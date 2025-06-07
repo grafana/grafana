@@ -1,13 +1,15 @@
 import { useEffect } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
+import { useTranslate } from '@grafana/i18n';
 import { Alert, LoadingBar, Pagination } from '@grafana/ui';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { usePagination } from '../../hooks/usePagination';
-import { isAlertingRule } from '../../utils/rules';
+import { Annotation } from '../../utils/constants';
+import { prometheusRuleType } from '../../utils/rules';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
 import { EvaluationGroup } from './EvaluationGroup';
@@ -48,12 +50,20 @@ export const EvaluationGroupLoader = ({
       });
     }
   }, [fetchRulerRuleGroup, isOpen, name, namespace, rulerConfig]);
+  const { t } = useTranslate();
 
   return (
     <EvaluationGroup name={name} interval={interval} provenance={provenance} isOpen={isOpen} onToggle={toggle}>
       {/* @TODO nicer error handling */}
       {error ? (
-        <Alert title="Something went wrong when trying to fetch group details">{String(error)}</Alert>
+        <Alert
+          title={t(
+            'alerting.evaluation-group-loader.title-something-wrong-trying-fetch-group-details',
+            'Something went wrong when trying to fetch group details'
+          )}
+        >
+          {String(error)}
+        </Alert>
       ) : (
         <>
           {isLoading ? (
@@ -65,7 +75,7 @@ export const EvaluationGroupLoader = ({
                 state={PromAlertingRuleState.Inactive}
                 name={rule.name}
                 href={'/'}
-                summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
+                summary={prometheusRuleType.alertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
               />;
 
               return null;

@@ -4,7 +4,6 @@ import { AnyAction, combineReducers } from 'redux';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
-import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
@@ -27,16 +26,21 @@ import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
+import { advisorAPI } from '../../api/clients/advisor';
+import { folderAPI } from '../../api/clients/folder';
+import { iamAPI } from '../../api/clients/iam';
+import { playlistAPI } from '../../api/clients/playlist';
+import { provisioningAPI } from '../../api/clients/provisioning';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
-import { iamApi } from '../../features/iam/api/api';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
+// Used by the API client generator
+// PLOP_INJECT_IMPORT
 
 const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
-  ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
@@ -59,8 +63,14 @@ const rootReducers = {
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
-  [iamApi.reducerPath]: iamApi.reducer,
+  [iamAPI.reducerPath]: iamAPI.reducer,
+  [playlistAPI.reducerPath]: playlistAPI.reducer,
   [userPreferencesAPI.reducerPath]: userPreferencesAPI.reducer,
+  [provisioningAPI.reducerPath]: provisioningAPI.reducer,
+  [folderAPI.reducerPath]: folderAPI.reducer,
+  [advisorAPI.reducerPath]: advisorAPI.reducer,
+  // PLOP_INJECT_REDUCER
+  // Used by the API client generator
 };
 
 const addedReducers = {};

@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ConfirmModal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface DeleteTokenConfirmationModalProps {
   isOpen: boolean;
@@ -9,6 +9,7 @@ interface DeleteTokenConfirmationModalProps {
 }
 
 export function DeleteTokenConfirmationModal(props: DeleteTokenConfirmationModalProps) {
+  const { t } = useTranslate();
   const { isOpen, hasError, onConfirm, onDismiss } = props;
 
   const body = (

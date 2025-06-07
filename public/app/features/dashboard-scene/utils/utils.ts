@@ -1,5 +1,6 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { t } from '@grafana/i18n/internal';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
   CustomVariable,
@@ -7,6 +8,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneObject,
+  SceneObjectState,
   SceneQueryRunner,
   VizPanel,
   VizPanelMenu,
@@ -14,11 +16,14 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain } from './clone';
@@ -263,7 +268,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
   const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
 
   // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
     return '$__auto';
   }
 
@@ -317,12 +322,17 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultVizPanel(): VizPanel {
+  const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+
   return new VizPanel({
-    title: 'Panel Title',
-    pluginId: 'timeseries',
+    title: newPanelTitle,
+    pluginId: defaultPluginId,
+    seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
+    extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
@@ -434,4 +444,27 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
 
 export function getGridItemKeyForPanelId(panelId: number): string {
   return `grid-item-${panelId}`;
+}
+
+export function useDashboard(scene: SceneObject): DashboardScene {
+  return getDashboardSceneFor(scene);
+}
+
+export function useDashboardState(scene: SceneObject): DashboardSceneState {
+  const dashboard = useDashboard(scene);
+  return dashboard.useState();
+}
+
+export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
+  const { title } = scene.useState();
+
+  if (!title) {
+    return '';
+  }
+
+  return sceneGraph.interpolate(scene, title, undefined, 'text');
+}
+
+export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
+  return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }

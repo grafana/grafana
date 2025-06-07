@@ -7,8 +7,8 @@ import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
 
 export interface Props {
-  onChange: (weekStart: WeekStart) => void;
-  value: string;
+  onChange: (weekStart?: WeekStart) => void;
+  value?: WeekStart;
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
@@ -24,9 +24,9 @@ const weekStarts: ComboboxOption[] = [
   { value: 'monday', label: 'Monday' },
 ];
 
-const isWeekStart = (value: string): value is WeekStart => {
+export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
-};
+}
 
 declare global {
   interface Window {
@@ -57,13 +57,13 @@ export const WeekStartPicker = (props: Props) => {
   const onChangeWeekStart = useCallback(
     (selectable: ComboboxOption | null) => {
       if (selectable && selectable.value !== undefined) {
-        onChange(selectable.value as WeekStart);
+        onChange(isWeekStart(selectable.value) ? selectable.value : undefined);
       }
     },
     [onChange]
   );
 
-  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? null, [value]);
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value]);
 
   return (
     <Combobox

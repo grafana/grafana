@@ -22,11 +22,29 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 
+const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
+const getResourceNames = jest.fn().mockResolvedValue([
+  {
+    id: 'foobarID',
+    name: 'foobar',
+    subscriptionId: 'subID',
+    resourceGroup: 'resourceGroup',
+    type: 'foobarType',
+    location: 'london',
+  },
+]);
 const defaultProps = {
   query: {
     refId: 'A',
@@ -39,7 +57,6 @@ const defaultProps = {
   onChange: jest.fn(),
   datasource: createMockDatasource({
     getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Primary Subscription', value: 'sub' }]),
-    getResourceGroups: jest.fn().mockResolvedValue([{ text: 'rg', value: 'rg' }]),
     getMetricNamespaces: jest
       .fn()
       .mockImplementation(
@@ -50,11 +67,16 @@ const defaultProps = {
           return [{ text: 'foo/custom', value: 'foo/custom' }];
         }
       ),
-    getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
     getVariablesRaw: jest.fn().mockReturnValue([
       { label: 'query0', name: 'sub0' },
       { label: 'query1', name: 'rg', query: { queryType: AzureQueryType.ResourceGroupsQuery } },
     ]),
+    azureResourceGraphDatasource: {
+      getResourceGroups,
+      getResourceNames,
+    },
+    getResourceGroups,
+    getResourceNames,
   }),
 };
 
@@ -63,10 +85,10 @@ describe('VariableEditor:', () => {
     const onChange = jest.fn();
     const legacyQuery = { ...defaultProps.query, queryType: AzureQueryType.GrafanaTemplateVariableFn };
     render(<VariableEditor {...defaultProps} onChange={onChange} query={legacyQuery} />);
-    await waitFor(() => screen.getByLabelText('select query type'));
-    expect(screen.getByLabelText('select query type')).toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('select query type'));
-    await select(screen.getByLabelText('select query type'), 'Grafana Query Function', {
+    await waitFor(() => screen.getByLabelText('Select query type'));
+    expect(screen.getByLabelText('Select query type')).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('Select query type'));
+    await select(screen.getByLabelText('Select query type'), 'Grafana Query Function', {
       container: document.body,
     });
     expect(onChange).toHaveBeenCalledWith(
@@ -89,10 +111,10 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...defaultProps} onChange={onChange} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
-      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      await userEvent.type(screen.getByTestId('mockeditor'), '2');
       expect(onChange).toHaveBeenCalledWith({
         azureLogAnalytics: {
-          query: 'test quer',
+          query: 'test query2',
         },
         queryType: 'Azure Log Analytics',
         refId: 'A',
@@ -119,9 +141,9 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...ARGqueryProps} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       await waitFor(() => screen.queryByLabelText('Subscriptions'));
+      expect(screen.queryByLabelText('Select query type')).toBeInTheDocument();
       expect(screen.queryByText('Resource Graph')).toBeInTheDocument();
       expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Select query type')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select resource group')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select namespace')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select resource')).not.toBeInTheDocument();
@@ -213,7 +235,7 @@ describe('VariableEditor:', () => {
     it('should run the query if requesting subscriptions', async () => {
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
-      await selectAndRerender('select query type', 'Subscriptions', onChange, rerender);
+      await selectAndRerender('Select query type', 'Subscriptions', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({ queryType: AzureQueryType.SubscriptionsQuery, refId: 'A' })
       );
@@ -224,8 +246,8 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Resource Groups', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select query type', 'Resource Groups', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.ResourceGroupsQuery,
@@ -240,9 +262,9 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Resource Groups', onChange, rerender);
+      await selectAndRerender('Select query type', 'Resource Groups', onChange, rerender);
       // Select a subscription
-      openMenu(screen.getByLabelText('select subscription'));
+      openMenu(screen.getByLabelText('Select subscription'));
       await waitFor(() => expect(screen.getByText('Primary Subscription')).toBeInTheDocument());
       await userEvent.click(screen.getByText('Template Variables'));
       // Simulate onChange behavior
@@ -258,8 +280,8 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Namespaces', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select query type', 'Namespaces', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.NamespacesQuery,
@@ -274,9 +296,9 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Resource Names', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
-      await selectAndRerender('select region', 'North Europe', onChange, rerender);
+      await selectAndRerender('Select query type', 'Resource Names', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select region', 'North Europe', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.ResourceNamesQuery,
@@ -292,11 +314,11 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Metric Names', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
-      await selectAndRerender('select resource group', 'rg', onChange, rerender);
-      await selectAndRerender('select namespace', 'foo/bar', onChange, rerender);
-      await selectAndRerender('select resource', 'foobar', onChange, rerender);
+      await selectAndRerender('Select query type', 'Metric Names', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select resource group', 'rg', onChange, rerender);
+      await selectAndRerender('Select namespace', 'foo/bar', onChange, rerender);
+      await selectAndRerender('Select resource', 'foobar', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.MetricNamesQuery,
@@ -315,7 +337,7 @@ describe('VariableEditor:', () => {
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
       // Select a new query type
-      await selectAndRerender('select query type', 'Subscriptions', onChange, rerender);
+      await selectAndRerender('Select query type', 'Subscriptions', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.SubscriptionsQuery,
@@ -333,8 +355,8 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Workspaces', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select query type', 'Workspaces', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.WorkspacesQuery,
@@ -349,8 +371,8 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Regions', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select query type', 'Regions', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.LocationsQuery,
@@ -365,11 +387,11 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Custom Namespaces', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
-      await selectAndRerender('select resource group', 'rg', onChange, rerender);
-      await selectAndRerender('select namespace', 'foo/bar', onChange, rerender);
-      await selectAndRerender('select resource', 'foobar', onChange, rerender);
+      await selectAndRerender('Select query type', 'Custom Namespaces', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select resource group', 'rg', onChange, rerender);
+      await selectAndRerender('Select namespace', 'foo/bar', onChange, rerender);
+      await selectAndRerender('Select resource', 'foobar', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.CustomNamespacesQuery,
@@ -387,12 +409,12 @@ describe('VariableEditor:', () => {
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
       // wait for initial load
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
-      await selectAndRerender('select query type', 'Custom Metric Names', onChange, rerender);
-      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
-      await selectAndRerender('select resource group', 'rg', onChange, rerender);
-      await selectAndRerender('select namespace', 'foo/bar', onChange, rerender);
-      await selectAndRerender('select resource', 'foobar', onChange, rerender);
-      await selectAndRerender('select custom namespace', 'foo/custom', onChange, rerender);
+      await selectAndRerender('Select query type', 'Custom Metric Names', onChange, rerender);
+      await selectAndRerender('Select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('Select resource group', 'rg', onChange, rerender);
+      await selectAndRerender('Select namespace', 'foo/bar', onChange, rerender);
+      await selectAndRerender('Select resource', 'foobar', onChange, rerender);
+      await selectAndRerender('Select custom namespace', 'foo/custom', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.CustomMetricNamesQuery,

@@ -1,7 +1,7 @@
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 
 export interface Props<T extends DataSourceJsonData>
@@ -22,9 +22,12 @@ export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsC
           <div className="gf-form">
             <InlineField
               labelWidth={29}
-              label="Manage alert rules in Alerting UI"
+              label={t('grafana-ui.data-source-settings.alerting-settings-label', 'Manage alert rules in Alerting UI')}
               disabled={options.readOnly}
-              tooltip="Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source."
+              tooltip={t(
+                'grafana-ui.data-source-settings.alerting-settings-tooltip',
+                'Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.'
+              )}
             >
               <InlineSwitch
                 value={options.jsonData.manageAlerts !== false}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -9,7 +10,7 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -79,8 +80,10 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          Too many points to visualize properly. <br />
-          Update the query to return fewer points. <br />({paginatedFrames[0].length} points received)
+          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+            Too many points to visualize properly. <br />
+            Update the query to return fewer points. <br />({'{{count}}'} points received)
+          </Trans>
         </p>
       </div>
     );

@@ -15,8 +15,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/core"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -61,7 +62,7 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, nil, features, migrations, bus, tracer)
+	s, err := newStore(cfg, nil, features, migrations, bus, tracer, false)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +79,8 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 // NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
@@ -87,24 +88,20 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	return newSQLStore(cfg, nil, features, nil, bus, tracer)
+	return newStore(cfg, nil, features, nil, bus, tracer, true)
 }
 
-func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
+	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
 	ss := &SQLStore{
 		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: false,
+		skipEnsureDefaultOrgAndUser: skipEnsureDefaultOrgAndUser,
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
 		features:                    features,
-	}
-	for _, opt := range opts {
-		if !opt.EnsureDefaultOrgAndUser {
-			ss.skipEnsureDefaultOrgAndUser = true
-		}
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -351,7 +348,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
 			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
 			// replace with compatible system var for transaction isolation
-			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
+			connectionString = strings.ReplaceAll(connectionString, "&transaction_isolation", "&tx_isolation")
 			// recreate the xorm engine with new connection string that is compatible
 			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
 			if err != nil {
@@ -426,7 +423,7 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
-	store, err := initTestDB(t, cfg, features, migration, opts...)
+	store, err := initTestDB(t, cfg, features, migration, bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -439,7 +436,8 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.C
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features),
+		bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -505,6 +503,7 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
+	bus bus.Bus,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -540,59 +539,26 @@ func TestMain(m *testing.M) {
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
 
-		// set test db config
-		cfg := setting.NewCfg()
-		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
-
-		sec, err := cfg.Raw.NewSection("database")
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := sec.NewKey("type", dbType); err != nil {
-			return nil, err
-		}
+		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
-			return nil, err
-		}
-		if _, err := sec.NewKey("path", testDB.Path); err != nil {
-			return nil, err
-		}
+		cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+		cfgDBSec.Key("path").SetValue(testDB.Path)
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
+			cfgDBSec.Key("skip_migrations").SetValue("true")
 		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-
 		// need to get engine to clean db before we init
-		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		engine, err := xorm.NewEngine(dbType, testDB.ConnStr)
 		if err != nil {
 			return nil, err
 		}
@@ -600,9 +566,16 @@ func TestMain(m *testing.M) {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
+		skipEnsureDefaultOrgAndUser := false
+		for _, opt := range opts {
+			if !opt.EnsureDefaultOrgAndUser {
+				skipEnsureDefaultOrgAndUser = true
+				break
+			}
+		}
+
 		tracer := tracing.InitializeTracerForTest()
-		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, engine, features, migration, bus, tracer, opts...)
+		testSQLStore, err = newStore(testCfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
 		if err != nil {
 			return nil, err
 		}
@@ -618,6 +591,8 @@ func TestMain(m *testing.M) {
 	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
+	testSQLStore.engine.ResetSequenceGenerator()
+
 	if err := testSQLStore.Reset(); err != nil {
 		return nil, err
 	}

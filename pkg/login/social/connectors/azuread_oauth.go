@@ -385,6 +385,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		return nil
 
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
+		}
+		return nil
+
 	case social.ClientSecretPost, "":
 		if info.ClientSecret == "" {
 			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
@@ -552,11 +558,11 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
-	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	fmt.Fprintf(bf, "allowed_groups = %v\n", s.info.AllowedGroups)
+	fmt.Fprintf(bf, "forceUseGraphAPI = %v\n", s.forceUseGraphAPI)
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.getBaseSupportBundleContent(bf)
+	return s.getBaseSupportBundleContent(bf)
 }
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {

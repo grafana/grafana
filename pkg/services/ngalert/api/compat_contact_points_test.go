@@ -11,6 +11,7 @@ import (
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
 	"github.com/stretchr/testify/require"
 
+	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -38,7 +39,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 					return string(d)
 				})
 			require.NoError(t, err)
-			ex, err := ReceiverExportFromEmbeddedContactPoint(emb)
+			ex, err := apicompat.ReceiverExportFromEmbeddedContactPoint(emb)
 			require.NoError(t, err)
 			export = append(export, ex)
 		}

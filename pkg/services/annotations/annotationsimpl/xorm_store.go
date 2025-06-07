@@ -267,10 +267,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
-				alert.name as alert_name
+				r.title as alert_name
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
-			LEFT OUTER JOIN alert on alert.id = annotation.alert_id
+			LEFT OUTER JOIN alert_rule as r on r.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
 			`)
@@ -279,7 +279,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		params = append(params, query.OrgID)
 
 		if query.AnnotationID != 0 {
-			// fmt.Print("annotation query")
+			// fmt.Println("annotation query")
 			sql.WriteString(` AND a.id = ?`)
 			params = append(params, query.AnnotationID)
 		}
@@ -287,6 +287,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 		if query.AlertID != 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
 			params = append(params, query.AlertID)
+		} else if query.AlertUID != "" {
+			sql.WriteString(` AND a.alert_id = (SELECT id FROM alert_rule WHERE uid = ? and org_id = ?)`)
+			params = append(params, query.AlertUID, query.OrgID)
 		}
 
 		if query.DashboardID != 0 {
@@ -309,9 +312,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.To, query.From)
 		}
 
-		if query.Type == "alert" {
+		switch query.Type {
+		case "alert":
 			sql.WriteString(` AND a.alert_id > 0`)
-		} else if query.Type == "annotation" {
+		case "annotation":
 			sql.WriteString(` AND a.alert_id = 0`)
 		}
 
@@ -331,9 +335,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 
 			if len(tags) > 0 {
 				tagsSubQuery := fmt.Sprintf(`
-			SELECT SUM(1) FROM annotation_tag at
-			INNER JOIN tag on tag.id = at.tag_id
-			WHERE at.annotation_id = a.id
+			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
+			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
+			WHERE `+r.db.Quote("at")+`.annotation_id = a.id
 				AND (
 				%s
 				)
@@ -471,8 +475,16 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
-		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (`)
+		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(" OR ")
+
+		s, p = r.db.GetDialect().LikeOperator(tagValue, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(")")
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)

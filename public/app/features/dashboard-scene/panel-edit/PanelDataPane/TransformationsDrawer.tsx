@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
@@ -42,6 +43,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
+  const { t } = useTranslate();
 
   const transformations = allTransformations.filter((t) => {
     if (
@@ -65,7 +67,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
         onClick={() => {
           setDrawerState({ ...drawerState, ...{ search: '' } });
         }}
-        tooltip="Clear search"
+        tooltip={t('dashboard-scene.transformations-drawer.search-box-suffix.tooltip-clear-search', 'Clear search')}
       />
     </>
   );

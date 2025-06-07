@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -27,7 +25,7 @@ var (
 )
 
 // Function that will create a dual writer
-type DualWriteBuilder func(gr schema.GroupResource, legacy LegacyStorage, storage Storage) (Storage, error)
+type DualWriteBuilder func(gr schema.GroupResource, legacy Storage, unified Storage) (Storage, error)
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
@@ -36,24 +34,10 @@ type Storage interface {
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
-	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
 	rest.Lister
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-}
-
-// LegacyStorage is a storage implementation that writes to the Grafana SQL database.
-type LegacyStorage interface {
-	rest.Storage
-	rest.Scoper
-	rest.SingularNameProvider
-	rest.CreaterUpdater
-	rest.Lister
-	rest.GracefulDeleter
-	rest.CollectionDeleter
-	rest.TableConvertor
-	rest.Getter
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
@@ -79,7 +63,6 @@ type LegacyStorage interface {
 
 type DualWriter interface {
 	Storage
-	LegacyStorage
 	Mode() DualWriterMode
 }
 
@@ -105,36 +88,6 @@ const (
 	// Mode5 uses storage regardless of the background sync state
 	Mode5
 )
-
-// TODO: make this function private as there should only be one public way of setting the dual writing mode
-// NewDualWriter returns a new DualWriter.
-func NewDualWriter(
-	mode DualWriterMode,
-	legacy LegacyStorage,
-	storage Storage,
-	reg prometheus.Registerer,
-	resource string,
-) Storage {
-	metrics := &dualWriterMetrics{}
-	metrics.init(reg)
-	switch mode {
-	case Mode0:
-		return legacy
-	case Mode1:
-		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics, resource)
-	case Mode2:
-		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics, resource)
-	case Mode3:
-		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics, resource)
-	case Mode4, Mode5:
-		return storage
-	default:
-		return newDualWriterMode1(legacy, storage, metrics, resource)
-	}
-}
 
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
@@ -201,6 +154,10 @@ func SetDualWritingMode(
 			return Mode0, errDualWriterSetCurrentMode
 		}
 	case cfg.Mode >= Mode3 && currentMode < Mode3:
+		if cfg.SkipDataSync {
+			return currentMode, nil
+		}
+
 		// Transitioning to Mode3 or higher requires data synchronization.
 		cfgModeTmp := cfg.Mode
 		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
@@ -210,8 +167,8 @@ func SetDualWritingMode(
 		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
 		cfg.Mode = cfgModeTmp
 		if err != nil {
-			klog.Info("data syncer failed for mode:", m)
-			return Mode0, err
+			klog.Error("data syncer failed for mode:", m, "err", err)
+			return currentMode, nil
 		}
 		if !syncOk {
 			klog.Info("data syncer not ok for mode:", m)
@@ -258,16 +215,4 @@ func extractSpec(obj runtime.Object) []byte {
 		return nil
 	}
 	return jsonObj
-}
-
-func getName(o runtime.Object) string {
-	if o == nil {
-		return ""
-	}
-	accessor, err := meta.Accessor(o)
-	if err != nil {
-		klog.Error("failed to get object name: ", err)
-		return ""
-	}
-	return accessor.GetName()
 }

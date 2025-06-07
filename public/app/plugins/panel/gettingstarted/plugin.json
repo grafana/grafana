@@ -14,6 +14,7 @@
     "logos": {
       "small": "img/icn-dashlist-panel.svg",
       "large": "img/icn-dashlist-panel.svg"
-    }
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
   }
 }

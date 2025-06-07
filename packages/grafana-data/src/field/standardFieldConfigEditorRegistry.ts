@@ -16,6 +16,7 @@ export interface StandardEditorContext<TOptions, TState = any> {
   options?: TOptions;
   instanceState?: TState;
   isOverride?: boolean;
+  annotations?: DataFrame[];
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any, TState = any> {

@@ -23,6 +23,7 @@ type UserAuth struct {
 	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
+	ExternalUID       string `xorm:"external_uid"`
 }
 
 type ExternalUserInfo struct {
@@ -72,17 +73,19 @@ type RequestURIKey struct{}
 // COMMANDS
 
 type SetAuthInfoCommand struct {
-	AuthModule string
-	AuthId     string
-	UserId     int64
-	OAuthToken *oauth2.Token
+	AuthModule  string
+	AuthId      string
+	UserId      int64
+	OAuthToken  *oauth2.Token
+	ExternalUID string
 }
 
 type UpdateAuthInfoCommand struct {
-	AuthModule string
-	AuthId     string
-	UserId     int64
-	OAuthToken *oauth2.Token
+	AuthModule  string
+	AuthId      string
+	UserId      int64
+	OAuthToken  *oauth2.Token
+	ExternalUID string
 }
 
 type DeleteAuthInfoCommand struct {

@@ -5,6 +5,8 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -22,13 +24,15 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const scene = context.instanceState?.scene;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
-
+  const { t } = useTranslate();
   if (isEditMode && isSelected) {
     return <TextEdit {...props} />;
   }
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set text'}</span>
+      <span className={styles.span}>
+        {data?.text ? data.text : t('canvas.text-display.double-click-to-set', 'Double click to set text')}
+      </span>
     </div>
   );
 };
@@ -194,9 +198,9 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
         name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.text-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.text-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.text-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -207,9 +211,9 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
         name: 'Vertical align',
         settings: {
           options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
+            { value: VAlign.Top, label: t('canvas.text-item.label.top', 'Top') },
+            { value: VAlign.Middle, label: t('canvas.text-item.label.middle', 'Middle') },
+            { value: VAlign.Bottom, label: t('canvas.text-item.label.bottom', 'Bottom') },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -219,7 +223,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
         path: 'config.size',
         name: 'Text size',
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.text-item.placeholder.auto', 'Auto'),
         },
       });
   },

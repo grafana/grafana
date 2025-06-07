@@ -61,7 +61,7 @@ func List[T Resource](
 		return nil, err
 	}
 
-	check := func(_, _, _ string) bool { return true }
+	check := func(_, _ string) bool { return true }
 	if ac != nil {
 		var err error
 		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
@@ -82,7 +82,7 @@ func List[T Resource](
 	}
 
 	for _, item := range first.Items {
-		if !check(ns.Value, item.AuthID(), "") {
+		if !check(item.AuthID(), "") {
 			continue
 		}
 		res.Items = append(res.Items, item)
@@ -105,7 +105,7 @@ outer:
 				break outer
 			}
 
-			if !check(ns.Value, item.AuthID(), "") {
+			if !check(item.AuthID(), "") {
 				continue
 			}
 

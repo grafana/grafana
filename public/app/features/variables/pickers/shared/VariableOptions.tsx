@@ -4,8 +4,11 @@ import * as React from 'react';
 
 import { GrafanaTheme2, VariableOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import checkboxPng from 'img/checkbox.png';
+import checkboxWhitePng from 'img/checkbox_white.png';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
 
@@ -121,7 +124,7 @@ class VariableOptions extends PureComponent<Props> {
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
-          aria-label="Toggle all values"
+          aria-label={t('variables.variable-options.aria-label-toggle-all-values', 'Toggle all values')}
           data-placement="top"
         >
           <span
@@ -129,7 +132,9 @@ class VariableOptions extends PureComponent<Props> {
               [styles.variableOptionIconManySelected]: selectedValues.length > 1,
             })}
           ></span>
-          <Trans i18nKey="variable.picker.option-selected-values">Selected</Trans> ({selectedValues.length})
+          <Trans i18nKey="variable.picker.option-selected-values" values={{ numSelected: selectedValues.length }}>
+            Selected ({'{{numSelected}}'})
+          </Trans>
         </button>
       </Tooltip>
     );
@@ -137,7 +142,7 @@ class VariableOptions extends PureComponent<Props> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const checkboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
+  const checkboxImageUrl = theme.isDark ? checkboxPng : checkboxWhitePng;
 
   return {
     hideVariableOptionIcon: css({

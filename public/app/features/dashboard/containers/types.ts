@@ -20,6 +20,7 @@ export type DashboardPageRouteSearchParams = {
   kiosk?: string | true;
   scenes?: boolean;
   shareView?: string;
+  ref?: string; // used for repo preview
 };
 
 export type PublicDashboardPageRouteParams = {

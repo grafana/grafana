@@ -1,6 +1,6 @@
 export const getTestQueryList = () => ({
   kind: 'QueryTemplateList',
-  apiVersion: 'peakq.grafana.app/v0alpha1',
+  apiVersion: 'querylibrary.grafana.app/v0alpha1',
   metadata: {
     resourceVersion: '1783293408052252672',
     remainingItemCount: 0,
@@ -8,7 +8,7 @@ export const getTestQueryList = () => ({
   items: [
     {
       kind: 'QueryTemplate',
-      apiVersion: 'peakq.grafana.app/v0alpha1',
+      apiVersion: 'querylibrary.grafana.app/v0alpha1',
       metadata: {
         name: 'AElastic2nkf9',
         generateName: 'AElastic',
@@ -55,7 +55,7 @@ export const getTestQueryList = () => ({
     },
     {
       kind: 'QueryTemplate',
-      apiVersion: 'peakq.grafana.app/v0alpha1',
+      apiVersion: 'querylibrary.grafana.app/v0alpha1',
       metadata: {
         name: 'ALoki296tj',
         generateName: 'ALoki',
@@ -67,6 +67,74 @@ export const getTestQueryList = () => ({
       },
       spec: {
         title: 'Loki Query Template',
+        vars: [
+          {
+            key: '__value',
+            defaultValues: [''],
+            valueListDefinition: {
+              customValues: '',
+            },
+          },
+        ],
+        targets: [
+          {
+            variables: {
+              __value: [
+                {
+                  path: '$.datasource.jsonData.derivedFields.0.url',
+                  position: {
+                    start: 0,
+                    end: 14,
+                  },
+                  format: 'raw',
+                },
+                {
+                  path: '$.datasource.jsonData.derivedFields.1.url',
+                  position: {
+                    start: 0,
+                    end: 14,
+                  },
+                  format: 'raw',
+                },
+                {
+                  path: '$.datasource.jsonData.derivedFields.2.url',
+                  position: {
+                    start: 0,
+                    end: 14,
+                  },
+                  format: 'raw',
+                },
+              ],
+            },
+            properties: {
+              refId: 'A',
+              datasource: {
+                type: 'loki',
+                uid: 'loki-uid',
+              },
+              queryType: 'range',
+              editorMode: 'code',
+              expr: '{test="test"}',
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'QueryTemplate',
+      apiVersion: 'querylibrary.grafana.app/v0alpha1',
+      metadata: {
+        name: 'ALoki296tj',
+        generateName: 'ALoki',
+        namespace: 'default',
+        uid: '3e71de65-efa7-40e3-8f23-124212cca456',
+        resourceVersion: '1783214217151647744',
+        creationTimestamp: '2024-04-25T11:05:55Z',
+        annotations: { 'grafana.app/createdBy': 'user:u000000002' },
+      },
+      spec: {
+        title: 'Loki Query Template Hidden',
+        isVisible: false,
         vars: [
           {
             key: '__value',

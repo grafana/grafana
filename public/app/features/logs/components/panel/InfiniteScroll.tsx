@@ -3,13 +3,13 @@ import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Spinner } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Spinner, useStyles2 } from '@grafana/ui';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
-import { LogLine } from './LogLine';
+import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
 
@@ -22,9 +22,11 @@ interface ChildrenProps {
 
 interface Props {
   children: (props: ChildrenProps) => ReactNode;
-  handleOverflow: (index: number, id: string, height: number) => void;
+  displayedFields: string[];
+  handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
+  onClick: (log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
@@ -38,9 +40,11 @@ type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
 
 export const InfiniteScroll = ({
   children,
+  displayedFields,
   handleOverflow,
   loadMore,
   logs,
+  onClick,
   scrollElement,
   setInitialScrollPosition,
   showTime,
@@ -57,6 +61,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -128,28 +133,49 @@ export const InfiniteScroll = ({
     };
   }, [infiniteLoaderState, loadMore, logs.length, onLoadMore, scrollElement]);
 
+  const { t } = useTranslate();
+
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
-          <LogLineMessage style={style} onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}>
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
+          <LogLineMessage
+            style={style}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll' ? onLoadMore : undefined}
+          >
+            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder, t)}
           </LogLineMessage>
         );
       }
       return (
         <LogLine
+          displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          onClick={onClick}
           showTime={showTime}
           style={style}
+          styles={styles}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
       );
     },
-    [handleOverflow, infiniteLoaderState, logs, onLoadMore, showTime, sortOrder, wrapLogMessage]
+    [
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      logs,
+      onClick,
+      onLoadMore,
+      showTime,
+      sortOrder,
+      styles,
+      wrapLogMessage,
+      t,
+    ]
   );
 
   const onItemsRendered = useCallback(
@@ -178,7 +204,7 @@ export const InfiniteScroll = ({
   return <>{children({ getItemKey, itemCount, onItemsRendered, Renderer })}</>;
 };
 
-function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
+function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder, t: TFunction) {
   switch (state) {
     case 'out-of-bounds':
       return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');

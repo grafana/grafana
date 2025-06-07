@@ -25,7 +25,6 @@ import (
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
-	utilversion "k8s.io/component-base/version"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -33,6 +32,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -169,6 +169,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here
@@ -221,28 +223,25 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	v := utilversion.DefaultKubeEffectiveVersion()
-	patchver := 0 // required for semver
-
-	info := v.BinaryVersion().Info()
-	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
-	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
-	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
-	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
-
-	info2 := v.EmulationVersion().Info()
-	info2.BuildDate = info.BuildDate
-	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
-	info2.GitCommit = info.GitCommit
-	info2.GitTreeState = info.GitTreeState
-
-	serverConfig.EffectiveVersion = v
+	serverConfig.EffectiveVersion = getEffectiveVersion(buildTimestamp, buildVersion, buildCommit, buildBranch)
+	// set priority for aggregated discovery
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			return fmt.Errorf("builder did not return any API group versions: %T", b)
+		}
+		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		for j, gv := range pvs {
+			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
+		}
+	}
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
 		return err
@@ -275,16 +274,23 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
+	metrics := newBuilderMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+			// Dashboards + Folders may be managed (depends on feature toggles and database state)
+			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
+				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			}
+
 			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
 
 			// Get the option from custom.ini/command line
@@ -293,6 +299,7 @@ func InstallAPIs(
 
 			var (
 				dualWriterPeriodicDataSyncJobEnabled bool
+				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
 				dataSyncerRecordsLimit               = 1000
 			)
@@ -301,6 +308,7 @@ func InstallAPIs(
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
 				dataSyncerInterval = resourceConfig.DataSyncerInterval
 				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
@@ -321,6 +329,7 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,
@@ -334,6 +343,9 @@ func InstallAPIs(
 			if err != nil {
 				return nil, err
 			}
+
+			metrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
+
 			switch currentMode {
 			case grafanarest.Mode0:
 				return legacy, nil
@@ -341,6 +353,7 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
+
 			if dualWriterPeriodicDataSyncJobEnabled {
 				// The mode might have changed in SetDualWritingMode, so apply current mode first.
 				syncerCfg.Mode = currentMode
@@ -353,7 +366,7 @@ func InstallAPIs(
 			if currentMode != mode {
 				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
-			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
+			return dualwrite.NewDualWriter(gr, currentMode, legacy, storage)
 		}
 	}
 
@@ -375,11 +388,12 @@ func InstallAPIs(
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
 			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:           scheme,
-				OptsGetter:       optsGetter,
-				DualWriteBuilder: dualWrite,
-				MetricsRegister:  reg,
-				StorageOptions:   optsregister,
+				Scheme:              scheme,
+				OptsGetter:          optsGetter,
+				DualWriteBuilder:    dualWrite,
+				MetricsRegister:     reg,
+				StorageOptsRegister: optsregister,
+				StorageOpts:         storageOpts,
 			}); err != nil {
 				return err
 			}

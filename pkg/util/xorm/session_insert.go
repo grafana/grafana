@@ -8,12 +8,16 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"xorm.io/builder"
-	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -120,13 +124,39 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	}
 
 	table := session.statement.RefTable
-	size := sliceValue.Len()
+	firstElement := sliceValue.Index(0)
+	firstValue := reflect.Indirect(firstElement)
 
 	var colNames []string
-	var colMultiPlaces []string
-	var args []any
 	var cols []*core.Column
 
+	// Find columns that will be in the INSERT statement.
+	for _, col := range table.Columns() {
+		ptrFieldValue, err := col.ValueOfV(&firstValue)
+		if err != nil {
+			return 0, err
+		}
+		fieldValue := *ptrFieldValue
+		if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
+			continue
+		}
+		if col.IsDeleted {
+			continue
+		}
+		if session.statement.omitColumnMap.contain(col.Name) {
+			continue
+		}
+		if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
+			continue
+		}
+
+		colNames = append(colNames, col.Name)
+		cols = append(cols, col)
+	}
+
+	var colMultiPlaces []string
+	var args []any
+	size := sliceValue.Len()
 	for i := 0; i < size; i++ {
 		v := sliceValue.Index(i)
 		vv := reflect.Indirect(v)
@@ -143,105 +173,38 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 			processor.BeforeInsert()
 		}
 
-		if i == 0 {
-			for _, col := range table.Columns() {
-				ptrFieldValue, err := col.ValueOfV(&vv)
+		for _, col := range cols {
+			ptrFieldValue, err := col.ValueOfV(&vv)
+			if err != nil {
+				return 0, err
+			}
+			fieldValue := *ptrFieldValue
+
+			if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
+				val, t := session.engine.nowTime(col)
+				args = append(args, val)
+
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean any) {
+					col := table.GetColumn(colName)
+					setColumnTime(bean, col, t)
+				})
+			} else if col.IsVersion && session.statement.checkVersion {
+				args = append(args, 1)
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean any) {
+					col := table.GetColumn(colName)
+					setColumnInt(bean, col, 1)
+				})
+			} else {
+				arg, err := session.value2Interface(col, fieldValue)
 				if err != nil {
 					return 0, err
 				}
-				fieldValue := *ptrFieldValue
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == core.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
-				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
-
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.checkVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
-				colNames = append(colNames, col.Name)
-				cols = append(cols, col)
-				colPlaces = append(colPlaces, "?")
+				args = append(args, arg)
 			}
-		} else {
-			for _, col := range cols {
-				ptrFieldValue, err := col.ValueOfV(&vv)
-				if err != nil {
-					return 0, err
-				}
-				fieldValue := *ptrFieldValue
 
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == core.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
-				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
-
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.checkVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
-				colPlaces = append(colPlaces, "?")
-			}
+			colPlaces = append(colPlaces, "?")
 		}
 		colMultiPlaces = append(colMultiPlaces, strings.Join(colPlaces, ", "))
 	}
@@ -345,6 +308,40 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		return 0, err
 	}
 
+	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
+	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
+		found := slices.Contains(colNames, table.AutoIncrement)
+		if !found {
+			seq, err := session.engine.sequenceGenerator.Next(session.ctx, table.Name, table.AutoIncrement)
+			if err != nil {
+				return 0, fmt.Errorf("failed to generate next value for auto_increment columns: %v", err)
+			}
+
+			colNames = append(colNames, table.AutoIncrement)
+			args = append(args, seq)
+		}
+	} else if len(table.RandomID) > 0 {
+		found := slices.Contains(colNames, table.RandomID)
+		if !found {
+			id := session.engine.randomIDGen()
+			colNames = append(colNames, table.RandomID)
+			args = append(args, id)
+			// Set random ID back to the bean.
+			col := table.GetColumn(table.RandomID)
+			if col == nil {
+				return 0, fmt.Errorf("column %s not found in table %s", table.RandomID, table.Name)
+			}
+			idValue, err := col.ValueOf(bean)
+			if err != nil {
+				session.engine.logger.Error(err)
+			}
+			if idValue == nil || !idValue.IsValid() || !idValue.CanSet() {
+				return 0, fmt.Errorf("failed to set snowflake ID to bean: %v", err)
+			}
+			idValue.Set(int64ToIntValue(id, idValue.Type()))
+		}
+	}
+
 	exprs := session.statement.exprColumns
 	colPlaces := strings.Repeat("?, ", len(colNames))
 	if exprs.Len() <= 0 && len(colPlaces) > 0 {
@@ -423,9 +420,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 	}
 
 	if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == core.POSTGRES {
-		if _, err := buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement)); err != nil {
-			return 0, err
-		}
+		buf.WriteString(" RETURNING " + session.engine.Quote(table.AutoIncrement))
 	}
 
 	sqlStr := buf.String()
@@ -461,6 +456,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
+	var insertID, rowsAffected int64
 	if session.engine.dialect.DBType() == core.ORACLE && len(table.AutoIncrement) > 0 {
 		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
 		if err != nil {
@@ -483,23 +479,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 
 		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
+		insertID, err = strconv.ParseInt(string(idByte), 10, 64)
+		if err != nil || insertID <= 0 {
 			return 1, err
 		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Error(err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
+		rowsAffected = 1
 	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
@@ -522,23 +506,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		}
 
 		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
+		insertID, err = strconv.ParseInt(string(idByte), 10, 64)
+		if err != nil || insertID <= 0 {
 			return 1, err
 		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Error(err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
+		rowsAffected = 1
 	} else {
 		res, err := session.exec(sqlStr, args...)
 		if err != nil {
@@ -560,25 +532,29 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			return res.RowsAffected()
 		}
 
-		var id int64
-		id, err = res.LastInsertId()
-		if err != nil || id <= 0 {
+		insertID, err = res.LastInsertId()
+		if err != nil || insertID <= 0 {
 			return res.RowsAffected()
 		}
 
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+		rowsAffected, err = res.RowsAffected()
 		if err != nil {
-			session.engine.logger.Error(err)
+			return 0, err
 		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return res.RowsAffected()
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return res.RowsAffected()
 	}
+
+	// Set insertID back to the bean.
+	aiValue, err := table.AutoIncrColumn().ValueOf(bean)
+	if err != nil {
+		session.engine.logger.Error(err)
+	}
+
+	if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
+		return rowsAffected, nil
+	}
+
+	aiValue.Set(int64ToIntValue(insertID, aiValue.Type()))
+	return rowsAffected, nil
 }
 
 // InsertOne insert only one struct into database as a record.
@@ -599,10 +575,6 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 	args := make([]any, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if col.IsDeleted {
 			continue
 		}
@@ -629,7 +601,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 		}
 		fieldValue := *fieldValuePtr
 
-		if col.IsAutoIncrement {
+		if col.IsAutoIncrement || col.IsRandomID {
 			switch fieldValue.Type().Kind() {
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
 				if fieldValue.Int() == 0 {
@@ -821,4 +793,41 @@ func (session *Session) insertMap(columns []string, args []any) (int64, error) {
 		return 0, err
 	}
 	return affected, nil
+}
+
+type snowflake struct {
+	mu       sync.Mutex
+	nodeID   int64
+	sequence int64
+	lastTime int64
+	epoch    time.Time
+}
+
+// newSnowflake creates a new instance with a random node ID (0-1023)
+// It forcefully converts epoch time (in milliseconds) to monotonic time
+func newSnowflake(nodeID int64) *snowflake {
+	const snowflakeEpoch = 1288834974657 // 2010-11-04 01:42:54.657 UTC
+	epoch := time.Unix(snowflakeEpoch/1000, (snowflakeEpoch%1000)*1000000)
+	now := time.Now()
+	return &snowflake{nodeID: nodeID & 0x3ff, epoch: now.Add(epoch.Sub(now))}
+}
+
+func (s *snowflake) Generate() int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	currentTime := time.Since(s.epoch).Milliseconds()
+	if currentTime == s.lastTime {
+		s.sequence = (s.sequence + 1) & 0xfff
+		if s.sequence == 0 {
+			// wait for next millisecond, we are not using time.Sleep() here due to its low resolution (often >4ms)
+			for currentTime <= s.lastTime {
+				currentTime = time.Since(s.epoch).Milliseconds()
+			}
+		}
+	} else {
+		s.sequence = 0
+	}
+	s.lastTime = currentTime
+	id := (currentTime << 22) | (s.nodeID << 12) | s.sequence
+	return id
 }

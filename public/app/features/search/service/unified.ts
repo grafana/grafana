@@ -1,8 +1,10 @@
 import { isEmpty } from 'lodash';
 
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import kbn from 'app/core/utils/kbn';
 
 import { getAPINamespace } from '../../../api/utils';
 
@@ -92,18 +94,17 @@ export class UnifiedSearcher implements GrafanaSearcher {
   // TODO: Implement this correctly
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
-      { value: '-name_sort', label: 'Alphabetically (Z-A)' },
+      {
+        value: folderViewSort,
+        label: t('search.unified-searcher.opts.label.alphabetically-az', 'Alphabetically (A-Z)'),
+      },
+      { value: '-name_sort', label: t('search.unified-searcher.opts.label.alphabetically-za', 'Alphabetically (Z-A)') },
     ];
 
     if (config.licenseInfo.enabledFeatures.analytics) {
       for (const sf of sortFields) {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
-      }
-      for (const sf of sortTimeFields) {
-        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
-        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
       }
     }
 
@@ -283,12 +284,6 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
-// Enterprise only time sort field values for dashboards
-const sortTimeFields = [
-  { name: 'created_at', display: 'Created time' },
-  { name: 'updated_at', display: 'Updated time' },
-];
-
 function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
   return {
     view: new DataFrameView({ length: 0, fields: [] }),
@@ -305,11 +300,6 @@ function noDataResponse(): QueryResponse | PromiseLike<QueryResponse> {
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
-    if (sf.name === name) {
-      return sf.display;
-    }
-  }
-  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }
@@ -336,7 +326,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name),
+      url: toURL(hit.resource, hit.name, hit.title),
       tags: hit.tags || [],
       folder: hit.folder || 'general',
       location,
@@ -384,7 +374,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         locationInfo[hit.name] = {
           name: hit.title,
           kind: 'folder',
-          url: toURL('folders', hit.name),
+          url: toURL('folders', hit.name, hit.title),
         };
       }
       return locationInfo;
@@ -392,9 +382,10 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string): string {
+function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `/dashboards/f/${name}`;
   }
-  return `/d/${name}`;
+  const slug = kbn.slugifyForUrl(title);
+  return `/d/${name}/${slug}`;
 }

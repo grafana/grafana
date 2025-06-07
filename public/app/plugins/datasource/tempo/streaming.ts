@@ -188,7 +188,6 @@ export function doTempoMetricsStreaming(
 function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): DataQueryResponse {
   const result = combineResponses(cloneQueryResponse(acc), newResult);
 
-  // Remove duplicate time field values for all frames
   result.data = result.data.map((frame: DataFrame) => {
     let newFrame = frame;
     const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
@@ -227,6 +226,15 @@ function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeFieldIndex: num
   accFrame.fields.forEach((field) => {
     field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
   });
+
+  // This updates the length of the dataframe having already removed duplicate values.
+  // This is necessary because Tempo sends partial results to Grafana and
+  // this can result in duplicate values for the same timestamp so this removes
+  // older values and keeps the latest value, and ensures the length of the dataframe is updated,
+  // which would otherwise cause issues with rendering the exemplar data.
+  if (accFrame.name === 'exemplar' && accFrame.meta?.dataTopic === 'annotations' && indexesToRemove.length > 0) {
+    accFrame.length = accFrame.fields[timeFieldIndex].values.length;
+  }
 }
 
 function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, elapsedTime: number) {

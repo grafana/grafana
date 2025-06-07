@@ -14,6 +14,7 @@ var (
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 	ErrSnapshotNotFound            = errutil.NotFound("cloudmigrations.snapshotNotFound").Errorf("Snapshot not found")
+	ErrEmptyResourceTypes          = errutil.BadRequest("cloudmigrations.emptyResourceTypes").Errorf("Resource types cannot be empty")
 )
 
 // CloudMigration domain structs
@@ -162,12 +163,53 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ResultSortColumn string
+
+const (
+	SortColumnID     ResultSortColumn = "id"
+	SortColumnName   ResultSortColumn = "name"
+	SortColumnType   ResultSortColumn = "resource_type"
+	SortColumnStatus ResultSortColumn = "status"
+)
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+// ResultPage should be in the range [1, 10000]
+type ResultPage int
+
+// ResultLimit should be in the rage [1, 10000]
+type ResultLimit int
+
+type SnapshotResultQueryParams struct {
+	ResultPage  ResultPage
+	ResultLimit ResultLimit
+	SortColumn  ResultSortColumn
+	SortOrder   SortOrder
+	ErrorsOnly  bool
+}
+
+type ResourceTypes map[MigrateDataType]struct{}
+
+func (r ResourceTypes) Has(t MigrateDataType) bool {
+	_, ok := r[t]
+	return ok
+}
+
+type CreateSnapshotCommand struct {
+	SessionUID    string
+	ResourceTypes ResourceTypes
+}
+
 type GetSnapshotsQuery struct {
 	SnapshotUID string
 	OrgID       int64
 	SessionUID  string
-	ResultPage  int
-	ResultLimit int
+	SnapshotResultQueryParams
 }
 
 type ListSnapshotsQuery struct {

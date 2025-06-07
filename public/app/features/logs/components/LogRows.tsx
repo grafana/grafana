@@ -5,17 +5,16 @@ import {
   TimeZone,
   LogsDedupStrategy,
   LogRowModel,
-  Field,
-  LinkModel,
   LogsSortOrder,
   CoreApp,
   DataFrame,
   LogRowContextOptions,
 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -44,7 +43,7 @@ export interface Props {
   showContextToggle?: (row: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
@@ -61,7 +60,6 @@ export interface Props {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  pinnedRowId?: string;
   pinnedLogs?: string[];
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
@@ -252,6 +250,8 @@ export const LogRows = memo(
       setShowDisablePopoverOptions(false);
     }, []);
 
+    const { t } = useTranslate();
+
     return (
       <div className={styles.logRows} ref={logRowsRef}>
         {popoverState.selection && popoverState.selectedRow && (
@@ -305,7 +305,7 @@ export const LogRows = memo(
                   onPinLine={props.onPinLine}
                   onUnpinLine={props.onUnpinLine}
                   pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
-                  pinned={props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
+                  pinned={pinnedLogs?.some((logId) => logId === row.rowId || logId === row.uid)}
                   isFilterLabelActive={props.isFilterLabelActive}
                   handleTextSelection={handleSelection}
                   enableLogDetails={enableLogDetails}

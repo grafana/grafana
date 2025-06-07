@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
@@ -16,17 +15,6 @@ import (
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
 )
-
-// swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
-//
-// sets an Alerting config
-//
-// This API is designated to internal use only and can be removed or changed at any time without prior notice.
-//
-// Deprecated: true
-//     Responses:
-//       201: Ack
-//       400: ValidationError
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
@@ -369,6 +357,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -388,6 +380,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
@@ -497,6 +498,8 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 	SilenceID string `json:"silenceID,omitempty"`
 }
 
+// GettableSilences gettable silences
+//
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -551,11 +554,15 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 // swagger:model gettableGrafanaSilences
 type GettableGrafanaSilences []*GettableGrafanaSilence
 
+// GettableAlerts gettable alerts
+//
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
 type GettableAlert = amv2.GettableAlert
 
+// AlertGroups alert groups
+//
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
@@ -685,33 +692,13 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
-// Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
-func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (PostableUserConfig, error) {
-	newCfg, ok := deepcopy.Copy(c).(*PostableUserConfig)
-	if !ok {
-		return PostableUserConfig{}, fmt.Errorf("failed to copy config")
-	}
-
-	// Iterate through receivers and decrypt secure settings.
-	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
-			if err != nil {
-				return PostableUserConfig{}, err
-			}
-			gmr.SecureSettings = decrypted
-		}
-	}
-	return *newCfg, nil
-}
-
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -815,7 +802,7 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -951,7 +938,7 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	hasGrafanaReceivers := len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0
+	hasGrafanaReceivers := len(r.GrafanaManagedReceivers) > 0
 
 	if hasGrafanaReceivers {
 		if len(r.EmailConfigs) > 0 {
@@ -984,14 +971,14 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 }
 
 func (r *GettableApiReceiver) Type() ReceiverType {
-	if len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
+	if len(r.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
 	return AlertmanagerReceiverType
 }
 
 func (r *GettableApiReceiver) GetName() string {
-	return r.Receiver.Name
+	return r.Name
 }
 
 type GettableGrafanaReceivers struct {
