@@ -26,29 +26,9 @@ import {
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 
-import { useAutoDetectFeatures } from './useAutoDetectFeatures';
-
-export const postgresVersions: Array<SelectableValue<number>> = [
-  { label: '9.0', value: 900 },
-  { label: '9.1', value: 901 },
-  { label: '9.2', value: 902 },
-  { label: '9.3', value: 903 },
-  { label: '9.4', value: 904 },
-  { label: '9.5', value: 905 },
-  { label: '9.6', value: 906 },
-  { label: '10', value: 1000 },
-  { label: '11', value: 1100 },
-  { label: '12', value: 1200 },
-  { label: '13', value: 1300 },
-  { label: '14', value: 1400 },
-  { label: '15', value: 1500 },
-];
-
 export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>) => {
-  const [versionOptions, setVersionOptions] = useState(postgresVersions);
   const [isOpen, setIsOpen] = useState(true);
 
-  useAutoDetectFeatures({ props, setVersionOptions });
   useMigrateDatabaseFields(props);
 
   const { options, onOptionsChange } = props;
@@ -322,29 +302,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
 
       <ConfigSection title="Additional settings" isCollapsible>
         <ConfigSubSection title="PostgreSQL Options">
-          <Field
-            label={
-              <Label>
-                <EditorStack gap={0.5}>
-                  <span>Version</span>
-                  <Tooltip
-                    content={
-                      <span>This option controls what functions are available in the PostgreSQL query builder</span>
-                    }
-                  >
-                    <Icon name="info-circle" size="sm" />
-                  </Tooltip>
-                </EditorStack>
-              </Label>
-            }
-          >
-            <Select
-              value={jsonData.postgresVersion || 903}
-              onChange={onJSONDataOptionSelected('postgresVersion')}
-              options={versionOptions}
-              width={WIDTH_LONG}
-            />
-          </Field>
           <Field
             label={
               <Label>
