@@ -1,7 +1,9 @@
+import { locationService } from '@grafana/runtime';
 import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { createRelativeUrl } from '../../utils/url';
 
 import { CloudReceiverForm } from './form/CloudReceiverForm';
 import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';
@@ -17,7 +19,14 @@ export const EditReceiverView = ({ contactPoint, alertmanagerName }: Props) => {
   const readOnly = !editSupported || !editAllowed;
 
   if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
-    return <GrafanaReceiverForm contactPoint={contactPoint} readOnly={readOnly} editMode />;
+    return (
+      <GrafanaReceiverForm
+        contactPoint={contactPoint}
+        readOnly={readOnly}
+        editMode
+        onCreate={() => locationService.push(createRelativeUrl('/alerting/notifications'))}
+      />
+    );
   } else {
     return (
       <CloudReceiverForm
