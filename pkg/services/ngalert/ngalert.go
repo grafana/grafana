@@ -187,15 +187,26 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if remotePrimary || remoteSecondary {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+		smtpCfg := remote.SmtpConfig{
+			FromAddress:    ng.Cfg.Smtp.FromAddress,
+			FromName:       ng.Cfg.Smtp.FromName,
+			Host:           ng.Cfg.Smtp.Host,
+			User:           ng.Cfg.Smtp.User,
+			Password:       ng.Cfg.Smtp.Password,
+			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
+			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
+			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
+			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
+		}
+
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
 			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			Smtp:              smtpCfg,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
