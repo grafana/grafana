@@ -185,12 +185,15 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      if (!query.spec.datasource?.uid) {
+      if (!query.spec.query.datasource?.name) {
         datasource = getRuntimePanelDataSource(query);
       } else {
-        datasource = query.spec.datasource;
+        datasource = {
+          uid: query.spec.query.datasource?.name,
+          type: query.spec.query.group,
+        };
       }
-    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
+    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
       isMixedDatasource = true;
     }
   });
@@ -199,11 +202,19 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 }
 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(variable.spec.datasource, variable.spec.query.kind);
+  const ds: DataSourceRef = {
+    uid: variable.spec.query.datasource?.name,
+    type: variable.spec.query.group,
+  };
+  return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
 export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(query.spec.datasource, query.spec.query.kind);
+  const ds: DataSourceRef = {
+    uid: query.spec.query.datasource?.name,
+    type: query.spec.query.group,
+  };
+  return getDataSourceForQuery(ds, query.spec.query.group);
 }
 
 /**
