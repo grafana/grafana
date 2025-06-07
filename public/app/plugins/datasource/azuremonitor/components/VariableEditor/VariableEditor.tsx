@@ -30,22 +30,64 @@ const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
   const { t } = useTranslate();
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
-    { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
-    { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },
-    { label: 'Namespaces', value: AzureQueryType.NamespacesQuery },
-    { label: 'Regions', value: AzureQueryType.LocationsQuery },
-    { label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery },
-    { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
-    { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
-    { label: 'Resource Graph', value: AzureQueryType.AzureResourceGraph },
-    { label: 'Logs', value: AzureQueryType.LogAnalytics },
-    { label: 'Custom Namespaces', value: AzureQueryType.CustomNamespacesQuery },
-    { label: 'Custom Metric Names', value: AzureQueryType.CustomMetricNamesQuery },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.subscriptions', 'Subscriptions'),
+      value: AzureQueryType.SubscriptionsQuery,
+    },
+    {
+      label: t(
+        'azuremonitor.variable-editor.azure_query_variable_type_options.label.resource-groups',
+        'Resource Groups'
+      ),
+      value: AzureQueryType.ResourceGroupsQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.namespaces', 'Namespaces'),
+      value: AzureQueryType.NamespacesQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.regions', 'Regions'),
+      value: AzureQueryType.LocationsQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.resource-names', 'Resource Names'),
+      value: AzureQueryType.ResourceNamesQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.metric-names', 'Metric Names'),
+      value: AzureQueryType.MetricNamesQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.workspaces', 'Workspaces'),
+      value: AzureQueryType.WorkspacesQuery,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.resource-graph', 'Resource Graph'),
+      value: AzureQueryType.AzureResourceGraph,
+    },
+    {
+      label: t('azuremonitor.variable-editor.azure_query_variable_type_options.label.logs', 'Logs'),
+      value: AzureQueryType.LogAnalytics,
+    },
+    {
+      label: t(
+        'azuremonitor.variable-editor.azure_query_variable_type_options.label.custom-namespaces',
+        'Custom Namespaces'
+      ),
+      value: AzureQueryType.CustomNamespacesQuery,
+    },
+    {
+      label: t(
+        'azuremonitor.variable-editor.azure_query_variable_type_options.label.custom-metric-names',
+        'Custom Metric Names'
+      ),
+      value: AzureQueryType.CustomMetricNamesQuery,
+    },
   ];
   if (typeof props.query === 'object' && props.query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     // Add the option for the GrafanaTemplateVariableFn only if it's already in use
     AZURE_QUERY_VARIABLE_TYPE_OPTIONS.push({
-      label: 'Grafana Query Function',
+      label: t('azuremonitor.variable-editor.label.grafana-query-function', 'Grafana Query Function'),
       value: AzureQueryType.GrafanaTemplateVariableFn,
     });
   }
@@ -134,7 +176,7 @@ const VariableEditor = (props: Props) => {
       }
     });
     setVariableOptionGroup({
-      label: 'Template Variables',
+      label: t('azuremonitor.variable-editor.label.template-variables', 'Template Variables'),
       options,
     });
   }, [datasource, queryType]);

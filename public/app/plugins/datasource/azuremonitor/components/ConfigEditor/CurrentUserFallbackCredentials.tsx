@@ -37,21 +37,30 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     let opts: Array<SelectableValue<FallbackCredentialAuthTypeOptions>> = [
       {
         value: 'clientsecret',
-        label: 'App Registration',
+        label: t(
+          'azuremonitor.current-user-fallback-credentials.auth-type-options.opts.label.app-registration',
+          'App Registration'
+        ),
       },
     ];
 
     if (managedIdentityEnabled) {
       opts.push({
         value: 'msi',
-        label: 'Managed Identity',
+        label: t(
+          'azuremonitor.current-user-fallback-credentials.auth-type-options.label.managed-identity',
+          'Managed Identity'
+        ),
       });
     }
 
     if (workloadIdentityEnabled) {
       opts.push({
         value: 'workloadidentity',
-        label: 'Workload Identity',
+        label: t(
+          'azuremonitor.current-user-fallback-credentials.auth-type-options.label.workload-identity',
+          'Workload Identity'
+        ),
       });
     }
 
@@ -156,8 +165,14 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
       >
         <RadioButtonGroup
           options={[
-            { label: 'Enabled', value: true },
-            { label: 'Disabled', value: false },
+            {
+              label: t('azuremonitor.current-user-fallback-credentials.label.options-enabled', 'Enabled'),
+              value: true,
+            },
+            {
+              label: t('azuremonitor.current-user-fallback-credentials.label.options-disabled', 'Disabled'),
+              value: false,
+            },
           ]}
           value={credentials.serviceCredentialsEnabled ?? false}
           size={'md'}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export const VersionList = ({ pluginId, versions = [], installedVersion, disableInstallation }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
 
@@ -118,7 +119,9 @@ export const VersionList = ({ pluginId, versions = [], installedVersion, disable
                 {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {version.grafanaDependency || t('plugins.version-list.na', 'N/A')}
+              </td>
             </tr>
           );
         })}
