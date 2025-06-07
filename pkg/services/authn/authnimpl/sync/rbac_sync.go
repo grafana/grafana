@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"errors"
 
 	"golang.org/x/exp/maps"
 
@@ -79,19 +78,8 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	defer span.End()
 
 	permissions := make([]accesscontrol.Permission, 0, 8)
-	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
-	if len(roles) > 0 || len(actions) > 0 {
-		for _, role := range roles {
-			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
-			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
-				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
-				return nil, errSyncPermissionsForbidden
-			}
-			if roleDTO != nil {
-				permissions = append(permissions, roleDTO.Permissions...)
-			}
-		}
+	if len(actions) > 0 {
 		for _, action := range actions {
 			scopes, ok := s.permRegistry.GetScopePrefixes(action)
 			if !ok {
