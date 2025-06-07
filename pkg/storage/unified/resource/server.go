@@ -19,10 +19,20 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
+)
+
+const (
+	// DefaultMaxBackoff is the default maximum backoff duration for enqueue operations.
+	DefaultMaxBackoff = 1 * time.Second
+	// DefaultMinBackoff is the default minimum backoff duration for enqueue operations.
+	DefaultMinBackoff = 100 * time.Millisecond
+	// DefaultMaxRetries is the default maximum number of retries for enqueue operations.
+	DefaultMaxRetries = 3
 )
 
 // ResourceServer implements all gRPC services
@@ -1327,14 +1337,38 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 }
 
 func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
-	var wg sync.WaitGroup
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: DefaultMinBackoff,
+		MaxBackoff: DefaultMaxBackoff,
+		MaxRetries: DefaultMaxRetries,
+	})
+
+	var (
+		wg  sync.WaitGroup
+		err error
+	)
 	wg.Add(1)
 	wrapped := func(ctx context.Context) {
 		runnable(ctx)
 		wg.Done()
 	}
-	if queueErr := s.queue.Enqueue(ctx, tenantID, wrapped); queueErr != nil {
-		return queueErr
+	for boff.Ongoing() {
+		err = s.queue.Enqueue(ctx, tenantID, wrapped)
+		if err == nil {
+			break
+		}
+		s.log.Warn("failed to enqueue runnable, retrying",
+			"maxRetries", DefaultMaxRetries,
+			"tenantID", tenantID,
+			"error", err)
+		boff.Wait()
+	}
+	if err != nil {
+		s.log.Error("failed to enqueue runnable",
+			"maxRetries", DefaultMaxRetries,
+			"tenantID", tenantID,
+			"error", err)
+		return fmt.Errorf("failed to enqueue runnable for tenant %s: %w", tenantID, err)
 	}
 	wg.Wait()
 	return nil
