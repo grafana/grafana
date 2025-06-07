@@ -10,6 +10,7 @@ import {
   DataFrame,
   EventBus,
   EventBusSrv,
+  GrafanaTheme2,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -46,6 +47,7 @@ export interface Props {
   enableLogDetails: boolean;
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
+  fontSize?: LogListFontSize;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
@@ -82,6 +84,8 @@ export interface Props {
   wrapLogMessage: boolean;
 }
 
+export type LogListFontSize = 'default' | 'small';
+
 export type LogListControlOptions = LogListState;
 
 type LogListComponentProps = Omit<
@@ -105,6 +109,8 @@ export const LogList = ({
   enableLogDetails,
   eventBus,
   filterLevels,
+  logOptionsStorageKey,
+  fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
   getRowContextQuery,
   grammar,
@@ -113,7 +119,6 @@ export const LogList = ({
   loading,
   loadMore,
   logLineMenuCustomItems,
-  logOptionsStorageKey,
   logs,
   logsMeta,
   logSupportsContext,
@@ -148,6 +153,7 @@ export const LogList = ({
       displayedFields={displayedFields}
       enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
+      fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
@@ -211,6 +217,7 @@ const LogListComponent = ({
     displayedFields,
     dedupStrategy,
     filterLevels,
+    fontSize,
     forceEscape,
     hasLogsWithErrors,
     hasSampledLogs,
@@ -236,7 +243,7 @@ const LogListComponent = ({
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
-  const styles = getStyles(dimensions, { showTime });
+  const styles = getStyles(dimensions, { showTime }, theme);
   const widthContainer = wrapperRef.current ?? containerElement;
 
   const debouncedResetAfterIndex = useMemo(() => {
@@ -247,8 +254,8 @@ const LogListComponent = ({
   }, []);
 
   useEffect(() => {
-    initVirtualization(theme);
-  }, [theme]);
+    initVirtualization(theme, fontSize);
+  }, [fontSize, theme]);
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
@@ -299,12 +306,15 @@ const LogListComponent = ({
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
       if (height !== undefined) {
-        storeLogLineSize(id, widthContainer, height);
+        storeLogLineSize(id, widthContainer, height, fontSize);
+      }
+      if (index === overflowIndexRef.current) {
+        return;
       }
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
       debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [debouncedResetAfterIndex, widthContainer]
+    [debouncedResetAfterIndex, fontSize, widthContainer]
   );
 
   const handleScrollPosition = useCallback(() => {
@@ -367,6 +377,7 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
+                fontSize,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
@@ -400,7 +411,7 @@ const LogListComponent = ({
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
+function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }, theme: GrafanaTheme2) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
@@ -411,6 +422,8 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
     }),
     logListContainer: css({
       display: 'flex',
+      // Minimum width to prevent rendering issues and a sausage-like logs panel.
+      minWidth: theme.spacing(35),
     }),
     logListWrapper: css({
       width: '100%',
