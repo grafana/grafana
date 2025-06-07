@@ -45,7 +45,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                             | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                   | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                             | Yes                |
-| `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                   | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                               | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                              | Yes                |
 | `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                          | Yes                |
@@ -70,6 +69,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
+| `lokiSendDashboardPanelNames`          | Send dashboard and panel names to Loki when querying                                                                               | Yes                |
 | `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                             | Yes                |
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                       | Yes                |
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                               |                    |
@@ -78,7 +78,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                           | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                          | Yes                |
-| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                            |                    |
