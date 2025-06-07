@@ -246,3 +246,53 @@ func toProvider(keeperType secretv0alpha1.KeeperType, payload string) secretv0al
 		return nil
 	}
 }
+
+// extractSecureValues extracts unique securevalues referenced by the keeper, if any.
+func extractSecureValues(kp *secretv0alpha1.Keeper) map[string]struct{} {
+	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) map[string]struct{} {
+		secureValues := make(map[string]struct{}, 0)
+
+		if aws.AccessKeyID.SecureValueName != "" {
+			secureValues[aws.AccessKeyID.SecureValueName] = struct{}{}
+		}
+
+		if aws.SecretAccessKey.SecureValueName != "" {
+			secureValues[aws.SecretAccessKey.SecureValueName] = struct{}{}
+		}
+
+		return secureValues
+	}
+
+	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) map[string]struct{} {
+		if azure.ClientSecret.SecureValueName != "" {
+			return map[string]struct{}{azure.ClientSecret.SecureValueName: {}}
+		}
+
+		return nil
+	}
+
+	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) map[string]struct{} {
+		if hashicorp.Token.SecureValueName != "" {
+			return map[string]struct{}{hashicorp.Token.SecureValueName: {}}
+		}
+
+		return nil
+	}
+
+	switch {
+	case kp.Spec.AWS != nil:
+		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
+
+	case kp.Spec.Azure != nil:
+		return secureValuesFromAzure(kp.Spec.Azure.AzureCredentials)
+
+	// GCP does not reference secureValues.
+	case kp.Spec.GCP != nil:
+		return nil
+
+	case kp.Spec.HashiCorp != nil:
+		return secureValuesFromHashiCorp(kp.Spec.HashiCorp.HashiCorpCredentials)
+	}
+
+	return nil
+}
