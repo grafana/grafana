@@ -37,6 +37,7 @@ const setup = (props?: Partial<ViewProps>) => {
         exploreUrl={'/explore'}
         onDelete={jest.fn()}
         onDefaultChange={jest.fn()}
+        onDescriptionChange={jest.fn()}
         onNameChange={jest.fn()}
         onOptionsChange={jest.fn()}
         onTest={jest.fn()}

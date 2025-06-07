@@ -656,6 +656,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   uid: string;
   orgId: number;
   name: string;
+  description?: string;
   typeLogoUrl: string;
   type: string;
   typeName: string;
@@ -689,6 +690,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   uid: string;
   type: string;
   name: string;
+  description?: string;
   apiVersion?: string;
   meta: DataSourcePluginMeta;
   cachingConfig?: PluginQueryCachingConfig;

@@ -13,6 +13,7 @@ type DataSource struct {
 	UID              string                 `json:"uid"`
 	OrgId            int64                  `json:"orgId"`
 	Name             string                 `json:"name"`
+	Description      string                 `json:"description"`
 	Type             string                 `json:"type"`
 	TypeLogoUrl      string                 `json:"typeLogoUrl"`
 	Access           datasources.DsAccess   `json:"access"`
@@ -37,6 +38,7 @@ type DataSourceListItemDTO struct {
 	UID         string               `json:"uid"`
 	OrgId       int64                `json:"orgId"`
 	Name        string               `json:"name"`
+	Description string               `json:"description"`
 	Type        string               `json:"type"`
 	TypeName    string               `json:"typeName"`
 	TypeLogoUrl string               `json:"typeLogoUrl"`
