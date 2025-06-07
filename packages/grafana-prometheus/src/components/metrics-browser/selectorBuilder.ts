@@ -1,4 +1,4 @@
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../language_utils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../escaping';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
 /**
