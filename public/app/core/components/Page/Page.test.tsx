@@ -5,6 +5,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { NavModelItem, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import * as recentActionsSrv from 'app/core/services/recentActionsSrv';
 
 import { Page } from './Page';
 import { PageProps } from './types';
@@ -79,5 +80,51 @@ describe('Render', () => {
     pageNav.children![0].hideFromBreadcrumbs = true;
     setup({ navId: 'child1', pageNav });
     expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+  });
+
+  it('should call addRecentAction when a page with navModel is rendered', async () => {
+    const spy = jest.spyOn(recentActionsSrv, 'addRecentAction');
+
+    const navId = 'child1';
+    const navModel = {
+      main: pageNav,
+      node: pageNav.children![0],
+    };
+    setup({ navId, navModel });
+
+    expect(spy).toHaveBeenCalledWith({
+      id: 'child1',
+      title: 'pageNav child1',
+      url: '1',
+    });
+
+    spy.mockRestore();
+  });
+
+  it('should use navModel.node.text as title if no matching child is found', () => {
+    const spy = jest.spyOn(recentActionsSrv, 'addRecentAction');
+
+    const navId = 'notThere';
+    const navModel = {
+      main: {
+        text: 'pageNav title',
+        children: [{ text: 'Unrelated child', id: 'unrelated', url: '/some-other-url' }],
+      },
+      node: {
+        text: 'My Node Title',
+        url: '/node-url',
+        id: 'node-123',
+      },
+    };
+
+    setup({ navId, navModel });
+
+    expect(spy).toHaveBeenCalledWith({
+      id: 'node-123',
+      title: 'My Node Title',
+      url: '/node-url',
+    });
+
+    spy.mockRestore();
   });
 });

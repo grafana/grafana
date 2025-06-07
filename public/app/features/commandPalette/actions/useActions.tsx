@@ -14,6 +14,7 @@ import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
 import { getRecentDashboardActions } from './dashboardActions';
+import { getRecentGeneralActions } from './recentActions';
 import { getRecentScopesActions } from './recentScopesActions';
 import { useStaticActions } from './staticActions';
 import useExtensionActions from './useExtensionActions';
@@ -50,6 +51,20 @@ export function useRegisterRecentDashboardsActions(searchQuery: string) {
 export function useRegisterRecentScopesActions() {
   const recentScopesActions = getRecentScopesActions();
   useRegisterActions(recentScopesActions, [recentScopesActions]);
+}
+
+export function useRecentGeneralActions(searchQuery: string) {
+  const [recentGeneralActions, setRecentGeneralActions] = useState<CommandPaletteAction[]>([]);
+  useEffect(() => {
+    if (!searchQuery) {
+      getRecentGeneralActions()
+        .then(setRecentGeneralActions)
+        .catch((err) => {
+          console.error('Error loading recent general actions', err);
+        });
+    }
+  }, [searchQuery]);
+  useRegisterActions(recentGeneralActions, [recentGeneralActions]);
 }
 
 /**
