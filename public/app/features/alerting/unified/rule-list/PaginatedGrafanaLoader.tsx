@@ -1,5 +1,5 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Icon, Spinner, Stack, Text } from '@grafana/ui';
@@ -20,12 +20,33 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
-export const GRAFANA_GROUP_PAGE_SIZE = 40;
+const FRONTEND_GROUP_PAGE_SIZE = 40;
 
-export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
+interface LoaderProps {
+  groupFilter?: string;
+  namespaceFilter?: string;
+}
 
-  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+  const key = `${groupFilter}-${namespaceFilter}`;
+
+  // Key is crucial. It resets the generator when filters change.
+  return <PaginatedGroupsLoader key={key} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />;
+}
+
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+  const hasFilters = groupFilter || namespaceFilter;
+
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
+    populateCache: hasFilters ? false : true,
+    limitAlerts: 0,
+  });
+
+  // If there are no filters we can match one frontend page to one API page.
+  // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
+  const apiGroupPageSize = hasFilters ? 200 : FRONTEND_GROUP_PAGE_SIZE;
+
+  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(apiGroupPageSize)));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -34,9 +55,23 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
+  const filterFn = useCallback(
+    (group: GrafanaPromRuleGroupDTO) => {
+      if (groupFilter && !group.name.includes(groupFilter)) {
+        return false;
+      }
+      if (namespaceFilter && !group.file.includes(namespaceFilter)) {
+        return false;
+      }
+      return true;
+    },
+    [groupFilter, namespaceFilter]
+  );
+
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
-    GRAFANA_GROUP_PAGE_SIZE
+    FRONTEND_GROUP_PAGE_SIZE,
+    filterFn
   );
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);

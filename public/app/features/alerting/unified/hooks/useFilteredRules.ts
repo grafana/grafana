@@ -38,6 +38,10 @@ export function useRulesFilter() {
   }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
+  const activeFilters = useMemo(() => {
+    return chain(filterState).omitBy(isEmpty).keys().filter(isRuleFilterKey).value();
+  }, [filterState]);
+
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
       const newSearchQuery = applySearchFilterToQuery(searchQuery, newFilter);
@@ -86,7 +90,7 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
+  return { filterState, hasActiveFilters, activeFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
@@ -356,3 +360,20 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
     return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
   });
 };
+
+const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
+  'freeFormWords',
+  'namespace',
+  'groupName',
+  'ruleName',
+  'ruleState',
+  'ruleType',
+  'dataSourceNames',
+  'labels',
+  'ruleHealth',
+  'dashboardUid',
+  'plugins',
+  'contactPoint',
+]);
+
+const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groups } from '../utils/navigation';
 
@@ -20,18 +21,47 @@ import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups
 
 export const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
-interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
+interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
+  groupFilter?: string;
+  namespaceFilter?: string;
 }
 
-export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
+export function PaginatedDataSourceLoader({
+  rulesSourceIdentifier,
+  application,
+  groupFilter,
+  namespaceFilter,
+}: LoaderProps) {
+  const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
+
+  // Key is crucial. It resets the generator when filters change.
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      rulesSourceIdentifier={rulesSourceIdentifier}
+      application={application}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+    />
+  );
+}
+
+function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
   const styles = useStyles2(getStyles);
+  const hasFilters = groupFilter || namespaceFilter;
 
   const { uid, name } = rulesSourceIdentifier;
-  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({ populateCache: true });
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator({
+    populateCache: hasFilters ? false : true,
+  });
+
+  // If there are no filters we can match one frontend page to one API page.
+  // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
+  const apiGroupPageSize = hasFilters ? 200 : DATA_SOURCE_GROUP_PAGE_SIZE;
 
   const groupsGenerator = useRef(
-    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE))
+    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize))
   );
 
   useEffect(() => {
@@ -39,11 +69,25 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     return () => {
       currentGenerator.return();
     };
-  }, [groupsGenerator]);
+  }, []);
+
+  const filterFn = useCallback(
+    (group: PromRuleGroupDTO) => {
+      if (groupFilter && !group.name.includes(groupFilter)) {
+        return false;
+      }
+      if (namespaceFilter && !group.file.includes(namespaceFilter)) {
+        return false;
+      }
+      return true;
+    },
+    [groupFilter, namespaceFilter]
+  );
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
-    DATA_SOURCE_GROUP_PAGE_SIZE
+    DATA_SOURCE_GROUP_PAGE_SIZE,
+    filterFn
   );
 
   const hasNoRules = isEmpty(groups) && !isLoading;
