@@ -1518,6 +1518,10 @@
         "title": "Bekräfta import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Datakälla"
+        },
         "label": "Datakälla",
         "required-message": "Välj en datakälla"
       },

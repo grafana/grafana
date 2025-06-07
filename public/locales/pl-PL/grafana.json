@@ -1530,6 +1530,10 @@
         "title": "Potwierdź import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Źródło danych"
+        },
         "label": "Źródło danych",
         "required-message": "Wybierz źródło danych"
       },
