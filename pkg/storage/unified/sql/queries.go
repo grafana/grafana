@@ -46,6 +46,7 @@ var (
 	sqlResourceHistoryGet          = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete       = mustTemplate("resource_history_delete.sql")
 	sqlResourceHistoryPrune        = mustTemplate("resource_history_prune.sql")
+	sqlResourceTrash               = mustTemplate("resource_trash.sql")
 	sqlResourceInsertFromHistory   = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")

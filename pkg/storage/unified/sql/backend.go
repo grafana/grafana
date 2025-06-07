@@ -780,7 +780,12 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 			listReq.MinRV = latestDeletedRV + 1
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		var rows db.Rows
+		if listReq.Trash {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceTrash, listReq)
+		} else {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		}
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {
