@@ -1512,6 +1512,10 @@
         "title": "確認匯入"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "資料來源"
+        },
         "label": "資料來源",
         "required-message": "請選擇一個資料來源"
       },

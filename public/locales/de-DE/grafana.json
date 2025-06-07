@@ -1518,6 +1518,10 @@
         "title": "Import bestätigen"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Datenquelle"
+        },
         "label": "Datenquelle",
         "required-message": "Bitte wählen Sie eine Datenquelle aus"
       },

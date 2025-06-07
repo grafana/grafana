@@ -1512,6 +1512,10 @@
         "title": "确认导入"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "数据源"
+        },
         "label": "数据源",
         "required-message": "请选择数据源"
       },
