@@ -1016,7 +1016,7 @@ func TestProcessEvalResults(t *testing.T) {
 			// TODO(@moustafab): figure out why this test doesn't fail as is
 			desc:                "classic condition, execution Error as Error (alerting -> query error -> alerting)",
 			alertRule:           baseRuleWith(m.WithErrorExecAs(models.ErrorErrState)),
-			expectedAnnotations: 3,
+			expectedAnnotations: 2,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
@@ -1030,15 +1030,33 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels:             labels["system + rule"],
+					Labels:             data.Labels{"label": "test", "system": "owned"},
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.Alerting,
 					LatestResult:       newEvaluation(t3, eval.Alerting),
-					StartsAt:           t3,
+					StartsAt:           t1,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            &t3,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
-					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
+					LastSentAt:         &t1,
+					Annotations: map[string]string{
+						"annotation": "test",
+					},
+				},
+				{
+					Labels:             data.Labels{"system": "owned", "label": "test", "ref_id": "A", "datasource_uid": "datasource_uid_1"},
+					ResultFingerprint:  data.Labels{}.Fingerprint(),
+					State:              eval.Error,
+					LatestResult:       newEvaluation(t2, eval.Error),
+					StartsAt:           t2,
+					EndsAt:             t2.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t2,
+					LastSentAt:         &t2,
+					Error:              expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error")),
+					Annotations: map[string]string{
+						"Error":      "[sse.dataQueryError] failed to execute query [A]: this is an error",
+						"annotation": "test",
+					},
 				},
 			},
 		},
