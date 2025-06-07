@@ -57,7 +57,7 @@ var (
 	}
 )
 
-func TestTemplateDefaultData(t *testing.T) {
+func TestIntegrationTemplateDefaultData(t *testing.T) {
 	am := setupAMTest(t)
 
 	tests := []struct {
