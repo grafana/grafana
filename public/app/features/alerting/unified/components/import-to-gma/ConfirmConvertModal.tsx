@@ -152,7 +152,14 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
 
       const isRootFolder = isEmpty(targetFolder?.uid);
 
-      trackImportToGMASuccess({ importSource });
+      trackImportToGMASuccess({
+        importSource,
+        isRootFolder,
+        namespace,
+        ruleGroup,
+        pauseRecordingRules,
+        pauseAlertingRules,
+      });
       const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', targetFolder?.title ?? '']], {
         skipSubPath: true,
       });
