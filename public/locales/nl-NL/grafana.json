@@ -1518,6 +1518,10 @@
         "title": "Import bevestigen"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Gegevensbron"
+        },
         "label": "Gegevensbron",
         "required-message": "Selecteer een gegevensbron"
       },

@@ -1518,6 +1518,10 @@
         "title": "Confirmar importação"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Fonte de dados"
+        },
         "label": "Fonte de dados",
         "required-message": "Selecione uma fonte de dados"
       },

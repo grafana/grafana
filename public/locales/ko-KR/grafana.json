@@ -1512,6 +1512,10 @@
         "title": "가져오기 확인"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "데이터 소스"
+        },
         "label": "데이터 소스",
         "required-message": "데이터 소스를 선택하세요"
       },

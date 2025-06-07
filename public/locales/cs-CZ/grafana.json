@@ -1530,6 +1530,10 @@
         "title": "Potvrdit import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Zdroj dat"
+        },
         "label": "Zdroj dat",
         "required-message": "Vyberte zdroj dat"
       },

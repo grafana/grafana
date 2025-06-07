@@ -1518,6 +1518,10 @@
         "title": "İçe aktarmayı onayla"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Veri kaynağı"
+        },
         "label": "Veri kaynağı",
         "required-message": "Lütfen bir veri kaynağı seçin"
       },
