@@ -339,6 +339,49 @@ This transformation lets you augment your data by fetching additional informatio
   `;
     },
   },
+  fieldNameMapping: {
+    name: 'Rename fields by mapping',
+    getHelperDocs: function () {
+      return `
+Use this transformation to rename fields of all queries by using a mapping from one query.
+
+#### Dataset Example
+
+**Query: Mapping**
+
+| Letter | Name    |
+|--------|---------|
+| A      | Alpha   |
+| B      | Beta    |
+| C      | Charlie |
+| D      | Delta   |
+
+**Query: Curves**
+
+| Timestamp           | A | D |
+|---------------------|---|---|
+| 1636678740000000000 | 1 | 2 |
+| 1636678680000000000 | 5 | 6 |
+| 1636678620000000000 | 7 | 8 |
+
+With this configuration:
+
+- Series: Mapping
+- Replace: Letter
+- With: Name
+
+You'll get the following output:
+
+#### Transformed Data
+
+| Timestamp           | Alpha | Delta |
+|---------------------|-------|-------|
+| 1636678740000000000 | 1     | 2     |
+| 1636678680000000000 | 5     | 6     |
+| 1636678620000000000 | 7     | 8     |
+  `;
+    },
+  },
   filterByRefId: {
     name: 'Filter data by query refId',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {

@@ -10709,6 +10709,11 @@
       "label-field": "Field",
       "label-lookup": "Lookup"
     },
+    "field-name-mapping-transformer-editor": {
+      "label-field-to-replace": "Field to replace",
+      "label-mapping-query": "Mapping query",
+      "label-replace-with": "Replace with"
+    },
     "field-to-config-mapping-editor": {
       "additional-settings": "Additional settings",
       "field": "Field",
