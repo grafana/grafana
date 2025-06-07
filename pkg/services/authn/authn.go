@@ -76,6 +76,8 @@ type FetchPermissionsParams struct {
 	// Note: Kept for backwards compatibility, use AllowedActions instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
+	// K8s stores Kubernetes-style permissions in the format "resource:action"
+	K8s []string
 }
 
 type (

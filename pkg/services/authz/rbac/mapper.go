@@ -6,6 +6,19 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
+type Mapping interface {
+	// action returns the action for the given verb.
+	// If no action is found, it returns false.
+	Action(verb string) (string, bool)
+	// scope returns the scope for the given resource name.
+	Scope(name string) string
+	// prefix returns the scope prefix for the translation.
+	Prefix() string
+	// AllActions returns all the actions for the translation.
+	AllActions() []string
+}
+
 type translation struct {
 	resource      string
 	attribute     string
@@ -13,18 +26,42 @@ type translation struct {
 	folderSupport bool
 }
 
-func (t translation) action(verb string) (string, bool) {
+func (t translation) Action(verb string) (string, bool) {
 	action, ok := t.verbMapping[verb]
 	return action, ok
 }
 
-func (t translation) scope(name string) string {
+func (t translation) Scope(name string) string {
 	return t.resource + ":" + t.attribute + ":" + name
 }
 
-func (t translation) prefix() string {
+func (t translation) Prefix() string {
 	return t.resource + ":" + t.attribute + ":"
 }
+
+func (t translation) AllActions() []string {
+	actions := make([]string, 0, len(t.verbMapping))
+	actionsMap := make(map[string]bool)
+	for _, action := range t.verbMapping {
+		if actionsMap[action] {
+			continue
+		}
+		actionsMap[action] = true
+		actions = append(actions, action)
+	}
+	return actions
+}
+
+// MappingRegistry is a registry of mappers that maps a group and resource to a translation.
+type MappingRegistry interface {
+	// translation returns the translation for the given group and resource.
+	// If no translation is found, it returns false.
+	GetTranslation(group, resource string) (Mapping, bool)
+	// GetAll returns all the translations for the given group
+	GetAll(group string) []Mapping
+}
+
+type mapper map[string]map[string]translation
 
 func newResourceTranslation(resource string, attribute string, folderSupport bool) translation {
 	defaultMapping := func(r string) map[string]string {
@@ -50,10 +87,8 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 	}
 }
 
-type mapper map[string]map[string]translation
-
-func newMapper() mapper {
-	return map[string]map[string]translation{
+func NewMappingRegistry() MappingRegistry {
+	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
 		},
@@ -77,10 +112,12 @@ func newMapper() mapper {
 				folderSupport: false,
 			},
 		},
-	}
+	})
+
+	return mapper
 }
 
-func (m mapper) translation(group, resource string) (translation, bool) {
+func (m mapper) GetTranslation(group, resource string) (Mapping, bool) {
 	resources, ok := m[group]
 	if !ok {
 		return translation{}, false
@@ -92,4 +129,18 @@ func (m mapper) translation(group, resource string) (translation, bool) {
 	}
 
 	return t, true
+}
+
+func (m mapper) GetAll(group string) []Mapping {
+	resources, ok := m[group]
+	if !ok {
+		return nil
+	}
+
+	translations := make([]Mapping, 0, len(resources))
+	for _, t := range resources {
+		translations = append(translations, t)
+	}
+
+	return translations
 }
