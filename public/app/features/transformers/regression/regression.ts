@@ -30,6 +30,7 @@ export const DEFAULTS = { predictionCount: 100, modelType: ModelType.linear, deg
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
   name: 'Regression analysis',
+  description: 'Create a new data frame containing values predicted by a statistical model.',
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
