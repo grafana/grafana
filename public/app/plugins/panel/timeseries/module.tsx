@@ -15,6 +15,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addTimeCompareOption(builder);
 
     builder.addCustomEditor({
       id: 'timezone',
