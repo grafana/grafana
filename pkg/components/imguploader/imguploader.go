@@ -89,6 +89,7 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 		bucketName := gcssec.Key("bucket").MustString("")
 		path := gcssec.Key("path").MustString("")
 		enableSignedURLs := gcssec.Key("enable_signed_urls").MustBool(false)
+		uniformBucketLevelAccess := gcssec.Key("uniform_bucket_level_access").MustBool(false)
 		exp := gcssec.Key("signed_url_expiration").MustString("")
 		var suExp time.Duration
 		if exp != "" {
@@ -100,7 +101,7 @@ func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
 			suExp = defaultGCSSignedURLExpiration
 		}
 
-		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, suExp)
+		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, uniformBucketLevelAccess, suExp)
 	case "azure_blob":
 		azureBlobSec, err := cfg.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {
