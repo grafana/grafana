@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -13,8 +14,21 @@ type StorageMetrics struct {
 	PollerLatency     prometheus.Histogram
 }
 
+var (
+	storageMetricsInstance *StorageMetrics
+	storageMetricsMutex    sync.Mutex
+)
+
+// ProvideStorageMetrics returns the StorageMetrics instance using the singleton pattern to avoid duplicate registration
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
-	return &StorageMetrics{
+	storageMetricsMutex.Lock()
+	defer storageMetricsMutex.Unlock()
+
+	if storageMetricsInstance != nil {
+		return storageMetricsInstance
+	}
+
+	storageMetricsInstance = &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:                       "storage_server",
 			Name:                            "watch_latency_seconds",
@@ -34,4 +48,5 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
 	}
+	return storageMetricsInstance
 }
