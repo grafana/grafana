@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
 import { generateOptions } from '../Select/mockOptions';
 
 import { ValuePicker } from './ValuePicker';

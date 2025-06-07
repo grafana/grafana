@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn } from '@storybook/react';
 
-import { ComponentSize } from '../../types';
+import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
 

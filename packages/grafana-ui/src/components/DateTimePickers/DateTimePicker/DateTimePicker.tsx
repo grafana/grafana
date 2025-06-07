@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';

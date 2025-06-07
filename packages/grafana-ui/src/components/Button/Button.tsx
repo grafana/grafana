@@ -4,13 +4,14 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ComponentSize, IconSize, IconType } from '../../types';
-import { IconName } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
+import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
-import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];

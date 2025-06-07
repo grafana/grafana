@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';

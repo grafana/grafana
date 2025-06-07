@@ -1,8 +1,8 @@
-import { withTheme2 } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
-import { PopoverContentProps } from '../Tooltip';
+import { PopoverContentProps } from '../Tooltip/types';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 

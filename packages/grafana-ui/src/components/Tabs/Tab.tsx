@@ -5,10 +5,10 @@ import * as React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types';
-import { clearButtonStyles } from '../Button';
+import { IconName } from '../../types/icon';
+import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 

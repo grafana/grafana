@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { attachDebugger } from '../../utils';
+import { attachDebugger } from '../../utils/debug';
 import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';

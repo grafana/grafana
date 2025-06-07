@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import mdx from '../Toggletip/Toggletip.mdx';
 

@@ -3,7 +3,7 @@ import { memo, ChangeEvent } from 'react';
 
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/index';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';

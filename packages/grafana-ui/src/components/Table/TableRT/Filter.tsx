@@ -3,8 +3,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Popover } from '../..';
-import { useStyles2 } from '../../../themes';
+import { Popover } from '../../../components/Tooltip/Popover';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 
 import { REGEX_OPERATOR } from './FilterList';

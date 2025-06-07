@@ -15,10 +15,11 @@ import {
 
 import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
-import { PopoverContent, Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 import { Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';

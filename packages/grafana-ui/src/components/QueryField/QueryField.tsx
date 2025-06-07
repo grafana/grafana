@@ -10,16 +10,14 @@ import { Editor, EventHook, Plugin } from 'slate-react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import {
-  ClearPlugin,
-  NewlinePlugin,
-  SelectionShortcutsPlugin,
-  IndentationPlugin,
-  ClipboardPlugin,
-  RunnerPlugin,
-  SuggestionsPlugin,
-} from '../../slate-plugins';
-import { withTheme2 } from '../../themes';
+import { ClearPlugin } from '../../slate-plugins/clear';
+import { ClipboardPlugin } from '../../slate-plugins/clipboard';
+import { IndentationPlugin } from '../../slate-plugins/indentation';
+import { NewlinePlugin } from '../../slate-plugins/newline';
+import { RunnerPlugin } from '../../slate-plugins/runner';
+import { SelectionShortcutsPlugin } from '../../slate-plugins/selection_shortcuts';
+import { SuggestionsPlugin } from '../../slate-plugins/suggestions';
+import { withTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { CompletionItemGroup, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../../types/completion';
 import { Themeable2 } from '../../types/theme';

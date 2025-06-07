@@ -6,7 +6,7 @@ import { useClickAway } from 'react-use';
 
 import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
