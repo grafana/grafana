@@ -16,7 +16,8 @@ Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the
 
 ## `sqlstore` handlers
 
-> **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SQLStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
+> [!Warning]  
+>  **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SQLStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
 
 The `sqlstore` package allows you to register [command handlers](communication.md#commands-and-queries) that either store or retrieve objects from the database. The `sqlstore` handlers are similar to services:
 
@@ -89,7 +90,8 @@ Add a migration using one of the following methods:
 - Add migrations in the `migrations` package.
 - Implement the `DatabaseMigrator` for the service.
 
-> **Important:** If there are previous migrations for a service, use that method. Don't add migrations using both methods or you risk running migrations in the wrong order.
+> [!Important]
+>  If there are previous migrations for a service, use that method. Don't add migrations using both methods or you risk running migrations in the wrong order.
 
 ### Add migrations in `migrations` package
 
@@ -103,7 +105,8 @@ To add a migration:
 
 - [Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)
 
-> **Note:** We no longer recommend putting migrations behind feature flags because this could cause the migration to skip integration testing.
+> [!Note]
+>  We no longer recommend putting migrations behind feature flags because this could cause the migration to skip integration testing.
 
 ### Implement `DatabaseMigrator`
 
