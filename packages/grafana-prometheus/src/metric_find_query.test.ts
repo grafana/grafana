@@ -10,7 +10,7 @@ import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 import { escapeForUtf8Support } from './utf8_support';
 
-const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
+const fetchMock = jest.fn((_: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
   return of({} as unknown as FetchResponse);
 });
 
@@ -30,7 +30,7 @@ const instanceSettings = {
   user: 'test',
   password: 'mupp',
   jsonData: {
-    httpMethod: 'GET',
+    httpMethod: 'POST',
     prometheusVersion: '2.20.0',
     prometheusType: PromApplication.Prometheus,
   },
@@ -93,11 +93,13 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: new URLSearchParams({ start: raw.from.unix().toString(), end: raw.to.unix().toString() }),
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/labels`,
         hideFromInspector: true,
         showErrorAlert: false,
         headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
           'X-Grafana-Cache': 'private, max-age=60',
         },
       });
@@ -115,10 +117,14 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: { start: raw.from.unix().toString(), end: raw.to.unix().toString() },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values`,
         hideFromInspector: true,
-        headers: {},
+        showErrorAlert: false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -138,10 +144,14 @@ describe('PrometheusMetricFindQuery', () => {
         expect(results).toHaveLength(3);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
-          method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+          data: { start: raw.from.unix().toString(), end: raw.to.unix().toString() },
+          method: 'POST',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values`,
           hideFromInspector: true,
-          headers: {},
+          showErrorAlert: false,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         });
       });
     });
@@ -163,13 +173,14 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: { start: raw.from.unix().toString(), end: raw.to.unix().toString(), 'match[]': 'metric' },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series`,
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -189,11 +200,18 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: '/api/datasources/uid/ABCDEF/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+          'match[]': 'metric{label1="foo", label2="bar", label3="baz"}',
+        },
+        method: 'POST',
+        url: '/api/datasources/uid/ABCDEF/resources/api/v1/series',
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -215,13 +233,18 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[1].text).toBe('value2');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+          'match[]': 'metric',
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series`,
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
     // </LegacyPrometheus>
@@ -238,10 +261,17 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/__name__/values`,
         hideFromInspector: true,
-        headers: {},
+        showErrorAlert: false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -266,9 +296,15 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        headers: {},
+        data: {
+          query: 'metric',
+          time: raw.to.unix().toString(),
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
         hideFromInspector: true,
         showErrorAlert: false,
       });
@@ -297,9 +333,15 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${expectedTime}`,
-        headers: {},
+        data: {
+          time: expectedTime.toString(),
+          query: 'metric',
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
         hideFromInspector: true,
         showErrorAlert: false,
       });
@@ -320,9 +362,15 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[0].text).toBe('2');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        headers: {},
+        data: {
+          query: '1+1',
+          time: raw.to.unix().toString(),
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
         hideFromInspector: true,
         showErrorAlert: false,
       });
@@ -347,13 +395,18 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[2].text).toBe('up{instance="127.0.0.1:9102",job="job1"}');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
-          'up{job="job1"}'
-        )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+          'match[]': `up{job="job1"}`,
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series`,
         hideFromInspector: true,
         showErrorAlert: false,
-        headers: {},
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -379,12 +432,18 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match${encodeURIComponent(
-          '[]'
-        )}=${metricName}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+          'match[]': `${metricName}`,
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values`,
         hideFromInspector: true,
-        headers: {},
+        showErrorAlert: false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
 
@@ -407,10 +466,18 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results).toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match%5B%5D=${metricName}%7B${label1Name}%3D%22${label1Value}%22%7D&start=1524650400&end=1524654000`,
+        data: {
+          start: raw.from.unix().toString(),
+          end: raw.to.unix().toString(),
+          'match[]': `${metricName}{${label1Name}="${label1Value}"}`,
+        },
+        method: 'POST',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values`,
         hideFromInspector: true,
-        headers: {},
+        showErrorAlert: false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       });
     });
     // </ ModernPrometheus>
@@ -423,10 +490,18 @@ describe('PrometheusMetricFindQuery', () => {
         metricFindQuery.process(raw);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
-          method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          data: {
+            start: raw.from.unix().toString(),
+            end: raw.to.unix().toString(),
+            'match[]': `${metricName}`,
+          },
+          method: 'POST',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values`,
           hideFromInspector: true,
-          headers: {},
+          showErrorAlert: false,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         });
       });
 
@@ -438,10 +513,18 @@ describe('PrometheusMetricFindQuery', () => {
         metricFindQuery.process(raw);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
-          method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${label}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          data: {
+            start: raw.from.unix().toString(),
+            end: raw.to.unix().toString(),
+            'match[]': `${metricName}`,
+          },
+          method: 'POST',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${label}/values`,
           hideFromInspector: true,
-          headers: {},
+          showErrorAlert: false,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         });
       });
 
@@ -453,10 +536,18 @@ describe('PrometheusMetricFindQuery', () => {
         metricFindQuery.process(raw);
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith({
-          method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          data: {
+            start: raw.from.unix().toString(),
+            end: raw.to.unix().toString(),
+            'match[]': `${metricName}`,
+          },
+          method: 'POST',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values`,
           hideFromInspector: true,
-          headers: {},
+          showErrorAlert: false,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         });
       });
     });
