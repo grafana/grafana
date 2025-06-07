@@ -32,7 +32,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
 		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-		newNamespaceAuthorizer(),
+		//newNamespaceAuthorizer(),
 	}
 
 	// Individual services may have explicit implementations
@@ -41,7 +41,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 
 	// org role is last -- and will return allow for verbs that match expectations
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, newRoleAuthorizer())
+	//authorizers = append(authorizers, newRoleAuthorizer())
 	return &GrafanaAuthorizer{
 		apis: apis,
 		auth: union.New(authorizers...),

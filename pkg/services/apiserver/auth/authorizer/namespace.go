@@ -45,13 +45,13 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	if ns.OrgID != ident.GetOrgID() {
-		return authorizer.DecisionDeny, "invalid org", nil
-	}
+	//if ns.OrgID != ident.GetOrgID() {
+	//	return authorizer.DecisionDeny, "invalid org", nil
+	//}
 
-	if !types.NamespaceMatches(ident.GetNamespace(), a.GetNamespace()) {
-		return authorizer.DecisionDeny, "invalid namespace", nil
-	}
+	//if !types.NamespaceMatches(ident.GetNamespace(), a.GetNamespace()) {
+	//	return authorizer.DecisionDeny, "invalid namespace", nil
+	//}
 
 	return authorizer.DecisionNoOpinion, "", nil
 }
