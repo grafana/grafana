@@ -147,6 +147,9 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
+	case http.MethodPost + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+
 	// Alert Instances and Silences
 
 	// Silences for Grafana paths.

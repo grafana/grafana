@@ -31,6 +31,7 @@ type ConvertPrometheusApi interface {
 	RouteConvertPrometheusGetNamespace(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRules(*contextmodel.ReqContext) response.Response
+	RouteConvertPrometheusPostAlertmanagerConfig(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroups(*contextmodel.ReqContext) response.Response
 }
@@ -92,6 +93,9 @@ func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusGetRuleGroup(ctx *co
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusGetRules(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteConvertPrometheusGetRules(ctx)
+}
+func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteConvertPrometheusPostAlertmanagerConfig(ctx)
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -245,6 +249,18 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 				http.MethodGet,
 				"/api/convert/prometheus/config/v1/rules",
 				api.Hooks.Wrap(srv.RouteConvertPrometheusGetRules),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/convert/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/convert/api/v1/alerts"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/convert/api/v1/alerts",
+				api.Hooks.Wrap(srv.RouteConvertPrometheusPostAlertmanagerConfig),
 				m,
 			),
 		)
