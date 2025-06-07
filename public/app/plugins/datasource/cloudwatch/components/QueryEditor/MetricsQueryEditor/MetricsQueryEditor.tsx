@@ -4,6 +4,7 @@ import * as React from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/plugin-ui';
 import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_METRICS_QUERY } from '../../../defaultQueries';
@@ -43,6 +44,10 @@ export const MetricsQueryEditor = (props: Props) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [codeEditorIsDirty, setCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
+
+  const applicationId = query.namespace === 'AWS/EMRServerless' 
+    ? getTemplateSrv().replace('$ApplicationId', {}) 
+    : undefined;
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: MetricEditorMode) => {
@@ -135,6 +140,7 @@ export const MetricsQueryEditor = (props: Props) => {
               {...props}
               refId={query.refId}
               metricStat={query}
+              applicationId={applicationId}
               onChange={(metricStat: MetricStat) => {
                 if (!codeEditorIsDirty) {
                   setCodeEditorIsDirty(true);
