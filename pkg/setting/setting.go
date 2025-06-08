@@ -555,6 +555,7 @@ type Cfg struct {
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexRebuildInterval                       time.Duration
 	EnableSharding                             bool
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string

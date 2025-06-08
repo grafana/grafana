@@ -121,6 +121,9 @@ type searchSupport struct {
 
 	// testing
 	clientIndexEventsChan chan *IndexEvent
+
+	// periodic rebuilding of the indexes to keep usage insights up to date
+	rebuildInterval time.Duration
 }
 
 var (
@@ -153,6 +156,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
 		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
+		rebuildInterval:       opts.RebuildInterval,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -428,6 +432,12 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	go s.monitorIndexEvents(ctx)
 
+	// since usage insights is not in unified storage, we need to periodically rebuild the index
+	// to make sure these data points are up to date.
+	if s.rebuildInterval > 0 {
+		go s.startPeriodicRebuild(watchctx)
+	}
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	if s.indexMetrics != nil {
@@ -506,6 +516,76 @@ func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
 			s.clientIndexEventsChan <- evt
 		}
 	}
+}
+
+func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
+	ticker := time.NewTicker(s.rebuildInterval)
+	defer ticker.Stop()
+
+	s.log.Info("starting periodic index rebuild", "interval", s.rebuildInterval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			s.log.Info("stopping periodic index rebuild due to context cancellation")
+			return
+		case <-ticker.C:
+			s.log.Info("starting periodic index rebuild")
+			if err := s.rebuildAllIndexes(ctx); err != nil {
+				s.log.Error("error during periodic index rebuild", "error", err)
+			} else {
+				s.log.Info("periodic index rebuild completed successfully")
+			}
+		}
+	}
+}
+
+func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildAllIndexes")
+	defer span.End()
+
+	start := time.Now()
+	s.log.Info("rebuilding all search indexes")
+
+	// the cache has to be cleared in order to retrieve the latest usage insights data
+	if s.builders != nil {
+		s.builders.clearNamespacedCache()
+	}
+
+	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
+	if err != nil {
+		return fmt.Errorf("failed to get resource stats for rebuild: %w", err)
+	}
+
+	group := errgroup.Group{}
+	group.SetLimit(s.initWorkers)
+	rebuildCount := 0
+	for _, info := range stats {
+		rebuildCount++
+		group.Go(func() error {
+			s.log.Debug("rebuilding search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
+			return err
+		})
+	}
+
+	err = group.Wait()
+	if err != nil {
+		return fmt.Errorf("failed to rebuild indexes: %w", err)
+	}
+
+	end := time.Now()
+	duration := end.Sub(start)
+	s.log.Info("completed rebuilding all search indexes",
+		"duration", duration,
+		"rebuilt_indexes", rebuildCount,
+		"total_docs", s.search.TotalDocs())
+
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(duration.Seconds())
+	}
+
+	return nil
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
@@ -769,4 +849,10 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
 	s.indexQueueProcessors[key] = indexQueueProcessor
 	return indexQueueProcessor, nil
+}
+
+func (s *builderCache) clearNamespacedCache() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ns.Purge()
 }
