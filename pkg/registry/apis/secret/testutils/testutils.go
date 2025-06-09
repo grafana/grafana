@@ -127,7 +127,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperService = setupCfg.keeperService
 	}
 
-	secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+	secretService := service.ProvideSecureValueService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
 
 	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
 
