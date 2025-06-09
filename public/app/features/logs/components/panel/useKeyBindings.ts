@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 
 import { mousetrap } from 'app/core/services/mousetrap';
 
-import { useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 
 export const useKeyBindings = () => {
-  const { hideSearch, searchVisible, showSearch } = useLogListContext();
+  const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
   useEffect(() => {
     mousetrap.bind(

@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
-import { useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const LogListSearch = ({ listRef, logs, width }: Props) => {
-  const { searchVisible, hideSearch } = useLogListContext();
+  const { hideSearch, setSearch: setContextSearch, searchVisible } = useLogListSearchContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const styles = useStyles2(getStyles);
@@ -70,6 +70,10 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
     }
   }, [searchVisible]);
 
+  useEffect(() => {
+    setContextSearch(search ? search : undefined);
+  }, [search, setContextSearch]);
+
   if (!searchVisible) {
     return null;
   }
@@ -77,7 +81,7 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
   const suffix = search !== '' ? <>{`${currentResult ? currentResult + 1 : 0}/${matches?.length ?? 0}`}</> : undefined;
 
   return (
-    <div className={styles.container} style={{ width }}>
+    <div className={styles.container} style={{ width: width - 24 }}>
       <div style={{ width: Math.round(width / 2) }}>
         <Input
           value={search}
@@ -106,14 +110,15 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    background: tinycolor(theme.colors.background.primary).setAlpha(0.8).toRgbString(),
+    background: tinycolor(theme.colors.background.canvas).setAlpha(0.8).toRgbString(),
     display: 'flex',
     gap: theme.spacing(1),
-    padding: theme.spacing(0.5),
+    padding: theme.spacing(1),
     position: 'absolute',
-    top: theme.spacing(0.5),
-    left: theme.spacing(1.25),
+    top: 0,
+    left: theme.spacing(1),
     zIndex: theme.zIndex.modal,
+    overflow: 'hidden',
   }),
 });
 

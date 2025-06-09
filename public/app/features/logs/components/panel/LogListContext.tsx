@@ -41,9 +41,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   hasUnescapedContent?: boolean;
-  hideSearch: () => void;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
-  searchVisible?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
@@ -58,7 +56,6 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
-  showSearch: () => void;
   toggleDetails: (log: LogListModel) => void;
 }
 
@@ -74,7 +71,6 @@ export const LogListContext = createContext<LogListContextData>({
   filterLevels: [],
   fontSize: 'default',
   hasUnescapedContent: false,
-  hideSearch: () => {},
   setDedupStrategy: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
@@ -89,7 +85,6 @@ export const LogListContext = createContext<LogListContextData>({
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
   showDetails: [],
-  showSearch: () => {},
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
@@ -233,7 +228,6 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
-  const [searchVisible, setSearchVisible] = useState(false);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -471,14 +465,6 @@ export const LogListContextProvider = ({
     [containerElement, logOptionsStorageKey]
   );
 
-  const showSearch = useCallback(() => {
-    setSearchVisible(true);
-  }, []);
-
-  const hideSearch = useCallback(() => {
-    setSearchVisible(false);
-  }, []);
-
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
 
@@ -499,7 +485,6 @@ export const LogListContextProvider = ({
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent: logListState.hasUnescapedContent,
-        hideSearch,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
@@ -519,7 +504,6 @@ export const LogListContextProvider = ({
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
-        searchVisible,
         setDedupStrategy,
         setDetailsWidth,
         setFilterLevels,
@@ -534,7 +518,6 @@ export const LogListContextProvider = ({
         setSyntaxHighlighting,
         setWrapLogMessage,
         showDetails,
-        showSearch,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
