@@ -115,6 +115,7 @@ export function validateSecretName(value: string): true | string {
 }
 
 export function validateSecretDescription(value: string): true | string {
+  console.log('validateSecretDescription', value);
   if (value.length < 1) {
     return t('secrets.form.description.error.required', 'Description is required');
   }
@@ -241,7 +242,7 @@ export function transformSecretLabel(nameOrValue: string): string {
  * @param {Object} errors - Error map
  */
 export function isFieldInvalid(fieldName: string, errors: Record<string, { message?: string } | undefined>) {
-  return fieldName in errors;
+  return fieldName in errors ? true : undefined;
 }
 
 export function getErrorMessage(error: any) {

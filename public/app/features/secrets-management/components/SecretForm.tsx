@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { MutationActionCreatorResult, MutationDefinition } from '@reduxjs/toolkit/query';
-import { ChangeEvent, FormEvent, useState, useEffect } from 'react';
+import { ChangeEvent, FormEvent, useState, useEffect, useId } from 'react';
 import { Controller, FieldPath, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/';
@@ -23,7 +23,7 @@ import {
 
 import { SecretValueInput } from './SecretValueInput';
 
-interface BaseSecretFormProps {
+export interface SecretFormProps {
   onCancel: () => void;
   initialValues?: SecretFormValues;
   onSubmit: (data: SecretFormValues) => MutationActionCreatorResult<MutationDefinition<Secret, any, any, any>>;
@@ -39,7 +39,7 @@ export function SecretForm({
   submitText,
   disableNameField = false,
   externalErrors,
-}: BaseSecretFormProps) {
+}: SecretFormProps) {
   // Duplicates are not shown.
   const decrypters = [...DECRYPT_ALLOW_LIST_OPTIONS, ...(initialValues?.decrypters ?? [])];
   const isNew = initialValues?.uid === undefined;
@@ -57,6 +57,7 @@ export function SecretForm({
     trigger,
     setError,
   } = useForm<SecretFormValues>({
+    mode: 'onChange',
     defaultValues: initialValues,
   });
 
@@ -90,6 +91,12 @@ export function SecretForm({
 
   const maxLabelsReached = getValues('labels')?.length >= SECRETS_MAX_LABELS;
 
+  // field ids
+  const nameId = useId();
+  const descriptionId = useId();
+  const valueId = useId();
+  const decryptersId = useId();
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <input type="hidden" {...register('uid')} />
@@ -100,12 +107,14 @@ export function SecretForm({
         invalid={isFieldInvalid('name', errors)}
         error={errors?.name?.message as string}
         required
+        htmlFor={nameId}
       >
         <Input
           {...register('name', {
             validate: validateSecretName,
           })}
           onChange={handleNameOnChange}
+          id={nameId}
         />
       </Field>
       <Field
@@ -114,11 +123,13 @@ export function SecretForm({
         invalid={isFieldInvalid('description', errors)}
         error={errors?.description?.message as string}
         required
+        htmlFor={descriptionId}
       >
         <Input
           {...register('description', {
             validate: validateSecretDescription,
           })}
+          id={descriptionId}
         />
       </Field>
       <Field
@@ -127,6 +138,7 @@ export function SecretForm({
         invalid={isFieldInvalid('value', errors)}
         error={errors?.value?.message as string}
         required
+        htmlFor={valueId}
       >
         <SecretValueInput
           isConfigured={isConfigured}
@@ -134,11 +146,13 @@ export function SecretForm({
           {...register('value', {
             validate: validateSecretValue,
           })}
+          id={valueId}
         />
       </Field>
       <Field
         description={t('secrets.form.decrypters.description', 'Services able to decrypt secret value')}
         label={t('secrets.form.decrypters.label', 'Decrypters')}
+        htmlFor={decryptersId}
       >
         <Controller
           control={control}
@@ -148,6 +162,7 @@ export function SecretForm({
               placeholder={t('secrets.form.decrypters.placeholder', 'Choose decrypter(s)')}
               options={decrypters}
               {...field}
+              inputId={decryptersId}
             />
           )}
         />

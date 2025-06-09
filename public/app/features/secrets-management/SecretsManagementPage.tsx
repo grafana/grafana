@@ -7,7 +7,7 @@ import { Box, Button, EmptyState, FilterInput, InlineField, TextLink, useStyles2
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
 
-import { useDeleteSecretMutation, useListSecretsQuery } from './api/secretsManagementApi';
+import { useDeleteSecretMutation, useListSecretsQuery } from './api';
 import { EditSecretModal } from './components/EditSecretModal';
 import { SecretsList } from './components/SecretsList';
 import { SecretStatusPhase } from './types';
