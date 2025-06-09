@@ -3062,31 +3062,31 @@
   },
   "PrometheusRule": {
    "properties": {
-    "Alert": {
+    "alert": {
      "type": "string"
     },
-    "Annotations": {
+    "annotations": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Expr": {
+    "expr": {
      "type": "string"
     },
-    "For": {
+    "for": {
      "type": "string"
     },
-    "KeepFiringFor": {
+    "keep_firing_for": {
      "type": "string"
     },
-    "Labels": {
+    "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Record": {
+    "record": {
      "type": "string"
     }
    },
@@ -3094,26 +3094,26 @@
   },
   "PrometheusRuleGroup": {
    "properties": {
-    "Interval": {
+    "interval": {
      "$ref": "#/definitions/Duration"
     },
-    "Labels": {
+    "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Limit": {
+    "limit": {
      "format": "int64",
      "type": "integer"
     },
-    "Name": {
+    "name": {
      "type": "string"
     },
-    "QueryOffset": {
+    "query_offset": {
      "type": "string"
     },
-    "Rules": {
+    "rules": {
      "items": {
       "$ref": "#/definitions/PrometheusRule"
      },
@@ -4932,6 +4932,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -5218,6 +5219,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
