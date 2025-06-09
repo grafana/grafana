@@ -132,6 +132,28 @@ describe('ScopesSelectorService', () => {
       await service.changeScopes(['test-scope']);
       expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }]);
     });
+
+    it('should skip update if setting same scopes as are already applied', async () => {
+      const subscribeFn = jest.fn();
+      const sub = service.subscribeToState(subscribeFn);
+
+      await service.changeScopes(['test-scope', 'recent-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      await service.changeScopes(['test-scope', 'recent-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      // Should not be called again
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      // Order should not matter
+      await service.changeScopes(['recent-scope', 'test-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      // Should not be called again
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      sub.unsubscribe();
+    });
   });
 
   describe('open', () => {
