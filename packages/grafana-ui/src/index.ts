@@ -301,8 +301,6 @@ export { TextArea } from './components/TextArea/TextArea';
 export { FileUpload } from './components/FileUpload/FileUpload';
 export {
   FileDropzone,
-  getMimeTypeByExtension,
-  transformAcceptToNewFormat,
   FileDropzoneDefaultChildren,
   type FileDropzoneProps,
   type DropzoneFile,
@@ -395,13 +393,13 @@ export type { ValidationRule, ValidationEvents } from './types/input';
 export type {
   SearchFunction,
   CompletionItemGroup,
-  CompletionItemKind,
   HighlightPart,
   CompletionItem,
   TypeaheadOutput,
   TypeaheadInput,
   SuggestionsState,
 } from './types/completion';
+export { CompletionItemKind } from './types/completion';
 export type { FormsOnSubmit, FormFieldErrors, FormAPI, FieldArrayApi } from './types/forms';
 export type { IconName, IconType, IconSize } from './types/icon';
 export { toIconName, isIconSize, getAvailableIcons, getFieldTypeIcon, getFieldTypeIconName } from './types/icon';
