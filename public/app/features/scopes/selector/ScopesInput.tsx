@@ -114,9 +114,9 @@ function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
 
   const scopeNames = appliedScopes.map((s) => {
     if (s.scopeNodeId) {
-      return nodes[s.scopeNodeId].spec.title;
+      return nodes[s.scopeNodeId]?.spec.title || s.scopeNodeId;
     } else {
-      return scopes[s.scopeId].spec.title;
+      return scopes[s.scopeId]?.spec.title || s.scopeId;
     }
   });
 
