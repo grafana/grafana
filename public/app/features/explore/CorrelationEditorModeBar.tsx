@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useBeforeUnload, useUnmount } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
@@ -113,6 +114,8 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
       dispatch(runQueries({ exploreId: pane[0] }));
     });
   });
+
+  const { t } = useTranslate();
 
   const resetEditor = () => {
     dispatch(
@@ -230,7 +233,12 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
       )}
       <div className={styles.correlationEditorTop}>
         <Stack gap={2} justifyContent="flex-end" alignItems="center">
-          <Tooltip content="Correlations editor in Explore is an experimental feature.">
+          <Tooltip
+            content={t(
+              'explore.correlation-editor-mode-bar.content-correlations-editor-explore-experimental-feature',
+              'Correlations editor in Explore is an experimental feature.'
+            )}
+          >
             <Icon className={styles.iconColor} name="info-circle" size="xl" />
           </Tooltip>
           <Button
@@ -242,7 +250,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               saveCorrelationPostAction(true);
             }}
           >
-            Save
+            <Trans i18nKey="explore.correlation-editor-mode-bar.save">Save</Trans>
           </Button>
           <Button
             variant="secondary"
@@ -254,7 +262,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               reportInteraction('grafana_explore_correlation_editor_exit_pressed');
             }}
           >
-            Exit correlation editor
+            <Trans i18nKey="explore.correlation-editor-mode-bar.exit-correlation-editor">Exit correlation editor</Trans>
           </Button>
         </Stack>
       </div>

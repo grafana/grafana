@@ -156,8 +156,8 @@ describe('MultiCombobox', () => {
     await user.type(input, 'D');
     await user.keyboard('{arrowdown}{enter}');
     expect(onChange).toHaveBeenCalledWith([
-      { value: 'a' },
-      { value: 'c' },
+      { label: 'A', value: 'a' },
+      { label: 'C', value: 'c' },
       { label: 'D', value: 'D', description: 'Use custom value' },
     ]);
   });
@@ -234,6 +234,19 @@ describe('MultiCombobox', () => {
       await user.click(input);
       await user.click(await screen.findByRole('option', { name: 'All' }));
       expect(onChange).toHaveBeenCalledWith([]);
+    });
+
+    it('should keep label names on selected items when searching', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'b');
+      expect(screen.getByText('A')).toBeInTheDocument();
     });
   });
 
@@ -335,7 +348,7 @@ describe('MultiCombobox', () => {
       jest.advanceTimersByTime(1500); // Resolve the first request, should be ignored
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('option', { name: 'third' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
 
       jest.clearAllTimers();
     });

@@ -16,14 +16,14 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import { PureComponent } from 'react';
 
-import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';
-import { TraceSpan, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -76,7 +76,6 @@ export type SpanDetailRowProps = {
   columnDivision: number;
   detailState: DetailState;
   onDetailToggled: (spanID: string) => void;
-  linksGetter: (span: TraceSpan, links: TraceKeyValuePair[], index: number) => TraceLink[];
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -99,20 +98,18 @@ export type SpanDetailRowProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   visibleSpanIds: string[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
+  timeRange: TimeRange;
+  app: CoreApp;
 };
 
 export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
   _detailToggle = () => {
     this.props.onDetailToggled(this.props.span.spanID);
-  };
-
-  _linksGetter = (items: TraceKeyValuePair[], itemIndex: number) => {
-    const { linksGetter, span } = this.props;
-    return linksGetter(span, items, itemIndex);
   };
 
   render() {
@@ -142,10 +139,13 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       focusedSpanId,
       createFocusSpanLink,
       datasourceType,
+      datasourceUid,
       visibleSpanIds,
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
+      timeRange,
+      app,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -171,7 +171,6 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
           <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
             <SpanDetail
               detailState={detailState}
-              linksGetter={this._linksGetter}
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
               processToggle={processToggle}
@@ -190,9 +189,12 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
               datasourceType={datasourceType}
+              datasourceUid={datasourceUid}
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}
+              timeRange={timeRange}
+              app={app}
             />
           </div>
         </TimelineRow.Cell>

@@ -39,9 +39,6 @@ const desertBloomTheme: NewThemeOptions = {
     info: {
       main: '#1A82E2',
     },
-    error: {
-      main: '#FF6B6B',
-    },
     success: {
       main: '#4CAF50',
     },
@@ -52,6 +49,7 @@ const desertBloomTheme: NewThemeOptions = {
       canvas: '#FFF8F0',
       primary: '#FFFFFF',
       secondary: '#f9f3e8',
+      elevated: '#FFFFFF',
     },
     action: {
       hover: 'rgba(168, 156, 134, 0.12)',
@@ -63,9 +61,10 @@ const desertBloomTheme: NewThemeOptions = {
       disabledBackground: 'rgba(168, 156, 134, 0.06)',
       disabledOpacity: 0.38,
     },
+
     gradients: {
-      brandHorizontal: 'linear-gradient(270deg, #FF6F61 0%, #ece0d1 100%)',
-      brandVertical: 'linear-gradient(0.01deg, #FF6F61 0.01%, #ece0d1 99.99%)',
+      brandHorizontal: 'linear-gradient(270deg,rgba(255, 111, 97, 1) 0%, rgba(255, 167, 58, 1) 100%)',
+      brandVertical: 'linear-gradient(0deg, rgba(255, 111, 97, 1) 0%, rgba(255, 167, 58, 1) 100%)',
     },
     contrastThreshold: 3,
     hoverFactor: 0.03,

@@ -144,10 +144,124 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
           "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`RuleEditor grafana managed rules can restore grafana managed alert when isManualRestore is passed as query param 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "instant": true,
+                  "queryType": "alerting",
+                  "range": false,
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": true,
+                "simplified_query_and_expressions_section": false,
+              },
+            },
+            "missing_series_evals_to_resolve": 0,
+            "no_data_state": "NoData",
+            "title": "Grafana-rule",
+          },
+          "keep_firing_for": "0",
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
         },
       ],
     },

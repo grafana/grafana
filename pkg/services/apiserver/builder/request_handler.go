@@ -23,47 +23,48 @@ func GetCustomRoutesHandler(delegateHandler http.Handler, restConfig *restclient
 			continue
 		}
 
-		routes := provider.GetAPIRoutes()
-		if routes == nil {
-			continue
-		}
-
-		gv := builder.GetGroupVersion()
-		prefix := "/apis/" + gv.String()
-
-		// Root handlers
-		var sub *mux.Router
-		for _, route := range routes.Root {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+		for _, gv := range GetGroupVersions(builder) {
+			routes := provider.GetAPIRoutes(gv)
+			if routes == nil {
+				continue
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
-			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
-		}
+			prefix := "/apis/" + gv.String()
 
-		// Namespace handlers
-		sub = nil
-		prefix += "/namespaces/{namespace}"
-		for _, route := range routes.Namespace {
-			if sub == nil {
-				sub = router.PathPrefix(prefix).Subrouter()
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+			// Root handlers
+			var sub *mux.Router
+			for _, route := range routes.Root {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
 
-			useful = true
-			methods, err := methodsFromSpec(route.Path, route.Spec)
-			if err != nil {
-				return nil, err
+			// Namespace handlers
+			sub = nil
+			prefix += "/namespaces/{namespace}"
+			for _, route := range routes.Namespace {
+				if sub == nil {
+					sub = router.PathPrefix(prefix).Subrouter()
+					sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
+				}
+
+				useful = true
+				methods, err := methodsFromSpec(route.Path, route.Spec)
+				if err != nil {
+					return nil, err
+				}
+				sub.HandleFunc("/"+route.Path, route.Handler).
+					Methods(methods...)
 			}
-			sub.HandleFunc("/"+route.Path, route.Handler).
-				Methods(methods...)
 		}
 	}
 

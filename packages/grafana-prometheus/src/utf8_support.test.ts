@@ -124,4 +124,31 @@ describe('wrapUtf8Filters', () => {
     const expected = 'key1="nested \\"escaped\\" quotes",key2="value with \\"escaped\\" quotes"';
     expect(result).toEqual(expected);
   });
+
+  it('should handle different Prometheus operators correctly', () => {
+    const inputs = [
+      'label="value"', // equals
+      'label!="different value"', // not equals
+      'label=~"regex.*value"', // regex match
+      'label!~"not.regex.*value"', // regex not match
+      'utf8.label.spaß!="no match"', // utf8 with not equals
+      'utf8.label.spaß=~"match.*"', // utf8 with regex match
+      'complex case=~".*",simple="value"', // multiple operators
+    ];
+
+    const expected = [
+      'label="value"',
+      'label!="different value"',
+      'label=~"regex.*value"',
+      'label!~"not.regex.*value"',
+      '"utf8.label.spaß"!="no match"',
+      '"utf8.label.spaß"=~"match.*"',
+      '"complex case"=~".*",simple="value"',
+    ];
+
+    inputs.forEach((input, index) => {
+      const result = wrapUtf8Filters(input);
+      expect(result).toEqual(expected[index]);
+    });
+  });
 });

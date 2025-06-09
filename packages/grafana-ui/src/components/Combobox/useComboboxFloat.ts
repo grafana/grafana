@@ -1,4 +1,4 @@
-import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
 import { measureText } from '../../utils';
@@ -18,6 +18,8 @@ const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
 
+const SCROLL_CONTAINER_PADDING = 8;
+
 export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
@@ -31,10 +33,11 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
 
   // the order of middleware is important!
   const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: true,
+    autoPlacement({
+      // see https://floating-ui.com/docs/autoplacement
+      allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
       boundary: document.body,
+      crossAxis: true,
     }),
     size({
       apply({ availableWidth, availableHeight }) {
@@ -69,7 +72,7 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
+    return size + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {

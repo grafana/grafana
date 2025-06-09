@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { IconButton } from '@grafana/ui/';
-import { t } from 'app/core/internationalization';
+import { useTranslate } from '@grafana/i18n';
+import { Dropdown, Field, Icon, IconButton, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
@@ -17,6 +16,8 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
 const RecipientMenu = ({ onDelete, onReshare }: { onDelete: () => void; onReshare: () => void }) => {
+  const { t } = useTranslate();
+
   return (
     <Menu>
       <Menu.Item label={t('public-dashboard.email-sharing.resend-invite-label', 'Resend invite')} onClick={onReshare} />
@@ -42,6 +43,7 @@ const EmailList = ({
 
   const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteRecipientMutation();
   const [reshareAccess, { isLoading: isReshareLoading }] = useReshareAccessToRecipientMutation();
+  const { t } = useTranslate();
 
   const isLoading = isDeleteLoading || isReshareLoading;
 
@@ -78,7 +80,12 @@ const EmailList = ({
                   />
                 }
               >
-                <IconButton name="ellipsis-v" aria-label="email-menu" variant="secondary" size="lg" />
+                <IconButton
+                  name="ellipsis-v"
+                  aria-label={t('dashboard-scene.email-list.aria-label-emailmenu', 'Toggle email menu')}
+                  variant="secondary"
+                  size="lg"
+                />
               </Dropdown>
             </td>
           </tr>
@@ -93,6 +100,7 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
+  const { t } = useTranslate();
   return (
     <Field
       label={t('public-dashboard.email-sharing.recipient-list-title', 'People with access')}

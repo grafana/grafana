@@ -242,7 +242,7 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			cmd.PublicDashboard.Share,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
-			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
+			cmd.PublicDashboard.UpdatedAt.UTC(),
 			cmd.PublicDashboard.Uid)
 
 		if err != nil {

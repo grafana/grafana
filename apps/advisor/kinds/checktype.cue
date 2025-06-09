@@ -7,7 +7,7 @@ checktype: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: false
+				frontend: true
 				backend:  true
 			}
 			schema: {
@@ -15,6 +15,7 @@ checktype: {
 					title:			string
 					description:	string
 					stepID:			string
+					resolution:		string
 				}	
 				spec: {
 					name: 	string

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -26,11 +27,12 @@ const GrafanaReceiverExportPreview = ({
     decrypt: decrypt,
     format: exportFormat,
   });
+  const { t } = useTranslate();
 
   const downloadFileName = `cp-${receiverName}-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-receiver-export-preview.text-loading', 'Loading....')} />;
   }
 
   return (

@@ -25,12 +25,3 @@ class LayoutMockWorker {
 jest.mock('../../app/plugins/panel/nodeGraph/createLayoutWorker', () => ({
   createWorker: () => new LayoutMockWorker(),
 }));
-
-class BasicMockWorker {
-  postMessage() {}
-}
-const mockCreateWorker = {
-  createWorker: () => new BasicMockWorker(),
-};
-
-jest.mock('../../app/features/live/centrifuge/createCentrifugeServiceWorker', () => mockCreateWorker);

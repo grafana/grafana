@@ -1,8 +1,6 @@
-import * as React from 'react';
-
+import { useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Icon, ModalsController } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { OnRowOptionsUpdate } from './RowOptionsForm';
 import { RowOptionsModal } from './RowOptionsModal';
@@ -12,14 +10,11 @@ export interface RowOptionsButtonProps {
   repeat?: string;
   parent: SceneObject;
   onUpdate: OnRowOptionsUpdate;
-  warning?: React.ReactNode;
+  isUsingDashboardDS: boolean;
 }
 
-export const RowOptionsButton = ({ repeat, title, parent, onUpdate, warning }: RowOptionsButtonProps) => {
-  const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
-    onUpdate(title, repeat);
-    hideModal();
-  };
+export const RowOptionsButton = ({ repeat, title, parent, onUpdate, isUsingDashboardDS }: RowOptionsButtonProps) => {
+  const { t } = useTranslate();
 
   return (
     <ModalsController>
@@ -35,8 +30,11 @@ export const RowOptionsButton = ({ repeat, title, parent, onUpdate, warning }: R
                 repeat,
                 parent,
                 onDismiss: hideModal,
-                onUpdate: onUpdateChange(hideModal),
-                warning,
+                onUpdate: (title: string, repeat?: string | null) => {
+                  onUpdate(title, repeat);
+                  hideModal();
+                },
+                isUsingDashboardDS,
               });
             }}
           >

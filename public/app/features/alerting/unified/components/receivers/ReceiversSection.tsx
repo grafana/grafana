@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
@@ -33,8 +34,17 @@ export const ReceiversSection = ({
   const styles = useStyles2(getStyles);
   const showMore = showExport;
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
-
-  const newMenu = <Menu>{showExport && <MenuItem onClick={toggleShowExportDrawer} label="Export all" />}</Menu>;
+  const { t } = useTranslate();
+  const newMenu = (
+    <Menu>
+      {showExport && (
+        <MenuItem
+          onClick={toggleShowExportDrawer}
+          label={t('alerting.receivers-section.new-menu.label-export-all', 'Export all')}
+        />
+      )}
+    </Menu>
+  );
 
   return (
     <Stack direction="column" gap={2}>
@@ -54,7 +64,7 @@ export const ReceiversSection = ({
           {showMore && (
             <Dropdown overlay={newMenu}>
               <Button variant="secondary">
-                More
+                <Trans i18nKey="alerting.receivers-section.button-more">More</Trans>
                 <Icon name="angle-down" />
               </Button>
             </Dropdown>

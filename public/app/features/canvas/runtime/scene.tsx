@@ -6,7 +6,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';
 
 import { AppEvents, PanelData } from '@grafana/data';
-import { locationService } from '@grafana/runtime/src';
+import { locationService } from '@grafana/runtime';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -96,6 +96,8 @@ export class Scene {
   tooltip?: CanvasTooltipPayload;
 
   moveableActionCallback?: (moved: boolean) => void;
+
+  actionConfirmationCallback?: () => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;

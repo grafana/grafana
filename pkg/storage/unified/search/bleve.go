@@ -5,24 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -55,10 +63,11 @@ type bleveBackend struct {
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 
-	features featuremgmt.FeatureToggles
+	features     featuremgmt.FeatureToggles
+	indexMetrics *resource.BleveIndexMetrics
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -70,14 +79,19 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
-	return &bleveBackend{
-		log:      slog.Default().With("logger", "bleve-backend"),
-		tracer:   tracer,
-		cache:    make(map[resource.NamespacedResource]*bleveIndex),
-		opts:     opts,
-		start:    time.Now(),
-		features: features,
-	}, nil
+	bleveBackend := &bleveBackend{
+		log:          slog.Default().With("logger", "bleve-backend"),
+		tracer:       tracer,
+		cache:        make(map[resource.NamespacedResource]*bleveIndex),
+		opts:         opts,
+		start:        time.Now(),
+		features:     features,
+		indexMetrics: indexMetrics,
+	}
+
+	go bleveBackend.updateIndexSizeMetric(opts.Root)
+
+	return bleveBackend, nil
 }
 
 // This will return nil if the key does not exist
@@ -90,6 +104,39 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 		return idx, nil
 	}
 	return nil, nil
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
+	if b.indexMetrics == nil {
+		return
+	}
+
+	for {
+		var totalSize int64
+
+		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				fileInfo, err := info.Info()
+				if err != nil {
+					return err
+				}
+				totalSize += fileInfo.Size()
+			}
+			return nil
+		})
+
+		if err == nil {
+			b.indexMetrics.IndexSize.Set(float64(totalSize))
+		} else {
+			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
+		}
+
+		time.Sleep(60 * time.Second)
+	}
 }
 
 // Build an index from scratch
@@ -116,7 +163,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var index bleve.Index
 
 	build := true
-	mapper := getBleveMappings(fields)
+	mapper, err := GetBleveMappings(fields)
+	if err != nil {
+		return nil, err
+	}
 
 	if size > b.opts.FileThreshold {
 		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
@@ -127,6 +177,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			fname = b.start.Format("tmp-20060102-150405")
 		}
 		dir := filepath.Join(resourceDir, fname)
+		if !isValidPath(dir, b.opts.Root) {
+			b.log.Error("Directory is not valid", "directory", dir)
+		}
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -159,10 +212,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if index != nil && err == nil {
 			go b.cleanOldIndexes(resourceDir, fname)
 		}
-		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
+		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -170,14 +227,12 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	// Batch all the changes
 	idx := &bleveIndex{
-		key:       key,
-		index:     index,
-		batch:     index.NewBatch(),
-		batchSize: b.opts.BatchSize,
-		fields:    fields,
-		standard:  resource.StandardSearchFields(),
-		features:  b.features,
-		tracing:   b.tracer,
+		key:      key,
+		index:    index,
+		fields:   fields,
+		standard: resource.StandardSearchFields(),
+		features: b.features,
+		tracing:  b.tracer,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -187,12 +242,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	if build {
 		_, err = builder(idx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Flush the batch
-		err = idx.Flush()
 		if err != nil {
 			return nil, err
 		}
@@ -213,14 +262,32 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
 	for _, file := range files {
 		if file.IsDir() && file.Name() != skip {
 			fpath := filepath.Join(dir, file.Name())
+			if !isValidPath(dir, b.opts.Root) {
+				b.log.Error("Path is not valid", "directory", fpath, "error", err)
+			}
 			err = os.RemoveAll(fpath)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
 			} else {
-				b.log.Error("Removed old index folder", "directory", fpath)
+				b.log.Info("Removed old index folder", "directory", fpath)
 			}
 		}
 	}
+}
+
+// isValidPath does a sanity check in case it tries to access a different dir
+func isValidPath(path, safeDir string) bool {
+	if path == "" || safeDir == "" {
+		return false
+	}
+	cleanPath := filepath.Clean(path)
+	cleanSafeDir := filepath.Clean(safeDir)
+
+	rel, err := filepath.Rel(cleanSafeDir, cleanPath)
+	if err != nil {
+		return false
+	}
+	return !strings.HasPrefix(rel, "..") && !strings.Contains(rel, "\\")
 }
 
 // TotalDocs returns the total number of documents across all indices
@@ -244,78 +311,78 @@ type bleveIndex struct {
 	fields   resource.SearchableDocumentFields
 
 	// The values returned with all
-	allFields []*resource.ResourceTableColumnDefinition
-
-	// only valid in single thread
-	batch     *bleve.Batch
-	batchSize int // ??? not totally sure the units here
-
-	features featuremgmt.FeatureToggles
-	tracing  trace.Tracer
+	allFields []*resourcepb.ResourceTableColumnDefinition
+	features  featuremgmt.FeatureToggles
+	tracing   trace.Tracer
 }
 
-// Write implements resource.DocumentIndex.
-func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
-	// remove references (for now!)
-	v.References = nil
-	if b.batch != nil {
-		err := b.batch.Index(v.Key.SearchID(), v)
-		if err != nil {
-			return err
+// BulkIndex implements resource.ResourceIndex.
+func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
+	if len(req.Items) == 0 {
+		return nil
+	}
+
+	batch := b.index.NewBatch()
+	for _, item := range req.Items {
+		switch item.Action {
+		case resource.ActionIndex:
+			if item.Doc == nil {
+				return fmt.Errorf("missing document")
+			}
+			doc := item.Doc.UpdateCopyFields()
+			doc.References = nil // remove references (for now!)
+
+			err := batch.Index(resource.SearchID(doc.Key), doc)
+			if err != nil {
+				return err
+			}
+		case resource.ActionDelete:
+			batch.Delete(resource.SearchID(item.Key))
 		}
-		if b.batch.Size() > b.batchSize {
-			err = b.index.Batch(b.batch)
-			b.batch.Reset() // clear the batch
-		}
-		return err // nil
 	}
-	return b.index.Index(v.Key.SearchID(), v)
+
+	return b.index.Batch(batch)
 }
 
-// Delete implements resource.DocumentIndex.
-func (b *bleveIndex) Delete(key *resource.ResourceKey) error {
-	if b.batch != nil {
-		return fmt.Errorf("unexpected delete while building batch")
-	}
-	return b.index.Delete(key.SearchID())
-}
-
-// Flush implements resource.DocumentIndex.
-func (b *bleveIndex) Flush() (err error) {
-	if b.batch != nil {
-		err = b.index.Batch(b.batch)
-		b.batch.Reset()
-		b.batch = nil
-	}
-	return err
-}
-
-func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
-	if req.Name == "" {
-		return &resource.ListRepositoryObjectsResponse{
-			Error: resource.NewBadRequestError("empty repository name"),
+	if req.Kind == "" {
+		return &resourcepb.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager kind"),
+		}, nil
+	}
+	if req.Id == "" {
+		return &resourcepb.ListManagedObjectsResponse{
+			Error: resource.NewBadRequestError("empty manager id"),
 		}, nil
 	}
 
+	q := bleve.NewBooleanQuery()
+	q.AddMust(&query.TermQuery{
+		Term:     req.Kind,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_KIND,
+	})
+	q.AddMust(&query.TermQuery{
+		Term:     req.Id,
+		FieldVal: resource.SEARCH_FIELD_MANAGER_ID,
+	})
+
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: &query.TermQuery{
-			Term:     req.Name,
-			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
-		},
+		Query: q,
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_REPOSITORY_NAME,
-			resource.SEARCH_FIELD_REPOSITORY_PATH,
-			resource.SEARCH_FIELD_REPOSITORY_HASH,
-			resource.SEARCH_FIELD_REPOSITORY_TIME,
+			resource.SEARCH_FIELD_MANAGER_KIND,
+			resource.SEARCH_FIELD_MANAGER_ID,
+			resource.SEARCH_FIELD_SOURCE_PATH,
+			resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+			resource.SEARCH_FIELD_SOURCE_TIME,
 		},
 		Sort: search.SortOrder{
 			&search.SortField{
-				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Field: resource.SEARCH_FIELD_SOURCE_PATH,
 				Type:  search.SortFieldAsString,
 				Desc:  false,
 			},
@@ -346,6 +413,10 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		if ok {
 			return intV
 		}
+		floatV, ok := v.(float64)
+		if ok {
+			return int64(floatV)
+		}
 		str, ok := v.(string)
 		if ok {
 			t, _ := time.Parse(time.RFC3339, str)
@@ -354,17 +425,17 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		return 0
 	}
 
-	rsp := &resource.ListRepositoryObjectsResponse{}
+	rsp := &resourcepb.ListManagedObjectsResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.ListRepositoryObjectsResponse_Item{
-			Object: &resource.ResourceKey{},
-			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
-			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
-			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+		item := &resourcepb.ListManagedObjectsResponse_Item{
+			Object: &resourcepb.ResourceKey{},
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_SOURCE_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_SOURCE_TIME]),
 			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
 			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
-		err := item.Object.ReadSearchID(hit.ID)
+		err := resource.ReadSearchID(item.Object, hit.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -373,27 +444,32 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_ResourceCount, error) {
+func (b *bleveIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
-			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	vals := make([]*resource.CountRepositoryObjectsResponse_ResourceCount, 0)
+	vals := make([]*resourcepb.CountManagedObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
-			vals = append(vals, &resource.CountRepositoryObjectsResponse_ResourceCount{
-				Repository: v.Term,
-				Group:      b.key.Group,
-				Resource:   b.key.Resource,
-				Count:      int64(v.Count),
-			})
+			val := v.Term
+			idx := strings.Index(val, ":")
+			if idx > 0 {
+				vals = append(vals, &resourcepb.CountManagedObjectsResponse_ResourceCount{
+					Kind:     val[0:idx],
+					Id:       val[idx+1:],
+					Group:    b.key.Group,
+					Resource: b.key.Resource,
+					Count:    int64(v.Count),
+				})
+			}
 		}
 	}
 	return vals, nil
@@ -403,19 +479,19 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 func (b *bleveIndex) Search(
 	ctx context.Context,
 	access authlib.AccessClient,
-	req *resource.ResourceSearchRequest,
+	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
-) (*resource.ResourceSearchResponse, error) {
+) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"Search")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key == nil {
-		return &resource.ResourceSearchResponse{
+		return &resourcepb.ResourceSearchResponse{
 			Error: resource.NewBadRequestError("missing query key"),
 		}, nil
 	}
 
-	response := &resource.ResourceSearchResponse{
+	response := &resourcepb.ResourceSearchResponse{
 		Error: b.verifyKey(req.Options.Key),
 	}
 	if response.Error != nil {
@@ -441,7 +517,16 @@ func (b *bleveIndex) Search(
 		if err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = f
+		if len(f) > 0 {
+			searchrequest.Fields = f
+		} else {
+			searchrequest.Fields = []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+				resource.SEARCH_FIELD_MANAGED_BY,
+			}
+		}
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -462,7 +547,7 @@ func (b *bleveIndex) Search(
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
 		if response.Facet == nil {
-			response.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
+			response.Facet = make(map[string]*resourcepb.ResourceSearchResponse_Facet)
 		}
 		response.Facet[k] = f
 	}
@@ -494,7 +579,7 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string) (int64, error)
 }
 
 // make sure the request key matches the index
-func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult {
+func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	if key.Namespace != b.key.Namespace {
 		return resource.NewBadRequestError("namespace mismatch (expected " + b.key.Namespace + ")")
 	}
@@ -509,7 +594,7 @@ func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult 
 
 func (b *bleveIndex) getIndex(
 	ctx context.Context,
-	req *resource.ResourceSearchRequest,
+	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
 	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
@@ -538,7 +623,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"toBleveSearchRequest")
 	defer span.End()
 
@@ -551,15 +636,24 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
-			f = "fields." + f
+			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
 	}
 
+	size, err := safeInt64ToInt(req.Limit)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+	offset, err := safeInt64ToInt(req.Offset)
+	if err != nil {
+		return nil, resource.AsErrorResult(err)
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    int(req.Limit),
-		From:    int(req.Offset),
+		Size:    size,
+		From:    offset,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -586,15 +680,35 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		}
 	}
 
-	// Add a text query
-	if req.Query != "" && req.Query != "*" {
+	if len(req.Query) > 1 && strings.Contains(req.Query, "*") {
+		// wildcard query is expensive - should be used with caution
+		wildcard := bleve.NewWildcardQuery(req.Query)
+		queries = append(queries, wildcard)
+	}
+
+	if req.Query != "" && !strings.Contains(req.Query, "*") {
+		// Add a text query
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		// mimic the behavior of the sql search
-		query := strings.ToLower(req.Query)
-		if !strings.Contains(query, "*") {
-			query = "*" + query + "*"
-		}
-		queries = append(queries, bleve.NewWildcardQuery(query))
+
+		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
+
+		// Query 1: Match the exact query string
+		queryExact := bleve.NewMatchQuery(req.Query)
+		queryExact.SetBoost(10.0)
+		queryExact.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+
+		// Query 2: Phrase query with standard analyzer
+		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
+		queryExact.SetBoost(5.0)
+		queryPhrase.Analyzer = standard.Name
+
+		// Query 3: Match query with standard analyzer
+		queryAnalyzed := bleve.NewMatchQuery(req.Query)
+		queryAnalyzed.Analyzer = standard.Name
+
+		// At least one of the queries must match
+		searchQuery := bleve.NewDisjunctionQuery(queryExact, queryAnalyzed, queryPhrase)
+		queries = append(queries, searchQuery)
 	}
 
 	switch len(queries) {
@@ -611,11 +725,16 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
+		verb := utils.VerbList
+		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+			verb = utils.VerbPatch
+		}
+
 		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
-			Verb:      utils.VerbList,
+			Verb:      verb,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
@@ -652,17 +771,31 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	sorting := getSortFields(req)
 	searchrequest.SortBy(sorting)
 
-	// Always sort by *something*, otherwise the order is unstable
+	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
 	if len(sorting) == 0 {
-		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
-			Desc: false,
-		})
+		if req.Query != "" && req.Query != "*" {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
+				Desc: true,
+			})
+		} else {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
+				Desc:  false,
+			})
+		}
 	}
 
 	return searchrequest, nil
 }
 
-func getSortFields(req *resource.ResourceSearchRequest) []string {
+func safeInt64ToInt(i64 int64) (int, error) {
+	if i64 > math.MaxInt32 || i64 < math.MinInt32 {
+		return 0, fmt.Errorf("int64 value %d overflows int", i64)
+	}
+	return int(i64), nil
+}
+
+func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 	sorting := []string{}
 	for _, sort := range req.SortBy {
 		input := sort.Field
@@ -671,7 +804,7 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 		}
 
 		if slices.Contains(DashboardFields(), input) {
-			input = "fields." + input
+			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
 		if sort.Desc {
@@ -689,24 +822,27 @@ var textSortFields = map[string]string{
 
 const lowerCase = "phrase"
 
+// termField fields to use termQuery for filtering
+var termFields = []string{
+	resource.SEARCH_FIELD_TITLE,
+}
+
 // Convert a "requirement" into a bleve query
-func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
+func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	switch selection.Operator(req.Operator) {
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
 
-		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
-			return q, nil
+		if len(req.Values) == 1 {
+			filter := filterValue(req.Key, req.Values[0])
+			return newQuery(req.Key, filter, prefix), nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			conjuncts = append(conjuncts, q)
 		}
 
@@ -722,15 +858,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(filterValue(req.Key, v))
-			q.FieldVal = prefix + req.Key
+			q := newQuery(req.Key, filterValue(req.Key, v), prefix)
 			disjuncts = append(disjuncts, q)
 		}
 
@@ -741,12 +875,13 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
+			q := newQuery(req.Key, filterValue(req.Key, value), prefix)
+			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
 		// must still have a value
-		notEmptyQuery := bleve.NewWildcardQuery("*")
+		notEmptyQuery := bleve.NewMatchAllQuery()
 		boolQuery.AddMust(notEmptyQuery)
 
 		return boolQuery, nil
@@ -754,6 +889,55 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// newQuery will create a query that will match the value or the tokens of the value
+func newQuery(key string, value string, prefix string) query.Query {
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		// wildcard query is expensive - should be used with caution
+		return bleve.NewWildcardQuery(value)
+	}
+	delimiter, ok := hasTerms(value)
+	if slices.Contains(termFields, key) && ok {
+		return newTermsQuery(key, value, delimiter, prefix)
+	}
+	q := bleve.NewMatchQuery(value)
+	q.SetField(prefix + key)
+	return q
+}
+
+// newTermsQuery will create a query that will match on term or tokens
+func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
+	tokens := strings.Split(value, delimiter)
+	// won't match with ending space
+	value = strings.TrimSuffix(value, " ")
+
+	q := bleve.NewTermQuery(value)
+	q.SetField(prefix + key)
+
+	cq := newMatchAllTokensQuery(tokens, key, prefix)
+	return bleve.NewDisjunctionQuery(q, cq)
+}
+
+// newMatchAllTokensQuery will create a query that will match on all tokens
+func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
+	cq := bleve.NewConjunctionQuery()
+	for _, token := range tokens {
+		_, ok := hasTerms(token)
+		if ok {
+			tq := bleve.NewTermQuery(token)
+			tq.SetField(prefix + key)
+			cq.AddQuery(tq)
+			continue
+		}
+		mq := bleve.NewMatchQuery(token)
+		mq.SetField(prefix + key)
+		cq.AddQuery(mq)
+	}
+	return cq
 }
 
 // filterValue will convert the value to lower case if the field is a phrase field
@@ -764,11 +948,11 @@ func filterValue(field string, v string) string {
 	return v
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
 	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
 	defer span.End()
 
-	fields := []*resource.ResourceTableColumnDefinition{}
+	fields := []*resourcepb.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
 		if name == "_all" {
 			fields = b.allFields
@@ -782,9 +966,9 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 		if f == nil {
 			// Labels as a string
 			if strings.HasPrefix(name, "labels.") {
-				f = &resource.ResourceTableColumnDefinition{
+				f = &resourcepb.ResourceTableColumnDefinition{
 					Name: name,
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				}
 			}
 
@@ -805,18 +989,18 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 	encoders := builder.Encoders()
 
-	table := &resource.ResourceTable{
+	table := &resourcepb.ResourceTable{
 		Columns: fields,
-		Rows:    make([]*resource.ResourceTableRow, hits.Len()),
+		Rows:    make([]*resourcepb.ResourceTableRow, hits.Len()),
 	}
 	for rowID, match := range hits {
-		row := &resource.ResourceTableRow{
-			Key:   &resource.ResourceKey{},
+		row := &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{},
 			Cells: make([][]byte, len(fields)),
 		}
 		table.Rows[rowID] = row
 
-		err := row.Key.ReadSearchID(match.ID)
+		err := resource.ReadSearchID(row.Key, match.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -834,6 +1018,15 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				if match.Expl != nil {
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
+			case resource.SEARCH_FIELD_LEGACY_ID:
+				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+				if v != nil {
+					str, ok := v.(string)
+					if ok {
+						id, _ := strconv.ParseInt(str, 10, 64)
+						row.Cells[i], err = encoders[i](id)
+					}
+				}
 			default:
 				fieldName := f.Name
 				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
@@ -841,7 +1034,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				v := match.Fields[fieldName]
 				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
 				if v == nil {
-					v = match.Fields["fields."+fieldName]
+					v = match.Fields[resource.SEARCH_FIELD_PREFIX+fieldName]
 				}
 				if v != nil {
 					// Encode the value to protobuf
@@ -857,14 +1050,16 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	return table, nil
 }
 
-func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resource.ResourceTableColumnDefinition, error) {
-	fields := []*resource.ResourceTableColumnDefinition{
+func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
+	fields := []*resourcepb.ResourceTableColumnDefinition{
 		standard.Field(resource.SEARCH_FIELD_ID),
 		standard.Field(resource.SEARCH_FIELD_TITLE),
 		standard.Field(resource.SEARCH_FIELD_TAGS),
 		standard.Field(resource.SEARCH_FIELD_FOLDER),
 		standard.Field(resource.SEARCH_FIELD_RV),
 		standard.Field(resource.SEARCH_FIELD_CREATED),
+		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
+		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
 	}
 
 	if custom != nil {
@@ -884,15 +1079,15 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 	return fields, nil
 }
 
-func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Facet {
-	f := &resource.ResourceSearchResponse_Facet{
+func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_Facet {
+	f := &resourcepb.ResourceSearchResponse_Facet{
 		Field:   v.Field,
 		Total:   int64(v.Total),
 		Missing: int64(v.Missing),
 	}
 	if v.Terms != nil {
 		for _, t := range v.Terms.Terms() {
-			f.Terms = append(f.Terms, &resource.ResourceSearchResponse_TermFacet{
+			f.Terms = append(f.Terms, &resourcepb.ResourceSearchResponse_TermFacet{
 				Term:  t.Term,
 				Count: int64(t.Count),
 			})
@@ -959,7 +1154,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			q.log.Debug("No resource checker found", "resource", resource)
 			return false
 		}
-		allowed := q.checkers[resource](ns, name, folder)
+		allowed := q.checkers[resource](name, folder)
 		if !allowed {
 			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}
@@ -967,4 +1162,21 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	})
 
 	return filteringSearcher, nil
+}
+
+// hasTerms - any value that will be split into multiple tokens
+var hasTerms = func(v string) (string, bool) {
+	for _, c := range TermCharacters {
+		if strings.Contains(v, c) {
+			return c, true
+		}
+	}
+	return "", false
+}
+
+// TermCharacters characters that will be used to determine if a value is split into tokens
+var TermCharacters = []string{
+	" ", "-", "_", ".", ",", ":", ";", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+",
+	"=", "{", "}", "[", "]", "|", "\\", "/", "<", ">", "~", "`",
+	"'", "\"",
 }

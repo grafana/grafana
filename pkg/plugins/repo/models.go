@@ -35,7 +35,8 @@ type ArchMeta struct {
 
 // PluginInfo is (a subset of) the JSON response from grafana.com/api/plugins/$pluginID
 type PluginInfo struct {
-	ID     int    `json:"id"`
-	Status string `json:"status"`
-	Slug   string `json:"slug"`
+	ID      int    `json:"id"`
+	Status  string `json:"status"`
+	Slug    string `json:"slug"`
+	Version string `json:"version"`
 }

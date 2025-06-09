@@ -1,4 +1,4 @@
-import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
+import { Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -11,11 +11,12 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
+  Field,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
-  findVizPanelByKey,
+  findOriginalVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
@@ -78,6 +79,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
+        debounceTime(50),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query),
@@ -104,12 +106,25 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         },
       }));
     } else {
-      return [...data.series, ...annotations];
+      const series = data.series.map((s) => {
+        return {
+          ...s,
+          fields: s.fields.map((field: Field) => ({
+            ...field,
+            state: {
+              ...field.state,
+            },
+          })),
+        };
+      });
+
+      return [...series, ...annotations];
     }
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
-    return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
+    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
   private emitFirstLoadedDataIfMixedDS(

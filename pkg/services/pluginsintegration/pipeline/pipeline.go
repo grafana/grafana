@@ -27,7 +27,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr
 		FindFunc: pf.Find,
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{
-				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel, plugins.TypeSecretsManager,
+				plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel,
 			}),
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return NewDuplicatePluginIDFilterStep(pr).Filter(ctx, b)
@@ -44,7 +44,7 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr
 
 func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
-		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
+		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, a),
 		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }

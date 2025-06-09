@@ -246,6 +246,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
 | [JSON View](#json-view)                   | Shows values formatted as code.                                                                                                                                                                                                                                                                                                               |
 | [Image](#image)                           | If the field value is an image URL or a base64 encoded image, the table displays the image.                                                                                                                                                                                                                                                   |
+| [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked.                                                                                                                                                                                                                                                      |
 
 ##### Sparkline
 
@@ -333,6 +334,23 @@ Set the following options:
 - **Alt text** - Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
 - **Title text** - Set the text that's displayed when the image is hovered over with a cursor.
 
+##### Actions
+
+The cell displays a button that triggers a basic, unauthenticated API call when clicked.
+Configure the API call with the following options:
+
+<!-- prettier-ignore-start -->
+| Option  | Description  |
+| ------- | ------------ |
+| Endpoint | Enter the endpoint URL. |
+| Method | Choose from **GET**, **POST**, and **PUT**. |
+| Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| Query parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Header parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Payload | Enter the body of the API call. |
+
+<!-- prettier-ignore-end -->
+
 #### Wrap text
 
 {{< admonition type="note" >}}
@@ -362,9 +380,9 @@ If you want to apply this setting to only some fields instead of all fields, you
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-3.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 

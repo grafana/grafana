@@ -4,8 +4,14 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
-import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
+import {
+  getMinMaxAndDelta,
+  DataFrame,
+  formattedValueToString,
+  getFieldColorModeForField,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
@@ -24,6 +30,7 @@ export interface MarkersLegendProps {
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
+  const { t } = useTranslate();
   const { layerName, styleConfig, layer } = props;
   const style = useStyles2(getStyles);
 
@@ -61,7 +68,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
           <SanitizedSVG
             src={`public/${symbol}`}
             className={style.legendSymbol}
-            title={'Symbol'}
+            title={t('geomap.markers-legend.title-symbol', 'Symbol')}
             style={{ fill: color, opacity: opacity }}
           />
         </div>

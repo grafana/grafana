@@ -28,6 +28,7 @@ const synthwaveTheme: NewThemeOptions = {
       canvas: '#1A1A2E',
       primary: '#16213E',
       secondary: '#0F3460',
+      elevated: '#0F3460',
     },
     action: {
       hover: 'rgba(255, 20, 147, 0.16)',

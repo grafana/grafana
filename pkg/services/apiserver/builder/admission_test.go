@@ -207,8 +207,8 @@ type mockBuilder struct {
 	validator    builder.APIGroupValidation
 }
 
-func (m *mockBuilder) GetGroupVersion() schema.GroupVersion {
-	return m.groupVersion
+func (m *mockBuilder) GetGroupVersions() []schema.GroupVersion {
+	return []schema.GroupVersion{m.groupVersion}
 }
 
 func (m *mockBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
 
+import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../../types';
 
 import { LokiQueryBuilderOptions, Props } from './LokiQueryBuilderOptions';
@@ -122,33 +123,11 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for metric query', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m', resolution: 2 });
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
-    expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
     expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
-  });
-
-  it('does not show resolution field if resolution is not set', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]' });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does not show resolution field if resolution is set to default value 1', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-  });
-
-  it('does shows resolution field with warning if resolution is set to non-default value', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 2 });
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    expect(screen.getByText('Resolution')).toBeInTheDocument();
-    expect(
-      screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
-    ).toBeInTheDocument();
   });
 
   it.each(['abc', 10])('shows correct options for metric query with invalid step', async (step: string | number) => {
@@ -297,6 +276,9 @@ describe('LokiQueryBuilderOptions', () => {
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), propOverrides: Partial<Props> = {}) {
+  const datasource = createLokiDatasource();
+  datasource.maxLines = 20;
+
   const props = {
     query: {
       refId: 'A',
@@ -305,7 +287,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}, onChange = jest.fn(), pr
     },
     onRunQuery: jest.fn(),
     onChange,
-    maxLines: 20,
+    datasource,
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
     ...propOverrides,
   };

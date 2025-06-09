@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
@@ -44,11 +45,11 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
               grafana_version: config.buildInfo.version,
               datasource_uid: dataSource.uid,
               plugin_name: dataSource.typeName,
-              path: location.pathname,
+              path: window.location.pathname,
             });
           }}
         >
-          Build a dashboard
+          <Trans i18nKey="datasources.data-sources-list-card.build-a-dashboard">Build a dashboard</Trans>
         </LinkButton>
 
         {/* Explore */}
@@ -64,11 +65,11 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
                 grafana_version: config.buildInfo.version,
                 datasource_uid: dataSource.uid,
                 plugin_name: dataSource.typeName,
-                path: location.pathname,
+                path: window.location.pathname,
               });
             }}
           >
-            Explore
+            <Trans i18nKey="datasources.data-sources-list-card.explore">Explore</Trans>
           </LinkButton>
         )}
       </Card.Tags>

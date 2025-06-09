@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
@@ -69,7 +70,7 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 			},
 		},
 	}
-	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	assert.Equal(t, http.StatusAccepted, status)
 	require.Len(t, resp.Created, 1)
 	return rules, resp.Created[0]
@@ -87,7 +88,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -97,11 +98,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -508,7 +504,34 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	t.Run("when provisioning alert rules", func(t *testing.T) {
 		url := fmt.Sprintf("http://%s/api/v1/provisioning/alert-rules", grafanaListedAddr)
-		body := `{"orgID":1,"folderUID":"default","ruleGroup":"Test Group","title":"Provisioned","condition":"A","data":[{"refId":"A","queryType":"","relativeTimeRange":{"from":600,"to":0},"datasourceUid":"f558c85f-66ad-4fd1-b31d-7979e6c93db4","model":{"editorMode":"code","exemplar":false,"expr":"sum(rate(low_card[5m])) \u003e 0","format":"time_series","instant":true,"intervalMs":1000,"legendFormat":"__auto","maxDataPoints":43200,"range":false,"refId":"A"}}],"noDataState":"NoData","execErrState":"Error","for":"0s"}`
+		body := `
+		{
+			"orgID":1,
+			"folderUID":"default",
+			"ruleGroup":"Test Group",
+			"title":"Provisioned",
+			"condition":"A",
+			"data":[{
+					"refId":"A",
+					"queryType":"",
+					"relativeTimeRange":{"from":600,"to":0},
+					"datasourceUid":"f558c85f-66ad-4fd1-b31d-7979e6c93db4",
+					"model":{
+						"editorMode":"code",
+						"exemplar":false,
+						"expr":"sum(rate(low_card[5m])) \u003e 0",
+						"format":"time_series",
+						"instant":true,
+						"intervalMs":1000,
+						"legendFormat":"__auto",
+						"maxDataPoints":43200,
+						"range":false,"refId":"A"
+					}
+			}],
+			"noDataState":"NoData",
+			"execErrState":"Error",
+			"for":"0s"
+		}`
 		req := createTestRequest("POST", url, "admin", body)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
@@ -535,7 +558,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 }
 
-func TestMuteTimings(t *testing.T) {
+func TestIntegrationProvisioningRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -545,11 +570,151 @@ func TestMuteTimings(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "viewer",
+		Login:          "viewer",
 	})
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
+	// Create the namespace we'll save our alerts to.
+	namespaceUID := "default"
+	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
+
+	t.Run("when provisioning alert rules", func(t *testing.T) {
+		originalRuleGroup := definitions.AlertRuleGroup{
+			Title:     "TestGroup",
+			Interval:  60,
+			FolderUID: "default",
+			Rules: []definitions.ProvisionedAlertRule{
+				{
+					UID:          "rule1",
+					Title:        "Rule1",
+					OrgID:        1,
+					RuleGroup:    "TestGroup",
+					Condition:    "A",
+					NoDataState:  definitions.Alerting,
+					ExecErrState: definitions.AlertingErrState,
+					For:          model.Duration(time.Duration(60) * time.Second),
+					Data: []definitions.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: definitions.RelativeTimeRange{
+								From: definitions.Duration(time.Duration(5) * time.Hour),
+								To:   definitions.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
+						},
+					},
+				},
+				{
+					UID:          "rule2",
+					Title:        "Rule2",
+					OrgID:        1,
+					RuleGroup:    "TestGroup",
+					Condition:    "A",
+					NoDataState:  definitions.Alerting,
+					ExecErrState: definitions.AlertingErrState,
+					For:          model.Duration(time.Duration(60) * time.Second),
+					Data: []definitions.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: definitions.RelativeTimeRange{
+								From: definitions.Duration(time.Duration(5) * time.Hour),
+								To:   definitions.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
+						},
+					},
+				},
+				{
+					UID:          "rule3",
+					Title:        "Rule3",
+					OrgID:        1,
+					RuleGroup:    "TestGroup",
+					Condition:    "A",
+					NoDataState:  definitions.Alerting,
+					ExecErrState: definitions.AlertingErrState,
+					For:          model.Duration(time.Duration(60) * time.Second),
+					Data: []definitions.AlertQuery{
+						{
+							RefID: "A",
+							RelativeTimeRange: definitions.RelativeTimeRange{
+								From: definitions.Duration(time.Duration(5) * time.Hour),
+								To:   definitions.Duration(time.Duration(3) * time.Hour),
+							},
+							DatasourceUID: expr.DatasourceUID,
+							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
+						},
+					},
+					MissingSeriesEvalsToResolve: util.Pointer(3),
+				},
+			},
+		}
+
+		result, status, raw := apiClient.CreateOrUpdateRuleGroupProvisioning(t, originalRuleGroup)
+
+		t.Run("should create a new rule group with UIDs specified", func(t *testing.T) {
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Equal(t, originalRuleGroup, result)
+
+			require.Len(t, result.Rules, 3)
+			for _, rule := range result.Rules {
+				require.NotEmpty(t, rule.UID)
+				if rule.UID == "rule3" {
+					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+				}
+			}
+		})
+
+		t.Run("should remove a rule when updating group with a rule removed", func(t *testing.T) {
+			existingRuleGroup, status, raw := apiClient.GetRuleGroupProvisioning(t, "default", "TestGroup")
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Len(t, existingRuleGroup.Rules, 3)
+
+			updatedRuleGroup := existingRuleGroup
+			updatedRuleGroup.Rules = updatedRuleGroup.Rules[:2]
+			result, status, raw := apiClient.CreateOrUpdateRuleGroupProvisioning(t, updatedRuleGroup)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Equal(t, updatedRuleGroup, result)
+
+			// Check that the rule was removed
+			rules, status, raw := apiClient.GetRuleGroupProvisioning(t, existingRuleGroup.FolderUID, existingRuleGroup.Title)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Len(t, rules.Rules, 2)
+		})
+
+		t.Run("should recreate a rule when updating group with the rule added back", func(t *testing.T) {
+			result, status, raw := apiClient.CreateOrUpdateRuleGroupProvisioning(t, originalRuleGroup)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Equal(t, originalRuleGroup, result)
+			require.Len(t, result.Rules, 3)
+
+			// Check that the rule was re-added
+			rules, status, raw := apiClient.GetRuleGroupProvisioning(t, originalRuleGroup.FolderUID, originalRuleGroup.Title)
+			requireStatusCode(t, http.StatusOK, status, raw)
+			require.Len(t, rules.Rules, 3)
+		})
+	})
+}
+
+func TestMuteTimings(t *testing.T) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -827,16 +992,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning alert rules from files", func(t *testing.T) {
 		// add file provisioned alert rules
@@ -922,16 +1080,9 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning mixed set of alerting configurations from files", func(t *testing.T) {
 		// add file provisioned mixed set of alerting configurations
@@ -975,15 +1126,9 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
 
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning contact points from files", func(t *testing.T) {

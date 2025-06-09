@@ -10,6 +10,7 @@ import { RowOptionsForm } from './RowOptionsForm';
 jest.mock('app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect', () => ({
   RepeatRowSelect2: () => <div />,
 }));
+
 describe('DashboardRow', () => {
   const scene = new DashboardScene({
     title: 'hello',
@@ -28,7 +29,7 @@ describe('DashboardRow', () => {
           title=""
           onCancel={jest.fn()}
           onUpdate={jest.fn()}
-          warning="a warning message"
+          isUsingDashboardDS={true}
         />
       </TestProvider>
     );
@@ -40,7 +41,14 @@ describe('DashboardRow', () => {
   it('Should not show warning component when does not have warningMessage prop', () => {
     render(
       <TestProvider>
-        <RowOptionsForm repeat={'3'} sceneContext={scene} title="" onCancel={jest.fn()} onUpdate={jest.fn()} />
+        <RowOptionsForm
+          repeat={'3'}
+          sceneContext={scene}
+          title=""
+          onCancel={jest.fn()}
+          onUpdate={jest.fn()}
+          isUsingDashboardDS={false}
+        />
       </TestProvider>
     );
     expect(

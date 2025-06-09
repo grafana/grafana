@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import {
   Button,
   InlineField,
@@ -14,7 +15,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { closePopover } from '@grafana/ui/src/utils/closePopover';
+import { closePopover } from '@grafana/ui/internal';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
@@ -71,7 +72,7 @@ export const ResourcePicker = (props: Props) => {
     } else {
       return (
         <LinkButton variant="primary" fill="text" size="sm">
-          Set icon
+          <Trans i18nKey="dimensions.resource-picker.render-small-resource-picker.set-icon">Set icon</Trans>
         </LinkButton>
       );
     }
@@ -132,7 +133,7 @@ export const ResourcePicker = (props: Props) => {
 
 // strip the SVG off icons in the icons folder
 function getDisplayName(src?: string, name?: string): string | undefined {
-  if (src?.startsWith('public/img/icons')) {
+  if (src?.startsWith('public/build/img/icons')) {
     const idx = name?.lastIndexOf('.svg') ?? 0;
     if (idx > 0) {
       return name!.substring(0, idx);

@@ -22,7 +22,9 @@ export function QueryEditor(props: Props) {
   const styles = useStyles2(getStyles);
   const query = defaults(props.query, defaultQuery);
   const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(() => {
-    const genQuery = props.datasource.languageProvider.generateQueryFromFilters(query.filters || []);
+    const genQuery = props.datasource.languageProvider.generateQueryFromFilters({
+      traceqlFilters: query.filters || [],
+    });
     return genQuery === query.query || genQuery === '{}';
   });
 
@@ -50,7 +52,9 @@ export function QueryEditor(props: Props) {
               props.onClearResults();
               props.onChange({
                 ...query,
-                query: props.datasource.languageProvider.generateQueryFromFilters(query.filters || []),
+                query: props.datasource.languageProvider.generateQueryFromFilters({
+                  traceqlFilters: query.filters || [],
+                }),
               });
               setShowCopyFromSearchButton(true);
             }}
@@ -71,7 +75,9 @@ export function QueryEditor(props: Props) {
         <TempoQueryBuilderOptions
           query={query}
           onChange={props.onChange}
-          isStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
+          searchStreaming={props.datasource.isStreamingSearchEnabled() ?? false}
+          metricsStreaming={props.datasource.isStreamingMetricsEnabled() ?? false}
+          app={props.app}
         />
       </div>
     </>

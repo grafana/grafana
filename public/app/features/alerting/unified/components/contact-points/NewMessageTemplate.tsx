@@ -1,16 +1,40 @@
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { useTranslate } from '@grafana/i18n';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { createRelativeUrl } from '../../utils/url';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-const NewMessageTemplate = () => {
+import { ActiveTab } from './ContactPoints';
+
+function NewMessageTemplatePage() {
+  const { t } = useTranslate();
+
+  return (
+    <AlertmanagerPageWrapper
+      navId="receivers"
+      accessType="notification"
+      pageNav={{
+        id: 'templates',
+        text: t('alerting.notification-templates.new.title', 'New notification template group'),
+        subTitle: t('alerting.notification-templates.new.subTitle', 'Create a new group of notification templates'),
+        parentItem: {
+          text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
+          url: createRelativeUrl('/alerting/notifications', {
+            tab: ActiveTab.NotificationTemplates,
+          }),
+        },
+      }}
+    >
+      <NewMessageTemplate />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+function NewMessageTemplate() {
   const { selectedAlertmanager } = useAlertmanager();
+  return <TemplateForm alertmanager={selectedAlertmanager ?? ''} />;
+}
 
-  if (!selectedAlertmanager) {
-    return <EntityNotFound entity="Alertmanager" />;
-  }
-
-  return <TemplateForm alertmanager={selectedAlertmanager} />;
-};
-
-export default NewMessageTemplate;
+export default withPageErrorBoundary(NewMessageTemplatePage);

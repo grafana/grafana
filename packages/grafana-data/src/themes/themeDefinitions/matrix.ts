@@ -8,6 +8,7 @@ const matrixTheme: NewThemeOptions = {
       canvas: '#000000',
       primary: '#020202',
       secondary: '#080808',
+      elevated: '#080808',
     },
     text: {
       primary: '#00c017',

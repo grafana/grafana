@@ -3,6 +3,57 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  describe('info function support', () => {
+    // Currently, the visual query editor throws an error when parsing the 'info' function
+    // because this function is only supported in code mode.
+    // TODO: When visual query editor support for the 'info' function is implemented,
+    // this test should be updated to expect successful parsing instead of an error.
+    it('should throw error when trying to parse info function', () => {
+      expect(
+        buildVisualQueryFromString(
+          'sum by (cluster, sdk_language) ( info( rate(server_req_dur_sec_count{instance="the-instance"}[2m]), {sdk_language="go"} ) )'
+        )
+      ).toEqual({
+        query: {
+          labels: [
+            {
+              label: 'instance',
+              op: '=',
+              value: 'the-instance',
+            },
+            {
+              label: 'sdk_language',
+              op: '=',
+              value: 'go',
+            },
+          ],
+          metric: 'server_req_dur_sec_count',
+          operations: [
+            {
+              id: 'rate',
+              params: ['2m'],
+            },
+            {
+              id: 'info',
+              params: [],
+            },
+            {
+              id: '__sum_by',
+              params: ['cluster', 'sdk_language'],
+            },
+          ],
+        },
+        errors: [
+          {
+            from: 33,
+            text: 'Query parsing is ambiguous.',
+            to: 121,
+          },
+        ],
+      });
+    });
+  });
+
   describe('utf8 support', () => {
     it('supports uts-8 label names', () => {
       expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({

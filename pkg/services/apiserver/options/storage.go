@@ -1,6 +1,7 @@
 package options
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -10,10 +11,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/client-go/rest"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -29,7 +29,13 @@ const (
 
 	// Deprecated: legacy is a shim that is no longer necessary
 	StorageTypeLegacy StorageType = "legacy"
+
+	BlobThresholdDefault int = 0
 )
+
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*rest.Config, error)
+}
 
 type StorageOptions struct {
 	// The desired storage type
@@ -51,9 +57,15 @@ type StorageOptions struct {
 	// s3://my-bucket?region=us-west-1 (using default credentials)
 	// azblob://my-container
 	BlobStoreURL string
+	// Optional blob storage field. When an object's size in bytes exceeds the threshold
+	// value, it is considered large and gets partially stored in blob storage.
+	BlobThresholdBytes int
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
+
+	// Access to the other clients
+	ConfigProvider RestConfigProvider
 }
 
 func NewStorageOptions() *StorageOptions {
@@ -62,6 +74,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
+		BlobThresholdBytes:                     BlobThresholdDefault,
 	}
 }
 
@@ -123,40 +136,19 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	authCfg := authn.GrpcClientConfig{
-		TokenClientConfig: &authn.TokenExchangeConfig{
-			Token:            o.GrpcClientAuthenticationToken,
-			TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
-		},
-		TokenRequest: &authn.TokenExchangeRequest{
-			Audiences: []string{"resourceStore"},
-			Namespace: o.GrpcClientAuthenticationTokenNamespace,
-		},
-	}
-	unified, err := resource.NewCloudResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
+
+	const resourceStoreAudience = "resourceStore"
+
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+		Token:            o.GrpcClientAuthenticationToken,
+		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
+		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
+		Audiences:        []string{resourceStoreAudience},
+	})
 	if err != nil {
 		return err
 	}
-	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
-	return nil
-}
-
-// EnforceFeatureToggleAfterMode1 makes sure there is a feature toggle set for resources with DualWriterMode > 1.
-// This is needed to ensure that we use the K8s client before enabling dual writing.
-func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.FeatureToggles) error {
-	// nolint:staticcheck
-	if o.StorageType != StorageTypeLegacy {
-		for rg, s := range o.UnifiedStorageConfig {
-			if s.DualWriterMode > 1 {
-				switch rg {
-				case "playlists.playlist.grafana.app":
-					if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
-						return fmt.Errorf("feature toggle FlagKubernetesPlaylists to be set")
-					}
-				}
-			}
-		}
-	}
 	return nil
 }

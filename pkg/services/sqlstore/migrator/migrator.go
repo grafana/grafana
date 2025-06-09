@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -16,7 +17,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
-	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -161,16 +163,7 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
-
-	exists, err := mg.DBEngine.IsTableExist(mg.tableName)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check table existence", err)
-	}
-	if !exists {
-		return logMap, nil
-	}
-
-	if err = mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
+	if err := mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -246,9 +239,29 @@ func (mg *Migrator) run(ctx context.Context) (err error) {
 
 	logger.Info("Starting DB migrations")
 
-	_, err = mg.GetMigrationLog()
+	migrationLogExists, err := mg.DBEngine.IsTableExist(mg.tableName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to check table existence: %w", err)
+	}
+
+	if !migrationLogExists {
+		// Check if dialect can initialize database from a snapshot.
+		err := mg.Dialect.CreateDatabaseFromSnapshot(ctx, mg.DBEngine, mg.tableName)
+		if err != nil {
+			return fmt.Errorf("failed to create database from snapshot: %w", err)
+		}
+
+		migrationLogExists, err = mg.DBEngine.IsTableExist(mg.tableName)
+		if err != nil {
+			return fmt.Errorf("failed to check table existence after applying snapshot: %w", err)
+		}
+	}
+
+	if migrationLogExists {
+		_, err = mg.GetMigrationLog()
+		if err != nil {
+			return err
+		}
 	}
 
 	successLabel := prometheus.Labels{"success": "true"}
@@ -380,8 +393,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {

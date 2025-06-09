@@ -85,15 +85,29 @@ You can expand any span in a trace and view the details, including the span and 
 
 For more information about spans and traces, refer to [Introduction to tracing](https://grafana.com/docs/tempo/latest/introduction/) in the Tempo documentation.
 
-Span details include:
+Span details include span attributes, resource attributes, events, and links.
 
-- **Span attributes** - Key/value pairs that provides context for spans. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`).
+#### Span and resource attributes
 
-- **Resource attributes** - Key/value pairs that describe the context of how the span was collected.
+**Span attributes** are key-value pairs that provide metadata about a specific span. They give context to the operation being performed, such as information about the request, response, or any relevant operational details. For example, if the span deals with calling another service via HTTP, an attribute could include the HTTP URL (maybe as the span attribute key `http.url`) and the HTTP status code returned (as the span attribute `http.status_code`).
 
-Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-span-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span attributes" >}}
 
-{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-details.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span details" >}}
+**Resource attributes** are key-value pairs that describe the environment or entity that is producing the trace. They capture static information about the origin of traces, like the application name or the service version.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-resource-attributes.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span resource attributes" >}}
+
+Span attributes are specific to a particular operation, while resource attributes are associated with the whole trace or the entire service emitting the spans. Refer to [Span and resource attributes](/docs/tempo/<TEMPO_VERSION>/operations/best-practices/#span-and-resource-attributes) for more detail.
+
+#### Events
+
+Events are log-like records attached to a span that represent an occurrence during its execution. They record notable moments or occurrences within the span's lifecycle, such as errors, warnings, or checkpoints. If an error occurs during an operation, an event can be added to the span to indicate what went wrong and when. Events include a timestamp, name, and key-value pairs attributes that provide additional context or details about the event.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-span-events.png" class="docs-image--no-shadow" max-width= "900px"  caption="Trace view span events" >}}
+
+#### Links
+
+Links show relationships between spans that are not in a direct parent-child relationship. They represent associations between spans that happen concurrently or across separate trace trees, linking traces that originated from separate sources but are logically connected, such as background job processing initiated from a web request. You might use links when a trace passes through an asynchronous queue or when correlating traces from different services.
 
 ### Span filters
 
@@ -143,6 +157,14 @@ For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 {{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
+### Trace correlations
+
+You can use [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to define custom links that appear in the trace view based on trace and span information.
+
+For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
 ## Node graph
 
 You can also expand the node graph for a displayed trace. If the data source supports it, this displays spans of the trace as nodes in the graph, or provides additional context, such as a service graph based on the current trace.
@@ -157,7 +179,8 @@ The node graph requires data to be returned from the data source in a specific f
 
 ## Service graph
 
-A service graph visualizes span metrics, including rates, error rates, and durations (RED), along with service relationships. Once the requirements are configured, this pre-configured view is immediately available.
+A service graph visualizes rates, error rates, and durations (RED), along with service relationships.
+After the requirements are configured, this pre-configured view is immediately available.
 
 For additional information refer to the following documentation:
 

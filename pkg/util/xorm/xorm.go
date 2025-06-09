@@ -9,14 +9,16 @@ package xorm
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 const (
@@ -83,19 +85,22 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	}
 
 	engine := &Engine{
-		db:             db,
-		dialect:        dialect,
-		Tables:         make(map[reflect.Type]*core.Table),
-		mutex:          &sync.RWMutex{},
-		TagIdentifier:  "xorm",
-		TZLocation:     time.Local,
-		tagHandlers:    defaultTagHandlers,
-		defaultContext: context.Background(),
+		db:              db,
+		dialect:         dialect,
+		Tables:          make(map[reflect.Type]*core.Table),
+		mutex:           &sync.RWMutex{},
+		TagIdentifier:   "xorm",
+		TZLocation:      time.Local,
+		tagHandlers:     defaultTagHandlers,
+		defaultContext:  context.Background(),
+		timestampFormat: "2006-01-02 15:04:05",
+		randomIDGen:     newSnowflake(rand.Int64N(1024)).Generate,
 	}
 
-	if uri.DbType == core.SQLITE {
+	switch uri.DbType {
+	case core.SQLITE:
 		engine.DatabaseTZ = time.UTC
-	} else {
+	default:
 		engine.DatabaseTZ = time.Local
 	}
 
@@ -106,5 +111,35 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	runtime.SetFinalizer(engine, close)
 
+	if ext, ok := dialect.(DialectWithSequenceGenerator); ok {
+		engine.sequenceGenerator, err = ext.CreateSequenceGenerator(db.DB)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create sequence generator: %w", err)
+		}
+	}
+
 	return engine, nil
+}
+
+func (engine *Engine) ResetSequenceGenerator() {
+	if engine.sequenceGenerator != nil {
+		engine.sequenceGenerator.Reset()
+	}
+}
+
+type SequenceGenerator interface {
+	Next(ctx context.Context, table, column string) (int64, error)
+	Reset()
+}
+
+type DialectWithSequenceGenerator interface {
+	core.Dialect
+
+	// CreateSequenceGenerator returns optional generator used to create AUTOINCREMENT ids for inserts.
+	CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
+}
+
+type DialectWithRetryableErrors interface {
+	core.Dialect
+	RetryOnError(err error) bool
 }

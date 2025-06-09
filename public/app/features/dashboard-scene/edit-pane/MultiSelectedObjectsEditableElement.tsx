@@ -1,39 +1,38 @@
-import { ReactNode } from 'react';
-
-import { Stack, Text, Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t } from '@grafana/i18n/internal';
+import { appEvents } from 'app/core/core';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { BulkActionElement } from '../scene/types/BulkActionElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Objects';
+export class MultiSelectedObjectsEditableElement implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  private items?: BulkActionElement[];
+  constructor(private _elements: BulkActionElement[]) {}
 
-  constructor(items: BulkActionElement[]) {
-    this.items = items;
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+    return [];
   }
 
-  public onDelete = () => {
-    for (const item of this.items || []) {
-      item.onDelete();
-    }
-  };
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeName: t('dashboard.edit-pane.elements.objects', 'Objects'), icon: 'folder', instanceName: '' };
+  }
 
-  renderActions(): ReactNode {
-    return (
-      <Stack direction="column">
-        <Text>
-          <Trans i18nKey="dashboard.edit-pane.objects.multi-select.selection-number">No. of objects selected: </Trans>
-          {this.items?.length}
-        </Text>
-        <Stack direction="row">
-          <Button size="sm" variant="secondary" icon="copy" />
-          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-        </Stack>
-      </Stack>
+  public onConfirmDelete() {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.edit-pane.elements.multiple-elements', 'Multiple elements'),
+        text: t(
+          'dashboard.edit-pane.elements.multiple-elements-delete-text',
+          'Are you sure you want to delete these elements?'
+        ),
+        onConfirm: () => this.onDelete(),
+      })
     );
+  }
+
+  public onDelete() {
+    this._elements.forEach((item) => item.onDelete());
   }
 }

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 
+import { useTranslate } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
 interface Props {
@@ -10,9 +11,11 @@ interface Props {
 }
 
 export function ConfirmDeleteModal({ varName, isOpen = false, onConfirm, onDismiss }: Props) {
+  const { t } = useTranslate();
+
   return (
     <ConfirmModal
-      title="Delete variable"
+      title={t('variables.confirm-delete-modal.title-delete-variable', 'Delete variable')}
       isOpen={isOpen}
       onConfirm={onConfirm}
       onDismiss={onDismiss}

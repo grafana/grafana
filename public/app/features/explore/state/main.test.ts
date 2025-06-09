@@ -1,7 +1,6 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { dateTime, ExploreUrlState } from '@grafana/data';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { dateTime, ExploreUrlState, serializeStateToUrlParam } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
