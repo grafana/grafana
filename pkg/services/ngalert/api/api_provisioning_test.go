@@ -393,6 +393,20 @@ func TestProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
 		})
+
+		t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			quotas := provisioning.MockQuotaChecker{}
+			quotas.EXPECT().LimitExceeded()
+			env.quotas = &quotas
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			group := createTestAlertRuleGroup(1)
+			rc := createTestRequestCtx()
+
+			response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+			require.Equal(t, 403, response.Status())
+		})
 	})
 
 	t.Run("exports", func(t *testing.T) {
