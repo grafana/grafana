@@ -114,7 +114,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	} else if strings.Contains(req.URL.Path, "/metadata") {
-		isAppInsights := strings.Contains(req.URL.Path, "Microsoft.Insights/components")
+		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
 		// Add necessary headers
 		if isAppInsights {
 			// metadata-format-v4 is not supported for AppInsights resources
