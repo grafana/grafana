@@ -82,13 +82,18 @@ export function ChannelSubForm<R extends ChannelValues>({
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
       const value = name ? formValues[name] : '';
-      if (initialValues && name === typeFieldPath && type === 'change') {
-        if (value === initialValues.type) {
+      if (name === typeFieldPath && type === 'change') {
+        if (initialValues && value === initialValues.type) {
           // Restore values when switching back to the default type
           setValue(settingsFieldPath, initialValues.settings);
         } else {
-          // Clear settings when switching to a new type
-          setValue(settingsFieldPath, {});
+          // Clear all settings when switching to a new type
+          const currentSettings = getValues(settingsFieldPath);
+          const clearedSettings = Object.keys(currentSettings).reduce<Record<string, any>>((acc, key) => {
+            acc[key] = undefined;
+            return acc;
+          }, {});
+          setValue(settingsFieldPath, clearedSettings);
         }
       }
       // Restore initial value of an existing oncall integration
@@ -102,7 +107,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
+  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch, getValues]);
 
   // const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
   const formSecureFields = useWatch({ control, name: `${channelFieldPath}.secureFields` });
