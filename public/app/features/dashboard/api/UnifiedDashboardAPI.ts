@@ -1,9 +1,9 @@
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { isResource } from 'app/features/apiserver/guards';
+import { Resource, ListOptions, ResourceList } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { Resource, ListOptions, ResourceList } from '../../apiserver/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';

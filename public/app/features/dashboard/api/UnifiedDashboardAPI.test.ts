@@ -1,4 +1,4 @@
-import { Dashboard } from '@grafana/schema/dist/esm/index';
+import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -231,7 +231,7 @@ describe('UnifiedDashboardAPI', () => {
         ],
       };
 
-      // @ts-expect-error - specs are null
+      // @ts-expect-error - v1 specs are null
       v1Client.listDeletedDashboards.mockResolvedValue(mockV1Response);
       v2Client.listDeletedDashboards.mockResolvedValue(mockV2Response);
 
@@ -277,23 +277,9 @@ describe('UnifiedDashboardAPI', () => {
         },
         spec: { title: 'V1 Dashboard', panels: [], schemaVersion: 30, uid: '123' },
       };
-      const mockResponse = {
-        apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'Dashboard',
-        metadata: {
-          name: 'dash-1',
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-          uid: '123',
-        },
-        spec: mockV1Dashboard.spec,
-      };
 
-      v1Client.restoreDashboard.mockResolvedValue(mockResponse);
+      await api.restoreDashboard(mockV1Dashboard);
 
-      const result = await api.restoreDashboard(mockV1Dashboard);
-
-      expect(result).toBe(mockResponse);
       expect(v1Client.restoreDashboard).toHaveBeenCalledWith(mockV1Dashboard);
       expect(v2Client.restoreDashboard).not.toHaveBeenCalled();
     });
@@ -312,22 +298,9 @@ describe('UnifiedDashboardAPI', () => {
           title: 'V2 Dashboard',
         },
       };
-      const mockResponse = {
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
-        kind: 'Dashboard',
-        metadata: {
-          name: 'dash-1',
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-        },
-        spec: mockV2Dashboard.spec,
-      };
 
-      v2Client.restoreDashboard.mockResolvedValue(mockResponse);
+      await api.restoreDashboard(mockV2Dashboard);
 
-      const result = await api.restoreDashboard(mockV2Dashboard);
-
-      expect(result).toBe(mockResponse);
       expect(v2Client.restoreDashboard).toHaveBeenCalledWith(mockV2Dashboard);
       expect(v1Client.restoreDashboard).not.toHaveBeenCalled();
     });

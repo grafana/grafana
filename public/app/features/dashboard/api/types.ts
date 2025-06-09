@@ -13,7 +13,7 @@ export interface DashboardAPI<G, T> {
   saveDashboard(options: SaveDashboardCommand<T>): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
-  /** List all soft deleted dashboards */
+  /** List all deleted dashboards */
   listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>): Promise<ResourceList<T>>;
   /**  Restore a deleted dashboard by re-creating it */
   restoreDashboard(dashboard: Resource<T>): Promise<Resource<T>>;

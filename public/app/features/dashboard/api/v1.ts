@@ -176,16 +176,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }
   }
 
-  /**
-   * List all soft deleted dashboards
-   */
   listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
     return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
-  /**
-   * Restore a deleted dashboard by re-creating it
-   */
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
     // reset the resource version to create a new resource
     dashboard.metadata.resourceVersion = '';
