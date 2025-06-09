@@ -114,6 +114,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   closeIcon: css({
     position: 'absolute',
     top: theme.spacing(1),
-    right: theme.spacing(3),
+    right: theme.spacing(1.5),
   }),
 });
