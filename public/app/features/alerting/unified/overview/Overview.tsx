@@ -39,10 +39,13 @@ import { prometheusRuleType } from '../utils/rules';
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 const { useGetAlertmanagerAlertsQuery } = alertmanagerApi;
 
-const alertStateOptions: Array<SelectableValue<GrafanaAlertState>> = Object.values(GrafanaAlertState).map((state) => ({
-  label: state,
-  value: state,
-}));
+const alertStateOptions: Array<SelectableValue<GrafanaAlertState | 'all'>> = [
+  { label: 'All', value: 'all' },
+  ...Object.values(GrafanaAlertState).map((state) => ({
+    label: state,
+    value: state,
+  })),
+];
 
 interface PromRuleWithOrigin extends GrafanaPromAlertingRuleDTO {
   namespace: string;
@@ -57,6 +60,7 @@ function Overview() {
   });
 
   const [details, setDetails] = useState<{ rule: AlertingRule; amAlerts: AlertmanagerAlert[] } | null>(null);
+  const [selectedState, setSelectedState] = useState<GrafanaAlertState | 'all'>('all');
 
   const promGroups = promRespose?.data?.groups ?? [];
   const promRules: PromRuleWithOrigin[] = promGroups
@@ -86,13 +90,20 @@ function Overview() {
     };
   });
 
+  const filteredRules =
+    selectedState === 'all'
+      ? combinedRules
+      : combinedRules.filter(({ rule }) =>
+          rule.alerts?.some((alert) => mapStateWithReasonToBaseState(alert.state) === selectedState)
+        );
+
   const styles = useStyles2(getStyles);
   return (
     <AlertingPageWrapper navId="alerting" pageNav={{ text: 'Alerting overview' }}>
       <Stack direction="column" gap={2}>
-        <RadioButtonGroup options={alertStateOptions} />
+        <RadioButtonGroup options={alertStateOptions} value={selectedState} onChange={setSelectedState} />
         <div className={styles.rulesGrid}>
-          {combinedRules.map(({ rule, amAlerts }) => (
+          {filteredRules.map(({ rule, amAlerts }) => (
             <RuleRow key={rule.uid} rule={rule} amAlerts={amAlerts} onDetailsClick={setDetails} />
           ))}
         </div>
@@ -120,7 +131,9 @@ const RuleRow = memo(function RuleRow({ rule, amAlerts, onDetailsClick }: RuleRo
   return (
     <>
       <div className={styles.stateCell}>
-        <AlertStateDot color={rulerAlertStateToColor(rule.state)} />
+        <AlertStateDot
+          color={rulerAlertStateToColor(mapStateWithReasonToBaseState(rule.alerts?.[0]?.state ?? 'Normal'))}
+        />
       </div>
       <div>
         <Text element="h2" variant="body" weight="bold">
