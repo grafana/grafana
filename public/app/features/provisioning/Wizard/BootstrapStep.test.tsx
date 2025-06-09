@@ -6,6 +6,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 
 import { BootstrapStep, Props } from './BootstrapStep';
+import { StepStatusProvider } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
 import { WizardFormData } from './types';
 
@@ -41,7 +42,11 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
     },
   });
 
-  return <FormProvider {...methods}>{children}</FormProvider>;
+  return (
+    <FormProvider {...methods}>
+      <StepStatusProvider>{children}</StepStatusProvider>
+    </FormProvider>
+  );
 }
 
 function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFormData>) {
@@ -49,7 +54,6 @@ function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFor
 
   const defaultProps: Props = {
     onOptionSelect: jest.fn(),
-    onStepStatusUpdate: jest.fn(),
     repoName: 'test-repo',
     settingsData: undefined,
     ...props,
@@ -111,20 +115,16 @@ describe('BootstrapStep', () => {
         isLoading: true,
       });
 
-      const { props } = setup();
+      setup();
 
       expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
-      expect(props.onStepStatusUpdate).toHaveBeenCalledWith({ status: 'running' });
     });
 
     it('should render correct info for GitHub repository type', async () => {
-      const { props } = setup();
-
+      setup();
       expect(await screen.findByText('Grafana instance')).toBeInTheDocument();
       expect(screen.getByText('External storage')).toBeInTheDocument();
       expect(screen.getAllByText('Empty')).toHaveLength(2); // Both should show empty
-
-      expect(props.onStepStatusUpdate).toHaveBeenCalledWith({ status: 'idle' });
     });
 
     it('should render correct info for local file repository type', async () => {
