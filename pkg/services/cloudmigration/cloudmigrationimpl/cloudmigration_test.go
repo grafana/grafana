@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -918,19 +919,20 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
+
+	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, accessControl, bus)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
-		secretsService, nil, alertMetrics, mockFolder, fakeAccessControl, dashboardService, nil, bus, fakeAccessControlService,
+		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
 		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
