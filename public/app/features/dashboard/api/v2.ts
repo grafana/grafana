@@ -174,7 +174,7 @@ export class K8sDashboardV2API
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
     // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '0';
+    dashboard.metadata.resourceVersion = '';
     return this.client.create(dashboard);
   }
 }
