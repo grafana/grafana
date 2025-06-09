@@ -55,7 +55,7 @@ export class UnifiedDashboardAPI
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
     try {
       const resp = await this.v1Client.listDeletedDashboards(options);
-      // TODO better version mismatch handling
+      // v1 client returns v2 spec as null
       if (resp.items.every((item) => item.spec === null)) {
         throw new DashboardVersionError('unsupported version');
       }
@@ -69,6 +69,7 @@ export class UnifiedDashboardAPI
   }
 
   async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
+    // Await returned promise to support proper error handling with try/catch
     if (isDashboardV2Spec(dashboard.spec) && isResource<DashboardV2Spec>(dashboard)) {
       return await this.v2Client.restoreDashboard(dashboard);
     }
