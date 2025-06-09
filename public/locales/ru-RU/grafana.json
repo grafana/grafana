@@ -960,9 +960,6 @@
       "title-search-panel": "Панель поиска",
       "title-select-dashboard-and-panel": "Выбор дашборда и панели"
     },
-    "data-source-section": {
-      "import-to-grafana": "Импорт в правила Grafana"
-    },
     "datasource-not-found": {
       "card-description": "Источник данных для этого запроса не найден. Он был удален или неправильно установлен.",
       "remove-query": "Удалить запрос",
@@ -1212,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Удалить",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1225,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1521,12 +1511,6 @@
       "label-insights": "Аналитика",
       "title-alerting": "Оповещение"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "Папка для импорта правил.",
-      "message": {
-        "please-select-a-target-data-source": ""
-      }
-    },
     "import-to-gma": {
       "action-button": "Импорт",
       "additional-settings": "Дополнительные параметры",
@@ -1534,8 +1518,9 @@
       "confirm-modal": {
         "confirm": "Импорт",
         "loading": "Загрузка…",
-        "loading-body": "Подготовка данных к импорту. Это может занять некоторое время...",
+        "loading-body": "",
         "no-rules-body": "Нет правил для импорта. Выберите другое пространство имен или группу правил.",
+        "no-rules-body-yaml": "",
         "no-rules-title": "Нет правил для импорта",
         "plugin-rules-warning": {
           "text": "Мы обнаружили, что некоторые правила управляются плагинами. Эти правила не будут импортированы.",
@@ -1545,6 +1530,10 @@
         "title": "Подтверждение импорта"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Источник данных"
+        },
         "label": "Источник данных",
         "required-message": "Выберите источник данных"
       },
@@ -1554,11 +1543,12 @@
         "label": "Группа"
       },
       "import-location-and-filters": "Импортировать местоположение и фильтры",
+      "import-source": "",
       "namespace": {
         "description": "Введите текст для поиска существующего пространства имен.",
         "label": "Пространство имен"
       },
-      "pageTitle": "Импорт правил оповещения из источника данных в правила, управляемые Grafana",
+      "pageTitle": "",
       "pause": {
         "label": "Приостановить импортированные правила оповещения"
       },
@@ -1566,10 +1556,26 @@
         "label": "Приостановить импортированные правила записи"
       },
       "recording-rules": "Правила записи",
+      "source": {
+        "datasource": "",
+        "datasource-description": "",
+        "yaml": "",
+        "yaml-description": ""
+      },
       "success": "Правила оповещения импортированы в правила, управляемые Grafana.",
       "target-folder": {
+        "description": "Папка для импорта правил.",
         "label": "Целевая папка"
-      }
+      },
+      "yaml": {
+        "description": "",
+        "label": "",
+        "required-message": "",
+        "target-datasource": "Целевой источник данных",
+        "target-datasource-description": "",
+        "target-datasource-required": ""
+      },
+      "yaml-error": ""
     },
     "insights": {
       "monitor-status-of-system": "Следите за состоянием своей системы",
@@ -1666,6 +1672,20 @@
         "new-recording-rule": "Новое правило записи",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Действия с папками",
+          "title": "Действия"
+        },
+        "export": {
+          "aria-label": "Папка правил экспорта",
+          "label": "Папка правил экспорта"
+        },
+        "view": {
+          "aria-label": "Просмотр папки",
+          "label": "Просмотр папки"
+        }
       },
       "no-prom-or-loki-rules": "Нет настроенных источников данных Prometheus или Loki",
       "no-rules": "Правила не найдены.",
@@ -2155,7 +2175,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "Источник данных Prometheus для хранения правил записи.",
-      "label-target-data-source": "Целевой источник данных"
+      "label-target-data-source": "Целевой источник данных",
+      "target-data-source-required": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Выберите пространство имен и группу для правила записи.",
@@ -2339,7 +2360,6 @@
     "rule-group-action": {
       "details": "данные группы правил",
       "edit": "редактировать группу правил",
-      "export-rules-folder": "Папка правил экспорта",
       "go-to-folder": "перейти в папку",
       "manage-permissions": "управление разрешениями"
     },
@@ -2368,11 +2388,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Настроить",
       "draft-new-rule": "Составить новое правило",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Проверьте конфигурацию источника данных. Поддерживает ли источник данных API Prometheus?",
         "title": "Не удалось загрузить правила из этого источника данных"
       },
       "empty-data-source": "",
+      "error-button": "Ошибка",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -2384,6 +2408,7 @@
         "new-badge": "Новое",
         "text": "Импортировать в правила, управляемые Grafana"
       },
+      "loading-more-groups": "",
       "more": "Еще",
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",
@@ -2421,6 +2446,9 @@
     "rule-list-v1": {
       "collapse-all": "Свернуть всё",
       "expand-all": "Развернуть всё"
+    },
+    "rule-list-v2": {
+      "import-to-gma": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Загрузка правила...",
@@ -2916,6 +2944,36 @@
       "body": "Содержимое YAML в редакторе содержит только конфигурацию правил оповещения. <1></1>Чтобы настроить Prometheus, необходимо предоставить остальную часть <4>содержимого файла конфигурации.</4>"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "",
+      "placeholder-group-by": "Группировать по"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "",
+      "aria-label-view-alert-rule": "",
+      "view-alert-rule": ""
+    },
+    "unified-alert-list": {
+      "clear": "Очистить",
+      "text-loading": "Загрузка…"
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "",
+      "title-permission-required": ""
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "",
+      "filter": "",
+      "loading": "Загрузка…",
+      "no-annotations-found": ""
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": ""
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Аннотация",
@@ -2934,51 +2992,6 @@
       "no-query-editor": "Аннотации не поддерживаются. Этот источник данных должен экспортировать редактор запросов",
       "test-annotation-query": "Тестирование запроса аннотации",
       "title-query-result": "Результат запроса"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Поиск ключей"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Включить ключи с истекшим сроком действия"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Удалить ключ API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Срок действия",
-      "last-used-at": "Время последнего использования",
-      "migrate-to-service-account": "Перенести в служебную учетную запись",
-      "name": "Имя",
-      "role": "Роль"
-    },
-    "empty-state": {
-      "message": "Ключи API не найдены"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Ключи API не найдены. Если перезагрузить браузер, страница больше не будет доступна.",
-      "body-switch-service-accounts": "Ключи API устарели и будут удалены из Grafana 31 января 2025 года. Каждый ключ API будет перенесен в служебную учетную запись с токеном и будет продолжать работать, как и раньше. Рекомендуем перенести ключи API в служебные учетные записи уже сейчас. <docsLink />",
-      "docs-link": {
-        "about-migration": "Подробнее о переносе здесь."
-      },
-      "migrate-all-service-accounts": "Перенести все служебные учетные записи",
-      "migration-box-desc": {
-        "migrating": "После переноса всех ключей API вкладка ключей API будет скрыта."
-      },
-      "modal-title": "Перенос ключей API в служебные учетные записи",
-      "title-no-api-keys-found": "Ключи API не найдены",
-      "title-switch-service-accounts": "Переключение с ключей API на служебные учетные записи"
-    },
-    "migration-summary": {
-      "close": "Закрыть",
-      "failed": "<0>Ошибки: </0>{{failed}}",
-      "failed-details": "<0>Сведения об ошибках: </0>{{details}}",
-      "failed-ids": "<0>Недействительные идентификаторы ключей API: </0>{{ids}}",
-      "migrated": "<0>Перенесено: </0>{{migrated}}",
-      "migration-complete": "Перенос завершен Обратите внимание: хотя несколько ключей API могут быть помечены как «не прошедшие перенос», все ваши ключи API полностью функциональны и работоспособны. Повторите попытку или обратитесь в службу поддержки.",
-      "migration-successful": "Перенос выполнен",
-      "title-migration-summary": "Сводка переноса",
-      "total": "<0>Всего: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -3120,7 +3133,10 @@
       "use-refresh-token-description": "",
       "use-refresh-token-label": "",
       "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": ""
+      "validate-hosted-domain-label": "",
+      "workload-identity-token-file-description": "",
+      "workload-identity-token-file-label": "",
+      "workload-identity-token-file-required": ""
     },
     "get-page-nav": {
       "subTitle": {
@@ -3163,6 +3179,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "",
+      "label-rtl": ""
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3302,6 +3324,17 @@
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда."
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "",
+      "label-header-parameters": "",
+      "label-method": "Метод",
+      "label-payload": "Полезные данные",
+      "label-query-parameters": "Параметры запроса",
+      "render-test-apibutton": {
+        "test-api": "",
+        "title-test-api": ""
+      }
+    },
     "button-item": {
       "label": {
         "center": "",
@@ -3310,6 +3343,28 @@
       },
       "placeholder": {
         "auto": "Авто"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "Вариант"
+    },
+    "canvas-context-menu": {
+      "close-editor": "",
+      "open-editor": "",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": ""
+        },
+        "edit-element-menu-item": {
+          "label-edit": "Редактировать"
+        },
+        "label-bring-to-front": "",
+        "label-delete": "Удалить",
+        "label-duplicate": "Дублировать",
+        "label-send-to-back": "",
+        "set-background-menu-item": {
+          "label-set-background": ""
+        }
       }
     },
     "cloud-item": {
@@ -3338,6 +3393,17 @@
         "auto": "Авто"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "",
+      "tooltip-close-inline-editor": ""
+    },
+    "inline-edit-body": {
+      "label-add-item": "",
+      "please-select-an-element": ""
+    },
+    "line-style-editor": {
+      "label-animate": ""
+    },
     "metric-value-item": {
       "label": {
         "bottom": "",
@@ -3354,6 +3420,14 @@
     "not-found-display": {
       "not-found": "<0>Не найдено: </0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "",
+      "middle-mouse": "",
+      "pan-title": "",
+      "reset-double-click": "",
+      "title-pan-and-zoom-controls": "",
+      "zoom-scroll-wheel": ""
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "",
@@ -3366,6 +3440,25 @@
       "placeholder": {
         "auto": "Авто"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "Добавить",
+      "aria-label-delete": "Удалить",
+      "placeholder-key": "Ключ",
+      "placeholder-value": "Значение"
+    },
+    "placement-editor": {
+      "label-constraints": "",
+      "label-position": "",
+      "loading": "Загрузка…"
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "",
+      "tooltip-align-horizontal-centers": "",
+      "tooltip-align-left": "",
+      "tooltip-align-right": "",
+      "tooltip-align-top": "",
+      "tooltip-align-vertical-centers": ""
     },
     "rectangle-item": {
       "label": {
@@ -3395,6 +3488,22 @@
       "placeholder": {
         "auto": "Авто"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "Очистить выбор",
+      "frame-selection": "",
+      "label-add-item": "",
+      "missing-layer": "",
+      "no-settings": "",
+      "switcher-icon": {
+        "title-node-icon": ""
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "Дублировать",
+      "title-remove": "Удалить",
+      "tooltip-duplicate": "Дублировать",
+      "tooltip-remove": "Удалить"
     },
     "triangle-item": {
       "label": {
@@ -3955,6 +4064,15 @@
         "tooltip-remove-property": "Удалить свойство"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Вставка панели",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
@@ -4509,18 +4627,6 @@
     },
     "toolbar": {
       "add": "Добавить",
-      "add-new": {
-        "button": {
-          "label": "Добавить",
-          "tooltip": "Добавить панели и другие элементы"
-        },
-        "menu": {
-          "lib-panel": "Панель библиотеки",
-          "panel": "Панель",
-          "row": "Строка",
-          "tab": "Вкладка"
-        }
-      },
       "alert-rules": "Правила оповещения",
       "back-to-dashboard": "Назад на дашборд",
       "dashboard-settings": {
@@ -4986,6 +5092,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "",
       "description-enables-users-custom-values": "Позволяет пользователям добавлять пользовательские значения в список.",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Укажите измерения в формате CSV: {{name}}, {{value}}.",
       "group-by-options": "Группировать по параметрам",
@@ -5509,6 +5616,25 @@
       "message": "Источники данных не найдены"
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": ""
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "",
+        "label-clear-row": "",
+        "label-remove-all-data": "",
+        "label-search": "Поиск…"
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "",
+        "label-delete-column": "",
+        "label-rename-column": "",
+        "label-set-field-type": ""
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "У вас нет разрешения на настройку новых источников данных"
@@ -5691,6 +5817,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": ""
+    },
+    "render-info-viewer": {
+      "data-counter": "",
+      "elapsed-time": "",
+      "field": "Поле",
+      "last": "",
+      "render-counter": "",
+      "schema-counter": "",
+      "title-reset-counters": "",
+      "tooltip-step-back": "",
+      "type": "Тип"
+    },
+    "state-view": {
+      "current-value": "",
+      "label-state-name": ""
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "Передать"
@@ -5823,6 +5969,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "",
       "footer": "Метки времени событий относятся к времени начала полной трассировки."
     },
     "accordian-references": {
@@ -6539,9 +6686,101 @@
     "incomplete-request-error": "К сожалению, не удалось выполнить запрос. Повторите попытку.",
     "send-custom-feedback": "Отправить"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "",
+      "label-longitude": ""
+    },
+    "debug-overlay": {
+      "center": "",
+      "zoom": ""
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": ""
+      },
+      "label-data": "Данные",
+      "last-only-editor-fragment": {
+        "label-padding": "",
+        "tooltip-padding-relative-percent-beyond-extent": ""
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": ""
+    },
+    "geomap-panel": {
+      "aria-label-map": ""
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": ""
+    },
+    "layers-editor": {
+      "label-add-layer": "",
+      "no-layers": ""
+    },
+    "map-view-editor": {
+      "label-max-zoom": "",
+      "label-view": "Просмотр",
+      "label-zoom": "Масштаб",
+      "use-current-map-settings": ""
+    },
+    "markers-legend": {
+      "title-symbol": "Символ"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": ""
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": ""
+    },
+    "style-editor": {
+      "label-align": "",
+      "label-baseline": "",
+      "label-color": "Цвет",
+      "label-fill-opacity": "",
+      "label-font-size": "",
+      "label-opacity": "",
+      "label-rotation-angle": "",
+      "label-size": "",
+      "label-symbol": "Символ",
+      "label-symbol-horizontal-align": "",
+      "label-symbol-vertical-align": "",
+      "label-text-label": "",
+      "label-x-offset": "",
+      "label-y-offset": ""
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "Оператор сравнения",
+      "aria-label-comparison-value": "",
+      "aria-label-delete-style-rule": "",
+      "aria-label-feature-property": "",
+      "label-rule": "Правило",
+      "placeholder-feature-property": "",
+      "placeholder-numeric-value": "",
+      "placeholder-value": "значение"
+    }
+  },
   "get-enterprise": {
     "requires-license": "Требуется лицензия Grafana Enterprise",
     "title": "Enterprise"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "завершить",
+      "learn-how": ""
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "",
+      "aria-label-to-basic-tutorials": "",
+      "checking-completed-setup-steps": "",
+      "remove-this-panel": ""
+    },
+    "tutorial-card": {
+      "complete": "завершить"
+    }
   },
   "gops": {
     "config-card": {
@@ -7030,6 +7269,11 @@
     "support-bundle": "Вы также можете получить пакет поддержки, содержащий информацию о вашем экземпляре Grafana и настроенных источниках данных в <1>разделе о пакетах поддержки</1>.",
     "troubleshooting-help": "Чтобы запросить помощь в устранении неполадок, отправьте снимок этой панели в службу технической поддержки Grafana Labs. Снимок содержит данные ответа на запрос и параметры панели."
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": ""
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Загрузка",
@@ -7351,8 +7595,26 @@
       "discard-local-changes": "Отменить локальные изменения",
       "title-dashboard-changed": "Дашборд изменен"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "",
+      "namespace": "Пространство имен",
+      "path": "Путь",
+      "placeholder-select-watchable-resource": "",
+      "scope": "",
+      "title-grafana-live": ""
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "Соединение с сервером прервано..."
+    },
+    "live-panel": {
+      "error": "Ошибка",
+      "grafana-requires-feature": "",
+      "panel-editor-channel": "",
+      "title-grafana-live": "",
+      "waiting-for-data": ""
+    },
+    "live-publish": {
+      "publish": ""
     }
   },
   "lock-icon": "значок замка",
@@ -7524,6 +7786,11 @@
       "scroll-bottom": "Прокрутить вниз",
       "scroll-top": "Прокрутить вверх",
       "start-of-range": "Начало диапазона"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": ""
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "Конец выбранного временного диапазона."
@@ -7906,10 +8173,6 @@
       "subtitle": "Просмотр недавно удаленных правил оповещения",
       "title": "Последние удаленные"
     },
-    "api-keys": {
-      "subtitle": "Создание ключей API, используемых для взаимодействия с Grafana HTTP API, и управление ими",
-      "title": "Ключи API"
-    },
     "application": {
       "title": "Приложение"
     },
@@ -8246,7 +8509,62 @@
       "close": "Закрыть выдвижную панель"
     },
     "link-title": "Перейти в блог Grafana Labs",
+    "news-panel": {
+      "body-error-loading-rss-feed": "",
+      "loading": "Загрузка…",
+      "title-error-loading-rss-feed": ""
+    },
     "title": "Последние записи в блоге"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "",
+      "title-remove-arc": ""
+    },
+    "edge": {
+      "aria-label-from-to": ""
+    },
+    "edge-header": {
+      "label-source-target": ""
+    },
+    "marker": {
+      "100-node-count": "",
+      "aria-label-hidden-marker": "",
+      "node-count_one": "",
+      "node-count_few": "",
+      "node-count_many": "",
+      "node-count_other": ""
+    },
+    "node": {
+      "aria-label-node-title": ""
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "",
+      "aria-label-nodes-hidden-warning": "",
+      "computing-layout": "",
+      "no-data": "Нет данных",
+      "hidden-nodes_one": "",
+      "hidden-nodes_few": "",
+      "hidden-nodes_many": "",
+      "hidden-nodes_other": "",
+      "processed-nodes_one": "",
+      "processed-nodes_few": "",
+      "processed-nodes_many": "",
+      "processed-nodes_other": ""
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": ""
+    },
+    "node-header": {
+      "label-subtitle": "",
+      "label-title": "Заголовок"
+    },
+    "view-controls": {
+      "hide-config": "",
+      "show-config": "",
+      "title-zoom-in": "",
+      "title-zoom-out": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -10046,6 +10364,14 @@
   "sort-picker": {
     "select-aria-label": "Сортировать"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_one": "",
+      "too-many-points_few": "",
+      "too-many-points_many": "",
+      "too-many-points_other": ""
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "Новый пакет поддержки"
@@ -10071,10 +10397,35 @@
     "login": "Вход"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "",
+      "label-wrap-text": ""
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "",
+      "label-value-display": ""
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "",
+      "description-wrap-text": "",
+      "label": {
+        "text-alpha": ""
+      },
+      "label-apply-to-entire-row": "",
+      "label-background-display-mode": "",
+      "label-wrap-text": "",
+      "wrap-text": ""
+    },
     "container": {
       "content": "Отображение слишком большого количества столбцов в одной таблице может повлиять на производительность и затруднить чтение данных. Попробуйте уточнить запросы.",
       "show-all-series": "Показать все столбцы",
       "show-only-series": "Максимальное количество отображаемых столбцов: {{MAX_NUMBER_OF_COLUMNS}}"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "",
+      "description-title-text": "",
+      "label-alt-text": "",
+      "label-title-text": ""
     }
   },
   "tag-filter": {
@@ -10231,6 +10582,42 @@
     "zone": {
       "select-aria-label": "Указатель часового пояса",
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "Добавить аннотацию",
+      "cancel": "Отмена",
+      "edit-annotation": "",
+      "label-description": "Описание",
+      "label-tags": "Теги",
+      "placeholder-add-tags": "",
+      "save": "Сохранить",
+      "saving": "Сохранение"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "Удалить",
+      "tooltip-edit": "Редактировать"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "",
+      "tooltip-help": "Справка"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "Бессрочно"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "",
+      "zoom-to-data": ""
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "",
+      "tooltip-remove-timezone": ""
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": ""
     }
   },
   "transformations": {
@@ -10849,6 +11236,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "Ссылка"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "Нужна помощь?",
+      "welcome-to-grafana": ""
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "",
+      "aria-label-select-series": "",
+      "label-color-field": "",
+      "label-frame": "Фрейм",
+      "label-size-field": "",
+      "label-x-field": "Поле X",
+      "label-y-field": "Поле Y",
+      "placeholder-all-frames": "",
+      "placeholder-select-frame": "",
+      "tooltip-delete-series": ""
     }
   }
 }
