@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const LogListSearch = ({ listRef, logs, width }: Props) => {
-  const { hideSearch, setSearch: setContextSearch, searchVisible } = useLogListSearchContext();
+  const { hideSearch, setMatchingUids, setSearch: setContextSearch, searchVisible } = useLogListSearchContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const styles = useStyles2(getStyles);
@@ -67,12 +67,15 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
   useEffect(() => {
     if (!searchVisible) {
       setSearch('');
+      setContextSearch(undefined);
+      setMatchingUids(null);
     }
-  }, [searchVisible]);
+  }, [searchVisible, setContextSearch, setMatchingUids]);
 
   useEffect(() => {
     setContextSearch(search ? search : undefined);
-  }, [search, setContextSearch]);
+    setMatchingUids(matches ? logs.filter((_, index) => matches.includes(index)).map((log) => log.uid) : null);
+  }, [logs, matches, search, setContextSearch, setMatchingUids]);
 
   if (!searchVisible) {
     return null;

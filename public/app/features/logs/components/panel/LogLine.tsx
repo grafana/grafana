@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, MouseEvent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
@@ -11,6 +11,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
@@ -233,13 +234,20 @@ Log.displayName = 'Log';
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
   const { syntaxHighlighting } = useLogListContext();
+  const { matchingUids, search } = useLogListSearchContext();
+
+  const highlight = useMemo(() => {
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    if (search && matchingUids?.includes(log.uid)) {
+      searchWords.push(search);
+    }
+    if (!searchWords.length) {
+      return undefined;
+    }
+    return { searchWords, highlightClassName: styles.matchHighLight };
+  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight]);
 
   if (log.hasAnsi) {
-    const needsHighlighter =
-      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
-    const highlight = needsHighlighter
-      ? { searchWords: log.searchWords ?? [], highlightClassName: styles.matchHighLight }
-      : undefined;
     return (
       <span className="field no-highlighting">
         <LogMessageAnsi value={log.body} highlight={highlight} />

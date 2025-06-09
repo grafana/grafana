@@ -2,15 +2,19 @@ import { createContext, ReactNode, useCallback, useContext, useState } from 'rea
 
 export interface LogListSearchContextData {
   hideSearch: () => void;
+  matchingUids: string[] | null;
   search?: string;
   searchVisible?: boolean;
+  setMatchingUids: (matches: string[] | null) => void;
   setSearch: (search: string | undefined) => void;
   showSearch: () => void;
 }
 
 export const LogListSearchContext = createContext<LogListSearchContextData>({
   hideSearch: () => {},
+  matchingUids: null,
   searchVisible: false,
+  setMatchingUids: () => {},
   setSearch: () => {},
   showSearch: () => {},
 });
@@ -27,6 +31,7 @@ export const useLogListSearchContext = (): LogListSearchContextData => {
 export const LogListSearchContextProvider = ({ children }: { children: ReactNode }) => {
   const [search, setSearch] = useState<string | undefined>(undefined);
   const [searchVisible, setSearchVisible] = useState(false);
+  const [matchingUids, setMatchingUids] = useState<string[] | null>(null);
 
   const showSearch = useCallback(() => {
     setSearchVisible(true);
@@ -40,8 +45,10 @@ export const LogListSearchContextProvider = ({ children }: { children: ReactNode
     <LogListSearchContext.Provider
       value={{
         hideSearch,
+        matchingUids,
         search,
         searchVisible,
+        setMatchingUids,
         setSearch,
         showSearch,
       }}
