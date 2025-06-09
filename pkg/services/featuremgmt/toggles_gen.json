@@ -7,7 +7,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleA",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -21,7 +22,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleB",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -56,6 +58,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichment",
+        "resourceVersion": "1749210731545",
+        "creationTimestamp": "2025-06-06T11:52:11Z"
+      },
+      "spec": {
+        "description": "Enable configuration of alert enrichments in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -1447,6 +1464,7 @@
         "name": "grafanaManagedRecordingRulesDatasources",
         "resourceVersion": "1746998568254",
         "creationTimestamp": "2025-03-07T13:30:40Z",
+        "deletionTimestamp": "2025-05-19T10:18:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
         }
@@ -2573,18 +2591,6 @@
     },
     {
       "metadata": {
-        "name": "postgresDSUsePGX",
-        "resourceVersion": "1745320933872",
-        "creationTimestamp": "2025-04-22T11:22:13Z"
-      },
-      "spec": {
-        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
-      }
-    },
-    {
-      "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-07T12:14:25Z"
@@ -2915,7 +2921,8 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-11-14T20:08:03Z"
+        "creationTimestamp": "2024-11-14T20:08:03Z",
+        "deletionTimestamp": "2025-05-28T13:44:54Z"
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
@@ -3018,6 +3025,24 @@
     },
     {
       "metadata": {
+        "name": "skipTokenRotationIfRecent",
+        "resourceVersion": "1748363818965",
+        "creationTimestamp": "2025-05-27T16:30:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-06-06T16:28:52Z"
@@ -3071,15 +3096,19 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "resourceVersion": "1749024523226",
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-04 08:08:43.226801 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {

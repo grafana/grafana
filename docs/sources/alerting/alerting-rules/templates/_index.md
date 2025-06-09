@@ -18,11 +18,11 @@ labels:
 title: Template annotations and labels
 weight: 500
 refs:
-  shared-stale-alert-instances:
+  shared-dynamic-label-example:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-labels/
   reference-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
@@ -198,7 +198,7 @@ In this example, the value of the `severity` label is determined by the query va
 > **Note:** An alert instance is uniquely identified by its set of labels.
 >
 > - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
-> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered [stale (MissingSeries)](ref:shared-stale-alert-instances) when its label value is no longer present.
+> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](ref:shared-dynamic-label-example).
 
 [//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 

@@ -1,10 +1,11 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
 import UserInviteForm from './UserInviteForm';
 
 export function UserInvitePage() {
+  const { t } = useTranslate();
   const subTitle = (
     <Trans i18nKey="org.user-invite-page.sub-title" values={{ orgName: contextSrv.user.orgName }}>
       Send invitation or add existing Grafana user to the organization.
@@ -13,7 +14,11 @@ export function UserInvitePage() {
   );
 
   return (
-    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page
+      navId="global-users"
+      pageNav={{ text: t('org.user-invite-page.text.invite-user', 'Invite user') }}
+      subTitle={subTitle}
+    >
       <Page.Contents>
         <UserInviteForm />
       </Page.Contents>

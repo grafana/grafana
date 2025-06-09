@@ -65,10 +65,10 @@ func testGetFolders(t *testing.T, featureToggles []string) {
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
-		Login:          "admin",
+		Login:          "admin2",
 	})
 
-	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+	adminClient := tests.GetClient(grafanaListedAddr, "admin2", "admin")
 	editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 
