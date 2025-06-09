@@ -20,6 +20,7 @@ import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
@@ -36,7 +37,7 @@ export interface ExportableResource {
   apiVersion: string;
   kind: 'Dashboard';
   metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
-  spec: Dashboard | DashboardModel | DashboardV2Spec | { error: unknown };
+  spec: Dashboard | DashboardModel | DashboardV2Spec | DashboardJson | DashboardDataDTO | { error: unknown };
   // A placeholder for now because as code tooling expects it
   status: {};
 }
@@ -149,12 +150,17 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           creationTimestamp: metadata.creationTimestamp ?? '',
         });
 
-        const oldModel = new DashboardModel(spec1, undefined, {
-          getVariablesFromState: () => {
-            return getVariablesCompatibility(window.__grafanaSceneContext);
-          },
-        });
-        const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : spec1;
+        let exportableV1: Dashboard | DashboardDataDTO | DashboardJson | { error: unknown };
+        if (isSharingExternally) {
+          const oldModel = new DashboardModel(spec1, undefined, {
+            getVariablesFromState: () => {
+              return getVariablesCompatibility(window.__grafanaSceneContext);
+            },
+          });
+          exportableV1 = await makeExportableV1(oldModel);
+        } else {
+          exportableV1 = spec1;
+        }
         return {
           json: {
             // Forcing V1 version here to match export mode selection

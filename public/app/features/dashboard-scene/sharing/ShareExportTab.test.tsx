@@ -19,7 +19,6 @@ describe('ShareExportTab', () => {
   // Spies to track function calls
   let transformV2ToV1Spy: jest.SpyInstance;
   let makeExportableV1Spy: jest.SpyInstance;
-  let makeExportableV2Spy: jest.SpyInstance;
   let transformSceneToV1Spy: jest.SpyInstance;
   let transformSceneToV2Spy: jest.SpyInstance;
 
@@ -45,7 +44,6 @@ describe('ShareExportTab', () => {
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
 
-    makeExportableV2Spy = jest.spyOn(exporters, 'makeExportableV2').mockImplementation(async (dashboard) => dashboard);
 
     transformSceneToV1Spy = jest.spyOn(sceneToV1, 'transformSceneToSaveModel').mockReturnValue({
       title: 'Scene V1',
