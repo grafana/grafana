@@ -17,6 +17,8 @@ type Mapping interface {
 	Prefix() string
 	// AllActions returns all the actions for the translation.
 	AllActions() []string
+	// HasFolderSupport returns true if the translation supports folders.
+	HasFolderSupport() bool
 }
 
 type translation struct {
@@ -52,11 +54,15 @@ func (t translation) AllActions() []string {
 	return actions
 }
 
+func (t translation) HasFolderSupport() bool {
+	return t.folderSupport
+}
+
 // MappingRegistry is a registry of mappers that maps a group and resource to a translation.
 type MappingRegistry interface {
-	// translation returns the translation for the given group and resource.
+	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
-	GetTranslation(group, resource string) (Mapping, bool)
+	Get(group, resource string) (Mapping, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
 }
@@ -117,18 +123,18 @@ func NewMappingRegistry() MappingRegistry {
 	return mapper
 }
 
-func (m mapper) GetTranslation(group, resource string) (Mapping, bool) {
+func (m mapper) Get(group, resource string) (Mapping, bool) {
 	resources, ok := m[group]
 	if !ok {
-		return translation{}, false
+		return nil, false
 	}
 
 	t, ok := resources[resource]
 	if !ok {
-		return translation{}, false
+		return nil, false
 	}
 
-	return t, true
+	return &t, true
 }
 
 func (m mapper) GetAll(group string) []Mapping {
@@ -139,7 +145,7 @@ func (m mapper) GetAll(group string) []Mapping {
 
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, t)
+		translations = append(translations, &t)
 	}
 
 	return translations

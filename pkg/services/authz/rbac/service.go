@@ -334,7 +334,7 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.GetTranslation(group, resource)
+	t, ok := s.mapper.Get(group, resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", group, "resource", resource)
 		return "", status.Error(codes.NotFound, "unsupported resource")
@@ -585,7 +585,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return true, nil
 	}
 
-	t, ok := s.mapper.GetTranslation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return false, status.Error(codes.NotFound, "unsupported resource")
@@ -595,7 +595,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return true, nil
 	}
 
-	if !t.(translation).folderSupport {
+	if !t.HasFolderSupport() {
 		return false, nil
 	}
 
@@ -679,14 +679,14 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.GetTranslation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	var tree folderTree
-	if t.(translation).folderSupport {
+	if t.HasFolderSupport() {
 		var err error
 		tree, err = s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {

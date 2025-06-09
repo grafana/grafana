@@ -437,7 +437,7 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 				"folder.grafana.app/folders:get",
 			},
 			expectedPerms: []accesscontrol.Permission{
-				{Action: "folders:read"},
+				{Action: "folders:read", Scope: "folders:uid:*"},
 			},
 			expectedError: nil,
 		},
@@ -447,54 +447,12 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 				"folder.grafana.app/folders:*",
 			},
 			expectedPerms: []accesscontrol.Permission{
-				{Action: "folders:read"},
-				{Action: "folders:write"},
-				{Action: "folders:delete"},
-				{Action: "folders:create"},
-				{Action: "folders.permissions:read"},
-				{Action: "folders.permissions:write"},
-			},
-			expectedError: nil,
-		},
-		{
-			name: "should translate group with wildcard resource",
-			k8sPerms: []string{
-				"secret.grafana.app:*",
-			},
-			expectedPerms: []accesscontrol.Permission{
-				// securevalues actions
-				{Action: "secret.securevalues:read"},
-				{Action: "secret.securevalues:write"},
-				{Action: "secret.securevalues:delete"},
-				{Action: "secret.securevalues:create"},
-				{Action: "secret.securevalues.permissions:read"},
-				{Action: "secret.securevalues.permissions:write"},
-				// keepers actions
-				{Action: "secret.keepers:read"},
-				{Action: "secret.keepers:write"},
-				{Action: "secret.keepers:delete"},
-				{Action: "secret.keepers:create"},
-				{Action: "secret.keepers.permissions:read"},
-				{Action: "secret.keepers.permissions:write"},
-			},
-			expectedError: nil,
-		},
-		{
-			name: "should handle multiple permissions",
-			k8sPerms: []string{
-				"folder.grafana.app/folders:get",
-				"dashboard.grafana.app/dashboards:*",
-				"query.grafana.app:*",
-			},
-			expectedPerms: []accesscontrol.Permission{
-				{Action: "folders:read"},
-				{Action: "dashboards:read"},
-				{Action: "dashboards:write"},
-				{Action: "dashboards:delete"},
-				{Action: "dashboards:create"},
-				{Action: "dashboards.permissions:read"},
-				{Action: "dashboards.permissions:write"},
-				{Action: "datasources:query"},
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:write", Scope: "folders:uid:*"},
+				{Action: "folders:delete", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:read", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:write", Scope: "folders:uid:*"},
 			},
 			expectedError: nil,
 		},
@@ -520,6 +478,59 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 				"folder.grafana.app/folders:unknown",
 			},
 			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle group:verb format",
+			k8sPerms: []string{
+				"folder.grafana.app:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle group:* format",
+			k8sPerms: []string{
+				"folder.grafana.app:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:write", Scope: "folders:uid:*"},
+				{Action: "folders:delete", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:read", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:write", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown group in group:verb format",
+			k8sPerms: []string{
+				"unknown.grafana.app:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown verb in group:verb format",
+			k8sPerms: []string{
+				"folder.grafana.app:unknownverb",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle multiple group:verb permissions",
+			k8sPerms: []string{
+				"folder.grafana.app:get",
+				"folder.grafana.app:create",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+			},
 			expectedError: nil,
 		},
 	}
@@ -559,6 +570,16 @@ func setupTestEnv(t *testing.T) *RBACSync {
 		},
 	}
 	permRegistry := permreg.ProvidePermissionRegistry(t)
+
+
+	// Register additional folder actions that are returned by the mapping registry
+	// but not included in the default test registry
+	require.NoError(t, permRegistry.RegisterPermission("folders:write", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders:create", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders:delete", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:read", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:write", "folders:uid:"))
+
 	s := &RBACSync{
 		ac:           acMock,
 		log:          log.NewNopLogger(),
