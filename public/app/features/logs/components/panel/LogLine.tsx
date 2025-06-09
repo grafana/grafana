@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
@@ -200,7 +200,7 @@ interface LogProps {
   wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
@@ -225,7 +225,9 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
       )}
     </>
   );
-};
+});
+
+Log.displayName = 'Log';
 
 const LogLineBody = ({ log }: { log: LogListModel }) => {
   const { syntaxHighlighting } = useLogListContext();
