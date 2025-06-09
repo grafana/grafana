@@ -278,10 +278,10 @@ Following the above example, [notification policies](ref:notification-policies) 
 
    {{< admonition type="note" >}}
    Label matchers are combined using the `AND` logical operator. This means that all matchers must be satisfied for a rule to be linked to a policy. If you attempt to use the same label key (e.g., region) with different values (e.g., us-west and us-east), the condition will not match, because it is logically impossible for a single key to have multiple values simultaneously.
-   
+
    Hoewever, `region!=us-east && region=!us-west` can match. For example, it would match a label set where `region=eu-central`.
    Alternatively, for identical label keys use regex matchers (e.g., `region=~us-west|us-east`).
-  {{</ admonition >}}
+   {{</ admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
