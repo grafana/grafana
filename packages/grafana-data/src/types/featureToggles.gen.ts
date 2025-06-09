@@ -300,6 +300,10 @@ export interface FeatureToggles {
   */
   kubernetesSnapshots?: boolean;
   /**
+  * Routes library elements requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
+  /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;

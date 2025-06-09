@@ -54,6 +54,8 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 		return true
 	case "dashboards.dashboard.grafana.app":
 		return true
+	case "librarypanels.dashboard.grafana.app":
+		return true
 	}
 	return false
 }

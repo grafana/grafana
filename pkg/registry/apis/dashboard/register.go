@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -86,6 +87,7 @@ type DashboardsAPIBuilder struct {
 	cfg                          *setting.Cfg
 	dualWriter                   dualwrite.Service
 	folderClient                 client.K8sHandler
+	libraryElementService        libraryelements.Service
 
 	log log.Logger
 	reg prometheus.Registerer
@@ -112,6 +114,7 @@ func RegisterAPIService(
 	folderStore folder.FolderStore,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
+	libraryElementService libraryelements.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
@@ -135,6 +138,7 @@ func RegisterAPIService(
 		cfg:                          cfg,
 		dualWriter:                   dual,
 		folderClient:                 folderClient,
+		libraryElementService:        libraryElementService,
 
 		legacy: &DashboardStorage{
 			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
@@ -186,6 +190,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 // Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
+
+	if a.GetKind().Kind == "LibraryPanel" {
+		return nil
+	}
 
 	// Handle different operations
 	switch op {
@@ -505,11 +513,24 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	// Expose read only library panels
+	// Expose library panels with dual-write support
 	if libraryPanels != nil {
-		storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
-			Access:       b.legacy.Access,
-			ResourceInfo: *libraryPanels,
+		legacyLibraryStore := &LibraryPanelStore{
+			Access:                b.legacy.Access,
+			ResourceInfo:          *libraryPanels,
+			LibraryElementService: b.libraryElementService,
+			Cfg:                   b.cfg,
+		}
+
+		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		libraryGr := libraryPanels.GroupResource()
+		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
+		if err != nil {
+			return err
 		}
 	}
 
