@@ -41,13 +41,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
-    const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
+    const dashboard = options.dashboard;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
       },
       spec: {
         ...dashboard,
+        title: dashboard.title ?? '',
+        uid: dashboard.uid ?? '',
       },
     };
 
@@ -186,7 +188,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
    */
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
     // reset the resource version to create a new resource
-    dashboard.metadata.resourceVersion = '0';
+    dashboard.metadata.resourceVersion = '';
     return this.client.create(dashboard);
   }
 }
