@@ -76,7 +76,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
-  const isDisabled = variableOptions.length <= 1;
+  const isDisabled = !repeat && variableOptions.length <= 1;
 
   return (
     <Combobox
