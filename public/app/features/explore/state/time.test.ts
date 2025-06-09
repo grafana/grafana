@@ -1,11 +1,12 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime } from '@grafana/data';
+import { dateTime, TimeZone } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './testHelpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const mockTimeSrv = {
   init: jest.fn(),
@@ -20,6 +21,11 @@ const mockTemplateSrv = {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => mockTemplateSrv,
+}));
+
+jest.mock('app/features/profile/state/selectors', () => ({
+  getTimeZone: jest.fn(),
+  getFiscalYearStartMonth: jest.fn(() => 0),
 }));
 
 describe('Explore item reducer', () => {
@@ -55,5 +61,96 @@ describe('Explore item reducer', () => {
           } as unknown as ExploreItemState);
       });
     });
+  });
+});
+
+describe('updateTime', () => {
+  const mockDispatch = jest.fn();
+  const mockGetState = jest.fn();
+  const exploreId = 'left';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetState.mockReturnValue({
+      explore: {
+        panes: {
+          [exploreId]: {
+            range: {
+              raw: {
+                from: dateTime('2023-01-01T00:00:00Z'),
+                to: dateTime('2023-01-02T00:00:00Z'),
+              },
+            },
+          },
+        },
+        user: {},
+      },
+    });
+  });
+
+  it('should convert absolute range to configured timezone', () => {
+    (getTimeZone as jest.Mock).mockReturnValue('America/New_York');
+    
+    const absoluteRange = {
+      from: dateTime('2023-01-01T00:00:00Z').valueOf(),
+      to: dateTime('2023-01-02T00:00:00Z').valueOf(),
+    };
+
+    updateTime({ exploreId, absoluteRange })(mockDispatch, mockGetState);
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          range: expect.objectContaining({
+            from: expect.any(Object),
+            to: expect.any(Object),
+          }),
+        }),
+      })
+    );
+  });
+
+  it('should handle browser timezone', () => {
+    (getTimeZone as jest.Mock).mockReturnValue('browser');
+    
+    const absoluteRange = {
+      from: dateTime('2023-01-01T00:00:00Z').valueOf(),
+      to: dateTime('2023-01-02T00:00:00Z').valueOf(),
+    };
+
+    updateTime({ exploreId, absoluteRange })(mockDispatch, mockGetState);
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          range: expect.objectContaining({
+            from: expect.any(Object),
+            to: expect.any(Object),
+          }),
+        }),
+      })
+    );
+  });
+
+  it('should handle UTC timezone', () => {
+    (getTimeZone as jest.Mock).mockReturnValue('utc');
+    
+    const absoluteRange = {
+      from: dateTime('2023-01-01T00:00:00Z').valueOf(),
+      to: dateTime('2023-01-02T00:00:00Z').valueOf(),
+    };
+
+    updateTime({ exploreId, absoluteRange })(mockDispatch, mockGetState);
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          range: expect.objectContaining({
+            from: expect.any(Object),
+            to: expect.any(Object),
+          }),
+        }),
+      })
+    );
   });
 });

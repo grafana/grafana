@@ -23,6 +23,7 @@ import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 
 import { TemplateSrv } from './template_srv';
+import * as TimeSrvModule from '../dashboard/services/TimeSrv';
 
 const key = 'key';
 
@@ -947,6 +948,53 @@ describe('templateSrv', () => {
       deactivate();
 
       expect(_templateSrv.timeRange!.raw).toEqual({ from: '10', to: '10' });
+    });
+  });
+
+  describe('date variable interpolation', () => {
+    beforeEach(() => {
+      jest.restoreAllMocks();
+      // Use January 2, 2023 for UTC test, December 31, 2022 for EST test
+      _templateSrv = initTemplateSrv(key, [], {
+        from: dateTime('2023-01-01T00:00:00Z'),
+        to: dateTime('2023-01-02T00:00:00Z'),
+      } as TimeRange);
+    });
+    it('should respect dashboard timezone for date formatting', () => {
+      // Mock getTimeSrv to return a timeModel with getTimezone
+      jest.spyOn(TimeSrvModule, 'getTimeSrv').mockReturnValue({
+        timeModel: { getTimezone: () => 'UTC' },
+      } as any);
+      // Test various date formats
+      expect(_templateSrv.replace('${__to:date:M}')).toBe('1'); // Month in UTC
+      expect(_templateSrv.replace('${__to:date:YYYY-MM}')).toBe('2023-01');
+      expect(_templateSrv.replace('${__to:date:iso}')).toBe('2023-01-02T00:00:00.000Z');
+    });
+
+    it('should handle browser timezone', () => {
+      jest.spyOn(TimeSrvModule, 'getTimeSrv').mockReturnValue({
+        timeModel: { getTimezone: () => 'browser' },
+      } as any);
+      // The exact value will depend on the test environment's timezone
+      const result = _templateSrv.replace('${__to:date:M}');
+      expect(typeof result).toBe('string');
+      expect(parseInt(result, 10)).toBeGreaterThanOrEqual(1);
+      expect(parseInt(result, 10)).toBeLessThanOrEqual(12);
+    });
+
+    it('should handle custom timezone', () => {
+      // Use December 31, 2022 at 23:00 UTC, which is still December in New York
+      _templateSrv = initTemplateSrv(key, [], {
+        from: dateTime('2022-12-31T00:00:00Z'),
+        to: dateTime('2022-12-31T23:00:00Z'),
+      } as TimeRange);
+      jest.spyOn(TimeSrvModule, 'getTimeSrv').mockReturnValue({
+        timeModel: { getTimezone: () => 'America/New_York' },
+      } as any);
+      // Test various date formats
+      expect(_templateSrv.replace('${__to:date:M}')).toBe('12'); // Month in EST
+      expect(_templateSrv.replace('${__to:date:YYYY-MM}')).toBe('2022-12');
+      expect(_templateSrv.replace('${__to:date:iso}')).toBe('2022-12-31T18:00:00.000-05:00');
     });
   });
 });

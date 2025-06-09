@@ -8,6 +8,8 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
   ScopedVar,
+  dateTimeForTimeZone,
+  getTimeZone,
 } from '@grafana/data';
 import {
   getDataSourceSrv,
@@ -28,6 +30,7 @@ import { variableRegex } from '../variables/utils';
 import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 /**
  * Internal regex replace function
@@ -312,9 +315,51 @@ export class TemplateSrv implements BaseTemplateSrv {
     match: string,
     variableName: string,
     fieldPath: string,
-    format: string | VariableCustomFormatterFn | undefined,
-    scopedVars: ScopedVars | undefined
-  ) {
+    format: string | undefined,
+    scopedVars?: ScopedVars
+  ): string {
+    // Handle built-in time variables
+    if (variableName === '__from' || variableName === '__to') {
+      const timeRange = this.timeRange;
+      if (!timeRange) {
+        return match;
+      }
+
+      const time = variableName === '__from' ? timeRange.from : timeRange.to;
+      const timeZone = getTimeZone({ timeZone: getTimeSrv().timeModel?.getTimezone() });
+
+      // If format is specified, use it to format the date
+      if (format) {
+        if (format.startsWith('date:')) {
+          const dateFormat = format.substring(5);
+          if (dateFormat === 'iso' || dateFormat === '') {
+            // Use toISOString() for UTC, browser, or unset timezones
+            if (!timeZone || timeZone === 'UTC' || timeZone === 'browser') {
+              return time.toISOString();
+            }
+            // For custom timezones, use dateTimeForTimeZone
+            return dateTimeForTimeZone(timeZone, time.valueOf()).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+          }
+          if (dateFormat === 'seconds') {
+            return Math.floor(time.valueOf() / 1000).toString();
+          }
+          // For custom date formats, use the dashboard's timezone
+          return dateTimeForTimeZone(timeZone, time.valueOf()).format(dateFormat);
+        }
+        // If format is exactly 'date', handle same as iso
+        if (format === 'date') {
+          const timeZone = getTimeZone({ timeZone: getTimeSrv().timeModel?.getTimezone() });
+          if (!timeZone || timeZone === 'UTC' || timeZone === 'browser') {
+            return time.toISOString();
+          }
+          return dateTimeForTimeZone(timeZone, time.valueOf()).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+      }
+
+      // Default to epoch milliseconds
+      return time.valueOf().toString();
+    }
+
     const variable = this.getVariableAtIndex(variableName);
     const scopedVar = scopedVars?.[variableName];
 

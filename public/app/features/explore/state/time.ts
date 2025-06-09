@@ -44,11 +44,14 @@ export interface ChangeRefreshIntervalPayload {
 
 export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
-export const updateTimeRange = (options: {
+export interface UpdateTimeRangeOptions {
   exploreId: string;
+  range?: TimeRange;
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
-}): ThunkResult<void> => {
+}
+
+export const updateTimeRange = (options: UpdateTimeRangeOptions): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
@@ -83,6 +86,7 @@ export const updateTime = (config: {
     let rawRange: RawTimeRange = rangeInState.raw;
 
     if (absRange) {
+      // Convert absolute range to the configured timezone
       rawRange = {
         from: dateTimeForTimeZone(timeZone, absRange.from),
         to: dateTimeForTimeZone(timeZone, absRange.to),
@@ -122,7 +126,7 @@ export function syncTimes(exploreId: string): ThunkResult<void> {
     Object.keys(getState().explore.panes)
       .filter((key) => key !== exploreId)
       .forEach((exploreId) => {
-        dispatch(updateTimeRange({ exploreId, rawRange: range }));
+        dispatch(updateTimeRange({ exploreId, range, absoluteRange: range }));
       });
 
     const isTimeSynced = getState().explore.syncedTimes;
@@ -157,21 +161,21 @@ function modifyExplorePanesTimeRange(
 export function makeAbsoluteTime(): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-    dispatch(updateTimeRange({ exploreId, absoluteRange }));
+    dispatch(updateTimeRange({ exploreId, range, absoluteRange }));
   });
 }
 
 export function shiftTime(direction: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const shiftedRange = getShiftedTimeRange(direction, range);
-    dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
+    dispatch(updateTimeRange({ exploreId, range: shiftedRange, absoluteRange: shiftedRange }));
   });
 }
 
 export function zoomOut(scale: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const zoomedRange = getZoomedTimeRange(range, scale);
-    dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
+    dispatch(updateTimeRange({ exploreId, range: zoomedRange, absoluteRange: zoomedRange }));
   });
 }
 
@@ -201,12 +205,12 @@ export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
     const panesSynced = getState().explore.syncedTimes;
 
     if (panesSynced) {
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
-      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], range, absoluteRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], range, absoluteRange: range }));
       return;
     }
 
-    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], range, absoluteRange: range }));
   };
 }
 
