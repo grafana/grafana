@@ -79,20 +79,18 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
-    // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
       const value = name ? formValues[name] : '';
-
-      if (name === typeFieldPath && type === 'change') {
-        // Reset settings to default when changing type
-        setValue(settingsFieldPath, defaultValues.settings);
-
-        // Restore initial values if switching back to original type
-        if (initialValues && value === initialValues.type) {
+      if (initialValues && name === typeFieldPath && type === 'change') {
+        if (value === initialValues.type) {
+          // Restore values when switching back to the default type
           setValue(settingsFieldPath, initialValues.settings);
+        } else {
+          // Clear settings when switching to a new type
+          setValue(settingsFieldPath, {});
         }
-      } 
+      }
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
