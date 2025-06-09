@@ -30,6 +30,8 @@ type CommonProps = {
   tooltip?: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
+  /** Position of the icon */
+  iconPlacement?: 'left' | 'right';
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -48,6 +50,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       tooltip,
       disabled,
       tooltipPlacement,
+      iconPlacement = 'left',
       onClick,
       ...otherProps
     },
@@ -73,6 +76,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const hasTooltip = Boolean(tooltip);
 
+    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
+
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
@@ -87,8 +92,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={!hasTooltip && disabled}
         ref={tooltip ? undefined : ref}
       >
-        <IconRenderer icon={icon} size={size} className={styles.icon} />
+        {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
+        {iconPlacement === 'right' && iconComponent}
       </button>
     );
 
@@ -219,6 +225,7 @@ export const getButtonStyles = (props: StyleProps) => {
       label: 'button',
       display: 'inline-flex',
       alignItems: 'center',
+      gap: theme.spacing(1),
       fontSize: fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       fontFamily: theme.typography.fontFamily,
@@ -254,9 +261,7 @@ export const getButtonStyles = (props: StyleProps) => {
           marginRight: theme.spacing(-padding / 2),
           marginLeft: theme.spacing(-padding / 2),
         })
-      : css({
-          marginRight: theme.spacing(padding / 2),
-        }),
+      : undefined,
     content: css({
       display: 'flex',
       flexDirection: 'row',
