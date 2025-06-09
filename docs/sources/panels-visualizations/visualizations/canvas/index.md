@@ -447,19 +447,20 @@ To add a data link, follow these steps:
 1. In either the inline editor or panel editor, expand the **Selected element** editor.
 1. Scroll down to the **Data links and actions** section and expand it.
 1. Click **+ Add action**.
-1. In the dialog box that opens, set the action options:
+   In the dialog box that opens, set the action options:
 
-   | Option               | Description                                                                                                                                                                                     |
-   | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                               |
-   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                           |
-   | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                        |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                      |
-   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
-   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                   |
-   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                         |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                |
-   | Body                 | The body of the request.                                                                                                                                                                        |
+   | Option               | Description                                                                                                                                                                                                                                 |
+   | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
+   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
+   | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
+   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
+   | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
+   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
+   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
