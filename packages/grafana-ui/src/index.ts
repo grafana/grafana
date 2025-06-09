@@ -307,6 +307,7 @@ export {
   type FileDropzoneProps,
   type DropzoneFile,
 } from './components/FileDropzone/FileDropzone';
+export { FileListItem, type FileListItemProps } from './components/FileDropzone/FileListItem';
 export { TimeRangeInput } from './components/DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, type Props as CardProps, getCardStyles } from './components/Card/Card';
