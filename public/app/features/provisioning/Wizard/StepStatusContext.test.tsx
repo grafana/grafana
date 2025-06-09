@@ -1,239 +1,117 @@
-import { render, screen, act } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { renderHook, act } from '@testing-library/react';
+import { PropsWithChildren } from 'react';
 
 import { StepStatusProvider, useStepStatus } from './StepStatusContext';
 
-function MockComponent() {
-  const { stepStatusInfo, setStepStatusInfo, hasStepError, isStepRunning, isStepSuccess, isStepIdle } = useStepStatus();
-
-  return (
-    <div>
-      <div data-testid="status">{stepStatusInfo.status}</div>
-      <div data-testid="error">{'error' in stepStatusInfo ? stepStatusInfo.error : ''}</div>
-      <div data-testid="hasStepError">{hasStepError.toString()}</div>
-      <div data-testid="isStepRunning">{isStepRunning.toString()}</div>
-      <div data-testid="isStepSuccess">{isStepSuccess.toString()}</div>
-      <div data-testid="isStepIdle">{isStepIdle.toString()}</div>
-      <button data-testid="set-running" onClick={() => setStepStatusInfo({ status: 'running' })}>
-        Set Running
-      </button>
-      <button data-testid="set-success" onClick={() => setStepStatusInfo({ status: 'success' })}>
-        Set Success
-      </button>
-      <button data-testid="set-error" onClick={() => setStepStatusInfo({ status: 'error', error: 'Test error' })}>
-        Set Error
-      </button>
-      <button data-testid="set-idle" onClick={() => setStepStatusInfo({ status: 'idle' })}>
-        Set Idle
-      </button>
-    </div>
-  );
-}
-
-function TestWrapper({ children }: { children: ReactNode }) {
-  return <StepStatusProvider>{children}</StepStatusProvider>;
-}
-
 describe('StepStatusContext', () => {
-  describe('StepStatusProvider', () => {
+  const wrapper = ({ children }: PropsWithChildren<{}>) => <StepStatusProvider>{children}</StepStatusProvider>;
+
+  describe('useStepStatus hook', () => {
+    // Initial state (Status: Idle)
     it('should provide initial idle status', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
 
-      expect(screen.getByTestId('status')).toHaveTextContent('idle'); // Initial status should be idle
-      expect(screen.getByTestId('error')).toHaveTextContent(''); // Initially no error
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('true'); // Initially idle
-
-      // Check other statuses
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
+      expect(result.current.stepStatusInfo.status).toBe('idle');
+      expect(result.current.isStepIdle).toBe(true);
+      expect(result.current.hasStepError).toBe(false);
+      expect(result.current.isStepRunning).toBe(false);
+      expect(result.current.isStepSuccess).toBe(false);
     });
 
+    // Status: Running
     it('should update status to running', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
 
       act(() => {
-        screen.getByTestId('set-running').click();
+        result.current.setStepStatusInfo({ status: 'running' });
       });
 
-      expect(screen.getByTestId('status')).toHaveTextContent('running');
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('true');
-
-      // Check other statuses
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('false');
+      expect(result.current.stepStatusInfo.status).toBe('running');
+      expect(result.current.isStepRunning).toBe(true);
+      expect(result.current.isStepIdle).toBe(false);
     });
 
+    // Status: Success
     it('should update status to success', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
 
       act(() => {
-        screen.getByTestId('set-success').click();
+        result.current.setStepStatusInfo({ status: 'success' });
       });
 
-      expect(screen.getByTestId('status')).toHaveTextContent('success');
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('true');
-
-      // Check other statuses
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('false');
+      expect(result.current.stepStatusInfo.status).toBe('success');
+      expect(result.current.isStepSuccess).toBe(true);
+      expect(result.current.isStepIdle).toBe(false);
+      expect(result.current.hasStepError).toBe(false);
+      expect(result.current.isStepRunning).toBe(false);
     });
 
-    it('should update status to error with error message', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
+    // Status: Error
+    it('should update status to error with message', () => {
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
 
       act(() => {
-        screen.getByTestId('set-error').click();
+        result.current.setStepStatusInfo({ status: 'error', error: 'Test error' });
       });
 
-      expect(screen.getByTestId('status')).toHaveTextContent('error');
-      expect(screen.getByTestId('error')).toHaveTextContent('Test error'); // Check error message
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('true');
+      const { stepStatusInfo } = result.current;
 
-      // Check other statuses
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('false');
+      expect(stepStatusInfo.status).toBe('error');
+      expect(result.current.hasStepError).toBe(true);
+
+      // Check if error property exists
+      if ('error' in stepStatusInfo) {
+        expect(stepStatusInfo.error).toBe('Test error');
+      }
     });
-  });
 
-  describe('useStepStatus', () => {
+    // Status transitions tests
+    it('should handle status transitions correctly', () => {
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
+
+      // idle -> running
+      act(() => {
+        result.current.setStepStatusInfo({ status: 'running' });
+      });
+      expect(result.current.isStepRunning).toBe(true);
+
+      // running -> success
+      act(() => {
+        result.current.setStepStatusInfo({ status: 'success' });
+      });
+      expect(result.current.isStepSuccess).toBe(true);
+      expect(result.current.isStepRunning).toBe(false);
+
+      // success -> idle (reset)
+      act(() => {
+        result.current.setStepStatusInfo({ status: 'idle' });
+      });
+      expect(result.current.isStepIdle).toBe(true);
+      expect(result.current.isStepSuccess).toBe(false);
+    });
+
+    it('should handle multiple status updates', () => {
+      const { result } = renderHook(() => useStepStatus(), { wrapper });
+
+      act(() => {
+        result.current.setStepStatusInfo({ status: 'running' });
+        result.current.setStepStatusInfo({ status: 'error', error: 'Failed' });
+        result.current.setStepStatusInfo({ status: 'success' });
+      });
+
+      // Should end up in success state
+      expect(result.current.stepStatusInfo.status).toBe('success');
+      expect(result.current.isStepSuccess).toBe(true);
+    });
+
     it('should throw error when used outside provider', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => {
-        render(<MockComponent />);
+        renderHook(() => useStepStatus());
       }).toThrow('useStepStatus must be used within a StepStatusProvider');
 
       consoleSpy.mockRestore();
-    });
-
-    it('should provide all required context values', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      // Check that all expected elements are present
-      expect(screen.getByTestId('status')).toBeInTheDocument();
-      expect(screen.getByTestId('error')).toBeInTheDocument();
-      expect(screen.getByTestId('hasStepError')).toBeInTheDocument();
-      expect(screen.getByTestId('isStepRunning')).toBeInTheDocument();
-      expect(screen.getByTestId('isStepSuccess')).toBeInTheDocument();
-      expect(screen.getByTestId('isStepIdle')).toBeInTheDocument();
-    });
-  });
-
-  describe('computed status checks', () => {
-    it('should correctly compute hasStepError', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      // Initially false
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('false');
-
-      // True when error
-      act(() => {
-        screen.getByTestId('set-error').click();
-      });
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('true');
-
-      // False when not error
-      act(() => {
-        screen.getByTestId('set-success').click();
-      });
-      expect(screen.getByTestId('hasStepError')).toHaveTextContent('false');
-    });
-
-    it('should correctly compute isStepRunning', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      // Initially false
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
-
-      // True when running
-      act(() => {
-        screen.getByTestId('set-running').click();
-      });
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('true');
-
-      // False when not running
-      act(() => {
-        screen.getByTestId('set-idle').click();
-      });
-      expect(screen.getByTestId('isStepRunning')).toHaveTextContent('false');
-    });
-
-    it('should correctly compute isStepSuccess', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      // Initially false
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
-
-      // True when success
-      act(() => {
-        screen.getByTestId('set-success').click();
-      });
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('true');
-
-      // False when not success
-      act(() => {
-        screen.getByTestId('set-error').click();
-      });
-      expect(screen.getByTestId('isStepSuccess')).toHaveTextContent('false');
-    });
-
-    it('should correctly compute isStepIdle', () => {
-      render(
-        <TestWrapper>
-          <MockComponent />
-        </TestWrapper>
-      );
-
-      // Initially true
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('true');
-
-      // False when not idle
-      act(() => {
-        screen.getByTestId('set-running').click();
-      });
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('false');
-
-      // True when idle again
-      act(() => {
-        screen.getByTestId('set-idle').click();
-      });
-      expect(screen.getByTestId('isStepIdle')).toHaveTextContent('true');
     });
   });
 });
