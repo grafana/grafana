@@ -128,7 +128,7 @@ Following is a list of configuration options for Graphite.
 
 Pass along additional information and metadata about the request or response.
 
-- **Header** - Add a custom header. This allows custom headers to be passed based on the needs of your Prometheus instance.
+- **Header** - Add a custom header. This allows custom headers to be passed based on the needs of your Graphite instance.
 - **Value** - The value of the header.
 
 **Graphite details:**

@@ -95,9 +95,7 @@ This query returns all server tag values from series where the `server` tag matc
 
 For details, refer to the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
-### Tag expression example
-
-**Using regex formatting and the Equal Tilde operator, `=~`:**
+**Using regular expression formatting and the equal tilde operator `=~`:**
 
 ```
 server=~${servers:regex}
@@ -115,7 +113,7 @@ When using multi-value variables in tag queries, append `${var:regex}` to the va
 tag_values(server, app=~${apps:regex})
 ```
 
-The query filters the results to only include series where the app tag matches the selected values in $`{apps}`, formatted as a regular expression. `=~` is the regular expression operator
+This query returns only series where the app tag matches the selected values in $`{apps}`, formatted as a regular expression. `=~` is the regular expression operator
 
 Non-tag queries use the default `glob` formatting for multi-value variables.
 
@@ -160,7 +158,7 @@ The following table illustrates the difference between expanded and non-expanded
 | `*.servers.*.cpu`      | `cpu`          | `expand(*.servers.*.cpu)` | `prod.servers.001.cpu`, `prod.servers.002.cpu`, `test.servers.001.cpu` |
 
 {{% admonition type="note" %}}
-A non-expanded query behaves similarly to an expanded query, but only returns the final segment of each matched metric.
+A non-expanded query query works like an expanded query but returns only the final segment of each matched metric.
 {{% /admonition %}}
 
 Grafana also supports **nested variables**, which allow you to reference other variables in a query.
