@@ -1518,6 +1518,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
@@ -1795,7 +1799,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when to only send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },

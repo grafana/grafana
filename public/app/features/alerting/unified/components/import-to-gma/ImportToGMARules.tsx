@@ -31,6 +31,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
+import { NeedHelpInfo } from '../rule-editor/NeedHelpInfo';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
@@ -449,7 +450,22 @@ function DataSourceField() {
 
   return (
     <Field
-      label={t('alerting.import-to-gma.datasource.label', 'Data source')}
+      label={
+        <Stack direction="row" gap={1}>
+          <Text variant="bodySmall" color="secondary">
+            {t('alerting.import-to-gma.datasource.label', 'Data source')}
+          </Text>
+          <NeedHelpInfo
+            externalLink={'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/'}
+            linkText={`Read importing to Grafana alerting`}
+            contentText={t(
+              'alerting.import-to-gma.datasource.help-info.content',
+              'The dropdown only displays Mimir or Loki data sources that have the ruler API available.'
+            )}
+            title={t('alerting.import-to-gma.datasource.help-info.title', 'Data source')}
+          />
+        </Stack>
+      }
       invalid={!!errors.selectedDatasourceName}
       error={errors.selectedDatasourceName?.message}
       htmlFor="datasource-picker"
