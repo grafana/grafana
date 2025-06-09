@@ -66,7 +66,7 @@ export function useProcessedRows(
     panelPaddingHeight,
   }: ProcessedRowsOptions
 ): TableFiltersAndSort {
-  // TODO: initial filter?
+  // TODO: allow persisted filter selection via url
   const [filter, setFilter] = useState<FilterType>({});
   const filterValues = useMemo(() => Object.entries(filter), [filter]);
 
@@ -89,7 +89,7 @@ export function useProcessedRows(
     [filterValues]
   );
 
-  // TODO: initial page state?
+  // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
@@ -151,6 +151,8 @@ export function useProcessedRows(
     return filteredRows.slice().sort(compareRows);
   }, [filteredRows, sortColumns, columnTypes, hasNestedFrames]);
 
+  // the number of rows after filtering and sorting, but before paginating. this is the "true"
+  // total number of rows which the table may render.
   const numRows = useMemo(() => sortedRows.length, [sortedRows.length]);
 
   // using dimensions of the panel, calculate pagination parameters
