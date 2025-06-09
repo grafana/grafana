@@ -59,9 +59,6 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		return nil, nil
 	}
 
-	// mock
-	s.BuildDate = time.Time{}.UTC()
-
 	// If the build date is less than 9 months old, it's supported
 	if s.BuildDate.After(time.Now().AddDate(0, -9, 0)) {
 		return nil, nil
