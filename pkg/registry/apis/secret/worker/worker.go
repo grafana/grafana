@@ -85,7 +85,7 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 				return ctx.Err()
 			}
 
-			if err := w.receiveAndProcessMessages(ctx); err != nil {
+			if err := w.ReceiveAndProcessMessages(ctx); err != nil {
 				logging.FromContext(ctx).Error("receiving outbox messages", "err", err.Error())
 			}
 		}
@@ -93,7 +93,7 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 }
 
 // TODO: don't rollback every message when a single error happens
-func (w *Worker) receiveAndProcessMessages(ctx context.Context) error {
+func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 	messageIDs := make([]string, 0)
 
 	txErr := w.database.Transaction(ctx, func(ctx context.Context) error {
