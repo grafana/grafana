@@ -44,21 +44,3 @@ export function esmOutput(pkg, pkgName) {
     preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
   };
 }
-
-// Copy plugin settings for copying type declarations to both esm and cjs output directories.
-export const copyTypeDeclarationsConfig = {
-  hook: 'writeBundle',
-  targets: [
-    {
-      src: 'compiled/**/*.d.ts',
-      dest: 'dist/esm',
-      rename: (name) => `${name}.mts`,
-    },
-    {
-      src: 'compiled/**/*.d.ts',
-      dest: 'dist/cjs',
-      rename: (name) => `${name}.cts`,
-    },
-  ],
-  flatten: false,
-};
