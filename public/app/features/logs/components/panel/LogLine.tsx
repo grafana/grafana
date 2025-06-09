@@ -215,7 +215,7 @@ const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: Lo
       {displayedFields.length > 0 ? (
         displayedFields.map((field) =>
           field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} key={field} />
+            <LogLineBody log={log} key={field} styles={styles} />
           ) : (
             <span className="field" title={field} key={field}>
               {log.getDisplayedFieldValue(field)}
@@ -223,7 +223,7 @@ const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: Lo
           )
         )
       ) : (
-        <LogLineBody log={log} />
+        <LogLineBody log={log} styles={styles} />
       )}
     </>
   );
@@ -231,13 +231,15 @@ const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: Lo
 
 Log.displayName = 'Log';
 
-const LogLineBody = ({ log }: { log: LogListModel }) => {
+const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
   const { syntaxHighlighting } = useLogListContext();
 
   if (log.hasAnsi) {
     const needsHighlighter =
       log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
-    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
+    const highlight = needsHighlighter
+      ? { searchWords: log.searchWords ?? [], highlightClassName: styles.matchHighLight }
+      : undefined;
     return (
       <span className="field no-highlighting">
         <LogMessageAnsi value={log.body} highlight={highlight} />
@@ -328,6 +330,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '& .no-highlighting': {
         color: theme.colors.text.primary,
       },
+    }),
+    matchHighLight: css({
+      color: theme.components.textHighlight.text,
+      backgroundColor: theme.components.textHighlight.background,
     }),
     fontSizeSmall: css({
       fontSize: theme.typography.bodySmall.fontSize,
