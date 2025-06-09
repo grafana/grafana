@@ -2,12 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 
 import { Field, FieldType } from '@grafana/data';
 
-import { TableSortByFieldState } from '../types';
-
-import { useTableFiltersAndSorts } from './hooks';
+import { useProcessedRows, ProcessedRowsOptions } from './hooks';
 
 describe('TableNG hooks', () => {
-  function setupHook(initialSortBy: TableSortByFieldState[] = []) {
+  function setupHook(options: Partial<ProcessedRowsOptions> = {}) {
     // Mock data for testing
     const fields: Field[] = [
       {
@@ -40,17 +38,18 @@ describe('TableNG hooks', () => {
     ];
 
     // Mock the hooks
-    return renderHook(() => useTableFiltersAndSorts(rows, fields, initialSortBy));
+    return renderHook(() => useProcessedRows(rows, fields, { height: 300, width: 800, ...options }));
   }
 
   it('should correctly initialize with provided fields and rows', () => {
     const { result } = setupHook();
     expect(result.current.renderedRows[0].name).toBe('Alice');
+    expect(result.current.numRows).toBe(3);
   });
 
   describe('sorting', () => {
     it('should correctly set up the table with an initial sort', () => {
-      const { result } = setupHook([{ displayName: 'age', desc: false }]);
+      const { result } = setupHook({ initialSortBy: [{ displayName: 'age', desc: false }] });
 
       // Initial state checks
       expect(result.current.sortColumns).toEqual([{ columnKey: 'age', direction: 'ASC' }]);
@@ -59,7 +58,7 @@ describe('TableNG hooks', () => {
     });
 
     it('should change the sort on setSortColumns', () => {
-      const { result } = setupHook([{ displayName: 'age', desc: false }]);
+      const { result } = setupHook({ initialSortBy: [{ displayName: 'age', desc: false }] });
 
       expect(result.current.renderedRows[0].name).toBe('Bob');
 
@@ -107,6 +106,48 @@ describe('TableNG hooks', () => {
       });
 
       expect(result.current.renderedRows.length).toBe(3);
+    });
+  });
+
+  describe('pagination', () => {
+    it('should return defaults for pagination values when pagination is disabled', () => {
+      const { result } = setupHook();
+      expect(result.current.page).toBe(-1);
+      expect(result.current.numRows).toBe(3);
+      expect(result.current.rowsPerPage).toBe(0);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.renderedRows.length).toBe(3);
+    });
+
+    it('should handle pagination correctly', () => {
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      const { result } = setupHook({
+        height: 100,
+        enablePagination: true,
+        headerCellHeight: 16,
+        paginationHeight: 20,
+        panelPaddingHeight: 16,
+        defaultRowHeight: 16,
+      });
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.numRows).toBe(3);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.renderedRows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.numRows).toBe(3);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.renderedRows.length).toBe(1);
     });
   });
 });
