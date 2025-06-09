@@ -106,7 +106,9 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        {(isV2Dashboard || exportMode === ExportMode.Classic || (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
+        {(isV2Dashboard ||
+          exportMode === ExportMode.Classic ||
+          (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />

@@ -137,7 +137,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       };
     }
 
-
     if (exportMode === ExportMode.V1Resource) {
       // Check if source is V2 and auto-transform to V1
       if (isDashboardV2Spec(origDashboard) && initialSaveModelVersion === 'v2') {
