@@ -387,9 +387,9 @@ func setup(t *testing.T, opts ...func(*setupConfig)) sut {
 	)
 	require.NoError(t, err)
 
-	secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+	secureValueService := service.ProvideSecureValueService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
 
-	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
+	secureValueRest := reststorage.NewSecureValueRest(secureValueService, utils.ResourceInfo{})
 
 	worker, err := NewWorker(setupCfg.workerCfg,
 		database,

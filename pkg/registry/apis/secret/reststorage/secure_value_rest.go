@@ -40,17 +40,17 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	secretService  *service.SecretService
-	resource       utils.ResourceInfo
-	tableConverter rest.TableConvertor
+	secureValueService *service.SecureValueService
+	resource           utils.ResourceInfo
+	tableConverter     rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(secretService *service.SecretService, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(secureValueService *service.SecureValueService, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{
-		secretService:  secretService,
-		resource:       resource,
-		tableConverter: resource.TableConverter(),
+		secureValueService: secureValueService,
+		resource:           resource,
+		tableConverter:     resource.TableConverter(),
 	}
 }
 
@@ -89,7 +89,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace))
+	secureValueList, err := s.secureValueService.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
@@ -127,7 +127,7 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.secretService.Read(ctx, xkube.Namespace(namespace), name)
+	sv, err := s.secureValueService.Read(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -160,7 +160,7 @@ func (s *SecureValueRest) Create(
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv, user.GetUID())
+	createdSecureValueMetadata, err := s.secureValueService.Create(ctx, sv, user.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value %+w", err)
 	}
@@ -208,7 +208,7 @@ func (s *SecureValueRest) Update(
 		return nil, false, fmt.Errorf("missing auth info in context")
 	}
 
-	updatedSecureValueMetadata, _, err := s.secretService.Update(ctx, newSecureValue, user.GetUID())
+	updatedSecureValueMetadata, _, err := s.secureValueService.Update(ctx, newSecureValue, user.GetUID())
 	if err != nil {
 		return updatedSecureValueMetadata, false, fmt.Errorf("updating secure value metadata: %+w", err)
 	}
@@ -223,7 +223,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	updatedSv, err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name)
+	updatedSv, err := s.secureValueService.Delete(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, false, s.resource.NewNotFound(name)
