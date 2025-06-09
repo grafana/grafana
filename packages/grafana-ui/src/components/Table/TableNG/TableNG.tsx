@@ -18,7 +18,7 @@ import {
   RenderRowProps,
   Row,
 } from 'react-data-grid';
-// import { useMeasure } from 'react-use';
+import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
@@ -38,15 +38,15 @@ import { useStyles2, useTheme2 } from '../../../themes';
 import { /* t, */ Trans } from '../../../utils/i18n';
 // import { ContextMenu } from '../../ContextMenu/ContextMenu';
 // import { MenuItem } from '../../Menu/MenuItem';
-// import { Pagination } from '../../Pagination/Pagination';
-import { PanelContext /* , usePanelContext */, usePanelContext } from '../../PanelChrome';
+import { Pagination } from '../../Pagination/Pagination';
+import { PanelContext, usePanelContext } from '../../PanelChrome';
 // import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
-import { useTableFiltersAndSorts } from './hooks';
+import { useProcessedRows } from './hooks';
 import {
   TableNGProps,
   // FilterType,
@@ -63,6 +63,7 @@ import {
   frameToRecords,
   getCellColors,
   getCellHeightCalculator,
+  getDefaultRowHeight,
   // getComparator,
   // getDefaultRowHeight,
   // getFooterItemNG,
@@ -76,23 +77,78 @@ import {
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles2);
   const panelContext = usePanelContext();
 
-  const { data, initialSortBy, onColumnResize, onSortByChange, showTypeIcons, width } = props;
+  const {
+    cellHeight,
+    data,
+    enablePagination,
+    enableSharedCrosshair,
+    footerOptions,
+    height,
+    initialSortBy,
+    noHeader,
+    onColumnResize,
+    onSortByChange,
+    showTypeIcons,
+    width,
+  } = props;
+
   const gridHandle = useRef<DataGridHandle>(null);
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
+  const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
-  // TODO: construct a memoized represenation of the data to use throughout,
-  // which shields us from changes to the fieldOverrides.
+  const hasHeader = !noHeader;
+  const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
+
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
+
+  const headerCellHeight = useMemo(() => {
+    let h = TABLE.MAX_CELL_HEIGHT;
+    if (hasHeader) {
+      h = 0;
+    } else {
+      for (const key in headerCellRefs.current) {
+        h = headerCellRefs.current[key].getBoundingClientRect().height;
+        break;
+      }
+    }
+    return h;
+  }, [hasHeader, headerCellRefs]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
-  const { filter, setFilter, crossFilterOrder, crossFilterRows, renderedRows, setSortColumns, sortColumns } =
-    useTableFiltersAndSorts(rows, data.fields, initialSortBy);
+  const {
+    renderedRows,
+    numRows,
+    filter,
+    setFilter,
+    crossFilterOrder,
+    crossFilterRows,
+    sortColumns,
+    setSortColumns,
+    page,
+    setPage,
+    numPages,
+    pageRangeStart,
+    pageRangeEnd,
+    smallPagination
+  } = useProcessedRows(rows, data.fields, {
+    height,
+    width,
+    initialSortBy,
+    enablePagination,
+    paginationHeight,
+    hasFooter,
+    defaultRowHeight,
+    panelPaddingHeight,
+    headerCellHeight
+  });
 
   // const [expandedRows]?
 
-  // const [page, setPage] = useState(0);
   // const [scrollPos, setScrollPos] = useState(0);
 
   // vt scrollbar accounting for column auto-sizing
@@ -113,18 +169,18 @@ export function TableNG(props: TableNGProps) {
           field.type === FieldType.number
             ? styles.cellRight
             : () => {
-                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
-                switch (cellType) {
-                  case TableCellDisplayMode.Auto:
-                  case TableCellDisplayMode.ColorBackground:
-                  case TableCellDisplayMode.ColorBackgroundSolid:
-                  case TableCellDisplayMode.ColorText:
-                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
-                  default:
-                    return null;
-                }
-              },
+              switch (cellType) {
+                case TableCellDisplayMode.Auto:
+                case TableCellDisplayMode.ColorBackground:
+                case TableCellDisplayMode.ColorBackgroundSolid:
+                case TableCellDisplayMode.ColorText:
+                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
+                default:
+                  return null;
+              }
+            },
         renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
           <HeaderCell
             column={column}
@@ -168,30 +224,61 @@ export function TableNG(props: TableNGProps) {
   // todo: don't re-init this on each memoizedData change, only schema/config changes
   const rowHeight = useRowHeight(columns, data, hasSubTable);
 
+  // we need to have variables with these exact names for the localization to work properly
+  const itemsRangeStart = pageRangeStart;
+  const displayedEnd = pageRangeEnd;
+
   return (
-    <DataGrid<TableRow, TableSummaryRow>
-      className={styles.grid}
-      ref={gridHandle}
-      columns={columns}
-      rows={renderedRows}
-      defaultColumnOptions={{
-        minWidth: 50,
-        resizable: true,
-        sortable: true,
-        // draggable: true,
-      }}
-      onColumnWidthsChange={(widths) => {
-        for (const [key, entry] of widths) {
-          onColumnResize?.(key, entry.width);
-        }
-      }}
-      sortColumns={sortColumns}
-      rowHeight={rowHeight}
-      renderers={{
-        renderRow: (key, rowProps) =>
-          myRowRenderer(key, rowProps, [], panelContext, data, props.enableSharedCrosshair ?? false),
-      }}
-    />
+    <>
+      <DataGrid<TableRow, TableSummaryRow>
+        className={styles.grid}
+        ref={gridHandle}
+        columns={columns}
+        rows={renderedRows}
+        defaultColumnOptions={{
+          minWidth: 50,
+          resizable: true,
+          sortable: true,
+          // draggable: true,
+        }}
+        onColumnWidthsChange={(widths) => {
+          for (const [key, entry] of widths) {
+            onColumnResize?.(key, entry.width);
+          }
+        }}
+        sortColumns={sortColumns}
+        rowHeight={rowHeight}
+        renderers={{
+          renderRow: (key, rowProps) =>
+            myRowRenderer(key, rowProps, [], panelContext, data, enableSharedCrosshair ?? false),
+        }}
+      />
+      {
+        enablePagination && (
+          <div /*className={styles.paginationContainer}*/ ref={paginationWrapperRef}>
+            <Pagination
+              className="table-ng-pagination"
+              currentPage={page + 1}
+              numberOfPages={numPages}
+              showSmallVersion={smallPagination}
+              onNavigate={(toPage) => {
+                setPage(toPage - 1);
+              }}
+            />
+            {!smallPagination && (
+              <div /*className={styles.paginationSummary}*/>
+                {/* TODO: once old table is deprecated, we can update the localiziation
+                    string with the more consistent variable names */}
+                <Trans i18nKey="grafana-ui.table.pagination-summary">
+                  {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+                </Trans>
+              </div>
+            )}
+          </div>
+        )
+      }
+    </>
+
   );
 }
 
@@ -827,8 +914,6 @@ TODO:
 
 styling
 value formatting
-sorting
-filtering
 footer reducers
 hidden
 overlay/expand on hover, active line and cell styling
