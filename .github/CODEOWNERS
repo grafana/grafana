@@ -806,6 +806,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
+/.github/workflows/scripts/create-security-branch @grafana/grafana-developer-enablement-squad
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-verification.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
