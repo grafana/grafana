@@ -18,7 +18,14 @@ interface Props {
 }
 
 export const LogListSearch = ({ listRef, logs, width }: Props) => {
-  const { hideSearch, setMatchingUids, setSearch: setContextSearch, searchVisible } = useLogListSearchContext();
+  const {
+    hideSearch,
+    filterLogs,
+    setMatchingUids,
+    setSearch: setContextSearch,
+    searchVisible,
+    toggleFilterLogs,
+  } = useLogListSearchContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const styles = useStyles2(getStyles);
@@ -107,6 +114,13 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
         name="angle-down"
         aria-label={t('logs.log-list-search.next', 'Next result')}
       />
+      <IconButton
+        onClick={toggleFilterLogs}
+        disabled={!matches || !matches.length}
+        className={filterLogs ? styles.controlButtonActive : undefined}
+        name="filter"
+        aria-label={t('logs.log-list-search.filter', 'Filter matching logs')}
+      />
       <IconButton onClick={hideSearch} name="times" aria-label={t('logs.log-list-search.close', 'Close search')} />
     </div>
   );
@@ -123,6 +137,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     left: theme.spacing(1),
     zIndex: theme.zIndex.modal,
     overflow: 'hidden',
+  }),
+  controlButtonActive: css({
+    '&:after': {
+      display: 'block',
+      content: '" "',
+      position: 'absolute',
+      height: 2,
+      borderRadius: theme.shape.radius.default,
+      bottom: 2,
+      backgroundImage: theme.colors.gradients.brandHorizontal,
+      width: '95%',
+      opacity: 1,
+    },
   }),
 });
 
