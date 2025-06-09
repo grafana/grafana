@@ -1,4 +1,4 @@
-package configchecks
+package instancechecks
 
 import (
 	"context"
@@ -59,7 +59,7 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		return nil, nil
 	}
 
-	// If the build date is less than 9 months ago, it's supported
+	// If the build date is less than 9 months old, it's supported
 	if s.BuildDate.After(time.Now().AddDate(0, -9, 0)) {
 		return nil, nil
 	}
@@ -70,8 +70,9 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		isOutOfSupport = true
 	} else {
 		// In other cases, we need to check if the version is out of support.
-		// Minor versions are generally supported for 9 months,
-		// but the last minor version for a major version is supported for 15 months.
+		// Minor versions are generally supported for 9 months but the last
+		// minor version for a major version is supported for 15 months.
+		// https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/#what-to-know-about-version-support
 
 		// Parse the current version using semver
 		version, err := semver.NewVersion(s.GrafanaVersion)

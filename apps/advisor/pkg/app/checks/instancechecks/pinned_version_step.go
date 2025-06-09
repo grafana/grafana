@@ -1,4 +1,4 @@
-package configchecks
+package instancechecks
 
 import (
 	"context"
@@ -46,9 +46,13 @@ func (s *pinnedVersionStep) Run(ctx context.Context, log logging.Logger, _ *advi
 		return nil, nil
 	}
 
-	if s.StackID == "" || s.BuildBranch == "HEAD" {
-		// Not running in cloud or not a pinned version
-		// Pinned versions have a custom build branch name
+	if s.StackID == "" {
+		// Not running in cloud
+		return nil, nil
+	}
+
+	if s.BuildBranch == "HEAD" {
+		// Not a pinned version
 		return nil, nil
 	}
 

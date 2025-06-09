@@ -1,4 +1,4 @@
-package configchecks
+package instancechecks
 
 import (
 	"context"
