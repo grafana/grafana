@@ -11,8 +11,6 @@ describe('Dashboard edit - Group By variables', () => {
   });
 
   it('can add a new group by variable', () => {
-    e2e.pages.Dashboards.visit();
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
