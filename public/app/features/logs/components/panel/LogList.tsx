@@ -30,6 +30,7 @@ import { LogLineDetails } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
+import { LogListSearch } from './LogListSearch';
 import { preProcessLogs, LogListModel } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
@@ -406,6 +407,7 @@ const LogListComponent = ({
             onDismiss={onDisableCancel}
           />
         )}
+        <LogListSearch logs={processedLogs} listRef={listRef.current} width={widthRef.current} />
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
@@ -475,8 +477,8 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
       minWidth: theme.spacing(35),
     }),
     logListWrapper: css({
-      width: '100%',
       position: 'relative',
+      width: '100%',
     }),
     shortcut: css({
       display: 'inline-flex',
