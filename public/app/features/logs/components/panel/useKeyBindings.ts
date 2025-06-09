@@ -2,12 +2,16 @@ import { useEffect } from 'react';
 
 import { mousetrap } from 'app/core/services/mousetrap';
 
+import { useLogListContext } from './LogListContext';
+
 export const useKeyBindings = () => {
+  const { showSearch } = useLogListContext();
+
   useEffect(() => {
     mousetrap.bind(
       'ctrl+f',
       () => {
-        console.log('search');
+        showSearch();
         return true;
       },
       'keydown'
@@ -16,7 +20,7 @@ export const useKeyBindings = () => {
     mousetrap.bind(
       'meta+f',
       () => {
-        console.log('search');
+        showSearch();
         return true;
       },
       'keydown'
