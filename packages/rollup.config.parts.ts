@@ -1,7 +1,6 @@
 // This file contains the common parts of the rollup configuration that are shared across multiple packages.
 import nodeResolve from '@rollup/plugin-node-resolve';
-import { dirname, join, resolve } from 'node:path';
-import dts from 'rollup-plugin-dts';
+import { dirname, resolve } from 'node:path';
 import esbuild from 'rollup-plugin-esbuild';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 
@@ -46,21 +45,20 @@ export function esmOutput(pkg, pkgName) {
   };
 }
 
-// Generate a rollup configuration for rolling up typescript declaration files into a single file.
-export function tsDeclarationOutput(pkg, overrides = {}) {
-  return {
-    input: './compiled/index.d.ts',
-    plugins: [dts()],
-    output: [
-      {
-        file: pkg.publishConfig.types,
-        format: 'cjs',
-      },
-      {
-        file: join(dirname(pkg.publishConfig.module), 'index.d.mts'),
-        format: 'es',
-      },
-    ],
-    ...overrides,
-  };
-}
+// Copy plugin settings for copying type declarations to both esm and cjs output directories.
+export const copyTypeDeclarationsConfig = {
+  hook: 'writeBundle',
+  targets: [
+    {
+      src: 'compiled/**/*.d.ts',
+      dest: 'dist/esm',
+      rename: (name) => `${name}.mts`,
+    },
+    {
+      src: 'compiled/**/*.d.ts',
+      dest: 'dist/cjs',
+      rename: (name) => `${name}.cts`,
+    },
+  ],
+  flatten: false,
+};
