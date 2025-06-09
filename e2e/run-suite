@@ -153,6 +153,7 @@ case "$1" in
       "dashboard-new-layouts")
       env[kubernetesDashboards]=true
       env[dashboardNewLayouts]=true
+      env[groupByVariable]=true
       cypressConfig[specPattern]=$rootForDashboardNewLayouts/$testFilesForSingleSuite
       cypressConfig[video]=false
           case "$2" in
