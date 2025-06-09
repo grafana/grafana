@@ -48,7 +48,7 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
     if (!matches || currentResult === null) {
       return;
     }
-    const next = currentResult <= matches.length - 1 ? currentResult + 1 : 0;
+    const next = currentResult < matches.length - 1 ? currentResult + 1 : 0;
     setCurrentResult(next);
     listRef?.scrollToItem(matches[next], 'center');
   }, [currentResult, listRef, matches]);
@@ -81,7 +81,8 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
     return null;
   }
 
-  const suffix = search !== '' ? <>{`${currentResult ? currentResult + 1 : 0}/${matches?.length ?? 0}`}</> : undefined;
+  const suffix =
+    search !== '' ? <>{`${currentResult !== null ? currentResult + 1 : 0}/${matches?.length ?? 0}`}</> : undefined;
 
   return (
     <div className={styles.container} style={{ width: width - 24 }}>
