@@ -27,4 +27,18 @@ describe('KeybindingSet', () => {
     expect(mousetrap.unbind).toHaveBeenCalledTimes(1);
     expect(mousetrap.unbind).toHaveBeenCalledWith('a b', 'keydown');
   });
+
+  test('Binds and unbinds keys of a certain type', () => {
+    keyBindingSet.addBinding({
+      key: 'a b',
+      onTrigger: () => {},
+      type: 'keypress',
+    });
+
+    expect(mousetrap.bind).toHaveBeenCalledWith('a b', expect.any(Function), 'keypress');
+
+    keyBindingSet.removeAll();
+
+    expect(mousetrap.unbind).toHaveBeenCalledWith('a b', 'keypress');
+  });
 });
