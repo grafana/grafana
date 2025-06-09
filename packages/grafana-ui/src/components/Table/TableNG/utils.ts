@@ -429,12 +429,13 @@ export const handleSort = (
   columnKey: string,
   direction: SortDirection,
   isMultiSort: boolean,
-  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>,
-  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>,
+  sortColumns: SortColumn[],
+  onSortByChange?: (sortBy: TableSortByFieldState[]) => void
 ) => {
   let currentSortColumn: SortColumn | undefined;
 
-  const updatedSortColumns = sortColumnsRef.current.filter((column) => {
+  const updatedSortColumns = sortColumns.filter((column) => {
     const isCurrentColumn = column.columnKey === columnKey;
     if (isCurrentColumn) {
       currentSortColumn = column;
@@ -445,16 +446,22 @@ export const handleSort = (
   // sorted column exists and is descending -> remove it to reset sorting
   if (currentSortColumn && currentSortColumn.direction === 'DESC') {
     setSortColumns(updatedSortColumns);
-    sortColumnsRef.current = updatedSortColumns;
   } else {
     // new sort column or changed direction
     if (isMultiSort) {
       setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
     } else {
       setSortColumns([{ columnKey, direction }]);
-      sortColumnsRef.current = [{ columnKey, direction }];
     }
+  }
+
+  // Update panel context with the new sort order
+  if (typeof onSortByChange === "function") {
+    const sortByFields = sortColumns.map(({ columnKey, direction }) => ({
+      displayName: columnKey,
+      desc: direction === 'DESC',
+    }));
+    onSortByChange(sortByFields);
   }
 };
 
@@ -504,8 +511,8 @@ export interface MapFrameToGridOptions extends TableNGProps {
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
-  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
-  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+  sortColumns: SortColumn[];
   styles: { cell: string; cellWrapped: string; dataGrid: string };
   textWraps: Record<string, boolean>;
   theme: GrafanaTheme2;

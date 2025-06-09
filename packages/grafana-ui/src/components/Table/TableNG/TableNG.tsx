@@ -11,7 +11,13 @@ import {
   // SetStateAction,
   RefObject,
 } from 'react';
-import { DataGrid, RenderCellProps, RenderRowProps, Row, /* SortColumn, */ DataGridHandle } from 'react-data-grid';
+import {
+  DataGrid,
+  DataGridHandle,
+  RenderCellProps,
+  RenderRowProps,
+  Row,
+} from 'react-data-grid';
 // import { useMeasure } from 'react-use';
 
 import {
@@ -73,21 +79,16 @@ export function TableNG(props: TableNGProps) {
   const styles = useStyles2(getStyles2);
   const panelContext = usePanelContext();
 
-  const { data, onColumnResize, width } = props;
+  const { data, initialSortBy, onColumnResize, onSortByChange, showTypeIcons, width } = props;
   const gridHandle = useRef<DataGridHandle>(null);
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
 
-  // the data passed into this component is always a new reference after column resizing,
-  // which leads to the memos in this component failing to work properly. we sinfully
-  // memoize based on the array length here.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // const memoizedData = useMemo(() => data, [data.length]);
+  // TODO: construct a memoized represenation of the data to use throughout,
+  // which shields us from changes to the fieldOverrides.
 
   const rows = useMemo(() => frameToRecords(data), [data]);
-  const { filter, setFilter, crossFilterOrder, crossFilterRows, renderedRows } = useTableFiltersAndSorts(
-    rows,
-    data.fields
-  );
+  const { filter, setFilter, crossFilterOrder, crossFilterRows, renderedRows, setSortColumns, sortColumns } =
+    useTableFiltersAndSorts(rows, data.fields, initialSortBy);
 
   // const [expandedRows]?
 
@@ -129,19 +130,9 @@ export function TableNG(props: TableNGProps) {
             column={column}
             rows={rows}
             field={field}
-            onSort={() => {}}
-            // onSort={(columnKey, direction, isMultiSort) => {
-            //   handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef);
-
-            //   // Update panel context with the new sort order
-            //   if (onSortByChange) {
-            //     const sortByFields = sortColumnsRef.current.map(({ columnKey, direction }) => ({
-            //       displayName: columnKey,
-            //       desc: direction === 'DESC',
-            //     }));
-            //     onSortByChange(sortByFields);
-            //   }
-            // }}
+            onSort={(columnKey, direction, isMultiSort) => {
+              handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
+            }}
             filter={filter}
             setFilter={setFilter}
             crossFilterOrder={crossFilterOrder}
@@ -150,7 +141,7 @@ export function TableNG(props: TableNGProps) {
             justifyContent={getTextAlign(field)}
             onColumnResize={onColumnResize}
             headerCellRefs={headerCellRefs}
-            showTypeIcons={props.showTypeIcons}
+            showTypeIcons={showTypeIcons}
           />
         ),
       })
@@ -162,11 +153,14 @@ export function TableNG(props: TableNGProps) {
     onColumnResize,
     data.fields,
     styles,
-    props.showTypeIcons,
+    showTypeIcons,
     filter,
     setFilter,
+    sortColumns,
+    setSortColumns,
     crossFilterOrder,
     crossFilterRows,
+    onSortByChange,
   ]);
 
   const hasSubTable = false;
@@ -191,6 +185,7 @@ export function TableNG(props: TableNGProps) {
           onColumnResize?.(key, entry.width);
         }
       }}
+      sortColumns={sortColumns}
       rowHeight={rowHeight}
       renderers={{
         renderRow: (key, rowProps) =>
@@ -233,7 +228,7 @@ export function mapFrameToDataGrid({
     setFilter,
     setIsInspecting,
     setSortColumns,
-    sortColumnsRef,
+    sortColumns,
     styles,
     theme,
     timeRange,
@@ -409,16 +404,7 @@ export function mapFrameToDataGrid({
           rows={rows}
           field={field}
           onSort={(columnKey, direction, isMultiSort) => {
-            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef);
-
-            // Update panel context with the new sort order
-            if (onSortByChange) {
-              const sortByFields = sortColumnsRef.current.map(({ columnKey, direction }) => ({
-                displayName: columnKey,
-                desc: direction === 'DESC',
-              }));
-              onSortByChange(sortByFields);
-            }
+            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
           }}
           direction={sortDirection}
           justifyContent={justifyColumnContent}
