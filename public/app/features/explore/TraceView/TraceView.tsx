@@ -16,6 +16,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -168,6 +169,7 @@ export function TraceView(props: Props) {
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const datasourceUid = datasource ? datasource?.uid : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
@@ -203,6 +205,7 @@ export function TraceView(props: Props) {
             trace={traceProp}
             traceToProfilesOptions={traceToProfilesOptions}
             datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
             spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}
@@ -226,7 +229,6 @@ export function TraceView(props: Props) {
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
@@ -283,7 +285,10 @@ function useFocusSpanLink(options: {
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
     const link: DataLink = {
-      title: 'Deep link to this span',
+      title: t(
+        'explore.use-focus-span-link.create-focus-span-link.link.title.deep-link-to-this-span',
+        'Deep link to this span'
+      ),
       url: '',
       internal: {
         datasourceUid: options.datasource?.uid!,

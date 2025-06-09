@@ -26,19 +26,21 @@ export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
         <span className={styles.scopesText}>
           <Trans i18nKey={'command-palette.scopes.selected-scopes-label'}>Scopes: </Trans>
         </span>
-        {treeScopes?.map((scope) => {
-          return (
-            <FilterPill
-              key={scope.scopeName}
-              selected={true}
-              icon={'times'}
-              label={scope.title}
-              onClick={() => {
-                toggleNode(scope);
-              }}
-            />
-          );
-        })}
+        <Stack wrap={'wrap'}>
+          {treeScopes?.map((scope) => {
+            return (
+              <FilterPill
+                key={scope.scopeName}
+                selected={true}
+                icon={'times'}
+                label={scope.title}
+                onClick={() => {
+                  toggleNode(scope);
+                }}
+              />
+            );
+          })}
+        </Stack>
       </Stack>
       {isDirty && (
         <Button
