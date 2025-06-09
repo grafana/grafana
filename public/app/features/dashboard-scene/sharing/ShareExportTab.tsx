@@ -15,6 +15,7 @@ import { ObjectMeta } from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -75,7 +76,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       exportMode,
     });
 
-    if (exportMode === ExportMode.Classic || exportMode === ExportMode.V2TransformedToV1) {
+    if (exportMode === ExportMode.Classic) {
       this.setState({
         isViewingYAML: false,
       });
@@ -117,7 +118,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       isDashboardV2Spec(origDashboard) &&
       'elements' in exportable &&
       initialSaveModelVersion === 'v2' &&
-      exportMode !== ExportMode.V2TransformedToV1
+      exportMode !== ExportMode.V1Resource
     ) {
       this.setState({
         exportMode: ExportMode.V2Resource,
@@ -136,44 +137,53 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       };
     }
 
-    if (exportMode === ExportMode.V2TransformedToV1) {
-      const spec = transformSceneToSaveModelSchemaV2(scene);
-      // transform now to v1
-      const metadata = getMetadata(scene, Boolean(isSharingExternally));
-      const spec1 = transformDashboardV2SpecToV1(spec, {
-        name: metadata.name ?? '',
-        generation: metadata.generation ?? 0,
-        resourceVersion: metadata.resourceVersion ?? '0',
-        creationTimestamp: metadata.creationTimestamp ?? '',
-      });
-
-      const oldModel = new DashboardModel(spec1, undefined, {
-        getVariablesFromState: () => {
-          return getVariablesCompatibility(window.__grafanaSceneContext);
-        },
-      });
-      const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : spec1;
-      return {
-        json: exportableV1,
-        hasLibraryPanels: undefined,
-        initialSaveModelVersion,
-      };
-    }
 
     if (exportMode === ExportMode.V1Resource) {
-      const spec = transformSceneToSaveModel(scene);
+      // Check if source is V2 and auto-transform to V1
+      if (isDashboardV2Spec(origDashboard) && initialSaveModelVersion === 'v2') {
+        const spec = transformSceneToSaveModelSchemaV2(scene);
+        const metadata = getMetadata(scene, Boolean(isSharingExternally));
+        const spec1 = transformDashboardV2SpecToV1(spec, {
+          name: metadata.name ?? '',
+          generation: metadata.generation ?? 0,
+          resourceVersion: metadata.resourceVersion ?? '0',
+          creationTimestamp: metadata.creationTimestamp ?? '',
+        });
 
-      return {
-        json: {
-          apiVersion: scene.serializer.apiVersion ?? '',
-          kind: 'Dashboard',
-          metadata,
-          spec,
-          status: {},
-        },
-        initialSaveModelVersion,
-        hasLibraryPanels: undefined,
-      };
+        const oldModel = new DashboardModel(spec1, undefined, {
+          getVariablesFromState: () => {
+            return getVariablesCompatibility(window.__grafanaSceneContext);
+          },
+        });
+        const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : spec1;
+        return {
+          json: {
+            // Forcing V1 version here to match export mode selection
+            apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
+            kind: 'Dashboard',
+            metadata,
+            spec: exportableV1,
+            status: {},
+          },
+          initialSaveModelVersion,
+          hasLibraryPanels: undefined,
+        };
+      } else {
+        // Source is already V1, export as-is
+        const spec = transformSceneToSaveModel(scene);
+        return {
+          json: {
+            // Forcing V1 version here to match export mode selection
+            apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
+            kind: 'Dashboard',
+            metadata,
+            spec,
+            status: {},
+          },
+          initialSaveModelVersion,
+          hasLibraryPanels: undefined,
+        };
+      }
     }
 
     if (exportMode === ExportMode.V2Resource) {

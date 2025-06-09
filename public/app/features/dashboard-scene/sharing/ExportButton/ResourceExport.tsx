@@ -12,7 +12,6 @@ export enum ExportMode {
   Classic = 'classic',
   V1Resource = 'v1-resource',
   V2Resource = 'v2-resource',
-  V2TransformedToV1 = 'v2-transformed-to-v1',
 }
 
 interface Props {
@@ -75,37 +74,39 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        {exportMode !== ExportMode.Classic && (
-          <>
-            <Stack alignItems="center">
-              <Label>{switchExportModeLabel}</Label>
-              <RadioButtonGroup
-                options={[
-                  { label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'), value: ExportMode.V2Resource },
-                  {
-                    label: t('dashboard-scene.resource-export.label.v2-transformed-to-v1', 'Transform V2 to Classic(V1)'),
-                    value: ExportMode.V2TransformedToV1,
-                  },
-                ]}
-                value={exportMode}
-                onChange={(value) => onExportModeChange(value)}
-              />
-            </Stack>
-
-            <Stack gap={1} alignItems="center">
-              <Label>{switchExportFormatLabel}</Label>
-              <RadioButtonGroup
-                options={[
-                  { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
-                  { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
-                ]}
-                value={isViewingYAML ? 'yaml' : 'json'}
-                onChange={onViewYAML}
-              />
-            </Stack>
-          </>
+        {initialSaveModelVersion === 'v2' && (
+          <Stack alignItems="center">
+            <Label>{switchExportModeLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                {
+                  label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
+                  value: ExportMode.V2Resource,
+                },
+                {
+                  label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
+                  value: ExportMode.V1Resource,
+                },
+              ]}
+              value={exportMode}
+              onChange={(value) => onExportModeChange(value)}
+            />
+          </Stack>
         )}
-        {(isV2Dashboard || exportMode === ExportMode.Classic) && (
+        {exportMode !== ExportMode.Classic && (
+          <Stack gap={1} alignItems="center">
+            <Label>{switchExportFormatLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
+                { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
+              ]}
+              value={isViewingYAML ? 'yaml' : 'json'}
+              onChange={onViewYAML}
+            />
+          </Stack>
+        )}
+        {(isV2Dashboard || exportMode === ExportMode.Classic || (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
