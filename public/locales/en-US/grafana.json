@@ -10008,6 +10008,7 @@
       "label-decrypters": "Decrypters:",
       "label-description": "Description:",
       "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
+      "label-modified": "Modified:",
       "label-uid": "ID:"
     },
     "mutation-error": {
