@@ -44,7 +44,6 @@ describe('ShareExportTab', () => {
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
 
-
     transformSceneToV1Spy = jest.spyOn(sceneToV1, 'transformSceneToSaveModel').mockReturnValue({
       title: 'Scene V1',
       uid: 'scene-v1-uid',
