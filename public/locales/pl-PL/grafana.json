@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Usuń",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1537,6 +1530,10 @@
         "title": "Potwierdź import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Źródło danych"
+        },
         "label": "Źródło danych",
         "required-message": "Wybierz źródło danych"
       },
@@ -1675,6 +1672,20 @@
         "new-recording-rule": "Nowa reguła rejestracji",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Działania dotyczące folderu",
+          "title": "Działania"
+        },
+        "export": {
+          "aria-label": "Eksportuj folder reguł",
+          "label": "Eksportuj folder reguł"
+        },
+        "view": {
+          "aria-label": "Wyświetl folder",
+          "label": "Wyświetl folder"
+        }
       },
       "no-prom-or-loki-rules": "Brak skonfigurowanych źródeł danych Prometheus lub Loki",
       "no-rules": "Nie znaleziono reguł.",
@@ -2349,7 +2360,6 @@
     "rule-group-action": {
       "details": "szczegóły grupy reguł",
       "edit": "edytuj grupę reguł",
-      "export-rules-folder": "Eksportuj folder reguł",
       "go-to-folder": "przejdź do folderu",
       "manage-permissions": "zarządzaj uprawnieniami"
     },
@@ -2378,11 +2388,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfiguruj",
       "draft-new-rule": "Zaprojektuj nową regułę",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Sprawdź konfigurację źródła danych. Czy źródło danych obsługuje API usługi Prometheus?",
         "title": "Nie można załadować reguł z tego źródła danych"
       },
       "empty-data-source": "",
+      "error-button": "Błąd",
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -2394,6 +2408,7 @@
         "new-badge": "Nowość!",
         "text": "Importuj do reguł zarządzanych przez usługę Grafana"
       },
+      "loading-more-groups": "",
       "more": "Więcej",
       "new-alert-rule": "Nowa reguła alertu",
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
@@ -2977,51 +2992,6 @@
       "no-query-editor": "Adnotacje nie są obsługiwane. To źródło danych musi wyeksportować QueryEditor",
       "test-annotation-query": "Testuj zapytanie dotyczące adnotacji",
       "title-query-result": "Wynik zapytania"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Szukaj kluczy"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Uwzględnij nieważne klucze"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Usuń klucz API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Wygasa",
-      "last-used-at": "Ostatnio używane",
-      "migrate-to-service-account": "Przeprowadź migrację do konta usługi",
-      "name": "Nazwa",
-      "role": "Rola"
-    },
-    "empty-state": {
-      "message": "Nie znaleziono kluczy API"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nie znaleziono kluczy API. Jeśli odświeżysz przeglądarkę, ta strona nie będzie już dostępna.",
-      "body-switch-service-accounts": "Klucze API są przestarzałe i 31 stycznia 2025 roku zostaną usunięte z usługi Grafana. Każdy klucz API zostanie przeniesiony na konto usługi z tokenem i będzie nadal działał bez zmian. Zachęcamy do przeprowadzenia migracji kluczy API na konta usług już teraz. <docsLink />",
-      "docs-link": {
-        "about-migration": "Więcej informacji na temat migracji znajdziesz tutaj."
-      },
-      "migrate-all-service-accounts": "Migracja wszystkich kont usług",
-      "migration-box-desc": {
-        "migrating": "Migracja wszystkich kluczy API spowoduje ukrycie karty kluczy API."
-      },
-      "modal-title": "Migracja kluczy API na konta usług",
-      "title-no-api-keys-found": "Nie znaleziono kluczy API",
-      "title-switch-service-accounts": "Przełącz z kluczy API na konta usług"
-    },
-    "migration-summary": {
-      "close": "Zamknij",
-      "failed": "<0>Niepowodzenie: </0>{{failed}}",
-      "failed-details": "<0>Szczegóły niepowodzenia: </0>{{details}}",
-      "failed-ids": "<0>Identyfikatory nieprawidłowych kluczy API: </0>{{ids}}",
-      "migrated": "<0>Przeniesiono: </0>{{migrated}}",
-      "migration-complete": "Migracja ukończona. Chociaż niektóre klucze API mogą być oznaczone jako „nieudane migracje”, zapewniamy, że wszystkie są w pełni funkcjonalne i sprawne. Spróbuj ponownie lub skontaktuj się z zespołem pomocy.",
-      "migration-successful": "Migracja ukończona!",
-      "title-migration-summary": "Podsumowanie migracji",
-      "total": "<0>Łącznie: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4094,6 +4064,15 @@
         "tooltip-remove-property": "Usuń właściwość"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Wklej panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Pulpit",
@@ -4648,18 +4627,6 @@
     },
     "toolbar": {
       "add": "Dodaj",
-      "add-new": {
-        "button": {
-          "label": "Dodaj",
-          "tooltip": "Dodaj panele i inne elementy"
-        },
-        "menu": {
-          "lib-panel": "Panel biblioteki",
-          "panel": "Panel",
-          "row": "Wiersz",
-          "tab": "Karta"
-        }
-      },
       "alert-rules": "Reguły alertu",
       "back-to-dashboard": "Wróć do pulpitu",
       "dashboard-settings": {
@@ -8205,10 +8172,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Zobacz niedawno usunięte reguły alertów",
       "title": "Ostatnio usunięte"
-    },
-    "api-keys": {
-      "subtitle": "Zarządzaj kluczami API używanymi do interakcji z interfejsami HTTP API serwisu Grafana i je twórz",
-      "title": "Klucze API"
     },
     "application": {
       "title": "Aplikacja"

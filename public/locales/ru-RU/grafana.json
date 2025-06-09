@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Удалить",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1537,6 +1530,10 @@
         "title": "Подтверждение импорта"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Источник данных"
+        },
         "label": "Источник данных",
         "required-message": "Выберите источник данных"
       },
@@ -1675,6 +1672,20 @@
         "new-recording-rule": "Новое правило записи",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Действия с папками",
+          "title": "Действия"
+        },
+        "export": {
+          "aria-label": "Папка правил экспорта",
+          "label": "Папка правил экспорта"
+        },
+        "view": {
+          "aria-label": "Просмотр папки",
+          "label": "Просмотр папки"
+        }
       },
       "no-prom-or-loki-rules": "Нет настроенных источников данных Prometheus или Loki",
       "no-rules": "Правила не найдены.",
@@ -2349,7 +2360,6 @@
     "rule-group-action": {
       "details": "данные группы правил",
       "edit": "редактировать группу правил",
-      "export-rules-folder": "Папка правил экспорта",
       "go-to-folder": "перейти в папку",
       "manage-permissions": "управление разрешениями"
     },
@@ -2378,11 +2388,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Настроить",
       "draft-new-rule": "Составить новое правило",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Проверьте конфигурацию источника данных. Поддерживает ли источник данных API Prometheus?",
         "title": "Не удалось загрузить правила из этого источника данных"
       },
       "empty-data-source": "",
+      "error-button": "Ошибка",
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -2394,6 +2408,7 @@
         "new-badge": "Новое",
         "text": "Импортировать в правила, управляемые Grafana"
       },
+      "loading-more-groups": "",
       "more": "Еще",
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",
@@ -2977,51 +2992,6 @@
       "no-query-editor": "Аннотации не поддерживаются. Этот источник данных должен экспортировать редактор запросов",
       "test-annotation-query": "Тестирование запроса аннотации",
       "title-query-result": "Результат запроса"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Поиск ключей"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Включить ключи с истекшим сроком действия"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Удалить ключ API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Срок действия",
-      "last-used-at": "Время последнего использования",
-      "migrate-to-service-account": "Перенести в служебную учетную запись",
-      "name": "Имя",
-      "role": "Роль"
-    },
-    "empty-state": {
-      "message": "Ключи API не найдены"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Ключи API не найдены. Если перезагрузить браузер, страница больше не будет доступна.",
-      "body-switch-service-accounts": "Ключи API устарели и будут удалены из Grafana 31 января 2025 года. Каждый ключ API будет перенесен в служебную учетную запись с токеном и будет продолжать работать, как и раньше. Рекомендуем перенести ключи API в служебные учетные записи уже сейчас. <docsLink />",
-      "docs-link": {
-        "about-migration": "Подробнее о переносе здесь."
-      },
-      "migrate-all-service-accounts": "Перенести все служебные учетные записи",
-      "migration-box-desc": {
-        "migrating": "После переноса всех ключей API вкладка ключей API будет скрыта."
-      },
-      "modal-title": "Перенос ключей API в служебные учетные записи",
-      "title-no-api-keys-found": "Ключи API не найдены",
-      "title-switch-service-accounts": "Переключение с ключей API на служебные учетные записи"
-    },
-    "migration-summary": {
-      "close": "Закрыть",
-      "failed": "<0>Ошибки: </0>{{failed}}",
-      "failed-details": "<0>Сведения об ошибках: </0>{{details}}",
-      "failed-ids": "<0>Недействительные идентификаторы ключей API: </0>{{ids}}",
-      "migrated": "<0>Перенесено: </0>{{migrated}}",
-      "migration-complete": "Перенос завершен Обратите внимание: хотя несколько ключей API могут быть помечены как «не прошедшие перенос», все ваши ключи API полностью функциональны и работоспособны. Повторите попытку или обратитесь в службу поддержки.",
-      "migration-successful": "Перенос выполнен",
-      "title-migration-summary": "Сводка переноса",
-      "total": "<0>Всего: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4094,6 +4064,15 @@
         "tooltip-remove-property": "Удалить свойство"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Вставка панели",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
@@ -4648,18 +4627,6 @@
     },
     "toolbar": {
       "add": "Добавить",
-      "add-new": {
-        "button": {
-          "label": "Добавить",
-          "tooltip": "Добавить панели и другие элементы"
-        },
-        "menu": {
-          "lib-panel": "Панель библиотеки",
-          "panel": "Панель",
-          "row": "Строка",
-          "tab": "Вкладка"
-        }
-      },
       "alert-rules": "Правила оповещения",
       "back-to-dashboard": "Назад на дашборд",
       "dashboard-settings": {
@@ -8205,10 +8172,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Просмотр недавно удаленных правил оповещения",
       "title": "Последние удаленные"
-    },
-    "api-keys": {
-      "subtitle": "Создание ключей API, используемых для взаимодействия с Grafana HTTP API, и управление ими",
-      "title": "Ключи API"
     },
     "application": {
       "title": "Приложение"

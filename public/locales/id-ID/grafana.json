@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Hapus",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1519,6 +1512,10 @@
         "title": "Konfirmasi impor"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Sumber data"
+        },
         "label": "Sumber data",
         "required-message": "Pilih sumber data"
       },
@@ -1657,6 +1654,20 @@
         "new-recording-rule": "Aturan pencatatan baru",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Tindakan folder",
+          "title": "Tindakan"
+        },
+        "export": {
+          "aria-label": "Ekspor folder aturan",
+          "label": "Ekspor folder aturan"
+        },
+        "view": {
+          "aria-label": "Lihat folder",
+          "label": "Lihat folder"
+        }
       },
       "no-prom-or-loki-rules": "Tidak ada sumber data Prometheus atau Loki yang dikonfigurasi",
       "no-rules": "Tidak ada aturan yang ditemukan.",
@@ -2319,7 +2330,6 @@
     "rule-group-action": {
       "details": "detail grup aturan",
       "edit": "edit grup aturan",
-      "export-rules-folder": "Ekspor folder aturan",
       "go-to-folder": "buka folder",
       "manage-permissions": "kelola izin"
     },
@@ -2348,11 +2358,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurasikan",
       "draft-new-rule": "Buat draf aturan baru",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Periksa konfigurasi sumber data. Apakah sumber data mendukung API Prometheus?",
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
       "empty-data-source": "",
+      "error-button": "Kesalahan",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -2364,6 +2378,7 @@
         "new-badge": "Baru!",
         "text": "Impor ke aturan yang dikelola Grafana"
       },
+      "loading-more-groups": "",
       "more": "Lebih banyak",
       "new-alert-rule": "Aturan peringatan baru",
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",
@@ -2938,51 +2953,6 @@
       "no-query-editor": "Anotasi tidak didukung. Sumber data ini perlu mengekspor QueryEditor",
       "test-annotation-query": "Uji kueri anotasi",
       "title-query-result": "Hasil kueri"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Kunci pencarian"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Sertakan kunci kedaluwarsa"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Hapus kunci API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Kedaluwarsa",
-      "last-used-at": "Terakhir digunakan pada",
-      "migrate-to-service-account": "Migrasi ke akun layanan",
-      "name": "Nama",
-      "role": "Peran"
-    },
-    "empty-state": {
-      "message": "Tidak ada kunci API yang ditemukan"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Tidak ada kunci API yang ditemukan. Jika Anda memuat ulang browser, halaman ini tidak akan tersedia lagi.",
-      "body-switch-service-accounts": "Kunci API sudah usang dan akan dihapus dari Grafana pada 31 Jan 2025. Setiap kunci API akan dimigrasikan ke akun layanan dengan token dan akan terus berfungsi sebagaimana adanya. Kami mendorong Anda untuk memigrasikan kunci API Anda ke akun layanan sekarang. <docsLink />",
-      "docs-link": {
-        "about-migration": "Cari tahu lebih lanjut tentang migrasi di sini."
-      },
-      "migrate-all-service-accounts": "Migrasikan semua akun layanan",
-      "migration-box-desc": {
-        "migrating": "Memigrasikan semua kunci API akan menyembunyikan tab kunci API."
-      },
-      "modal-title": "Migrasi kunci API ke akun layanan",
-      "title-no-api-keys-found": "Tidak ada kunci API yang ditemukan",
-      "title-switch-service-accounts": "Beralih dari kunci API ke akun layanan"
-    },
-    "migration-summary": {
-      "close": "Tutup",
-      "failed": "<0>Gagal: </0>{{failed}}",
-      "failed-details": "<0>Detail gagal: </0>{{details}}",
-      "failed-ids": "<0> ID kunci API gagal: </0>{{ids}}",
-      "migrated": "<0>Dimigrasikan: </0>{{migrated}}",
-      "migration-complete": "Migrasi selesai! Harap diperhatikan, meskipun mungkin ada beberapa kunci API yang ditandai sebagai 'migrasi gagal', jangan khawatir, semua kunci API Anda berfungsi dan beroperasi xecara penuh. Silakan coba lagi atau hubungi dukungan pelanggan.",
-      "migration-successful": "Migrasi Berhasil!",
-      "title-migration-summary": "Ringkasan migrasi",
-      "total": "<0>Total: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4040,6 +4010,15 @@
         "tooltip-remove-property": "Hapus properti"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Tempel panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
@@ -4591,18 +4570,6 @@
     },
     "toolbar": {
       "add": "Tambahkan",
-      "add-new": {
-        "button": {
-          "label": "Tambahkan",
-          "tooltip": "Tambahkan panel dan elemen lainnya"
-        },
-        "menu": {
-          "lib-panel": "Panel pustaka",
-          "panel": "Panel",
-          "row": "Baris",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Aturan peringatan",
       "back-to-dashboard": "Kembali ke dasbor",
       "dashboard-settings": {
@@ -8127,10 +8094,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Lihat aturan peringatan yang baru dihapus",
       "title": "Baru dihapus"
-    },
-    "api-keys": {
-      "subtitle": "Kelola dan buat kunci API yang digunakan untuk berinteraksi dengan API HTTP Grafana",
-      "title": "Kunci API"
     },
     "application": {
       "title": "Aplikasi"

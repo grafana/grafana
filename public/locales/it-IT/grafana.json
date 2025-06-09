@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Elimina",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1525,6 +1518,10 @@
         "title": "Conferma importazione"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Origine dei dati"
+        },
         "label": "Sorgente dati",
         "required-message": "Seleziona un'origine di dati"
       },
@@ -1663,6 +1660,20 @@
         "new-recording-rule": "Nuova regola di registrazione",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Azioni cartella",
+          "title": "Azioni"
+        },
+        "export": {
+          "aria-label": "Esporta la cartella delle regole",
+          "label": "Esporta la cartella delle regole"
+        },
+        "view": {
+          "aria-label": "Visualizza cartella",
+          "label": "Visualizza cartella"
+        }
       },
       "no-prom-or-loki-rules": "Non sono presenti origini di dati Prometheus o Loki configurate",
       "no-rules": "Nessuna regola trovata.",
@@ -2329,7 +2340,6 @@
     "rule-group-action": {
       "details": "dettagli del gruppo di regole",
       "edit": "modifica gruppo di regole",
-      "export-rules-folder": "Esporta la cartella delle regole",
       "go-to-folder": "vai alla cartella",
       "manage-permissions": "gestisci autorizzazioni"
     },
@@ -2358,11 +2368,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Configura",
       "draft-new-rule": "Scrivi una nuova regola",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Controlla la configurazione dell'origine dati. L'origine dati supporta l'API di Prometheus?",
         "title": "Impossibile caricare le regole da questa origine dati"
       },
       "empty-data-source": "",
+      "error-button": "Errore",
       "filter-view": {
         "cancel-search": "Annulla ricerca",
         "no-more-results": "Nessun altro risultato: {{numberOfRules}} regole trovate",
@@ -2374,6 +2388,7 @@
         "new-badge": "Novità!",
         "text": "Importa nelle regole gestite da Grafana"
       },
+      "loading-more-groups": "",
       "more": "Altro",
       "new-alert-rule": "Nuova regola di avviso",
       "new-datasource-recording-rule": "Nuova regola di registrazione dell'origine dei dati",
@@ -2951,51 +2966,6 @@
       "no-query-editor": "Le annotazioni non sono supportate. Questa origine dei dati deve esportare un QueryEditor",
       "test-annotation-query": "Prova la query di annotazione",
       "title-query-result": "Risultato query"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Cerca chiavi"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Includi chiavi scadute"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Elimina chiave API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Scade ",
-      "last-used-at": "Ultimo utilizzo alle",
-      "migrate-to-service-account": "Migra all'account di servizio",
-      "name": "Nome",
-      "role": "Ruolo"
-    },
-    "empty-state": {
-      "message": "Nessun tasto API trovato"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nessuna Chiave API trovata. Se ricarichi il browser, questa pagina non sarà più disponibile.",
-      "body-switch-service-accounts": "Le chiavi API sono obsolete e verranno rimosse da Grafana il 31 gennaio 2025. Ogni chiave API verrà migrata in un account di servizio con un token e continuerà a funzionare come prima. Ti invitiamo a migrare subito le chiavi API agli account di servizio. <docsLink />",
-      "docs-link": {
-        "about-migration": "Scopri di più sulla migrazione qui."
-      },
-      "migrate-all-service-accounts": "Esegui la migrazione di tutti gli account di servizio",
-      "migration-box-desc": {
-        "migrating": "La migrazione di tutte le chiavi API nasconderà la scheda delle chiavi API."
-      },
-      "modal-title": "Migra le chiavi API agli account di servizio",
-      "title-no-api-keys-found": "Nessuna chiave API trovata",
-      "title-switch-service-accounts": "Passa dalle chiavi API agli account di servizio"
-    },
-    "migration-summary": {
-      "close": "Chiudi",
-      "failed": "<0>Non riuscito: </0>{{failed}}",
-      "failed-details": "<0>Dettagli non riusciti: </0>{{details}}",
-      "failed-ids": "<0>ID chiavi API non riuscite: </0>{{ids}}",
-      "migrated": "<0>Migrate: </0>{{migrated}}",
-      "migration-complete": "Migrazione completata! Ricorda che, sebbene potrebbero esserci alcune chiavi API contrassegnate come \"migrazioni non riuscite\", tutte le tue chiavi API sono perfettamente funzionanti e operative. Riprova più tardi o contatta il supporto tecnico.",
-      "migration-successful": "Migrazione completata!",
-      "title-migration-summary": "Riepilogo della migrazione",
-      "total": "<0>Totale: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4058,6 +4028,15 @@
         "tooltip-remove-property": "Rimuovi proprietà"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Incolla pannello",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4589,6 @@
     },
     "toolbar": {
       "add": "Aggiungi",
-      "add-new": {
-        "button": {
-          "label": "Aggiungi",
-          "tooltip": "Aggiungi pannelli e altri elementi"
-        },
-        "menu": {
-          "lib-panel": "Pannello della libreria",
-          "panel": "Pannello",
-          "row": "Riga",
-          "tab": "Scheda"
-        }
-      },
       "alert-rules": "Regole di avviso",
       "back-to-dashboard": "Torna al dashboard",
       "dashboard-settings": {
@@ -8153,10 +8120,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Visualizza le regole di avviso eliminate di recente",
       "title": "Eliminati di recente"
-    },
-    "api-keys": {
-      "subtitle": "Gestisci e crea chiavi API utilizzate per interagire con le API HTTP di Grafana",
-      "title": "Chiavi API"
     },
     "application": {
       "title": "Applicazione"

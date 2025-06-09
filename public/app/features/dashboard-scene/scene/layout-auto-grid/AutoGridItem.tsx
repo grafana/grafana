@@ -168,6 +168,27 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     };
   }
 
+  public editingStarted() {
+    if (!this.state.variableName) {
+      return;
+    }
+
+    if ((this.state.repeatedPanels?.length ?? 0) > 1) {
+      this.state.body.setState({
+        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
+        $data: this.state.repeatedPanels![0].state.$data?.clone(),
+      });
+    }
+  }
+
+  public editingCompleted(withChanges: boolean) {
+    if (withChanges) {
+      this._prevRepeatValues = undefined;
+    }
+
+    this.performRepeat();
+  }
+
   public scrollIntoView() {
     scrollCanvasElementIntoView(this, this.containerRef);
   }
