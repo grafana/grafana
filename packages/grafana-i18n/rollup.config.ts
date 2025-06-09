@@ -27,13 +27,4 @@ export default [
     ],
   },
   tsDeclarationOutput(pkg),
-  tsDeclarationOutput(pkg, {
-    input: './compiled/eslint-plugin.d.ts',
-    output: [
-      {
-        file: './dist/cjs/eslint-plugin.d.cts',
-        format: 'cjs',
-      },
-    ],
-  }),
 ];
