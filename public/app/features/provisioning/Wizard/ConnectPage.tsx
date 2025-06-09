@@ -4,6 +4,7 @@ import { useTranslate } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
+import { StepStatusProvider } from './StepStatusContext';
 import { RepoType } from './types';
 
 export default function ConnectPage() {
@@ -26,7 +27,9 @@ export default function ConnectPage() {
       }}
     >
       <Page.Contents>
-        <ProvisioningWizard type={type} />
+        <StepStatusProvider>
+          <ProvisioningWizard type={type} />
+        </StepStatusProvider>
       </Page.Contents>
     </Page>
   );
