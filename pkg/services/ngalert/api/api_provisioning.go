@@ -499,6 +499,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if errors.Is(err, store.ErrOptimisticLock) {
 		return ErrResp(http.StatusConflict, err, "")
 	}
+	if errors.Is(err, alerting_models.ErrQuotaReached) {
+		return ErrResp(http.StatusForbidden, err, "")
+	}
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
