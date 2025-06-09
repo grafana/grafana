@@ -1,8 +1,10 @@
 import { createContext, useContext } from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
 import { LogListContextData, Props } from '../LogListContext';
+import { LogListModel } from '../processing';
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
@@ -44,9 +46,14 @@ export const useLogListContext = (): LogListContextData => {
   return useContext(LogListContext);
 };
 
-export const useLogIsPinned = (log: LogRowModel) => {
+export const useLogIsPinned = (log: LogListModel) => {
   const { pinnedLogs } = useContext(LogListContext);
   return pinnedLogs?.some((logId) => logId === log.rowId);
+};
+
+export const useLogIsPermalinked = (log: LogListModel) => {
+  const { permalinkedLogId } = useContext(LogListContext);
+  return permalinkedLogId && permalinkedLogId === log.uid;
 };
 
 export const defaultValue: LogListContextData = {
@@ -108,18 +115,24 @@ export const LogListContextProvider = ({
   enableLogDetails = false,
   filterLevels = [],
   getRowContextQuery = jest.fn(),
+  logLineMenuCustomItems = undefined,
+  logs = [],
   logSupportsContext = jest.fn(),
   onLogLineHover,
   onPermalinkClick = jest.fn(),
   onPinLine = jest.fn(),
   onOpenContext = jest.fn(),
   onUnpinLine = jest.fn(),
+  permalinkedLogId,
   pinnedLogs = [],
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   wrapLogMessage = true,
 }: Partial<Props>) => {
+  const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
+  const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
+
   return (
     <LogListContext.Provider
       value={{
@@ -129,14 +142,18 @@ export const LogListContextProvider = ({
         displayedFields,
         downloadLogs: jest.fn(),
         enableLogDetails,
+        hasLogsWithErrors,
+        hasSampledLogs,
         filterLevels,
         getRowContextQuery,
+        logLineMenuCustomItems,
         logSupportsContext,
         onLogLineHover,
         onPermalinkClick,
         onPinLine,
         onOpenContext,
         onUnpinLine,
+        permalinkedLogId,
         pinnedLogs,
         setDedupStrategy: jest.fn(),
         setFilterLevels: jest.fn(),

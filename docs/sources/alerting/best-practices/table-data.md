@@ -22,6 +22,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
+  infinity-csv:
+    - pattern: /docs/grafana/
+      destination: /docs/plugins/yesoreyeram-infinity-datasource/latest/csv/
 ---
 
 # Example of alerting on tabular data
@@ -115,7 +118,19 @@ To test this quickly, you can simulate the table using the [**TestData** data so
 
    {{< figure src="/media/docs/alerting/example-table-data-preview.png" max-width="750px" alt="Alert preview with tabular data using the TestData data source" >}}
 
-## **Differences with time series data**
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/eemqylh1l8tfkf/view" >}}
+
+## CSV data with Infinity
+
+Note that when the [Infinity plugin fetches CSV data](ref:infinity-csv), all the columns are parsed and returned as strings. By default, this causes the query expression to fail in Alerting.
+
+To make it work, you need to format the CSV data as [expected by Grafana Alerting](#how-grafana-alerting-evaluates-tabular-data).
+
+In the query editor, specify the column names and their types to ensure that only one column is treated as a number.
+
+{{< figure src="/media/docs/alerting/example-table-data-infinity-csv-data.png" max-width="750px" alt="Using the Infinity data source plugin to fetch CSV data in Alerting" >}}
+
+## Differences with time series data
 
 Working with time series is similar—each series is treated as a separate alert instance, based on its label set.
 
