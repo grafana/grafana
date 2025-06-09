@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 
-import { cjsOutput, entryPoint, esmOutput, plugins, tsDeclarationOutput } from '../rollup.config.parts';
+import { cjsOutput, entryPoint, esmOutput, plugins } from '../rollup.config.parts';
 
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
@@ -16,7 +16,6 @@ export default [
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-schema')],
   },
-  tsDeclarationOutput(pkg, { input: './dist/esm/index.d.ts' }),
   {
     input: Object.fromEntries(
       glob
