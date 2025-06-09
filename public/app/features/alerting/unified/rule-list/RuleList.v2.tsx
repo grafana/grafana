@@ -6,10 +6,9 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { SupportedView, useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
@@ -17,13 +16,7 @@ import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
-  const [queryParams] = useURLSearchParams();
-  const { filterState, activeFilters } = useRulesFilter();
-
-  // const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
-
-  // const hasOnlyGroupedViewFilters = activeFilters.every((filter) => filter === 'groupName' || filter === 'namespace');
-  // const showListView = hasOnlyGroupedViewFilters === false || view === 'list';
+  const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
 
   return (

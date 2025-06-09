@@ -8,6 +8,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
+import { testWithFeatureToggles } from '../test/test-utils';
 
 import RuleList, { RuleListActions } from './RuleList.v2';
 
@@ -24,12 +25,18 @@ jest.mock('./GroupedView', () => ({
 const ui = {
   filterView: byTestId('filter-view'),
   groupedView: byTestId('grouped-view'),
+  modeSelector: {
+    grouped: byRole('radio', { name: /grouped/i }),
+    list: byRole('radio', { name: /list/i }),
+  },
+  searchInput: byTestId('search-query-input'),
 };
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+testWithFeatureToggles(['alertingListViewV2']);
 
 setupMswServer();
 
@@ -235,5 +242,49 @@ describe('RuleListActions', () => {
     expect(ui.menuOptions.draftNewRule.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+  });
+});
+
+describe('RuleList v2 - View switching', () => {
+  it('should preserve both group and namespace filters when switching from list view to grouped view', async () => {
+    // Start with list view and both group and namespace filters
+    const { user } = render(<RuleList />, {
+      historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
+    });
+    expect(ui.filterView.get()).toBeInTheDocument();
+
+    // Click the "Grouped" view button
+    const groupedButton = await ui.modeSelector.grouped.find();
+    await user.click(groupedButton);
+
+    // Should preserve both filters and switch to grouped view
+    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(ui.filterView.query()).not.toBeInTheDocument();
+
+    // Verify filters are preserved
+    expect(ui.searchInput.get()).toHaveValue('group:cpu-usage namespace:global');
+    expect(ui.modeSelector.list.query()).not.toBeChecked();
+  });
+
+  it('should clear all filters when switching from list view to grouped view with group, namespace and other filters', async () => {
+    // Start with list view with all types of filters
+    const { user } = render(<RuleList />, {
+      historyOptions: {
+        initialEntries: ['/?view=list&search=group:cpu-usage namespace:global state:firing rule:"test"'],
+      },
+    });
+    expect(ui.filterView.get()).toBeInTheDocument();
+
+    // Click the "Grouped" view button
+    const groupedButton = await ui.modeSelector.grouped.find();
+    await user.click(groupedButton);
+
+    // Should clear all filters because other filters are present
+    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(ui.filterView.query()).not.toBeInTheDocument();
+
+    // Verify all filters are cleared
+    expect(ui.searchInput.get()).toHaveValue('');
+    expect(ui.modeSelector.list.query()).not.toBeChecked();
   });
 });

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
@@ -42,14 +44,24 @@ export function useListViewMode() {
   );
   const showListView = areFiltersGroupedViewCompatible === false || queryStringView === 'list';
 
-  const handleViewChange = (view: SupportedView) => {
-    if (view === 'list') {
-      updateQueryParams({ view });
+  const handleViewChange = useCallback(
+    (view: SupportedView) => {
+      if (view === 'grouped') {
+        // When switching to grouped view, preserve filters only if they are grouped-view compatible
+        if (areFiltersGroupedViewCompatible) {
+          // Only remove view parameter, keep search (preserve group/namespace filters)
+          updateQueryParams({ view: undefined });
+        } else {
+          // Clear both view and search (clear all filters)
+          updateQueryParams({ view: undefined, search: undefined });
+        }
+      } else {
+        updateQueryParams({ view });
+      }
       trackRulesListViewChange({ view });
-    } else {
-      updateQueryParams({ view: undefined, search: undefined });
-    }
-  };
+    },
+    [updateQueryParams, areFiltersGroupedViewCompatible]
+  );
 
   const viewMode: SupportedView = showListView ? 'list' : 'grouped';
 
