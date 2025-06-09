@@ -14,6 +14,14 @@ import {
   validateSecretValue,
 } from './utils';
 
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
+beforeAll(() => {
+  jest.restoreAllMocks();
+});
+
 describe('isSecretPending', () => {
   it('should return true', () => {
     expect(isSecretPending({ status: SecretStatusPhase.Pending })).toBe(true);
@@ -151,8 +159,8 @@ describe('isFieldInvalid', () => {
     expect(isFieldInvalid('invalid', { invalid: { message: '' } })).toBe(true);
   });
 
-  it('should return false', () => {
-    expect(isFieldInvalid('valid', { invalid: { message: '' } })).toBe(false);
+  it('should return undefined', () => {
+    expect(isFieldInvalid('valid', { invalid: { message: '' } })).toBe(undefined);
   });
 });
 

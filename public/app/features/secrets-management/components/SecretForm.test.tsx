@@ -25,6 +25,13 @@ function renderSecretForm(props?: Partial<SecretFormProps>) {
   const mergedProps = { ...defaultProps, ...props };
   return render(<SecretForm {...mergedProps} />);
 }
+afterAll(() => {
+  jest.restoreAllMocks();
+});
+
+beforeAll(() => {
+  jest.restoreAllMocks();
+});
 
 describe('SecretForm', () => {
   it('should render form', () => {

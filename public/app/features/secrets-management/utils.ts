@@ -115,7 +115,6 @@ export function validateSecretName(value: string): true | string {
 }
 
 export function validateSecretDescription(value: string): true | string {
-  console.log('validateSecretDescription', value);
   if (value.length < 1) {
     return t('secrets.form.description.error.required', 'Description is required');
   }
