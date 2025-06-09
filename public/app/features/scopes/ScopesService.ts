@@ -81,6 +81,7 @@ export class ScopesService implements ScopesContextValue {
         }
         const queryParams = new URLSearchParams(location.search);
         const scopes = queryParams.getAll('scopes');
+        //const scopesFromState = this.state.value.map((scope) => scope.metadata.name);
         if (scopes.length) {
           // We only update scopes but never delete them. This is to keep the scopes in memory if user navigates to
           // page that does not use scopes (like from dashboard to dashboard list back to dashboard). If user
@@ -96,12 +97,7 @@ export class ScopesService implements ScopesContextValue {
         const oldScopeNames = prev.appliedScopes.map((scope) => scope.scopeId);
         const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
         if (!isEqual(oldScopeNames, newScopeNames)) {
-          this.locationService.partial(
-            {
-              scopes: newScopeNames,
-            },
-            true
-          );
+          this.locationService.partial({ scopes: newScopeNames }, true);
         }
       })
     );

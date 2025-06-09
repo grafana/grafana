@@ -2,21 +2,176 @@ package postgres
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "github.com/lib/pq"
 )
+
+var writeCertFileCallNum int
+
+// TestDataSourceCacheManager is to test the Cache manager
+func TestDataSourceCacheManager(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+	mng := tlsManager{
+		logger:          backend.NewLoggerWith("logger", "tsdb.postgres"),
+		dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+		dataPath:        cfg.DataPath,
+	}
+	jsonData := sqleng.JsonData{
+		Mode:                "verify-full",
+		ConfigurationMethod: "file-content",
+	}
+	secureJSONData := map[string]string{
+		"tlsClientCert": "I am client certification",
+		"tlsClientKey":  "I am client key",
+		"tlsCACert":     "I am CA certification",
+	}
+
+	updateTime := time.Now().Add(-5 * time.Minute)
+
+	mockValidateCertFilePaths()
+	t.Cleanup(resetValidateCertFilePaths)
+
+	t.Run("Check datasource cache creation", func(t *testing.T) {
+		var wg sync.WaitGroup
+		wg.Add(10)
+		for id := int64(1); id <= 10; id++ {
+			go func(id int64) {
+				ds := sqleng.DataSourceInfo{
+					ID:                      id,
+					Updated:                 updateTime,
+					Database:                "database",
+					JsonData:                jsonData,
+					DecryptedSecureJSONData: secureJSONData,
+					UID:                     "testData",
+				}
+				s := tlsSettings{}
+				err := mng.writeCertFiles(ds, &s)
+				require.NoError(t, err)
+				wg.Done()
+			}(id)
+		}
+		wg.Wait()
+
+		t.Run("check cache creation is succeed", func(t *testing.T) {
+			for id := int64(1); id <= 10; id++ {
+				updated, ok := mng.dsCacheInstance.cache.Load(strconv.Itoa(int(id)))
+				require.True(t, ok)
+				require.Equal(t, updateTime, updated)
+			}
+		})
+	})
+
+	t.Run("Check datasource cache modification", func(t *testing.T) {
+		t.Run("check when version not changed, cache and files are not updated", func(t *testing.T) {
+			mockWriteCertFile()
+			t.Cleanup(resetWriteCertFile)
+			var wg1 sync.WaitGroup
+			wg1.Add(5)
+			for id := int64(1); id <= 5; id++ {
+				go func(id int64) {
+					ds := sqleng.DataSourceInfo{
+						ID:                      1,
+						Updated:                 updateTime,
+						Database:                "database",
+						JsonData:                jsonData,
+						DecryptedSecureJSONData: secureJSONData,
+						UID:                     "testData",
+					}
+					s := tlsSettings{}
+					err := mng.writeCertFiles(ds, &s)
+					require.NoError(t, err)
+					wg1.Done()
+				}(id)
+			}
+			wg1.Wait()
+			assert.Equal(t, writeCertFileCallNum, 0)
+		})
+
+		t.Run("cache is updated with the last datasource version", func(t *testing.T) {
+			dsV2 := sqleng.DataSourceInfo{
+				ID:                      1,
+				Updated:                 updateTime.Add(time.Minute),
+				Database:                "database",
+				JsonData:                jsonData,
+				DecryptedSecureJSONData: secureJSONData,
+				UID:                     "testData",
+			}
+			dsV3 := sqleng.DataSourceInfo{
+				ID:                      1,
+				Updated:                 updateTime.Add(2 * time.Minute),
+				Database:                "database",
+				JsonData:                jsonData,
+				DecryptedSecureJSONData: secureJSONData,
+				UID:                     "testData",
+			}
+			s := tlsSettings{}
+			err := mng.writeCertFiles(dsV2, &s)
+			require.NoError(t, err)
+			err = mng.writeCertFiles(dsV3, &s)
+			require.NoError(t, err)
+			version, ok := mng.dsCacheInstance.cache.Load("1")
+			require.True(t, ok)
+			require.Equal(t, updateTime.Add(2*time.Minute), version)
+		})
+	})
+}
+
+// Test getFileName
+
+func TestGetFileName(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		datadir               string
+		fileType              certFileType
+		expErr                string
+		expectedGeneratedPath string
+	}{
+		{
+			desc:                  "Get File Name for root certification",
+			datadir:               ".",
+			fileType:              rootCert,
+			expectedGeneratedPath: "root.crt",
+		},
+		{
+			desc:                  "Get File Name for client certification",
+			datadir:               ".",
+			fileType:              clientCert,
+			expectedGeneratedPath: "client.crt",
+		},
+		{
+			desc:                  "Get File Name for client certification",
+			datadir:               ".",
+			fileType:              clientKey,
+			expectedGeneratedPath: "client.key",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.desc, func(t *testing.T) {
+			generatedPath := getFileName(tt.datadir, tt.fileType)
+			assert.Equal(t, tt.expectedGeneratedPath, generatedPath)
+		})
+	}
+}
 
 // Test getTLSSettings.
 func TestGetTLSSettings(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
+
 	mockValidateCertFilePaths()
 	t.Cleanup(resetValidateCertFilePaths)
 
@@ -61,13 +216,75 @@ func TestGetTLSSettings(t *testing.T) {
 				CertKeyFile:         "i/am/coding/client.key",
 			},
 		},
+		{
+			desc:    "Custom TLS mode verify-full with certificate files content",
+			updated: updatedTime.Add(2 * time.Minute),
+			uid:     "xxx",
+			jsonData: sqleng.JsonData{
+				Mode:                "verify-full",
+				ConfigurationMethod: "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsCACert":     "I am CA certification",
+				"tlsClientCert": "I am client certification",
+				"tlsClientKey":  "I am client key",
+			},
+			tlsSettings: tlsSettings{
+				Mode:                "verify-full",
+				ConfigurationMethod: "file-content",
+				RootCertFile:        filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "root.crt"),
+				CertFile:            filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.crt"),
+				CertKeyFile:         filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.key"),
+			},
+		},
+		{
+			desc:    "Custom TLS mode verify-ca with no client certificates with certificate files content",
+			updated: updatedTime.Add(3 * time.Minute),
+			uid:     "xxx",
+			jsonData: sqleng.JsonData{
+				Mode:                "verify-ca",
+				ConfigurationMethod: "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsCACert": "I am CA certification",
+			},
+			tlsSettings: tlsSettings{
+				Mode:                "verify-ca",
+				ConfigurationMethod: "file-content",
+				RootCertFile:        filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "root.crt"),
+				CertFile:            "",
+				CertKeyFile:         "",
+			},
+		},
+		{
+			desc:    "Custom TLS mode require with client certificates and no root certificate with certificate files content",
+			updated: updatedTime.Add(4 * time.Minute),
+			uid:     "xxx",
+			jsonData: sqleng.JsonData{
+				Mode:                "require",
+				ConfigurationMethod: "file-content",
+			},
+			secureJSONData: map[string]string{
+				"tlsClientCert": "I am client certification",
+				"tlsClientKey":  "I am client key",
+			},
+			tlsSettings: tlsSettings{
+				Mode:                "require",
+				ConfigurationMethod: "file-content",
+				RootCertFile:        "",
+				CertFile:            filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.crt"),
+				CertKeyFile:         filepath.Join(cfg.DataPath, "tls", "xxxgeneratedTLSCerts", "client.key"),
+			},
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			var settings tlsSettings
 			var err error
 			mng := tlsManager{
-				logger: backend.NewLoggerWith("logger", "tsdb.postgres"),
+				logger:          backend.NewLoggerWith("logger", "tsdb.postgres"),
+				dsCacheInstance: datasourceCacheManager{locker: newLocker()},
+				dataPath:        cfg.DataPath,
 			}
 
 			ds := sqleng.DataSourceInfo{
@@ -101,145 +318,15 @@ func resetValidateCertFilePaths() {
 	validateCertFunc = validateCertFilePaths
 }
 
-func TestTLSManager_GetTLSSettings(t *testing.T) {
-	logger := log.New()
-	tlsManager := newTLSManager(logger)
-
-	dsInfo := sqleng.DataSourceInfo{
-		JsonData: sqleng.JsonData{
-			Mode:                "require",
-			ConfigurationMethod: "file-content",
-		},
-		DecryptedSecureJSONData: map[string]string{
-			"tlsCACert":     "root-cert-content",
-			"tlsClientCert": "client-cert-content",
-			"tlsClientKey":  "client-key-content",
-		},
+func mockWriteCertFile() {
+	writeCertFileCallNum = 0
+	writeCertFileFunc = func(logger log.Logger, fileContent string, generatedFilePath string) error {
+		writeCertFileCallNum++
+		return nil
 	}
-
-	tlsConfig, err := tlsManager.getTLSSettings(dsInfo)
-	require.NoError(t, err)
-	assert.Equal(t, "require", tlsConfig.Mode)
-	assert.NotEmpty(t, tlsConfig.RootCertFile)
-	assert.NotEmpty(t, tlsConfig.CertFile)
-	assert.NotEmpty(t, tlsConfig.CertKeyFile)
-
-	// Cleanup temporary files
-	tlsManager.cleanupCertFiles(tlsConfig)
-	assert.NoFileExists(t, tlsConfig.RootCertFile)
-	assert.NoFileExists(t, tlsConfig.CertFile)
-	assert.NoFileExists(t, tlsConfig.CertKeyFile)
 }
 
-func TestTLSManager_CleanupCertFiles_FilePath(t *testing.T) {
-	logger := log.New()
-	tlsManager := newTLSManager(logger)
-
-	// Create temporary files for testing
-	rootCertFile, err := tlsManager.writeCertFile("root-*.crt", "root-cert-content")
-	require.NoError(t, err)
-	clientCertFile, err := tlsManager.writeCertFile("client-*.crt", "client-cert-content")
-	require.NoError(t, err)
-	clientKeyFile, err := tlsManager.writeCertFile("client-*.key", "client-key-content")
-	require.NoError(t, err)
-
-	// Simulate a configuration where the method is "file-path"
-	tlsConfig := tlsSettings{
-		ConfigurationMethod: "file-path",
-		RootCertFile:        rootCertFile,
-		CertFile:            clientCertFile,
-		CertKeyFile:         clientKeyFile,
-	}
-
-	// Call cleanupCertFiles
-	tlsManager.cleanupCertFiles(tlsConfig)
-
-	// Verify the files are NOT deleted
-	assert.FileExists(t, rootCertFile, "Root certificate file should not be deleted")
-	assert.FileExists(t, clientCertFile, "Client certificate file should not be deleted")
-	assert.FileExists(t, clientKeyFile, "Client key file should not be deleted")
-
-	// Cleanup the files manually
-	err = os.Remove(rootCertFile)
-	require.NoError(t, err)
-	err = os.Remove(clientCertFile)
-	require.NoError(t, err)
-	err = os.Remove(clientKeyFile)
-	require.NoError(t, err)
-}
-
-func TestTLSManager_CreateCertFiles(t *testing.T) {
-	logger := log.New()
-	tlsManager := newTLSManager(logger)
-
-	dsInfo := sqleng.DataSourceInfo{
-		DecryptedSecureJSONData: map[string]string{
-			"tlsCACert":     "root-cert-content",
-			"tlsClientCert": "client-cert-content",
-			"tlsClientKey":  "client-key-content",
-		},
-	}
-
-	tlsConfig := tlsSettings{
-		ConfigurationMethod: "file-content",
-	}
-	err := tlsManager.createCertFiles(dsInfo, &tlsConfig)
-	require.NoError(t, err)
-
-	assert.FileExists(t, tlsConfig.RootCertFile)
-	assert.FileExists(t, tlsConfig.CertFile)
-	assert.FileExists(t, tlsConfig.CertKeyFile)
-
-	// Cleanup temporary files
-	tlsManager.cleanupCertFiles(tlsConfig)
-	assert.NoFileExists(t, tlsConfig.RootCertFile)
-	assert.NoFileExists(t, tlsConfig.CertFile)
-	assert.NoFileExists(t, tlsConfig.CertKeyFile)
-}
-
-func TestTLSManager_WriteCertFile(t *testing.T) {
-	logger := log.New()
-	tlsManager := newTLSManager(logger)
-
-	// Test writing a valid certificate file
-	filePath, err := tlsManager.writeCertFile("test-*.crt", "test-cert-content")
-	require.NoError(t, err)
-	assert.FileExists(t, filePath)
-
-	content, err := os.ReadFile(filepath.Clean(filePath))
-	require.NoError(t, err)
-	assert.Equal(t, "test-cert-content", string(content))
-
-	// Cleanup the file
-	err = os.Remove(filePath)
-	require.NoError(t, err)
-	assert.NoFileExists(t, filePath)
-}
-
-func TestTLSManager_CleanupCertFiles(t *testing.T) {
-	logger := log.New()
-	tlsManager := newTLSManager(logger)
-
-	// Create temporary files for testing
-	rootCertFile, err := tlsManager.writeCertFile("root-*.crt", "root-cert-content")
-	require.NoError(t, err)
-	clientCertFile, err := tlsManager.writeCertFile("client-*.crt", "client-cert-content")
-	require.NoError(t, err)
-	clientKeyFile, err := tlsManager.writeCertFile("client-*.key", "client-key-content")
-	require.NoError(t, err)
-
-	tlsConfig := tlsSettings{
-		ConfigurationMethod: "file-content",
-		RootCertFile:        rootCertFile,
-		CertFile:            clientCertFile,
-		CertKeyFile:         clientKeyFile,
-	}
-
-	// Cleanup the files
-	tlsManager.cleanupCertFiles(tlsConfig)
-
-	// Verify the files are deleted
-	assert.NoFileExists(t, rootCertFile)
-	assert.NoFileExists(t, clientCertFile)
-	assert.NoFileExists(t, clientKeyFile)
+func resetWriteCertFile() {
+	writeCertFileCallNum = 0
+	writeCertFileFunc = writeCertFile
 }

@@ -237,6 +237,8 @@ export async function makeExportableV1(dashboard: DashboardModel) {
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
         variable.current = {};
+      } else if (variable.type === 'adhoc') {
+        await templateizeDatasourceUsage(variable);
       }
     }
 
