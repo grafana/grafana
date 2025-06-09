@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import * as React from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -70,7 +70,6 @@ export function ChannelSubForm<R extends ChannelValues>({
   const onCallIntegrationType = watch(`${settingsFieldPath}.integration_type`);
   const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
 
-  const prevSelectedType = useRef<string | undefined>(selectedType);
   useEffect(() => {
     register(`${channelFieldPath}.__id`);
     /* Need to manually register secureFields or else they'll
@@ -78,24 +77,22 @@ export function ChannelSubForm<R extends ChannelValues>({
     register(`${channelFieldPath}.secureFields`);
   }, [register, channelFieldPath]);
 
-  useEffect(() => {
-    // If the integration type has changed, clear the settings to avoid shared field conflicts
-    if (prevSelectedType.current !== selectedType) {
-      setValue(settingsFieldPath, {});
-      prevSelectedType.current = selectedType;
-    }
-  }, [selectedType, setValue, settingsFieldPath]);
-
-
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
       // @ts-expect-error name is valid key for formValues
       const value = name ? formValues[name] : '';
-      if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
-        setValue(settingsFieldPath, initialValues.settings);
-      }
+
+      if (name === typeFieldPath && type === 'change') {
+        // Reset settings to default when changing type
+        setValue(settingsFieldPath, defaultValues.settings);
+
+        // Restore initial values if switching back to original type
+        if (initialValues && value === initialValues.type) {
+          setValue(settingsFieldPath, initialValues.settings);
+        }
+      } 
       // Restore initial value of an existing oncall integration
       if (
         initialValues &&
