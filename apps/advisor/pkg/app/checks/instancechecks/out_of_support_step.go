@@ -34,7 +34,7 @@ func (s *outOfSupportVersionStep) Description() string {
 }
 
 func (s *outOfSupportVersionStep) Resolution() string {
-	return "Out of support versions are not supported by Grafana Cloud and will not receive security updates or bug fixes. " +
+	return "Out of support versions will not receive security updates or bug fixes. " +
 		"Upgrade to a more recent version. " +
 		"<a href='https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/#what-to-know-about-version-support' target='_blank'>" +
 		"Learn more about version support</a>."
@@ -58,6 +58,9 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		// Running in cloud, no need to check if the version is out of support
 		return nil, nil
 	}
+
+	// mock
+	s.BuildDate = time.Time{}.UTC()
 
 	// If the build date is less than 9 months old, it's supported
 	if s.BuildDate.After(time.Now().AddDate(0, -9, 0)) {
