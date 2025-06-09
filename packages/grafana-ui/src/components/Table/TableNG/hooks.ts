@@ -57,7 +57,8 @@ export function useTableFiltersAndSorts(
 
   const [filteredRows, crossFilterRows] = useMemo(() => {
     const crossFilterRows: TableFiltersAndSort['crossFilterRows'] = {};
-    const filterFn = (row: TableRow): boolean => {
+
+    const filterRows = (row: TableRow): boolean => {
       for (const [key, value] of filterValues) {
         const displayedValue = getDisplayedValue(row, key, fields);
         if (!value.filteredSet.has(displayedValue)) {
@@ -69,9 +70,11 @@ export function useTableFiltersAndSorts(
       }
       return true;
     };
+
     const filteredRows = hasNestedFrames
-      ? processNestedTableRows(rows, (parents) => parents.filter(filterFn))
-      : rows.filter(filterFn);
+      ? processNestedTableRows(rows, (parents) => parents.filter(filterRows))
+      : rows.filter(filterRows);
+
     return [filteredRows, crossFilterRows];
   }, [filterValues, rows, fields, hasNestedFrames]);
 
@@ -85,7 +88,6 @@ export function useTableFiltersAndSorts(
       return filteredRows;
     }
 
-    // Common sort comparator function
     const compareRows = (a: TableRow, b: TableRow): number => {
       let result = 0;
       for (let i = 0; i < sortColumns.length; i++) {
