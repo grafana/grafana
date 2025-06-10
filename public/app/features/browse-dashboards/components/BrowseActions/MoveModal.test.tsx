@@ -149,15 +149,6 @@ describe('browse-dashboards MoveModal', () => {
     expect(mockOnConfirm).toHaveBeenCalledWith(folderA.item.uid);
   });
 
-  // it.only('calls onConfirm when clicking the `Move` button', async () => {
-  //   render(<MoveModal {...props} />);
-  //   const folderPicker = await screen.findByTestId(selectors.components.FolderPicker.input);
-
-  //   await selectOptionInTest(folderPicker, mockFolders[1].title);
-  //   await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
-  //   expect(mockOnConfirm).toHaveBeenCalledWith(mockFolders[1].uid);
-  // });
-
   it('calls onDismiss when clicking the `Cancel` button', async () => {
     render(<MoveModal {...props} />);
 
