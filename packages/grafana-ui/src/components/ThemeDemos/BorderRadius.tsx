@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getInternalRadius, getExternalRadius } from '../../themes/mixins';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';

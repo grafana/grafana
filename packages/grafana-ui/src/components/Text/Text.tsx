@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { TruncatedText } from './TruncatedText';
 import { customWeight, customColor, customVariant } from './utils';

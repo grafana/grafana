@@ -1,5 +1,5 @@
 import { Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Stack } from '../../Layout/Stack/Stack';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';

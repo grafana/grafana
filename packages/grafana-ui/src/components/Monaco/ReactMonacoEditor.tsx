@@ -2,7 +2,7 @@ import Editor, { loader as monacoEditorLoader, Monaco } from '@monaco-editor/rea
 import * as monaco from 'monaco-editor';
 import { useCallback, useEffect } from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 import defineThemes from './theme';
 import type { ReactMonacoEditorProps } from './types';

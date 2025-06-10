@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendStatsList } from './VizLegendStatsList';

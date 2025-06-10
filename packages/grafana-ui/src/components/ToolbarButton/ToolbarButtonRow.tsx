@@ -6,7 +6,7 @@ import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { getPortalContainer } from '../Portal/Portal';
 

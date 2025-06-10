@@ -2,7 +2,8 @@ import { Meta, StoryFn } from '@storybook/react';
 import { useState, useCallback } from 'react';
 import * as React from 'react';
 
-import { Input, Switch } from '..';
+import { Input } from '../Input/Input';
+import { Switch } from '../Switch/Switch';
 
 import { Field } from './Field';
 import mdx from './Field.mdx';

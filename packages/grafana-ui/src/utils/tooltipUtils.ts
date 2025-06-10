@@ -3,7 +3,7 @@ import { Placement } from '@floating-ui/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { TooltipPlacement } from '../components/Tooltip';
+import { TooltipPlacement } from '../components/Tooltip/types';
 
 export function getPlacement(placement?: TooltipPlacement): Placement {
   switch (placement) {

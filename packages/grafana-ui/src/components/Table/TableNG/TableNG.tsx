@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';

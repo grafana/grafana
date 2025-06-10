@@ -21,7 +21,7 @@ import {
   ScaleOrientation,
 } from '@grafana/schema';
 
-import { Themeable2 } from '../../types';
+import { Themeable2 } from '../../types/theme';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';

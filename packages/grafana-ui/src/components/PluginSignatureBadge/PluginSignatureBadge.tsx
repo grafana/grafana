@@ -2,7 +2,7 @@ import { HTMLAttributes } from 'react';
 
 import { PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { Badge, BadgeProps } from '../Badge/Badge';
 
 const SIGNATURE_ICONS: Record<string, IconName> = {

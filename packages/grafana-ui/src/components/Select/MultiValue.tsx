@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 

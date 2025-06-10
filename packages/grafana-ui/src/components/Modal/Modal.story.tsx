@@ -3,9 +3,9 @@ import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { useState } from 'react';
 
-import { getAvailableIcons } from '../../types';
-import { Button } from '../Button';
-import { TabContent } from '../Tabs';
+import { getAvailableIcons } from '../../types/icon';
+import { Button } from '../Button/Button';
+import { TabContent } from '../Tabs/TabContent';
 
 import { Modal } from './Modal';
 import mdx from './Modal.mdx';

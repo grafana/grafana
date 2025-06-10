@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 
-import { HighlightPart } from '../../types';
+import { HighlightPart } from '../../types/completion';
 
 interface Props {
   text: string;

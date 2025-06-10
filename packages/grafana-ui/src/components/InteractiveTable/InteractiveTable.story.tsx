@@ -2,7 +2,7 @@ import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
 import { CellProps } from 'react-table';
 
-import { LinkButton } from '../Button';
+import { LinkButton } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 

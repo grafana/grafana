@@ -4,7 +4,7 @@ import { forwardRef, HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 

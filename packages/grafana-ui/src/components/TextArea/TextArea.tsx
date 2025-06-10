@@ -3,7 +3,7 @@ import { forwardRef, HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 
 export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {

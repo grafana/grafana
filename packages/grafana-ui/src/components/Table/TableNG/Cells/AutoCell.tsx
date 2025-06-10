@@ -6,7 +6,7 @@ import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { AutoCellProps } from '../types';
