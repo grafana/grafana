@@ -1,4 +1,4 @@
-/* eslint-disable @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
@@ -226,7 +226,7 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </Stack>
-              <Card>
+              <Card noMargin>
                 <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
                   {allButtonVariants.map((variant) => (
@@ -259,8 +259,8 @@ export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
-      {color.shades.map((shade) => (
-        <td>
+      {color.shades.map((shade, index) => (
+        <td key={index}>
           <div
             className={css({
               background: shade.color,

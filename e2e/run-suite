@@ -153,6 +153,7 @@ case "$1" in
       "dashboard-new-layouts")
       env[kubernetesDashboards]=true
       env[dashboardNewLayouts]=true
+      env[groupByVariable]=true
       cypressConfig[specPattern]=$rootForDashboardNewLayouts/$testFilesForSingleSuite
       cypressConfig[video]=false
           case "$2" in
@@ -164,6 +165,8 @@ case "$1" in
                 ;;
             "dev")
                 echo "Dev mode"
+                # remove comment to run in slomo ( demo mode )
+                # env[SLOWMO]=1
                 CMD="cypress open"
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;

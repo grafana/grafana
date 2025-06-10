@@ -1,4 +1,5 @@
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Dashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -69,6 +70,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -101,7 +104,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
-      title: 'deleted',
+      title: t('dashboard.k8s-dashboard-api.title.deleted', 'deleted'),
     }));
   }
 

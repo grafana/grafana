@@ -13,13 +13,18 @@ const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const bettererConfig = require('./.betterer.eslint.config');
 const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
-const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor'];
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/mssql',
+];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -119,21 +124,28 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['react-i18next', 'i18next'],
+              importNames: ['t'],
+              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+            },
+            {
+              group: ['react-i18next'],
+              importNames: ['Trans'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+            {
+              regex: '\\.test$',
+              message:
+                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
               importNames: ['useDispatch', 'useSelector'],
               message: 'Please import from app/types instead.',
-            },
-            {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from app/core/internationalization instead',
-            },
-            {
-              name: 'i18next',
-              importNames: ['t'],
-              message: 'Please import from app/core/internationalization instead',
             },
           ],
         },
@@ -287,16 +299,23 @@ module.exports = [
     name: 'grafana/i18n-overrides',
     plugins: {
       '@grafana': grafanaPlugin,
+      '@grafana/i18n': grafanaI18nPlugin,
     },
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
-    ignores: ['**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test', '**/spec/**/*.{ts,tsx}'],
+    ignores: [
+      'public/test/**',
+      '**/*.{test,spec,story}.{ts,tsx}',
+      '**/{tests,__mocks__,__tests__,fixtures,spec,mocks}/**',
+      '**/{test-utils,testHelpers,mocks}.{ts,tsx}',
+      '**/mock*.{ts,tsx}',
+    ],
     rules: {
-      '@grafana/no-untranslated-strings': 'error',
-      '@grafana/no-translation-top-level': 'error',
+      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
   {

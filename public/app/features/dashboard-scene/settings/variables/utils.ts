@@ -23,12 +23,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
-import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor } from './editors/CustomVariableEditor';
-import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
-import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
+import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
+import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
+import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
@@ -76,6 +75,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Data source',
     description: 'Dynamically switch the data source for multiple panels',
     editor: DataSourceVariableEditor,
+    getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
     name: 'Ad hoc filters',
@@ -87,6 +87,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Group by',
     description: 'Add keys to group by on the fly',
     editor: GroupByVariableEditor,
+    getOptions: getGroupByVariableOptions,
   },
   textbox: {
     name: 'Textbox',
@@ -215,8 +216,6 @@ export function getOptionDataSourceTypes() {
       return { label: ds.meta.name, value: ds.meta.id };
     })
     .value();
-
-  optionTypes.unshift({ label: '', value: '' });
 
   return optionTypes;
 }

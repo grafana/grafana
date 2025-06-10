@@ -2,7 +2,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 
-import { FieldType, LoadingState, SupplementaryQueryType, DataSourceApi, createDataFrame } from '@grafana/data';
+import {
+  FieldType,
+  LoadingState,
+  SupplementaryQueryType,
+  DataSourceApi,
+  createDataFrame,
+  getDefaultTimeRange,
+} from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
@@ -11,6 +18,7 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
   };
 });
 
@@ -23,6 +31,7 @@ const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePan
     setLogsSampleEnabled: jest.fn(),
     queries: [],
     splitOpen: jest.fn(),
+    timeRange: getDefaultTimeRange(),
   };
 
   return { ...props, ...propOverrides };

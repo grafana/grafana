@@ -163,6 +163,11 @@ export const versionedPages = {
       },
     },
   },
+  ImportDashboard: {
+    url: {
+      [MIN_GRAFANA_VERSION]: '/dashboard/import',
+    },
+  },
   Dashboard: {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
@@ -446,10 +451,22 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
+            },
+            editor: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor',
+            },
+            previewButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor preview button',
+            },
             queryOptionsDataSourceSelect: {
               '10.4.0': 'data-testid Select a data source',
               '10.0.0': 'data-testid Data source picker select container',
               [MIN_GRAFANA_VERSION]: 'Data source picker select container',
+            },
+            queryOptionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor open button',
             },
             queryOptionsRefreshSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Refresh select',
@@ -493,6 +510,9 @@ export const versionedPages = {
           DatasourceVariable: {
             datasourceSelect: {
               [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource type',
+            },
+            nameFilter: {
+              [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource name filter',
             },
           },
           TextBoxVariable: {

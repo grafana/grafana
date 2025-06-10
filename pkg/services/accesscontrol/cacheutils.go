@@ -30,10 +30,6 @@ func (s *SearchOptions) HashString() (string, error) {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }
 
-func GetUserPermissionCacheKey(user identity.Requester) string {
-	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
-}
-
 func GetSearchPermissionCacheKey(log log.Logger, user identity.Requester, searchOptions SearchOptions) (string, error) {
 	searchHash, err := searchOptions.HashString()
 	if err != nil {

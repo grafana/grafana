@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -71,6 +71,8 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         app={rest.app || CoreApp.Unknown}
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
+        enableLogDetails={false}
+        fontSize="default"
         hasUnescapedContent={hasUnescapedContent}
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
@@ -95,7 +97,17 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
 ControlledLogRows.displayName = 'ControlledLogRows';
 
 const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps>(
-  ({ loading, loadMoreLogs, deduplicatedRows = [], range, ...rest }: LogRowsComponentProps, ref) => {
+  (
+    {
+      loading,
+      loadMoreLogs,
+      deduplicatedRows = [],
+      range,
+      scrollIntoView: scrollIntoViewProp,
+      ...rest
+    }: LogRowsComponentProps,
+    ref
+  ) => {
     const {
       app,
       dedupStrategy,
@@ -134,6 +146,22 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
       return config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows;
     }, [ref]);
 
+    const scrollIntoView = useCallback(
+      (element: HTMLElement) => {
+        if (scrollIntoViewProp) {
+          scrollIntoViewProp(element);
+          return;
+        }
+        if (scrollElementRef.current) {
+          scrollElementRef.current.scroll({
+            behavior: 'smooth',
+            top: scrollElementRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          });
+        }
+      },
+      [scrollIntoViewProp]
+    );
+
     return (
       <div className={styles.logRowsContainer}>
         <LogListControls eventBus={eventBus} />
@@ -157,6 +185,7 @@ const LogRowsComponent = forwardRef<HTMLDivElement | null, LogRowsComponentProps
               logsSortOrder={sortOrder}
               scrollElement={scrollElementRef.current}
               prettifyLogMessage={Boolean(prettifyJSON)}
+              scrollIntoView={scrollIntoView}
               showLabels={Boolean(showUniqueLabels)}
               showTime={showTime}
               wrapLogMessage={wrapLogMessage}

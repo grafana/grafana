@@ -1,8 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 

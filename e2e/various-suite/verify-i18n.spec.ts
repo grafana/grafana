@@ -38,23 +38,13 @@ describe('Verify i18n', () => {
   });
 
   // map between languages in the language picker and the corresponding translation of the 'Language' label
-  // const languageMap: Record<string, string> = {
-  //   Deutsch: 'Sprache',
-  //   English: 'Language',
-  //   Español: 'Idioma',
-  //   Français: 'Langue',
-  //   'Português Brasileiro': 'Idioma',
-  //   '中文（简体）': '语言',
-  // };
-
-  // map between languages in the weekstart picker and the corresponding translation of the 'Week Start' label
-  const weekStartMap: Record<string, string> = {
-    Deutsch: 'Wochenbeginn',
-    English: 'Week start',
-    Español: 'Inicio de la semana',
-    Français: 'Début de la semaine',
-    'Português Brasileiro': 'Início da semana',
-    '中文（简体）': '每周开始日',
+  const languageMap: Record<string, string> = {
+    Deutsch: 'Sprache',
+    English: 'Language',
+    Español: 'Idioma',
+    Français: 'Langue',
+    'Português Brasileiro': 'Idioma',
+    '中文（简体）': '语言',
   };
 
   // basic test which loops through the defined languages in the picker
@@ -62,9 +52,7 @@ describe('Verify i18n', () => {
   it('loads all the languages correctly', () => {
     cy.visit('/profile');
     const LANGUAGE_SELECTOR = '[id="language-preference-select"]';
-    //TODO ckeck translations using language label when its translations get updated
-    // Checking the Week start label instead
-    cy.wrap(Object.entries(weekStartMap)).each(([language, label]: [string, string]) => {
+    cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
       cy.get(LANGUAGE_SELECTOR).should('not.be.disabled');
       cy.get(LANGUAGE_SELECTOR).click();
       cy.get(LANGUAGE_SELECTOR).clear().type(language).type('{downArrow}{enter}');

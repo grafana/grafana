@@ -334,7 +334,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 
 			if len(tags) > 0 {
-				// "at" is a keyword in Spanner and needs to be quoted.
 				tagsSubQuery := fmt.Sprintf(`
 			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
 			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id

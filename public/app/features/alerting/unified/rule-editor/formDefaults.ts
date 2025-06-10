@@ -71,6 +71,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(),
+    targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
 
     // cortex / loki
     namespace: '',
@@ -120,7 +121,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-        type: type || RuleFormType.grafana,
+        type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
         evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )

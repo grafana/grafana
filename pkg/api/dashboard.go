@@ -345,7 +345,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-// DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
+// swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
 // Delete dashboard by uid.
 //
