@@ -12,20 +12,12 @@ interface Props {
   onEdit: () => void;
 }
 
-const retFalse = () => false;
-
 export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
 
-  const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
-
-  const dashboardUID = annoVals.dashboardUID?.[annoIdx];
-
-  // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
-  const canEdit = annoId !== 0 && canEditAnnotations(dashboardUID);
-  const canDelete = annoId !== 0 && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+  const { onAnnotationDelete } = usePanelContext();
 
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {
@@ -72,19 +64,12 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
             </span>
             {time}
           </div>
-          {(canEdit || canDelete) && (
-            <div className={styles.editControls}>
-              {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
-              {canDelete && (
-                <IconButton
-                  name={'trash-alt'}
-                  size={'sm'}
-                  onClick={() => onAnnotationDelete(annoId)}
-                  tooltip="Delete"
-                />
-              )}
-            </div>
-          )}
+          <div className={styles.editControls}>
+            <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />
+            {onAnnotationDelete != null && (
+              <IconButton name={'trash-alt'} size={'sm'} onClick={() => onAnnotationDelete(annoId)} tooltip="Delete" />
+            )}
+          </div>
         </HorizontalGroup>
       </div>
 
