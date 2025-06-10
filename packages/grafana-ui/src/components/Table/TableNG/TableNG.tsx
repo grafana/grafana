@@ -14,7 +14,7 @@ import {
 import {
   DataGrid,
   DataGridHandle,
-  RenderCellProps,
+  // RenderCellProps,
   RenderRowProps,
   Row,
 } from 'react-data-grid';
@@ -28,7 +28,7 @@ import {
   // fieldReducers,
   FieldType,
   // formattedValueToString,
-  getDefaultTimeRange,
+  // getDefaultTimeRange,
   GrafanaTheme2,
   // ReducerID,
 } from '@grafana/data';
@@ -43,8 +43,8 @@ import { PanelContext, usePanelContext } from '../../PanelChrome';
 // import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
-import { RowExpander } from './Cells/RowExpander';
-import { TableCellNG } from './Cells/TableCellNG';
+// import { RowExpander } from './Cells/RowExpander';
+// import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import { useProcessedRows } from './hooks';
 import {
@@ -53,27 +53,27 @@ import {
   TableRow,
   TableSummaryRow,
   // ColumnTypes,
-  TableColumnResizeActionCallback,
+  // TableColumnResizeActionCallback,
   TableColumn,
-  TableFieldOptionsType,
+  // TableFieldOptionsType,
   // ScrollPosition,
-  CellColors,
+  // CellColors,
 } from './types';
 import {
   frameToRecords,
-  getCellColors,
+  // getCellColors,
   getCellHeightCalculator,
   getDefaultRowHeight,
   // getComparator,
   // getDefaultRowHeight,
   // getFooterItemNG,
-  getFooterStyles,
-  getIsNestedTable,
+  // getFooterStyles,
+  // getIsNestedTable,
   // getRowHeight,
   getTextAlign,
   handleSort,
-  MapFrameToGridOptions,
-  shouldTextOverflow,
+  // MapFrameToGridOptions,
+  // shouldTextOverflow,
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
@@ -250,9 +250,10 @@ export function TableNG(props: TableNGProps) {
         rowHeight={rowHeight}
         headerRowClass={styles.dataGridHeaderRow}
         headerRowHeight={noHeader ? 0 : undefined}
+        bottomSummaryRows={hasFooter ? [{}] : undefined}
         renderers={{
           renderRow: (key, rowProps) =>
-            myRowRenderer(key, rowProps, [], panelContext, data, enableSharedCrosshair ?? false),
+            renderRow(key, rowProps, [], panelContext, data, enableSharedCrosshair ?? false),
         }}
       />
       {
@@ -283,260 +284,261 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-export function mapFrameToDataGrid({
-  frame,
-  calcsRef,
-  options,
-  handlers,
-  availableWidth,
-}: {
-  frame: DataFrame;
-  calcsRef: React.MutableRefObject<string[]>;
-  options: MapFrameToGridOptions;
-  handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
-  availableWidth: number;
-}): TableColumn[] {
-  const {
-    columnTypes,
-    textWraps,
-    crossFilterOrder,
-    crossFilterRows,
-    defaultLineHeight,
-    defaultRowHeight,
-    expandedRows,
-    filter,
-    headerCellRefs,
-    isCountRowsSet,
-    onCellFilterAdded,
-    ctx,
-    onSortByChange,
-    renderedRows,
-    rows,
-    setContextMenuProps,
-    setFilter,
-    setIsInspecting,
-    setSortColumns,
-    sortColumns,
-    styles,
-    theme,
-    timeRange,
-    getActions,
-    showTypeIcons,
-  } = options;
-  const { onCellExpand, onColumnResize } = handlers;
+// export function mapFrameToDataGrid({
+//   frame,
+//   calcs,
+//   options,
+//   handlers,
+//   availableWidth,
+// }: {
+//   frame: DataFrame;
+//   calcs: string[];
+//   options: MapFrameToGridOptions;
+//   handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
+//   availableWidth: number;
+// }): TableColumn[] {
+//   console.log("foo")
+//   const {
+//     columnTypes,
+//     textWraps,
+//     crossFilterOrder,
+//     crossFilterRows,
+//     defaultLineHeight,
+//     defaultRowHeight,
+//     expandedRows,
+//     filter,
+//     headerCellRefs,
+//     isCountRowsSet,
+//     onCellFilterAdded,
+//     ctx,
+//     onSortByChange,
+//     renderedRows,
+//     rows,
+//     setContextMenuProps,
+//     setFilter,
+//     setIsInspecting,
+//     setSortColumns,
+//     sortColumns,
+//     styles,
+//     theme,
+//     timeRange,
+//     getActions,
+//     showTypeIcons,
+//   } = options;
+//   const { onCellExpand, onColumnResize } = handlers;
 
-  const columns: TableColumn[] = [];
-  const hasNestedFrames = getIsNestedTable(frame.fields);
+//   const columns: TableColumn[] = [];
+//   const hasNestedFrames = getIsNestedTable(frame.fields);
 
-  // If nested frames, add expansion control column
-  if (hasNestedFrames) {
-    const expanderField: Field = {
-      name: '',
-      type: FieldType.other,
-      config: {},
-      values: [],
-    };
-    columns.push({
-      key: 'expanded',
-      name: '',
-      field: expanderField,
-      cellClass: styles.cell,
-      colSpan(args) {
-        return args.type === 'ROW' && Number(args.row.__depth) === 1 ? frame.fields.length : 1;
-      },
-      renderCell: ({ row }) => {
-        // TODO add TableRow type extension to include row depth and optional data
-        if (Number(row.__depth) === 0) {
-          const rowIdx = Number(row.__index);
-          return (
-            <RowExpander
-              height={defaultRowHeight}
-              onCellExpand={() => onCellExpand(rowIdx)}
-              isExpanded={expandedRows.includes(rowIdx)}
-            />
-          );
-        }
-        // If it's a child, render entire DataGrid at first column position
-        let expandedColumns: TableColumn[] = [];
-        let expandedRecords: TableRow[] = [];
+//   // If nested frames, add expansion control column
+//   if (hasNestedFrames) {
+//     const expanderField: Field = {
+//       name: '',
+//       type: FieldType.other,
+//       config: {},
+//       values: [],
+//     };
+//     columns.push({
+//       key: 'expanded',
+//       name: '',
+//       field: expanderField,
+//       cellClass: styles.cell,
+//       colSpan(args) {
+//         return args.type === 'ROW' && Number(args.row.__depth) === 1 ? frame.fields.length : 1;
+//       },
+//       renderCell: ({ row }) => {
+//         // TODO add TableRow type extension to include row depth and optional data
+//         if (Number(row.__depth) === 0) {
+//           const rowIdx = Number(row.__index);
+//           return (
+//             <RowExpander
+//               height={defaultRowHeight}
+//               onCellExpand={() => onCellExpand(rowIdx)}
+//               isExpanded={expandedRows.includes(rowIdx)}
+//             />
+//           );
+//         }
+//         // If it's a child, render entire DataGrid at first column position
+//         let expandedColumns: TableColumn[] = [];
+//         let expandedRecords: TableRow[] = [];
 
-        // Type guard to check if data exists as it's optional
-        if (row.data) {
-          expandedColumns = mapFrameToDataGrid({
-            frame: row.data,
-            calcsRef,
-            options: { ...options },
-            handlers: { onCellExpand, onColumnResize },
-            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
-          });
-          expandedRecords = frameToRecords(row.data);
-        }
+//         // Type guard to check if data exists as it's optional
+//         if (row.data) {
+//           expandedColumns = mapFrameToDataGrid({
+//             frame: row.data,
+//             calcs,
+//             options: { ...options },
+//             handlers: { onCellExpand, onColumnResize },
+//             availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
+//           });
+//           expandedRecords = frameToRecords(row.data);
+//         }
 
-        // TODO add renderHeaderCell HeaderCell's here and handle all features
-        return (
-          <DataGrid<TableRow, TableSummaryRow>
-            className="rdg-dark"
-            rows={expandedRecords}
-            columns={expandedColumns}
-            rowHeight={defaultRowHeight}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
-            headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
-          />
-        );
-      },
-      width: COLUMN.EXPANDER_WIDTH,
-      minWidth: COLUMN.EXPANDER_WIDTH,
-    });
+//         // TODO add renderHeaderCell HeaderCell's here and handle all features
+//         return (
+//           <DataGrid<TableRow, TableSummaryRow>
+//             className="rdg-dark"
+//             rows={expandedRecords}
+//             columns={expandedColumns}
+//             rowHeight={defaultRowHeight}
+//             style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
+//             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
+//           />
+//         );
+//       },
+//       width: COLUMN.EXPANDER_WIDTH,
+//       minWidth: COLUMN.EXPANDER_WIDTH,
+//     });
 
-    availableWidth -= COLUMN.EXPANDER_WIDTH;
-  }
+//     availableWidth -= COLUMN.EXPANDER_WIDTH;
+//   }
 
-  // Row background color function
-  let rowBg: Function | undefined = undefined;
-  for (const field of frame.fields) {
-    const fieldOptions = field.config.custom;
-    const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
+//   // Row background color function
+//   let rowBg: Function | undefined = undefined;
+//   for (const field of frame.fields) {
+//     const fieldOptions = field.config.custom;
+//     const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
 
-    if (
-      cellOptionsExist &&
-      fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
-      fieldOptions.cellOptions.applyToRow
-    ) {
-      rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(renderedRows[rowIndex].__index));
-        const colors = getCellColors(theme, fieldOptions.cellOptions, display);
-        return colors;
-      };
-    }
-  }
+//     if (
+//       cellOptionsExist &&
+//       fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+//       fieldOptions.cellOptions.applyToRow
+//     ) {
+//       rowBg = (rowIndex: number): CellColors => {
+//         const display = field.display!(field.values.get(renderedRows[rowIndex].__index));
+//         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
+//         return colors;
+//       };
+//     }
+//   }
 
-  let fieldCountWithoutWidth = 0;
-  frame.fields.map((field, fieldIndex) => {
-    if (field.type === FieldType.nestedFrames || field.config.custom?.hidden) {
-      // Don't render nestedFrames type field
-      return;
-    }
-    const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
-    const key = field.name;
-    const justifyColumnContent = getTextAlign(field);
-    const footerStyles = getFooterStyles(justifyColumnContent);
+//   let fieldCountWithoutWidth = 0;
+//   frame.fields.map((field, fieldIndex) => {
+//     if (field.type === FieldType.nestedFrames || field.config.custom?.hidden) {
+//       // Don't render nestedFrames type field
+//       return;
+//     }
+//     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
+//     const key = field.name;
+//     const justifyColumnContent = getTextAlign(field);
+//     const footerStyles = getFooterStyles(justifyColumnContent);
 
-    // current/old table width logic calculations
-    if (fieldTableOptions.width) {
-      availableWidth -= fieldTableOptions.width;
-    } else {
-      fieldCountWithoutWidth++;
-    }
+//     // current/old table width logic calculations
+//     if (fieldTableOptions.width) {
+//       availableWidth -= fieldTableOptions.width;
+//     } else {
+//       fieldCountWithoutWidth++;
+//     }
 
-    // Add a column for each field
-    columns.push({
-      key,
-      name: field.name,
-      field,
-      cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
-      renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
-        const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
-        const value = row[key];
-        // Cell level rendering here
-        return (
-          <TableCellNG
-            frame={frame}
-            key={key}
-            value={value}
-            field={field}
-            theme={theme}
-            timeRange={timeRange ?? getDefaultTimeRange()}
-            height={defaultRowHeight}
-            justifyContent={justifyColumnContent}
-            rowIdx={renderedRows[rowIdx].__index}
-            shouldTextOverflow={() =>
-              shouldTextOverflow(
-                key,
-                row,
-                columnTypes,
-                headerCellRefs,
-                ctx,
-                defaultLineHeight,
-                defaultRowHeight,
-                TABLE.CELL_PADDING,
-                textWraps[field.name],
-                field,
-                cellType
-              )
-            }
-            setIsInspecting={setIsInspecting}
-            setContextMenuProps={setContextMenuProps}
-            getActions={getActions}
-            rowBg={rowBg}
-            onCellFilterAdded={onCellFilterAdded}
-          />
-        );
-      },
-      renderSummaryCell: () => {
-        if (isCountRowsSet && fieldIndex === 0) {
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>
-                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-              </span>
-              <span>{calcsRef.current[fieldIndex]}</span>
-            </div>
-          );
-        }
-        return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-      },
-      renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
-        <HeaderCell
-          column={column}
-          rows={rows}
-          field={field}
-          onSort={(columnKey, direction, isMultiSort) => {
-            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
-          }}
-          direction={sortDirection}
-          justifyContent={justifyColumnContent}
-          filter={filter}
-          setFilter={setFilter}
-          onColumnResize={onColumnResize}
-          headerCellRefs={headerCellRefs}
-          crossFilterOrder={crossFilterOrder}
-          crossFilterRows={crossFilterRows}
-          showTypeIcons={showTypeIcons}
-        />
-      ),
-      width: fieldTableOptions.width,
-      minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
-    });
-  });
+//     // Add a column for each field
+//     columns.push({
+//       key,
+//       name: field.name,
+//       field,
+//       cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
+//       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+//         const { row, rowIdx } = props;
+//         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+//         const value = row[key];
+//         // Cell level rendering here
+//         return (
+//           <TableCellNG
+//             frame={frame}
+//             key={key}
+//             value={value}
+//             field={field}
+//             theme={theme}
+//             timeRange={timeRange ?? getDefaultTimeRange()}
+//             height={defaultRowHeight}
+//             justifyContent={justifyColumnContent}
+//             rowIdx={renderedRows[rowIdx].__index}
+//             shouldTextOverflow={() =>
+//               shouldTextOverflow(
+//                 key,
+//                 row,
+//                 columnTypes,
+//                 headerCellRefs,
+//                 ctx,
+//                 defaultLineHeight,
+//                 defaultRowHeight,
+//                 TABLE.CELL_PADDING,
+//                 textWraps[field.name],
+//                 field,
+//                 cellType
+//               )
+//             }
+//             setIsInspecting={setIsInspecting}
+//             setContextMenuProps={setContextMenuProps}
+//             getActions={getActions}
+//             rowBg={rowBg}
+//             onCellFilterAdded={onCellFilterAdded}
+//           />
+//         );
+//       },
+//       renderSummaryCell: () => {
+//         if (isCountRowsSet && fieldIndex === 0) {
+//           return (
+//             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+//               <span>
+//                 <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+//               </span>
+//               <span>{calcs[fieldIndex]}</span>
+//             </div>
+//           );
+//         }
+//         return <div className={footerStyles.footerCell}>{calcs[fieldIndex]}</div>;
+//       },
+//       renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
+//         <HeaderCell
+//           column={column}
+//           rows={rows}
+//           field={field}
+//           onSort={(columnKey, direction, isMultiSort) => {
+//             handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
+//           }}
+//           direction={sortDirection}
+//           justifyContent={justifyColumnContent}
+//           filter={filter}
+//           setFilter={setFilter}
+//           onColumnResize={onColumnResize}
+//           headerCellRefs={headerCellRefs}
+//           crossFilterOrder={crossFilterOrder}
+//           crossFilterRows={crossFilterRows}
+//           showTypeIcons={showTypeIcons}
+//         />
+//       ),
+//       width: fieldTableOptions.width,
+//       minWidth: fieldTableOptions.minWidth || COLUMN.DEFAULT_WIDTH,
+//     });
+//   });
 
-  // INFO: This loop calculates the width for each column in less than a millisecond.
-  let sharedWidth = availableWidth / fieldCountWithoutWidth;
+//   // INFO: This loop calculates the width for each column in less than a millisecond.
+//   let sharedWidth = availableWidth / fieldCountWithoutWidth;
 
-  // First pass: Assign minimum widths to columns that need it
-  columns.forEach((column) => {
-    if (!column.width && column.minWidth! > sharedWidth) {
-      column.width = column.minWidth;
-      availableWidth -= column.width!;
-      fieldCountWithoutWidth -= 1;
-    }
-  });
+//   // First pass: Assign minimum widths to columns that need it
+//   columns.forEach((column) => {
+//     if (!column.width && column.minWidth! > sharedWidth) {
+//       column.width = column.minWidth;
+//       availableWidth -= column.width!;
+//       fieldCountWithoutWidth -= 1;
+//     }
+//   });
 
-  // Recalculate shared width after assigning minimum widths
-  sharedWidth = availableWidth / fieldCountWithoutWidth;
+//   // Recalculate shared width after assigning minimum widths
+//   sharedWidth = availableWidth / fieldCountWithoutWidth;
 
-  // Second pass: Assign shared width to remaining columns
-  columns.forEach((column) => {
-    if (!column.width) {
-      column.width = sharedWidth;
-    }
-    column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
-  });
+//   // Second pass: Assign shared width to remaining columns
+//   columns.forEach((column) => {
+//     if (!column.width) {
+//       column.width = sharedWidth;
+//     }
+//     column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
+//   });
 
-  return columns;
-}
+//   return columns;
+// }
 
-export function myRowRenderer(
+export function renderRow(
   key: React.Key,
   props: RenderRowProps<TableRow, TableSummaryRow>,
   expandedRows: number[],
@@ -598,7 +600,7 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
-const getStyles2 = (theme: GrafanaTheme2, {enablePagination, noHeader} : {enablePagination?: boolean, noHeader?: boolean}) => ({
+const getStyles2 = (theme: GrafanaTheme2, {enablePagination, noHeader}: {enablePagination?: boolean, noHeader?: boolean}) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
@@ -931,14 +933,15 @@ const useRowHeight = (columns: TableColumn[], data: DataFrame, hasSubTable: bool
 
 /*
 TODO:
-
 styling
 value formatting
 footer reducers
 hidden
+auto-cell: can we deprecate in favor of newer RDG options?
 overlay/expand on hover, active line and cell styling
 inspect? actions?
 subtable/ expand
 cell types, backgrounds
+-----
 accessible sorting and filtering
 */

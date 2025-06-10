@@ -153,7 +153,7 @@ export function useProcessedRows(
 
   // the number of rows after filtering and sorting, but before paginating. this is the "true"
   // total number of rows which the table may render.
-  const numRows = useMemo(() => sortedRows.length, [sortedRows.length]);
+  const numRows = sortedRows.length;
 
   // using dimensions of the panel, calculate pagination parameters
   const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
