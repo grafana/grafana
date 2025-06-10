@@ -65,13 +65,13 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
       maxWidth={maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
-        <IconButton
-          name="times"
-          className={styles.closeIcon}
-          aria-label={t('logs.log-details.close', 'Close log details')}
-          onClick={closeDetails}
-        />
         <div className={styles.scrollContainer}>
+          <IconButton
+            name="times"
+            className={styles.closeIcon}
+            aria-label={t('logs.log-details.close', 'Close log details')}
+            onClick={closeDetails}
+          />
           <table width="100%">
             <tbody>
               <LogDetails
@@ -104,11 +104,11 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
-    position: 'relative',
     height: '100%',
   }),
   scrollContainer: css({
     overflow: 'auto',
+    position: 'relative',
     height: '100%',
   }),
   closeIcon: css({
