@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -33,7 +34,6 @@ type dualWriter struct {
 	unified     grafanarest.Storage
 	readUnified bool
 	errorIsOK   bool // in "mode1" we try writing both -- but don't block on unified write errors
-	log         logging.Logger
 }
 
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -52,7 +52,8 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			if _, err := d.unified.Get(ctxBg, name, options); err != nil {
-				d.log.Error("failed background GET to unified", "err", err)
+				log := logging.FromContext(ctxBg).With("method", "Get")
+				log.Error("failed background GET to unified", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return legacyGet, nil
@@ -81,7 +82,8 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			if _, err := d.unified.List(ctxBg, options); err != nil {
-				d.log.Error("failed background LIST to unified", "err", err)
+				log := logging.FromContext(ctxBg).With("method", "List")
+				log.Error("failed background LIST to unified", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 		return legacyList, nil
@@ -95,7 +97,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	log := d.log.With("method", "Create").WithContext(ctx)
+	log := logging.FromContext(ctx).With("method", "Create")
 
 	accIn, err := meta.Accessor(in)
 	if err != nil {
@@ -190,7 +192,8 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 			defer cancel()
 			_, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options)
 			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-				d.log.Error("failed background DELETE in unified storage", "err", err)
+				log := logging.FromContext(ctxBg).With("method", "Delete")
+				log.Error("failed background DELETE in unified storage", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
 	}
@@ -204,7 +207,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	log := d.log.With("method", "Update").WithContext(ctx)
+	log := logging.FromContext(ctx).With("method", "Update")
 
 	// update in legacy first, and then unistore. Will return a failure if either fails.
 	//
@@ -251,7 +254,7 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	log := d.log.With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion).WithContext(ctx)
+	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion)
 
 	// delete from legacy first, and anything that is successful can be deleted in unistore too.
 	//

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { measureText } from '../../utils';
+import { measureText } from '../../utils/measureText';
 
 import { ComboboxOption } from './types';
 
