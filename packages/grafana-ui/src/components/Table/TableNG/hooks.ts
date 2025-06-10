@@ -4,7 +4,7 @@ import { DataGridHandle, SortColumn } from 'react-data-grid';
 import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
 import { ColumnTypes, FilterType, TableColumn, TableNGProps, TableRow, TableSortByFieldState } from './types';
