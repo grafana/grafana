@@ -1,5 +1,8 @@
 name: Create security branch
 on:
+  push:
+    branches:
+      - '**'  # Temporary: for testing from any branch
   workflow_call:
     inputs:
       release_branch:
@@ -42,6 +45,8 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+    # Only run if we have the required inputs (not on push)
+    if: ${{ inputs.release_branch != '' && inputs.repository != '' }}
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
