@@ -3,7 +3,7 @@ import UFuzzy from '@leeoniya/ufuzzy';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
@@ -20,6 +20,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   const {
     hideSearch,
     filterLogs,
+    matchingUids,
     setMatchingUids,
     setSearch: setContextSearch,
     searchVisible,
@@ -64,7 +65,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
       setCurrentResult(null);
       return;
     }
-    if (currentResult === null) {
+    if (!currentResult) {
       setCurrentResult(0);
       listRef?.scrollToItem(matches[0], 'center');
     }
@@ -79,9 +80,30 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, [searchVisible, setContextSearch, setMatchingUids]);
 
   useEffect(() => {
+    const matchingLogs = matches ? logs.filter((_, index) => matches.includes(index)) : [];
+    const newMatchingUids = matchingLogs.map((log) => log.uid);
+
+    if (shallowCompare(matchingUids ?? [], newMatchingUids)) {
+      // noop
+      console.log('Ignoring noop');
+      return;
+    }
+
+    if (matchingUids) {
+      // Cleanup previous matches
+      logs
+        .filter((log) => matchingUids.includes(log.uid))
+        .filter(
+          (prevMatchingLog) => matchingLogs.findIndex((matchingLog) => matchingLog.uid === prevMatchingLog.uid) < 0
+        )
+        .forEach((log) => log.setCurrentSearch(undefined));
+    }
+
+    matchingLogs.forEach((log) => log.setCurrentSearch(search));
+
     setContextSearch(search ? search : undefined);
-    setMatchingUids(matches ? logs.filter((_, index) => matches.includes(index)).map((log) => log.uid) : null);
-  }, [logs, matches, search, setContextSearch, setMatchingUids]);
+    setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
+  }, [logs, matches, matchingUids, search, setContextSearch, setMatchingUids]);
 
   if (!searchVisible) {
     return null;

@@ -23,3 +23,16 @@ export const generateLogGrammar = (log: LogListModel) => {
     ...logsGrammar,
   };
 };
+
+export const generateTextMatchGrammar = (highlightWords: string[] | undefined = [], search: string | undefined): Grammar => {
+  const textMatches = [...highlightWords];
+  if (search) {
+    textMatches.push(search);
+  }
+  if (!textMatches.length) {
+    return {};
+  }
+  return {
+    'log-search-match': new RegExp(textMatches.join('|'), 'g'),
+  };
+};
