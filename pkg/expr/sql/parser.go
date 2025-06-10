@@ -63,7 +63,7 @@ func TablesList(rawSQL string) ([]string, error) {
 			continue
 		}
 
-		// Skip tables that are part of CTEs
+		// Skip CTEs
 		if _, ok := cteNames[strings.ToLower(table)]; ok {
 			continue
 		}
