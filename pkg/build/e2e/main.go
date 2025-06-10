@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path"
-	"strconv"
-	"strings"
 
 	"dagger.io/dagger"
 	"github.com/urfave/cli/v3"
@@ -68,18 +65,6 @@ func NewApp() *cli.Command {
 				Usage: "Install the image renderer plugin",
 				Value: false,
 			},
-			&cli.StringSliceFlag{
-				Name:  "host-ports",
-				Usage: "Ports to forward from the host to the Grafana service under the 'host' hostname. Format is: [host-port:]service-port[/protocol], e.g. 3306:3306/tcp",
-				Validator: func(s []string) error {
-					for _, portForward := range s {
-						if _, err := parsePortForward(portForward); err != nil {
-							return cli.Exit("invalid port forward: "+portForward+", "+err.Error(), 1)
-						}
-					}
-					return nil
-				},
-			},
 		},
 		Action: run,
 	}
@@ -92,15 +77,6 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	licensePath := cmd.String("license")
 	imageRenderer := cmd.Bool("image-renderer")
 	runnerFlags := cmd.String("flags")
-	hostPortsRaw := cmd.StringSlice("host-ports")
-	hostPorts := make([]dagger.PortForward, 0, len(hostPortsRaw))
-	for _, portForward := range hostPortsRaw {
-		pf, err := parsePortForward(portForward)
-		if err != nil {
-			return cli.Exit("invalid port forward: "+portForward+", "+err.Error(), 1)
-		}
-		hostPorts = append(hostPorts, pf)
-	}
 
 	d, err := dagger.Connect(ctx)
 	if err != nil {
@@ -129,7 +105,6 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		YarnCache:            yarnCache,
 		License:              license,
 		InstallImageRenderer: imageRenderer,
-		HostPorts:            hostPorts,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
@@ -196,51 +171,4 @@ func mustBeDir(arg string) func(string) error {
 		}
 		return nil
 	}
-}
-
-func parsePortForward(s string) (dagger.PortForward, error) {
-	var pf dagger.PortForward
-	if s == "" {
-		return pf, errors.New("port forward string cannot be empty")
-	}
-
-	parts := strings.SplitN(s, ":", 2)
-	if len(parts) == 2 {
-		port, err := strconv.Atoi(parts[0])
-		if err != nil {
-			return pf, errors.New("invalid host port: " + parts[0])
-		}
-		if port < 1 || port > 65535 {
-			return pf, errors.New("service port must be between 1 and 65535: " + parts[0])
-		}
-		pf.Backend = port
-	}
-
-	parts = strings.SplitN(parts[1], "/", 2)
-	port, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return pf, errors.New("invalid service port: " + parts[0])
-	}
-	if port < 1 || port > 65535 {
-		return pf, errors.New("service port must be between 1 and 65535: " + parts[0])
-	}
-	pf.Frontend = port
-	if pf.Backend == 0 {
-		pf.Backend = pf.Frontend
-	}
-
-	if len(parts) == 2 {
-		switch strings.ToLower(parts[1]) {
-		case "tcp":
-			pf.Protocol = dagger.NetworkProtocolTcp
-		case "udp":
-			pf.Protocol = dagger.NetworkProtocolUdp
-		default:
-			return pf, errors.New("invalid protocol: " + parts[1] + ", must be 'tcp' or 'udp'")
-		}
-	} else {
-		pf.Protocol = dagger.NetworkProtocolTcp
-	}
-
-	return pf, nil
 }
