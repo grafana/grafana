@@ -2,11 +2,13 @@ package pyroscope
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -226,6 +228,145 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 	})
 }
 
+func Test_seriesToDataFrameAnnotations(t *testing.T) {
+	t.Run("annotations field is not added when no annotations are present", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Labels: []*LabelPair{},
+					Points: []*Point{
+						{
+							Timestamp: int64(1000),
+							Value:     30,
+						},
+						{
+							Timestamp: int64(2000),
+							Value:     20,
+						},
+						{
+							Timestamp: int64(3000),
+							Value:     10,
+						},
+					},
+				},
+			},
+			Units: "short",
+			Label: "samples",
+		}
+
+		frames, err := seriesToDataFrames(series, true)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+		require.Equal(t, 2, len(frames[0].Fields))
+	})
+
+	t.Run("annotations frame can be skipped", func(t *testing.T) {
+		rawAnnotation := `{"body":{"periodType":"day","periodLimitMb":1024,"limitResetTime":1609459200}}`
+
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Points: []*Point{
+						{
+							Timestamp: int64(1609455600000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		frames, err := seriesToDataFrames(series, false)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(frames))
+	})
+
+	t.Run("throttling annotations are correctly processed", func(t *testing.T) {
+		rawAnnotation := `{"body":{"periodType":"day","periodLimitMb":1024,"limitResetTime":1609459200}}`
+
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Points: []*Point{
+						{
+							Timestamp: int64(1609455600000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		frames, err := seriesToDataFrames(series, true)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(frames))
+
+		annotationsFrame := frames[1]
+		require.Equal(t, "annotations", annotationsFrame.Name)
+		require.Equal(t, data.DataTopicAnnotations, annotationsFrame.Meta.DataTopic)
+
+		require.Equal(t, 5, len(annotationsFrame.Fields))
+		require.Equal(t, "time", annotationsFrame.Fields[0].Name)
+		require.Equal(t, "timeEnd", annotationsFrame.Fields[1].Name)
+		require.Equal(t, "text", annotationsFrame.Fields[2].Name)
+		require.Equal(t, "isRegion", annotationsFrame.Fields[3].Name)
+		require.Equal(t, "color", annotationsFrame.Fields[4].Name)
+
+		require.Equal(t, 1, annotationsFrame.Fields[0].Len())
+		require.Equal(t, time.UnixMilli(1609455600000), annotationsFrame.Fields[0].At(0))
+		require.Equal(t, time.UnixMilli(1609459200000), annotationsFrame.Fields[1].At(0))
+		require.Contains(t, annotationsFrame.Fields[2].At(0).(string), "Ingestion limit")
+	})
+
+	t.Run("non-throttling annotations are ignored", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
+					Points: []*Point{
+						{
+							Timestamp: int64(1000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: "key1", Value: "value1"},
+								{Key: "key2", Value: "value2"},
+							},
+						},
+						{
+							Timestamp: int64(2000),
+							Value:     20,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: "key3", Value: "value3"},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		frames, err := seriesToDataFrames(series, true)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(frames))
+
+		annotationsFrame := frames[1]
+		require.Equal(t, "annotations", annotationsFrame.Name)
+		require.Equal(t, data.DataTopicAnnotations, annotationsFrame.Meta.DataTopic)
+
+		require.Equal(t, 5, len(annotationsFrame.Fields))
+
+		require.Equal(t, 0, annotationsFrame.Fields[0].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[1].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[2].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[3].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[4].Len())
+	})
+}
+
 func Test_seriesToDataFrame(t *testing.T) {
 	t.Run("single series", func(t *testing.T) {
 		series := &SeriesResponse{
@@ -235,7 +376,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames := seriesToDataFrames(series)
+		frames, err := seriesToDataFrames(series, true)
+		require.NoError(t, err)
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, data.NewField("time", nil, []time.Time{time.UnixMilli(1000), time.UnixMilli(2000)}), frames[0].Fields[0])
 		require.Equal(t, data.NewField("samples", map[string]string{}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
@@ -249,7 +391,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Label: "samples",
 		}
 
-		frames = seriesToDataFrames(series)
+		frames, err = seriesToDataFrames(series, true)
+		require.NoError(t, err)
 		require.Equal(t, data.NewField("samples", map[string]string{"app": "bar"}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 	})
 
@@ -262,7 +405,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 			Units: "short",
 			Label: "samples",
 		}
-		frames := seriesToDataFrames(resp)
+		frames, err := seriesToDataFrames(resp, true)
+		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
 		require.Equal(t, 2, len(frames[0].Fields))
 		require.Equal(t, 2, len(frames[1].Fields))
@@ -275,7 +419,7 @@ type FakeClient struct {
 	Args []any
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, http.Header, error) {
 	return []*ProfileType{
 		{
 			ID:    "type:1",
@@ -285,18 +429,18 @@ func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) (
 			ID:    "type:2",
 			Label: "memory",
 		},
-	}, nil
+	}, http.Header{}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -309,10 +453,10 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 			MaxSelf: 56,
 		},
 		Units: "count",
-	}, nil
+	}, http.Header{}, nil
 }
 
-func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -325,10 +469,10 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 			MaxSelf: 56,
 		},
 		Units: "count",
-	}, nil
+	}, http.Header{}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, http.Header, error) {
 	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{
@@ -339,5 +483,5 @@ func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector
 		},
 		Units: "count",
 		Label: "test",
-	}, nil
+	}, http.Header{}, nil
 }

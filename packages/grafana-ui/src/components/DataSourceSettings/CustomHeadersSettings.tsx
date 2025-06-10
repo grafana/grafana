@@ -4,9 +4,9 @@ import { PureComponent } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
@@ -61,7 +61,7 @@ const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: Custom
       <FormField
         label={t('grafana-ui.data-source-settings.custom-headers-header', 'Header')}
         name="name"
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="X-Custom-Header"
         labelWidth={5}
         value={header.name || ''}

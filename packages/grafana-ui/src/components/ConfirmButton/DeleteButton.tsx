@@ -1,5 +1,5 @@
 import { ComponentSize } from '../../types/size';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 
 import { ConfirmButton } from './ConfirmButton';
 

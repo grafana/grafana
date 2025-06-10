@@ -154,19 +154,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
-		})
-	}
 
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
