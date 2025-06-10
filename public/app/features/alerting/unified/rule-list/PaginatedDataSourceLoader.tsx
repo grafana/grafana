@@ -77,14 +77,8 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
-            <LoadMoreButton onClick={fetchMoreGroups} />
+            <LoadMoreButton loading={isLoading} onClick={fetchMoreGroups} />
           </div>
-        )}
-        {isLoading && (
-          <Stack direction="row" gap={2} alignItems="baseline" justifyContent="flex-start">
-            <Spinner inline={true} />
-            <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
-          </Stack>
         )}
         {hasNoRules && (
           <div className={styles.noRules}>
