@@ -369,11 +369,19 @@ const LogListComponent = ({
     debouncedResetAfterIndex(0);
   }, [debouncedResetAfterIndex]);
 
-  const filteredLogs = useMemo(() => {
-    const filteredLogs =
-      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel));
-    return matchingUids && filterLogs ? filteredLogs.filter((log) => matchingUids.includes(log.uid)) : filteredLogs;
-  }, [filterLevels, filterLogs, matchingUids, processedLogs]);
+  const levelFilteredLogs = useMemo(
+    () =>
+      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
+    [filterLevels, processedLogs]
+  );
+
+  const filteredLogs = useMemo(
+    () =>
+      matchingUids && filterLogs
+        ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
+        : levelFilteredLogs,
+    [filterLogs, levelFilteredLogs, matchingUids]
+  );
 
   return (
     <div className={styles.logListContainer}>
@@ -411,7 +419,7 @@ const LogListComponent = ({
             onDismiss={onDisableCancel}
           />
         )}
-        <LogListSearch logs={processedLogs} listRef={listRef.current} />
+        <LogListSearch logs={levelFilteredLogs} listRef={listRef.current} />
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}

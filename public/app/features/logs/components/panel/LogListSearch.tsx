@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import UFuzzy from '@leeoniya/ufuzzy';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
@@ -31,11 +30,12 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   const styles = useStyles2(getStyles);
   const { t } = useTranslate();
 
-  const filterer = useMemo(() => new UFuzzy({ intraMode: 1 }), []);
-  const matches = useMemo(
-    () => (search !== '' ? filterer.filter(getHaystack(logs), search) : null),
-    [filterer, logs, search]
-  );
+  const matches = useMemo(() => {
+    const regex = new RegExp(search, 'i');
+    const newMatches = logs.filter((log) => log.entry.match(regex) !== null);
+    newMatches.forEach((log) => log.setCurrentSearch(search));
+    return newMatches;
+  }, [logs, search]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
@@ -48,8 +48,8 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     const prev = currentResult > 0 ? currentResult - 1 : matches.length - 1;
     setCurrentResult(prev);
-    listRef?.scrollToItem(matches[prev], 'center');
-  }, [currentResult, listRef, matches]);
+    listRef?.scrollToItem(logs.indexOf(matches[prev]), 'center');
+  }, [currentResult, listRef, logs, matches]);
 
   const nextResult = useCallback(() => {
     if (!matches || currentResult === null) {
@@ -57,8 +57,8 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     const next = currentResult < matches.length - 1 ? currentResult + 1 : 0;
     setCurrentResult(next);
-    listRef?.scrollToItem(matches[next], 'center');
-  }, [currentResult, listRef, matches]);
+    listRef?.scrollToItem(logs.indexOf(matches[next]), 'center');
+  }, [currentResult, listRef, logs, matches]);
 
   useEffect(() => {
     if (!matches || !matches.length) {
@@ -67,9 +67,9 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
     if (!currentResult) {
       setCurrentResult(0);
-      listRef?.scrollToItem(matches[0], 'center');
+      listRef?.scrollToItem(logs.indexOf(matches[0]), 'center');
     }
-  }, [currentResult, listRef, matches]);
+  }, [currentResult, listRef, logs, matches]);
 
   useEffect(() => {
     if (!searchVisible) {
@@ -80,26 +80,15 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, [searchVisible, setContextSearch, setMatchingUids]);
 
   useEffect(() => {
-    const matchingLogs = matches ? logs.filter((_, index) => matches.includes(index)) : [];
-    const newMatchingUids = matchingLogs.map((log) => log.uid);
+    const newMatchingUids = matches.map((log) => log.uid);
 
-    if (shallowCompare(matchingUids ?? [], newMatchingUids)) {
-      // noop
-      console.log('Ignoring noop');
-      return;
-    }
-
-    if (matchingUids) {
+    if (matchingUids && !shallowCompare(matchingUids, newMatchingUids)) {
       // Cleanup previous matches
       logs
         .filter((log) => matchingUids.includes(log.uid))
-        .filter(
-          (prevMatchingLog) => matchingLogs.findIndex((matchingLog) => matchingLog.uid === prevMatchingLog.uid) < 0
-        )
+        .filter((prevMatchingLog) => matches.findIndex((matchingLog) => matchingLog.uid === prevMatchingLog.uid) < 0)
         .forEach((log) => log.setCurrentSearch(undefined));
     }
-
-    matchingLogs.forEach((log) => log.setCurrentSearch(search));
 
     setContextSearch(search ? search : undefined);
     setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
@@ -182,7 +171,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-function getHaystack(logs: LogListModel[]) {
-  return logs.map((log) => log.entry);
-}
