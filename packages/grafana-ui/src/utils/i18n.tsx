@@ -29,6 +29,7 @@ type I18NextTransProps = Parameters<I18NextTransType>[0];
 
 interface TransProps extends I18NextTransProps {
   i18nKey: string;
+  className?: string;
 }
 
 export const Trans = (props: TransProps): ReactElement => {
