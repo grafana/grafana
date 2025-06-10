@@ -3,10 +3,9 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
-
-import { t } from '../../../core/internationalization';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
@@ -64,6 +63,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       return acc;
     }, {});
   });
+
+  const { t } = useTranslate();
 
   const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;

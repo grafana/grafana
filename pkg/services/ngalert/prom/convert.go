@@ -58,6 +58,7 @@ type Config struct {
 	KeepOriginalRuleDefinition *bool
 	RecordingRules             RulesConfig
 	AlertRules                 RulesConfig
+	NotificationSettings       []models.NotificationSettings
 }
 
 // RulesConfig contains configuration that applies to either recording or alerting rules.
@@ -235,6 +236,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
 
+	// Save the merged group-level + rule-level labels to the original rule,
+	// to ensure that they are saved to the original YAML rule definition.
+	if rule.Labels == nil {
+		rule.Labels = make(map[string]string)
+	}
+	maps.Copy(rule.Labels, labels)
+
 	// Add a special label to indicate that this rule was converted from a Prometheus rule.
 	labels[models.ConvertedPrometheusRuleLabel] = "true"
 
@@ -264,6 +272,10 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		// By setting this value to 1 we ensure that the alert is resolved on the first evaluation
 		// that doesn't have the series.
 		MissingSeriesEvalsToResolve: util.Pointer(1),
+	}
+
+	if !isRecordingRule {
+		result.NotificationSettings = p.cfg.NotificationSettings
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {

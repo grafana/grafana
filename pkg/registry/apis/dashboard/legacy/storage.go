@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -59,7 +61,7 @@ func getProvisioningDataFromEvent(event resource.WriteEvent) (*dashboards.Dashbo
 	return provisioning, nil
 }
 
-func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
+func isDashboardKey(key *resourcepb.ResourceKey, requireName bool) error {
 	gr := dashboard.DashboardResourceInfo.GroupResource()
 	if key.Group != gr.Group {
 		return fmt.Errorf("expecting dashboard group (%s != %s)", key.Group, gr.Group)
@@ -83,13 +85,13 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	}
 
 	switch event.Type {
-	case resource.WatchEvent_DELETED:
+	case resourcepb.WatchEvent_DELETED:
 		{
 			_, _, err = a.DeleteDashboard(ctx, info.OrgID, event.Key.Name)
 			//rv = ???
 		}
 	// The difference depends on embedded internal ID
-	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:
+	case resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED:
 		{
 			dash, err := getDashboardFromEvent(event)
 			if err != nil {
@@ -119,7 +121,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					rv = int64(after.Version)
 				}
 			} else {
-				failOnExisting := event.Type == resource.WatchEvent_ADDED
+				failOnExisting := event.Type == resourcepb.WatchEvent_ADDED
 				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
 				if err != nil {
 					return 0, err
@@ -187,7 +189,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	rsp := &resource.BackendReadResponse{}
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -208,7 +210,7 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 		return rsp
 	}
 	if dash == nil {
-		rsp.Error = &resource.ErrorResult{
+		rsp.Error = &resourcepb.ErrorResult{
 			Code: http.StatusNotFound,
 		}
 	} else {
@@ -227,8 +229,13 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 	return rsp
 }
 
-// List implements AppendingStore.
-func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+// ListHistory implements StorageBackend.
+func (a *dashboardSqlAccess) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	return a.ListIterator(ctx, req, cb)
+}
+
+// List implements StorageBackend.
+func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	if req.ResourceVersion != 0 {
 		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
 	}
@@ -262,12 +269,12 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	}
 
 	switch req.Source {
-	case resource.ListRequest_HISTORY:
+	case resourcepb.ListRequest_HISTORY:
 		query.GetHistory = true
 		query.UID = req.Options.Key.Name
-	case resource.ListRequest_TRASH:
+	case resourcepb.ListRequest_TRASH:
 		query.GetTrash = true
-	case resource.ListRequest_STORE:
+	case resourcepb.ListRequest_STORE:
 		// normal
 	}
 
@@ -321,23 +328,23 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 }
 
 // Simple wrapper for index implementation
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.BackendReadResponse, error) {
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resource.BackendReadResponse, error) {
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	return a.dashboardSearchClient.Search(ctx, req)
 }
 
-func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
+func (a *dashboardSqlAccess) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
+func (a *dashboardSqlAccess) CountManagedObjects(context.Context, *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // GetStats implements ResourceServer.
-func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	return a.dashboardSearchClient.GetStats(ctx, req)
 }

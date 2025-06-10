@@ -4,8 +4,8 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { IconSize, isIconSize } from '../../types';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { IconSize, isIconSize } from '../../types/icon';
 import { t } from '../../utils/i18n';
 import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
@@ -96,6 +96,7 @@ export const Spinner = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   inline: css({
     display: 'inline-block',
+    lineHeight: 0,
   }),
   spin: css({
     [theme.transitions.handleMotion('no-preference')]: {

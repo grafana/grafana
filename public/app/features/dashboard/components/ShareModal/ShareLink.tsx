@@ -1,9 +1,10 @@
 import { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';

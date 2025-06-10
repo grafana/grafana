@@ -11,20 +11,18 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 1
-weight: 50
+title: Get started with Grafana Alerting - Create and receive your first alert
+weight: 60
 killercoda:
-  title: Get started with Grafana Alerting - Part 1
-  description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live — Part 1.
+  title: Get started with Grafana Alerting - Create and receive your first alert
+  description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live.
   backend:
     imageid: ubuntu
 ---
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 1
-
-In this guide, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
+In this tutorial, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
 In this tutorial you will:
 
@@ -36,7 +34,7 @@ In this tutorial you will:
 
 {{< admonition type="tip" >}}
 
-Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+After you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /admonition >}}
 
@@ -44,7 +42,7 @@ Once you have completed Part 1, don’t forget to explore the advanced but essen
 
 {{< docs/ignore >}}
 
-> Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+> After you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /docs/ignore >}}
 
@@ -181,7 +179,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we establish an [alert rule](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-1. In Grafana, navigate to **Alerts & IRM > Alerting > Alert rules**. Click on **New alert rule**.
+1. In Grafana, navigate to **Alerts & IRM > Alerting > Alert rules**. Click on **+ New alert rule**.
 
 1. Enter alert rule name for your alert rule. Make it short and descriptive as this appears in your alert notification. For instance, **database-metrics**
 
@@ -195,7 +193,8 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 1. In the **Alert condition** section:
 
-   - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
+   - Keep **Random Walk** as the _Scenario_.
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 0` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the query.
 
@@ -214,13 +213,15 @@ The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fun
 - **Evaluation group**: every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
 - **Evaluation interval**: determines how frequently the alert rule is checked. For instance, the evaluation may occur every 10s, 30s, 1m, 10m, etc.
 - **Pending period**: how long the condition must be met to trigger the alert rule.
+- **Keep firing for**: defines how long an alert should remain in the Firing state after the alert condition stops being true. During this time, the alert enters a _Recovering_ state, suppressing additional notifications but keeping the alert active. It helps prevent alert flapping, where alerts rapidly switch between firing and resolved due to noisy or unstable metrics.
 
 To set up the evaluation:
 
-1. In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
+1. In the **Evaluation group and interval**, enter a name. For example: `1m-evaluation`.
 1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
 1. Set the **pending period** to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
+1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true. Use this when you want alerts to be resolved as soon as the system is healthy again.
 
 ### Configure notifications
 
@@ -263,13 +264,13 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 <!-- INTERACTIVE page finish.md START -->
 
-## Learn more in [Grafana Alerting Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
+## Learn more in [Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you'll learn to use alert instances and route notifications by labels to contacts
 
 {{< /admonition >}}
 
@@ -277,7 +278,7 @@ In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Grafana Alerting: Multi-dimensional alerts and how to route them](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you'll learn to use alert instances and route notifications by labels to contacts.
 
 {{< /docs/ignore >}}
 

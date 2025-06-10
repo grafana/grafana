@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
@@ -11,7 +12,7 @@ import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter'
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPane';
+import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 import { useEditPaneCollapsed } from './shared';
 
 interface Props {
@@ -98,7 +99,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           <NavToolbarActions dashboard={dashboard} />
           <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
           <div className={styles.bodyWrapper}>
-            <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+            <div
+              className={cx(styles.body, isEditing && styles.bodyEditing)}
+              data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+              ref={onBodyRef}
+            >
               {body}
             </div>
           </div>
@@ -153,10 +158,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       label: 'body',
       display: 'flex',
       flexGrow: 1,
-      gap: '8px',
+      gap: theme.spacing(1),
       boxSizing: 'border-box',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2, 2, 2),
+      // without top padding the fixed controls headers is rendered over the selection outline.
+      padding: theme.spacing(0.125, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',
@@ -166,8 +172,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       bottom: 0,
       overflow: 'auto',
       scrollbarWidth: 'thin',
-      // The fixed controls headers is otherwise rendered over the selection outlinem, Maybe there is an other solution
-      paddingTop: '2px',
+      scrollbarGutter: 'stable',
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),

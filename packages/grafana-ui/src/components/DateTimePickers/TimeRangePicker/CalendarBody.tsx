@@ -4,7 +4,7 @@ import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, WeekStart } from '../WeekStartPicker';
@@ -109,7 +109,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
     }),
     body: css({
       zIndex: theme.zIndex.modal,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       width: '268px',
 
       '.react-calendar__navigation': {
@@ -169,7 +169,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
         abbr: {
           backgroundColor: theme.colors.primary.main,
-          borderRadius: '100px',
+          borderRadius: theme.shape.radius.pill,
           display: 'block',
           paddingTop: '2px',
           height: '26px',

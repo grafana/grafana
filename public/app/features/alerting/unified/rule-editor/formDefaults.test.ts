@@ -1,3 +1,4 @@
+import { GrafanaConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
@@ -177,27 +178,43 @@ describe('getDefaultManualRouting', () => {
     window.localStorage.clear();
   });
 
-  it('returns false if the feature toggle is not enabled', () => {
-    config.featureToggles.alertingSimplifiedRouting = false;
-    expect(getDefautManualRouting()).toBe(false);
-  });
-
-  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns true if localStorage is not set', () => {
     expect(getDefautManualRouting()).toBe(true);
   });
 
-  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns false if localStorage is set to "false"', () => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     expect(getDefautManualRouting()).toBe(false);
   });
 
-  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
-    config.featureToggles.alertingSimplifiedRouting = true;
+  it('returns true if localStorage is set to any value other than "false"', () => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('getDefaultFormValues', () => {
+  // This is for Typescript. GrafanaBootConfig returns narrower types than GrafanaConfig
+  const grafanaConfig: GrafanaConfig = config;
+  const uaConfig = grafanaConfig.unifiedAlerting;
+
+  afterEach(() => {
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = undefined;
+  });
+
+  it('should set targetDatasourceUid from config when defaultRecordingRulesTargetDatasourceUID is provided', () => {
+    const expectedDatasourceUid = 'test-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = expectedDatasourceUid;
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBe(expectedDatasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when defaultRecordingRulesTargetDatasourceUID is not provided', () => {
+    const result = getDefaultFormValues();
+    expect(result.targetDatasourceUid).toBeUndefined();
   });
 });

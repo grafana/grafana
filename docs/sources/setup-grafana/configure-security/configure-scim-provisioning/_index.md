@@ -20,7 +20,7 @@ weight: 300
 System for Cross-domain Identity Management (SCIM) is an open standard that allows automated user provisioning and management. With SCIM, you can automate the provisioning of users and groups from your identity provider to Grafana.
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 {{< admonition type="note" >}}
@@ -28,6 +28,18 @@ This feature is behind the `enableSCIM` feature toggle.
 You can enable feature toggles through configuration file or environment variables.
 
 For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
+{{< /admonition >}}
+
+{{< admonition type="warning" title="Critical: Aligning SAML Identifier with SCIM externalId" >}}
+When using SAML for authentication alongside SCIM provisioning, a critical security measure is to ensure proper alignment between the the SCIM user's `externalId` and the SAML user identifier. The unique identifier used for SCIM provisioning (which becomes the `externalId` in Grafana, often sourced from a stable IdP attribute like Azure AD's `user.objectid`) **must also be sent as a claim in the SAML assertion from your Identity Provider.**
+Furthermore, the Grafana SAML configuration must be correctly set up to identify and use this specific claim for linking the authenticated SAML user to their SCIM-provisioned user. This can be achieved by either ensuring the primary SAML login identifier by using the `assertion_attribute_external_uid` setting in Grafana to explicitly set the name of the SAML claim that contains the stable unique identifier attribute.
+
+**Why is this important?**
+A mismatch or inconsistent mapping between this SAML login identifier and the SCIM `externalId` creates a critical security vulnerability. If these two identifiers are not reliably and uniquely aligned for each individual user, Grafana may fail to correctly link an authenticated SAML session to the intended SCIM-provisioned user profile and its associated permissions. This can enable a malicious actor to impersonate another user—for instance, by crafting a SAML assertion that, due to the identifier misalignment, incorrectly grants them the access rights of the targeted user.
+
+Grafana relies on this linkage to correctly associate the authenticated user from SAML with the provisioned user from SCIM. Failure to ensure a consistent and unique identifier across both systems can break this linkage, leading to incorrect user mapping and potential unauthorized access.
+
+Always verify that your SAML identity provider is configured to send a stable, unique user identifier that your SCIM configuration maps to `externalId`. Refer to your identity provider's documentation and the specific Grafana SCIM integration guides (e.g., for [Azure AD](configure-scim-with-azuread/) or [Okta](configure-scim-with-okta/)) for detailed instructions on configuring these attributes correctly.
 {{< /admonition >}}
 
 ## Benefits
@@ -48,15 +60,19 @@ SCIM offers several advantages for managing users and teams in Grafana:
 
 When you enable SCIM in Grafana, the following requirements and restrictions apply:
 
-1. **Use the same identity provider**: You must use the same identity provider for both authentication and user provisioning. For example, if you use Azure AD for SCIM, you must also use Azure AD for authentication.
+1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
 
 2. **Authentication restrictions**:
 
    - Users attempting to log in through other methods (LDAP, OAuth) will be blocked
    - By default, users who are not provisioned through SCIM cannot access Grafana
-   - You can allow non-SCIM users by setting `allow_non_provisioned_users = true`
 
-3. **Exceptions**: Users with Basic Auth credentials and those using their Grafana Cloud accounts can still log in regardless of these restrictions.
+3. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
+
+   - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
+   - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
+
+4. **Exceptions**: Users with Basic Auth credentials and those using their Grafana Cloud accounts can still log in regardless of these restrictions.
 
 ## Configure SCIM in Grafana
 
@@ -73,7 +89,7 @@ The table below describes all SCIM configuration options. Like any other Grafana
 
 - SCIM group sync (`group_sync_enabled = true`) and Team Sync cannot be enabled simultaneously
 - You can use SCIM user sync (`user_sync_enabled = true`) alongside Team Sync
-- For more details about migration and compatibility, see [SCIM vs Team Sync](./manage-users-teams/_index.md#scim-vs-team-sync)
+- For more details about migration and compatibility, see [SCIM vs Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/manage-users-teams/#scim-vs-team-sync)
   {{< /admonition >}}
 
 ### Example SCIM configuration
@@ -122,5 +138,5 @@ The following table compares SCIM with other synchronization methods to help you
 ## Next steps
 
 - [Manage users and teams with SCIM provisioning](manage-users-teams/)
-- [Configure SCIM with Azure AD](azuread/)
-- [Configure SCIM with Okta](okta/)
+- [Configure SCIM with Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-azuread/)
+- [Configure SCIM with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-scim-provisioning/configure-scim-with-okta/)

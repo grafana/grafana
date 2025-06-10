@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 )
 
@@ -200,6 +201,21 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// Route for `mimirtool alertmanager load`
+// swagger:route POST /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusPostAlertmanagerConfig
+//
+// Load Alertmanager configuration to Grafana and merge it with the existing configuration.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
+
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
@@ -210,6 +226,12 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
 	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
+	// in: header
+	TargetDatasourceUID string `json:"x-grafana-alerting-target-datasource-uid"`
+	// in: header
+	FolderUID string `json:"x-grafana-alerting-folder-uid"`
+	// in: header
+	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
 	// in:body
 	Body PrometheusRuleGroup
 }
@@ -222,23 +244,23 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name        string            `yaml:"name"`
-	Interval    model.Duration    `yaml:"interval"`
-	QueryOffset *model.Duration   `yaml:"query_offset,omitempty"`
-	Limit       int               `yaml:"limit,omitempty"`
-	Rules       []PrometheusRule  `yaml:"rules"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
+	Name        string            `yaml:"name" json:"name"`
+	Interval    model.Duration    `yaml:"interval" json:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules" json:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 // swagger:model
 type PrometheusRule struct {
-	Alert         string            `yaml:"alert,omitempty"`
-	Expr          string            `yaml:"expr"`
-	For           *model.Duration   `yaml:"for,omitempty"`
-	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty"`
-	Annotations   map[string]string `yaml:"annotations,omitempty"`
-	Record        string            `yaml:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
 }
 
 // swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusCortexDeleteRuleGroup RouteConvertPrometheusGetRuleGroup RouteConvertPrometheusCortexGetRuleGroup
@@ -260,4 +282,15 @@ type ConvertPrometheusResponse struct {
 	Status    string `json:"status"`
 	ErrorType string `json:"errorType"`
 	Error     string `json:"error"`
+}
+
+// swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
+type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
+	// in:body
+	Body AlertmanagerUserConfig
+}
+
+// swagger:model
+type AlertmanagerUserConfig struct {
+	AlertmanagerConfig config.Config `yaml:"alertmanager_config" json:"alertmanager_config"`
 }

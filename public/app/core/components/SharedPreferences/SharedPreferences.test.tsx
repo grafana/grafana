@@ -93,8 +93,8 @@ const defaultPreferences: UserPreferencesDTO = {
   language: '',
 };
 
-const mockPrefsPatch = jest.fn();
-const mockPrefsUpdate = jest.fn();
+const mockPrefsPatch = jest.fn().mockResolvedValue(undefined);
+const mockPrefsUpdate = jest.fn().mockResolvedValue(undefined);
 const mockPrefsLoad = jest.fn().mockResolvedValue(mockPreferences);
 
 jest.mock('app/core/services/PreferencesService', () => ({
@@ -129,9 +129,6 @@ describe('SharedPreferences', () => {
   });
 
   beforeEach(async () => {
-    mockReload.mockReset();
-    mockPrefsUpdate.mockReset();
-
     render(<SharedPreferences {...props} />);
 
     await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());

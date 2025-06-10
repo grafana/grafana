@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
@@ -21,6 +21,7 @@ function GrafanaModifyExport() {
   const ruleIdentifier = useMemo<RuleIdentifier | undefined>(() => {
     return ruleId.tryParse(id, true);
   }, [id]);
+  const { t } = useTranslate();
 
   if (!ruleIdentifier) {
     return (
@@ -37,6 +38,7 @@ function GrafanaModifyExport() {
 
 function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
   const { loading, error, result: rulerRule } = useRuleWithLocation({ ruleIdentifier: ruleIdentifier });
+  const { t } = useTranslate();
 
   if (loading) {
     return <LoadingPlaceholder text={t('alerting.rule-modify-export.text-loading-the-rule', 'Loading the rule...')} />;
@@ -91,11 +93,12 @@ function RuleModifyExport({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }
 }
 
 function GrafanaModifyExportPage() {
+  const { t } = useTranslate();
   return (
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: 'Modify export',
+        text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}

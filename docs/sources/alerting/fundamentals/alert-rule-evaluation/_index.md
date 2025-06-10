@@ -29,10 +29,11 @@ refs:
 
 # Alert rule evaluation
 
-The criteria determining when an alert rule fires are based on two settings:
+The criteria determining when an alert rule fires are based on three settings:
 
 - [Evaluation group](#evaluation-group): how frequently the alert rule is evaluated.
 - [Pending period](#pending-period): how long the condition must be met to start firing.
+- [Keep firing for](#pending-period): how long the alert continues to fire after the condition is no longer met.
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-2.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." caption="Set alert rule evaluation" >}}
 
@@ -50,7 +51,7 @@ Rules in different groups can be evaluated simultaneously.
 
 - **Data source-managed** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
 
-- **Grafana-managed rules [imported from data source-managed rules](ref:import-ds-rules)** are evaluated sequentially, like data source-managed rules.
+- **Grafana-managed rules [imported from data source-managed rules](ref:import-ds-rules)** are also evaluated sequentially.
 
 ## Pending period
 

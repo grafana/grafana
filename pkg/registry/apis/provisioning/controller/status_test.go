@@ -104,7 +104,7 @@ func TestRepositoryStatusPatcher_Patch(t *testing.T) {
 			}
 
 			patcher := NewRepositoryStatusPatcher(&client)
-			err := patcher.Patch(context.Background(), tt.repo, tt.patchOperations)
+			err := patcher.Patch(context.Background(), tt.repo, tt.patchOperations...)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)

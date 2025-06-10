@@ -17,6 +17,7 @@ export const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     metric: byRole('textbox', { name: 'metric' }),
+    targetDatasource: byTestId('target-data-source'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),
@@ -39,7 +40,7 @@ export const ui = {
       byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
   },
   buttons: {
-    saveAndExit: byRole('button', { name: 'Save rule and exit' }),
+    save: byTestId('save-rule'),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),

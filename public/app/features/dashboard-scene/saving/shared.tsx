@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { isFetchError } from '@grafana/runtime';
+import { Trans, useTranslate } from '@grafana/i18n';
+import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Diffs } from '../settings/version-history/utils';
 
@@ -41,7 +41,8 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = false;
+  const { t } = useTranslate();
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
@@ -83,6 +84,7 @@ export interface SaveButtonProps {
 }
 
 export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+  const { t } = useTranslate();
   return (
     <Button
       disabled={!isValid || isLoading}

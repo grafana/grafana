@@ -1,7 +1,6 @@
+import { useTranslate } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
-
-import { t } from '../../../core/internationalization';
 
 type DataSourceInfo = {
   dataSourcePluginName: string;
@@ -9,16 +8,17 @@ type DataSourceInfo = {
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
+  const { t } = useTranslate();
   const info: PageInfoItem[] = [];
   const alertingEnabled = dataSourceInfo.alertingSupported;
 
   info.push({
-    label: 'Type',
+    label: t('datasources.use-data-source-info.label.type', 'Type'),
     value: dataSourceInfo.dataSourcePluginName,
   });
 
   info.push({
-    label: 'Alerting',
+    label: t('datasources.use-data-source-info.label.alerting', 'Alerting'),
     value: (
       <Badge
         color={alertingEnabled ? 'green' : 'red'}
