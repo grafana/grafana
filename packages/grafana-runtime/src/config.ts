@@ -159,6 +159,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
     recordingRulesEnabled: false,
+    defaultRecordingRulesTargetDatasourceUID: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
