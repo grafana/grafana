@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
