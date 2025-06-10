@@ -3,7 +3,7 @@ import { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
 import { t } from '../../utils/i18n';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';

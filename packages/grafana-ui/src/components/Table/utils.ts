@@ -31,7 +31,7 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 
 import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';

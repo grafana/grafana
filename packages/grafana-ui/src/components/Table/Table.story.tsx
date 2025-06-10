@@ -13,7 +13,7 @@ import {
   Field,
 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { Button } from '../Button/Button';

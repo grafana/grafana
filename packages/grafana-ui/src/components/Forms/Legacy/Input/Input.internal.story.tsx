@@ -2,7 +2,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { zip, fromPairs } from 'lodash';
 import { useState } from 'react';
 
-import { EventsWithValidation } from '../../../../utils';
+import { EventsWithValidation } from '../../../../utils/validate';
 
 import { Input } from './Input';
 

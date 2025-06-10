@@ -55,7 +55,7 @@ export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
-export { type ButtonLinkProps, getButtonStyles } from '../components/Button';
+export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
 export {
   type TableSortByFieldState,
   type TableFieldOptions,
@@ -77,7 +77,7 @@ export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';
 export { type Props as AlertProps } from '../components/Alert/Alert';
-export { type TooltipPlacement } from '../components/Tooltip';
+export { type TooltipPlacement } from '../components/Tooltip/types';
 export { ConfirmContent, type ConfirmContentProps } from '../components/ConfirmModal/ConfirmContent';
 
 export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';

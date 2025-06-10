@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
 import { Alert } from '../Alert/Alert';
 import { Icon } from '../Icon/Icon';
 

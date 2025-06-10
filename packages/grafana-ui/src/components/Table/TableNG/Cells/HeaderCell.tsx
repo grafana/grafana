@@ -5,8 +5,8 @@ import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
-import { getFieldTypeIcon } from '../../../../types';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';

@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { FilterPill } from './FilterPill';

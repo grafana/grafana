@@ -1,7 +1,7 @@
 import { ChangeEvent, MouseEvent } from 'react';
 
 import { Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { Input } from '../Input/Input';

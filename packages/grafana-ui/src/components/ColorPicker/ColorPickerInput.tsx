@@ -5,7 +5,7 @@ import { useThrottleFn } from 'react-use';
 
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Props as InputProps } from '../Input/Input';
 

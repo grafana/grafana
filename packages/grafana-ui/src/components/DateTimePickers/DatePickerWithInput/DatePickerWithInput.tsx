@@ -4,7 +4,7 @@ import { ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 

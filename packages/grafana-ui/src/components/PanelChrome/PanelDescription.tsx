@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TitleItem } from './TitleItem';
 

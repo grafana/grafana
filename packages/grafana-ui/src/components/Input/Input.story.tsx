@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
 
-import { getAvailableIcons } from '../../types';
-import { Button } from '../Button';
+import { getAvailableIcons } from '../../types/icon';
+import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 
 import { Input } from './Input';

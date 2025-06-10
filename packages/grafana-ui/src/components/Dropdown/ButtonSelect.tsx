@@ -17,8 +17,8 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
-import { PopoverContent } from '../Tooltip';
+import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
+import { PopoverContent } from '../Tooltip/types';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;

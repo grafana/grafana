@@ -9,7 +9,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 
-import { getTheme } from '../../themes';
+import { getTheme } from '../../themes/getTheme';
 
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 

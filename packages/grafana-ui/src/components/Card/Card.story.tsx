@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { TagList } from '../Tags/TagList';
 

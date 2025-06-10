@@ -6,7 +6,7 @@ import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } fr
 import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 // import { GeoCell } from '../../Cells/GeoCell';

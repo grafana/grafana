@@ -26,8 +26,8 @@ import {
   TableSortByFieldState,
 } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../..';
-import { getTextColorForAlphaBackground } from '../../../utils';
+import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { TableCellInspectorMode } from '../TableCellInspector';
 
 import { TABLE } from './constants';
 import {
