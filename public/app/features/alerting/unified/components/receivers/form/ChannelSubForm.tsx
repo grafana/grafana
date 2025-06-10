@@ -7,6 +7,7 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { NotificationChannelOption } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
@@ -21,7 +22,6 @@ import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIn
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 import { Notifier } from './notifiers';
-import { NotificationChannelOption } from 'app/types';
 
 interface Props<R extends ChannelValues> {
   defaultValues: R;
