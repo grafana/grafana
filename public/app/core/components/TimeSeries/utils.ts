@@ -347,46 +347,59 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
-        if (!show && gaps && gaps.length) {
+        if (!show) {
           const yData = u.data[seriesIdx];
 
-          const firstIdx = u.posToIdx(gaps[0][0], true);
+          if (gaps && gaps.length) {
+            const firstIdx = u.posToIdx(gaps[0][0], true);
 
-          if (yData[firstIdx - 1] == null) {
-            filtered.push(firstIdx);
-          }
+            if (yData[firstIdx - 1] == null) {
+              filtered.push(firstIdx);
+            }
 
-          // show single points between consecutive gaps that share end/start
-          for (let i = 0; i < gaps.length; i++) {
-            let thisGap = gaps[i];
-            let nextGap = gaps[i + 1];
+            // show single points between consecutive gaps that share end/start
+            for (let i = 0; i < gaps.length; i++) {
+              let thisGap = gaps[i];
+              let nextGap = gaps[i + 1];
 
-            if (nextGap && thisGap[1] === nextGap[0]) {
-              // approx when data density is > 1pt/px, since gap start/end pixels are rounded
-              let approxIdx = u.posToIdx(thisGap[1], true);
+              if (nextGap && thisGap[1] === nextGap[0]) {
+                // approx when data density is > 1pt/px, since gap start/end pixels are rounded
+                let approxIdx = u.posToIdx(thisGap[1], true);
 
-              if (yData[approxIdx] == null) {
-                // scan left/right alternating to find closest index with non-null value
-                for (let j = 1; j < 100; j++) {
-                  if (yData[approxIdx + j] != null) {
-                    approxIdx += j;
-                    break;
-                  }
-                  if (yData[approxIdx - j] != null) {
-                    approxIdx -= j;
-                    break;
+                if (yData[approxIdx] == null) {
+                  // scan left/right alternating to find closest index with non-null value
+                  for (let j = 1; j < 100; j++) {
+                    if (yData[approxIdx + j] != null) {
+                      approxIdx += j;
+                      break;
+                    }
+                    if (yData[approxIdx - j] != null) {
+                      approxIdx -= j;
+                      break;
+                    }
                   }
                 }
-              }
 
-              filtered.push(approxIdx);
+                filtered.push(approxIdx);
+              }
+            }
+
+            const lastIdx = u.posToIdx(gaps[gaps.length - 1][1], true);
+
+            if (yData[lastIdx + 1] == null) {
+              filtered.push(lastIdx);
             }
           }
-
-          const lastIdx = u.posToIdx(gaps[gaps.length - 1][1], true);
-
-          if (yData[lastIdx + 1] == null) {
-            filtered.push(lastIdx);
+          // single point surrounded by nulls
+          else {
+            // meh heuristic
+            if (yData[0] == null && yData[yData.length - 1] == null) {
+              for (let i = 0; i < yData.length; i++) {
+                if (yData[i] != null) {
+                  filtered.push(i);
+                }
+              }
+            }
           }
         }
 
