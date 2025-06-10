@@ -11,7 +11,8 @@ import (
 
 var logger = log.New("sql_expr")
 
-// TablesList returns a list of tables for the sql statement
+// TablesList returns a list of tables for the sql statement excluding
+// CTEs and the 'dual' table. The list is sorted alphabetically.
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
@@ -27,7 +28,7 @@ func TablesList(rawSQL string) ([]string, error) {
 			switch v := node.(type) {
 			case *sqlparser.CommonTableExpr:
 				// Track CTE name from the As field
-				cteName := v.AliasedTableExpr.As.String()
+				cteName := v.As.String()
 				if cteName != "" {
 					cteNames[strings.ToLower(cteName)] = struct{}{}
 				}
