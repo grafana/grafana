@@ -74,7 +74,7 @@ export interface Props {
   renderPreview?: boolean;
 }
 
-type PopoverStateType = {
+export type PopoverStateType = {
   selection: string;
   selectedRow: LogRowModel | null;
   popoverMenuCoordinates: { x: number; y: number };

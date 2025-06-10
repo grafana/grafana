@@ -72,6 +72,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
         enableLogDetails={false}
+        fontSize="default"
         hasUnescapedContent={hasUnescapedContent}
         logOptionsStorageKey={logOptionsStorageKey}
         logs={deduplicatedRows ?? []}
