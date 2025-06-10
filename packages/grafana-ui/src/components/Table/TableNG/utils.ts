@@ -322,6 +322,10 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
 }
 
 export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
+  footerCellCountRows: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
   footerCell: css({
     display: 'flex',
     justifyContent: justifyContent || 'space-between',

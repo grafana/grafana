@@ -4,7 +4,16 @@ import { useMemo, useRef } from 'react';
 import { DataGrid, DataGridHandle, RenderRowProps, Row } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  Field,
+  fieldReducers,
+  FieldType,
+  GrafanaTheme2,
+  ReducerID,
+} from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -16,7 +25,14 @@ import { HeaderCell } from './Cells/HeaderCell';
 import { COLUMN, TABLE } from './constants';
 import { useProcessedRows, useRowHeight, useScrollbarWidth } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn } from './types';
-import { frameToRecords, getDefaultRowHeight, getTextAlign, handleSort } from './utils';
+import {
+  frameToRecords,
+  getDefaultRowHeight,
+  getFooterItemNG,
+  getFooterStyles,
+  getTextAlign,
+  handleSort,
+} from './utils';
 
 export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
@@ -44,6 +60,12 @@ export function TableNG(props: TableNGProps) {
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
 
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
@@ -77,6 +99,7 @@ export function TableNG(props: TableNGProps) {
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
+    footerCalcs,
   } = useProcessedRows(rows, data.fields, {
     height,
     width,
@@ -87,6 +110,8 @@ export function TableNG(props: TableNGProps) {
     defaultRowHeight,
     panelPaddingHeight,
     headerCellHeight,
+    footerOptions,
+    isCountRowsSet,
   });
 
   // const [expandedRows]?
@@ -99,9 +124,10 @@ export function TableNG(props: TableNGProps) {
   // TODO: skip hidden
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const widths = computeColWidths(data.fields, width - scrollbarWidth);
-
-    return data.fields.map(
-      (field, i): TableColumn => ({
+    return data.fields.map((field, i): TableColumn => {
+      const justifyColumnContent = getTextAlign(field);
+      const footerStyles = getFooterStyles(justifyColumnContent);
+      return {
         field,
         key: field.name,
         name: field.name,
@@ -136,14 +162,27 @@ export function TableNG(props: TableNGProps) {
             crossFilterOrder={crossFilterOrder}
             crossFilterRows={crossFilterRows}
             direction={sortDirection}
-            justifyContent={getTextAlign(field)}
+            justifyContent={justifyColumnContent}
             onColumnResize={onColumnResize}
             headerCellRefs={headerCellRefs}
             showTypeIcons={showTypeIcons}
           />
         ),
-      })
-    );
+        renderSummaryCell: () => {
+          if (isCountRowsSet && i === 0) {
+            return (
+              <div className={footerStyles.footerCellCountRows}>
+                <span>
+                  <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+                </span>
+                <span>{footerCalcs[i]}</span>
+              </div>
+            );
+          }
+          return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
+        },
+      };
+    });
   }, [
     width,
     scrollbarWidth,
@@ -159,6 +198,8 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     onSortByChange,
+    footerCalcs,
+    isCountRowsSet,
   ]);
 
   const hasSubTable = false;
@@ -288,7 +329,11 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 
 const getStyles2 = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
+  {
+    enablePagination,
+    justifyContent,
+    noHeader,
+  }: { enablePagination?: boolean; justifyContent?: boolean; noHeader?: boolean }
 ) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -402,6 +447,8 @@ overlay/expand on hover, active line and cell styling
 inspect? actions?
 subtable/ expand
 cell types, backgrounds
+-----
+enable pagination disables footer?
 -----
 accessible sorting and filtering
 */
