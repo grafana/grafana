@@ -145,7 +145,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Takes you to **Reporting** and opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **Report settings** - Takes you to **Reporting** in a new browser tab and opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -177,7 +177,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Opens the **Report template settings** drawer where you can configure organization-level report settings.
+     - **Report settings** - Opens the **Report template settings** drawer in a new browser tab where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
