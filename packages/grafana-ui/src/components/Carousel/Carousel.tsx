@@ -143,7 +143,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
                 data-testid="previous-button"
               />
 
-              <div data-testid="carousel-full-image">
+              <div className={styles.imageContainer} data-testid="carousel-full-image">
                 <img
                   className={styles.imagePreview}
                   src={validImages[selectedIndex].path}
@@ -170,6 +170,11 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   imageButton: css({
     textAlign: 'left',
+  }),
+  imageContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+    flex: 1,
   }),
   imagePreview: css({
     maxWidth: '100%',
