@@ -145,6 +145,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
+RUN apk add --no-cache nodejs npm && npm install -g nodemon
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
@@ -217,4 +218,5 @@ ARG RUN_SH=./packaging/docker/run.sh
 COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
-ENTRYPOINT [ "/run.sh" ]
+# ENTRYPOINT [ "/run.sh" ]
+ENTRYPOINT [ "nodemon", "--watch", "public", "--watch", "packages", "--exec", "/run.sh" ]

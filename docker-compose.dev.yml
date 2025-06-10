@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  grafana-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3000:3000'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Mount source code for hot reloading
+      - ./public:/usr/share/grafana/public:delegated
+      - ./packages:/tmp/grafana/packages
+      - ./conf:/usr/share/grafana/conf
+      - ./pkg:/tmp/grafana/pkg
+      - ./scripts:/tmp/grafana/scripts
+      - ./apps:/tmp/grafana/apps
+      - ./tsconfig.json:/tmp/grafana/tsconfig.json
+      - ./package.json:/tmp/grafana/package.json
+      - ./yarn.lock:/tmp/grafana/yarn.lock
+      - ./.yarnrc.yml:/tmp/grafana/.yarnrc.yml
+      - ./.yarn:/tmp/grafana/.yarn
+      - ./eslint.config.js:/tmp/grafana/eslint.config.js
+      - ./.editorconfig:/tmp/grafana/.editorconfig
+      - ./.browserslistrc:/tmp/grafana/.browserslistrc
+      - ./.prettierrc.js:/tmp/grafana/.prettierrc.js
+      - ./emails:/tmp/grafana/emails
+      - ./node_modules:/tmp/grafana/node_modules
+      # Mount local build directory directly - build locally
+      - ./public/build:/usr/share/grafana/public/build:delegated
+      # Mount data directories
+      - grafana-data:/var/lib/grafana
+      - grafana-logs:/var/log/grafana
+    environment:
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini
+      - GF_PATHS_DATA=/var/lib/grafana
+      - GF_PATHS_HOME=/usr/share/grafana
+      - GF_PATHS_LOGS=/var/log/grafana
+      - GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_LOG_MODE=console
+      - GF_LOG_LEVEL=debug
+      - NODE_ENV=development
+    networks:
+      - grafana-dev
+
+volumes:
+  grafana-data:
+  grafana-logs:
+
+networks:
+  grafana-dev:
+    driver: bridge
