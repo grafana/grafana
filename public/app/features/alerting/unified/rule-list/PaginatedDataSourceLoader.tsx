@@ -18,8 +18,7 @@ import { NoRulesFound } from './components/NoRulesFound';
 import { groupFilter as groupFilterFn } from './hooks/filters';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
-
-export const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
+import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
 interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
@@ -48,7 +47,9 @@ export function PaginatedDataSourceLoader({
 }
 
 function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
-  const hasFilters = groupFilter || namespaceFilter;
+  // If there are filters, we don't want to populate the cache to avoid performance issues
+  // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
 
   const { uid, name } = rulesSourceIdentifier;
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator({
@@ -57,7 +58,7 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
 
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
-  const apiGroupPageSize = hasFilters ? 200 : DATA_SOURCE_GROUP_PAGE_SIZE;
+  const apiGroupPageSize = getApiGroupPageSize(hasFilters);
 
   const groupsGenerator = useRef(
     toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize))
@@ -81,7 +82,7 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
-    DATA_SOURCE_GROUP_PAGE_SIZE,
+    FRONTED_GROUPED_PAGE_SIZE,
     filterFn
   );
 
