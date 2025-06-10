@@ -52,7 +52,7 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			if _, err := d.unified.Get(ctxBg, name, options); err != nil {
-				log := logging.FromContext(ctxBg)
+				log := logging.FromContext(ctxBg).With("method", "Get")
 				log.Error("failed background GET to unified", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
@@ -82,7 +82,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			if _, err := d.unified.List(ctxBg, options); err != nil {
-				log := logging.FromContext(ctxBg)
+				log := logging.FromContext(ctxBg).With("method", "List")
 				log.Error("failed background LIST to unified", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
@@ -192,7 +192,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 			defer cancel()
 			_, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options)
 			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-				log := logging.FromContext(ctxBg)
+				log := logging.FromContext(ctxBg).With("method", "Delete")
 				log.Error("failed background DELETE in unified storage", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
