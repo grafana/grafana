@@ -33,9 +33,24 @@ const setup = async (variables?: SceneVariable[]) => {
 };
 
 describe('RepeatRowSelect2', () => {
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   it('should render correct options', async () => {
     const variableA = new CustomVariable({
-      name: 'customVar',
+      name: 'testVar',
       query: 'test, test2',
       value: 'test',
       text: 'testVar',
@@ -49,9 +64,11 @@ describe('RepeatRowSelect2', () => {
 
     await setup([variableA, variableB]);
 
-    expect(screen.getByRole('combobox')).not.toBeDisabled();
-    expect(screen.getByRole('combobox')).toHaveProperty('placeholder', 'Choose');
-    await userEvent.click(screen.getByRole('combobox'));
+    const input = screen.getByRole('combobox');
+
+    expect(input).not.toBeDisabled();
+    expect(input).toHaveProperty('placeholder', 'Choose');
+    await userEvent.click(input);
 
     expect(await screen.findByText(/Disable repeating/)).toBeInTheDocument();
     expect(screen.getByText(/testVar/)).toBeInTheDocument();
