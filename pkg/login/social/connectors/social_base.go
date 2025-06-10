@@ -124,6 +124,7 @@ func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	fmt.Fprintf(bf, "client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.ClientSecret)))
 	fmt.Fprintf(bf, "managed_identity_client_id = %v\n", s.info.ManagedIdentityClientID)
 	fmt.Fprintf(bf, "federated_credential_audience = %v\n", s.info.FederatedCredentialAudience)
+	fmt.Fprintf(bf, "workload_identity_token_file = %v\n", s.info.WorkloadIdentityTokenFile)
 	fmt.Fprintf(bf, "auth_url = %v\n", s.Endpoint.AuthURL)
 	fmt.Fprintf(bf, "token_url = %v\n", s.Endpoint.TokenURL)
 	fmt.Fprintf(bf, "auth_style = %v\n", s.Endpoint.AuthStyle)

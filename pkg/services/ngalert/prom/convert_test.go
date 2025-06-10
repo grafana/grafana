@@ -347,6 +347,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
 				require.Equal(t, models.OK, grafanaRule.NoDataState)
 
+				// Update the rule with the group-level labels,
+				// to test that they are saved to the rule definition.
+				mergedLabels := make(map[string]string)
+				maps.Copy(mergedLabels, tc.promGroup.Labels)
+				maps.Copy(mergedLabels, promRule.Labels)
+				promRule.Labels = mergedLabels
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
 				require.Equal(t, string(originalRuleDefinition), grafanaRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
