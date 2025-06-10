@@ -129,13 +129,6 @@ docker ps
 - **Dependencies**: `node_modules/`, `.yarn/` for consistency
 - **Persistent Data**: Grafana data and logs persist across container restarts
 
-**Development Workflow**:
-
-1. **Backend**: Docker container with nodemon watching for Go file changes
-2. **Frontend**: Local `yarn start:liveReload` watching for frontend changes
-3. **Asset Sharing**: Built frontend assets are mounted into Docker container
-4. **Live Reload**: Browser automatically refreshes when frontend changes
-
 ---
 
 ## 🐛 Troubleshooting
@@ -169,5 +162,3 @@ docker ps
 | All Local       | Fast, simple           | Less consistent environment  |
 | All Docker      | Consistent environment | File watching issues, slower |
 | **This Hybrid** | **Fast + Consistent**  | **Requires two terminals**   |
-
-This hybrid setup gives you the best of both worlds: containerized backend consistency with native frontend development speed!
