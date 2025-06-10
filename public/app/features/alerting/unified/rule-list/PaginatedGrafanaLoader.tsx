@@ -1,10 +1,10 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Icon, Spinner, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
@@ -18,6 +18,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
+import { groupFilter as groupFilterFn } from './hooks/filters';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
@@ -56,17 +57,13 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
     };
   }, []);
 
-  const filterFn = useCallback(
-    (group: GrafanaPromRuleGroupDTO) => {
-      if (groupFilter && !group.name.includes(groupFilter)) {
-        return false;
-      }
-      if (namespaceFilter && !group.file.includes(namespaceFilter)) {
-        return false;
-      }
-      return true;
-    },
-    [groupFilter, namespaceFilter]
+  const filterFn = useMemo(
+    () => (group: PromRuleGroupDTO) =>
+      groupFilterFn(group, {
+        namespace: namespaceFilter,
+        groupName: groupFilter,
+      }),
+    [namespaceFilter, groupFilter]
   );
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
