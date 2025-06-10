@@ -161,15 +161,16 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.title-dashboard-drastically-changed',
-            'Dashboard drastically changed'
+            'Dashboard irreversibly changed'
           )}
           severity="warning"
         >
           <p>
             <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
-              Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
-              dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer
-              to save the dashboard as a new copy.
+              The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be
+              reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a
+              copy instead. If you’re seeing this message in a production environment, contact Support to have the
+              feature disabled.
             </Trans>
           </p>
         </Alert>
