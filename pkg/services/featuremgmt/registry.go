@@ -1046,10 +1046,11 @@ var (
 		{
 			Name:            "ssoSettingsLDAP",
 			Description:     "Use the new SSO Settings API to configure LDAP",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           identityAccessTeam,
 			AllowSelfServe:  true,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "failWrongDSUID",
@@ -1555,14 +1556,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "grafanaManagedRecordingRulesDatasources",
-			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: false,
-			Expression:     "false",
-		},
-		{
 			Name:         "infinityRunQueriesInParallel",
 			Description:  "Enables running Infinity queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -1698,12 +1691,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "postgresDSUsePGX",
-			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
-		},
-		{
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
@@ -1756,6 +1743,33 @@ var (
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
+			Name:              "skipTokenRotationIfRecent",
+			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichment",
+			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerAPI",
+			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 			Expression:        "false",
 		},
 	}

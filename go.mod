@@ -18,6 +18,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest/adal v0.9.24 // @grafana/grafana-backend-group
+	github.com/Bose/minisentinel v0.0.0-20200130220412-917c5a9223bb // @grafana/alerting-backend
 	github.com/BurntSushi/toml v1.5.0 // @grafana/identity-access-team
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // @grafana/grafana-search-and-storage
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
@@ -76,7 +77,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250521131632-6e476b0b04c3 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250604192009-6bf6277b5b8d // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -389,6 +390,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-msgpack/v2 v2.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
@@ -426,6 +428,7 @@ require (
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/matryer/is v1.4.1 // indirect
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -567,14 +570,12 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/hashicorp/go-msgpack/v2 v2.1.1 // indirect
-
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250417181314-6d0f5436a1fb
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

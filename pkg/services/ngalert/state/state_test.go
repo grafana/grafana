@@ -1091,48 +1091,6 @@ func TestPatch(t *testing.T) {
 		assert.Equal(t, orig.LastEvaluationTime, state.LastEvaluationTime)
 		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
 	})
-
-	t.Run("if result Error and current state is Error it should copy datasource_uid and ref_id labels", func(t *testing.T) {
-		state := randomSate(key)
-		orig := state.Copy()
-		current := randomSate(key)
-		current.State = eval.Error
-		current.Labels["datasource_uid"] = util.GenerateShortUID()
-		current.Labels["ref_id"] = util.GenerateShortUID()
-
-		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
-			State:    eval.Error,
-		}
-
-		expectedLabels := orig.Labels.Copy()
-		expectedLabels["datasource_uid"] = current.Labels["datasource_uid"]
-		expectedLabels["ref_id"] = current.Labels["ref_id"]
-
-		patch(&state, &current, result)
-
-		assert.Equal(t, expectedLabels, state.Labels)
-		assert.Equal(t, current.State, state.State)
-		assert.Equal(t, current.StateReason, state.StateReason)
-		assert.Equal(t, current.Image, state.Image)
-		assert.Equal(t, current.LatestResult, state.LatestResult)
-		assert.Equal(t, current.Error, state.Error)
-		assert.Equal(t, current.Values, state.Values)
-		assert.Equal(t, current.StartsAt, state.StartsAt)
-		assert.Equal(t, current.EndsAt, state.EndsAt)
-		assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
-		assert.Equal(t, current.LastSentAt, state.LastSentAt)
-		assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
-
-		// Fields that should not change
-		assert.Equal(t, orig.OrgID, state.OrgID)
-		assert.Equal(t, orig.AlertRuleUID, state.AlertRuleUID)
-		assert.Equal(t, orig.CacheID, state.CacheID)
-		assert.Equal(t, orig.ResultFingerprint, state.ResultFingerprint)
-		assert.Equal(t, orig.LastEvaluationTime, state.LastEvaluationTime)
-		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
-		assert.EqualValues(t, orig.Annotations, state.Annotations)
-	})
 }
 
 func TestResultStateReason(t *testing.T) {
