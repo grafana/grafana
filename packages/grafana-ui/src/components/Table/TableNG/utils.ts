@@ -456,7 +456,7 @@ export const handleSort = (
   }
 
   // Update panel context with the new sort order
-  if (typeof onSortByChange === "function") {
+  if (typeof onSortByChange === 'function') {
     const sortByFields = sortColumns.map(({ columnKey, direction }) => ({
       displayName: columnKey,
       desc: direction === 'DESC',
@@ -523,33 +523,37 @@ export interface MapFrameToGridOptions extends TableNGProps {
 // The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
 // within strings and sorts numerically instead of lexicographically.
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
+const strCompare: Comparator = (a, b) => compare(String(a ?? ''), String(b ?? ''));
+const numCompare: Comparator = (a, b) => {
+  if (a === b) {
+    return 0;
+  }
+  if (a == null) {
+    return -1;
+  }
+  if (b == null) {
+    return 1;
+  }
+  return Number(a) - Number(b);
+};
+const frameCompare: Comparator = (a, b) => {
+  // @ts-ignore The values are DataFrameWithValue
+  return (a?.value ?? 0) - (b?.value ?? 0);
+};
+
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     // Handle sorting for frame type fields (sparklines)
     case FieldType.frame:
-      return (a, b) => {
-        // @ts-ignore The values are DataFrameWithValue
-        return (a?.value ?? 0) - (b?.value ?? 0);
-      };
+      return frameCompare;
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
-      return (a, b) => {
-        if (a === b) {
-          return 0;
-        }
-        if (a == null) {
-          return -1;
-        }
-        if (b == null) {
-          return 1;
-        }
-        return Number(a) - Number(b);
-      };
+      return numCompare;
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => compare(String(a ?? ''), String(b ?? ''));
+      return strCompare;
   }
 }
 
