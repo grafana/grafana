@@ -28,8 +28,8 @@
       "require": "./src/internal/index.ts"
     },
     "./eslint-plugin": {
-      "import": "./src/eslint-plugin.cjs",
-      "require": "./src/eslint-plugin.cjs"
+      "import": "./src/eslint/index.cjs",
+      "require": "./src/eslint/index.cjs"
     }
   },
   "publishConfig": {
@@ -47,10 +47,10 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./eslint-plugin ./package.tgz",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=eslint-plugin node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./eslint-plugin"
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
     "@formatjs/intl-durationformat": "^0.7.0",
@@ -65,8 +65,8 @@
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
     "@types/react": "18.3.18",
-    "rimraf": "6.0.1",
     "rollup": "^4.22.4",
+    "rollup-plugin-copy": "3.5.0",
     "typescript": "5.7.3"
   },
   "peerDependencies": {
