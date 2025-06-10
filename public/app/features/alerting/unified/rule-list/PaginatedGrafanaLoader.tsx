@@ -2,15 +2,13 @@ import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
+import { Icon, Spinner, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { FolderBulkActionsButton } from '../components/folder-actions/FolderActionsButton';
+import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import { makeFolderLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
@@ -36,7 +34,7 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     GRAFANA_GROUP_PAGE_SIZE
   );
@@ -44,15 +42,18 @@ export function PaginatedGrafanaLoader() {
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
 
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
-
   return (
-    <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
+    <DataSourceSection
+      name="Grafana"
+      application="grafana"
+      uid={GrafanaRulesSourceSymbol}
+      isLoading={isLoading}
+      error={error}
+    >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
           // Groups are grouped by folder, so we can use the first group to get the folder name
           const folderName = groups[0].file;
-          const folderUrl = makeFolderLink(folderUid);
 
           return (
             <ListSection
@@ -65,14 +66,7 @@ export function PaginatedGrafanaLoader() {
                   </Text>
                 </Stack>
               }
-              actions={
-                <>
-                  <LinkButton variant="secondary" fill="text" size="sm" href={folderUrl}>
-                    <Trans i18nKey="alerting.folder-bulk-actions.view.folder">View folder</Trans>
-                  </LinkButton>
-                  {isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
-                </>
-              }
+              actions={<FolderActionsButton folderUID={folderUid} />}
             >
               {groups.map((group) => (
                 <GrafanaRuleGroupListItem
@@ -90,6 +84,12 @@ export function PaginatedGrafanaLoader() {
           <div>
             <LoadMoreButton onClick={fetchMoreGroups} />
           </div>
+        )}
+        {isLoading && (
+          <Stack direction="row" gap={2} alignItems="center" justifyContent="flex-start">
+            <Spinner inline={true} />
+            <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
+          </Stack>
         )}
       </Stack>
     </DataSourceSection>

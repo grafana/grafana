@@ -161,8 +161,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         cursor: 'text',
       },
     }),
-    addaptToParent: css({
-      label: 'combobox-addapt-to-parent',
+    adaptToParent: css({
+      label: 'combobox-adapt-to-parent',
       maxWidth: '100%',
       '[class*="input-wrapper-combobox-input"]': {
         maxWidth: '100%',

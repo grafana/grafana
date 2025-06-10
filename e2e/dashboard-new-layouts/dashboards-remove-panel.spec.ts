@@ -8,7 +8,6 @@ describe('Dashboard panels', () => {
   });
 
   it('can remove a panel', () => {
-    e2e.pages.Dashboards.visit();
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
     e2e.flows.scenes.toggleEditMode();
@@ -22,7 +21,6 @@ describe('Dashboard panels', () => {
   });
 
   it('can remove several panels at once', () => {
-    e2e.pages.Dashboards.visit();
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
     e2e.flows.scenes.toggleEditMode();

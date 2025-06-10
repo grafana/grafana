@@ -22,8 +22,8 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayLinks, setDisplayLinks] = useState(true);
   const { t } = useTranslate();
   const modes: Array<SelectableValue<PlaylistMode>> = [
-    { label: 'Normal', value: false },
-    { label: 'Kiosk', value: true },
+    { label: t('playlist.start-modal.modes.label.normal', 'Normal'), value: false },
+    { label: t('playlist.start-modal.modes.label.kiosk', 'Kiosk'), value: true },
   ];
 
   const onStart = () => {

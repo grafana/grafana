@@ -31,7 +31,7 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 
 import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';
@@ -729,12 +729,11 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
       const numValues = stringFields[0].values.length;
       let longestLength = 0;
 
-      // If we have less than 30 values we assume
-      // that the first record is representative
-      // of the overall data
+      // If we have less than 30 values we assume that the first
+      // non-null record is representative of the overall data
       if (numValues <= 30) {
         for (const field of stringFields) {
-          const fieldLength = field.values[0].length;
+          const fieldLength = field.values.find((v) => v != null)?.length ?? 0;
           if (fieldLength > longestLength) {
             longestLength = fieldLength;
             longestField = field;
