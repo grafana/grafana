@@ -181,7 +181,7 @@
     "esbuild": "0.25.0",
     "esbuild-loader": "4.3.0",
     "esbuild-plugin-browserslist": "^0.16.0",
-    "eslint": "9.19.0",
+    "eslint": "9.28.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "28.11.0",
