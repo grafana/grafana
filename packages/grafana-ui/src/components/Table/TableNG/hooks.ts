@@ -1,19 +1,28 @@
 import { useState, useMemo, useEffect, useLayoutEffect, RefObject } from 'react';
 import { DataGridHandle, SortColumn } from 'react-data-grid';
 
-import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { DataFrame, Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableColumn, TableNGProps, TableRow, TableSortByFieldState } from './types';
+import {
+  ColumnTypes,
+  FilterType,
+  TableColumn,
+  TableFooterCalc,
+  TableNGProps,
+  TableRow,
+  TableSortByFieldState,
+} from './types';
 import {
   getComparator,
   getDisplayName,
   getIsNestedTable,
   processNestedTableRows,
   getCellHeightCalculator,
+  getFooterItemNG,
 } from './utils';
 
 export interface ProcessedRowsOptions {
@@ -26,6 +35,8 @@ export interface ProcessedRowsOptions {
   defaultRowHeight?: number;
   headerCellHeight?: number;
   panelPaddingHeight?: number;
+  footerOptions?: TableFooterCalc;
+  isCountRowsSet?: boolean;
 }
 
 interface TableFiltersAndSort {
@@ -48,6 +59,8 @@ interface TableFiltersAndSort {
   pageRangeStart: number;
   pageRangeEnd: number;
   smallPagination: boolean;
+  // --- footer --- //
+  footerCalcs: string[];
 }
 
 // Helper function to get displayed value
@@ -73,6 +86,8 @@ export function useProcessedRows(
     defaultRowHeight,
     headerCellHeight,
     panelPaddingHeight,
+    footerOptions,
+    isCountRowsSet,
   }: ProcessedRowsOptions
 ): TableFiltersAndSort {
   // TODO: allow persisted filter selection via url
@@ -222,6 +237,26 @@ export function useProcessedRows(
     enablePagination,
   ]);
 
+  // calculate footer data
+  const footerCalcs = useMemo(() => {
+    if (!hasFooter) {
+      return [];
+    }
+    return fields.map((field, index) => {
+      if (field.state?.calcs) {
+        delete field.state?.calcs;
+      }
+      if (isCountRowsSet) {
+        return index === 0 ? `${numRows}` : '';
+      }
+      if (index === 0) {
+        const footerCalcReducer = footerOptions?.reducer?.[0];
+        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+      }
+      return getFooterItemNG(sortedRows, field, footerOptions);
+    });
+  }, [fields, hasFooter, footerOptions, sortedRows, isCountRowsSet, numRows]);
+
   // safeguard against page overflow on panel resize or other factors
   useEffect(() => {
     if (!enablePagination) {
@@ -259,6 +294,7 @@ export function useProcessedRows(
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
+    footerCalcs,
   };
 }
 
