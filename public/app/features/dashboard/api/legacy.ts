@@ -28,11 +28,14 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
     return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, undefined, {
       showSuccessAlert,
+      sanitizePath: true,
     });
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
-    const result = await getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, params);
+    const result = await getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, params, undefined, {
+      sanitizePath: true,
+    });
 
     if (result.meta.isFolder) {
       appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
