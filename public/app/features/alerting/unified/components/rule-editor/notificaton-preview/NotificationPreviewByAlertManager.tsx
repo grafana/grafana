@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -22,7 +22,7 @@ function NotificationPreviewByAlertManager({
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
     potentialInstances
@@ -73,14 +73,13 @@ function NotificationPreviewByAlertManager({
           if (!route) {
             return null;
           }
-          if (!receiver) {
-            throw new Error('Receiver not found');
-          }
           return (
             <NotificationRoute
               instanceMatches={instanceMatches}
               route={route}
-              receiver={receiver}
+              // If we can't find a receiver, it might just be because the user doesn't have access
+              receiver={receiver ? receiver : undefined}
+              receiverNameFromRoute={route?.receiver ? route.receiver : undefined}
               key={routeId}
               routesByIdMap={routesByIdMap}
               alertManagerSourceName={alertManagerSource.name}

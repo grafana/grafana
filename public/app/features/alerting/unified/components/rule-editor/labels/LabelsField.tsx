@@ -3,8 +3,8 @@ import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
@@ -62,6 +62,7 @@ export interface LabelsSubFormProps {
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
   const styles = useStyles2(getStyles);
   const { watch } = useFormContext<RuleFormValues>();
+  const { t } = useTranslate();
   const type = watch('type') ?? RuleFormType.grafana;
 
   const onSave = (labels: LabelsSubformValues) => {
@@ -81,9 +82,9 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
       <form onSubmit={formAPI.handleSubmit(onSave)}>
         <Stack direction="column" gap={4}>
           <Stack direction="column" gap={1}>
-            <Text>{getLabelText(type)}</Text>
+            <Text>{getLabelText(type, t)}</Text>
             <Text variant="bodySmall" color="secondary">
-              {getDescriptionText()}
+              {getDescriptionText(t)}
             </Text>
           </Stack>
           <Stack direction="column" gap={1}>
@@ -115,6 +116,7 @@ export function useCombinedLabels(
   labelsInSubform: Array<{ key: string; value: string }>,
   selectedKey: string
 ) {
+  const { t } = useTranslate();
   // ------- Get labels keys and their values from existing alerts
   const { labels: labelsByKeyFromExisingAlerts, isLoading } = useGetLabelsFromDataSourceName(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
@@ -142,12 +144,12 @@ export function useCombinedLabels(
   // create two groups of labels, one for ops and one for custom
   const groupedOptions = [
     {
-      label: 'From alerts',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-alerts', 'From alerts'),
       options: keysFromExistingAlerts,
       expanded: true,
     },
     {
-      label: 'From system',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-system', 'From system'),
       options: keysFromGopsLabels,
       expanded: true,
     },
@@ -260,7 +262,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   const values = useMemo(() => {
     return getValuesForLabel(selectedKey);
   }, [selectedKey, getValuesForLabel]);
-
+  const { t } = useTranslate();
   const isLoading = loading || loadingLabelsPlugin;
 
   return (
@@ -356,6 +358,7 @@ export const LabelsWithoutSuggestions: FC = () => {
   const appendLabel = useCallback(() => {
     append({ key: '', value: '' });
   }, [append]);
+  const { t } = useTranslate();
 
   return (
     <>
@@ -370,7 +373,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.key`, {
-                    required: { value: !!labels[index]?.value, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.value,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-key', 'key')}
                   data-testid={`label-key-${index}`}
@@ -385,7 +391,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.value`, {
-                    required: { value: !!labels[index]?.key, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.key,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-value', 'value')}
                   data-testid={`label-value-${index}`}
@@ -404,6 +413,7 @@ export const LabelsWithoutSuggestions: FC = () => {
 
 function LabelsField() {
   const { watch } = useFormContext<RuleFormValues>();
+  const { t } = useTranslate();
   const type = watch('type') ?? RuleFormType.grafana;
 
   return (
@@ -414,7 +424,7 @@ function LabelsField() {
         </Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
-            {getLabelText(type)}
+            {getLabelText(type, t)}
           </Text>
           <NeedHelpInfo
             externalLink={'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/'}
@@ -430,7 +440,7 @@ function LabelsField() {
   );
 }
 
-function getLabelText(type: RuleFormType) {
+function getLabelText(type: RuleFormType, t: TFunction) {
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
@@ -441,7 +451,7 @@ function getLabelText(type: RuleFormType) {
   return text;
 }
 
-function getDescriptionText() {
+function getDescriptionText(t: TFunction) {
   return t(
     'alerting.labels-sub-form.description',
     'Select a label key/value from the options below, or type a new one and press Enter.'

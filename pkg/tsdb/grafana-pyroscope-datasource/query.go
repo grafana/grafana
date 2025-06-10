@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -76,7 +77,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				}
 			}
 			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
-			seriesResp, err := d.client.GetSeries(
+			seriesResp, _, err := d.client.GetSeries(
 				gCtx,
 				profileTypeId,
 				labelSelector,
@@ -94,7 +95,15 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
-			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+			withAnnotations := qm.Annotations != nil && *qm.Annotations
+			frames, err := seriesToDataFrames(seriesResp, withAnnotations)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				return err
+			}
+			response.Frames = append(response.Frames, frames...)
 			responseMutex.Unlock()
 			return nil
 		})
@@ -105,7 +114,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			var profileResp *ProfileResponse
 			if len(qm.SpanSelector) > 0 {
 				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, _, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -115,7 +124,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				profileResp = prof
 			} else {
 				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
-				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				prof, _, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
@@ -411,8 +420,22 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+type TimedAnnotation struct {
+	Timestamp  int64                      `json:"timestamp"`
+	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
+}
+
+func (ta *TimedAnnotation) getKey() string {
+	return ta.Annotation.Key
+}
+
+func (ta *TimedAnnotation) getValue() string {
+	return ta.Annotation.Value
+}
+
+func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
+	annotations := make([]*TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
@@ -430,15 +453,32 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 
 		valueField := data.NewField(resp.Label, labels, []float64{})
 		valueField.Config = &data.FieldConfig{Unit: resp.Units}
+		fields = append(fields, valueField)
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
+			if withAnnotations {
+				for _, a := range point.Annotations {
+					annotations = append(annotations, &TimedAnnotation{
+						Timestamp:  point.Timestamp,
+						Annotation: a,
+					})
+				}
+			}
 		}
 
-		fields = append(fields, valueField)
 		frame.Fields = fields
 		frames = append(frames, frame)
 	}
-	return frames
+
+	if len(annotations) > 0 {
+		frame, err := createAnnotationFrame(annotations)
+		if err != nil {
+			return nil, err
+		}
+		frames = append(frames, frame)
+	}
+
+	return frames, nil
 }

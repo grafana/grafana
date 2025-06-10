@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
-import { Box, Icon, Stack, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -21,41 +22,41 @@ export function DashboardOutline({ editPane }: Props) {
   const dashboard = getDashboardSceneFor(editPane);
 
   return (
-    <Box padding={1} gap={0} display="flex" direction="column">
+    <Box padding={1} gap={0} display="flex" direction="column" element="ul" role="tree" position="relative">
       <DashboardOutlineNode sceneObject={dashboard} editPane={editPane} depth={0} />
     </Box>
   );
 }
 
-function DashboardOutlineNode({
-  sceneObject,
-  editPane,
-  depth,
-}: {
+interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
   editPane: DashboardEditPane;
   depth: number;
-}) {
-  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
-  const theme = useTheme2();
-  const { key } = sceneObject.useState();
+}
+
+function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutlineNodeProps) {
   const styles = useStyles2(getStyles);
+  const { key } = sceneObject.useState();
+  const [isCollapsed, setIsCollapsed] = useState(depth > 0);
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
+  const { t } = useTranslate();
+  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
   const children = editableElement.getOutlineChildren?.() ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
-  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
   //const elementCollapsed = editableElement.getCollapsedState?.();
   const outlineRename = useOutlineRename(editableElement);
   const isContainer = editableElement.getOutlineChildren ? true : false;
 
-  const onNodeClicked = (evt: React.PointerEvent) => {
+  const onNodeClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
     // Only select via clicking outline never deselect
     if (!isSelected) {
-      onSelect?.(evt);
+      onSelect?.(e);
     }
 
     editableElement.scrollIntoView?.();
@@ -64,36 +65,33 @@ function DashboardOutlineNode({
   const onToggleCollapse = (evt: React.MouseEvent) => {
     evt.stopPropagation();
     setIsCollapsed(!isCollapsed);
-
-    // Sync expanded state with canvas element
-    // if (editableElement.getCollapsedState) {
-    //   editableElement.setCollapsedState?.(!isCollapsed);
-    // }
   };
 
-  // Sync canvas element expanded state with outline element
-  // useEffect(() => {
-  //   if (elementCollapsed != null && elementCollapsed !== isCollapsed) {
-  //     setIsCollapsed(elementCollapsed);
-  //   }
-  // }, [isCollapsed, elementCollapsed]);
-
   return (
-    <>
-      <div
-        className={cx(styles.container, isSelected && styles.containerSelected)}
-        style={{ paddingLeft: theme.spacing(depth * 3) }}
-        onPointerDown={onNodeClicked}
-      >
+    // todo: add proper keyboard navigation
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+    <li
+      role="treeitem"
+      aria-selected={isSelected}
+      className={styles.container}
+      onClick={onNodeClicked}
+      style={{ '--depth': depth } as React.CSSProperties}
+    >
+      <div className={cx(styles.row, { [styles.rowSelected]: isSelected })}>
+        <div className={styles.indentation}></div>
         {isContainer && (
-          <button role="treeitem" className={styles.angleButton} onPointerDown={onToggleCollapse}>
-            <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
+          <button
+            className={styles.angleButton}
+            onClick={onToggleCollapse}
+            data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
+          >
+            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
           </button>
         )}
         <button
-          role="button"
-          className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
+          className={cx(styles.nodeName, { [styles.nodeNameClone]: isCloned })}
           onDoubleClick={outlineRename.onNameDoubleClicked}
+          data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
           <Icon size="sm" name={elementInfo.icon} />
           {outlineRename.isRenaming ? (
@@ -124,20 +122,19 @@ function DashboardOutlineNode({
       </div>
 
       {isContainer && !isCollapsed && (
-        <div className={styles.nodeChildren}>
-          <div className={styles.nodeChildrenLine} style={{ marginLeft: theme.spacing(depth * 3) }} />
+        <ul className={styles.nodeChildren} role="group">
           {children.length > 0 ? (
             children.map((child) => (
               <DashboardOutlineNode key={child.state.key} sceneObject={child} editPane={editPane} depth={depth + 1} />
             ))
           ) : (
-            <Text color="secondary">
+            <Text color="secondary" element="li">
               <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
             </Text>
           )}
-        </div>
+        </ul>
       )}
-    </>
+    </li>
   );
 }
 
@@ -146,28 +143,34 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       gap: theme.spacing(0.5),
-      alignItems: 'center',
       flexGrow: 1,
+      flexDirection: 'column',
       borderRadius: theme.shape.radius.default,
-      position: 'relative',
-      marginBottom: theme.spacing(0.25),
       color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-        outline: `1px dashed ${theme.colors.border.strong}`,
-        outlineOffset: '0px',
-        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
-      },
     }),
     containerSelected: css({
       outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
       color: theme.colors.text.primary,
+    }),
+    row: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
-        outline: `1px dashed ${theme.colors.primary.border}`,
         color: theme.colors.text.primary,
+        outline: `1px dashed ${theme.colors.border.strong}`,
+        backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
       },
+    }),
+    rowSelected: css({
+      color: theme.colors.text.primary,
+      outline: `1px dashed ${theme.colors.primary.border} !important`,
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
+    }),
+    indentation: css({
+      marginLeft: `calc(var(--depth) * ${theme.spacing(3)})`,
     }),
     angleButton: css({
       boxShadow: 'none',
@@ -182,7 +185,7 @@ function getStyles(theme: GrafanaTheme2) {
       boxShadow: 'none',
       border: 'none',
       background: 'transparent',
-      padding: theme.spacing(0.25, 1, 0.25, 0),
+      padding: 0,
       borderRadius: theme.shape.radius.default,
       color: 'inherit',
       display: 'flex',
@@ -218,14 +221,19 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-    }),
-    nodeChildrenLine: css({
-      position: 'absolute',
-      width: '1px',
-      height: '100%',
-      left: '7px',
-      zIndex: 1,
-      backgroundColor: theme.colors.border.weak,
+      gap: theme.spacing(0.5),
+
+      // tree line
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        width: '1px',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+        background: theme.colors.border.weak,
+        marginLeft: `calc(11px + ${theme.spacing(3)} * var(--depth))`,
+      },
     }),
   };
 }

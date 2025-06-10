@@ -8,12 +8,12 @@ import {
   VisualizationSuggestion,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
-import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';

@@ -77,18 +77,18 @@ type Data struct {
 	Values map[string]Value
 
 	// Value is the .Value and $value variables in templates.
-	// For single datasource queries, this will be the numeric value of the query.
-	// For multiple datasource queries, this will be the evaluation string.
-	Value string
+	// For single datasource queries, this will be the numeric value of the query (float64).
+	// For multiple datasource queries, this will be the evaluation string (string).
+	Value any
 }
 
 func NewData(labels map[string]string, res eval.Result) Data {
 	values := NewValues(res.Values)
 
 	// By default, use the evaluation string as the Value
-	valueStr := res.EvaluationString
+	var value any = res.EvaluationString
 
-	// If there's exactly one datasource node, use its value instead
+	// If there's exactly one datasource node, use its numeric value instead
 	// This makes the $value variable compatible with Prometheus templating
 	// where $value holds the numeric value of the alert query
 	datasourceNodeCount := 0
@@ -105,13 +105,13 @@ func NewData(labels map[string]string, res eval.Result) Data {
 	}
 
 	if datasourceNodeCount == 1 {
-		valueStr = datasourceNodeValue.String()
+		value = datasourceNodeValue.Value
 	}
 
 	return Data{
 		Labels: labels,
 		Values: values,
-		Value:  valueStr,
+		Value:  value,
 	}
 }
 

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ResourcePermission } from './types';
 
@@ -16,7 +16,7 @@ interface Props {
 
 export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, onChange }: Props) => {
   const styles = useStyles2(getStyles);
-
+  const { t } = useTranslate();
   return (
     <tr>
       <td>{getAvatar(item)}</td>
@@ -71,7 +71,13 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
             )}
           />
         ) : (
-          <Tooltip content={item.isInherited ? 'Inherited Permission' : 'Provisioned Permission'}>
+          <Tooltip
+            content={
+              item.isInherited
+                ? t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')
+                : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
+            }
+          >
             <Button
               size="sm"
               icon="lock"

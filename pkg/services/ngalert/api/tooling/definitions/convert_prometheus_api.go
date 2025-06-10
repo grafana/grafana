@@ -210,6 +210,12 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
 	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
+	// in: header
+	TargetDatasourceUID string `json:"x-grafana-alerting-target-datasource-uid"`
+	// in: header
+	FolderUID string `json:"x-grafana-alerting-folder-uid"`
+	// in: header
+	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
 	// in:body
 	Body PrometheusRuleGroup
 }
@@ -222,23 +228,23 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name        string            `yaml:"name"`
-	Interval    model.Duration    `yaml:"interval"`
-	QueryOffset *model.Duration   `yaml:"query_offset,omitempty"`
-	Limit       int               `yaml:"limit,omitempty"`
-	Rules       []PrometheusRule  `yaml:"rules"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
+	Name        string            `yaml:"name" json:"name"`
+	Interval    model.Duration    `yaml:"interval" json:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules" json:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 // swagger:model
 type PrometheusRule struct {
-	Alert         string            `yaml:"alert,omitempty"`
-	Expr          string            `yaml:"expr"`
-	For           *model.Duration   `yaml:"for,omitempty"`
-	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty"`
-	Annotations   map[string]string `yaml:"annotations,omitempty"`
-	Record        string            `yaml:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
 }
 
 // swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusCortexDeleteRuleGroup RouteConvertPrometheusGetRuleGroup RouteConvertPrometheusCortexGetRuleGroup

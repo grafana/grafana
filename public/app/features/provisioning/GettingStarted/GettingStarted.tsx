@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
+import provisioningSvg from 'img/provisioning/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -44,7 +45,7 @@ HTTP Requests
 const rootUrlExample = `[server]
 root_url = https://d60d-83-33-235-27.ngrok-free.app`;
 
-const getModalContent = (setupType: SetupType) => {
+const getModalContent = (setupType: SetupType, t: TFunction) => {
   switch (setupType) {
     case 'public-access':
       return {
@@ -126,7 +127,7 @@ export default function GettingStarted({ items }: Props) {
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
-
+  const { t } = useTranslate();
   return (
     <>
       {legacyStorage && (
@@ -144,7 +145,7 @@ export default function GettingStarted({ items }: Props) {
         </Alert>
       )}
       <Stack direction="column" gap={6} wrap="wrap">
-        <Stack gap={6} alignItems="center">
+        <Stack gap={10} alignItems="center">
           <FeaturesList
             repos={items}
             hasRequiredFeatures={hasRequiredFeatures}
@@ -154,7 +155,7 @@ export default function GettingStarted({ items }: Props) {
             }}
           />
           <div className={styles.imageContainer}>
-            <img src={'public/img/provisioning/provisioning.webp'} className={styles.image} />
+            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
           </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
@@ -170,7 +171,7 @@ export default function GettingStarted({ items }: Props) {
       </Stack>
       {showInstructionsModal && setupType && (
         <SetupModal
-          {...getModalContent(setupType)}
+          {...getModalContent(setupType, t)}
           isOpen={showInstructionsModal}
           onDismiss={() => setShowModal(false)}
         />
@@ -182,7 +183,7 @@ export default function GettingStarted({ items }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     imageContainer: css({
-      height: 400,
+      height: 350,
       display: `flex`,
       alignItems: `center`,
       justifyContent: `center`,

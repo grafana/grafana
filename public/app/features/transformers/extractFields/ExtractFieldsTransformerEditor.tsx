@@ -9,9 +9,9 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -35,6 +35,8 @@ export const extractFieldsTransformerEditor = ({
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
+  const { t } = useTranslate();
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -116,7 +118,7 @@ export const extractFieldsTransformerEditor = ({
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
           <InlineField
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             label="RegExp"
             labelWidth={16}
             interactive={true}
@@ -125,7 +127,7 @@ export const extractFieldsTransformerEditor = ({
             })}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/(?<NewField>.*)/"
               value={options.regExp}
               onChange={onRegexpChange}

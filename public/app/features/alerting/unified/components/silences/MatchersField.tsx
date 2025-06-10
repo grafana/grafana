@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Divider, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
@@ -35,6 +35,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
       getAlertRule({ uid: ruleUid });
     }
   }, [getAlertRule, ruleUid]);
+  const { t } = useTranslate();
 
   return (
     <div className={className}>
@@ -62,7 +63,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.name` as const, {
-                        required: { value: required, message: 'Required.' },
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
                       })}
                       defaultValue={matcher.name}
                       placeholder={t('alerting.matchers-field.placeholder-label', 'label')}
@@ -84,7 +88,12 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                       )}
                       defaultValue={matcher.operator || matcherFieldOptions[0].value}
                       name={`matchers.${index}.operator`}
-                      rules={{ required: { value: required, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field
@@ -94,7 +103,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.value` as const, {
-                        required: { value: required, message: 'Required.' },
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
                       })}
                       defaultValue={matcher.value}
                       placeholder={t('alerting.matchers-field.placeholder-value', 'value')}

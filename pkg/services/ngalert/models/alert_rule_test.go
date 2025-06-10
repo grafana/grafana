@@ -850,6 +850,22 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:                 "should detect changes in ActiveTimeIntervals",
+				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				diffs: []cmputil.Diff{
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
+					},
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
+					},
+				},
+			},
 		}
 
 		for _, tt := range testCases {
@@ -1243,7 +1259,7 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := tt.rule.PrometheusRuleDefinition()
-			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+			isPrometheusRule := tt.rule.HasPrometheusRuleDefinition()
 
 			if tt.expectedErrorMsg != "" {
 				require.Error(t, err)
@@ -1254,6 +1270,81 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 				require.Equal(t, tt.expectedResult, result)
 				require.True(t, isPrometheusRule)
 			}
+		})
+	}
+}
+
+func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		rule     AlertRule
+		expected bool
+	}{
+		{
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with converted prometheus rule label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with both prometheus definition and converted label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "rule with empty metadata",
+			rule:     AlertRule{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rule.ImportedPrometheusRule()
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }

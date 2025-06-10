@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"time"
 
-	otgrpc "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -23,7 +24,6 @@ import (
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -32,8 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
-
-const resourceStoreAudience = "resourceStore"
 
 type Options struct {
 	Cfg      *setting.Cfg
@@ -52,7 +50,7 @@ type clientMetrics struct {
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
-	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
+	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
@@ -146,7 +144,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create a client instance
-		client, err := newResourceClient(conn, cfg, features, tracer)
+		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -158,28 +156,12 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features, nil)
+		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
 		if err != nil {
 			return nil, err
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
-}
-
-func newResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return resource.NewLegacyResourceClient(conn), nil
-	}
-
-	clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-
-	return resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
-		Token:            clientCfg.Token,
-		TokenExchangeURL: clientCfg.TokenExchangeURL,
-		Audiences:        []string{resourceStoreAudience},
-		Namespace:        clientCfg.TokenNamespace,
-		AllowInsecure:    cfg.Env == setting.Dev,
-	})
 }
 
 // grpcConn creates a new gRPC connection to the provided address.
@@ -201,7 +183,7 @@ func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) 
 	// Set the defaults that are normally set by Config.RegisterFlags.
 	flagext.DefaultValues(&cfg)
 
-	opts, err := cfg.DialOption(unary, stream)
+	opts, err := cfg.DialOption(unary, stream, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
 	}

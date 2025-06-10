@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -294,45 +295,25 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("with disabled recording rules", func(t *testing.T) {
 		testCases := []struct {
-			name                   string
-			recordingRules         bool
-			recordingRulesTargetDS bool
-			expectedStatus         int
+			name           string
+			recordingRules bool
+			expectedStatus int
 		}{
 			{
-				name:                   "when recording rules are enabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusAccepted,
+				name:           "when recording rules are enabled",
+				recordingRules: true,
+				expectedStatus: http.StatusAccepted,
 			},
 			{
-				name:                   "when recording rules are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when target datasources for recording rules are disabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when both recording rules and target datasources are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
+				name:           "when recording rules are disabled",
+				recordingRules: false,
+				expectedStatus: http.StatusBadRequest,
 			},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				var features featuremgmt.FeatureToggles
-				if tc.recordingRulesTargetDS {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources)
-				} else {
-					features = featuremgmt.WithFeatures()
-				}
+				features := featuremgmt.WithFeatures()
 
 				srv, _, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(features))
 				srv.cfg.RecordingRules.Enabled = tc.recordingRules
@@ -424,6 +405,97 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Len(t, remaining, 1)
 		require.NotNil(t, remaining[0].Record)
 		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
+	})
+
+	t.Run("sets notification settings for rules if specified", func(t *testing.T) {
+		srv, _, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		receiver := "test-receiver"
+		groupBy := []string{"cluster", "pod"}
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: receiver,
+			GroupBy:  groupBy,
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, createdRules, 1)
+		require.Len(t, createdRules[0].NotificationSettings, 1)
+		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
+		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
+	})
+
+	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		rc.Req.Header.Set(notificationSettingsHeader, "{invalid json")
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
+	})
+
+	t.Run("returns error when notification settings contain invalid values", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: "", // empty receiver is invalid
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
 	})
 }
 
@@ -1012,12 +1084,17 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		Name:     "TestGroup1",
 		Interval: prommodel.Duration(1 * time.Minute),
 		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Labels: map[string]string{
+			"group_label": "group_value",
+		},
 	}
 
+	queryOffset := prommodel.Duration(5 * time.Minute)
 	promGroup2 := apimodels.PrometheusRuleGroup{
-		Name:     "TestGroup2",
-		Interval: prommodel.Duration(1 * time.Minute),
-		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Name:        "TestGroup2",
+		Interval:    prommodel.Duration(1 * time.Minute),
+		Rules:       []apimodels.PrometheusRule{promAlertRule},
+		QueryOffset: &queryOffset,
 	}
 
 	promGroup3 := apimodels.PrometheusRuleGroup{
@@ -1053,10 +1130,12 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, "group_value", rule.Labels["group_label"])
 			case "TestGroup2":
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, models.Duration(queryOffset), rule.Data[0].RelativeTimeRange.To)
 			case "TestGroup3":
 				switch rule.Title {
 				case "TestAlert":
@@ -1225,7 +1304,6 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		provenanceStore:              fakes.NewFakeProvisioningStore(),
 		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
 		quotaChecker:                 quotas,
-		featureToggles:               featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources),
 	}
 
 	for _, opt := range opts {

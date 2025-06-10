@@ -1,6 +1,6 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
@@ -485,7 +485,10 @@ export const getLinksSupplier =
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
         href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
+
+        if (href?.length > 0) {
+          href = locationUtil.processUrl(href);
+        }
       }
 
       if (link.onClick) {

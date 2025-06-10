@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -140,7 +141,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -193,7 +194,7 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -213,7 +214,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, "", 1)
 				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
@@ -355,21 +356,21 @@ func TestGetDashboard(t *testing.T) {
 		}
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
@@ -423,8 +424,8 @@ func TestGetAllDashboards(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetAllDashboards", mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
-		dashboard, err := service.GetAllDashboards(context.Background())
+		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{}, nil).Once()
+		dashboard, err := service.GetAllDashboardsByOrgId(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
 		fakeStore.AssertExpectations(t)
@@ -456,7 +457,7 @@ func TestGetAllDashboards(t *testing.T) {
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
-		dashes, err := service.GetAllDashboards(ctx)
+		dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashes)
 		k8sCliMock.AssertExpectations(t)
@@ -541,68 +542,74 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
-					"name": "uid",
-					"labels": map[string]interface{}{
-						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-					},
-					"annotations": map[string]interface{}{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "test",
-						utils.AnnoKeySourceChecksum:  "hash",
-						utils.AnnoKeySourcePath:      "path/to/file",
-						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-					},
-				},
-				"spec": map[string]interface{}{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}, nil).Once()
 		repo := "test"
 		k8sCliMock.On("Search", mock.Anything, int64(1),
-			mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+			mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				// make sure the kind is added to the query
 				return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 					req.Options.Fields[1].Values[0] == repo
-			})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{},
-				Rows:    []*resource.ResourceTableRow{},
+			})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
 			},
 			TotalHits: 0,
 		}, nil).Once()
-		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// make sure the kind is added to the query
 			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 				req.Options.Fields[1].Values[0] == repo
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte(repo),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -637,7 +644,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardID(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
@@ -648,56 +655,64 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
-				"name": "uid",
-				"labels": map[string]interface{}{
-					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-				},
-				"annotations": map[string]interface{}{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "test",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-				},
-			},
-			"spec": map[string]interface{}{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
-			},
-		}}, nil)
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{},
-				Rows:    []*resource.ResourceTableRow{},
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{},
+				Rows:    []*resourcepb.ResourceTableRow{},
 			},
 			TotalHits: 0,
 		}, nil)
-		k8sCliMock.On("Search", mock.Anything, int64(2), mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("test"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -731,7 +746,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardUID(context.Background(), 1, "test")
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
@@ -742,49 +757,57 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
-				"name": "uid",
-				"labels": map[string]interface{}{
-					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-				},
-				"annotations": map[string]interface{}{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "test",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-				},
-			},
-			"spec": map[string]interface{}{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
-			},
-		}}, nil).Once()
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("test"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -835,68 +858,55 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "orphaned",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
-		// should not delete this one, because it does not start with "file:"
-		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid2",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindPlugin),
-					utils.AnnoKeyManagerIdentity: "app",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
-
-		k8sCliMock.On("Get", mock.Anything, "uid3", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid3",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "orphaned",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// nolint:staticcheck
 			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -904,40 +914,70 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 
-		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// nolint:staticcheck
 			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid2",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
 							[]byte("folder 2"),
+							[]byte(string(utils.ManagerKindPlugin)),
+							[]byte("app"),
+							[]byte(""),
+							[]byte(""),
+							[]byte(""),
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid3",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 3"),
 							[]byte("folder 3"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -946,8 +986,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		}, nil).Once()
 
 		// mock call to waitForSearchQuery()
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results:   &resource.ResourceTable{},
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
 			TotalHits: 0,
 		}, nil).Twice()
 
@@ -970,59 +1010,58 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
-		provisioningTimestamp := int64(1234567)
-
 		// Call to searchProvisionedDashboardsThroughK8s()
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
-					"name": "uid",
-					"labels": map[string]interface{}{
-						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-					},
-					"annotations": map[string]interface{}{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "test",
-						utils.AnnoKeySourceChecksum:  "hash",
-						utils.AnnoKeySourcePath:      "path/to/file",
-						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-					},
-				},
-				"spec": map[string]interface{}{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}, nil).Once()
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// make sure the kind is added to the query
 			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 				req.Options.Fields[1].Values[0] == repo
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -1035,14 +1074,14 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 
 		// Mock WaitForSearchQuery()
 		// First call returns 1 hit
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results:   &resource.ResourceTable{},
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
 			TotalHits: 1,
 		}, nil).Once()
 
 		// Second call returns 0 hits
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results:   &resource.ResourceTable{},
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
 			TotalHits: 0,
 		}, nil).Once()
 
@@ -1068,12 +1107,12 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 
 		// Call to searchProvisionedDashboardsThroughK8s()
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// make sure the kind is added to the query
 			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 				req.Options.Fields[1].Values[0] == repo
-		})).Return(&resource.ResourceSearchResponse{
-			Results:   &resource.ResourceTable{},
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results:   &resourcepb.ResourceTable{},
 			TotalHits: 0,
 		}, nil)
 
@@ -1140,21 +1179,21 @@ func TestUnprovisionDashboard(t *testing.T) {
 		}).Return(dashWithoutAnnotations, nil)
 		k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
@@ -1208,25 +1247,25 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(uidUnstructured, nil)
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return ( // gofmt comment helper
 			req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
 				req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
@@ -1496,21 +1535,21 @@ func TestDeleteDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
@@ -1648,25 +1687,25 @@ func TestSearchDashboards(t *testing.T) {
 		}
 		fakeFolders.ExpectedHitList = expectedFolders
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid1",
 							Resource: "dashboard",
 						},
@@ -1677,7 +1716,7 @@ func TestSearchDashboards(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid2",
 							Resource: "dashboard",
 						},
@@ -1702,7 +1741,7 @@ func TestSearchDashboards(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			if len(req.Options.Fields) == 0 {
 				return false
 			}
@@ -1713,25 +1752,25 @@ func TestSearchDashboards(t *testing.T) {
 				}
 			}
 			return false
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "shared-uid1",
 							Resource: "dashboard",
 						},
@@ -1745,7 +1784,7 @@ func TestSearchDashboards(t *testing.T) {
 			},
 			TotalHits: 1,
 		}, nil).Once()
-		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			if len(req.Options.Fields) == 0 {
 				return false
 			}
@@ -1755,25 +1794,25 @@ func TestSearchDashboards(t *testing.T) {
 				}
 			}
 			return false
-		})).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "shared-uid1",
 							Resource: "dashboard",
 						},
@@ -1878,21 +1917,21 @@ func TestGetDashboards(t *testing.T) {
 		k8sCliMock.On("Get", mock.Anything, "uid1", mock.Anything, mock.Anything, mock.Anything).Return(uid1Unstructured, nil)
 		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(uid2Unstructured, nil)
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid1",
 							Resource: "dashboard",
 						},
@@ -1902,7 +1941,7 @@ func TestGetDashboards(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid2",
 							Resource: "dashboard",
 						},
@@ -1959,21 +1998,21 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid1",
 							Resource: "dashboard",
 						},
@@ -2078,10 +2117,10 @@ func TestGetDashboardTags(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
-		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Facet: map[string]*resource.ResourceSearchResponse_Facet{
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 				"tags": {
-					Terms: []*resource.ResourceSearchResponse_TermFacet{
+					Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
 						{
 							Term:  "tag1",
 							Count: 1,
@@ -2119,15 +2158,15 @@ func TestQuotaCount(t *testing.T) {
 		},
 	}
 
-	countOrg1 := resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
+	countOrg1 := resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{
 				Count: 1,
 			},
 		},
 	}
-	countOrg2 := resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
+	countOrg2 := resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{
 				Count: 2,
 			},
@@ -2176,8 +2215,8 @@ func TestCountDashboardsInOrg(t *testing.T) {
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
 	}
-	count := resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
+	count := resourcepb.ResourceStatsResponse{
+		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{
 				Count: 3,
 			},
@@ -2208,21 +2247,21 @@ func TestCountInFolders(t *testing.T) {
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
 	}
-	dashs := &resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
+	dashs := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
 				{
 					Name: "title",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
 				{
 					Name: "folder",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
 			},
-			Rows: []*resource.ResourceTableRow{
+			Rows: []*resourcepb.ResourceTableRow{
 				{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Name:     "uid",
 						Resource: "dashboard",
 					},
@@ -2232,7 +2271,7 @@ func TestCountInFolders(t *testing.T) {
 					},
 				},
 				{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Name:     "uid2",
 						Resource: "dashboard",
 					},
@@ -2273,26 +2312,26 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		Sort:  sort.SortAlphaAsc,
 	}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return len(req.SortBy) == 1 &&
 			// should be converted to "title" due to ParseSortName
 			req.SortBy[0].Field == "title" &&
 			!req.SortBy[0].Desc
-	})).Return(&resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
+	})).Return(&resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
 				{
 					Name: "title",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
 				{
 					Name: "folder",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
 			},
-			Rows: []*resource.ResourceTableRow{
+			Rows: []*resourcepb.ResourceTableRow{
 				{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Name:     "uid",
 						Resource: "dashboard",
 					},
@@ -2327,65 +2366,59 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		OrgId: 1,
 	}
 	provisioningTimestamp := int64(1234567)
-	dashboardUnstructuredProvisioned := unstructured.Unstructured{Object: map[string]any{
-		"metadata": map[string]any{
-			"name": "uid",
-			"annotations": map[string]any{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-				utils.AnnoKeyManagerIdentity: "test",
-				utils.AnnoKeySourceChecksum:  "hash",
-				utils.AnnoKeySourcePath:      "path/to/file",
-				utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-			},
-		},
-		"spec": map[string]any{},
-	}}
-	dashboardUnstructuredNotProvisioned := unstructured.Unstructured{Object: map[string]any{
-		"metadata": map[string]any{
-			"name": "uid2",
-		},
-		"spec": map[string]any{},
-	}}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
 				{
 					Name: "title",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
 				{
 					Name: "folder",
-					Type: resource.ResourceTableColumnDefinition_STRING,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_ID,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_PATH,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_TIME,
+					Type: resourcepb.ResourceTableColumnDefinition_INT64,
 				},
 			},
-			Rows: []*resource.ResourceTableRow{
+			Rows: []*resourcepb.ResourceTableRow{
 				{
-					Key: &resource.ResourceKey{
+					Key: &resourcepb.ResourceKey{
 						Name:     "uid",
 						Resource: "dashboard",
 					},
 					Cells: [][]byte{
 						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-					},
-				},
-				{
-					Key: &resource.ResourceKey{
-						Name:     "uid2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte("folder2"),
+						[]byte("folder 1"),
+						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+						[]byte("test"),
+						[]byte("path/to/file"),
+						[]byte("hash"),
+						[]byte("1234567"),
 					},
 				},
 			},
 		},
 		TotalHits: 1,
 	}, nil)
-	k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredProvisioned, nil).Once()
-	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredNotProvisioned, nil).Once()
 	res, err := service.searchProvisionedDashboardsThroughK8s(ctx, query)
 	require.NoError(t, err)
 	assert.Equal(t, []*dashboardProvisioningWithUID{
@@ -2514,7 +2547,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				service.RegisterDashboardPermissions(permService)
 
 				// Create test object
-				key := &resource.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
+				key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
 				obj := &dashboardv0.Dashboard{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: "dashboard.grafana.app/v0alpha1",
@@ -2578,6 +2611,7 @@ func TestCleanUpDashboard(t *testing.T) {
 
 			ctx := context.Background()
 			dashboardUID := "dash-uid"
+			dashboardID := int64(1)
 			orgID := int64(1)
 
 			// Setup mocks
@@ -2587,11 +2621,12 @@ func TestCleanUpDashboard(t *testing.T) {
 				fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{
 					OrgID: orgID,
 					UID:   dashboardUID,
+					ID:    dashboardID,
 				}).Return(tc.cleanupError).Maybe()
 			}
 
 			// Execute
-			err := service.CleanUpDashboard(ctx, dashboardUID, orgID)
+			err := service.CleanUpDashboard(ctx, dashboardUID, dashboardID, orgID)
 
 			// Assert
 			if tc.expectedError != nil {

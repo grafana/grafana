@@ -9,13 +9,15 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 type subAccessREST struct {
 	service folder.Service
+	ac      accesscontrol.AccessControl
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -63,17 +65,19 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	if err != nil {
 		return nil, err
 	}
-	guardian, err := guardian.NewByFolder(ctx, f, ns.OrgID, user)
-	if err != nil {
-		return nil, err
-	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		access := &folders.FolderAccessInfo{}
-		access.CanEdit, _ = guardian.CanEdit()
-		access.CanSave, _ = guardian.CanSave()
-		access.CanAdmin, _ = guardian.CanAdmin()
-		access.CanDelete, _ = guardian.CanDelete()
+		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		access.CanEdit, _ = r.ac.Evaluate(ctx, user, canEditEvaluator)
+		access.CanSave = access.CanEdit
+		canAdminEvaluator := accesscontrol.EvalAll(
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+		)
+		access.CanAdmin, _ = r.ac.Evaluate(ctx, user, canAdminEvaluator)
+		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		access.CanDelete, _ = r.ac.Evaluate(ctx, user, canDeleteEvaluator)
 		responder.Object(http.StatusOK, access)
 	}), nil
 }
