@@ -19,7 +19,6 @@ const (
 )
 
 type outOfSupportVersionStep struct {
-	StackID        string
 	GrafanaVersion string
 	BuildDate      time.Time
 	ghClient       gitHubClient
@@ -54,11 +53,6 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		return nil, nil
 	}
 
-	if s.StackID != "" {
-		// Running in cloud, no need to check if the version is out of support
-		return nil, nil
-	}
-
 	// If the build date is less than 9 months old, it's supported
 	if s.BuildDate.After(time.Now().AddDate(0, -9, 0)) {
 		return nil, nil
@@ -72,6 +66,7 @@ func (s *outOfSupportVersionStep) Run(ctx context.Context, log logging.Logger, _
 		// In other cases, we need to check if the version is out of support.
 		// Minor versions are generally supported for 9 months but the last
 		// minor version for a major version is supported for 15 months.
+		// This is the case when we keep doing releases for old minor versions (e.g. 11.x when 12.x is out).
 		// https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/#what-to-know-about-version-support
 
 		// Parse the current version using semver

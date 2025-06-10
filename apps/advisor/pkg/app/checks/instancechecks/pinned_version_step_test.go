@@ -21,7 +21,6 @@ func TestPinnedVersionStep(t *testing.T) {
 		{
 			name: "should return error for invalid input type",
 			step: &pinnedVersionStep{
-				StackID:     "test-stack",
 				BuildBranch: "test-branch",
 			},
 			input:   123, // invalid type
@@ -30,7 +29,6 @@ func TestPinnedVersionStep(t *testing.T) {
 		{
 			name: "should return nil for non-pinned version item",
 			step: &pinnedVersionStep{
-				StackID:     "test-stack",
 				BuildBranch: "test-branch",
 			},
 			input:       "other_item",
@@ -38,19 +36,8 @@ func TestPinnedVersionStep(t *testing.T) {
 			wantErr:     false,
 		},
 		{
-			name: "should return nil for non-cloud stack",
-			step: &pinnedVersionStep{
-				StackID:     "",
-				BuildBranch: "test-branch",
-			},
-			input:       pinnedVersion,
-			wantFailure: false,
-			wantErr:     false,
-		},
-		{
 			name: "should return nil for HEAD build branch",
 			step: &pinnedVersionStep{
-				StackID:     "test-stack",
 				BuildBranch: "HEAD",
 			},
 			input:       pinnedVersion,
@@ -58,9 +45,8 @@ func TestPinnedVersionStep(t *testing.T) {
 			wantErr:     false,
 		},
 		{
-			name: "should return failure for pinned version in cloud",
+			name: "should return failure for pinned version",
 			step: &pinnedVersionStep{
-				StackID:     "test-stack",
 				BuildBranch: "v9.5.0",
 			},
 			input:       pinnedVersion,

@@ -16,7 +16,6 @@ const (
 )
 
 type pinnedVersionStep struct {
-	StackID     string
 	BuildBranch string
 }
 
@@ -43,11 +42,6 @@ func (s *pinnedVersionStep) Run(ctx context.Context, log logging.Logger, _ *advi
 	}
 	if item != pinnedVersion {
 		// Not interested in this item
-		return nil, nil
-	}
-
-	if s.StackID == "" {
-		// Not running in cloud
 		return nil, nil
 	}
 

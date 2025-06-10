@@ -56,7 +56,6 @@ func (c *check) Steps() []checks.Step {
 	if c.isCloudInstance {
 		return []checks.Step{
 			&pinnedVersionStep{
-				StackID:     c.cfg.StackID,
 				BuildBranch: c.cfg.BuildBranch,
 			},
 		}
@@ -65,7 +64,6 @@ func (c *check) Steps() []checks.Step {
 	// If running in self-managed, we need to check if the version is out of support
 	return []checks.Step{
 		&outOfSupportVersionStep{
-			StackID:        c.cfg.StackID,
 			GrafanaVersion: c.cfg.BuildVersion,
 			BuildDate:      time.Unix(c.cfg.BuildStamp, 0).UTC(),
 			ghClient:       github.NewClient(nil).Repositories,

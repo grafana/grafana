@@ -29,7 +29,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return error for invalid input type",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      now,
 				ghClient:       &mockGitHubClient{},
@@ -40,7 +39,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return nil for non-out-of-support item",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      now,
 				ghClient:       &mockGitHubClient{},
@@ -50,21 +48,8 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 			wantErr:     false,
 		},
 		{
-			name: "should return nil for cloud stack",
-			step: &outOfSupportVersionStep{
-				StackID:        "test-stack",
-				GrafanaVersion: "9.5.0",
-				BuildDate:      oldDate,
-				ghClient:       &mockGitHubClient{},
-			},
-			input:       outOfSupportVersion,
-			wantFailure: false,
-			wantErr:     false,
-		},
-		{
 			name: "should return nil for recent build date",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "11.5.0",
 				BuildDate:      recentDate,
 				ghClient:       &mockGitHubClient{},
@@ -76,7 +61,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return failure for old build date",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      oldDate,
 				ghClient:       &mockGitHubClient{},
@@ -88,7 +72,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return nil for invalid version format",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "invalid-version",
 				BuildDate:      oldDateButSupportedIfLatestMinor,
 				ghClient:       &mockGitHubClient{},
@@ -100,7 +83,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return nil for GitHub API error",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      oldDateButSupportedIfLatestMinor,
 				ghClient: &mockGitHubClient{
@@ -114,7 +96,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return failure for non-latest minor version",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      oldDateButSupportedIfLatestMinor,
 				ghClient: &mockGitHubClient{
@@ -128,7 +109,6 @@ func TestOutOfSupportVersionStep(t *testing.T) {
 		{
 			name: "should return nil for latest minor version",
 			step: &outOfSupportVersionStep{
-				StackID:        "",
 				GrafanaVersion: "9.5.0",
 				BuildDate:      oldDateButSupportedIfLatestMinor,
 				ghClient: &mockGitHubClient{
