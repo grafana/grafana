@@ -227,15 +227,7 @@ export class GeneralSettingsEditView
               {dashboard.isManagedRepository() ? (
                 <Input readOnly value={meta.folderTitle} />
               ) : (
-                <FolderPicker
-                  value={meta.folderUid}
-                  onChange={model.onFolderChange}
-                  // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                  initialTitle={meta.folderTitle}
-                  inputId="dashboard-folder-input"
-                  enableCreateNew
-                  skipInitialLoad
-                />
+                <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
               )}
             </Field>
 

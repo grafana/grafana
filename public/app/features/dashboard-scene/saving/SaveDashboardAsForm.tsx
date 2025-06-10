@@ -43,7 +43,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues } = formState;
+  const { errors, isValid } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
@@ -158,11 +158,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
               },
             });
           }}
-          // Old folder picker fields
           value={formValues.folder?.uid}
-          initialTitle={defaultValues!.folder!.title}
-          dashboardId={dashboard.state.id ?? undefined}
-          enableCreateNew
         />
       </Field>
       {!changeInfo.isNew && (

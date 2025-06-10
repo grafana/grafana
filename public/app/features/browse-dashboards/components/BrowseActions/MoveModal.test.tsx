@@ -1,35 +1,79 @@
-import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { HttpResponse, http } from 'msw';
+import { SetupServer, setupServer } from 'msw/node';
+import { render, screen } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
-import * as api from 'app/features/manage-dashboards/state/actions';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import { treeViewersCanEdit, wellFormedTree } from '../../fixtures/dashboardsTreeItem.fixture';
 
 import { MoveModal, Props } from './MoveModal';
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
-}
+const [mockTree, { folderA }] = wellFormedTree();
+const [mockTreeThatViewersCanEdit /* shares folders with wellFormedTree */] = treeViewersCanEdit();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
   const mockOnConfirm = jest.fn();
-  const mockFolders = [
-    { title: 'Dashboards', uid: '' } as DashboardSearchHit,
-    { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
-  ];
   let props: Props;
+  let server: SetupServer;
+  window.HTMLElement.prototype.scrollIntoView = () => {};
 
   beforeAll(() => {
-    setBackendSrv(backendSrv);
-    jest.spyOn(backendSrv, 'get').mockResolvedValue({
-      dashboard: 0,
-      folder: 0,
-    });
+    server = setupServer(
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          title: folderA.item.title,
+          uid: folderA.item.uid,
+        });
+      }),
+
+      http.get('/api/folders/:uid/counts', () => {
+        return HttpResponse.json({
+          folder: 1,
+          dashboard: 2,
+          librarypanel: 3,
+          alertrule: 4,
+        });
+      }),
+
+      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/settings', () => {
+        return HttpResponse.json({
+          items: [],
+        });
+      }),
+
+      http.get('/api/folders', ({ request }) => {
+        const url = new URL(request.url);
+        const parentUid = url.searchParams.get('parentUid') ?? undefined;
+        const permission = url.searchParams.get('permission');
+
+        const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
+        const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+
+        const tree = permission === 'Edit' ? mockTreeThatViewersCanEdit : mockTree;
+
+        // reconstruct a folder API response from the flat tree fixture
+        const folders = tree
+          .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
+          .map((folder) => {
+            return {
+              uid: folder.item.uid,
+              title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+            };
+          })
+          .slice(limit * (page - 1), limit * page);
+
+        return HttpResponse.json(folders);
+      })
+    );
+
+    server.listen();
   });
 
   beforeEach(() => {
@@ -44,9 +88,10 @@ describe('browse-dashboards MoveModal', () => {
         panel: {},
       },
     };
+  });
 
-    // mock the searchFolders api call so the folder picker has some folders in it
-    jest.spyOn(api, 'searchFolders').mockResolvedValue(mockFolders);
+  afterAll(() => {
+    server.close();
   });
 
   it('renders a dialog with the correct title', async () => {
@@ -70,7 +115,7 @@ describe('browse-dashboards MoveModal', () => {
   it('displays a folder picker', async () => {
     render(<MoveModal {...props} />);
 
-    expect(await screen.findByTestId(selectors.components.FolderPicker.input)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
   });
 
   it('displays a warning about permissions if a folder is selected', async () => {
@@ -84,23 +129,24 @@ describe('browse-dashboards MoveModal', () => {
     ).toBeInTheDocument();
   });
 
-  it('only enables the `Move` button if a folder is selected', async () => {
+  it('enables the `Move` button once a folder is selected', async () => {
     render(<MoveModal {...props} />);
 
     expect(await screen.findByRole('button', { name: 'Move' })).toBeDisabled();
-    const folderPicker = await screen.findByTestId(selectors.components.FolderPicker.input);
 
-    await selectOptionInTest(folderPicker, mockFolders[1].title);
-    expect(await screen.findByRole('button', { name: 'Move' })).toBeEnabled();
-  });
+    // Open the picker and wait for children to load
+    const folderPicker = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(folderPicker);
+    await screen.findByLabelText(folderA.item.title);
 
-  it('calls onConfirm when clicking the `Move` button', async () => {
-    render(<MoveModal {...props} />);
-    const folderPicker = await screen.findByTestId(selectors.components.FolderPicker.input);
+    // Select the folder
+    await userEvent.click(screen.getByLabelText(folderA.item.title));
 
-    await selectOptionInTest(folderPicker, mockFolders[1].title);
-    await userEvent.click(await screen.findByRole('button', { name: 'Move' }));
-    expect(mockOnConfirm).toHaveBeenCalledWith(mockFolders[1].uid);
+    const moveButton = await screen.findByRole('button', { name: 'Move' });
+    expect(moveButton).toBeEnabled();
+
+    await userEvent.click(moveButton);
+    expect(mockOnConfirm).toHaveBeenCalledWith(folderA.item.uid);
   });
 
   it('calls onDismiss when clicking the `Cancel` button', async () => {
