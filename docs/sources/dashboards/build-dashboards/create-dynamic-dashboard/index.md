@@ -77,7 +77,13 @@ refs:
 
 # Create and edit dynamic dashboards
 
-{{< docs/experimental product="Dynamic dashboards" featureFlag="dashboardNewLayouts" >}}
+{{< admonition type="caution" >}}
+
+Dynamic dashboards is an [experimental](https://grafana.com/docs/release-life-cycle/) feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `dashboardNewLayouts` feature toggle in Grafana to use this feature.
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
