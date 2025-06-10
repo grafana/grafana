@@ -189,8 +189,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: variable.state.baseFilters,
-        filters: variable.state.filters,
+        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+        filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
     } else if (variable.state.type === 'system') {
