@@ -16,7 +16,6 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
@@ -76,15 +75,15 @@ type Alertmanager struct {
 }
 
 type SmtpConfig struct {
+	EhloIdentity   string
 	FromAddress    string
 	FromName       string
 	Host           string
 	Password       string
 	SkipVerify     bool
-	User           string
+	StartTLSPolicy string
 	StaticHeaders  map[string]string
-	EhloIdentity   string
-	StartTLSPolicy string // No equivalent on the AM side, prob not needed
+	User           string
 }
 
 type AlertmanagerConfig struct {
@@ -102,12 +101,13 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
+	Smtp SmtpConfig
+
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
-	Smtp    SmtpConfig
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -272,7 +272,6 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err != nil {
 		return err
 	}
-	am.addGlobals(c)
 
 	// Add auto-generated routes and decrypt before comparing.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
@@ -294,31 +293,6 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	}
 
 	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
-}
-
-func (am *Alertmanager) addGlobals(cfg *apimodels.PostableUserConfig) {
-	hostPort := strings.Split(am.smtp.Host, ":")
-	host := hostPort[0]
-	var port string
-	if len(hostPort) == 2 {
-		port = hostPort[1]
-	}
-
-	if cfg.AlertmanagerConfig.Global == nil {
-		g := config.DefaultGlobalConfig()
-		cfg.AlertmanagerConfig.Global = &g
-	}
-
-	cfg.AlertmanagerConfig.Global.SMTPFrom = am.smtp.FromAddress
-	cfg.AlertmanagerConfig.Global.SMTPHello = am.smtp.EhloIdentity
-	cfg.AlertmanagerConfig.Global.SMTPSmarthost = config.HostPort{Host: host, Port: port}
-	cfg.AlertmanagerConfig.Global.SMTPAuthUsername = am.smtp.User
-	cfg.AlertmanagerConfig.Global.SMTPAuthPassword = config.Secret(am.smtp.Password)
-	cfg.AlertmanagerConfig.Global.SMTPRequireTLS = !am.smtp.SkipVerify
-
-	//cfg.AlertmanagerConfig.Global.SMTPAuthPasswordFile
-	//cfg.AlertmanagerConfig.Global.SMTPAuthSecret
-	//cfg.AlertmanagerConfig.Global.SMTPAuthIdentity
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -400,8 +374,6 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	am.addGlobals(cfg)
-
 	// Get the hash for the encrypted configuration.
 	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
@@ -432,8 +404,6 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
 	}
-
-	am.addGlobals(c)
 
 	// Add auto-generated routes and decrypt before sending.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
@@ -726,11 +696,28 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
-	if rc.SmtpFrom != am.smtpFrom {
-		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
+	// Compare SMTP configs.
+	if rc.SmtpConfig.EhloIdentity != am.smtp.EhloIdentity ||
+		rc.SmtpConfig.Password != am.smtp.Password ||
+		rc.SmtpConfig.FromAddress != am.smtp.FromAddress ||
+		rc.SmtpConfig.FromName != am.smtp.FromName ||
+		rc.SmtpConfig.Host != am.smtp.Host ||
+		rc.SmtpConfig.SkipVerify != am.smtp.SkipVerify ||
+		rc.SmtpConfig.StartTLSPolicy != am.smtp.StartTLSPolicy ||
+		len(rc.SmtpConfig.StaticHeaders) != len(am.smtp.StaticHeaders) ||
+		rc.SmtpConfig.User != am.smtp.User {
+		am.log.Debug("SMTP config is different, sending the configuration to the remote Alertmanager")
 		return true
 	}
 
+	for k, v := range rc.SmtpConfig.StaticHeaders {
+		if value, ok := am.smtp.StaticHeaders[k]; !ok || v != value {
+			am.log.Debug("SMTP static headers are different, sending the configuration to the remote Alertmanager")
+			return true
+		}
+	}
+
+	// Hash and compare Alertmanager configs.
 	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
 	if err != nil {
 		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
