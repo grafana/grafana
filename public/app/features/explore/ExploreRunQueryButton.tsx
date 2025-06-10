@@ -108,7 +108,7 @@ export function ExploreRunQueryButton({
                   runQuery(pane[0]);
                   onClick?.();
                 }}
-                // eslint-disable-next-line @grafana/no-untranslated-strings
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 label={`${paneLabel}: ${buttonText.translation}`}
                 disabled={isInvalid || pane[0] === undefined}
               />

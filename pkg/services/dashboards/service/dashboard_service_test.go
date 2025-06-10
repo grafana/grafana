@@ -141,7 +141,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -194,7 +194,7 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -214,7 +214,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, "", 1)
 				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
@@ -542,30 +542,6 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
-					"name": "uid",
-					"labels": map[string]interface{}{
-						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-					},
-					"annotations": map[string]interface{}{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "test",
-						utils.AnnoKeySourceChecksum:  "hash",
-						utils.AnnoKeySourcePath:      "path/to/file",
-						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-					},
-				},
-				"spec": map[string]interface{}{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}, nil).Once()
 		repo := "test"
 		k8sCliMock.On("Search", mock.Anything, int64(1),
 			mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
@@ -594,6 +570,30 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -604,6 +604,12 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte(repo),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -638,7 +644,7 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, int64(1)).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardID(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
@@ -649,28 +655,6 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
-				"name": "uid",
-				"labels": map[string]interface{}{
-					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-				},
-				"annotations": map[string]interface{}{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "test",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-				},
-			},
-			"spec": map[string]interface{}{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
-			},
-		}}, nil)
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{},
@@ -689,6 +673,30 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -699,6 +707,12 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("test"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -732,7 +746,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioning{}, nil).Once()
+		fakeStore.On("GetProvisionedDataByDashboardUID", mock.Anything, int64(1), "test").Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
 		dashboard, err := service.GetProvisionedDashboardDataByDashboardUID(context.Background(), 1, "test")
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
@@ -743,28 +757,6 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
-				"name": "uid",
-				"labels": map[string]interface{}{
-					utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-				},
-				"annotations": map[string]interface{}{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "test",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-				},
-			},
-			"spec": map[string]interface{}{
-				"test":    "test",
-				"version": int64(1),
-				"title":   "testing slugify",
-			},
-		}}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -776,6 +768,30 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -786,6 +802,12 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte("1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("test"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -836,44 +858,6 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		_, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "orphaned",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
-		// should not delete this one, because it does not start with "file:"
-		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid2",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindPlugin),
-					utils.AnnoKeyManagerIdentity: "app",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
-
-		k8sCliMock.On("Get", mock.Anything, "uid3", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name": "uid3",
-				"annotations": map[string]any{
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-					utils.AnnoKeyManagerIdentity: "orphaned",
-					utils.AnnoKeySourceChecksum:  "hash",
-					utils.AnnoKeySourcePath:      "path/to/file",
-					utils.AnnoKeySourceTimestamp: "2025-01-01T00:00:00Z",
-				},
-			},
-			"spec": map[string]any{},
-		}}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// nolint:staticcheck
 			return req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "test" && req.Options.Fields[1].Operator == "notin"
@@ -888,6 +872,26 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -898,6 +902,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -919,6 +928,26 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -929,6 +958,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 2"),
 							[]byte("folder 2"),
+							[]byte(string(utils.ManagerKindPlugin)),
+							[]byte("app"),
+							[]byte(""),
+							[]byte(""),
+							[]byte(""),
 						},
 					},
 					{
@@ -939,6 +973,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 3"),
 							[]byte("folder 3"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -971,34 +1010,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 			log:                    log.NewNopLogger(),
 		}
 		ctx, k8sCliMock := setupK8sDashboardTests(singleOrgService)
-		provisioningTimestamp := int64(1234567)
-
 		// Call to searchProvisionedDashboardsThroughK8s()
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
-					"name": "uid",
-					"labels": map[string]interface{}{
-						utils.LabelKeyDeprecatedInternalID: "1", // nolint:staticcheck
-					},
-					"annotations": map[string]interface{}{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "test",
-						utils.AnnoKeySourceChecksum:  "hash",
-						utils.AnnoKeySourcePath:      "path/to/file",
-						utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-					},
-				},
-				"spec": map[string]interface{}{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}, nil).Once()
 		k8sCliMock.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			// make sure the kind is added to the query
 			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
@@ -1014,6 +1027,26 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Name: "folder",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_MANAGER_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_PATH,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: resource.SEARCH_FIELD_SOURCE_TIME,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -1024,6 +1057,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 						Cells: [][]byte{
 							[]byte("Dashboard 1"),
 							[]byte("folder 1"),
+							[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+							[]byte("orphaned"),
+							[]byte("path/to/file"),
+							[]byte("hash"),
+							[]byte("1234567"),
 						},
 					},
 				},
@@ -2328,25 +2366,6 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 		OrgId: 1,
 	}
 	provisioningTimestamp := int64(1234567)
-	dashboardUnstructuredProvisioned := unstructured.Unstructured{Object: map[string]any{
-		"metadata": map[string]any{
-			"name": "uid",
-			"annotations": map[string]any{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), // nolint:staticcheck
-				utils.AnnoKeyManagerIdentity: "test",
-				utils.AnnoKeySourceChecksum:  "hash",
-				utils.AnnoKeySourcePath:      "path/to/file",
-				utils.AnnoKeySourceTimestamp: fmt.Sprintf("%d", time.Unix(provisioningTimestamp, 0).UnixMilli()),
-			},
-		},
-		"spec": map[string]any{},
-	}}
-	dashboardUnstructuredNotProvisioned := unstructured.Unstructured{Object: map[string]any{
-		"metadata": map[string]any{
-			"name": "uid2",
-		},
-		"spec": map[string]any{},
-	}}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{
@@ -2359,6 +2378,26 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 					Name: "folder",
 					Type: resourcepb.ResourceTableColumnDefinition_STRING,
 				},
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_MANAGER_ID,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_PATH,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: resource.SEARCH_FIELD_SOURCE_TIME,
+					Type: resourcepb.ResourceTableColumnDefinition_INT64,
+				},
 			},
 			Rows: []*resourcepb.ResourceTableRow{
 				{
@@ -2368,25 +2407,18 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 					},
 					Cells: [][]byte{
 						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-					},
-				},
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte("folder2"),
+						[]byte("folder 1"),
+						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
+						[]byte("test"),
+						[]byte("path/to/file"),
+						[]byte("hash"),
+						[]byte("1234567"),
 					},
 				},
 			},
 		},
 		TotalHits: 1,
 	}, nil)
-	k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredProvisioned, nil).Once()
-	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructuredNotProvisioned, nil).Once()
 	res, err := service.searchProvisionedDashboardsThroughK8s(ctx, query)
 	require.NoError(t, err)
 	assert.Equal(t, []*dashboardProvisioningWithUID{
