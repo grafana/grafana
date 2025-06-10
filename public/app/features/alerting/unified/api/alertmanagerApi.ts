@@ -107,16 +107,21 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     grafanaNotifiers: build.query<NotifierDTO[], void>({
       query: () => ({ url: '/api/alert-notifiers' }),
       transformResponse: (response: NotifierDTO[]) => {
-        const populateSecureFieldKey = (option: NotificationChannelOption, prefix: string): NotificationChannelOption => ({
+        const populateSecureFieldKey = (
+          option: NotificationChannelOption,
+          prefix: string
+        ): NotificationChannelOption => ({
           ...option,
           secureFieldKey: option.secure && !option.secureFieldKey ? `${prefix}${option.propertyName}` : undefined,
-          subformOptions: option.subformOptions?.map((suboption) => populateSecureFieldKey(suboption, `${prefix}${option.propertyName}.`)),
-        })
+          subformOptions: option.subformOptions?.map((suboption) =>
+            populateSecureFieldKey(suboption, `${prefix}${option.propertyName}.`)
+          ),
+        });
 
         return response.map((notifier) => ({
           ...notifier,
           options: notifier.options.map((option) => {
-            return populateSecureFieldKey(option, '')
+            return populateSecureFieldKey(option, '');
           }),
         }));
       },

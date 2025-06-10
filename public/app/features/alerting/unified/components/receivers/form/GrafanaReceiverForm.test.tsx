@@ -83,7 +83,7 @@ const ui = {
           clientKey: byRole('textbox', { name: /^Client Key/ }),
           deleteButton: byTestId('items.0.settings.http_config.oauth2.tls_config.delete-button'),
         },
-      }
+      },
     },
     optionalSettings: byRole('button', { name: /optional webhook settings/i }),
   },
@@ -473,13 +473,13 @@ describe('GrafanaReceiverForm', () => {
                 'http_config.oauth2.tls_config.caCertificate': true,
                 'http_config.oauth2.tls_config.clientCertificate': true,
                 'http_config.oauth2.tls_config.clientKey': true,
-              }
+              },
             })
             .build(),
         ])
-        .build({id: 'webhook-id', name: contactPointName, metadata: {name: contactPointName}});
+        .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
 
-      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true}/>);
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
       await waitFor(() => expect(ui.webhook.optionalSettings.query()).toBeInTheDocument());
@@ -529,7 +529,8 @@ describe('GrafanaReceiverForm', () => {
                       param1: 'value1',
                       param2: 'value2',
                     },
-                    tls_config: { // This tls config has existing values via secureFields, delete should remove this correctly as well.
+                    tls_config: {
+                      // This tls config has existing values via secureFields, delete should remove this correctly as well.
                       insecureSkipVerify: false,
                     },
                     proxy_config: {
@@ -548,7 +549,7 @@ describe('GrafanaReceiverForm', () => {
                 'http_config.oauth2.tls_config.caCertificate': true,
                 'http_config.oauth2.tls_config.clientCertificate': true,
                 'http_config.oauth2.tls_config.clientKey': true,
-              }
+              },
             })
             .build(),
         ])
@@ -597,7 +598,6 @@ describe('GrafanaReceiverForm', () => {
 
       expect(postRequestBody).toMatchSnapshot();
     });
-
   });
 });
 
