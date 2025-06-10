@@ -179,10 +179,6 @@ export const SaveDashboardAsForm = ({
                   {...field}
                   onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
-                  // Old folder picker fields
-                  initialTitle={dashboard.meta.folderTitle}
-                  dashboardId={dashboard.id}
-                  enableCreateNew
                 />
               )}
               control={control}

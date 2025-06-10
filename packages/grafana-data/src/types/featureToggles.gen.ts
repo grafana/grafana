@@ -456,10 +456,6 @@ export interface FeatureToggles {
   */
   alertingQueryOptimization?: boolean;
   /**
-  * Enables the nested folder picker without having nested folders enabled
-  */
-  newFolderPicker?: boolean;
-  /**
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;

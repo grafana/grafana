@@ -214,7 +214,6 @@ export function SaveProvisionedDashboardForm({
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      inputId="dashboard-folder"
                       onChange={async (uid?: string, title?: string) => {
                         onChange({ uid, title });
                         // Update folderUid URL param
