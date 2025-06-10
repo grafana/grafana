@@ -7670,6 +7670,13 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
