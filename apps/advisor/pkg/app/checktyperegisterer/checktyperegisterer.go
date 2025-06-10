@@ -121,7 +121,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			},
 		}
 		for i := 0; i < r.retryAttempts; i++ {
-			err := r.createOrUpdate(ctx, logger, obj)
+			err := r.createOrUpdate(context.WithoutCancel(ctx), logger, obj)
 			if err != nil {
 				logger.Error("Error creating check type, retrying", "error", err, "attempt", i+1)
 				if i == r.retryAttempts-1 {
