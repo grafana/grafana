@@ -1,11 +1,20 @@
-import { useState, useMemo, useEffect } from 'react';
-import { SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useLayoutEffect, RefObject } from 'react';
+import { DataGridHandle, SortColumn } from 'react-data-grid';
 
-import { Field, formattedValueToString } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
+
+import { useTheme2 } from '../../../themes';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableRow, TableSortByFieldState } from './types';
-import { getComparator, getDisplayName, getIsNestedTable, processNestedTableRows } from './utils';
+import { ColumnTypes, FilterType, TableColumn, TableNGProps, TableRow, TableSortByFieldState } from './types';
+import {
+  getComparator,
+  getDisplayName,
+  getIsNestedTable,
+  processNestedTableRows,
+  getCellHeightCalculator,
+} from './utils';
 
 export interface ProcessedRowsOptions {
   height: number;
@@ -251,4 +260,104 @@ export function useProcessedRows(
     pageRangeEnd,
     smallPagination,
   };
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, renderedRows: TableRow[]) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(
+    () => {
+      let el = ref.current!.element!;
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    },
+    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [height, renderedRows]
+  );
+
+  return scrollbarWidth;
+}
+
+export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTable: boolean) {
+  const theme = useTheme2();
+
+  const wrappedColIdxs = useMemo(
+    () =>
+      data.fields.map((field) => {
+        if (field.type === FieldType.string) {
+          const { wrapText = false, type = TableCellDisplayMode.Auto } = field.config.custom?.cellOptions ?? {};
+          return wrapText && type !== TableCellDisplayMode.Image;
+        }
+        return false;
+      }),
+    [data]
+  );
+
+  const { ctx, avgCharWidth } = useMemo(() => {
+    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    // set in grafana/data in createTypography.ts
+    const letterSpacing = 0.15;
+
+    ctx.letterSpacing = `${letterSpacing}px`;
+    ctx.font = font;
+    let txt =
+      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+    const txtWidth = ctx.measureText(txt).width;
+    const avgCharWidth = txtWidth / txt.length + letterSpacing;
+
+    return {
+      ctx,
+      font,
+      avgCharWidth,
+    };
+  }, [theme.typography.fontSize, theme.typography.fontFamily]);
+
+  const rowHeight = useMemo(() => {
+    const defaultRowHeight = 35;
+
+    if (hasSubTable || wrappedColIdxs.some((v) => v)) {
+      const HPADDING = 6;
+      const BORDER_RIGHT = 0.666667;
+      const lineHeight = 22;
+      const VPADDING = 6;
+
+      const wrapWidths = columns.map((c) => Number(c.width) - 2 * HPADDING - BORDER_RIGHT);
+
+      // TODO: pass line height, row height, padding here
+      const calc = getCellHeightCalculator(ctx, lineHeight, defaultRowHeight, VPADDING);
+
+      const getRowHeight = ({ __index: rowIdx }: TableRow) => {
+        let maxLines = 1;
+        let maxLinesIdx = -1;
+        let maxLinesText = '';
+
+        for (let i = 0; i < columns.length; i++) {
+          if (wrappedColIdxs[i]) {
+            const cellText = String(columns[i].field.values[rowIdx]);
+
+            if (cellText != null) {
+              const charsPerLine = wrapWidths[i] / avgCharWidth;
+              const approxLines = cellText.length / charsPerLine;
+
+              if (approxLines > maxLines) {
+                maxLines = approxLines;
+                maxLinesIdx = i;
+                maxLinesText = cellText;
+              }
+            }
+          }
+        }
+
+        return maxLinesIdx === -1 ? defaultRowHeight : calc(maxLinesText, wrapWidths[maxLinesIdx]);
+      };
+
+      return getRowHeight;
+    }
+
+    return defaultRowHeight;
+  }, [wrappedColIdxs, hasSubTable, columns, avgCharWidth, ctx]);
+
+  return rowHeight;
 }

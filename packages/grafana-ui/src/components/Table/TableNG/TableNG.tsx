@@ -1,80 +1,22 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import {
-  useMemo,
-  useState,
-  useLayoutEffect,
-  // useCallback,
-  useRef,
-  // useEffect,
-  // Dispatch,
-  // SetStateAction,
-  RefObject,
-} from 'react';
-import {
-  DataGrid,
-  DataGridHandle,
-  // RenderCellProps,
-  RenderRowProps,
-  Row,
-} from 'react-data-grid';
+import { useMemo, useRef } from 'react';
+import { DataGrid, DataGridHandle, RenderRowProps, Row } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
-import {
-  DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  Field,
-  // fieldReducers,
-  FieldType,
-  // formattedValueToString,
-  // getDefaultTimeRange,
-  GrafanaTheme2,
-  // ReducerID,
-} from '@grafana/data';
+import { DataFrame, DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { /* t, */ Trans } from '../../../utils/i18n';
-// import { ContextMenu } from '../../ContextMenu/ContextMenu';
-// import { MenuItem } from '../../Menu/MenuItem';
+import { Trans } from '../../../utils/i18n';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
-// import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
-// import { RowExpander } from './Cells/RowExpander';
-// import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
-import { useProcessedRows } from './hooks';
-import {
-  TableNGProps,
-  // FilterType,
-  TableRow,
-  TableSummaryRow,
-  // ColumnTypes,
-  // TableColumnResizeActionCallback,
-  TableColumn,
-  // TableFieldOptionsType,
-  // ScrollPosition,
-  // CellColors,
-} from './types';
-import {
-  frameToRecords,
-  // getCellColors,
-  getCellHeightCalculator,
-  getDefaultRowHeight,
-  // getComparator,
-  // getDefaultRowHeight,
-  // getFooterItemNG,
-  // getFooterStyles,
-  // getIsNestedTable,
-  // getRowHeight,
-  getTextAlign,
-  handleSort,
-  // MapFrameToGridOptions,
-  // shouldTextOverflow,
-} from './utils';
+import { useProcessedRows, useRowHeight, useScrollbarWidth } from './hooks';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn } from './types';
+import { frameToRecords, getDefaultRowHeight, getTextAlign, handleSort } from './utils';
 
 export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
@@ -134,7 +76,7 @@ export function TableNG(props: TableNGProps) {
     numPages,
     pageRangeStart,
     pageRangeEnd,
-    smallPagination
+    smallPagination,
   } = useProcessedRows(rows, data.fields, {
     height,
     width,
@@ -144,7 +86,7 @@ export function TableNG(props: TableNGProps) {
     hasFooter,
     defaultRowHeight,
     panelPaddingHeight,
-    headerCellHeight
+    headerCellHeight,
   });
 
   // const [expandedRows]?
@@ -169,18 +111,18 @@ export function TableNG(props: TableNGProps) {
           field.type === FieldType.number
             ? styles.cellRight
             : () => {
-              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
-              switch (cellType) {
-                case TableCellDisplayMode.Auto:
-                case TableCellDisplayMode.ColorBackground:
-                case TableCellDisplayMode.ColorBackgroundSolid:
-                case TableCellDisplayMode.ColorText:
-                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
-                default:
-                  return null;
-              }
-            },
+                switch (cellType) {
+                  case TableCellDisplayMode.Auto:
+                  case TableCellDisplayMode.ColorBackground:
+                  case TableCellDisplayMode.ColorBackgroundSolid:
+                  case TableCellDisplayMode.ColorText:
+                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
+                  default:
+                    return null;
+                }
+              },
         renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
           <HeaderCell
             column={column}
@@ -256,30 +198,28 @@ export function TableNG(props: TableNGProps) {
             renderRow(key, rowProps, [], panelContext, data, enableSharedCrosshair ?? false),
         }}
       />
-      {
-        enablePagination && (
-          <div className={styles.paginationContainer} ref={paginationWrapperRef}>
-            <Pagination
-              className="table-ng-pagination"
-              currentPage={page + 1}
-              numberOfPages={numPages}
-              showSmallVersion={smallPagination}
-              onNavigate={(toPage) => {
-                setPage(toPage - 1);
-              }}
-            />
-            {!smallPagination && (
-              <div className={styles.paginationSummary}>
-                {/* TODO: once old table is deprecated, we can update the localiziation
+      {enablePagination && (
+        <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+          <Pagination
+            className="table-ng-pagination"
+            currentPage={page + 1}
+            numberOfPages={numPages}
+            showSmallVersion={smallPagination}
+            onNavigate={(toPage) => {
+              setPage(toPage - 1);
+            }}
+          />
+          {!smallPagination && (
+            <div className={styles.paginationSummary}>
+              {/* TODO: once TableRT is deprecated, we can update the localiziation
                     string with the more consistent variable names */}
-                <Trans i18nKey="grafana-ui.table.pagination-summary">
-                  {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
-                </Trans>
-              </div>
-            )}
-          </div>
-        )
-      }
+              <Trans i18nKey="grafana-ui.table.pagination-summary">
+                {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+              </Trans>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
@@ -346,7 +286,10 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
-const getStyles2 = (theme: GrafanaTheme2, {enablePagination, noHeader}: {enablePagination?: boolean, noHeader?: boolean}) => ({
+const getStyles2 = (
+  theme: GrafanaTheme2,
+  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
+) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
@@ -417,7 +360,7 @@ const getStyles2 = (theme: GrafanaTheme2, {enablePagination, noHeader}: {enableP
     padding: theme.spacing(0, 1, 0, 2),
   }),
   dataGridHeaderRow: css({
-    ...(noHeader && { display: 'none' })
+    ...(noHeader && { display: 'none' }),
   }),
 });
 
@@ -447,106 +390,6 @@ function computeColWidths(fields: Field[], availWidth: number) {
         Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
     );
 }
-
-function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, renderedRows: TableRow[]) {
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-
-  useLayoutEffect(
-    () => {
-      let el = ref.current!.element!;
-      setScrollbarWidth(el.offsetWidth - el.clientWidth);
-    },
-    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, renderedRows]
-  );
-
-  return scrollbarWidth;
-}
-
-const useRowHeight = (columns: TableColumn[], data: DataFrame, hasSubTable: boolean) => {
-  const theme = useTheme2();
-
-  const wrappedColIdxs = useMemo(
-    () =>
-      data.fields.map((field) => {
-        if (field.type === FieldType.string) {
-          const { wrapText = false, type = TableCellDisplayMode.Auto } = field.config.custom?.cellOptions ?? {};
-          return wrapText && type !== TableCellDisplayMode.Image;
-        }
-        return false;
-      }),
-    [data]
-  );
-
-  const { ctx, avgCharWidth } = useMemo(() => {
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    // set in grafana/data in createTypography.ts
-    const letterSpacing = 0.15;
-
-    ctx.letterSpacing = `${letterSpacing}px`;
-    ctx.font = font;
-    let txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width;
-    const avgCharWidth = txtWidth / txt.length + letterSpacing;
-
-    return {
-      ctx,
-      font,
-      avgCharWidth,
-    };
-  }, [theme.typography.fontSize, theme.typography.fontFamily]);
-
-  const rowHeight = useMemo(() => {
-    const defaultRowHeight = 35;
-
-    if (hasSubTable || wrappedColIdxs.some((v) => v)) {
-      const HPADDING = 6;
-      const BORDER_RIGHT = 0.666667;
-      const lineHeight = 22;
-      const VPADDING = 6;
-
-      const wrapWidths = columns.map((c) => Number(c.width) - 2 * HPADDING - BORDER_RIGHT);
-
-      // TODO: pass line height, row height, padding here
-      const calc = getCellHeightCalculator(ctx, lineHeight, defaultRowHeight, VPADDING);
-
-      const getRowHeight = ({ __index: rowIdx }: TableRow) => {
-        let maxLines = 1;
-        let maxLinesIdx = -1;
-        let maxLinesText = '';
-
-        for (let i = 0; i < columns.length; i++) {
-          if (wrappedColIdxs[i]) {
-            const cellText = String(columns[i].field.values[rowIdx]);
-
-            if (cellText != null) {
-              const charsPerLine = wrapWidths[i] / avgCharWidth;
-              const approxLines = cellText.length / charsPerLine;
-
-              if (approxLines > maxLines) {
-                maxLines = approxLines;
-                maxLinesIdx = i;
-                maxLinesText = cellText;
-              }
-            }
-          }
-        }
-
-        return maxLinesIdx === -1 ? defaultRowHeight : calc(maxLinesText, wrapWidths[maxLinesIdx]);
-      };
-
-      return getRowHeight;
-    }
-
-    return defaultRowHeight;
-  }, [wrappedColIdxs, hasSubTable, columns, avgCharWidth, ctx]);
-
-  return rowHeight;
-};
 
 /*
 TODO:
