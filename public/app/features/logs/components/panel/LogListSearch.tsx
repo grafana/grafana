@@ -31,11 +31,14 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   const { t } = useTranslate();
 
   const matches = useMemo(() => {
+    if (!search || !searchVisible) {
+      return [];
+    }
     const regex = new RegExp(search, 'i');
     const newMatches = logs.filter((log) => log.entry.match(regex) !== null);
     newMatches.forEach((log) => log.setCurrentSearch(search));
     return newMatches;
-  }, [logs, search]);
+  }, [logs, search, searchVisible]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
@@ -43,7 +46,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, []);
 
   const prevResult = useCallback(() => {
-    if (!matches || currentResult === null) {
+    if (currentResult === null) {
       return;
     }
     const prev = currentResult > 0 ? currentResult - 1 : matches.length - 1;
@@ -52,7 +55,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, [currentResult, listRef, logs, matches]);
 
   const nextResult = useCallback(() => {
-    if (!matches || currentResult === null) {
+    if (currentResult === null) {
       return;
     }
     const next = currentResult < matches.length - 1 ? currentResult + 1 : 0;
@@ -61,7 +64,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, [currentResult, listRef, logs, matches]);
 
   useEffect(() => {
-    if (!matches || !matches.length) {
+    if (!matches.length) {
       setCurrentResult(null);
       return;
     }
