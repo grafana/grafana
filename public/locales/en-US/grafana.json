@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Choose",
       "variable-options": {
         "label": {
           "disable-repeating": "Disable repeating",
