@@ -6,8 +6,8 @@ import React, { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
-import { Button } from '../Button';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 export function EmotionPerfTest() {

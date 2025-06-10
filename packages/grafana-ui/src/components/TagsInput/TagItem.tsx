@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { getTagColorsFromName } from '../../utils';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
+import { getTagColorsFromName } from '../../utils/tags';
 import { IconButton } from '../IconButton/IconButton';
 
 interface Props {
