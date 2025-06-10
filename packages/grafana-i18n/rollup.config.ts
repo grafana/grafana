@@ -12,7 +12,7 @@ export default [
     plugins: [
       ...plugins,
       copy({
-        targets: [{ src: 'src/eslint', dest: 'dist/eslint' }],
+        targets: [{ src: 'src/eslint', dest: 'dist' }],
       }),
     ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-i18n')],
