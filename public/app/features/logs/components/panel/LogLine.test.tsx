@@ -7,6 +7,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../__mocks__/logRow';
 
 import { getStyles, LogLine, Props } from './LogLine';
+import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { defaultProps } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
@@ -27,12 +28,14 @@ const contextProps = {
   sortOrder: LogsSortOrder.Ascending,
   wrapLogMessage: false,
 };
+const fontSizes: LogListFontSize[] = ['default', 'small'];
 
-describe('LogLine', () => {
+describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   let log: LogListModel, defaultProps: Props;
   beforeEach(() => {
     log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
     contextProps.logs = [log];
+    contextProps.fontSize = fontSize;
     defaultProps = {
       displayedFields: [],
       index: 0,
@@ -46,26 +49,42 @@ describe('LogLine', () => {
   });
 
   test('Renders a log line', () => {
-    render(<LogLine {...defaultProps} />);
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
   test('Renders a log line with no timestamp', () => {
-    render(<LogLine {...defaultProps} showTime={false} />);
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} showTime={false} />
+      </LogListContextProvider>
+    );
     expect(screen.queryByText(log.timestamp)).not.toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
   });
 
   test('Renders a log line with displayed fields', () => {
-    render(<LogLine {...defaultProps} displayedFields={['place']} />);
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} displayedFields={['place']} />
+      </LogListContextProvider>
+    );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
     expect(screen.queryByText(log.body)).not.toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
   });
 
   test('Renders a log line with body displayed fields', () => {
-    render(<LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />);
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogLine {...defaultProps} displayedFields={['place', LOG_LINE_BODY_FIELD_NAME]} />
+      </LogListContextProvider>
+    );
     expect(screen.getByText(log.timestamp)).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
     expect(screen.getByText('luna')).toBeInTheDocument();
@@ -143,7 +162,11 @@ describe('LogLine', () => {
 
   describe('Log line menu', () => {
     test('Renders a log line menu', async () => {
-      render(<LogLine {...defaultProps} />);
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
       expect(screen.queryByText('Copy log line')).not.toBeInTheDocument();
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.getByText('Copy log line')).toBeInTheDocument();
@@ -156,7 +179,11 @@ describe('LogLine', () => {
     });
 
     test('Highlights relevant tokens in the log line', () => {
-      render(<LogLine {...defaultProps} log={log} />);
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
       expect(screen.getByText('place')).toBeInTheDocument();
       expect(screen.getByText('1ms')).toBeInTheDocument();
       expect(screen.getByText('3 KB')).toBeInTheDocument();
@@ -196,7 +223,11 @@ describe('LogLine', () => {
     });
 
     test('Logs are not collapsed by default', () => {
-      render(<LogLine {...defaultProps} />);
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} />
+        </LogListContextProvider>
+      );
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
     });
@@ -204,11 +235,13 @@ describe('LogLine', () => {
     test('Logs are not collapsible when unwrapped', () => {
       log.collapsed = true;
       render(
-        <LogLine
-          {...defaultProps}
-          // Unwrapped logs
-          wrapLogMessage={false}
-        />
+        <LogListContextProvider {...contextProps}>
+          <LogLine
+            {...defaultProps}
+            // Unwrapped logs
+            wrapLogMessage={false}
+          />
+        </LogListContextProvider>
       );
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
@@ -216,7 +249,11 @@ describe('LogLine', () => {
 
     test('Long logs can be collapsed and expanded', async () => {
       log.collapsed = true;
-      render(<LogLine {...defaultProps} log={log} />);
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
       expect(screen.getByText('show more')).toBeVisible();
       await userEvent.click(screen.getByText('show more'));
       expect(await screen.findByText('show less')).toBeInTheDocument();
@@ -227,7 +264,11 @@ describe('LogLine', () => {
     test('When the collapsed state changes invokes a callback to update virtualized sizes', async () => {
       log.collapsed = true;
       const onOverflow = jest.fn();
-      render(<LogLine {...defaultProps} onOverflow={onOverflow} log={log} />);
+      render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} onOverflow={onOverflow} log={log} />
+        </LogListContextProvider>
+      );
       await userEvent.click(await screen.findByText('show more'));
       await userEvent.click(await screen.findByText('show less'));
       expect(onOverflow).toHaveBeenCalledTimes(2);
@@ -239,7 +280,11 @@ describe('LogLine', () => {
       expect(screen.getByText('show more')).toBeVisible();
 
       log.collapsed = undefined;
-      rerender(<LogLine {...defaultProps} log={log} />);
+      rerender(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
 
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
@@ -247,10 +292,18 @@ describe('LogLine', () => {
 
     test('Syncs the collapsed state with wrapping changes', async () => {
       log.collapsed = true;
-      const { rerender } = render(<LogLine {...defaultProps} log={log} />);
+      const { rerender } = render(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
       expect(screen.getByText('show more')).toBeVisible();
 
-      rerender(<LogLine {...defaultProps} log={log} wrapLogMessage={false} />);
+      rerender(
+        <LogListContextProvider {...contextProps}>
+          <LogLine {...defaultProps} log={log} wrapLogMessage={false} />
+        </LogListContextProvider>
+      );
 
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
       expect(screen.queryByText('show less')).not.toBeInTheDocument();

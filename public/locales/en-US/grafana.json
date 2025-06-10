@@ -7715,6 +7715,8 @@
       },
       "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
+      "font-size-default": "Use small font size",
+      "font-size-small": "Use default font size",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
