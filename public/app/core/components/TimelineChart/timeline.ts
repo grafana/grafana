@@ -211,7 +211,8 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
 
-              const shouldDrawY = !!yVal || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+              const shouldDrawY =
+                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
               if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
@@ -256,7 +257,8 @@ export function getConfig(opts: TimelineCoreOptions) {
 
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
-              const shouldDrawY = !!yVal || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+              const shouldDrawY =
+                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
               if (shouldDrawY) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
@@ -319,7 +321,8 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 const yVal = dataY[ix];
-                const shouldDrawY = !!yVal || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+                const shouldDrawY =
+                  !!yVal || yVal === 0 || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
                 if (shouldDrawY) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
