@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import UFuzzy from '@leeoniya/ufuzzy';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { VariableSizeList } from 'react-window';
-import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
@@ -14,10 +13,10 @@ import { LogListModel } from './processing';
 interface Props {
   listRef: VariableSizeList | null;
   logs: LogListModel[];
-  width: number;
 }
 
-export const LogListSearch = ({ listRef, logs, width }: Props) => {
+export const LOG_LIST_SEARCH_HEIGHT = 48;
+export const LogListSearch = ({ listRef, logs }: Props) => {
   const {
     hideSearch,
     filterLogs,
@@ -92,8 +91,8 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
     search !== '' ? <>{`${currentResult !== null ? currentResult + 1 : 0}/${matches?.length ?? 0}`}</> : undefined;
 
   return (
-    <div className={styles.container} style={{ width: width - 24 }}>
-      <div style={{ width: Math.round(width / 2) }}>
+    <div className={styles.container}>
+      <div className={styles.wrapper}>
         <Input
           value={search}
           onChange={handleChange}
@@ -102,6 +101,14 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
           suffix={suffix}
         />
       </div>
+      <IconButton
+        name="info-circle"
+        variant="secondary"
+        tooltip={t(
+          'logs.log-list-search.info',
+          'Client-side search for strings within the displayed logs. Not to be confused with query filters—use this component to search for specific strings in your log results.'
+        )}
+      />
       <IconButton
         onClick={prevResult}
         disabled={!matches || !matches.length}
@@ -128,15 +135,16 @@ export const LogListSearch = ({ listRef, logs, width }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    background: tinycolor(theme.colors.background.canvas).setAlpha(0.8).toRgbString(),
+    background: theme.colors.background.canvas,
     display: 'flex',
     gap: theme.spacing(1),
     padding: theme.spacing(1),
-    position: 'absolute',
-    top: 0,
-    left: theme.spacing(1),
     zIndex: theme.zIndex.modal,
     overflow: 'hidden',
+    width: '100%',
+  }),
+  wrapper: css({
+    width: '50%',
   }),
   controlButtonActive: css({
     '&:after': {

@@ -30,7 +30,7 @@ import { LogLineDetails } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
-import { LogListSearch } from './LogListSearch';
+import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
 import { preProcessLogs, LogListModel } from './processing';
 import { useKeyBindings } from './useKeyBindings';
@@ -265,7 +265,7 @@ const LogListComponent = ({
     showDisablePopoverOptions,
   } = usePopoverMenu(wrapperRef.current);
   useKeyBindings();
-  const { filterLogs, matchingUids } = useLogListSearchContext();
+  const { filterLogs, matchingUids, searchVisible } = useLogListSearchContext();
 
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
@@ -303,9 +303,9 @@ const LogListComponent = ({
   useEffect(() => {
     const handleResize = debounce(() => {
       setListHeight(
-        app === CoreApp.Explore
+        (app === CoreApp.Explore
           ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-          : containerElement.clientHeight
+          : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
       );
     }, 50);
     window.addEventListener('resize', handleResize);
@@ -313,7 +313,7 @@ const LogListComponent = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [app, containerElement.clientHeight]);
+  }, [app, containerElement.clientHeight, searchVisible]);
 
   useLayoutEffect(() => {
     if (widthRef.current === widthContainer.clientWidth) {
@@ -411,7 +411,7 @@ const LogListComponent = ({
             onDismiss={onDisableCancel}
           />
         )}
-        <LogListSearch logs={processedLogs} listRef={listRef.current} width={widthRef.current} />
+        <LogListSearch logs={processedLogs} listRef={listRef.current} />
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
