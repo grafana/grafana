@@ -75,5 +75,5 @@ jobs:
           INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
           INPUT_REPOSITORY: ${{ inputs.repository }}
         run: |
-          chmod +x .github/scripts/create-security-branch.sh
-          .github/scripts/create-security-branch.sh
+          chmod +x .github/workflows/scripts/create-security-branch/create-security-branch.sh
+          .github/workflows/scripts/create-security-branch/create-security-branch.sh
