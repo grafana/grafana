@@ -169,7 +169,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
             <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
               The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be
               reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a
-              copy instead.
+              copy instead. If you’re seeing this message in a production environment, contact Support to have the
+              feature disabled.
             </Trans>
           </p>
         </Alert>
