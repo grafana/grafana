@@ -62,6 +62,21 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichment",
+        "resourceVersion": "1749210731545",
+        "creationTimestamp": "2025-06-06T11:52:11Z"
+      },
+      "spec": {
+        "description": "Enable configuration of alert enrichments in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2025-03-05T14:15:26Z"

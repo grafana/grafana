@@ -1518,6 +1518,10 @@
         "title": "Valider l’importation"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Source de données"
+        },
         "label": "Source de données",
         "required-message": "Veuillez sélectionner une source de données"
       },
