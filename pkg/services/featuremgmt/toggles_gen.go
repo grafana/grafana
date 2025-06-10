@@ -930,4 +930,8 @@ const (
 	// FlagAlertEnrichment
 	// Enable configuration of alert enrichments in Grafana Cloud.
 	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertingImportAlertmanagerAPI
+	// Enables the API to import Alertmanager configuration
+	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 )
