@@ -56,6 +56,8 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+// This test should run before TestIntegrationPluginManager because this test relies on having a pre-existing Admin user
+// and because the SQLStore instance is shared between tests, this test does all the necessary setup
 func TestIntegrationPluginDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -76,7 +78,6 @@ apps:
 	require.NoError(t, err)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		EnableLog:         true,
 		AnonymousUserRole: org.RoleAdmin,
 	})
 
@@ -99,14 +100,14 @@ apps:
 		})
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		//resp, err = http.Get(fmt.Sprintf("http://%s/api/plugins/test-app/settings", grafanaListedAddr))
-		//require.NoError(t, err)
-		//require.NotNil(t, resp)
-		//t.Cleanup(func() {
-		//	err := resp.Body.Close()
-		//	require.NoError(t, err)
-		//})
-		//require.Equal(t, http.StatusOK, resp.StatusCode)
+		resp, err = http.Get(fmt.Sprintf("http://%s/api/plugins/test-app/settings", grafanaListedAddr))
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		resp, err = http.Get(fmt.Sprintf("http://%s/api/plugins/test-app/dashboards", grafanaListedAddr))
 		require.NoError(t, err)
