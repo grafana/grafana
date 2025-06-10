@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/pbkdf2"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -9,8 +10,6 @@ import (
 	"io"
 	"mime/quotedprintable"
 	"strings"
-
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -51,7 +50,10 @@ func GetRandomString(n int, alphabets ...byte) (string, error) {
 
 // EncodePassword encodes a password using PBKDF2.
 func EncodePassword(password string, salt string) (string, error) {
-	newPasswd := pbkdf2.Key([]byte(password), []byte(salt), 10000, 50, sha256.New)
+	newPasswd, err := pbkdf2.Key(sha256.New, password, []byte(salt), 10000, 50)
+	if err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(newPasswd), nil
 }
 
