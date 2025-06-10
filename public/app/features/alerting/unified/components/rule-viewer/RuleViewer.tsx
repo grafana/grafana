@@ -5,7 +5,6 @@ import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
 import {
   Alert,
   LinkButton,
@@ -182,6 +181,8 @@ const RuleViewer = () => {
 };
 
 const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
+  const { t } = useTranslate();
+
   const { labels, annotations, group, rulerRule } = rule;
   const metadata: PageInfoItem[] = [];
 
@@ -203,7 +204,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     if (contactPointName) {
       metadata.push({
         label: t('alerting.create-metadata.label.contact-point', 'Notifications are delivered to'),
-        value: <ContactPointLink name={contactPointName} />,
+        value: <ContactPointLink name={contactPointName} variant="bodySmall" />,
       });
     }
   }
@@ -408,6 +409,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 }
 
 function usePageNav(rule: CombinedRule) {
+  const { t } = useTranslate();
   const [activeTab, setActiveTab] = useActiveTab();
 
   const { annotations, promRule, rulerRule } = rule;
@@ -505,12 +507,6 @@ export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
 };
 
 const getStyles = () => ({
-  title: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  }),
   url: css({
     wordBreak: 'break-all',
   }),

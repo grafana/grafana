@@ -273,7 +273,7 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
   }
 
   return (
-    <DetailGroup title={t('alerting.alert.notification-configuration', 'Notification configuration')}>
+    <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
       <DetailText
         id="receiver"
         label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
