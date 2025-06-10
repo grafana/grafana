@@ -347,16 +347,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
-        let series = u.series[seriesIdx];
-
         if (!show && gaps && gaps.length) {
-          const [firstIdx, lastIdx] = series.idxs!;
-          const xData = u.data[0];
           const yData = u.data[seriesIdx];
-          const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
-          const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
 
-          if (gaps[0][0] === firstPos) {
+          const firstIdx = u.posToIdx(gaps[0][0], true);
+
+          if (yData[firstIdx - 1] == null) {
             filtered.push(firstIdx);
           }
 
@@ -387,7 +383,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
             }
           }
 
-          if (gaps[gaps.length - 1][1] === lastPos) {
+          const lastIdx = u.posToIdx(gaps[gaps.length - 1][1], true);
+
+          if (yData[lastIdx + 1] == null) {
             filtered.push(lastIdx);
           }
         }
