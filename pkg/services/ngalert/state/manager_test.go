@@ -885,7 +885,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
@@ -895,16 +895,6 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t3,
-				},
-				{
-					Labels:             labels["system + rule + no-data"],
-					ResultFingerprint:  noDataLabels.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(t2, eval.NoData),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -1013,10 +1003,9 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			// TODO(@moustafab): figure out why this test doesn't fail as is
 			desc:                "classic condition, execution Error as Error (alerting -> query error -> alerting)",
 			alertRule:           baseRuleWith(m.WithErrorExecAs(models.ErrorErrState)),
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
@@ -1040,21 +1029,6 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t3,
 					LastSentAt:         &t1,
 					Annotations: map[string]string{
-						"annotation": "test",
-					},
-				},
-				{
-					Labels:             data.Labels{"system": "owned", "label": "test", "ref_id": "A", "datasource_uid": "datasource_uid_1"},
-					ResultFingerprint:  data.Labels{}.Fingerprint(),
-					State:              eval.Error,
-					LatestResult:       newEvaluation(t2, eval.Error),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
-					Error:              expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error")),
-					Annotations: map[string]string{
-						"Error":      "[sse.dataQueryError] failed to execute query [A]: this is an error",
 						"annotation": "test",
 					},
 				},
