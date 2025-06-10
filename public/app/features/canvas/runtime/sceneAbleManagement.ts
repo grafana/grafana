@@ -459,6 +459,18 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     }
   });
 
+  // Prevent wheel scrolling when pan/zoom is disabled
+  scene.viewportDiv!.addEventListener(
+    'wheel',
+    (e) => {
+      if (!scene.shouldPanZoom) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
   // Mouse scroll click
   // Only allow panning with middle mouse button (button 1)
   // Left click is reserved for selection/manipulation, right click for context menu
