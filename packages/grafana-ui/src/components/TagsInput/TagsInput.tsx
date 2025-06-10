@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 
 import { TagItem } from './TagItem';
