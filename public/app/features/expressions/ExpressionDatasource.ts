@@ -77,14 +77,14 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     };
   }
 
-  async fetchFields(query: Partial<SQLQuery>, queries: DataQuery[]) {
+  async fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]) {
     if (!query.table) {
       return [];
     }
 
     const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
 
-    const queryResponse = await this.runMetaQuery(
+    const queryResponse = await this.runMetaSQLQuery(
       { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
       getDefaultTimeRange(),
       queries.filter((q) => q.refId === query.table)
@@ -104,7 +104,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return mapFieldsToTypes(fields);
   }
 
-  private runMetaQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
+  private runMetaSQLQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
     const refId = request.refId || 'meta';
     const metaExpressionQuery: ExpressionQuery = {
       window: '',

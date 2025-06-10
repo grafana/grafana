@@ -100,6 +100,6 @@ const getStyles = () => ({
 
 async function fetchMeta(identifier: TableIdentifier, queries: DataQuery[]) {
   const datasource = dataSource;
-  const fields = await datasource.fetchFields({ table: identifier.table }, queries);
+  const fields = await datasource.fetchSQLFields({ table: identifier.table }, queries);
   return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
 }
