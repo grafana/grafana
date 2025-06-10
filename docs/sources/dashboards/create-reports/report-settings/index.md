@@ -25,7 +25,7 @@ You can configure organization-wide report settings and branding options in **Da
 These settings are applied to all the reports for the current organization.
 
 To access the settings, go to **Dashboards > Reporting** and click the **Report settings** button.
-This opens the **Report template settings** drawer, where you can make changes, in a new browser tab.
+This opens the **Report template settings** drawer, where you can make changes.
 
 {{< admonition type="note" >}}
 
