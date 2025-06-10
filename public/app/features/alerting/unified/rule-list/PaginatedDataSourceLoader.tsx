@@ -16,6 +16,7 @@ import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
+import { NoRulesFound } from './components/NoRulesFound';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
@@ -48,7 +49,6 @@ export function PaginatedDataSourceLoader({
 }
 
 function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
-  const styles = useStyles2(getStyles);
   const hasFilters = groupFilter || namespaceFilter;
 
   const { uid, name } = rulesSourceIdentifier;
@@ -130,13 +130,7 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
             <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
           </Stack>
         )}
-        {hasNoRules && (
-          <div className={styles.noRules}>
-            <Text color="secondary">
-              <Trans i18nKey="alerting.rule-list.empty-data-source">No rules found</Trans>
-            </Text>
-          </div>
-        )}
+        {hasNoRules && <NoRulesFound />}
       </Stack>
     </DataSourceSection>
   );
@@ -171,9 +165,3 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
     </ListGroup>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  noRules: css({
-    margin: theme.spacing(1.5, 0, 0.5, 4),
-  }),
-});

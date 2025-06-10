@@ -17,6 +17,7 @@ import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
+import { NoRulesFound } from './components/NoRulesFound';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 
@@ -113,7 +114,9 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
             </ListSection>
           );
         })}
-        {hasNoRules && <GrafanaNoRulesCTA />}
+        {/* only show the CTA if the user has no rules and this isn't the result of a filter / search query */}
+        {hasNoRules && !hasFilters && <GrafanaNoRulesCTA />}
+        {hasNoRules && hasFilters && <NoRulesFound />}
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
