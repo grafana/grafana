@@ -188,7 +188,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/monitoring',
-      component: () => <NavLandingPage navId="monitoring" />,
+      component: () => <Navigate replace to="/observability" />,
+    },
+    {
+      path: '/observability',
+      component: () => <NavLandingPage navId="observability" />,
     },
     {
       path: '/infrastructure',
@@ -242,13 +246,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/org/users/invite',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserInvitePage" */ 'app/features/org/UserInvitePage')
-      ),
-    },
-    {
-      path: '/org/apikeys',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionAPIKeysRead]),
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
       ),
     },
     {
