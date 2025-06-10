@@ -1,10 +1,9 @@
-import { Scope } from '@grafana/data';
+import { Scope, ScopeNode, Store } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
-import { ScopesSelectorService } from './ScopesSelectorService';
-import { Node, NodeReason, NodesMap } from './types';
+import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
 
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
@@ -24,27 +23,37 @@ describe('ScopesSelectorService', () => {
     },
   };
 
-  const mockNode: Node = {
-    name: 'test-scope',
-    title: 'Test Node',
-    reason: NodeReason.Result,
-    nodeType: 'container',
-    expandable: true,
-    selectable: false,
-    expanded: false,
-    query: '',
-    nodes: {},
+  const mockScope2: Scope = {
+    metadata: {
+      name: 'recent-scope',
+    },
+    spec: {
+      title: 'test-scope',
+      type: 'scope',
+      category: 'scope',
+      description: 'test scope',
+      filters: [],
+    },
   };
 
-  const mockNodesMap: NodesMap = {
-    '': mockNode,
+  const mockNode: ScopeNode = {
+    metadata: { name: 'test-scope-node' },
+    spec: { linkId: 'test-scope', linkType: 'scope', parentName: '', nodeType: 'leaf', title: 'test-scope-node' },
   };
+
+  let storeValue: Record<string, unknown> = {};
 
   beforeEach(() => {
     apiClient = {
       fetchScope: jest.fn().mockResolvedValue(mockScope),
-      fetchMultipleScopes: jest.fn().mockResolvedValue([{ scope: mockScope, path: ['', 'test-scope'] }]),
-      fetchNode: jest.fn().mockResolvedValue(mockNodesMap),
+      fetchMultipleScopes: jest.fn().mockResolvedValue([mockScope]),
+      fetchNodes: jest.fn().mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+        if (options.parent === '' && !options.query) {
+          return [mockNode];
+        } else {
+          return [];
+        }
+      }),
       fetchDashboards: jest.fn().mockResolvedValue([]),
       fetchScopeNavigations: jest.fn().mockResolvedValue([]),
     } as unknown as jest.Mocked<ScopesApiClient>;
@@ -53,214 +62,195 @@ describe('ScopesSelectorService', () => {
       fetchDashboards: jest.fn(),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
-    service = new ScopesSelectorService(apiClient, dashboardsService);
+    storeValue = {};
+    const store = {
+      get(key: string) {
+        return storeValue[key];
+      },
+
+      set(key: string, value: string) {
+        storeValue[key] = value;
+      },
+    };
+
+    service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
   });
 
   describe('updateNode', () => {
     it('should update node and fetch children when expanded', async () => {
-      await service.updateNode([''], true, '');
-
-      expect(apiClient.fetchNode).toHaveBeenCalledWith('', '');
-      expect(service.state.nodes[''].expanded).toBe(true);
+      await service.updateNode('', true, '');
+      expect(service.state.nodes['test-scope-node']).toEqual(mockNode);
+      expect(service.state.tree).toMatchObject({
+        children: { 'test-scope-node': { expanded: false, scopeNodeId: 'test-scope-node' } },
+        expanded: true,
+        query: '',
+        scopeNodeId: '',
+      });
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: '' });
     });
 
     it('should update node query and fetch children when query changes', async () => {
-      await service.updateNode([''], false, 'new-query');
-
-      expect(apiClient.fetchNode).toHaveBeenCalledWith('', 'new-query');
+      await service.updateNode('', true, 'new-query');
+      expect(service.state.tree).toMatchObject({
+        children: {},
+        expanded: true,
+        query: 'new-query',
+        scopeNodeId: '',
+      });
+      expect(apiClient.fetchNodes).toHaveBeenCalledWith({ parent: '', query: 'new-query' });
     });
 
     it('should not fetch children when node is collapsed and query is unchanged', async () => {
       // First expand the node
-      await service.updateNode([''], true, '');
-
+      await service.updateNode('', true, '');
       // Then collapse it
-      await service.updateNode([''], false, '');
-
-      // fetchNode should be called only once (for the expansion)
-      expect(apiClient.fetchNode).toHaveBeenCalledTimes(1);
+      await service.updateNode('', false, '');
+      // Only the first expansion should trigger fetchNodes
+      expect(apiClient.fetchNodes).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('toggleNodeSelect', () => {
-    it('should select a node when it is not selected', async () => {
-      await service.updateNode([''], true, '');
-
-      const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-scope'] = {
-        ...mockNode,
-        selectable: true,
-        linkId: 'test-scope',
-      };
-
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
-
-      expect(service.state.treeScopes).toEqual([
-        {
-          scopeName: 'test-scope',
-          path: ['', 'test-scope'],
-          title: 'Test Node',
-        },
-      ]);
-      expect(apiClient.fetchScope).toHaveBeenCalledWith('test-scope');
+  describe('selectScope and deselectScope', () => {
+    beforeEach(async () => {
+      await service.updateNode('', true, '');
     });
 
-    it('should deselect a node when it is already selected', async () => {
-      await service.updateNode([''], true, '');
-
-      const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-scope'] = {
-        ...mockNode,
-        selectable: true,
-        linkId: 'test-scope',
-      };
-
-      // Select the node
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
-
-      // Deselect the node
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
-
-      expect(service.state.treeScopes).toEqual([]);
+    it('should select a scope', async () => {
+      await service.selectScope('test-scope-node');
+      expect(service.state.selectedScopes).toEqual([{ scopeId: 'test-scope', scopeNodeId: 'test-scope-node' }]);
     });
 
-    it('should deselect a node by name', async () => {
-      // Make the scope selected and applied
-      await service.changeScopes(['test-scope']);
-
-      // Deselect the node
-      service.toggleNodeSelect({ scopeName: 'test-scope' });
-
-      expect(service.state.treeScopes).toEqual([]);
+    it('should deselect a selected scope', async () => {
+      await service.selectScope('test-scope-node');
+      await service.deselectScope('test-scope-node');
+      expect(service.state.selectedScopes).toEqual([]);
     });
   });
 
   describe('changeScopes', () => {
-    it('should update treeScopes with the provided scope names', () => {
-      service.changeScopes(['test-scope']);
+    it('should apply the provided scope names', async () => {
+      await service.changeScopes(['test-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }]);
+    });
 
-      expect(service.state.treeScopes).toEqual([
-        {
-          scopeName: 'test-scope',
-          path: [],
-          title: 'test-scope',
-        },
-      ]);
+    it('should skip update if setting same scopes as are already applied', async () => {
+      const subscribeFn = jest.fn();
+      const sub = service.subscribeToState(subscribeFn);
+
+      await service.changeScopes(['test-scope', 'recent-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      await service.changeScopes(['test-scope', 'recent-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      // Should not be called again
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      // Order should not matter
+      await service.changeScopes(['recent-scope', 'test-scope']);
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope' }, { scopeId: 'recent-scope' }]);
+      // Should not be called again
+      expect(subscribeFn).toHaveBeenCalledTimes(2);
+
+      sub.unsubscribe();
     });
   });
 
   describe('open', () => {
     it('should open the selector and load root nodes if not loaded', async () => {
       await service.open();
-
-      expect(service.state.opened).toBe(true);
-    });
-
-    it('should not reload root nodes if already loaded', async () => {
-      // First load the nodes
-      await service.updateNode([''], true, '');
-
-      // Reset the mock to check if it's called again
-      apiClient.fetchNode.mockClear();
-
-      // Open the selector
-      await service.open();
-
       expect(service.state.opened).toBe(true);
     });
   });
 
   describe('closeAndReset', () => {
-    it('should close the selector and reset treeScopes to match selectedScopes', async () => {
-      // Setup: Open the selector and select a scope
-      await service.open();
-
+    it('should close the selector and reset selectedScopes to match appliedScopes', async () => {
       await service.changeScopes(['test-scope']);
-
       service.closeAndReset();
-
       expect(service.state.opened).toBe(false);
-      expect(service.state.treeScopes).toEqual([
-        {
-          scopeName: 'test-scope',
-          path: ['', 'test-scope'],
-          title: 'test-scope',
-        },
-      ]);
+      expect(service.state.selectedScopes).toEqual(service.state.appliedScopes);
     });
   });
 
   describe('closeAndApply', () => {
     it('should close the selector and apply the selected scopes', async () => {
-      await service.open();
-
-      const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-scope'] = {
-        ...mockNode,
-        selectable: true,
-        linkId: 'test-scope',
-      };
-
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
       await service.closeAndApply();
-
       expect(service.state.opened).toBe(false);
-      expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
+      expect(service.state.appliedScopes).toEqual(service.state.selectedScopes);
     });
   });
 
   describe('apply', () => {
     it('should apply the selected scopes without closing the selector', async () => {
       await service.open();
-
-      const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-scope'] = {
-        ...mockNode,
-        selectable: true,
-        linkId: 'test-scope',
-      };
-
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
+      await service.selectScope('test-scope-node');
       await service.apply();
-
       expect(service.state.opened).toBe(true);
-      expect(dashboardsService.fetchDashboards).toHaveBeenCalledWith(['test-scope']);
+      expect(service.state.appliedScopes).toEqual(service.state.selectedScopes);
     });
   });
 
   describe('resetSelection', () => {
-    it('should reset treeScopes to match selectedScopes', async () => {
-      await service.open();
+    it('should reset selectedScopes to match appliedScopes', async () => {
       await service.changeScopes(['test-scope']);
-
       service.resetSelection();
-      expect(service.state.treeScopes).toEqual([
-        {
-          scopeName: 'test-scope',
-          path: ['', 'test-scope'],
-          title: 'test-scope',
-        },
-      ]);
+      expect(service.state.selectedScopes).toEqual(service.state.appliedScopes);
     });
   });
 
   describe('removeAllScopes', () => {
-    it('should remove all selected scopes', async () => {
-      await service.open();
-
-      const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-scope'] = {
-        ...mockNode,
-        selectable: true,
-        linkId: 'test-scope',
-      };
-
-      service.toggleNodeSelect({ path: ['', 'test-scope'] });
+    it('should remove all selected and applied scopes', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
       await service.apply();
       await service.removeAllScopes();
+      expect(service.state.appliedScopes).toEqual([]);
+    });
+  });
 
-      expect(service.state.selectedScopes).toEqual([]);
-      expect(service.state.treeScopes).toEqual([]);
+  describe('getRecentScopes', () => {
+    it('should parse and filter scopes', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScope2], [mockScope]]);
+
+      const recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([[mockScope2]]);
+    });
+
+    it('should work with old version', async () => {
+      await service.updateNode('', true, '');
+      await service.selectScope('test-scope-node');
+      await service.apply();
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
+        [{ scope: mockScope2, path: [] }],
+        [{ scope: mockScope, path: [] }],
+      ]);
+
+      const recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([[mockScope2]]);
+    });
+
+    it('should return empty on wrong data', async () => {
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([{ scope: mockScope2 }]);
+
+      let recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([]);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(null);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
+
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[{ metadata: { noName: 'test' } }]]);
+      recentScopes = service.getRecentScopes();
+      expect(recentScopes).toEqual([]);
     });
   });
 });
