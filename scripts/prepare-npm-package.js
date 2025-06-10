@@ -33,6 +33,14 @@ try {
     };
   }
 
+  // Fix for @grafana/i18n so eslint-plugin can be imported by consumers
+  if (pkgJson.content.name === '@grafana/i18n') {
+    exports['./eslint-plugin'] = {
+      import: './dist/eslint/index.cjs',
+      require: './dist/eslint/index.cjs',
+    };
+  }
+
   pkgJson.update({
     main: cjsIndex,
     types: cjsTypes,
