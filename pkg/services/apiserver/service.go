@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,6 +17,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -43,6 +45,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -178,6 +181,11 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
+				// For unauthenticated requests, we set the namespace to the requested one
+				if !c.IsSignedIn {
+					useNamespaceFromPath(req.URL.Path, c.SignedInUser)
+				}
+
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
@@ -535,4 +543,17 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+func useNamespaceFromPath(path string, user *user.SignedInUser) {
+	if strings.HasPrefix(path, "/apis/") && len(path) > 6 {
+		parts := strings.Split(path[6:], "/")
+		if len(parts) >= 4 && parts[2] == "namespaces" {
+			ns, err := types.ParseNamespace(parts[3])
+			if err == nil {
+				user.Namespace = ns.Value
+				user.OrgID = ns.OrgID
+			}
+		}
+	}
 }
