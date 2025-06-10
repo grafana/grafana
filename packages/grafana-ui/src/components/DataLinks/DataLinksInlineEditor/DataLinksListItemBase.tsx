@@ -3,7 +3,7 @@ import { Draggable } from '@hello-pangea/dnd';
 
 import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t } from '../../../utils/i18n';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';

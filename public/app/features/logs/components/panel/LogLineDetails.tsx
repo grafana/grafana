@@ -12,6 +12,7 @@ import { getLogRowStyles } from '../getLogRowStyles';
 
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
+import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 interface Props {
   containerElement: HTMLDivElement;
@@ -51,44 +52,50 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
     onResize();
   }, [onResize, setDetailsWidth]);
 
+  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
   return (
     <Resizable
       onResize={handleResize}
       handleClasses={{ left: dragStyles.dragHandleVertical }}
       defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
+      size={{ width: detailsWidth, height: containerElement.clientHeight }}
       enable={{ left: true }}
       minWidth={40}
+      maxWidth={maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
-        <IconButton
-          name="times"
-          className={styles.closeIcon}
-          aria-label={t('logs.log-details.close', 'Close log details')}
-          onClick={closeDetails}
-        />
-        <table width="100%">
-          <tbody>
-            <LogDetails
-              getRows={getRows}
-              mode="sidebar"
-              row={showDetails[0]}
-              showDuplicates={false}
-              styles={logRowsStyles}
-              wrapLogMessage={wrapLogMessage}
-              onPinLine={onPinLine}
-              getFieldLinks={getFieldLinks}
-              onClickFilterLabel={onClickFilterLabel}
-              onClickFilterOutLabel={onClickFilterOutLabel}
-              onClickShowField={onClickShowField}
-              onClickHideField={onClickHideField}
-              hasError={showDetails[0].hasError}
-              displayedFields={displayedFields}
-              app={app}
-              isFilterLabelActive={isLabelFilterActive}
-              pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-            />
-          </tbody>
-        </table>
+        <div className={styles.scrollContainer}>
+          <IconButton
+            name="times"
+            className={styles.closeIcon}
+            aria-label={t('logs.log-details.close', 'Close log details')}
+            onClick={closeDetails}
+          />
+          <table width="100%">
+            <tbody>
+              <LogDetails
+                getRows={getRows}
+                mode="sidebar"
+                row={showDetails[0]}
+                showDuplicates={false}
+                styles={logRowsStyles}
+                wrapLogMessage={wrapLogMessage}
+                onPinLine={onPinLine}
+                getFieldLinks={getFieldLinks}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
+                hasError={showDetails[0].hasError}
+                displayedFields={displayedFields}
+                app={app}
+                isFilterLabelActive={isLabelFilterActive}
+                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+              />
+            </tbody>
+          </table>
+        </div>
       </div>
     </Resizable>
   );
@@ -96,6 +103,10 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    overflow: 'auto',
+    height: '100%',
+  }),
+  scrollContainer: css({
     overflow: 'auto',
     position: 'relative',
     height: '100%',
