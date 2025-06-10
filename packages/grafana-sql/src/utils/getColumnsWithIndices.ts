@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+
 import { SQLQuery } from '../types';
 
 export function getColumnsWithIndices(query: SQLQuery, fields: SelectableValue[]): SelectableValue[] {

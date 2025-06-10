@@ -2,11 +2,10 @@ import { SelectableValue } from '@grafana/data';
 
 import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLQuery } from '../../types';
+import { getColumnsWithIndices } from '../../utils/getColumnsWithIndices';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { OrderByRow } from './OrderByRow';
-
-import { getColumnsWithIndices } from '../../utils/getColumnsWithIndices';
 
 type SQLOrderByRowProps = {
   fields: SelectableValue[];
@@ -17,6 +16,6 @@ type SQLOrderByRowProps = {
 
 export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRowProps) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
-  let columnsWithIndices: SelectableValue[]=getColumnsWithIndices(query, fields);
+  let columnsWithIndices: SelectableValue[] = getColumnsWithIndices(query, fields);
   return <OrderByRow sql={query.sql!} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
 }
