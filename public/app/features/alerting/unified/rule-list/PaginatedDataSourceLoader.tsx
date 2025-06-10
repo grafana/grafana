@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
 import { groups } from '../utils/navigation';
@@ -41,7 +41,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     };
   }, [groupsGenerator]);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups } = useLazyLoadPrometheusGroups(
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
     DATA_SOURCE_GROUP_PAGE_SIZE
   );
@@ -50,7 +50,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
   const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
 
   return (
-    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
+    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading} error={error}>
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByNamespace).map(([namespace, groups]) => (
           <ListSection
@@ -79,6 +79,12 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
           <div>
             <LoadMoreButton onClick={fetchMoreGroups} />
           </div>
+        )}
+        {isLoading && (
+          <Stack direction="row" gap={2} alignItems="baseline" justifyContent="flex-start">
+            <Spinner inline={true} />
+            <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
+          </Stack>
         )}
         {hasNoRules && (
           <div className={styles.noRules}>

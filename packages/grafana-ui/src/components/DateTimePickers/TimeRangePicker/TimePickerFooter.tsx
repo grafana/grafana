@@ -6,12 +6,14 @@ import * as React from 'react';
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
-import { Tab, TabContent, TabsBar } from '../../Tabs';
+import { Tab } from '../../Tabs/Tab';
+import { TabContent } from '../../Tabs/TabContent';
+import { TabsBar } from '../../Tabs/TabsBar';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
@@ -110,7 +112,7 @@ export const TimePickerFooter = (props: Props) => {
               aria-controls={fiscalYearSettingsId}
             />
           </TabsBar>
-          <TabContent>
+          <TabContent className={style.noBackground}>
             {editMode === 'tz' ? (
               <section
                 role="tabpanel"
@@ -182,6 +184,9 @@ const getStyle = (theme: GrafanaTheme2) => ({
   }),
   timeSettingContainer: css({
     paddingTop: theme.spacing(1),
+  }),
+  noBackground: css({
+    background: 'inherit',
   }),
   fiscalYearField: css({
     marginBottom: 0,

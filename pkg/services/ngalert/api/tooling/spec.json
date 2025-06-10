@@ -1360,6 +1360,42 @@
         }
       }
     },
+    "/convert/api/v1/alerts": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Load Alertmanager configuration to Grafana and merge it with the existing configuration.",
+        "operationId": "RouteConvertPrometheusPostAlertmanagerConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AlertmanagerUserConfig"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        },
+        "x-raw-request": "true"
+      }
+    },
     "/convert/prometheus/config/v1/rules": {
       "get": {
         "produces": [
@@ -4747,6 +4783,14 @@
         }
       }
     },
+    "AlertmanagerUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/Config"
+        }
+      }
+    },
     "ApiRuleNode": {
       "type": "object",
       "properties": {
@@ -7236,31 +7280,31 @@
     "PrometheusRule": {
       "type": "object",
       "properties": {
-        "Alert": {
+        "alert": {
           "type": "string"
         },
-        "Annotations": {
+        "annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "Expr": {
+        "expr": {
           "type": "string"
         },
-        "For": {
+        "for": {
           "type": "string"
         },
-        "KeepFiringFor": {
+        "keep_firing_for": {
           "type": "string"
         },
-        "Labels": {
+        "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "Record": {
+        "record": {
           "type": "string"
         }
       }
@@ -7268,26 +7312,26 @@
     "PrometheusRuleGroup": {
       "type": "object",
       "properties": {
-        "Interval": {
+        "interval": {
           "$ref": "#/definitions/Duration"
         },
-        "Labels": {
+        "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "Limit": {
+        "limit": {
           "type": "integer",
           "format": "int64"
         },
-        "Name": {
+        "name": {
           "type": "string"
         },
-        "QueryOffset": {
+        "query_offset": {
           "type": "string"
         },
-        "Rules": {
+        "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PrometheusRule"
@@ -7839,8 +7883,8 @@
       }
     },
     "Route": {
-      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
+      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -7881,12 +7925,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "object_matchers": {
-          "$ref": "#/definitions/ObjectMatchers"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"

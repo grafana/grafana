@@ -3,7 +3,7 @@ import { HeaderGroup, Column } from 'react-table';
 import { Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { getFieldTypeIcon } from '../../../types';
+import { getFieldTypeIcon } from '../../../types/icon';
 import { Icon } from '../../Icon/Icon';
 import { TableFieldOptions } from '../types';
 

@@ -4,7 +4,7 @@ import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, WeekStart } from '../WeekStartPicker';

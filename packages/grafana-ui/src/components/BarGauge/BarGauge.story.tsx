@@ -3,7 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 import { BarGauge, Props } from './BarGauge';
 import mdx from './BarGauge.mdx';

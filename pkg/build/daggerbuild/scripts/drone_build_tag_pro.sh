@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 local_dst="dist/${DRONE_BUILD_EVENT}"
 set -e
 

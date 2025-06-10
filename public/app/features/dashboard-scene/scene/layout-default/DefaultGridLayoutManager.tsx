@@ -22,6 +22,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 
 import {
+  dashboardEditActions,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -43,6 +44,7 @@ import {
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
+import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -121,7 +123,18 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+      dashboardEditActions.addElement({
+        addedObject: vizPanel,
+        source: this,
+        perform: () => {
+          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.grid.setState({
+            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      });
     } else {
       const newGridItem = new DashboardGridItem({
         height: NEW_PANEL_HEIGHT,
@@ -134,15 +147,30 @@ export class DefaultGridLayoutManager
 
       this.state.grid.setState({ children: [newGridItem, ...this.state.grid.state.children] });
     }
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
   }
 
   public pastePanel() {
     const emptySpace = findSpaceForNewPanel(this.state.grid);
-    const panel = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
-    this.state.grid.setState({ children: [...this.state.grid.state.children, panel] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(panel), true);
+    const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
+
+    if (config.featureToggles.dashboardNewLayouts) {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
+        addedObject: newGridItem.state.body,
+        source: this,
+        perform: () => {
+          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.grid.setState({
+            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      });
+    } else {
+      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+    }
+
     clearClipboard();
   }
 
@@ -169,11 +197,18 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    this.state.grid.setState({
-      children: layout.state.children.filter((child) => child !== gridItem),
-    });
+    if (!config.featureToggles.dashboardNewLayouts) {
+      // No undo/redo support in legacy edit mode
+      layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+      return;
+    }
 
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
+    dashboardEditActions.removeElement({
+      removedObject: gridItem.state.body,
+      source: this,
+      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
+      undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
+    });
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -225,7 +260,6 @@ export class DefaultGridLayoutManager
     }
 
     grid.setState({ children: [...grid.state.children, newGridItem] });
-
     this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
   }
 
@@ -589,12 +623,7 @@ function getStyles(theme: GrafanaTheme2) {
         flexGrow: `0 !important`,
         minHeight: '250px',
       },
-      '&:hover': {
-        '.dashboard-canvas-add-button': {
-          opacity: 1,
-          filter: 'unset',
-        },
-      },
+      ...dashboardCanvasAddButtonHoverStyles,
     }),
     actionsWrapper: css({
       position: 'relative',
