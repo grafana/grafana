@@ -1,3 +1,6 @@
+import { GrafanaConfig } from '@grafana/data';
+import { config } from '@grafana/runtime';
+
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { testWithFeatureToggles } from '../test/test-utils';
 import { RuleFormType } from '../types/rule-form';
@@ -189,5 +192,29 @@ describe('getDefaultManualRouting', () => {
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('getDefaultFormValues', () => {
+  // This is for Typescript. GrafanaBootConfig returns narrower types than GrafanaConfig
+  const grafanaConfig: GrafanaConfig = config;
+  const uaConfig = grafanaConfig.unifiedAlerting;
+
+  afterEach(() => {
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = undefined;
+  });
+
+  it('should set targetDatasourceUid from config when defaultRecordingRulesTargetDatasourceUID is provided', () => {
+    const expectedDatasourceUid = 'test-datasource-uid';
+    uaConfig.defaultRecordingRulesTargetDatasourceUID = expectedDatasourceUid;
+
+    const result = getDefaultFormValues();
+
+    expect(result.targetDatasourceUid).toBe(expectedDatasourceUid);
+  });
+
+  it('should set targetDatasourceUid to undefined when defaultRecordingRulesTargetDatasourceUID is not provided', () => {
+    const result = getDefaultFormValues();
+    expect(result.targetDatasourceUid).toBeUndefined();
   });
 });

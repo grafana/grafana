@@ -73,6 +73,8 @@ export interface UnifiedAlertingConfig {
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
   recordingRulesEnabled?: boolean;
+  // will be undefined if no default datasource is configured
+  defaultRecordingRulesTargetDatasourceUID?: string;
 }
 
 /** Supported OAuth services

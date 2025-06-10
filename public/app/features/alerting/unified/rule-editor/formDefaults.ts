@@ -71,6 +71,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(),
+    targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
 
     // cortex / loki
     namespace: '',
