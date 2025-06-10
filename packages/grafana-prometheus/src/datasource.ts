@@ -388,6 +388,20 @@ export class PrometheusDatasource
       utcOffset = tz(request.timezone).utcOffset();
     }
 
+    // Ensure date formatting variables respect the dashboard timezone
+    const scopedVars = {
+      ...this.getIntervalVars(),
+      ...this.getRangeScopedVars(request.range),
+      __from: {
+        value: request.range.from.format(),
+        text: request.range.from.format(),
+      },
+      __to: {
+        value: request.range.to.format(),
+        text: request.range.to.format(),
+      },
+    };
+
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
@@ -407,24 +421,27 @@ export class PrometheusDatasource
       processedTarget.groupByKeys = request.groupByKeys;
     }
 
+    // Apply template variables with timezone-aware scopedVars
+    const targetWithVars = this.applyTemplateVariables(processedTarget, scopedVars);
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
       processedTargets.push(
         {
-          ...processedTarget,
-          refId: processedTarget.refId,
+          ...targetWithVars,
+          refId: targetWithVars.refId,
           instant: false,
         },
         {
-          ...processedTarget,
-          refId: processedTarget.refId + InstantQueryRefIdIndex,
+          ...targetWithVars,
+          refId: targetWithVars.refId + InstantQueryRefIdIndex,
           range: false,
           exemplar: false,
         }
       );
     } else {
-      processedTargets.push(processedTarget);
+      processedTargets.push(targetWithVars);
     }
 
     return processedTargets;
