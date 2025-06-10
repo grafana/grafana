@@ -513,6 +513,10 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	return grafanaGroup, nil
 }
 
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, config apimodels.AlertmanagerUserConfig) response.Response {
+	return response.Error(501, "Not implemented", nil)
+}
+
 // parseBooleanHeader parses a boolean header value, returning an error if the header
 // is present but invalid. If the header is not present, returns (false, nil).
 func parseBooleanHeader(header string, headerName string) (bool, error) {
