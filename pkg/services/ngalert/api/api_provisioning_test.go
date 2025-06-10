@@ -569,6 +569,7 @@ func TestProvisioningApi(t *testing.T) {
 			})
 		})
 	})
+
 	t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
 		env := createTestEnv(t, testConfig)
 		quotas := provisioning.MockQuotaChecker{}
@@ -589,6 +590,7 @@ func TestProvisioningApi(t *testing.T) {
 
 		require.Equal(t, 403, response.Status())
 	})
+
 	t.Run("exports", func(t *testing.T) {
 		t.Run("alert rule group", func(t *testing.T) {
 			t.Run("are present, GET returns 200", func(t *testing.T) {
