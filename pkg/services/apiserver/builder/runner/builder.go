@@ -75,8 +75,12 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 				Group:   gv.Group,
 				Version: runtime.APIVersionInternal,
 			}
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
+			// only register internal kind once
+			if _, ok := scheme.KnownTypes(gvInternal)[kind.Kind()]; !ok {
+				scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
+				scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+			}
 
 			if len(kind.SelectableFields()) == 0 {
 				continue
