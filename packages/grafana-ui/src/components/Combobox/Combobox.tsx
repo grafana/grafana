@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo } from 'react';
+import React, { useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -356,8 +356,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     </>
   );
 
+  const { Wrapper, wrapperProps } = isAutoSize
+    ? {
+        Wrapper: 'div',
+        wrapperProps: { className: styles.adaptToParent },
+      }
+    : { Wrapper: React.Fragment };
+
   return (
-    <div className={isAutoSize ? styles.addaptToParent : undefined}>
+    <Wrapper {...wrapperProps}>
       <InputComponent
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
@@ -396,6 +403,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           )}
         </div>
       </Portal>
-    </div>
+    </Wrapper>
   );
 };
