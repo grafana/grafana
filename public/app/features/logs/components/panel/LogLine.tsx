@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, memo, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
@@ -27,7 +27,7 @@ export interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
-  onClick: (log: LogListModel) => void;
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
@@ -92,9 +92,12 @@ export const LogLine = ({
   }, [collapsed, index, log, onOverflow]);
 
   const { t } = useTranslate();
-  const handleClick = useCallback(() => {
-    onClick(log);
-  }, [log, onClick]);
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      onClick(e, log);
+    },
+    [log, onClick]
+  );
 
   const detailsShown = detailsDisplayed(log);
 
