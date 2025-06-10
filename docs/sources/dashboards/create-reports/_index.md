@@ -78,6 +78,12 @@ refs:
 
 # Create and manage reports
 
+{{< admonition type="note" >}}
+
+The redesigned reporting feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. To use this feature, enable the `newShareReportDrawer` feature toggle in your Grafana configuration file or, for Grafana Cloud, contact Support.
+
+{{< /admonition >}}
+
 **Reporting** allows you to send automated and scheduled emails from any of your dashboards.
 You can configure several elements of these reports and generate PDFs and CSV files.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
