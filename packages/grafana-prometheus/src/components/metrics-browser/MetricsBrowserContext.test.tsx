@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
@@ -61,7 +61,7 @@ const setupLanguageProviderMock = () => {
       job: ['job1', 'job2'],
       instance: ['instance1', 'instance2'],
     }),
-  } as unknown as PromQlLanguageProvider;
+  } as unknown as PrometheusLanguageProviderInterface;
 
   return { mockTimeRange, mockLanguageProvider };
 };

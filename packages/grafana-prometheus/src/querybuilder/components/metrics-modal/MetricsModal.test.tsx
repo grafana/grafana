@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../../datasource';
-import PromQlLanguageProvider from '../../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
@@ -243,7 +243,7 @@ const listOfMetrics: string[] = [
 ];
 
 function createDatasource(withLabels?: boolean) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
 
   // display different results if their are labels selected in the PromVisualQuery
   if (withLabels) {

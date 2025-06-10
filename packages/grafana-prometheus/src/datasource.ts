@@ -42,17 +42,14 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import PrometheusLanguageProvider, {
+import {
   exportToAbstractQuery,
   importFromAbstractQuery,
+  PrometheusLanguageProvider,
+  PrometheusLanguageProviderInterface,
   SUGGESTIONS_LIMIT,
 } from './language_provider';
-import {
-  expandRecordingRules,
-  getClientCacheDurationInMinutes,
-  getPrometheusTime,
-  getRangeSnapInterval,
-} from './language_utils';
+import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
@@ -97,7 +94,7 @@ export class PrometheusDatasource
   withCredentials: boolean;
   interval: string;
   httpMethod: string;
-  languageProvider: PrometheusLanguageProvider;
+  languageProvider: PrometheusLanguageProviderInterface;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: URLSearchParams;
@@ -114,7 +111,7 @@ export class PrometheusDatasource
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    languageProvider?: PrometheusLanguageProvider
+    languageProvider?: PrometheusLanguageProviderInterface
   ) {
     super(instanceSettings);
 
@@ -864,32 +861,6 @@ export class PrometheusDatasource
     }
 
     return range.raw.from.includes('now') || range.raw.to.includes('now');
-  }
-
-  getDebounceTimeInMilliseconds(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 600;
-      case PrometheusCacheLevel.High:
-        return 1200;
-      default:
-        return 350;
-    }
-  }
-
-  getDaysToCacheMetadata(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 7;
-      case PrometheusCacheLevel.High:
-        return 30;
-      default:
-        return 1;
-    }
-  }
-
-  getCacheDurationInMinutes(): number {
-    return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 
   getDefaultQuery(app: CoreApp): PromQuery {

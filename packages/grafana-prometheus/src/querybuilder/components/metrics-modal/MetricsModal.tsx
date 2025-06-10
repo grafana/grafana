@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
@@ -19,6 +19,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
+import { getDebounceTimeInMilliseconds } from '../../../caching';
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
@@ -35,13 +36,7 @@ import {
   setMetrics,
   tracking,
 } from './state/helpers';
-import {
-  DEFAULT_RESULTS_PER_PAGE,
-  initialState,
-  MAXIMUM_RESULTS_PER_PAGE,
-  MetricsModalMetadata,
-  // stateSlice,
-} from './state/state';
+import { DEFAULT_RESULTS_PER_PAGE, initialState, MAXIMUM_RESULTS_PER_PAGE, MetricsModalMetadata } from './state/state';
 import { getStyles } from './styles';
 import { MetricsData, PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
@@ -117,7 +112,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             isLoading: false,
           })
         );
-      }, datasource.getDebounceTimeInMilliseconds()),
+      }, getDebounceTimeInMilliseconds(datasource.cacheLevel)),
     [datasource, query]
   );
 

@@ -22,7 +22,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from './datasource';
-import PromQlLanguageProvider from './language_provider';
+import { PrometheusLanguageProviderInterface } from './language_provider';
 import {
   createDataRequest,
   createDefaultPromResponse,
@@ -1015,7 +1015,7 @@ describe('PrometheusDatasource2', () => {
 
     ds.languageProvider = {
       histogramMetrics: ['tns_request_duration_seconds_bucket'],
-    } as PromQlLanguageProvider;
+    } as PrometheusLanguageProviderInterface;
 
     const request = {
       targets: [targetA, targetB],
