@@ -3044,6 +3044,14 @@
         },
         "type": "object"
       },
+      "AlertmanagerUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          }
+        },
+        "type": "object"
+      },
       "Annotation": {
         "properties": {
           "alertId": {
@@ -10069,7 +10077,6 @@
         "type": "object"
       },
       "Route": {
-        "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
           "active_time_intervals": {
             "items": {
@@ -10111,12 +10118,6 @@
             },
             "type": "array"
           },
-          "object_matchers": {
-            "$ref": "#/components/schemas/ObjectMatchers"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
           "receiver": {
             "type": "string"
           },
@@ -10130,6 +10131,7 @@
             "type": "array"
           }
         },
+        "title": "A Route is a node that contains definitions of how to handle alerts.",
         "type": "object"
       },
       "RouteExport": {
