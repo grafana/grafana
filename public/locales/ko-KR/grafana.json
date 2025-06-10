@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "삭제",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1519,6 +1512,10 @@
         "title": "가져오기 확인"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "데이터 소스"
+        },
         "label": "데이터 소스",
         "required-message": "데이터 소스를 선택하세요"
       },
@@ -1657,6 +1654,20 @@
         "new-recording-rule": "새 기록 규칙",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "폴더 작업",
+          "title": "작업"
+        },
+        "export": {
+          "aria-label": "규칙 폴더 내보내기",
+          "label": "규칙 폴더 내보내기"
+        },
+        "view": {
+          "aria-label": "폴더 보기",
+          "label": "폴더 보기"
+        }
       },
       "no-prom-or-loki-rules": "구성된 Prometheus 또는 Loki 데이터 소스가 없습니다",
       "no-rules": "규칙을 찾을 수 없습니다.",
@@ -2319,7 +2330,6 @@
     "rule-group-action": {
       "details": "규칙 그룹 세부 정보",
       "edit": "규칙 그룹 편집",
-      "export-rules-folder": "규칙 폴더 내보내기",
       "go-to-folder": "폴더로 이동",
       "manage-permissions": "권한 관리"
     },
@@ -2348,11 +2358,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "구성",
       "draft-new-rule": "새 규칙 초안 작성",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
         "title": "이 데이터 소스에서 규칙을 로딩할 수 없습니다."
       },
       "empty-data-source": "",
+      "error-button": "오류",
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -2364,6 +2378,7 @@
         "new-badge": "새 기능!",
         "text": "Grafana 관리 규칙으로 가져오기"
       },
+      "loading-more-groups": "",
       "more": "더 보기",
       "new-alert-rule": "새 경고 규칙",
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
@@ -2938,51 +2953,6 @@
       "no-query-editor": "주석은 지원되지 않습니다. 이 데이터 소스는 쿼리 편집기를 내보내야 합니다",
       "test-annotation-query": "주석 쿼리 테스트",
       "title-query-result": "쿼리 결과"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "키 검색"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "만료된 키 포함"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API 키 삭제",
-      "content-this-api-key-has-expired": "",
-      "expires": "만료",
-      "last-used-at": "마지막 사용 시간",
-      "migrate-to-service-account": "서비스 계정으로 마이그레이션",
-      "name": "이름",
-      "role": "역할"
-    },
-    "empty-state": {
-      "message": "찾은 API 키 없음"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "API 키를 찾을 수 없습니다. 브라우저를 다시 로딩하면 이 페이지를 더 이상 사용할 수 없습니다.",
-      "body-switch-service-accounts": "API 키는 사용 중단되었으며 2025년 1월 31일에 Grafana에서 제거됩니다. 각 API 키는 토큰이 있는 서비스 계정으로 마이그레이션되며 기존과 동일하게 계속 작동합니다. 지금 API 키를 서비스 계정으로 마이그레이션하는 것이 좋습니다. <docsLink />",
-      "docs-link": {
-        "about-migration": "여기에서 마이그레이션에 대해 자세히 알아보세요."
-      },
-      "migrate-all-service-accounts": "모든 서비스 계정 마이그레이션",
-      "migration-box-desc": {
-        "migrating": "모든 API 키를 마이그레이션하면 API 키 탭이 숨겨집니다."
-      },
-      "modal-title": "API 키를 서비스 계정으로 마이그레이션",
-      "title-no-api-keys-found": "API 키를 찾을 수 없습니다",
-      "title-switch-service-accounts": "API 키에서 서비스 계정으로 전환"
-    },
-    "migration-summary": {
-      "close": "닫기",
-      "failed": "<0>실패: </0>{{failed}}",
-      "failed-details": "<0>실패 항목 세부 정보: </0>{{details}}",
-      "failed-ids": "<0>실패한 API 키 ID: </0>{{ids}}",
-      "migrated": "<0>마이그레이션됨: </0>{{migrated}}",
-      "migration-complete": "마이그레이션 완료! '마이그레이션 실패'로 표시된 API 키가 몇 개 있을 수 있지만, 모든 API 키가 완전히 작동하고 운영 가능하므로 안심하셔도 됩니다. 다시 시도하거나 지원 팀에 문의하세요.",
-      "migration-successful": "마이그레이션 성공!",
-      "title-migration-summary": "마이그레이션 요약",
-      "total": "<0>총계: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4040,6 +4010,15 @@
         "tooltip-remove-property": "속성 제거"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "패널 붙여넣기",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "대시보드",
@@ -4591,18 +4570,6 @@
     },
     "toolbar": {
       "add": "추가",
-      "add-new": {
-        "button": {
-          "label": "추가",
-          "tooltip": "패널 및 기타 요소 추가"
-        },
-        "menu": {
-          "lib-panel": "라이브러리 패널",
-          "panel": "패널",
-          "row": "행",
-          "tab": "탭"
-        }
-      },
       "alert-rules": "경고 규칙",
       "back-to-dashboard": "대시보드로 돌아가기",
       "dashboard-settings": {
@@ -8127,10 +8094,6 @@
     "alerts-recently-deleted": {
       "subtitle": "최근에 삭제된 경고 규칙 보기",
       "title": "최근에 삭제됨"
-    },
-    "api-keys": {
-      "subtitle": "Grafana HTTP API와 상호 작용하는 데 사용되는 API 키의 관리 및 생성",
-      "title": "API 키"
     },
     "application": {
       "title": "애플리케이션"

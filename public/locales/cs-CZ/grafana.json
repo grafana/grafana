@@ -1209,10 +1209,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Odstranit",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1222,9 +1218,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1537,6 +1530,10 @@
         "title": "Potvrdit import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Zdroj dat"
+        },
         "label": "Zdroj dat",
         "required-message": "Vyberte zdroj dat"
       },
@@ -1675,6 +1672,20 @@
         "new-recording-rule": "Nové pravidlo nahrávání",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Akce složky",
+          "title": "Akce"
+        },
+        "export": {
+          "aria-label": "Exportovat složku pravidel",
+          "label": "Exportovat složku pravidel"
+        },
+        "view": {
+          "aria-label": "Zobrazit složku",
+          "label": "Zobrazit složku"
+        }
       },
       "no-prom-or-loki-rules": "Nejsou nakonfigurovány žádné zdroje dat Prometheus nebo Loki",
       "no-rules": "Nebyla nalezena žádná pravidla.",
@@ -2349,7 +2360,6 @@
     "rule-group-action": {
       "details": "podrobnosti o skupině pravidel",
       "edit": "upravit skupinu pravidel",
-      "export-rules-folder": "Exportovat složku pravidel",
       "go-to-folder": "jít do složky",
       "manage-permissions": "spravovat oprávnění"
     },
@@ -2378,11 +2388,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurovat",
       "draft-new-rule": "Navrhnout nové pravidlo",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Zkontrolujte konfiguraci zdroje dat. Podporuje zdroj dat Prometheus API?",
         "title": "Nepodařilo se načíst pravidla z tohoto zdroje dat"
       },
       "empty-data-source": "",
+      "error-button": "Chyba",
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -2394,6 +2408,7 @@
         "new-badge": "Nové!",
         "text": "Importovat do pravidel spravovaných Grafanou"
       },
+      "loading-more-groups": "",
       "more": "Další",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
@@ -2977,51 +2992,6 @@
       "no-query-editor": "Vysvětlivky nejsou podporovány. Tento zdroj dat musí exportovat QueryEditor",
       "test-annotation-query": "Otestovat dotaz na vysvětlivky",
       "title-query-result": "Výsledek dotazu"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Hledat klíče"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Zahrnout klíče po platnosti"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Odstranit API klíč",
-      "content-this-api-key-has-expired": "",
-      "expires": "Vyprší",
-      "last-used-at": "Naposledy použito v",
-      "migrate-to-service-account": "Migrovat na účet služby",
-      "name": "Název",
-      "role": "Role"
-    },
-    "empty-state": {
-      "message": "Nebyly nalezeny žádné API klíče"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Nebyly nalezeny žádné API klíče. Pokud znovu načtete prohlížeč, tato stránka už nebude k dispozici.",
-      "body-switch-service-accounts": "API klíče jsou zastaralé a 31. ledna 2025 budou z Grafany odstraněny. Každý API klíč bude migrován do účtu služby s tokenem a nadále bude plnit svou funkci. Doporučujeme migrovat API klíče na účty služeb teď. <docsLink />",
-      "docs-link": {
-        "about-migration": "Další informace o migraci najdete tady."
-      },
-      "migrate-all-service-accounts": "Migrovat všechny účty služeb",
-      "migration-box-desc": {
-        "migrating": "Migrací všech API klíčů skryjete záložku API klíčů."
-      },
-      "modal-title": "Migrovat API klíče na účty služeb",
-      "title-no-api-keys-found": "Nebyly nalezeny žádné API klíče",
-      "title-switch-service-accounts": "Přepnout z API klíčů na účty služeb"
-    },
-    "migration-summary": {
-      "close": "Zavřít",
-      "failed": "<0>Nezdařilo se: </0>{{failed}}",
-      "failed-details": "<0>Podrobnosti o nezdařilé migraci: </0>{{details}}",
-      "failed-ids": "<0>ID neúspěšných API klíčů: </0>{{ids}}",
-      "migrated": "<0>Migrováno: </0>{{migrated}}",
-      "migration-complete": "Migrace dokončena! Upozorňujeme, že i když může existovat několik API klíčů označených jako „migrace se nezdařila“, ujišťujeme vás, že všechny API klíče jsou plně funkční. Zkuste to znovu nebo kontaktujte podporu.",
-      "migration-successful": "Migrace proběhla úspěšně!",
-      "title-migration-summary": "Shrnutí migrace",
-      "total": "<0>Celkem: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4094,6 +4064,15 @@
         "tooltip-remove-property": "Odebrat vlastnost"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Vložit panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
@@ -4648,18 +4627,6 @@
     },
     "toolbar": {
       "add": "Přidat",
-      "add-new": {
-        "button": {
-          "label": "Přidat",
-          "tooltip": "Přidat panely a další prvky"
-        },
-        "menu": {
-          "lib-panel": "Panel knihovny",
-          "panel": "Panel",
-          "row": "Řádek",
-          "tab": "Karta"
-        }
-      },
       "alert-rules": "Pravidla výstrah",
       "back-to-dashboard": "Zpět na nástěnku",
       "dashboard-settings": {
@@ -8205,10 +8172,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Zobrazit nedávno odstraněná pravidla výstrah",
       "title": "Nedávno odstraněné"
-    },
-    "api-keys": {
-      "subtitle": "Spravujte a vytvářejte API klíče, které se používají k interakci s Grafana HTTP API",
-      "title": "API klíče"
     },
     "application": {
       "title": "Použití"

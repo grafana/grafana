@@ -51,6 +51,7 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
 
   return {
     isLoading,
+    error: groupsRequestState.error,
     groups,
     hasMoreGroups: !isLoading && hasMoreGroups,
     fetchMoreGroups,

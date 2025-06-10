@@ -1191,10 +1191,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "削除",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1204,9 +1200,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1519,6 +1512,10 @@
         "title": "インポートを確認"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "データソース"
+        },
         "label": "データソース",
         "required-message": "データソースを選択してください"
       },
@@ -1657,6 +1654,20 @@
         "new-recording-rule": "新しい記録ルール",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "フォルダ操作",
+          "title": "操作"
+        },
+        "export": {
+          "aria-label": "ルールフォルダをエクスポート",
+          "label": "ルールフォルダをエクスポート"
+        },
+        "view": {
+          "aria-label": "フォルダを表示",
+          "label": "フォルダを表示"
+        }
       },
       "no-prom-or-loki-rules": "PrometheusまたはLokiデータソースが設定されていません",
       "no-rules": "ルールが見つかりません。",
@@ -2319,7 +2330,6 @@
     "rule-group-action": {
       "details": "ルールグループの詳細",
       "edit": "ルールグループを編集",
-      "export-rules-folder": "ルールフォルダをエクスポート",
       "go-to-folder": "フォルダに移動",
       "manage-permissions": "権限を管理する"
     },
@@ -2348,11 +2358,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "構成",
       "draft-new-rule": "新しいルールの下書きを作成",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "データソースの設定を確認してください。データソースはPrometheus APIをサポートしていますか？",
         "title": "このデータソースからルールを読み込めません"
       },
       "empty-data-source": "",
+      "error-button": "エラー",
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -2364,6 +2378,7 @@
         "new-badge": "新登場！",
         "text": "Grafana管理ルールにインポート"
       },
+      "loading-more-groups": "",
       "more": "その他",
       "new-alert-rule": "新しいアラートルール",
       "new-datasource-recording-rule": "新しいデータソース記録ルール",
@@ -2938,51 +2953,6 @@
       "no-query-editor": "注釈はサポートされていません。このデータソースではQueryEditorをエクスポートする必要があります",
       "test-annotation-query": "注釈クエリをテスト",
       "title-query-result": "クエリ結果"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "キーを検索"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "期限切れのキーを含める"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "APIキーを削除",
-      "content-this-api-key-has-expired": "",
-      "expires": "有効期限",
-      "last-used-at": "最終使用日時",
-      "migrate-to-service-account": "サービスアカウントに移行",
-      "name": "名前",
-      "role": "ロール"
-    },
-    "empty-state": {
-      "message": "キーが見つかりませんでした。"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "APIキーが見つかりませんでした。ブラウザを再読み込みすると、このページは利用できなくなります。",
-      "body-switch-service-accounts": "APIキーは非推奨化されており、2025年1月31日付でGrafanaから削除されます。各APIキーはトークンを使用してサービスアカウントに移行され、引き続き同様に機能します。今すぐAPIキーをサービスアカウントに移行することをお勧めします。<docsLink /> ",
-      "docs-link": {
-        "about-migration": "移行の詳細については、こちらをご覧ください。"
-      },
-      "migrate-all-service-accounts": "すべてのサービスアカウントを移行",
-      "migration-box-desc": {
-        "migrating": "すべてのAPIキーを移行すると、APIキータブが非表示になります。"
-      },
-      "modal-title": "APIキーをサービスアカウントに移行",
-      "title-no-api-keys-found": "APIキーが見つかりませんでした",
-      "title-switch-service-accounts": "APIキーからサービスアカウントへ切り替え"
-    },
-    "migration-summary": {
-      "close": "閉じる",
-      "failed": "<0>失敗：</0>{{failed}}",
-      "failed-details": "<0>失敗の詳細：</0>{{details}}",
-      "failed-ids": "<0>失敗したAPIキーID：</0>{{ids}}",
-      "migrated": "<0>移行済み：</0>{{migrated}}",
-      "migration-complete": "移行が完了しました！なお、「移行に失敗」とマークされたAPIキーがいくつかあるかもしれませんが、すべてのAPIキーは完全に機能し動作しています。再試行するか、サポートにお問い合わせください。",
-      "migration-successful": "移行が成功しました！",
-      "title-migration-summary": "移行の概要",
-      "total": "<0>合計：</0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4040,6 +4010,15 @@
         "tooltip-remove-property": "プロパティを削除"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "パネルを貼り付け",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "ダッシュボード",
@@ -4591,18 +4570,6 @@
     },
     "toolbar": {
       "add": "追加",
-      "add-new": {
-        "button": {
-          "label": "追加",
-          "tooltip": "パネルやその他の要素を追加"
-        },
-        "menu": {
-          "lib-panel": "ライブラリパネルを追加",
-          "panel": "パネル",
-          "row": "行",
-          "tab": "タブ"
-        }
-      },
       "alert-rules": "アラートルール",
       "back-to-dashboard": "ダッシュボードに戻る",
       "dashboard-settings": {
@@ -8127,10 +8094,6 @@
     "alerts-recently-deleted": {
       "subtitle": "最近削除されたアラートルールを表示",
       "title": "最近削除された"
-    },
-    "api-keys": {
-      "subtitle": "Grafana HTTP APIとのやり取りに使用されるAPIキーを管理および作成します",
-      "title": "APIキー"
     },
     "application": {
       "title": "アプリケーション"

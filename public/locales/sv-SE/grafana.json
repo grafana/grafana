@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Radera",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1525,6 +1518,10 @@
         "title": "Bekräfta import"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Datakälla"
+        },
         "label": "Datakälla",
         "required-message": "Välj en datakälla"
       },
@@ -1663,6 +1660,20 @@
         "new-recording-rule": "Ny inspelningsregel",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Mappåtgärder",
+          "title": "Åtgärder"
+        },
+        "export": {
+          "aria-label": "Exportera regelmapp",
+          "label": "Exportera regelmapp"
+        },
+        "view": {
+          "aria-label": "Visa mapp",
+          "label": "Visa mapp"
+        }
       },
       "no-prom-or-loki-rules": "Det finns inga Prometheus- eller Loki-datakällor konfigurerade",
       "no-rules": "Inga regler hittades.",
@@ -2329,7 +2340,6 @@
     "rule-group-action": {
       "details": "information om regelgrupp",
       "edit": "redigera regelgrupp",
-      "export-rules-folder": "Exportera regelmapp",
       "go-to-folder": "gå till mapp",
       "manage-permissions": "hantera behörigheter"
     },
@@ -2358,11 +2368,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Konfigurera",
       "draft-new-rule": "Skapa utkast till en ny regel",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Kontrollera datakällans konfiguration. Har datakällan stöd för Prometheus API?",
         "title": "Det gick inte att ladda reglerna från den här datakällan"
       },
       "empty-data-source": "",
+      "error-button": "Fel",
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -2374,6 +2388,7 @@
         "new-badge": "Nyhet!",
         "text": "Importera till Grafana-hanterade regler"
       },
+      "loading-more-groups": "",
       "more": "Mer",
       "new-alert-rule": "Ny varningsregel",
       "new-datasource-recording-rule": "Ny registreringsregel för datakälla",
@@ -2951,51 +2966,6 @@
       "no-query-editor": "Kommentarer stöds inte. Denna datakälla behöver exportera en QueryEditor",
       "test-annotation-query": "Testa kommenteringsfråga",
       "title-query-result": "Resultat av fråga"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Söknycklar"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Inkludera utgångna nycklar"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Radera API-nyckel",
-      "content-this-api-key-has-expired": "",
-      "expires": "Löper ut",
-      "last-used-at": "Användes senast",
-      "migrate-to-service-account": "Migrera till servicekonto",
-      "name": "Namn",
-      "role": "Roll"
-    },
-    "empty-state": {
-      "message": "Inga API-nycklar hittades"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Inga API-nycklar hittades. Om du laddar om webbläsaren kommer den här sidan inte att vara tillgänglig längre.",
-      "body-switch-service-accounts": "API-nycklar är föråldrade och kommer att tas bort från Grafana den 31 januari 2025. Varje API-nyckel kommer att migreras till ett servicekonto med en token och kommer att fortsätta att fungera som de fungerade tidigare. Vi uppmuntrar dig att migrera dina API-nycklar till servicekonton nu. <docsLink />",
-      "docs-link": {
-        "about-migration": "Läs mer om migreringen här."
-      },
-      "migrate-all-service-accounts": "Migrera alla servicekonton",
-      "migration-box-desc": {
-        "migrating": "Migrering av alla API-nycklar kommer att dölja fliken API-nycklar."
-      },
-      "modal-title": "Migrera API-nycklar till servicekonton",
-      "title-no-api-keys-found": "Inga API-nycklar hittades",
-      "title-switch-service-accounts": "Växla från API-nycklar till servicekonton"
-    },
-    "migration-summary": {
-      "close": "Stäng",
-      "failed": "<0>Misslyckades: </0>{{failed}}",
-      "failed-details": "<0>Information om misslyckande: </0>{{details}}",
-      "failed-ids": "<0>ID för misslyckade API-nycklar: </0>{{ids}}",
-      "migrated": "<0>Migrerade: </0>{{migrated}}",
-      "migration-complete": "Migrering slutförd! Observera att även om det kan finnas några API-nycklar som flaggats som ”misslyckade migreringar” kan du vara säker på att alla dina API-nycklar är fullt funktionella och fungerar som de ska. Försök igen eller kontakta supporten.",
-      "migration-successful": "Migreringen lyckades!",
-      "title-migration-summary": "Migreringssammanfattning",
-      "total": "<0>Totalt: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4058,6 +4028,15 @@
         "tooltip-remove-property": "Ta bort egenskap"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Klistra in panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Instrumentpanel",
@@ -4610,18 +4589,6 @@
     },
     "toolbar": {
       "add": "Lägg till",
-      "add-new": {
-        "button": {
-          "label": "Lägg till",
-          "tooltip": "Lägg till paneler och andra element"
-        },
-        "menu": {
-          "lib-panel": "Bibliotekspanel",
-          "panel": "Panel",
-          "row": "Rad",
-          "tab": "Flik"
-        }
-      },
       "alert-rules": "Varningsregler",
       "back-to-dashboard": "Tillbaka till instrumentpanel",
       "dashboard-settings": {
@@ -8153,10 +8120,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Se nyligen raderade larmregler",
       "title": "Nyligen raderat"
-    },
-    "api-keys": {
-      "subtitle": "Hantera och skapa API-nycklar som används för att interagera med Grafana HTTP API:er",
-      "title": "API-nycklar"
     },
     "application": {
       "title": "Applikation"

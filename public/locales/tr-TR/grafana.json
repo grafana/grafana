@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Sil",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1525,6 +1518,10 @@
         "title": "İçe aktarmayı onayla"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Veri kaynağı"
+        },
         "label": "Veri kaynağı",
         "required-message": "Lütfen bir veri kaynağı seçin"
       },
@@ -1663,6 +1660,20 @@
         "new-recording-rule": "Yeni kayıt kuralı",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Klasör işlemleri",
+          "title": "İşlemler"
+        },
+        "export": {
+          "aria-label": "Kurallar klasörünü dışa aktar",
+          "label": "Kurallar klasörünü dışa aktar"
+        },
+        "view": {
+          "aria-label": "Klasörü görüntüle",
+          "label": "Klasörü görüntüle"
+        }
       },
       "no-prom-or-loki-rules": "Yapılandırılmış Prometheus veya Loki veri kaynağı yok",
       "no-rules": "Kural bulunamadı.",
@@ -2329,7 +2340,6 @@
     "rule-group-action": {
       "details": "kural grubu bilgileri",
       "edit": "kural grubunu düzenle",
-      "export-rules-folder": "Kurallar klasörünü dışa aktar",
       "go-to-folder": "klasöre git",
       "manage-permissions": "izinleri yönet"
     },
@@ -2358,11 +2368,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Yapılandır",
       "draft-new-rule": "Yeni bir kural taslağı oluştur",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Veri kaynağı yapılandırmasını kontrol edin. Veri kaynağı Prometheus API'yi destekliyor mu?",
         "title": "Bu veri kaynağından kurallar yüklenemedi"
       },
       "empty-data-source": "",
+      "error-button": "Hata",
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -2374,6 +2388,7 @@
         "new-badge": "Yeni!",
         "text": "Grafana tarafından yönetilen kurallara içe aktar"
       },
+      "loading-more-groups": "",
       "more": "Daha Fazla",
       "new-alert-rule": "Yeni uyarı kuralı",
       "new-datasource-recording-rule": "Yeni veri kaynağı kayıt kuralı",
@@ -2951,51 +2966,6 @@
       "no-query-editor": "Açıklamalar desteklenmiyor. Bu veri kaynağının bir QueryEditor dışa aktarması gerekiyor",
       "test-annotation-query": "Ek açıklama sorgusunu test et",
       "title-query-result": "Sorgu sonucu"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Anahtar ara"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Süresi dolmuş anahtarları dahil et"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API anahtarını sil",
-      "content-this-api-key-has-expired": "",
-      "expires": "Sona erme tarihi",
-      "last-used-at": "Son kullanım zamanı",
-      "migrate-to-service-account": "Hizmet hesabına geçiş yap",
-      "name": "Ad",
-      "role": "Rol"
-    },
-    "empty-state": {
-      "message": "Hiç API anahtarı bulunamadı"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Hiçbir API anahtarı bulunamadı. Tarayıcıyı yenilerseniz bu sayfaya artık erişilemez.",
-      "body-switch-service-accounts": "API anahtarları kullanımdan kaldırıldı ve 31 Ocak 2025'te Grafana'dan kaldırılacak. Her API anahtarı bir hizmet hesabına ve bir belirtece dönüştürülerek çalışmaya devam edecek. API anahtarlarınızı şimdi hizmet hesaplarına geçirmenizi öneriyoruz. <docsLink />",
-      "docs-link": {
-        "about-migration": "Geçiş hakkında daha fazla bilgi edinin."
-      },
-      "migrate-all-service-accounts": "Tüm hizmet hesaplarını taşı",
-      "migration-box-desc": {
-        "migrating": "Tüm API anahtarlarının taşınması, API anahtarları sekmesini gizleyecektir."
-      },
-      "modal-title": "API anahtarlarını hizmet hesaplarına taşı",
-      "title-no-api-keys-found": "Hiç API anahtarı bulunamadı",
-      "title-switch-service-accounts": "API anahtarlarından hizmet hesaplarına geçiş yap"
-    },
-    "migration-summary": {
-      "close": "Kapat",
-      "failed": "<0>Başarısız: </0>{{failed}}",
-      "failed-details": "<0>Başarısız işlem ayrıntıları: </0>{{details}}",
-      "failed-ids": "<0>Taşınamayan API anahtarı kimlikleri: </0>{{ids}}",
-      "migrated": "<0>Taşındı: </0>{{migrated}}",
-      "migration-complete": "Geçiş tamamlandı! Bazı API anahtarlarının \"başarısız geçiş\" olarak işaretlenmiş olabileceğini ancak tüm API anahtarlarınızın çalışır durumda olduğunu unutmayın. Lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.",
-      "migration-successful": "Geçiş Başarılı!",
-      "title-migration-summary": "Geçiş özeti",
-      "total": "<0>Toplam: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4058,6 +4028,15 @@
         "tooltip-remove-property": "Özelliği kaldır"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Paneli yapıştır",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Pano",
@@ -4610,18 +4589,6 @@
     },
     "toolbar": {
       "add": "Ekle",
-      "add-new": {
-        "button": {
-          "label": "Ekle",
-          "tooltip": "Panel ve diğer bileşenleri ekle"
-        },
-        "menu": {
-          "lib-panel": "Kütüphane paneli",
-          "panel": "Panel",
-          "row": "Satır",
-          "tab": "Sekme"
-        }
-      },
       "alert-rules": "Uyarı kuralları",
       "back-to-dashboard": "Panoya geri dön",
       "dashboard-settings": {
@@ -8153,10 +8120,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Son silinen uyarı kurallarını görüntüle",
       "title": "Son silinenler"
-    },
-    "api-keys": {
-      "subtitle": "Grafana HTTP API'leriyle etkileşimde bulunmak için kullanılan API anahtarlarını yönetin ve oluşturun",
-      "title": "API anahtarları"
     },
     "application": {
       "title": "Uygulama"

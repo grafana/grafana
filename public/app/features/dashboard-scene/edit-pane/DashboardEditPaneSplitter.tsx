@@ -12,7 +12,7 @@ import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter'
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPane';
+import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 import { useEditPaneCollapsed } from './shared';
 
 interface Props {

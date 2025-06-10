@@ -1197,10 +1197,6 @@
       "delete-modal-text": "",
       "delete-modal-title": "Verwijderen",
       "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
       "pause": {
         "button": {
           "label": ""
@@ -1210,9 +1206,6 @@
         "button": {
           "label": ""
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1525,6 +1518,10 @@
         "title": "Import bevestigen"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Gegevensbron"
+        },
         "label": "Gegevensbron",
         "required-message": "Selecteer een gegevensbron"
       },
@@ -1663,6 +1660,20 @@
         "new-recording-rule": "Nieuwe opnameregel",
         "no-rules-created": "",
         "provisioning": ""
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Mapacties",
+          "title": "Acties"
+        },
+        "export": {
+          "aria-label": "Regelsmap exporteren",
+          "label": "Regelsmap exporteren"
+        },
+        "view": {
+          "aria-label": "Map weergeven",
+          "label": "Map weergeven"
+        }
       },
       "no-prom-or-loki-rules": "Er zijn geen Prometheus- of Loki-gegevensbronnen geconfigureerd",
       "no-rules": "Geen regels gevonden.",
@@ -2329,7 +2340,6 @@
     "rule-group-action": {
       "details": "gegevens van regelgroep",
       "edit": "regelgroep bewerken",
-      "export-rules-folder": "Regelsmap exporteren",
       "go-to-folder": "ga naar map",
       "manage-permissions": "toestemmingen beheren"
     },
@@ -2358,11 +2368,15 @@
       "cannot-load-rule-details-for": "",
       "configure-datasource": "Configureren",
       "draft-new-rule": "Een nieuwe regel opstellen",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Controleer de configuratie van de gegevensbron. Ondersteunt de gegevensbron Prometheus API?",
         "title": "Kan regels uit deze gegevensbron niet laden"
       },
       "empty-data-source": "",
+      "error-button": "Fout",
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -2374,6 +2388,7 @@
         "new-badge": "Nieuw!",
         "text": "Importeren naar door Grafana beheerde regels"
       },
+      "loading-more-groups": "",
       "more": "Meer",
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",
@@ -2951,51 +2966,6 @@
       "no-query-editor": "Annotaties worden niet ondersteund. Deze gegevensbron moet een QueryEditor exporteren",
       "test-annotation-query": "Annotatiequery testen",
       "title-query-result": "Resultaat van query"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Sleutels zoeken"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Inclusief verlopen sleutels"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "API-sleutel verwijderen",
-      "content-this-api-key-has-expired": "",
-      "expires": "Verloopt op",
-      "last-used-at": "Laatst gebruikt op",
-      "migrate-to-service-account": "Migreren naar serviceaccount",
-      "name": "Naam",
-      "role": "Rol"
-    },
-    "empty-state": {
-      "message": "Geen API-sleutels gevonden"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Geen API-sleutels gevonden. Als je de browser opnieuw laadt, is deze pagina niet meer beschikbaar.",
-      "body-switch-service-accounts": "API-sleutels zijn verouderd en worden op 31 januari 2025 uit Grafana verwijderd. Elke API-sleutel wordt gemigreerd naar een serviceaccount met een token en blijft werken zoals voorheen. We raden je aan om je API-sleutels nu naar serviceaccounts te migreren. <docsLink />",
-      "docs-link": {
-        "about-migration": "Lees hier meer over de migratie."
-      },
-      "migrate-all-service-accounts": "Alle serviceaccounts migreren",
-      "migration-box-desc": {
-        "migrating": "Als je alle API-sleutels migreert, wordt het tabblad API-sleutels verborgen."
-      },
-      "modal-title": "API-sleutels migreren naar serviceaccounts",
-      "title-no-api-keys-found": "Geen API-sleutels gevonden",
-      "title-switch-service-accounts": "Overschakelen van API-sleutels naar serviceaccounts"
-    },
-    "migration-summary": {
-      "close": "Sluiten",
-      "failed": "<0>Mislukt: </0>{{failed}}",
-      "failed-details": "<0>Mislukte gegevens: </0>{{details}}",
-      "failed-ids": "<0>Mislukte API-sleutel-id's: </0>{{ids}}",
-      "migrated": "<0>Gemigreerd: </0>{{migrated}}",
-      "migration-complete": "Migratie voltooid! Hoewel er misschien een paar API-sleutels zijn gemarkeerd als 'mislukte migraties', kun je er zeker van zijn dat al je API-sleutels volledig functioneel en operationeel zijn. Probeer het opnieuw of neem contact op met ondersteuning.",
-      "migration-successful": "Migratie is voltooid.",
-      "title-migration-summary": "Migratieoverzicht",
-      "total": "<0>Totaal: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4058,6 +4028,15 @@
         "tooltip-remove-property": "Eigenschap verwijderen"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Paneel plakken",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4610,18 +4589,6 @@
     },
     "toolbar": {
       "add": "Toevoegen",
-      "add-new": {
-        "button": {
-          "label": "Toevoegen",
-          "tooltip": "Panelen en andere elementen toevoegen"
-        },
-        "menu": {
-          "lib-panel": "Bibliotheekpaneel",
-          "panel": "Paneel",
-          "row": "Rij",
-          "tab": "Tabblad"
-        }
-      },
       "alert-rules": "Waarschuwingsregels",
       "back-to-dashboard": "Terug naar dashboard",
       "dashboard-settings": {
@@ -8153,10 +8120,6 @@
     "alerts-recently-deleted": {
       "subtitle": "Recent verwijderde waarschuwingsregels bekijken",
       "title": "Onlangs verwijderd"
-    },
-    "api-keys": {
-      "subtitle": "API-sleutels beheren en maken die worden gebruikt om te communiceren met HTTP-API's van Grafana",
-      "title": "API-sleutels"
     },
     "application": {
       "title": "Applicaties"
