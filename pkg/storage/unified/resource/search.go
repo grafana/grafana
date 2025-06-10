@@ -381,34 +381,43 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
-// init is called during startup.  any failure will block startup and continued execution
-func (s *searchSupport) init(ctx context.Context) error {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
-	defer span.End()
-	start := time.Now().Unix()
-
+func (s *searchSupport) buildIndexes(ctx context.Context, logMessage string) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
 	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, info := range stats {
 		group.Go(func() error {
-			s.log.Debug("initializing search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
+			s.log.Debug(logMessage, "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
-			_, _, err = s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
 		})
 	}
 
 	err = group.Wait()
 	if err != nil {
+		return totalBatchesIndexed, err
+	}
+
+	return totalBatchesIndexed, nil
+}
+
+func (s *searchSupport) init(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	defer span.End()
+	start := time.Now().Unix()
+
+	totalBatchesIndexed, err := s.buildIndexes(ctx, "initializing search index")
+	if err != nil {
 		return err
 	}
+
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
 	// Now start listening for new events
@@ -552,24 +561,7 @@ func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
 		s.builders.clearNamespacedCache()
 	}
 
-	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
-	if err != nil {
-		return fmt.Errorf("failed to get resource stats for rebuild: %w", err)
-	}
-
-	group := errgroup.Group{}
-	group.SetLimit(s.initWorkers)
-	rebuildCount := 0
-	for _, info := range stats {
-		rebuildCount++
-		group.Go(func() error {
-			s.log.Debug("rebuilding search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
-			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
-			return err
-		})
-	}
-
-	err = group.Wait()
+	totalBatchesIndexed, err := s.buildIndexes(ctx, "rebuilding search index")
 	if err != nil {
 		return fmt.Errorf("failed to rebuild indexes: %w", err)
 	}
@@ -578,7 +570,7 @@ func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
 	duration := end.Sub(start)
 	s.log.Info("completed rebuilding all search indexes",
 		"duration", duration,
-		"rebuilt_indexes", rebuildCount,
+		"rebuilt_indexes", totalBatchesIndexed,
 		"total_docs", s.search.TotalDocs())
 
 	if s.indexMetrics != nil {
