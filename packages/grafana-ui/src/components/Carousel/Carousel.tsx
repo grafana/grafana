@@ -6,10 +6,10 @@ import { useState, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface

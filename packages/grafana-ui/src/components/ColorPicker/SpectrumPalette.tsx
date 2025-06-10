@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 import ColorInput from './ColorInput';
 
