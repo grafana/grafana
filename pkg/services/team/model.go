@@ -99,7 +99,7 @@ type TeamDTO struct {
 	OrgID         int64           `json:"orgId" xorm:"org_id"`
 	Name          string          `json:"name"`
 	Email         string          `json:"email"`
-	ExternalUID   string          `json:"externalUID"`
+	ExternalUID   string          `json:"externalUID" xorm:"external_uid"`
 	IsProvisioned bool            `json:"isProvisioned"`
 	AvatarURL     string          `json:"avatarUrl"`
 	MemberCount   int64           `json:"memberCount"`
