@@ -400,7 +400,14 @@ func TestProvisioningApi(t *testing.T) {
 			quotas.EXPECT().LimitExceeded()
 			env.quotas = &quotas
 			sut := createProvisioningSrvSutFromEnv(t, &env)
-			group := createTestAlertRuleGroup(1)
+			group := definitions.AlertRuleGroup{
+				Title:    "test rule group",
+				Interval: 60,
+				Rules: []definitions.ProvisionedAlertRule{
+					createTestAlertRule("test-alert-rule", 1),
+				},
+			}
+			group.Rules[0].UID = "" // The rule is only created if UID is empty.
 			rc := createTestRequestCtx()
 
 			response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
