@@ -1,15 +1,32 @@
-import { from, mergeMap, Observable } from 'rxjs';
+import { from, lastValueFrom, map, mergeMap, Observable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
+  DataFrame,
+  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
+  getDefaultTimeRange,
   PluginType,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { QueryFormat, SQLQuery } from '@grafana/plugin-ui';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getDataSourceSrv,
+  getTemplateSrv,
+  toDataQueryResponse,
+} from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
+import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
@@ -58,6 +75,65 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
       type: query?.type ?? ExpressionQueryType.math,
       ...query,
     };
+  }
+
+  async fetchFields(query: Partial<SQLQuery>, queries: DataQuery[]) {
+    if (!query.table) {
+      return [];
+    }
+
+    const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+
+    const queryResponse = await this.runMetaQuery(
+      { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
+      getDefaultTimeRange(),
+      queries.filter((q) => q.refId === query.table)
+    );
+    const frame = new DataFrameView<string[]>(queryResponse);
+
+    const fields = Object.entries(frame.fields).map((field) => {
+      return {
+        name: field[1].name,
+        text: field[1].name,
+        label: field[1].name,
+        value: quoteIdentifierIfNecessary(field[1].name),
+        type: field[1].type,
+      };
+    });
+
+    return mapFieldsToTypes(fields);
+  }
+
+  private runMetaQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
+    const refId = request.refId || 'meta';
+    const metaExpressionQuery: ExpressionQuery = {
+      window: '',
+      hide: false,
+      expression: request.rawSql,
+      datasource: ExpressionDatasourceRef,
+      refId,
+      type: ExpressionQueryType.sql,
+    };
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          headers: this.getRequestHeaders(),
+          data: {
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
+            queries: [...queries, metaExpressionQuery],
+          },
+          requestId: refId,
+        })
+        .pipe(
+          map((res: FetchResponse<BackendDataSourceResponse>) => {
+            const rsp = toDataQueryResponse(res, queries);
+            return rsp.data[0] ?? { fields: [] };
+          })
+        )
+    );
   }
 }
 
