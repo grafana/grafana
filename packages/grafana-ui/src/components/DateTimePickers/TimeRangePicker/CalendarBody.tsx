@@ -161,9 +161,10 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         border: '0px',
       },
 
-      '.react-calendar__tile:hover:not(.react-calendar__tile--active)': {
-        backgroundColor: theme.colors.action.hover,
-      },
+      '.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--rangeEnd):not(.react-calendar__tile--rangeStart)':
+        {
+          backgroundColor: theme.colors.action.hover,
+        },
 
       '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
         padding: 0,
