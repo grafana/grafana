@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import copy from 'rollup-plugin-copy';
 
 import { entryPoint, plugins, esmOutput, cjsOutput, tsDeclarationOutput } from '../rollup.config.parts';
 
@@ -8,7 +9,12 @@ const pkg = rq('./package.json');
 export default [
   {
     input: entryPoint,
-    plugins,
+    plugins: [
+      ...plugins,
+      copy({
+        targets: [{ src: 'src/eslint', dest: 'dist' }],
+      }),
+    ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-i18n')],
   },
   tsDeclarationOutput(pkg),
