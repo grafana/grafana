@@ -257,7 +257,7 @@ async function getMetrics(
 
 export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
   if (!metadata[metric]) {
-    return undefined;
+    return;
   }
   const { type, help } = metadata[metric];
   return `${type.toUpperCase()}: ${help}`;

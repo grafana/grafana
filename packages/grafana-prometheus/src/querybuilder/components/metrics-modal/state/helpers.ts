@@ -90,17 +90,11 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
 }
 
 export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].help;
+  return metadata[metric]?.help;
 }
 
 export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
-  if (!metadata[metric]) {
-    return undefined;
-  }
-  return metadata[metric].type;
+  return metadata[metric]?.type;
 }
 
 /**
