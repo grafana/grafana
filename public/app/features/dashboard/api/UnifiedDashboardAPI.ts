@@ -54,12 +54,7 @@ export class UnifiedDashboardAPI
     options: Omit<ListOptions, 'labelSelector'>
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
     try {
-      const resp = await this.v1Client.listDeletedDashboards(options);
-      // v1 client returns v2 spec as null
-      if (resp.items.every((item) => item.spec === null)) {
-        throw new DashboardVersionError('unsupported version');
-      }
-      return resp;
+      return await this.v1Client.listDeletedDashboards(options);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
         return await this.v2Client.listDeletedDashboards(options);

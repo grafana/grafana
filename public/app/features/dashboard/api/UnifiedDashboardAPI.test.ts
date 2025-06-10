@@ -200,12 +200,6 @@ describe('UnifiedDashboardAPI', () => {
             spec: null,
             metadata: { name: 'dash-2', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
           },
-          {
-            apiVersion: 'dashboard.grafana.app/v1beta1',
-            kind: 'Dashboard',
-            spec: null,
-            metadata: { name: 'dash-2', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
-          },
         ],
       };
       const mockV2Response = {
@@ -231,8 +225,15 @@ describe('UnifiedDashboardAPI', () => {
         ],
       };
 
-      // @ts-expect-error - v1 specs are null
-      v1Client.listDeletedDashboards.mockResolvedValue(mockV1Response);
+      // Mock the underlying backendSrv.get to return data with null specs
+      mockBackendSrvGet = mockV1Response;
+
+      // Use real v1 implementation so it can detect null specs internally
+      v1Client.listDeletedDashboards.mockImplementation((params) => {
+        const actualClient = jest.requireActual('./v1').K8sDashboardAPI;
+        const client = new actualClient();
+        return client.listDeletedDashboards(params);
+      });
       v2Client.listDeletedDashboards.mockResolvedValue(mockV2Response);
 
       const result = await api.listDeletedDashboards({ limit: 10 });

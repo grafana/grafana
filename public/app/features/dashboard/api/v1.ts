@@ -176,8 +176,14 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }
   }
 
-  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
-    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  async listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
+    const resp = await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+    // v1 client returns v2 spec as null
+    // if any of the items in the list has a null spec, we switch to the v2 client
+    if (resp.items.some((item) => item.spec === null)) {
+      throw new DashboardVersionError('unsupported version');
+    }
+    return resp;
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
