@@ -24,11 +24,10 @@ This section provides step-by-step tutorials to help you learn Grafana Alerting 
 - [Create multi-dimensional alerts and route them](https://grafana.com/tutorials/alerting-get-started-pt2/)
 - [Group alert notifications](https://grafana.com/tutorials/alerting-get-started-pt3/)
 - [Template your alert notifications](https://grafana.com/tutorials/alerting-get-started-pt4/)
-- [Route alerts using dynamic labels](https://grafana.com/tutorials/alerting-get-started-pt5/)
-- [Link alerts to visualizations](https://grafana.com/tutorials/alerting-get-started-pt6/)
 
 ## Additional tutorials
 
 - [Route alerts using dynamic labels](https://grafana.com/tutorials/alerting-get-started-pt5/)
+- [Link alerts to visualizations](https://grafana.com/tutorials/alerting-get-started-pt6/)
 - [Create alerts with log data](https://grafana.com/tutorials/create-alerts-with-logs/)
 - [Create alerts with InfluxDB and Flux queries](https://grafana.com/tutorials/create-alerts-from-flux-queries/)
