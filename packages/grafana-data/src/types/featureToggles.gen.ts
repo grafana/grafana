@@ -1024,4 +1024,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichment?: boolean;
+  /**
+  * Enables the API to import Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerAPI?: boolean;
 }
