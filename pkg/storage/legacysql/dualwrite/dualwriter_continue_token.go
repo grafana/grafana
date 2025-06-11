@@ -29,6 +29,7 @@ func buildContinueToken(legacyToken, unifiedToken string) string {
 	if legacyToken == "" && unifiedToken == "" {
 		return ""
 	}
+
 	return base64.StdEncoding.EncodeToString([]byte(
 		strings.Join([]string{legacyToken, unifiedToken}, ",")))
 }

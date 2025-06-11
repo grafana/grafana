@@ -53,9 +53,10 @@ func TestParseContinueTokens(t *testing.T) {
 
 func TestBuildContinueToken(t *testing.T) {
 	tcs := []struct {
-		name         string
-		legacyToken  string
-		unifiedToken string
+		name          string
+		legacyToken   string
+		unifiedToken  string
+		shouldBeEmpty bool
 	}{
 		{
 			name:         "Should handle both tokens",
@@ -70,6 +71,10 @@ func TestBuildContinueToken(t *testing.T) {
 			name:         "Should handle unified token standalone",
 			unifiedToken: "xyz",
 		},
+		{
+			name:          "Should handle both tokens empty",
+			shouldBeEmpty: true,
+		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
@@ -78,6 +83,9 @@ func TestBuildContinueToken(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, legacyToken, tc.legacyToken)
 			require.Equal(t, unifiedToken, tc.unifiedToken)
+			if tc.shouldBeEmpty {
+				require.Equal(t, "", token)
+			}
 		})
 	}
 }
