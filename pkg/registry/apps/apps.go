@@ -70,11 +70,12 @@ func ProvideRegistryServiceSink(
 	if alertingNotificationsAppProvider != nil {
 		providers = append(providers, alertingNotificationsAppProvider)
 	}
-	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if prometheusAppProvider != nil {
 		providers = append(providers, prometheusAppProvider)
 	}
+
+	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if err != nil {
 		return nil, err
