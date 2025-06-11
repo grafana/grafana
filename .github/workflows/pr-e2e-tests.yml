@@ -39,39 +39,98 @@ jobs:
           retention-days: 1
           name: ${{ steps.artifact.outputs.artifact }}
           path: grafana.tar.gz
-  e2e-matrix:
+
+  build-e2e-runner:
+    name: Build E2E test runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      artifact: ${{ steps.artifact.outputs.artifact }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: ${{ !github.event.pull_request.head.repo.fork }}
+      - name: Build E2E test runner
+        id: artifact
+        run: |
+          # We want a static binary, so we need to set CGO_ENABLED=0
+          CGO_ENABLED=0 go build -o ./e2e-runner ./e2e/
+          echo "artifact=e2e-runner-${{github.run_number}}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        id: upload
+        with:
+          retention-days: 1
+          name: ${{ steps.artifact.outputs.artifact }}
+          path: e2e-runner
+
+  run-e2e-tests:
+    needs:
+      - build-grafana
+      - build-e2e-runner
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: various-suite
+            path: e2e/various-suite
+          - suite: dashboards-suite
+            path: e2e/dashboards-suite
+          - suite: smoke-tests-suite
+            path: e2e/smoke-tests-suite
+          - suite: panels-suite
+            path: e2e/panels-suite
+          - suite: various-suite (old arch)
+            path: e2e/old-arch/various-suite
+            flags: --flags="--env dashboardScene=false"
+          - suite: dashboards-suite (old arch)
+            path: e2e/old-arch/dashboards-suite
+            flags: --flags="--env dashboardScene=false"
+          - suite: smoke-tests-suite (old arch)
+            path: e2e/old-arch/smoke-tests-suite
+            flags: --flags="--env dashboardScene=false"
+          - suite: panels-suite (old arch)
+            path: e2e/old-arch/panels-suite
+            flags: --flags="--env dashboardScene=false"
     name: ${{ matrix.suite }}
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - various-suite
-          - dashboards-suite
-          - smoke-tests-suite
-          - panels-suite
-    needs:
-      - build-grafana
-    uses: ./.github/workflows/run-e2e-suite.yml
-    with:
-      package: ${{ needs.build-grafana.outputs.artifact }}
-      suite: ${{ matrix.suite }}
-  e2e-matrix-old-arch:
+    runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
-    name: ${{ matrix.suite }} (old arch)
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - old-arch/various-suite
-          - old-arch/dashboards-suite
-          - old-arch/smoke-tests-suite
-          - old-arch/panels-suite
-    needs:
-      - build-grafana
-    uses: ./.github/workflows/run-e2e-suite.yml
-    with:
-      package: ${{ needs.build-grafana.outputs.artifact }}
-      suite: ${{ matrix.suite }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-grafana.outputs.artifact }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-e2e-runner.outputs.artifact }}
+      - name: chmod +x
+        run: chmod +x ./e2e-runner
+      - name: Run E2E tests
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/e2e --package=grafana.tar.gz
+            --suite=${{ matrix.path }}
+            ${{ matrix.flags }}
+      - name: Set suite name
+        id: set-suite-name
+        if: success() || failure()
+        env:
+          SUITE: ${{ matrix.path }}
+        run: |
+          echo "suite=$(echo "$SUITE" | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: ${{ steps.set-suite-name.outputs.suite }}-${{ github.run_number }}
+          path: videos
+          retention-days: 1
