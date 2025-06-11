@@ -24,9 +24,27 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { HeaderCell } from './Cells/HeaderCell';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
-import { useProcessedRows, useRowHeight, useScrollbarWidth } from './hooks';
+import {
+  useColumnTypes,
+  useFilteredRows,
+  useFooterCalcs,
+  usePaginatedRows,
+  useRowHeight,
+  useScrollbarWidth,
+  useSortedRows,
+  useTextWraps,
+} from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, CellColors } from './types';
-import { frameToRecords, getCellColors, getDefaultRowHeight, getDisplayName, getFooterStyles, getTextAlign, handleSort, shouldTextOverflow } from './utils';
+import {
+  frameToRecords,
+  getCellColors,
+  getDefaultRowHeight,
+  getDisplayName,
+  getFooterStyles,
+  getTextAlign,
+  handleSort,
+  shouldTextOverflow,
+} from './utils';
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -73,65 +91,68 @@ export function TableNG(props: TableNGProps) {
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-    footerOptions.reducer &&
-    footerOptions.reducer.length &&
-    footerOptions.reducer[0] === ReducerID.count
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
   );
 
-  const rows = useMemo(() => frameToRecords(data), [data]);
+  const memoizedRows = useMemo(() => frameToRecords(data), [data]);
+  const columnTypes = useColumnTypes(data.fields);
+
   const {
-    renderedRows,
-    numRows,
-    columnTypes,
+    rows: filteredRows,
     filter,
     setFilter,
     crossFilterOrder,
     crossFilterRows,
+  } = useFilteredRows(memoizedRows, data.fields);
+
+  const {
+    rows: sortedRows,
     sortColumns,
     setSortColumns,
+  } = useSortedRows(filteredRows, data.fields, {
+    initialSortBy,
+  });
+
+  const {
+    rows: paginatedRows,
     page,
     setPage,
     numPages,
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
-    footerCalcs,
-  } = useProcessedRows(rows, data.fields, {
+  } = usePaginatedRows(sortedRows, {
+    enabled: enablePagination,
     height,
     width,
-    initialSortBy,
-    enablePagination,
-    paginationHeight,
     hasHeader,
     hasFooter,
+    paginationHeight,
     defaultRowHeight,
-    footerOptions,
-    isCountRowsSet,
   });
 
+  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
+
   // Create a map of column key to text wrap
-  const textWraps = useMemo(
-    () =>
-      data.fields.reduce<{ [key: string]: boolean }>(
-        (acc, field) => ({
-          ...acc,
-          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
-        }),
-        {}
-      ),
-    [data.fields]
-  );
+  const textWraps = useTextWraps(data.fields);
 
   // const [expandedRows]?
 
   // const [scrollPos, setScrollPos] = useState(0);
 
   // vt scrollbar accounting for column auto-sizing
-  const scrollbarWidth = useScrollbarWidth(gridHandle, props, renderedRows);
+  const scrollbarWidth = useScrollbarWidth(gridHandle, props, paginatedRows);
+
+  // TODO maybe this ought to be slightly debounced.
+  const widths = useMemo(
+    () => computeColWidths(data.fields, width - scrollbarWidth),
+    [data.fields, width, scrollbarWidth]
+  );
 
   // TODO: skip hidden
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
-    const widths = computeColWidths(data.fields, width - scrollbarWidth);
     return data.fields.map((field, i): TableColumn => {
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
@@ -145,21 +166,21 @@ export function TableNG(props: TableNGProps) {
           field.type === FieldType.number
             ? styles.cellRight
             : () => {
-              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
-              switch (cellType) {
-                case TableCellDisplayMode.Auto:
-                case TableCellDisplayMode.ColorBackground:
-                case TableCellDisplayMode.ColorBackgroundSolid:
-                case TableCellDisplayMode.ColorText:
-                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : null;
-                default:
-                  return null;
-              }
-            },
+                switch (cellType) {
+                  case TableCellDisplayMode.Auto:
+                  case TableCellDisplayMode.ColorBackground:
+                  case TableCellDisplayMode.ColorBackgroundSolid:
+                  case TableCellDisplayMode.ColorText:
+                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : null;
+                  default:
+                    return null;
+                }
+              },
         renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const { row } = props;
-          const displayName = getDisplayName(field)
+          const displayName = getDisplayName(field);
           const value = row[displayName];
           const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
@@ -175,13 +196,7 @@ export function TableNG(props: TableNGProps) {
               justifyContent={justifyColumnContent}
               rowIdx={row.__index}
               shouldTextOverflow={() =>
-                shouldTextOverflow(
-                  displayName,
-                  columnTypes,
-                  textWraps[getDisplayName(field)],
-                  field,
-                  cellType
-                )
+                shouldTextOverflow(displayName, columnTypes, textWraps[getDisplayName(field)], field, cellType)
               }
               setIsInspecting={setIsInspecting}
               setContextMenuProps={setContextMenuProps}
@@ -195,7 +210,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
           <HeaderCell
             column={column}
-            rows={rows}
+            rows={paginatedRows}
             field={field}
             onSort={(columnKey, direction, isMultiSort) => {
               handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
@@ -239,8 +254,7 @@ export function TableNG(props: TableNGProps) {
     onColumnResize,
     onSortByChange,
     replaceVariables,
-    rows,
-    scrollbarWidth,
+    paginatedRows,
     setFilter,
     setSortColumns,
     showTypeIcons,
@@ -249,7 +263,7 @@ export function TableNG(props: TableNGProps) {
     styles.cellWrapped,
     textWraps,
     theme,
-    width,
+    widths,
   ]);
 
   const hasSubTable = false;
@@ -260,6 +274,7 @@ export function TableNG(props: TableNGProps) {
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
+  const numRows = sortedRows.length;
 
   return (
     <>
@@ -267,7 +282,7 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         ref={gridHandle}
         columns={columns}
-        rows={renderedRows}
+        rows={paginatedRows}
         defaultColumnOptions={{
           minWidth: 50,
           resizable: true,

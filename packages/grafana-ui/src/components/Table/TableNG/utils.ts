@@ -27,7 +27,6 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { TableCellInspectorMode } from '../TableCellInspector';
 
 import { TABLE } from './constants';
 import {
@@ -35,9 +34,7 @@ import {
   TableRow,
   TableFieldOptionsType,
   ColumnTypes,
-  FilterType,
   FrameToRowsConverter,
-  TableNGProps,
   Comparator,
   TableFooterCalc,
 } from './types';
@@ -490,31 +487,6 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
   const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
   return convert(frame);
 };
-
-export interface MapFrameToGridOptions extends TableNGProps {
-  columnTypes: ColumnTypes;
-  columnWidth: number | string;
-  crossFilterOrder: string[];
-  crossFilterRows: { [key: string]: TableRow[] };
-  defaultLineHeight: number;
-  defaultRowHeight: number;
-  expandedRows: number[];
-  filter: FilterType;
-  isCountRowsSet: boolean;
-  ctx: CanvasRenderingContext2D;
-  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
-  rows: TableRow[];
-  renderedRows: TableRow[];
-  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  setIsInspecting: (isInspecting: boolean) => void;
-  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
-  sortColumns: SortColumn[];
-  styles: { cell: string; cellWrapped: string; dataGrid: string };
-  textWraps: Record<string, boolean>;
-  theme: GrafanaTheme2;
-  showTypeIcons?: boolean;
-}
 
 /* ----------------------------- Data grid comparator ---------------------------- */
 // The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences

@@ -25,45 +25,6 @@ import {
   getFooterItemNG,
 } from './utils';
 
-export interface ProcessedRowsOptions {
-  height: number;
-  width: number;
-  initialSortBy?: TableSortByFieldState[];
-  enablePagination?: boolean;
-  paginationHeight?: number;
-  hasHeader?: boolean;
-  hasFooter?: boolean;
-  defaultRowHeight?: number;
-  headerCellHeight?: number;
-  footerOptions?: TableFooterCalc;
-  isCountRowsSet?: boolean;
-}
-
-interface TableFiltersAndSort {
-  // --- rows --- //
-  renderedRows: TableRow[];
-  numRows: number;
-  columnTypes: Record<string, FieldType>;
-  // --- filters --- //
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  crossFilterOrder: string[];
-  crossFilterRows: { [key: string]: TableRow[] };
-  // --- sorting --- //
-  sortColumns: SortColumn[];
-  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
-  // --- pagination --- //
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-  numPages: number;
-  rowsPerPage: number;
-  pageRangeStart: number;
-  pageRangeEnd: number;
-  smallPagination: boolean;
-  // --- footer --- //
-  footerCalcs: string[];
-}
-
 // Helper function to get displayed value
 const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
   const field = fields.find((field) => getDisplayName(field) === key);
@@ -74,52 +35,35 @@ const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
   return displayedValue;
 };
 
-export function useProcessedRows(
-  rows: TableRow[],
-  fields: Field[],
-  {
-    height,
-    width,
-    hasHeader = false,
-    hasFooter = false,
-    initialSortBy,
-    enablePagination,
-    paginationHeight,
-    defaultRowHeight,
-    footerOptions,
-    isCountRowsSet,
-  }: ProcessedRowsOptions
-): TableFiltersAndSort {
+export function useColumnTypes(fields: Field[]): ColumnTypes {
+  return useMemo(
+    () => fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
+    [fields]
+  );
+}
+
+export interface FilteredRowResult {
+  rows: TableRow[];
+  filter: FilterType;
+  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
+  crossFilterOrder: string[];
+  crossFilterRows: Record<string, TableRow[]>;
+}
+
+export function useFilteredRows(rows: TableRow[], fields: Field[]): FilteredRowResult {
   // TODO: allow persisted filter selection via url
   const [filter, setFilter] = useState<FilterType>({});
   const filterValues = useMemo(() => Object.entries(filter), [filter]);
 
-  const initialSortColumns = useMemo<SortColumn[]>(() => {
-    const initialSort = initialSortBy?.map(({ displayName, desc }) => {
-      const matchingField = fields.find(({ state }) => state?.displayName === displayName);
-      const columnKey = matchingField?.name || displayName;
-
-      return {
-        columnKey,
-        direction: desc ? ('DESC' as const) : ('ASC' as const),
-      };
-    });
-    return initialSort ?? [];
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
-
-  const crossFilterOrder: TableFiltersAndSort['crossFilterOrder'] = useMemo(
+  const crossFilterOrder: FilteredRowResult['crossFilterOrder'] = useMemo(
     () => Array.from(new Set(filterValues.map(([key]) => key))),
     [filterValues]
   );
 
-  // TODO: allow persisted page selection via url
-  const [page, setPage] = useState(0);
-
   const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
 
   const [filteredRows, crossFilterRows] = useMemo(() => {
-    const crossFilterRows: TableFiltersAndSort['crossFilterRows'] = {};
+    const crossFilterRows: FilteredRowResult['crossFilterRows'] = {};
 
     const filterRows = (row: TableRow): boolean => {
       for (const [key, value] of filterValues) {
@@ -141,14 +85,51 @@ export function useProcessedRows(
     return [filteredRows, crossFilterRows];
   }, [filterValues, rows, fields, hasNestedFrames]);
 
-  const columnTypes = useMemo(
-    () => fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
-    [fields]
+  return {
+    rows: filteredRows,
+    filter,
+    setFilter,
+    crossFilterOrder,
+    crossFilterRows,
+  };
+}
+
+export interface SortedRowsOptions {
+  initialSortBy?: TableSortByFieldState[];
+}
+
+export interface SortedRowsResult {
+  rows: TableRow[];
+  sortColumns: SortColumn[];
+  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>;
+}
+
+export function useSortedRows(
+  rows: TableRow[],
+  fields: Field[],
+  { initialSortBy }: SortedRowsOptions = {}
+): SortedRowsResult {
+  const initialSortColumns = useMemo<SortColumn[]>(
+    () =>
+      initialSortBy?.map(({ displayName, desc }) => {
+        const matchingField = fields.find(({ state }) => state?.displayName === displayName);
+        const columnKey = matchingField?.name || displayName;
+
+        return {
+          columnKey,
+          direction: desc ? ('DESC' as const) : ('ASC' as const),
+        };
+      }) ?? [],
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
+  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+
+  const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
+  const columnTypes = useColumnTypes(fields);
 
   const sortedRows = useMemo(() => {
     if (sortColumns.length === 0) {
-      return filteredRows;
+      return rows;
     }
 
     const compareRows = (a: TableRow, b: TableRow): number => {
@@ -168,16 +149,48 @@ export function useProcessedRows(
 
     // Handle nested tables
     if (hasNestedFrames) {
-      return processNestedTableRows(filteredRows, (parents) => [...parents].sort(compareRows));
+      return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
     }
 
     // Regular sort for tables without nesting
-    return filteredRows.slice().sort(compareRows);
-  }, [filteredRows, sortColumns, columnTypes, hasNestedFrames]);
+    return rows.slice().sort(compareRows);
+  }, [rows, sortColumns, columnTypes, hasNestedFrames]);
 
-  // the number of rows after filtering and sorting, but before paginating. this is the "true"
-  // total number of rows which the table may render.
-  const numRows = sortedRows.length;
+  return {
+    rows: sortedRows,
+    sortColumns,
+    setSortColumns,
+  };
+}
+
+export interface PaginatedRowsOptions {
+  height: number;
+  width: number;
+  hasHeader?: boolean;
+  hasFooter?: boolean;
+  paginationHeight?: number;
+  defaultRowHeight?: number;
+  enabled?: boolean;
+}
+
+export interface PaginatedRowsResult {
+  rows: TableRow[];
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  numPages: number;
+  rowsPerPage: number;
+  pageRangeStart: number;
+  pageRangeEnd: number;
+  smallPagination: boolean;
+}
+
+export function usePaginatedRows(
+  rows: TableRow[],
+  { height, width, hasHeader, hasFooter, paginationHeight, defaultRowHeight, enabled }: PaginatedRowsOptions
+): PaginatedRowsResult {
+  // TODO: allow persisted page selection via url
+  const [page, setPage] = useState(0);
+  const numRows = rows.length;
 
   // using dimensions of the panel, calculate pagination parameters
   const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
@@ -187,7 +200,7 @@ export function useProcessedRows(
     pageRangeEnd: number;
     smallPagination: boolean;
   } => {
-    if (!enablePagination) {
+    if (!enabled) {
       return { numPages: 0, rowsPerPage: 0, pageRangeStart: 1, pageRangeEnd: numRows, smallPagination: false };
     }
 
@@ -216,31 +229,11 @@ export function useProcessedRows(
       pageRangeEnd,
       smallPagination,
     };
-  }, [width, height, hasHeader, hasFooter, paginationHeight, defaultRowHeight, enablePagination, numRows, page]);
-
-  // calculate footer data
-  const footerCalcs = useMemo(() => {
-    if (!hasFooter) {
-      return [];
-    }
-    return fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-      if (isCountRowsSet) {
-        return index === 0 ? `${numRows}` : '';
-      }
-      if (index === 0) {
-        const footerCalcReducer = footerOptions?.reducer?.[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-      return getFooterItemNG(sortedRows, field, footerOptions);
-    });
-  }, [fields, hasFooter, footerOptions, sortedRows, isCountRowsSet, numRows]);
+  }, [width, height, hasHeader, hasFooter, paginationHeight, defaultRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
   useEffect(() => {
-    if (!enablePagination) {
+    if (!enabled) {
       return;
     }
 
@@ -248,39 +241,61 @@ export function useProcessedRows(
       // resets pagination to end
       setPage(numPages - 1);
     }
-  }, [numPages, enablePagination, page, setPage]);
+  }, [numPages, enabled, page, setPage]);
 
   // apply pagination to the sorted rows
   const paginatedRows = useMemo(() => {
-    if (!enablePagination) {
-      return sortedRows;
+    if (!enabled) {
+      return rows;
     }
     const pageOffset = page * rowsPerPage;
-    return sortedRows.slice(pageOffset, pageOffset + rowsPerPage);
-  }, [page, rowsPerPage, sortedRows, enablePagination]);
+    return rows.slice(pageOffset, pageOffset + rowsPerPage);
+  }, [page, rowsPerPage, rows, enabled]);
 
   return {
-    renderedRows: paginatedRows,
-    columnTypes,
-    numRows,
-    filter,
-    setFilter,
-    crossFilterOrder,
-    crossFilterRows,
-    sortColumns,
-    setSortColumns,
-    page: enablePagination ? page : -1,
+    rows: paginatedRows,
+    page: enabled ? page : -1,
     setPage,
     numPages,
     rowsPerPage,
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
-    footerCalcs,
   };
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, renderedRows: TableRow[]) {
+export interface FooterCalcsOptions {
+  enabled?: boolean;
+  isCountRowsSet?: boolean;
+  footerOptions?: TableFooterCalc;
+}
+
+export function useFooterCalcs(
+  rows: TableRow[],
+  fields: Field[],
+  { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
+): string[] {
+  return useMemo(() => {
+    if (!enabled) {
+      return [];
+    }
+    return fields.map((field, index) => {
+      if (field.state?.calcs) {
+        delete field.state?.calcs;
+      }
+      if (isCountRowsSet) {
+        return index === 0 ? `${rows.length}` : '';
+      }
+      if (index === 0) {
+        const footerCalcReducer = footerOptions?.reducer?.[0];
+        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+      }
+      return getFooterItemNG(rows, field, footerOptions);
+    });
+  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, rows: TableRow[]) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(
@@ -290,10 +305,24 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: Ta
     },
     // TODO: account for pagination, subtable expansion, default row height changes, height changes, data length
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, renderedRows]
+    [height, rows]
   );
 
   return scrollbarWidth;
+}
+
+export function useTextWraps(fields: Field[]): Record<string, boolean> {
+  return useMemo(
+    () =>
+      fields.reduce<{ [key: string]: boolean }>(
+        (acc, field) => ({
+          ...acc,
+          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
+        }),
+        {}
+      ),
+    [fields]
+  );
 }
 
 export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTable: boolean, defaultRowHeight: number) {

@@ -2,10 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 
 import { Field, FieldType } from '@grafana/data';
 
-import { useProcessedRows, ProcessedRowsOptions } from './hooks';
+import { useColumnTypes, useFilteredRows, usePaginatedRows, useSortedRows } from './hooks';
 
 describe('TableNG hooks', () => {
-  function setupHook(options: Partial<ProcessedRowsOptions> = {}) {
+  function setupData() {
     // Mock data for testing
     const fields: Field[] = [
       {
@@ -37,48 +37,32 @@ describe('TableNG hooks', () => {
       { name: 'Charlie', age: 35, active: true, __depth: 0, __index: 2 },
     ];
 
-    // Mock the hooks
-    return renderHook(() => useProcessedRows(rows, fields, { height: 300, width: 800, ...options }));
+    return { fields, rows };
   }
 
-  it('should correctly initialize with provided fields and rows', () => {
-    const { result } = setupHook();
-    expect(result.current.renderedRows[0].name).toBe('Alice');
-    expect(result.current.numRows).toBe(3);
-  });
+  describe('useColumnTypes', () => {
+    it('builds the expected record with column types', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => useColumnTypes(fields));
 
-  describe('sorting', () => {
-    it('should correctly set up the table with an initial sort', () => {
-      const { result } = setupHook({ initialSortBy: [{ displayName: 'age', desc: false }] });
-
-      // Initial state checks
-      expect(result.current.sortColumns).toEqual([{ columnKey: 'age', direction: 'ASC' }]);
-      expect(result.current.renderedRows[0].name).toBe('Bob');
-      expect(result.current.filter).toEqual({});
-    });
-
-    it('should change the sort on setSortColumns', () => {
-      const { result } = setupHook({ initialSortBy: [{ displayName: 'age', desc: false }] });
-
-      expect(result.current.renderedRows[0].name).toBe('Bob');
-
-      act(() => {
-        result.current.setSortColumns([{ columnKey: 'age', direction: 'DESC' }]);
+      expect(result.current).toEqual({
+        name: FieldType.string,
+        age: FieldType.number,
+        active: FieldType.boolean,
       });
-
-      expect(result.current.renderedRows[0].name).toBe('Charlie');
-
-      act(() => {
-        result.current.setSortColumns([{ columnKey: 'name', direction: 'ASC' }]);
-      });
-
-      expect(result.current.renderedRows[0].name).toBe('Alice');
     });
   });
 
-  describe('filtering', () => {
+  describe('useFilteredRows', () => {
+    it('should correctly initialize with provided fields and rows', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
+      expect(result.current.rows[0].name).toBe('Alice');
+    });
+
     it('should apply filters correctly', () => {
-      const { result } = setupHook();
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
 
       act(() => {
         result.current.setFilter({
@@ -86,12 +70,13 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(result.current.renderedRows.length).toBe(1);
-      expect(result.current.renderedRows[0].name).toBe('Alice');
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].name).toBe('Alice');
     });
 
     it('should clear filters correctly', () => {
-      const { result } = setupHook();
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() => useFilteredRows(rows, fields));
 
       act(() => {
         result.current.setFilter({
@@ -99,54 +84,90 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(result.current.renderedRows.length).toBe(1);
+      expect(result.current.rows.length).toBe(1);
 
       act(() => {
         result.current.setFilter({});
       });
 
-      expect(result.current.renderedRows.length).toBe(3);
+      expect(result.current.rows.length).toBe(3);
     });
   });
 
-  describe('pagination', () => {
+  describe('useSortedRows', () => {
+    it('should correctly set up the table with an initial sort', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() =>
+        useSortedRows(rows, fields, { initialSortBy: [{ displayName: 'age', desc: false }] })
+      );
+
+      // Initial state checks
+      expect(result.current.sortColumns).toEqual([{ columnKey: 'age', direction: 'ASC' }]);
+      expect(result.current.rows[0].name).toBe('Bob');
+    });
+
+    it('should change the sort on setSortColumns', () => {
+      const { fields, rows } = setupData();
+      const { result } = renderHook(() =>
+        useSortedRows(rows, fields, { initialSortBy: [{ displayName: 'age', desc: false }] })
+      );
+
+      expect(result.current.rows[0].name).toBe('Bob');
+
+      act(() => {
+        result.current.setSortColumns([{ columnKey: 'age', direction: 'DESC' }]);
+      });
+
+      expect(result.current.rows[0].name).toBe('Charlie');
+
+      act(() => {
+        result.current.setSortColumns([{ columnKey: 'name', direction: 'ASC' }]);
+      });
+
+      expect(result.current.rows[0].name).toBe('Alice');
+    });
+  });
+
+  describe('usePaginatedRows', () => {
     it('should return defaults for pagination values when pagination is disabled', () => {
-      const { result } = setupHook();
+      const { rows } = setupData();
+      const { result } = renderHook(() => usePaginatedRows(rows, { height: 300, width: 800, enabled: false }));
+
       expect(result.current.page).toBe(-1);
-      expect(result.current.numRows).toBe(3);
       expect(result.current.rowsPerPage).toBe(0);
       expect(result.current.pageRangeStart).toBe(1);
       expect(result.current.pageRangeEnd).toBe(3);
-      expect(result.current.renderedRows.length).toBe(3);
+      expect(result.current.rows.length).toBe(3);
     });
 
     it('should handle pagination correctly', () => {
       // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
-      const { result } = setupHook({
-        height: 100,
-        enablePagination: true,
-        headerCellHeight: 16,
-        paginationHeight: 20,
-        defaultRowHeight: 16,
-      });
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 60,
+          width: 800,
+          paginationHeight: 20,
+          defaultRowHeight: 16,
+        })
+      );
 
       expect(result.current.page).toBe(0);
-      expect(result.current.numRows).toBe(3);
       expect(result.current.rowsPerPage).toBe(2);
       expect(result.current.pageRangeStart).toBe(1);
       expect(result.current.pageRangeEnd).toBe(2);
-      expect(result.current.renderedRows.length).toBe(2);
+      expect(result.current.rows.length).toBe(2);
 
       act(() => {
         result.current.setPage(1);
       });
 
       expect(result.current.page).toBe(1);
-      expect(result.current.numRows).toBe(3);
       expect(result.current.rowsPerPage).toBe(2);
       expect(result.current.pageRangeStart).toBe(3);
       expect(result.current.pageRangeEnd).toBe(3);
-      expect(result.current.renderedRows.length).toBe(1);
+      expect(result.current.rows.length).toBe(1);
     });
   });
 });
