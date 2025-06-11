@@ -628,19 +628,6 @@
         },
         "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures."
       },
-      "getAPIkeyResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/ApiKeyDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getAccessControlStatusResponse": {
         "content": {
           "application/json": {
@@ -3057,6 +3044,20 @@
         },
         "type": "object"
       },
+      "AlertmanagerUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "Annotation": {
         "properties": {
           "alertId": {
@@ -3279,38 +3280,6 @@
           },
           "type": {
             "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ApiKeyDTO": {
-        "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
-          "expiration": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "lastUsedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "None",
-              "Viewer",
-              "Editor",
-              "Admin"
-            ],
             "type": "string"
           }
         },
@@ -5942,6 +5911,20 @@
         },
         "type": "object"
       },
+      "GettableAlertmanagerUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "type": "string"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "GettableAlertmanagers": {
         "properties": {
           "data": {
@@ -6795,7 +6778,11 @@
         "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
         "properties": {
           "equal": {
-            "$ref": "#/components/schemas/LabelNames"
+            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "source_match": {
             "additionalProperties": {
@@ -6970,17 +6957,6 @@
         },
         "title": "Label is a key/value pair of strings.",
         "type": "object"
-      },
-      "LabelName": {
-        "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-        "type": "string"
-      },
-      "LabelNames": {
-        "items": {
-          "$ref": "#/components/schemas/LabelName"
-        },
-        "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-        "type": "array"
       },
       "LabelSet": {
         "additionalProperties": {
@@ -8808,31 +8784,31 @@
       },
       "PrometheusRule": {
         "properties": {
-          "Alert": {
+          "alert": {
             "type": "string"
           },
-          "Annotations": {
+          "annotations": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
-          "Expr": {
+          "expr": {
             "type": "string"
           },
-          "For": {
+          "for": {
             "type": "string"
           },
-          "KeepFiringFor": {
+          "keep_firing_for": {
             "type": "string"
           },
-          "Labels": {
+          "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
-          "Record": {
+          "record": {
             "type": "string"
           }
         },
@@ -8840,26 +8816,26 @@
       },
       "PrometheusRuleGroup": {
         "properties": {
-          "Interval": {
+          "interval": {
             "$ref": "#/components/schemas/Duration"
           },
-          "Labels": {
+          "labels": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object"
           },
-          "Limit": {
+          "limit": {
             "format": "int64",
             "type": "integer"
           },
-          "Name": {
+          "name": {
             "type": "string"
           },
-          "QueryOffset": {
+          "query_offset": {
             "type": "string"
           },
-          "Rules": {
+          "rules": {
             "items": {
               "$ref": "#/components/schemas/PrometheusRule"
             },
@@ -12502,6 +12478,9 @@
           "Email": {
             "type": "string"
           },
+          "ExternalUID": {
+            "type": "string"
+          },
           "ID": {
             "format": "int64",
             "type": "integer"
@@ -16052,97 +16031,6 @@
         "summary": "Update Annotation.",
         "tags": [
           "annotations"
-        ]
-      }
-    },
-    "/auth/keys": {
-      "get": {
-        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
-        "operationId": "getAPIkeys",
-        "parameters": [
-          {
-            "description": "Show expired keys",
-            "in": "query",
-            "name": "includeExpired",
-            "schema": {
-              "default": false,
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAPIkeyResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get auth keys.",
-        "tags": [
-          "api_keys"
-        ]
-      },
-      "post": {
-        "deprecated": true,
-        "description": "Will return details of the created API key.",
-        "operationId": "addAPIkey",
-        "responses": {
-          "410": {
-            "$ref": "#/components/responses/goneError"
-          }
-        },
-        "summary": "Creates an API key.",
-        "tags": [
-          "api_keys"
-        ]
-      }
-    },
-    "/auth/keys/{id}": {
-      "delete": {
-        "deprecated": true,
-        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
-        "operationId": "deleteAPIkey",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Delete API key.",
-        "tags": [
-          "api_keys"
         ]
       }
     },

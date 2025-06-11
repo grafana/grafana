@@ -162,7 +162,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             name="host"
             type="text"
             value={dsSettings.url || ''}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="localhost:1433"
             onChange={onDSOptionChanged('url')}
           />
@@ -367,7 +367,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 value={dsSettings.user || ''}
                 placeholder={
                   jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw
-                    ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                    ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                       'name@EXAMPLE.COM'
                     : t('configuration.configuration-editor.placeholder-user', 'user')
                 }
@@ -434,7 +434,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           >
             <Input
               width={LONG_WIDTH}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="1m"
               value={jsonData.timeInterval || ''}
               onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}

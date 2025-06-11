@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.9",
+    "@floating-ui/react": "0.27.12",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
     "@grafana/plugin-ui": "0.10.6",
@@ -51,7 +51,7 @@
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@prometheus-io/lezer-promql": "0.304.0",
+    "@prometheus-io/lezer-promql": "0.304.1",
     "@reduxjs/toolkit": "2.5.1",
     "@types/debounce-promise": "3.1.9",
     "@types/lodash": "4.17.15",

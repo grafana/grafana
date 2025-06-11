@@ -1771,19 +1771,40 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 #### `ha_redis_address`
 
-The Redis server address that should be connected to.
+Redis server address or addresses. It can be a single Redis address if using Redis standalone,
+or a list of comma-separated addresses if using Redis Cluster/Sentinel.
 
 {{< admonition type="note" >}}
 For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
 {{< /admonition >}}
 
+#### `ha_redis_cluster_mode_enabled`
+
+Set to `true` when using Redis in Cluster mode. Mutually exclusive with `ha_redis_sentinel_mode_enabled`.
+
+#### `ha_redis_sentinel_mode_enabled`
+
+Set to `true` when using Redis in Sentinel mode. Mutually exclusive with `ha_redis_cluster_mode_enabled`.
+
+#### `ha_redis_sentinel_master_name`
+
+Redis Sentinel master name. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
+
 #### `ha_redis_username`
 
-The username that should be used to authenticate with the Redis server.
+The username that should be used to authenticate with Redis.
 
 #### `ha_redis_password`
 
-The password that should be used to authenticate with the Redis server.
+The password that should be used to authenticate with Redis.
+
+#### `ha_redis_sentinel_username`
+
+The username that should be used to authenticate with Redis Sentinel. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
+
+#### `ha_redis_sentinel_password`
+
+The password that should be used to authenticate with Redis Sentinel. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
 
 #### `ha_redis_db`
 
@@ -1791,7 +1812,7 @@ The Redis database. The default value is `0`.
 
 #### `ha_redis_prefix`
 
-A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting. Useful if you plan to share Redis with multiple Grafana instances.
 
 #### `ha_redis_peer_name`
 
@@ -1800,6 +1821,38 @@ The name of the cluster peer to use as an identifier. If none is provided, a ran
 #### `ha_redis_max_conns`
 
 The maximum number of simultaneous Redis connections.
+
+#### `ha_redis_tls_enabled`
+
+Enable TLS on the client used to communicate with the Redis server. This should be set to `true` if using any of the other `ha_redis_tls_*` fields.
+
+#### `ha_redis_tls_cert_path`
+
+Path to the PEM-encoded TLS client certificate file used to authenticate with the Redis server. Required if using Mutual TLS.
+
+#### `ha_redis_tls_key_path`
+
+Path to the PEM-encoded TLS private key file. Also requires the client certificate to be configured. Required if using Mutual TLS.
+
+#### `ha_redis_tls_ca_path`
+
+Path to the PEM-encoded CA certificates file. If not set, the host's root CA certificates are used.
+
+#### `ha_redis_tls_server_name`
+
+Overrides the expected name of the Redis server certificate.
+
+#### `ha_redis_tls_insecure_skip_verify`
+
+Skips validating the Redis server certificate.
+
+#### `ha_redis_tls_cipher_suites`
+
+Overrides the default TLS cipher suite list.
+
+#### `ha_redis_tls_min_version`
+
+Overrides the default minimum TLS version. Allowed values: `VersionTLS10`, `VersionTLS11`, `VersionTLS12`, `VersionTLS13`
 
 #### `ha_listen_address`
 
@@ -1925,6 +1978,16 @@ Configures for how long alert annotations are stored. Default is 0, which keeps 
 #### `max_annotations_to_keep`
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
+
+<hr>
+
+### `[unified_alerting.prometheus_conversion]`
+
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+
+#### `rule_query_offset`
+
+Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
 
 <hr>
 
@@ -2706,34 +2769,6 @@ Keys of features to enable, separated by space.
 #### `FEATURE_TOGGLE_NAME = false`
 
 Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
-
-<hr>
-
-### `[feature_management]`
-
-The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
-
-For more information, refer to [Configure feature toggles](feature-toggles/).
-
-#### `allow_editing`
-
-Lets you switch the feature toggle state in the feature management page. The default is `false`.
-
-#### `update_webhook`
-
-Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page are read-only.
-
-{{< admonition type="note" >}}
-The API for feature toggle updates has not been defined yet.
-{{< /admonition >}}
-
-#### `hidden_toggles`
-
-Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
-
-#### `read_only_toggles`
-
-Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
 
 <hr>
 
