@@ -147,8 +147,11 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
-	case http.MethodPost + "/api/convert/api/v1/alerts":
+	case http.MethodPost + "/api/convert/api/v1/alerts",
+		http.MethodDelete + "/api/convert/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+	case http.MethodGet + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// Alert Instances and Silences
 
