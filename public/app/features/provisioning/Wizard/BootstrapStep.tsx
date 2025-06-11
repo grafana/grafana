@@ -3,7 +3,11 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  RepositoryViewList,
+  useGetRepositoryFilesQuery,
+  useGetResourceStatsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
