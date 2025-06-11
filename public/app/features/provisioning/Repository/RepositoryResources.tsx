@@ -24,6 +24,8 @@ export function RepositoryResources({ repo }: RepoProps) {
     Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const supportsHistory = repo.spec?.type === 'github';
+
   const columns: Array<Column<ResourceListItem>> = useMemo(
     () => [
       {
@@ -99,15 +101,17 @@ export function RepositoryResources({ repo }: RepoProps) {
                   <Trans i18nKey="provisioning.repository-resources.columns.view-folder">View</Trans>
                 </LinkButton>
               )}
-              <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
-                <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
-              </LinkButton>
+              {supportsHistory && (
+                <LinkButton href={`${PROVISIONING_URL}/${repo.metadata?.name}/history/${path}`}>
+                  <Trans i18nKey="provisioning.repository-resources.columns.history">History</Trans>
+                </LinkButton>
+              )}
             </Stack>
           );
         },
       },
     ],
-    [repo.metadata?.name]
+    [repo.metadata?.name, supportsHistory]
   );
 
   if (query.isLoading) {

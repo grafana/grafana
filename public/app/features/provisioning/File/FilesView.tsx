@@ -22,25 +22,21 @@ export function FilesView({ repo }: FilesViewProps) {
   );
 
   const { t } = useTranslate();
+  const getFileUrl = (path: string) => `${PROVISIONING_URL}/${name}/file/${path}`;
+  const supportsHistory = repo.spec?.type === 'github';
 
-  const columns: Array<Column<FileDetails>> = [
+  const getHistoryUrl = (path: string) => supportsHistory ? `${PROVISIONING_URL}/${name}/history/${path}` : '';
+  const isViewableFile = (path: string) => ['.json', '.yaml', '.yml'].some(ext => path.endsWith(ext));
+
+  const baseColumns: Array<Column<FileDetails>> = [
     {
       id: 'path',
       header: 'Path',
       sortType: 'string',
       cell: ({ row: { original } }: FileCell<'path'>) => {
         const { path } = original;
-        return <a href={`${PROVISIONING_URL}/${name}/file/${path}`}>{path}</a>;
+        return <a href={getFileUrl(path)}>{path}</a>;
       },
-    },
-    {
-      id: 'size',
-      header: 'Size (KB)',
-      cell: ({ row: { original } }: FileCell<'size'>) => {
-        const { size } = original;
-        return (parseInt(size, 10) / 1024).toFixed(2);
-      },
-      sortType: 'number',
     },
     {
       id: 'hash',
@@ -54,19 +50,36 @@ export function FilesView({ repo }: FilesViewProps) {
         const { path } = original;
         return (
           <Stack>
-            {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
-              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>
+            {isViewableFile(path) && (
+              <LinkButton href={getFileUrl(path)}>
                 <Trans i18nKey="provisioning.files-view.columns.view">View</Trans>
               </LinkButton>
             )}
-            <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>
-              <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
-            </LinkButton>
+            {supportsHistory && (
+              <LinkButton href={getHistoryUrl(path)}>
+                <Trans i18nKey="provisioning.files-view.columns.history">History</Trans>
+              </LinkButton>
+            )}
           </Stack>
         );
       },
     },
   ];
+
+  const sizeColumn: Column<FileDetails> = {
+    id: 'size',
+    header: 'Size (KB)',
+    cell: ({ row: { original } }: FileCell<'size'>) => {
+      const { size } = original;
+      return (parseInt(size, 10) / 1024).toFixed(2);
+    },
+    sortType: 'number',
+  };
+
+  const columns = repo.spec?.type === 'github' || repo.spec?.type === 'local'
+    ? [...baseColumns.slice(0, 1), sizeColumn, ...baseColumns.slice(1)]
+    : baseColumns;
+
 
   if (query.isLoading) {
     return (

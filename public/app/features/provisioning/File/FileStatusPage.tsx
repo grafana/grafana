@@ -12,6 +12,7 @@ import {
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryStatusQuery,
 } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -27,6 +28,8 @@ export default function FileStatusPage() {
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
   const { t } = useTranslate();
+  const repo = useGetRepositoryStatusQuery({ name });
+
   return (
     <Page
       navId="provisioning"
@@ -41,7 +44,7 @@ export default function FileStatusPage() {
               {file.error.message}
             </Alert>
           )}
-          {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
+          {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} repoType={repo.data?.spec?.type}/>}
         </>
       </Page.Contents>
     </Page>
@@ -59,17 +62,19 @@ interface Props {
   repo: string;
   repoRef?: string;
   tab: TabSelection;
+  repoType?: string;
 }
 
-function ResourceView({ wrap, repo, repoRef, tab }: Props) {
+function ResourceView({ wrap, repo, repoRef, tab, repoType }: Props) {
   const isDashboard = wrap.resource?.type?.kind === 'Dashboard';
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const [replaceFile, replaceFileStatus] = useReplaceRepositoryFilesWithPathMutation();
   const [deleteFile, deleteFileStatus] = useDeleteRepositoryFilesWithPathMutation();
-
+  const supportsHistory = repoType === 'github' ;
   const [jsonView, setJsonView] = useState('');
+
 
   useEffect(() => {
     switch (tab) {
@@ -113,9 +118,11 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
             <Trans i18nKey="provisioning.resource-view.base">Base</Trans>
           </LinkButton>
         )}
-        <LinkButton href={`${PROVISIONING_URL}/${repo}/history/${wrap.path}`} variant="secondary">
-          <Trans i18nKey="provisioning.resource-view.history">History</Trans>
-        </LinkButton>
+        {supportsHistory && (
+          <LinkButton href={`${PROVISIONING_URL}/${repo}/history/${wrap.path}`} variant="secondary">
+            <Trans i18nKey="provisioning.resource-view.history">History</Trans>
+          </LinkButton>
+        )}
       </Stack>
 
       <br />

@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
 import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -11,10 +11,27 @@ import { HistoryListResponse } from '../types';
 import { formatTimestamp } from '../utils/time';
 
 export default function FileHistoryPage() {
+  const { t } = useTranslate();
   const params = useParams();
   const name = params['name'] ?? '';
-  const path = params['*'] ?? '';
   const query = useGetRepositoryStatusQuery({ name });
+  const repo = query.data;
+
+  if (!repo || repo.spec?.type !== 'github') {
+    return (
+      <EmptyState message={t('provisioning.file-history-page.history-not-supported', 'History not supported')} variant="not-found">
+        <Text element={'p'}>
+          <Trans i18nKey="provisioning.file-history-page.history-only-github">
+            History is only supported for GitHub repositories.
+          </Trans>
+        </Text>
+        <TextLink href={`${PROVISIONING_URL}/${name}`}>
+          <Trans i18nKey="provisioning.file-history-page.back-to-repository">Back to repository</Trans>
+        </TextLink>
+      </EmptyState>
+    );
+  }
+  const path = params['*'] ?? '';
   const history = useGetRepositoryHistoryWithPathQuery({ name, path });
   const notFound = query.isError && isNotFoundError(query.error);
 
