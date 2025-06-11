@@ -5,7 +5,6 @@ package v2alpha1
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 // +k8s:openapi-gen=true
