@@ -27,10 +27,6 @@ import { TableNGProps, TableRow, TableSummaryRow, TableColumn } from './types';
 import { frameToRecords, getDefaultRowHeight, getFooterStyles, getTextAlign, handleSort } from './utils';
 
 export function TableNG(props: TableNGProps) {
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles2, { enablePagination: props.enablePagination, noHeader: props.noHeader });
-  const panelContext = usePanelContext();
-
   const {
     cellHeight,
     data,
@@ -46,6 +42,15 @@ export function TableNG(props: TableNGProps) {
     width,
   } = props;
 
+  const theme = useTheme2();
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const styles = useStyles2(getStyles2, {
+    enablePagination: props.enablePagination,
+    noHeader: props.noHeader,
+    defaultRowHeight,
+  });
+  const panelContext = usePanelContext();
+
   const gridHandle = useRef<DataGridHandle>(null);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
@@ -57,8 +62,6 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer.length &&
       footerOptions.reducer[0] === ReducerID.count
   );
-
-  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const {
@@ -180,7 +183,7 @@ export function TableNG(props: TableNGProps) {
   const hasSubTable = false;
 
   // todo: don't re-init this on each memoizedData change, only schema/config changes
-  const rowHeight = useRowHeight(columns, data, hasSubTable);
+  const rowHeight = useRowHeight(columns, data, hasSubTable, defaultRowHeight);
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
@@ -304,7 +307,11 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 
 const getStyles2 = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
+  {
+    enablePagination,
+    noHeader,
+    defaultRowHeight,
+  }: { enablePagination?: boolean; noHeader?: boolean; defaultRowHeight?: number }
 ) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -352,7 +359,7 @@ const getStyles2 = (
       zIndex: 1,
 
       // this prevents cells with empty content from collapsing to a few px
-      minHeight: 35, // defaultRowHeight
+      minHeight: defaultRowHeight,
     },
   }),
   cellWrapped: css({

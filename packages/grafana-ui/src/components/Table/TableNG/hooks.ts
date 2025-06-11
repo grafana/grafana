@@ -294,7 +294,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: Ta
   return scrollbarWidth;
 }
 
-export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTable: boolean) {
+export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTable: boolean, defaultRowHeight: number) {
   const theme = useTheme2();
 
   const wrappedColIdxs = useMemo(
@@ -331,8 +331,6 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
   }, [theme.typography.fontSize, theme.typography.fontFamily]);
 
   const rowHeight = useMemo(() => {
-    const defaultRowHeight = 35;
-
     if (hasSubTable || wrappedColIdxs.some((v) => v)) {
       const HPADDING = 6;
       const BORDER_RIGHT = 0.666667;
@@ -373,7 +371,7 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
     }
 
     return defaultRowHeight;
-  }, [wrappedColIdxs, hasSubTable, columns, avgCharWidth, ctx]);
+  }, [wrappedColIdxs, hasSubTable, columns, defaultRowHeight, avgCharWidth, ctx]);
 
   return rowHeight;
 }
