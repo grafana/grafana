@@ -74,7 +74,6 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	var (
 		legacyOptions  = options.DeepCopy()
 		unifiedOptions = options.DeepCopy()
-		unifiedToken   = ""
 		log            = logging.FromContext(ctx).With("method", "List")
 	)
 
