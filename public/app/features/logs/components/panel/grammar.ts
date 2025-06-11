@@ -24,7 +24,10 @@ export const generateLogGrammar = (log: LogListModel) => {
   };
 };
 
-export const generateTextMatchGrammar = (highlightWords: string[] | undefined = [], search: string | undefined): Grammar => {
+export const generateTextMatchGrammar = (
+  highlightWords: string[] | undefined = [],
+  search: string | undefined
+): Grammar => {
   const textMatches = [...highlightWords];
   if (search) {
     textMatches.push(search);
