@@ -173,7 +173,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
             value: variable.state.defaultValue?.value,
             text: variable.state.defaultValue?.text,
           }
-        : {};
+        : undefined;
 
       variables.push({
         ...commonProperties,
@@ -428,7 +428,7 @@ export function sceneVariablesSetToSchemaV2Variables(
             value: variable.state.defaultValue?.value,
             text: variable.state.defaultValue?.text,
           }
-        : {};
+        : undefined;
 
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
