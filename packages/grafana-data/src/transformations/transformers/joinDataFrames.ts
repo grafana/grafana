@@ -431,12 +431,19 @@ function joinInner(tables: AlignedData[]) {
     // console.timeEnd('match left');
 
     // console.time('materialize');
-    let outFieldsTpl = Array.from({length: ltable.length + rtable.length - 1}, () => `Array(${count})`).join(',');
+    let outFieldsTpl = Array.from({ length: ltable.length + rtable.length - 1 }, () => `Array(${count})`).join(',');
     let copyLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ltable[${i}][lidx]`).join(';');
     // (skips join field in right table)
-    let copyRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i+1}][ridxs[j]]`).join(';');
+    let copyRightRowTpl = rtable
+      .slice(1)
+      .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridxs[j]]`)
+      .join(';');
 
-    let materialize = new Function('matched', 'ltable', 'rtable', `
+    let materialize = new Function(
+      'matched',
+      'ltable',
+      'rtable',
+      `
       const joined = [${outFieldsTpl}];
 
       let rowIdx = 0;
@@ -451,7 +458,8 @@ function joinInner(tables: AlignedData[]) {
       }
 
       return joined;
-    `);
+    `
+    );
 
     let joined = materialize(matched, ltable, rtable);
     // console.timeEnd('materialize');
@@ -460,7 +468,7 @@ function joinInner(tables: AlignedData[]) {
     lfield = ltable[0];
   }
 
-  return ltable as  Array<Array<string | number | null | undefined>>;
+  return ltable as Array<Array<string | number | null | undefined>>;
 }
 
 //--------------------------------------------------------------------------------
