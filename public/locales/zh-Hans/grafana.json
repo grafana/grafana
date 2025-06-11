@@ -4408,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "选择",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5223,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "消息",
-      "body-dashboard-drastically-changed": "由于您正在使用的新数据面板功能仅支持新的 Grafana 数据面板架构格式，因此数据面板将以新格式保存。请确保您要执行此操作，或者您希望将数据面板保存为新副本。",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "取消"
       },
@@ -5239,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "动态数据面板功能是实验性的，并且与当前数据面板行为没有完全的功能对称性。它基于新的模式格式，且不支持库面板。这意味着，在导出数据面板以便在其他实例中使用时，其中不会包含库面板。我们打算在<2>生命周期</2>功能中逐步支持它们。",
       "schema-v2-library-panels-export-title": "数据面板模式 V2 暂不支持导出库面板以便在其他实例中使用",
-      "title-dashboard-drastically-changed": "数据面板发生了重大变化"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "将使当前刷新成为新的默认值",
@@ -7689,6 +7690,8 @@
       },
       "enable-highlighting": "启用突出显示",
       "escape-newlines": "修复日志行中错误转义的换行和制表符序列",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "隐藏时间戳",
       "hide-unique-labels": "隐藏唯一标签",
       "newest-first": "先显示最新日志 - 点击以先显示最旧日志",
