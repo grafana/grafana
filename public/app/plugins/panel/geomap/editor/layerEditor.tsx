@@ -122,7 +122,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           });
         }
         builder.addBooleanSwitch({
-          path: 'tooltip',
+          path: 'layer-tooltip',
           name: 'Display tooltip',
           description: 'Show the tooltip for layer',
           defaultValue: true,
