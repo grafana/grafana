@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -66,6 +67,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                              |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                       | Yes                |
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                       | Yes                |
+| `ssoSettingsLDAP`                      | Use the new SSO Settings API to configure LDAP                                                                                     | Yes                |
 | `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
@@ -102,7 +104,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`                  | Allow pan and zoom in canvas panel                                                                                                                            |
 | `regressionTransformation`            | Enables regression analysis transformation                                                                                                                    |
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
-| `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                |
 | `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |

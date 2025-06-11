@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { DataFrame, Field, getFieldDisplayName, SelectableValue, FieldNamePickerBaseNameMode } from '@grafana/data';
 
-import { getFieldTypeIcon } from '../../types';
+import { getFieldTypeIcon } from '../../types/icon';
 
 /**
  * @internal

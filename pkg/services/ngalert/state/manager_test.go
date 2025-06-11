@@ -885,7 +885,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
@@ -895,16 +895,6 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t3,
-				},
-				{
-					Labels:             labels["system + rule + no-data"],
-					ResultFingerprint:  noDataLabels.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(t2, eval.NoData),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -1029,15 +1019,18 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels:             labels["system + rule"],
+					Labels:             data.Labels{"label": "test", "system": "owned"},
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.Alerting,
 					LatestResult:       newEvaluation(t3, eval.Alerting),
-					StartsAt:           t3,
+					StartsAt:           t1,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            &t3,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
-					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
+					LastSentAt:         &t1,
+					Annotations: map[string]string{
+						"annotation": "test",
+					},
 				},
 			},
 		},

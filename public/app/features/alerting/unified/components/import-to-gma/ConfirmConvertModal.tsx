@@ -8,16 +8,23 @@ import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createListFilterLink } from '../../utils/navigation';
+import { getRuleName, isPluginProvidedRule } from '../../utils/rules';
 
 import { ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
 import { parseYamlFileToRulerRulesConfigDTO } from './yamlToRulerConverter';
+
+export const SYNTHETICS_RULE_NAMES = [
+  'SyntheticMonitoringCheckFailureAtHighSensitivity',
+  'SyntheticMonitoringCheckFailureAtMediumSensitivity',
+  'SyntheticMonitoringCheckFailureAtLowSensitivity',
+  'instance_job_severity:probe_success:mean5m',
+];
 
 type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismiss'> & {
   isOpen: boolean;
@@ -145,7 +152,14 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
 
       const isRootFolder = isEmpty(targetFolder?.uid);
 
-      trackImportToGMASuccess({ importSource });
+      trackImportToGMASuccess({
+        importSource,
+        isRootFolder,
+        namespace,
+        ruleGroup,
+        pauseRecordingRules,
+        pauseAlertingRules,
+      });
       const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', targetFolder?.title ?? '']], {
         skipSubPath: true,
       });
@@ -220,7 +234,9 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
 
 /**
  * Filter the ruler rules config to be imported. It filters the rules by namespace and group name.
- * It also filters out the rules that have the '__grafana_origin' label.
+ * It also filters out the rules that have the '__grafana_origin' label, and rules from synthetics that have the
+ * 'namespace: synthetic_monitoring' label.
+ * Precondition: these rules are cloud rules.
  * @param rulerRulesConfig - The ruler rules config to be imported
  * @param namespace - The namespace to filter the rules by
  * @param groupName - The group name to filter the rules by
@@ -248,8 +264,8 @@ export function filterRulerRulesConfig(
       })
       .map((group) => {
         const filteredRules = group.rules.filter((rule) => {
-          const hasGrafanaOriginLabel = rule.labels?.[GRAFANA_ORIGIN_LABEL];
-          if (hasGrafanaOriginLabel) {
+          const shouldSkip = shouldSkipRule(rule);
+          if (shouldSkip) {
             someRulesAreSkipped = true;
             return false;
           }
@@ -269,6 +285,30 @@ export function filterRulerRulesConfig(
   });
 
   return { filteredConfig, someRulesAreSkipped };
+}
+
+/*
+This function is used to check if the rule should be skipped.
+It checks if the rule has the '__grafana_origin' label, and if the rule is from synthetics.
+If the rule has the '__grafana_origin' label, it is skipped.
+If the rule is from synthetics, it is skipped.
+*/
+function shouldSkipRule(rule: RulerRuleDTO): boolean {
+  // check if the rule has the '__grafana_origin' label
+  const hasGrafanaOriginLabel = isPluginProvidedRule(rule);
+  if (hasGrafanaOriginLabel) {
+    return true;
+  }
+  // check if the rule is from synthetics
+  const hasSyntheticsLabels = rule.labels?.namespace === 'synthetic_monitoring';
+
+  if (!hasSyntheticsLabels) {
+    return false;
+  }
+
+  const ruleName = getRuleName(rule);
+
+  return SYNTHETICS_RULE_NAMES.some((name) => name === ruleName);
 }
 
 function RulesPreview({ rules }: { rules: RulerRulesConfigDTO }) {
