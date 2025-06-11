@@ -120,10 +120,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
           placeholder={t('provisioning.config-form.placeholder-my-config', 'My config')}
         />
       </Field>
-      {type === 'github' && (
+      {type === 'github' || type === 'git' && (
         <>
           <Field
-            label={t('provisioning.config-form.label-github-token', 'GitHub token')}
+            label={t('provisioning.config-form.label-token', 'Token')}
             required
             error={errors?.token?.message}
             invalid={!!errors.token}
@@ -140,7 +140,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                     {...field}
                     id={'token'}
                     placeholder={t(
-                      'provisioning.config-form.placeholder-github-token',
+                      'provisioning.config-form.placeholder-token',
                       'ghp_yourTokenHere1234567890abcdEFGHijklMNOP'
                     )}
                     isConfigured={tokenConfigured}
@@ -153,12 +153,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
               }}
             />
           </Field>
-          <TokenPermissionsInfo />
+          {(type !== 'git') && <TokenPermissionsInfo />}
           <Field
             label={t('provisioning.config-form.label-repository-url', 'Repository URL')}
             error={errors?.url?.message}
             invalid={!!errors?.url}
-            description={t('provisioning.config-form.description-repository-url', 'Enter the GitHub repository URL')}
+            description={t('provisioning.config-form.description-repository-url', 'Enter the repository URL')}
             required
           >
             <Input
@@ -168,12 +168,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
                   message: t(
                     'provisioning.config-form.error-valid-github-url',
-                    'Please enter a valid GitHub repository URL'
+                    'Please enter a valid repository URL'
                   ),
                 },
               })}
               placeholder={t(
-                'provisioning.config-form.placeholder-github-url',
+                'provisioning.config-form.placeholder-url',
                 'https://github.com/username/repo-name'
               )}
             />
