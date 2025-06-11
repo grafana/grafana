@@ -76,7 +76,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	)
 
 	// Split a dualwriter continue token (legacy, unified) if we received one.
-	// Otherwise, only populated `legacyToken` with the legacy token seperated
+	// Otherwise, only populated `legacyToken` with the legacy token separated
 	// by `|`.
 	legacyToken, unifiedToken, err := parseContinueTokens(options.Continue)
 	if err != nil {
