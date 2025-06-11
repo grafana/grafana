@@ -4,8 +4,8 @@ import * as React from 'react';
 
 import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
-import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
+import { hoverColor } from '../../themes/mixins';
 import { Trans } from '../../utils/i18n';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
@@ -112,7 +112,7 @@ export const LegendTableItem = ({
 LegendTableItem.displayName = 'LegendTableItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = styleMixins.hoverColor(theme.colors.background.primary, theme);
+  const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
 
   return {
     row: css({
