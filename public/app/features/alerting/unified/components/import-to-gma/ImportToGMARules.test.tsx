@@ -47,7 +47,7 @@ const ui = {
 
 alertingFactory.dataSource.mimir().build({ meta: { alerting: true } });
 
-describe.skip('ImportToGMARules', () => {
+describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
   testWithFeatureToggles(['alertingImportYAMLUI', 'alertingMigrationUI']);
 
