@@ -161,8 +161,8 @@ export interface BackendSrv {
   get<T = any>(url: string, params?: any, requestId?: string, options?: Partial<BackendSrvRequest>): Promise<T>;
   delete<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
   post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
-  patch<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
-  put<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
+  patch<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
+  put<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T>;
 
   /**
    * @deprecated Use the `.fetch()` function instead. If you prefer to work with a promise
