@@ -217,12 +217,12 @@ func enterpriseDirectory(ctx context.Context, opts *pipeline.ArgumentOpts) (any,
 		return nil, fmt.Errorf("error initializing grafana directory: %w", err)
 	}
 
-	src, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, o.GitHubToken)
+	clone, err := cloneOrMount(ctx, opts.Client, o.EnterpriseDir, o.EnterpriseRepo, o.EnterpriseRef, o.GitHubToken)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error cloning or mounting Grafana Enterprise directory: %w", err)
 	}
 
-	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), src), nil
+	return InitializeEnterprise(opts.Client, grafanaDir.(*dagger.Directory), clone), nil
 }
 
 var GrafanaDirectoryFlags = []cli.Flag{
