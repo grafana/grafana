@@ -2287,7 +2287,8 @@
       "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-01-15T11:43:19Z"
+        "creationTimestamp": "2024-01-15T11:43:19Z",
+        "deletionTimestamp": "2025-05-14T09:11:28Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
