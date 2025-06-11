@@ -68,11 +68,9 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
-  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const styles = useStyles2(getStyles2, {
-    enablePagination: props.enablePagination,
-    noHeader: props.noHeader,
-    defaultRowHeight,
+    enablePagination,
+    noHeader,
   });
   const panelContext = usePanelContext();
 
@@ -133,6 +131,8 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, {
     initialSortBy,
   });
+
+  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
 
   const {
     rows: paginatedRows,
@@ -478,7 +478,7 @@ const getStyles2 = (
     '&:hover': {
       zIndex: theme.zIndex.tooltip,
       whiteSpace: 'pre-line',
-      height: 'fit-content',
+      height: 'min-content',
       minWidth: 'min-content',
     },
   }),
@@ -582,16 +582,15 @@ function getCellClasses(
 
 /*
 TODO:
-column width and min column width via panel config
-buggy hover overflow; smaller text looks bad
 hidden
 overlay/expand on hover
 active line and cell styling
-inspect? actions?
 subtable/ expand
 -----
 enable pagination disables footer?
+pagination + text wrap...
 auto-cell: can we deprecate in favor of newer RDG options?
+overflow hover at the bottom of paginated table
 -----
 accessible sorting and filtering
 accessible table navigation
