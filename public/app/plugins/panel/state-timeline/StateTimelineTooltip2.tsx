@@ -85,18 +85,10 @@ export const StateTimelineTooltip2 = ({
     }
   }
 
-  // eslint-disable  @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-    value: endTime ? (
-      <div>
-        {xVal} - <br />
-        {xField.display!(endTime).text}
-      </div>
-    ) : (
-      xVal
-    ),
-  } as any;
+    value: endTime ? xVal + ' - \n' + xField.display!(endTime).text : xVal,
+  };
 
   return (
     <VizTooltipWrapper>

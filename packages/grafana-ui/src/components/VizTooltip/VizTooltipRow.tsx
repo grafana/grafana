@@ -10,7 +10,6 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, VizTooltipItem } from './types';
-import { extractTextFromReactNode } from './utils';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   value: string | number | null | ReactNode;
@@ -53,7 +52,7 @@ export const VizTooltipRow = ({
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'wrap',
+        whiteSpace: 'pre-line',
         wordBreak: 'break-word',
       };
 
@@ -79,9 +78,7 @@ export const VizTooltipRow = ({
     };
   }, [showCopySuccess]);
 
-  const copyToClipboard = async (value: string | number | null | ReactNode, type: LabelValueTypes) => {
-    const text = extractTextFromReactNode(value);
-
+  const copyToClipboard = async (text: string, type: LabelValueTypes) => {
     if (!(navigator?.clipboard && window.isSecureContext)) {
       fallbackCopyToClipboard(text, type);
       return;
@@ -189,7 +186,7 @@ export const VizTooltipRow = ({
             <div
               className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
               style={innerValueScrollStyle}
-              onClick={() => copyToClipboard(value, LabelValueTypes.value)}
+              onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
             >
               {value}
