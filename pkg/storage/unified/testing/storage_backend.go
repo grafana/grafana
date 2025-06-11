@@ -35,6 +35,7 @@ const (
 	TestGetResourceStats          = "get resource stats"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
+	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 )
 
@@ -79,6 +80,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
+		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 	}
 
@@ -1127,4 +1129,96 @@ func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer 
 	require.NotNil(t, server)
 
 	return server
+}
+
+func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	server := newServer(t, backend)
+	ns := nsPrefix + "-ns-trash"
+
+	// item1 deleted with multiple history events
+	rv1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete1, rv1)
+	rvDelete2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete2, rvDelete1)
+
+	// item2 deleted and recreated, should not be returned in trash
+	rv2, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv2, int64(0))
+	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete3, rv2)
+	rv3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv3, int64(0))
+
+	tests := []struct {
+		name               string
+		request            *resourcepb.ListRequest
+		expectedVersions   []int64
+		expectedValues     []string
+		minExpectedHeadRV  int64
+		expectedContinueRV int64
+		expectedSortAsc    bool
+	}{
+		{
+			name: "returns the latest delete event",
+			request: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_TRASH,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns,
+						Group:     "group",
+						Resource:  "resource",
+						Name:      "item1",
+					},
+				},
+			},
+			expectedVersions:   []int64{rvDelete2},
+			expectedValues:     []string{"item1 DELETED"},
+			minExpectedHeadRV:  rvDelete2,
+			expectedContinueRV: rvDelete2,
+			expectedSortAsc:    false,
+		},
+		{
+			name: "does not return a version in the resource table",
+			request: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_TRASH,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns,
+						Group:     "group",
+						Resource:  "resource",
+						Name:      "item2",
+					},
+				},
+			},
+			expectedVersions:   []int64{},
+			expectedValues:     []string{},
+			minExpectedHeadRV:  rv3,
+			expectedContinueRV: rv3,
+			expectedSortAsc:    false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := server.List(ctx, tc.request)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			expectedItemCount := len(tc.expectedVersions)
+			require.Len(t, res.Items, expectedItemCount)
+			for i := 0; i < expectedItemCount; i++ {
+				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
+				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
+			}
+			require.GreaterOrEqual(t, res.ResourceVersion, tc.minExpectedHeadRV)
+		})
+	}
 }
