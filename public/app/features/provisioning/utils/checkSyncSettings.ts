@@ -1,4 +1,4 @@
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 type syncState = {
   instanceConnected: boolean;

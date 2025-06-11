@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { folderAPI } from 'app/api/clients/folder';
+import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 

@@ -8,7 +8,7 @@ import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 
 import { ShareModal } from './ShareModal';
 

@@ -1,6 +1,6 @@
 import { useDebounce } from 'react-use';
 
-import { Job, useGetRepositoryJobsQuery, useListJobQuery } from 'app/api/clients/provisioning';
+import { Job, useGetRepositoryJobsQuery, useListJobQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 interface RepositoryHistoricalJobsArgs {
   /** Limits the returned jobs to those which apply to this repository. */

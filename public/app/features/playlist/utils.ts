@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { DashboardQueryResult, SearchQuery } from '../search/service/types';
 
