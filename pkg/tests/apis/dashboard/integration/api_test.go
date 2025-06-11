@@ -56,8 +56,8 @@ type TestContext struct {
 	OrgID                     int64
 }
 
-// TestIntegrationValidation tests the dashboard K8s API
-func TestIntegrationValidation(t *testing.T) {
+// TestIntegrationDashboardAPIValidation tests the dashboard K8s API with validation checks
+func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -77,9 +77,24 @@ func TestIntegrationValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
 				}})
 
-			testIntegrationValidationForServer(t, helper, dualWriterMode)
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard validation tests", func(t *testing.T) {
+				runDashboardValidationTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard quota tests", func(t *testing.T) {
+				runQuotaTests(t, org1Ctx)
+			})
 		})
 	}
 
@@ -114,22 +129,92 @@ func TestIntegrationValidation(t *testing.T) {
 	}
 }
 
-func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) {
-	t.Cleanup(func() {
-		helper.Shutdown()
-	})
+// TestIntegrationDashboardAPIAuthorization tests the dashboard K8s API with authorization checks
+func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
-	// Create test contexts organization
-	org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-	org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+	// TODO: rest.Mode3 is failint on dashboard creation, so we skip it for now
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode4, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
 
-	t.Run("Organization 1 tests", func(t *testing.T) {
-		t.Run("Dashboard validation tests", func(t *testing.T) {
-			runDashboardValidationTests(t, org1Ctx)
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
+
+			t.Run("Authorization tests for all identity types", func(t *testing.T) {
+				runAuthorizationTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx)
+			})
+
+			t.Run("Cross-organization tests", func(t *testing.T) {
+				runCrossOrgTests(t, org1Ctx, org2Ctx)
+			})
+
+			t.Run("Dashboard HTTP API test", func(t *testing.T) {
+				runDashboardHttpTest(t, org1Ctx, org2Ctx)
+			})
 		})
+	}
+}
 
-		t.Run("Dashboard quota tests", func(t *testing.T) {
-			runQuotaTests(t, org1Ctx)
+// TestIntegrationDashboardAPI tests the dashboard K8s API
+func TestIntegrationDashboardAPI(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	// TODO: rest.Mode3 is failint on dashboard creation, so we skip it for now
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode4, rest.Mode5}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard LIST API test", func(t *testing.T) {
+				runDashboardListTests(t, org1Ctx)
+			})
 		})
 
 		t.Run("Authorization tests for all identity types", func(t *testing.T) {
@@ -144,7 +229,7 @@ func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper
 			t.Skip("Skip LIST")
 			runDashboardListTest(t, org1Ctx)
 		})
-	})
+	}
 
 	t.Run("Dashboard HTTP API test", func(t *testing.T) {
 		runDashboardHttpTest(t, org1Ctx, org2Ctx)
@@ -2097,6 +2182,8 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 
 // Helper function to retrieve a dashboard via HTTP
 func getDashboardViaHTTP(t *testing.T, ctx *TestContext, dashboardPath string, user apis.User) (map[string]interface{}, error) {
+	t.Helper()
+
 	getResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
 		User:   user,
 		Method: http.MethodGet,
@@ -2194,7 +2281,7 @@ func testDashboardHttpUpdateMethods(t *testing.T, ctx TestContext, dashboardPath
 }
 
 // Test dashboard list API with complex permission scenarios
-func runDashboardListTest(t *testing.T, ctx TestContext) {
+func runDashboardListTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
 	// Make sure no dashboards exist before we start
@@ -2223,8 +2310,8 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 	// Define a map of user types to their clients
 	clients := map[string]struct {
 		userClient   *apis.K8sResourceClient
-		tokenClient  *apis.K8sResourceClient
 		folderClient *apis.K8sResourceClient
+		tokenClient  *apis.K8sResourceClient
 	}{
 		"Admin": {
 			userClient:   getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()),
@@ -2296,8 +2383,8 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 				viewerUserId, _ := identity.UserIdentifier(ctx.ViewerUser.Identity.GetID())
 				viewerServiceUserId := ctx.ViewerServiceAccount.Id
 				permissions := []ResourcePermissionSetting{
-					{Level: ResourcePermissionLevelEdit, UserID: &viewerUserId},
-					{Level: ResourcePermissionLevelEdit, UserID: &viewerServiceUserId},
+					{Level: ResourcePermissionLevelView, UserID: &viewerUserId},
+					{Level: ResourcePermissionLevelView, UserID: &viewerServiceUserId},
 				}
 				setResourceUserPermission(t, ctx, ctx.AdminUser, isDashboard, resourceUID, permissions)
 			},
@@ -2309,8 +2396,8 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 				editorUserId, _ := identity.UserIdentifier(ctx.EditorUser.Identity.GetID())
 				editorServiceUserId := ctx.EditorServiceAccount.Id
 				permissions := []ResourcePermissionSetting{
-					{Level: ResourcePermissionLevelView, UserID: &editorUserId},
-					{Level: ResourcePermissionLevelView, UserID: &editorServiceUserId},
+					{Level: ResourcePermissionLevelEdit, UserID: &editorUserId},
+					{Level: ResourcePermissionLevelEdit, UserID: &editorServiceUserId},
 				}
 				setResourceUserPermission(t, ctx, ctx.AdminUser, isDashboard, resourceUID, permissions)
 			},
@@ -2322,6 +2409,24 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 	rootDashboards := make([]*unstructured.Unstructured, len(folderConfigs))
 	folders := make([]*folder.Folder, len(folderConfigs))
 	folderDashboards := make([]*unstructured.Unstructured, len(folderConfigs))
+
+	// Clean up
+	t.Cleanup(func() {
+		// Delete all root dashboards
+		for _, dash := range rootDashboards {
+			err := adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
+
+		// Delete all folder dashboards and folders
+		for i, folder := range folders {
+			err := adminClient.Resource.Delete(context.Background(), folderDashboards[i].GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+
+			err = adminFolderClient.Resource.Delete(context.Background(), folder.UID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
+	})
 
 	// Create all test resources (folders, dashboards) in one loop
 	for i, fc := range folderConfigs {
@@ -2415,71 +2520,55 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 
 	// Test LIST operation for each identity
 	for _, identity := range identities {
-		t.Run(fmt.Sprintf("LIST operation for %s", identity.Name), func(t *testing.T) {
-			// Get dashboards visible to this identity
-			clients := []apis.K8sResourceClient{
-				*identity.DashboardClient,
-				*identity.FolderClient,
-			}
+		// Get dashboards visible to this identity
+		clients := []apis.K8sResourceClient{
+			*identity.DashboardClient,
+			*identity.FolderClient,
+		}
+		for _, client := range clients {
+			t.Run(fmt.Sprintf("LIST operation for %s and %s", identity.Name, client.Args.GVR), func(t *testing.T) {
+				// Use the client to list all resources
+				dashList, err := client.Resource.List(context.Background(), v1.ListOptions{})
+				require.NoError(t, err)
 
-			for _, client := range clients {
-				t.Run(fmt.Sprintf("LIST operation for %s", client.Args.GVR), func(t *testing.T) {
-					listOpts := v1.ListOptions{}
-					dashList, err := client.Resource.List(context.Background(), listOpts)
+				if len(dashList.Items) == 0 {
+					t.Logf("WARNING: Got empty dashboard list for %s", identity.Name)
+				}
+
+				require.NotEmpty(t, dashList.Items)
+
+				// Extract dashboard titles
+				dashTitles := make([]string, 0, len(dashList.Items))
+				for _, dash := range dashList.Items {
+					meta, err := utils.MetaAccessor(&dash)
 					require.NoError(t, err)
-					require.NotEmpty(t, dashList.Items)
 
-					// Extract dashboard titles
-					dashTitles := make([]string, 0, len(dashList.Items))
-					for _, dash := range dashList.Items {
-						meta, err := utils.MetaAccessor(&dash)
-						require.NoError(t, err)
+					dashTitles = append(dashTitles, meta.FindTitle(""))
+				}
 
-						dashTitles = append(dashTitles, meta.FindTitle(""))
-					}
+				// Verify expectations
+				var expectedTitles []string
+				if client.Args.GVR == getDashboardGVR() {
+					expectedTitles = expectations[identity.Name]
+				} else {
+					expectedTitles = folderPermissions[identity.Name]
+				}
+				require.ElementsMatch(t, expectedTitles, dashTitles)
 
-					// Verify expectations
-					var expectedTitles []string
-					if client.Args.GVR == getDashboardGVR() {
-						expectedTitles = expectations[identity.Name]
-					} else {
-						expectedTitles = folderPermissions[identity.Name]
-					}
-					require.ElementsMatch(t, expectedTitles, dashTitles)
-
-					// Verify all expected items are found
-					for _, expected := range expectedTitles {
-						found := false
-						for _, title := range dashTitles {
-							if title == expected {
-								found = true
-								break
-							}
+				// Verify all expected items are found
+				for _, expected := range expectedTitles {
+					found := false
+					for _, title := range dashTitles {
+						if title == expected {
+							found = true
+							break
 						}
-						require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
 					}
-				})
-			}
-		})
+					require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
+				}
+			})
+		}
 	}
-
-	// Clean up
-	t.Run("Cleanup dashboards and folders", func(t *testing.T) {
-		// Delete all root dashboards
-		for _, dash := range rootDashboards {
-			err := adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-		}
-
-		// Delete all folder dashboards and folders
-		for i, folder := range folders {
-			err := adminClient.Resource.Delete(context.Background(), folderDashboards[i].GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-
-			err = adminFolderClient.Resource.Delete(context.Background(), folder.UID, v1.DeleteOptions{})
-			require.NoError(t, err)
-		}
-	})
 }
 
 func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
