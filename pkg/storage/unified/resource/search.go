@@ -381,7 +381,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
-func (s *searchSupport) buildIndexes(ctx context.Context, logMessage string) (int, error) {
+func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
@@ -393,7 +393,11 @@ func (s *searchSupport) buildIndexes(ctx context.Context, logMessage string) (in
 
 	for _, info := range stats {
 		group.Go(func() error {
-			s.log.Debug(logMessage, "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
+			if rebuild {
+				// on rebuilds, clear the cache, so we get the latest usage insights data
+				s.builders.clearNamespacedCache(info.NamespacedResource)
+			}
+			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
 			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
@@ -413,7 +417,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	defer span.End()
 	start := time.Now().Unix()
 
-	totalBatchesIndexed, err := s.buildIndexes(ctx, "initializing search index")
+	totalBatchesIndexed, err := s.buildIndexes(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -556,12 +560,7 @@ func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
 	start := time.Now()
 	s.log.Info("rebuilding all search indexes")
 
-	// the cache has to be cleared in order to retrieve the latest usage insights data
-	if s.builders != nil {
-		s.builders.clearNamespacedCache()
-	}
-
-	totalBatchesIndexed, err := s.buildIndexes(ctx, "rebuilding search index")
+	totalBatchesIndexed, err := s.buildIndexes(ctx, true)
 	if err != nil {
 		return fmt.Errorf("failed to rebuild indexes: %w", err)
 	}
@@ -843,8 +842,8 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 	return indexQueueProcessor, nil
 }
 
-func (s *builderCache) clearNamespacedCache() {
+func (s *builderCache) clearNamespacedCache(key NamespacedResource) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.ns.Purge()
+	s.ns.Remove(key)
 }
