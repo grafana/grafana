@@ -71,7 +71,7 @@ func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
 	}
 }
 
-func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, http.Header, error) {
+func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.ProfileTypes")
 	defer span.End()
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{
@@ -82,11 +82,11 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 	if res.Msg.ProfileTypes == nil {
 		// Let's make sure we send at least empty array if we don't have any types
-		return []*ProfileType{}, nil, nil
+		return []*ProfileType{}, nil
 	} else {
 		pTypes := make([]*ProfileType, len(res.Msg.ProfileTypes))
 		for i, pType := range res.Msg.ProfileTypes {
@@ -95,11 +95,11 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int
 				Label: pType.Name + " - " + pType.SampleType,
 			}
 		}
-		return pTypes, res.Header(), nil
+		return pTypes, nil
 	}
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, http.Header, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSeries", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{
@@ -117,7 +117,7 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 
 	series := make([]*Series, len(resp.Msg.Series))
@@ -152,10 +152,10 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Series: series,
 		Units:  getUnits(profileTypeID),
 		Label:  parts[1],
-	}, resp.Header(), nil
+	}, nil
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetProfile", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
@@ -173,18 +173,18 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 
 	if resp.Msg.Flamegraph == nil {
 		// Not an error, can happen when querying data oout of range.
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	return profileQuery(resp.Msg.Flamegraph, profileTypeID), resp.Header(), nil
+	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
 }
 
-func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
+func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSpanProfile", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector), attribute.String("spanSelector", strings.Join(spanSelector, ","))))
 	defer span.End()
 	req := &connect.Request[querierv1.SelectMergeSpanProfileRequest]{
@@ -202,18 +202,18 @@ func (c *PyroscopeClient) GetSpanProfile(ctx context.Context, profileTypeID, lab
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 
 	if resp.Msg.Flamegraph == nil {
 		// Not an error, can happen when querying data oout of range.
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	return profileQuery(resp.Msg.Flamegraph, profileTypeID), resp.Header(), nil
+	return profileQuery(ctx, err, span, resp.Msg.Flamegraph, profileTypeID)
 }
 
-func profileQuery(flamegraph *querierv1.FlameGraph, profileTypeID string) *ProfileResponse {
+func profileQuery(ctx context.Context, err error, span trace.Span, flamegraph *querierv1.FlameGraph, profileTypeID string) (*ProfileResponse, error) {
 	levels := make([]*Level, len(flamegraph.Levels))
 	for i, level := range flamegraph.Levels {
 		levels[i] = &Level{
@@ -229,7 +229,7 @@ func profileQuery(flamegraph *querierv1.FlameGraph, profileTypeID string) *Profi
 			MaxSelf: flamegraph.MaxSelf,
 		},
 		Units: getUnits(profileTypeID),
-	}
+	}, nil
 }
 
 func getUnits(profileTypeID string) string {
@@ -244,7 +244,7 @@ func getUnits(profileTypeID string) string {
 	return unit
 }
 
-func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
+func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
@@ -256,11 +256,11 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, fmt.Errorf("error sending LabelNames request %v", err)
+		return nil, fmt.Errorf("error sending LabelNames request %v", err)
 	}
 
 	if resp.Msg.Names == nil {
-		return []string{}, nil, nil
+		return []string{}, nil
 	}
 
 	var filtered []string
@@ -270,10 +270,10 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		}
 	}
 
-	return filtered, resp.Header(), nil
+	return filtered, nil
 }
 
-func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
+func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelValues")
 	defer span.End()
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{
@@ -286,12 +286,12 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
+		return nil, err
 	}
 	if resp.Msg.Names == nil {
-		return []string{}, nil, nil
+		return []string{}, nil
 	}
-	return resp.Msg.Names, resp.Header(), nil
+	return resp.Msg.Names, nil
 }
 
 func isPrivateLabel(label string) bool {
