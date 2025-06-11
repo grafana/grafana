@@ -6,10 +6,9 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { SupportedView } from '../components/rules/Filter/RulesViewModeSelector';
+import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { isAdmin } from '../utils/misc';
 
 import { FilterView } from './FilterView';
@@ -17,16 +16,17 @@ import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
-  const [queryParams] = useURLSearchParams();
-  const { filterState, hasActiveFilters } = useRulesFilter();
-
-  const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
-  const showListView = hasActiveFilters || view === 'list';
+  const { filterState } = useRulesFilter();
+  const { viewMode, handleViewChange } = useListViewMode();
 
   return (
     <>
-      <RulesFilter onClear={() => {}} />
-      {showListView ? <FilterView filterState={filterState} /> : <GroupedView />}
+      <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+      {viewMode === 'list' ? (
+        <FilterView filterState={filterState} />
+      ) : (
+        <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+      )}
     </>
   );
 }

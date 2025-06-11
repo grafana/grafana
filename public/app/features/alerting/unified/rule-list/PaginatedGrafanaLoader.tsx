@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Trans } from '@grafana/i18n';
 import { Icon, Spinner, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
@@ -17,15 +17,39 @@ import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { LoadMoreButton } from './components/LoadMoreButton';
+import { NoRulesFound } from './components/NoRulesFound';
+import { groupFilter as groupFilterFn } from './hooks/filters';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
+import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
-export const GRAFANA_GROUP_PAGE_SIZE = 40;
+interface LoaderProps {
+  groupFilter?: string;
+  namespaceFilter?: string;
+}
 
-export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true, limitAlerts: 0 });
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+  const key = `${groupFilter}-${namespaceFilter}`;
 
-  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
+  // Key is crucial. It resets the generator when filters change.
+  return <PaginatedGroupsLoader key={key} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />;
+}
+
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+  // If there are filters, we don't want to populate the cache to avoid performance issues
+  // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
+  const hasFilters = Boolean(groupFilter || namespaceFilter);
+
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
+    populateCache: hasFilters ? false : true,
+    limitAlerts: 0,
+  });
+
+  // If there are no filters we can match one frontend page to one API page.
+  // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
+  const apiGroupPageSize = getApiGroupPageSize(hasFilters);
+
+  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(apiGroupPageSize)));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -34,9 +58,19 @@ export function PaginatedGrafanaLoader() {
     };
   }, []);
 
+  const filterFn = useMemo(
+    () => (group: PromRuleGroupDTO) =>
+      groupFilterFn(group, {
+        namespace: namespaceFilter,
+        groupName: groupFilter,
+      }),
+    [namespaceFilter, groupFilter]
+  );
+
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
     groupsGenerator.current,
-    GRAFANA_GROUP_PAGE_SIZE
+    FRONTED_GROUPED_PAGE_SIZE,
+    filterFn
   );
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
@@ -78,7 +112,9 @@ export function PaginatedGrafanaLoader() {
             </ListSection>
           );
         })}
-        {hasNoRules && <GrafanaNoRulesCTA />}
+        {/* only show the CTA if the user has no rules and this isn't the result of a filter / search query */}
+        {hasNoRules && !hasFilters && <GrafanaNoRulesCTA />}
+        {hasNoRules && hasFilters && <NoRulesFound />}
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
