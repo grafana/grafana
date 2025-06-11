@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      backend-changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -66,7 +68,9 @@ jobs:
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs:
+      - detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.backend-changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -101,7 +105,9 @@ jobs:
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     # If it gets merged into `main` or `release-*`, then a junit test result is uploaded to GCS.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs:
+      - detect-changes
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.backend-changed == 'true')
     strategy:
       matrix:
         shard: [
