@@ -11,6 +11,7 @@ import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 // import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
+import { TABLE } from '../constants';
 import {
   CellColors,
   CustomCellRendererProps,
@@ -28,7 +29,6 @@ import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
-import { TABLE } from '../constants';
 
 export function TableCellNG(props: TableCellNGProps) {
   const {
@@ -49,6 +49,10 @@ export function TableCellNG(props: TableCellNGProps) {
     replaceVariables,
   } = props;
 
+  // TODO - use `onSelectedCellChange` at the top to maintain the selected state
+  // and show cell actions for accessible cell actions.
+  const isSelected = false;
+
   const cellInspect = field.config?.custom?.inspect ?? false;
   const displayName = getDisplayName(field);
 
@@ -61,12 +65,12 @@ export function TableCellNG(props: TableCellNGProps) {
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const displayValue = field.display!(value);
-  let colors: CellColors = { bgColor: '', textColor: '', bgHoverColor: '' };
-  if (rowBg) {
-    colors = rowBg(rowIdx);
-  } else {
-    colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
-  }
+  const colors: CellColors = useMemo(() => {
+    if (rowBg) {
+      return rowBg(rowIdx);
+    }
+    return getCellColors(theme, cellOptions, displayValue);
+  }, [theme, cellOptions, displayValue, rowBg, rowIdx]);
   const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO
@@ -212,7 +216,7 @@ export function TableCellNG(props: TableCellNGProps) {
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {renderedCell}
-      {isHovered && (cellInspect || showFilters) && (
+      {(isHovered || isSelected) && (cellInspect || showFilters) && (
         <div className={styles.cellActions}>
           {cellInspect && (
             <IconButton
@@ -273,13 +277,13 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
   cellActions: css({
     display: 'flex',
     position: 'absolute',
-    top: '1px',
+    top: 0,
     left: isRightAligned ? 0 : undefined,
     right: isRightAligned ? undefined : 0,
     margin: 'auto',
     height: '100%',
     background: theme.colors.background.secondary,
     color: theme.colors.text.primary,
-    padding: '4px 0px 4px 4px',
+    padding: '4px 0 4px 4px',
   }),
 });
