@@ -1981,6 +1981,16 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.prometheus_conversion]`
+
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+
+#### `rule_query_offset`
+
+Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`

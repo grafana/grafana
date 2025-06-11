@@ -229,7 +229,14 @@ export const trackDeletedRuleRestoreFail = async () => {
   reportInteraction('grafana_alerting_deleted_rule_restore_error');
 };
 
-export const trackImportToGMASuccess = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+export const trackImportToGMASuccess = async (payload: {
+  importSource: 'yaml' | 'datasource';
+  isRootFolder: boolean;
+  namespace?: string;
+  ruleGroup?: string;
+  pauseRecordingRules: boolean;
+  pauseAlertingRules: boolean;
+}) => {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
