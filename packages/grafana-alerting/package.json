@@ -38,7 +38,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
@@ -77,8 +77,8 @@
     "typescript": "5.7.3"
   },
   "peerDependencies": {
-    "@grafana/runtime": "^11.6.2",
-    "@grafana/ui": "^11.6.2",
+    "@grafana/runtime": ">=11.6 <= 12.x",
+    "@grafana/ui": ">=11.6 <= 12.x",
     "@reduxjs/toolkit": "^2.8.0",
     "msw": "^2.0.0",
     "react": "^18.0.0",
