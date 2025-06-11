@@ -11,13 +11,6 @@ inputs:
         * `pro:docker:llinux/amd64`
     required: true
     type: string
-  go-version:
-    type: string
-    required: false
-  go-version-file:
-    type: string
-    required: false
-    default: go.mod
   grafana-path:
     description: Path to a clone of the 'grafana' repo
     default: grafana
@@ -58,6 +51,11 @@ inputs:
     description: If true, then checksums will be produced for each file (with a '.sha256' extension)
     required: false
     default: false
+  verify:
+    type: boolean
+    description: If true, then the e2e smoke tests will run to verify the produced artifacts (--verify)
+    required: false
+    default: false
   output:
     type: string
     description: Filename to redirect stdout to. Contains list of packages that were produced
@@ -65,20 +63,33 @@ inputs:
     required: false
   docker-tag-format:
     type: string
+    default: "{{ .version }}-{{ .arch }}"
+    description: Go template of Docker image tag
+    required: false
+  docker-tag-format-ubuntu:
+    type: string
+    default: "{{ .version }}-ubuntu-{{ .arch }}"
     description: Go template of Docker image tag
     required: false
   docker-org:
     type: string
     description: Docker org of produced images
+    default: grafana
     required: false
   docker-registry:
     type: string
     description: Docker registry of produced images
+    default: docker.io
+    required: false
+  ubuntu-base:
+    type: string
+    default: 'ubuntu:22.04'
+    required: false
+  alpine-base:
+    type: string
+    default: 'alpine:3.22'
     required: false
 outputs:
-  directory:
-    description: Directory where `grafana-build` is cloned
-    value: ${{ steps.output.outputs.directory }}
   dist-dir:
     description: Directory where artifacts are placed
     value: ${{ steps.output.outputs.dist_dir }}
@@ -99,19 +110,12 @@ runs:
   steps:
     - shell: bash
       run: |
-        echo "GRAFANA_BUILD_PATH=${GB_PATH:-grafana-build}" >> "$GITHUB_ENV"
         echo "GRAFANA_PATH=${{ github.workspace }}/${GRAFANA_DIR}" >> "$GITHUB_ENV"
         echo "ENTERPRISE_PATH=${{ github.workspace }}/${{ inputs.grafana-enterprise-path }}" >> "$GITHUB_ENV"
       env:
         GB_PATH: ${{ inputs.path }}
         GRAFANA_DIR: ${{ inputs.grafana-path }}
         ENTERPRISE_DIR: ${{ inputs.enterprise-path }}
-    - shell: bash
-      run: echo "GRAFANA_GO_VERSION=${GO_VERSION:-`grep 'go 1.' ${GO_VERSION_FILE} |  cut -d\  -f2`}" >> "$GITHUB_ENV"
-      env:
-        GO_VERSION: ${{ inputs.go-version }}
-        GO_VERSION_FILE: ${{ inputs.go-version-file }}
-        GRAFANA_PATH: ${{ inputs.grafana-path }}
     - name: Build Grafana Enterprise packages
       uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
       env:
@@ -126,19 +130,22 @@ runs:
         DOCKER_ORG: ${{ inputs.docker-org }}
         DOCKER_REGISTRY: ${{ inputs.docker-registry }}
         TAG_FORMAT: ${{ inputs.docker-tag-format }}
+        UBUNTU_TAG_FORMAT: ${{ inputs.docker-tag-format-ubuntu }}
         CHECKSUM: ${{ inputs.checksum }}
+        VERIFY: ${{ inputs.verify }}
+        ALPINE_BASE: ${{ inputs.alpine-base }}
+        UBUNTU_BASE: ${{ inputs.ubuntu-base }}
       with:
         verb: run
-        workdir: ${{ env.GRAFANA_BUILD_PATH }}
-        args: go run ./pkg/build/cmd artifacts --artifacts ${ARTIFACTS} --grafana-dir=${GRAFANA_PATH} --enterprise-dir=${ENTERPRISE_PATH} --version=${VERSION} --go-version=${GRAFANA_GO_VERSION} --patches-repo=${PATCHES_REPO} --patches-ref=${PATCHES_REF} --patches-path=${PATCHES_PATH} --build-id=${BUILD_ID} --tag-format="${TAG_FORMAT}" --org=${DOCKER_ORG} --registry=${DOCKER_REGISTRY} --checksum=${CHECKSUM} > $OUTFILE
+        dagger-flags: --verbose=0
+        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts --artifacts ${ARTIFACTS} --grafana-dir=${GRAFANA_PATH} --alpine-base=${ALPINE_BASE} --ubuntu-base=${UBUNTU_BASE} --enterprise-dir=${ENTERPRISE_PATH} --version=${VERSION} --patches-repo=${PATCHES_REPO} --patches-ref=${PATCHES_REF} --patches-path=${PATCHES_PATH} --build-id=${BUILD_ID} --tag-format="${TAG_FORMAT}" --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}" --org=${DOCKER_ORG} --registry=${DOCKER_REGISTRY} --checksum=${CHECKSUM} --verify=${VERIFY} > $OUTFILE
     - id: output
       shell: bash
       env:
         OUTFILE: ${{ inputs.output }}
       run: |
-        echo "dist_dir=${GRAFANA_BUILD_PATH}/dist" | tee -a $GITHUB_OUTPUT
-        echo "directory=${GRAFANA_BUILD_PATH}" | tee -a $GITHUB_OUTPUT
-        echo "file=${GRAFANA_BUILD_PATH}/${OUTFILE}" | tee -a $GITHUB_OUTPUT
+        echo "dist_dir=dist" | tee -a $GITHUB_OUTPUT
+        echo "file=${OUTFILE}" | tee -a $GITHUB_OUTPUT
         echo "grafana_commit=$(git -C ${GRAFANA_PATH} rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
         echo "enterprise_commit=$(git -C ${ENTERPRISE_PATH} rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
         echo "version=$(cat ${GRAFANA_BUILD_PATH}/dist/VERSION)" | tee -a $GITHUB_OUTPUT
