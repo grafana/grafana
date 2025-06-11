@@ -12,12 +12,15 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';
+import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
@@ -34,7 +37,7 @@ export interface ExportableResource {
   apiVersion: string;
   kind: 'Dashboard';
   metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
-  spec: Dashboard | DashboardModel | DashboardV2Spec | { error: unknown };
+  spec: Dashboard | DashboardModel | DashboardV2Spec | DashboardJson | DashboardDataDTO | { error: unknown };
   // A placeholder for now because as code tooling expects it
   status: {};
 }
@@ -112,7 +115,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
     const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
-    if (isDashboardV2Spec(origDashboard) && 'elements' in exportable && initialSaveModelVersion === 'v2') {
+    if (
+      isDashboardV2Spec(origDashboard) &&
+      'elements' in exportable &&
+      initialSaveModelVersion === 'v2' &&
+      exportMode !== ExportMode.V1Resource
+    ) {
       this.setState({
         exportMode: ExportMode.V2Resource,
       });
@@ -131,19 +139,66 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
 
     if (exportMode === ExportMode.V1Resource) {
-      const spec = transformSceneToSaveModel(scene);
+      // Check if source is V2 and auto-transform to V1
+      if (isDashboardV2Spec(origDashboard) && initialSaveModelVersion === 'v2') {
+        try {
+          const spec = transformSceneToSaveModelSchemaV2(scene);
+          const metadata = getMetadata(scene, Boolean(isSharingExternally));
+          const spec1 = transformDashboardV2SpecToV1(spec, {
+            name: metadata.name ?? '',
+            generation: metadata.generation ?? 0,
+            resourceVersion: metadata.resourceVersion ?? '0',
+            creationTimestamp: metadata.creationTimestamp ?? '',
+          });
 
-      return {
-        json: {
-          apiVersion: scene.serializer.apiVersion ?? '',
-          kind: 'Dashboard',
-          metadata,
-          spec,
-          status: {},
-        },
-        initialSaveModelVersion,
-        hasLibraryPanels: undefined,
-      };
+          let exportableV1: Dashboard | DashboardDataDTO | DashboardJson | { error: unknown };
+          if (isSharingExternally) {
+            const oldModel = new DashboardModel(spec1, undefined, {
+              getVariablesFromState: () => {
+                return getVariablesCompatibility(window.__grafanaSceneContext);
+              },
+            });
+            exportableV1 = await makeExportableV1(oldModel);
+          } else {
+            exportableV1 = spec1;
+          }
+          return {
+            json: {
+              // Forcing V1 version here to match export mode selection
+              apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
+              kind: 'Dashboard',
+              metadata,
+              spec: exportableV1,
+              status: {},
+            },
+            initialSaveModelVersion,
+            hasLibraryPanels: undefined,
+          };
+        } catch (err) {
+          return {
+            json: {
+              error: `Failed to convert dashboard to v1. ${err}`,
+            },
+            initialSaveModelVersion,
+            hasLibraryPanels: undefined,
+          };
+        }
+      } else {
+        // Source is already V1, export as-is
+        const spec = transformSceneToSaveModel(scene);
+        return {
+          json: {
+            // Forcing V1 version here to match export mode selection
+            apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
+            kind: 'Dashboard',
+            metadata,
+            spec,
+            status: {},
+          },
+          initialSaveModelVersion,
+          hasLibraryPanels: undefined,
+        };
+      }
     }
 
     if (exportMode === ExportMode.V2Resource) {

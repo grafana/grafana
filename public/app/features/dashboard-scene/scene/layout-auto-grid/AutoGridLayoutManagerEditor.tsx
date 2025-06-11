@@ -106,6 +106,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       >
         {isStandardMinWidth ? (
           <Combobox
+            id="min-column-width"
             options={minWidthOptions}
             value={columnWidth}
             onChange={onNamedMinWidthChanged}
@@ -113,6 +114,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
           />
         ) : (
           <Input
+            id="min-column-width"
             defaultValue={columnWidth}
             onBlur={onCustomMinWidthChanged}
             ref={(ref) => setInputRef(ref)}
@@ -138,6 +140,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       </Field>
       <Field label={t('dashboard.auto-grid.options.max-columns', 'Max columns')} className={styles.narrowSelector}>
         <Combobox
+          id="max-columns"
           options={colOptions}
           value={String(maxColumnCount)}
           onChange={({ value }) => layoutManager.onMaxColumnCountChanged(parseInt(value, 10))}
@@ -220,6 +223,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       >
         {isStandardHeight ? (
           <Combobox
+            id="min-height"
             options={minWidthOptions}
             value={rowHeight}
             onChange={onNamedMinHeightChanged}
@@ -227,6 +231,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           />
         ) : (
           <Input
+            id="min-height"
             defaultValue={rowHeight}
             onBlur={onCustomHeightChanged}
             ref={(ref) => setInputRef(ref)}
@@ -252,6 +257,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       </Field>
       <Field label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')} className={styles.narrowSelector}>
         <InlineSwitch
+          id="fill-screen-toggle"
           value={fillScreen}
           onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
           data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}

@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Välj",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "meddelande",
-      "body-dashboard-drastically-changed": "Eftersom du använder nya instrumentpanelsfunktioner som endast stöds på det nya schemaformatet för Grafana-instrumentpaneler kommer instrumentpanelen att sparas i det nya formatet. Utför denna åtgärd om du verkligen vill göra det eller vill spara instrumentpanelen som en ny kopia.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Avbryt"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "Funktionen för dynamiska instrumentpaneler är experimentell och har ännu inte fullständig funktionsparitet med nuvarande instrumentpanelbeteende. Det är baserat på ett nytt schemaformat som saknar stöd för bibliotekspaneler. Det innebär att om du vill använda instrumentpanelen i en annan instans och exporterar den kommer inte bibliotekspaneler att inkluderas under exporten. Vi har för avsikt att inkludera stöd för dem när vi går vidare med funktionens <2>livscykel</2>.",
       "schema-v2-library-panels-export-title": "Instrumentpanelschema V2 saknar för närvarande stöd för export av bibliotekspaneler för användning i en annan instans",
-      "title-dashboard-drastically-changed": "Instrumentpanelen har ändrats drastiskt"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Kommer att göra den aktuella uppdateringen till ny standard",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Aktivera markering",
       "escape-newlines": "Åtgärda felaktiga undantagstecken för radbrytningar och tabbar i loggrader",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
