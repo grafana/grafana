@@ -157,7 +157,7 @@ export interface TableCellNGProps {
   setIsInspecting: (isInspecting: boolean) => void;
   shouldTextOverflow: () => boolean;
   theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;

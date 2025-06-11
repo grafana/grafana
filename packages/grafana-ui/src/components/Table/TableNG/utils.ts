@@ -182,12 +182,7 @@ export function isTextCell(key: string, columnTypes: Record<string, string>): bo
 
 export function shouldTextOverflow(
   key: string,
-  row: TableRow,
   columnTypes: ColumnTypes,
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding: number,
   textWrap: boolean,
   field: Field,
   cellType: TableCellDisplayMode

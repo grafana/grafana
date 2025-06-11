@@ -43,6 +43,7 @@ interface TableFiltersAndSort {
   // --- rows --- //
   renderedRows: TableRow[];
   numRows: number;
+  columnTypes: Record<string, FieldType>;
   // --- filters --- //
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
@@ -260,6 +261,7 @@ export function useProcessedRows(
 
   return {
     renderedRows: paginatedRows,
+    columnTypes,
     numRows,
     filter,
     setFilter,

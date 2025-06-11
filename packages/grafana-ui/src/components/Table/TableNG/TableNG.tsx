@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import { useMemo, useRef } from 'react';
-import { DataGrid, DataGridHandle, RenderRowProps, Row } from 'react-data-grid';
+import { useMemo, useRef, useState } from 'react';
+import { DataGrid, DataGridHandle, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -19,12 +19,14 @@ import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { Trans } from '../../../utils/i18n';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
+import { TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
+import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import { useProcessedRows, useRowHeight, useScrollbarWidth } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn } from './types';
-import { frameToRecords, getDefaultRowHeight, getFooterStyles, getTextAlign, handleSort } from './utils';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, CellColors } from './types';
+import { frameToRecords, getCellColors, getDefaultRowHeight, getDisplayName, getFooterStyles, getTextAlign, handleSort, shouldTextOverflow } from './utils';
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -33,11 +35,14 @@ export function TableNG(props: TableNGProps) {
     enablePagination,
     enableSharedCrosshair,
     footerOptions,
+    getActions,
     height,
     initialSortBy,
     noHeader,
+    onCellFilterAdded,
     onColumnResize,
     onSortByChange,
+    replaceVariables,
     showTypeIcons,
     width,
   } = props;
@@ -51,6 +56,16 @@ export function TableNG(props: TableNGProps) {
   });
   const panelContext = usePanelContext();
 
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [contextMenuProps, setContextMenuProps] = useState<{
+    rowIdx?: number;
+    value: string;
+    mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+    top?: number;
+    left?: number;
+  } | null>(null);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
   const gridHandle = useRef<DataGridHandle>(null);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
@@ -58,15 +73,16 @@ export function TableNG(props: TableNGProps) {
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
+    footerOptions.reducer &&
+    footerOptions.reducer.length &&
+    footerOptions.reducer[0] === ReducerID.count
   );
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const {
     renderedRows,
     numRows,
+    columnTypes,
     filter,
     setFilter,
     crossFilterOrder,
@@ -93,6 +109,19 @@ export function TableNG(props: TableNGProps) {
     isCountRowsSet,
   });
 
+  // Create a map of column key to text wrap
+  const textWraps = useMemo(
+    () =>
+      data.fields.reduce<{ [key: string]: boolean }>(
+        (acc, field) => ({
+          ...acc,
+          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
+        }),
+        {}
+      ),
+    [data.fields]
+  );
+
   // const [expandedRows]?
 
   // const [scrollPos, setScrollPos] = useState(0);
@@ -116,18 +145,53 @@ export function TableNG(props: TableNGProps) {
           field.type === FieldType.number
             ? styles.cellRight
             : () => {
-                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
-                switch (cellType) {
-                  case TableCellDisplayMode.Auto:
-                  case TableCellDisplayMode.ColorBackground:
-                  case TableCellDisplayMode.ColorBackgroundSolid:
-                  case TableCellDisplayMode.ColorText:
-                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
-                  default:
-                    return null;
-                }
-              },
+              switch (cellType) {
+                case TableCellDisplayMode.Auto:
+                case TableCellDisplayMode.ColorBackground:
+                case TableCellDisplayMode.ColorBackgroundSolid:
+                case TableCellDisplayMode.ColorText:
+                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : null;
+                default:
+                  return null;
+              }
+            },
+        renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+          const { row } = props;
+          const displayName = getDisplayName(field)
+          const value = row[displayName];
+          const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+
+          // Cell level rendering here
+          return (
+            <TableCellNG
+              frame={data}
+              key={displayName}
+              value={value}
+              field={field}
+              theme={theme}
+              height={defaultRowHeight}
+              justifyContent={justifyColumnContent}
+              rowIdx={row.__index}
+              shouldTextOverflow={() =>
+                shouldTextOverflow(
+                  displayName,
+                  columnTypes,
+                  textWraps[getDisplayName(field)],
+                  field,
+                  cellType
+                )
+              }
+              setIsInspecting={setIsInspecting}
+              setContextMenuProps={setContextMenuProps}
+              getActions={getActions}
+              rowBg={getRowBgFn(field, theme) ?? undefined}
+              onCellFilterAdded={onCellFilterAdded}
+              replaceVariables={replaceVariables}
+            />
+          );
+        },
         renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
           <HeaderCell
             column={column}
@@ -162,22 +226,30 @@ export function TableNG(props: TableNGProps) {
       };
     });
   }, [
-    width,
-    scrollbarWidth,
-    rows,
-    onColumnResize,
-    data.fields,
-    styles,
-    showTypeIcons,
-    filter,
-    setFilter,
-    sortColumns,
-    setSortColumns,
+    columnTypes,
     crossFilterOrder,
     crossFilterRows,
-    onSortByChange,
+    data,
+    defaultRowHeight,
+    filter,
     footerCalcs,
+    getActions,
     isCountRowsSet,
+    onCellFilterAdded,
+    onColumnResize,
+    onSortByChange,
+    replaceVariables,
+    rows,
+    scrollbarWidth,
+    setFilter,
+    setSortColumns,
+    showTypeIcons,
+    sortColumns,
+    styles.cellRight,
+    styles.cellWrapped,
+    textWraps,
+    theme,
+    width,
   ]);
 
   const hasSubTable = false;
@@ -332,11 +404,9 @@ const getStyles2 = (
     border: 'none',
 
     '.rdg-cell': {
-      paddingInline: 6,
-      paddingBlock: 6,
-
       // clip the overflow (like OG), without this the default is ellipsis
       textOverflow: 'initial',
+      paddingInline: 0,
 
       '&:last-child': {
         borderInlineEnd: 'none',
@@ -347,19 +417,17 @@ const getStyles2 = (
       fontWeight: 'normal',
 
       '.rdg-cell': {
+        paddingInline: TABLE.CELL_PADDING,
+        paddingBlock: TABLE.CELL_PADDING,
         borderInlineEnd: 'none',
       },
     },
-  }),
-  cellText: css({
-    '&:hover': {
-      position: 'absolute',
-      width: '100%',
-      whiteSpace: 'pre-line',
-      zIndex: 1,
 
-      // this prevents cells with empty content from collapsing to a few px
-      minHeight: defaultRowHeight,
+    '.rdg-summary-row': {
+      '.rdg-cell': {
+        paddingInline: TABLE.CELL_PADDING,
+        paddingBlock: TABLE.CELL_PADDING,
+      },
     },
   }),
   cellWrapped: css({
@@ -415,19 +483,38 @@ function computeColWidths(fields: Field[], availWidth: number) {
     );
 }
 
+function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+  const fieldOptions = field.config.custom;
+  const fieldDisplay = field.display;
+  if (
+    fieldDisplay !== undefined &&
+    fieldOptions !== undefined &&
+    fieldOptions.cellOptions !== undefined &&
+    fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+    fieldOptions.cellOptions.applyToRow
+  ) {
+    return (rowIndex: number): CellColors => {
+      const display = fieldDisplay(field.values[rowIndex]);
+      const colors = getCellColors(theme, fieldOptions.cellOptions, display);
+      return colors;
+    };
+  }
+}
+
 /*
 TODO:
-styling
 value formatting
 footer reducers
+column width and min column width via panel config
 hidden
-auto-cell: can we deprecate in favor of newer RDG options?
 overlay/expand on hover, active line and cell styling
 inspect? actions?
 subtable/ expand
 cell types, backgrounds
 -----
 enable pagination disables footer?
+hover experience is kinda weird
+auto-cell: can we deprecate in favor of newer RDG options?
 -----
 accessible sorting and filtering
 */
