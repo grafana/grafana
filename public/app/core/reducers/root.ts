@@ -4,7 +4,6 @@ import { AnyAction, combineReducers } from 'redux';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
-import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import authConfigReducers from 'app/features/auth-config/state/reducers';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import browseDashboardsReducers from 'app/features/browse-dashboards/state/slice';
@@ -42,7 +41,6 @@ const rootReducers = {
   ...sharedReducers,
   ...alertingReducers,
   ...teamsReducers,
-  ...apiKeysReducers,
   ...foldersReducers,
   ...dashboardReducers,
   ...exploreReducers,
