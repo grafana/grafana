@@ -127,7 +127,6 @@ describe('TableNG hooks', () => {
         enablePagination: true,
         headerCellHeight: 16,
         paginationHeight: 20,
-        panelPaddingHeight: 16,
         defaultRowHeight: 16,
       });
 

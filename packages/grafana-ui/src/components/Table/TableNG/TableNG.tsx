@@ -9,7 +9,6 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   Field,
-  fieldReducers,
   FieldType,
   GrafanaTheme2,
   ReducerID,
@@ -25,14 +24,7 @@ import { HeaderCell } from './Cells/HeaderCell';
 import { COLUMN, TABLE } from './constants';
 import { useProcessedRows, useRowHeight, useScrollbarWidth } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn } from './types';
-import {
-  frameToRecords,
-  getDefaultRowHeight,
-  getFooterItemNG,
-  getFooterStyles,
-  getTextAlign,
-  handleSort,
-} from './utils';
+import { frameToRecords, getDefaultRowHeight, getFooterStyles, getTextAlign, handleSort } from './utils';
 
 export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
@@ -55,7 +47,6 @@ export function TableNG(props: TableNGProps) {
   } = props;
 
   const gridHandle = useRef<DataGridHandle>(null);
-  const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
   const hasHeader = !noHeader;
@@ -68,20 +59,6 @@ export function TableNG(props: TableNGProps) {
   );
 
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
-  const panelPaddingHeight = theme.components.panel.padding * theme.spacing.gridSize * 2;
-
-  const headerCellHeight = useMemo(() => {
-    if (!hasHeader) {
-      return 0;
-    } else {
-      // this loop is here to avoid a call to Object.keys() to get the first key in this object.
-      // the return ensures its only executed once if it is executed at all.
-      for (const key in headerCellRefs.current) {
-        return headerCellRefs.current[key].getBoundingClientRect().height;
-      }
-    }
-    return TABLE.MAX_CELL_HEIGHT;
-  }, [hasHeader, headerCellRefs]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
   const {
@@ -106,10 +83,9 @@ export function TableNG(props: TableNGProps) {
     initialSortBy,
     enablePagination,
     paginationHeight,
+    hasHeader,
     hasFooter,
     defaultRowHeight,
-    panelPaddingHeight,
-    headerCellHeight,
     footerOptions,
     isCountRowsSet,
   });
@@ -164,7 +140,6 @@ export function TableNG(props: TableNGProps) {
             direction={sortDirection}
             justifyContent={justifyColumnContent}
             onColumnResize={onColumnResize}
-            headerCellRefs={headerCellRefs}
             showTypeIcons={showTypeIcons}
           />
         ),
@@ -232,7 +207,7 @@ export function TableNG(props: TableNGProps) {
         sortColumns={sortColumns}
         rowHeight={rowHeight}
         headerRowClass={styles.dataGridHeaderRow}
-        headerRowHeight={noHeader ? 0 : undefined}
+        headerRowHeight={noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT}
         bottomSummaryRows={hasFooter ? [{}] : undefined}
         renderers={{
           renderRow: (key, rowProps) =>
@@ -329,11 +304,7 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 
 const getStyles2 = (
   theme: GrafanaTheme2,
-  {
-    enablePagination,
-    justifyContent,
-    noHeader,
-  }: { enablePagination?: boolean; justifyContent?: boolean; noHeader?: boolean }
+  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
 ) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -405,6 +376,7 @@ const getStyles2 = (
     padding: theme.spacing(0, 1, 0, 2),
   }),
   dataGridHeaderRow: css({
+    paddingBlockStart: 0,
     ...(noHeader && { display: 'none' }),
   }),
 });

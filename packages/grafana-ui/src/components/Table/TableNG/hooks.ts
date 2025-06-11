@@ -31,10 +31,10 @@ export interface ProcessedRowsOptions {
   initialSortBy?: TableSortByFieldState[];
   enablePagination?: boolean;
   paginationHeight?: number;
+  hasHeader?: boolean;
   hasFooter?: boolean;
   defaultRowHeight?: number;
   headerCellHeight?: number;
-  panelPaddingHeight?: number;
   footerOptions?: TableFooterCalc;
   isCountRowsSet?: boolean;
 }
@@ -79,13 +79,12 @@ export function useProcessedRows(
   {
     height,
     width,
+    hasHeader = false,
     hasFooter = false,
     initialSortBy,
     enablePagination,
     paginationHeight,
     defaultRowHeight,
-    headerCellHeight,
-    panelPaddingHeight,
     footerOptions,
     isCountRowsSet,
   }: ProcessedRowsOptions
@@ -192,22 +191,14 @@ export function useProcessedRows(
     }
 
     // calculate number of rowsPerPage based on height stack
-    let rowsPerPage = Math.floor(
-      (height -
-        (headerCellHeight ?? 0) -
-        TABLE.SCROLL_BAR_WIDTH -
-        (paginationHeight ?? 0) -
-        (panelPaddingHeight ?? 0)) /
-        (defaultRowHeight ?? 1)
-    );
-    // if footer calcs are on, remove one row per page
-    if (hasFooter) {
-      rowsPerPage -= 1;
-    }
-    if (rowsPerPage < 1) {
-      // avoid 0 or negative rowsPerPage
-      rowsPerPage = 1;
-    }
+    const rowAreaHeight =
+      height -
+      (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) -
+      (hasFooter ? (defaultRowHeight ?? 0) : 0) -
+      (paginationHeight ?? 0);
+    const heightPerRow = Math.floor(rowAreaHeight / (defaultRowHeight ?? 1));
+    // ensure at least one row per page is displayed
+    const rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
 
     // calculate row range for pagination summary display
     const pageRangeStart = page * rowsPerPage + 1;
@@ -224,18 +215,7 @@ export function useProcessedRows(
       pageRangeEnd,
       smallPagination,
     };
-  }, [
-    width,
-    height,
-    hasFooter,
-    headerCellHeight,
-    paginationHeight,
-    defaultRowHeight,
-    panelPaddingHeight,
-    numRows,
-    page,
-    enablePagination,
-  ]);
+  }, [width, height, hasHeader, hasFooter, paginationHeight, defaultRowHeight, enablePagination, numRows, page]);
 
   // calculate footer data
   const footerCalcs = useMemo(() => {
@@ -306,7 +286,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: Ta
       let el = ref.current!.element!;
       setScrollbarWidth(el.offsetWidth - el.clientWidth);
     },
-    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
+    // TODO: account for pagination, subtable expansion, default row height changes, height changes, data length
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [height, renderedRows]
   );

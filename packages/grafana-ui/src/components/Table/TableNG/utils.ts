@@ -184,7 +184,6 @@ export function shouldTextOverflow(
   key: string,
   row: TableRow,
   columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
   ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
@@ -506,7 +505,6 @@ export interface MapFrameToGridOptions extends TableNGProps {
   defaultRowHeight: number;
   expandedRows: number[];
   filter: FilterType;
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   isCountRowsSet: boolean;
   ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
