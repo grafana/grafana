@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseContinueToken(t *testing.T) {
+func TestParseContinueTokens(t *testing.T) {
 	tcs := []struct {
 		name         string
 		token        string
@@ -44,6 +44,37 @@ func TestParseContinueToken(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			legacyToken, unifiedToken, err := parseContinueTokens(tc.token)
+			require.NoError(t, err)
+			require.Equal(t, legacyToken, tc.legacyToken)
+			require.Equal(t, unifiedToken, tc.unifiedToken)
+		})
+	}
+}
+
+func TestBuildContinueToken(t *testing.T) {
+	tcs := []struct {
+		name         string
+		legacyToken  string
+		unifiedToken string
+	}{
+		{
+			name:         "Should handle both tokens",
+			legacyToken:  "abc",
+			unifiedToken: "xyz",
+		},
+		{
+			name:        "Should handle legacy token standalone",
+			legacyToken: "abc",
+		},
+		{
+			name:         "Should handle unified token standalone",
+			unifiedToken: "xyz",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			token := buildContinueToken(tc.legacyToken, tc.unifiedToken)
+			legacyToken, unifiedToken, err := parseContinueTokens(token)
 			require.NoError(t, err)
 			require.Equal(t, legacyToken, tc.legacyToken)
 			require.Equal(t, unifiedToken, tc.unifiedToken)

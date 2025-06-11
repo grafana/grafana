@@ -2,10 +2,8 @@ package dualwrite
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -98,8 +96,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		if err != nil {
 			return nil, err
 		}
-		unifiedMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
-			strings.Join([]string{"", unifiedMeta.GetContinue()}, ","))))
+		unifiedMeta.SetContinue(buildContinueToken("", unifiedMeta.GetContinue()))
 		return unifiedList, nil
 	}
 	// If legacy is still the main store, lets first read from it.
@@ -137,8 +134,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
 			log.Warn("timeout while waiting on the unified storage continue token")
 		}
-		legacyMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
-			strings.Join([]string{legacyToken, unifiedToken}, ","))))
+		legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
 		return legacyList, nil
 	}
 	// If it's not okay to fail, we have to check it in the foreground.
@@ -151,8 +147,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		return nil, err
 	}
 	unifiedToken = unifiedMeta.GetContinue()
-	legacyMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
-		strings.Join([]string{legacyToken, unifiedToken}, ","))))
+	legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
 	return legacyList, nil
 }
 

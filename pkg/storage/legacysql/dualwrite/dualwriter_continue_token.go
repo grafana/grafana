@@ -24,3 +24,8 @@ func parseContinueTokens(token string) (string, string, error) {
 	return token, "", nil
 
 }
+
+func buildContinueToken(legacyToken, unifiedToken string) string {
+	return base64.StdEncoding.EncodeToString([]byte(
+		strings.Join([]string{legacyToken, unifiedToken}, ",")))
+}
