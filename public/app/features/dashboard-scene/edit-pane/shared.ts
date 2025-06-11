@@ -98,17 +98,23 @@ export interface RemoveElementActionHelperProps {
   undo: () => void;
 }
 
+export interface ChangeTitleActionHelperProps {
+  oldTitle: string;
+  newTitle: string;
+  source: DashboardScene;
+}
+
 export const dashboardEditActions = {
   /**
    * Registers and peforms an edit action
    */
-  edit: function (props: DashboardEditActionEventPayload) {
+  edit(props: DashboardEditActionEventPayload) {
     props.source.publishEvent(new DashboardEditActionEvent(props), true);
   },
   /**
    * Helper for makeEdit that adds elements
    */
-  addElement: function (props: AddElementActionHelperProps) {
+  addElement(props: AddElementActionHelperProps) {
     const { addedObject, source, perform, undo } = props;
 
     const element = getEditableElementFor(addedObject);
@@ -143,6 +149,19 @@ export const dashboardEditActions = {
       source,
       perform,
       undo,
+    });
+  },
+
+  changeTitle({ source, oldTitle, newTitle }: ChangeTitleActionHelperProps) {
+    dashboardEditActions.edit({
+      description: t('dashboard.title.action', 'Change dashboard title'),
+      source: source,
+      perform: () => {
+        source.setState({ title: newTitle });
+      },
+      undo: () => {
+        source.setState({ title: oldTitle });
+      },
     });
   },
 };
