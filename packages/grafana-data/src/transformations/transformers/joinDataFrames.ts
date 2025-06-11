@@ -468,6 +468,7 @@ function joinInner(tables: AlignedData[]) {
     lfield = ltable[0];
   }
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return ltable as Array<Array<string | number | null | undefined>>;
 }
 
