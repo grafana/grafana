@@ -74,6 +74,25 @@ export function ResourceExport({
             />
           </Stack>
         )}
+        {initialSaveModelVersion === 'v2' && (
+          <Stack alignItems="center">
+            <Label>{switchExportModeLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                {
+                  label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
+                  value: ExportMode.V2Resource,
+                },
+                {
+                  label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
+                  value: ExportMode.V1Resource,
+                },
+              ]}
+              value={exportMode}
+              onChange={(value) => onExportModeChange(value)}
+            />
+          </Stack>
+        )}
         {exportMode !== ExportMode.Classic && (
           <Stack gap={1} alignItems="center">
             <Label>{switchExportFormatLabel}</Label>
@@ -87,7 +106,9 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        {(isV2Dashboard || exportMode === ExportMode.Classic) && (
+        {(isV2Dashboard ||
+          exportMode === ExportMode.Classic ||
+          (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
