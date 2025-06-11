@@ -54,6 +54,10 @@ By default, the configuration file is located at `/opt/homebrew/etc/grafana/graf
 For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly.
 Otherwise, add a configuration file named `custom.ini` to the `conf` directory to override the settings defined in `conf/defaults.ini`.
 
+### Grafana Cloud
+
+While there is no local configuration file for Grafana Cloud stacks, many of these settings are still configurable. To edit configurable settings, open a support ticket.
+
 ## Remove comments in the .ini files
 
 Grafana uses semicolons (`;`) to comment out lines in the INI file.
@@ -2038,11 +2042,7 @@ Setting `0` means the short links are cleaned up approximately every 10 minutes.
 A negative value such as `-1` disables expiry.
 
 {{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted.
-{{< /admonition >}}
-
-{{< admonition type="note">}}
-To adjust short link expiration time or disable expiration entirely in Grafana Cloud, open a support ticket.
+Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends using a duration based on your specific use-case
 {{< /admonition >}}
 
 <hr>
