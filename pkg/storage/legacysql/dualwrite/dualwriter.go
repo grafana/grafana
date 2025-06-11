@@ -94,7 +94,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		}
 		unifiedMeta, err := meta.ListAccessor(unifiedList)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
 		}
 		unifiedMeta.SetContinue(buildContinueToken("", unifiedMeta.GetContinue()))
 		return unifiedList, nil
@@ -106,7 +106,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	}
 	legacyMeta, err := meta.ListAccessor(legacyList)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
 	}
 	legacyToken = legacyMeta.GetContinue()
 
@@ -125,8 +125,8 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 			}
 			unifiedMeta, err := meta.ListAccessor(unifiedList)
 			if err != nil {
-				log := logging.FromContext(ctxBg).With("method", "List")
-				log.Error("failed background LIST to unified", "err", err)
+				log.Error("failed background LIST to unified", "err",
+					fmt.Errorf("failed to access unified List MetaData: %w", err))
 			}
 			unifiedToken = unifiedMeta.GetContinue()
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
@@ -144,7 +144,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	}
 	unifiedMeta, err := meta.ListAccessor(unifiedList)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
 	}
 	unifiedToken = unifiedMeta.GetContinue()
 	legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
