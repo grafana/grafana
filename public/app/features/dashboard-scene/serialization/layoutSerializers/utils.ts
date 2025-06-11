@@ -32,7 +32,6 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
-import { isTimeCompareSupported } from '../../scene/PanelTimeCompare';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -75,10 +74,9 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
-    headerActions:
-      panel.spec.vizConfig.spec.options?.timeCompare && isTimeCompareSupported(panel.spec.vizConfig.kind)
-        ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
-        : undefined,
+    headerActions: panel.spec.vizConfig.spec.options?.timeCompare
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {
