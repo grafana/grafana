@@ -9,6 +9,7 @@ const (
 	grafanaDashboardsSquad                      codeowner = "@grafana/dashboards-squad"
 	grafanaDatavizSquad                         codeowner = "@grafana/dataviz-squad"
 	grafanaFrontendPlatformSquad                codeowner = "@grafana/grafana-frontend-platform"
+	grafanaFrontendSearchNavOrganise            codeowner = "@grafana/grafana-search-navigate-organise"
 	grafanaBackendServicesSquad                 codeowner = "@grafana/grafana-backend-services-squad"
 	grafanaSearchAndStorageSquad                codeowner = "@grafana/search-and-storage"
 	grafanaPluginsPlatformSquad                 codeowner = "@grafana/plugins-platform-backend"
