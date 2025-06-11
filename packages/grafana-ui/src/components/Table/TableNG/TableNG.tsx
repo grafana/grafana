@@ -582,18 +582,16 @@ function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => 
 
 /*
 TODO:
-value formatting
-footer reducers
 column width and min column width via panel config
 hidden
-overlay/expand on hover, active line and cell styling
+overlay/expand on hover
+active line and cell styling
 inspect? actions?
 subtable/ expand
-cell types, backgrounds
 -----
 enable pagination disables footer?
-hover experience is kinda weird
 auto-cell: can we deprecate in favor of newer RDG options?
 -----
 accessible sorting and filtering
+accessible table navigation
 */
