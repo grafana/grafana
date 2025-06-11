@@ -214,6 +214,20 @@ func getStatesFromQuery(v url.Values) ([]eval.State, error) {
 	return states, nil
 }
 
+func getHealthFromQuery(v url.Values) (map[string]struct{}, error) {
+	health := make(map[string]struct{})
+	for _, s := range v["health"] {
+		s = strings.ToLower(s)
+		switch s {
+		case "ok", "error", "nodata", "unknown":
+			health[s] = struct{}{}
+		default:
+			return nil, fmt.Errorf("unknown health '%s'", s)
+		}
+	}
+	return health, nil
+}
+
 type RuleGroupStatusesOptions struct {
 	Ctx               context.Context
 	OrgID             int64
@@ -412,6 +426,18 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		stateFilterSet[state] = struct{}{}
 	}
 
+	healthFilter, err := getHealthFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	healthFilterSet := make(map[string]struct{})
+	for health := range healthFilter {
+		healthFilterSet[health] = struct{}{}
+	}
+
 	var labelOptions []ngmodels.LabelOption
 	if !getBoolWithDefault(opts.Query, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
@@ -436,12 +462,15 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 
 	ruleGroups := opts.Query["rule_group"]
 
+	receiverName := opts.Query.Get("receiver_name")
+
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 		RuleGroups:    ruleGroups,
+		ReceiverName:  receiverName,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -489,7 +518,11 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 
 		if len(stateFilter) > 0 {
-			filterRules(ruleGroup, stateFilterSet)
+			filterRulesByState(ruleGroup, stateFilterSet)
+		}
+
+		if len(healthFilter) > 0 {
+			filterRulesByHealth(ruleGroup, healthFilterSet)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
@@ -578,7 +611,7 @@ func getGroupedRules(log log.Logger, ruleList ngmodels.RulesGroup, ruleNamesSet 
 	return ruleGroups
 }
 
-func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
+func filterRulesByState(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
 	// Filtering is weird but firing, pending, and normal filters also need to be
 	// applied to the rule. Others such as nodata and error should have no effect.
 	// This is to match the current behavior in the UI.
@@ -599,6 +632,19 @@ func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]s
 			if _, ok := withStatesFast[*state]; ok {
 				filteredRules = append(filteredRules, rule)
 			}
+		}
+	}
+	ruleGroup.Rules = filteredRules
+}
+
+func filterRulesByHealth(ruleGroup *apimodels.RuleGroup, withHealthFast map[string]struct{}) {
+	// Filtering is weird but error and nodata filters also need to be
+	// applied to the rule. Others such as firing, pending, and normal should have no effect.
+	// This is to match the current behavior in the UI.
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+	for _, rule := range ruleGroup.Rules {
+		if _, ok := withHealthFast[rule.Health]; ok {
+			filteredRules = append(filteredRules, rule)
 		}
 	}
 	ruleGroup.Rules = filteredRules
