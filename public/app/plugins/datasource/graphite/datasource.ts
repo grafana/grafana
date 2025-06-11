@@ -979,7 +979,10 @@ export class GraphiteDatasource
       .fetch(options)
       .pipe(
         catchError((err) => {
-          return throwError(reduceError(err));
+          return throwError(() => {
+            const reduced = reduceError(err);
+            return new Error(`${reduced.data.message}`);
+          });
         })
       );
   }
