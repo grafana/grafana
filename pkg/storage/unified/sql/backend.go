@@ -640,7 +640,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
@@ -742,7 +742,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending

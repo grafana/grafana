@@ -108,7 +108,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           className={cx(splitter.splitterProps.className, styles.splitter)}
           data-edit-pane-splitter={true}
         />
-        <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
+        <div {...splitter.secondaryProps} className={cx(splitter.secondaryProps.className, styles.paneContent)}>
           <button
             type="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
@@ -175,8 +175,13 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2, 1, 2, 0),
     }),
     splitter: css({
-      '&:after': {
-        display: 'none',
+      '&::after': {
+        background: 'transparent',
+        transform: 'unset',
+        width: '100%',
+        height: '1px',
+        top: '100%',
+        left: '0',
       },
     }),
     outlineCollapseButton: css({
