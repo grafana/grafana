@@ -1,0 +1,79 @@
+name: Create security branch
+on:
+  workflow_call:
+    inputs:
+      release_branch:
+        type: string
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.3+security-01` being created)
+        required: true
+      security_branch_number:
+        type: string
+        description: 'The security branch number (e.g., 01)'
+        required: false
+        default: '01'
+      repository:
+        type: string
+        description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
+        required: true
+    outputs:
+      branch:
+        description: The new security branch that was created
+        value: ${{ jobs.main.outputs.branch }}
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        type: string
+        description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.3+security-01` being created)
+        required: true
+      security_branch_number:
+        type: string
+        description: 'The security branch number (e.g., 01)'
+        required: false
+        default: '01'
+      repository:
+        type: string
+        description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.release_branch }}
+
+      - name: Create security branch
+        id: branch
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          INPUT_RELEASE_BRANCH: ${{ inputs.release_branch }}
+          INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
+          INPUT_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          chmod +x .github/workflows/scripts/create-security-branch/create-security-branch.sh
+          .github/workflows/scripts/create-security-branch/create-security-branch.sh
