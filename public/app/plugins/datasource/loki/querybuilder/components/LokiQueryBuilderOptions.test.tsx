@@ -297,7 +297,6 @@ describe('LokiQueryBuilderOptions', () => {
       expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
     });
 
-
     it('considers valid duration step as valid', async () => {
       setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
       await userEvent.click(screen.getByRole('button', { name: /Options/ }));
