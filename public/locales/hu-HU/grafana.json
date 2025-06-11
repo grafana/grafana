@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Kiválasztás",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "üzenet",
-      "body-dashboard-drastically-changed": "Mivel olyan új irányítópult-funkciókat használ, amelyeket csak a Grafana új irányítópult-sémaformátuma támogat, az irányítópultot az új formátumban menti a rendszer. Győződjön meg róla, hogy végre kívánja hajtani ezt a műveletet, vagy inkább új példányként menti az irányítópultot.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Mégse"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "A dinamikus irányítópult funkcionalitása kísérleti jellegű, és nem rendelkezik teljes funkcionalitással a jelenlegi irányítópultok viselkedéséhez képest. Új sémaformátumon alapul, amely nem támogatja a könyvtárpaneleket. Ez azt jelenti, hogy amikor az irányítópultot egy másik példányban való használathoz exportálja, nem fogja tartalmazni a könyvtárpaneleket. Támogatni kívánjuk őket a funkció <2>életciklusának</2> előrehaladtával.",
       "schema-v2-library-panels-export-title": "A Dashboard Schema V2 még nem támogatja a könyvtárpanelek exportálását egy másik példányban való használathoz",
-      "title-dashboard-drastically-changed": "Irányítópult nagymértékben megváltozott"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Az aktuális frissítés lesz az új alapértelmezés",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Kiemelés engedélyezése",
       "escape-newlines": "Helytelenül értelmezett újsor- és tabulátorkarakteres szekvenciák javítása a naplósorokban",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Időbélyegek elrejtése",
       "hide-unique-labels": "Egyedi címkék elrejtése",
       "newest-first": "Rendezés a legújabb naplók szerint – kattintson, hogy a legrégebbi naplók jelenjenek meg elsőként",
