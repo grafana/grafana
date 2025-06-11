@@ -198,11 +198,12 @@ func TestIntegrationFoldersApp(t *testing.T) {
 							DualWriterMode: mode,
 						},
 					},
+					MaxPageSizeBytes: 1,
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 						featuremgmt.FlagNestedFolders,
 					},
-				}))
+				}), mode)
 			})
 		}
 	})
@@ -518,12 +519,13 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	require.Equal(t, 400, create.Response.StatusCode)
 }
 
-func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper) {
+func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
 		GVR:  gvr,
 	})
-	for i := 0; i < 3; i++ {
+	foldersCount := 3
+	for i := 0; i < foldersCount; i++ {
 		payload := fmt.Sprintf(`{
 		"title": "Test-%d",
 		"uid": "uid-%d"
@@ -551,6 +553,28 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper) {
 	require.NoError(t, err)
 	require.Len(t, res.Items, 1)
 	require.Equal(t, "uid-1", res.Items[0].GetName())
+
+	// Now let's see if the iterator also works when we are limited by the page size, which should be set
+	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
+	// as legacy doesn't have such a page size limit.
+	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
+		t.Run("check page size iterator", func(t *testing.T) {
+			continueToken := ""
+			for i := 0; i < foldersCount; i++ {
+				res, err = client.Resource.List(context.Background(), metav1.ListOptions{
+					Limit:    3,
+					Continue: continueToken,
+				})
+				require.NoError(t, err)
+				require.Len(t, res.Items, 1)
+				continueToken = res.GetContinue()
+			}
+			// After we did as many requests as we created items, we expect the token to be empty and have reached
+			// the last page.
+			require.Equal(t, "", continueToken)
+		})
+	}
+
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {

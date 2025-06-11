@@ -99,6 +99,22 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		unifiedMeta.SetContinue(buildContinueToken("", unifiedMeta.GetContinue()))
 		return unifiedList, nil
 	}
+
+	// In some cases, the unified token might be there but not the legacy one.
+	// This can happen, as we iterate in unified not only based on the limit,
+	// but also in the response size. This prevents sending the first page again.
+	if options.Continue != "" && legacyToken == "" {
+		return nil, nil
+	}
+
+	// In some cases, where the stores are not in sync yet, the unified storage continue token might already
+	// be empty, while the legacy one is not, as it has more data. In that case we don't want to issue a new
+	// request with an empty continue token, resulting in getting the first page again.
+	shouldDoUnifiedRequest := true
+	if options.Continue != "" && unifiedToken == "" {
+		shouldDoUnifiedRequest = false
+	}
+
 	// If legacy is still the main store, lets first read from it.
 	legacyList, err := d.legacy.List(ctx, legacyOptions)
 	if err != nil {
@@ -112,7 +128,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 
 	// Once we have successfully listed from legacy, we can check if we want to fail on a unified list.
 	// If we allow the unified list to fail, we can do it in the background and return.
-	if d.errorIsOK {
+	if d.errorIsOK && shouldDoUnifiedRequest {
 		// We want to slow down this operation at most 300ms, by waiting in the background for the right continue token.
 		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Millisecond*300)
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
@@ -137,16 +153,18 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
 		return legacyList, nil
 	}
-	// If it's not okay to fail, we have to check it in the foreground.
-	unifiedList, err := d.unified.List(ctx, unifiedOptions)
-	if err != nil {
-		return nil, err
+	if shouldDoUnifiedRequest {
+		// If it's not okay to fail, we have to check it in the foreground.
+		unifiedList, err := d.unified.List(ctx, unifiedOptions)
+		if err != nil {
+			return nil, err
+		}
+		unifiedMeta, err := meta.ListAccessor(unifiedList)
+		if err != nil {
+			return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
+		}
+		unifiedToken = unifiedMeta.GetContinue()
 	}
-	unifiedMeta, err := meta.ListAccessor(unifiedList)
-	if err != nil {
-		return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
-	}
-	unifiedToken = unifiedMeta.GetContinue()
 	legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
 	return legacyList, nil
 }
