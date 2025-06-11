@@ -12459,6 +12459,9 @@
           "Email": {
             "type": "string"
           },
+          "ExternalUID": {
+            "type": "string"
+          },
           "ID": {
             "format": "int64",
             "type": "integer"
