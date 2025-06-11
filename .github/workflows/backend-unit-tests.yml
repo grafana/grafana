@@ -20,6 +20,32 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    name: Detect whether backend changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Detect changes
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            !*.md
+            !docs/**
+            .github/workflows/backend-unit-tests.yml
+            !.github/workflows/**
+      - name: Print all changed files
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: |
+          echo "Changed files: $CHANGED_FILES"
+
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
@@ -37,7 +63,6 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
-      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
