@@ -513,8 +513,16 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	return grafanaGroup, nil
 }
 
-func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, config apimodels.AlertmanagerUserConfig) response.Response {
-	return response.Error(501, "Not implemented", nil)
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header
