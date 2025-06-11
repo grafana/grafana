@@ -7673,7 +7673,7 @@
     "log-list-search": {
       "close": "Close search",
       "filter": "Filter matching logs",
-      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters—use this component to search for specific strings in your log results.",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
       "input-placeholder": "Search in logs",
       "next": "Next result",
       "prev": "Previous result"

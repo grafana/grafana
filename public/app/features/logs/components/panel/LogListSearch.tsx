@@ -124,7 +124,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
         variant="secondary"
         tooltip={t(
           'logs.log-list-search.info',
-          'Client-side search for strings within the displayed logs. Not to be confused with query filters—use this component to search for specific strings in your log results.'
+          'Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.'
         )}
       />
       <IconButton
