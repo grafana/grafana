@@ -553,14 +553,14 @@ describe('sceneVariablesSetToVariables', () => {
   });
 
   describe('should adapt AdHocFiltersVariable filters', () => {
-    it('should remove origin filters from filters property', () => {
+    it('should remove non dashboard originated filters from schema', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
         datasource: { uid: 'fake-std', type: 'fake-std' },
-        filters: [
+        originFilters: [
           {
             key: 'filterTest',
             operator: '=',
@@ -568,6 +568,7 @@ describe('sceneVariablesSetToVariables', () => {
             origin: 'asserts',
           },
         ],
+        filters: [],
       });
       const set = new SceneVariableSet({
         variables: [variable],
@@ -601,13 +602,15 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         datasource: { uid: 'fake-std', type: 'fake-std' },
-        filters: [
+        originFilters: [
           {
             key: 'filterTest',
             operator: '=',
             value: 'test',
             origin: 'dashboard',
           },
+        ],
+        filters: [
           {
             key: 'filterTest2',
             operator: '=',
@@ -633,6 +636,12 @@ describe('sceneVariablesSetToVariables', () => {
         "defaultKeys": undefined,
         "description": "test-desc",
         "filters": [
+          {
+            "key": "filterTest",
+            "operator": "=",
+            "origin": "dashboard",
+            "value": "test",
+          },
           {
             "key": "filterTest2",
             "operator": "=",

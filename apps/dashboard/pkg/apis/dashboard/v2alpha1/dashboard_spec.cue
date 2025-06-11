@@ -696,7 +696,7 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
-FilterOrigin: "dashboard" | string
+FilterOrigin: string
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {

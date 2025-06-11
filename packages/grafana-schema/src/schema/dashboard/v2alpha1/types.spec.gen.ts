@@ -1339,9 +1339,9 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 });
 
 // Determine the origin of the adhoc variable filter
-export type FilterOrigin = "dashboard" | string;
+export type FilterOrigin = string;
 
-export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
+export const defaultFilterOrigin = (): FilterOrigin => ("");
 
 // Define the MetricFindValue type
 export interface MetricFindValue {
