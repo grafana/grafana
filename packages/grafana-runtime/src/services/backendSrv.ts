@@ -87,7 +87,8 @@ export type BackendSrvRequest = {
   withCredentials?: boolean;
 
   /**
-   * Set to true to sanitize the URL path to prevent path traversal attacks
+   * Set to true to sanitize the URL path to prevent path traversal attacks.
+   * Use this when constructing URLs from user input.
    */
   sanitizePath?: boolean;
 };
