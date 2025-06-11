@@ -25,11 +25,11 @@ require (
 	go.opentelemetry.io/otel v1.35.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.35.0 // @grafana/grafana-backend-group
-	golang.org/x/crypto v0.38.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.40.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.39.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.41.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.29.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.14.0 // @grafana/alerting-backend
-	golang.org/x/text v0.25.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/sync v0.15.0 // @grafana/alerting-backend
+	golang.org/x/text v0.26.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.11.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.72.1 // indirect; @grafana/plugins-platform-backend
@@ -126,7 +126,7 @@ require (
 	go.opentelemetry.io/otel/sdk/log v0.11.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.6.0 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
+	gotest.tools/v3 v3.5.2 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

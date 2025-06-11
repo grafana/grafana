@@ -3,14 +3,15 @@ package nanogit
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGitRepository_Validate(t *testing.T) {
@@ -342,46 +343,16 @@ func TestEnsureBranchExists(t *testing.T) {
 }
 
 func TestHistory(t *testing.T) {
-	t.Run("should test basic method structure", func(t *testing.T) {
-		gitRepo := &gitRepository{
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					Git: &provisioning.GitRepositoryConfig{
-						URL:    "https://git.example.com/repo.git",
-						Branch: "main",
-						Token:  "token123",
-						Path:   "configs",
-					},
-				},
-			},
-		}
-
+	t.Run("should return not implemented", func(t *testing.T) {
 		ctx := context.Background()
+		history, err := (&gitRepository{}).History(ctx, "", "")
 
-		// Test that the method signature is correct and handles nil client gracefully
-		// This will panic on a nil pointer dereference since we don't have a real client
-		// The actual functionality would be tested in integration tests with a real nanogit client
-		require.Panics(t, func() {
-			gitRepo.History(ctx, "test.json", "main")
-		}, "Expected panic due to nil client")
-	})
-
-	t.Run("should validate path handling", func(t *testing.T) {
-		// Test path validation logic that doesn't require a client
-		config := &provisioning.Repository{
-			Spec: provisioning.RepositorySpec{
-				Git: &provisioning.GitRepositoryConfig{
-					Path: "configs",
-				},
-			},
-		}
-
-		// Test path joining logic (using the same logic as in the method)
-		finalPath := safepath.Join(config.Spec.Git.Path, "test.json")
-		require.Equal(t, "configs/test.json", finalPath)
-
-		// Test with empty path
-		finalPathEmpty := safepath.Join("", "test.json")
-		require.Equal(t, "test.json", finalPathEmpty)
+		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, int32(http.StatusNotImplemented), statusErr.Status().Code)
+		require.Equal(t, metav1.StatusReasonMethodNotAllowed, statusErr.Status().Reason)
+		require.Equal(t, "history is not supported for pure git repositories", statusErr.Status().Message)
+		require.Nil(t, history)
 	})
 }

@@ -94,9 +94,6 @@ func (r *gitRepository) Branch() string {
 	return r.branch
 }
 
-// TODO: see if we can provide users with a way to generate those URLs.
-// some kind of template or pattern
-
 // Validate implements provisioning.Repository.
 func (r *gitRepository) Validate() (list field.ErrorList) {
 	git := r.config.Spec.Git
@@ -461,67 +458,13 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 	return nil
 }
 
-func (r *gitRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
-	ctx, _ = r.logger(ctx, ref)
-
-	// Resolve ref to commit hash
-	refHash, err := r.resolveRefToHash(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-
-	// Prepare the final path by joining with the configured repository path
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
-
-	// Set up options for ListCommits with path filtering
-	options := nanogit.ListCommitsOptions{
-		PerPage: 10, // Reasonable default for history
-		Page:    1,
-		Path:    finalPath,
-	}
-
-	// Get commits using nanogit's ListCommits
-	commits, err := r.client.ListCommits(ctx, refHash, options)
-	if err != nil {
-		return nil, fmt.Errorf("list commits: %w", err)
-	}
-
-	// Convert nanogit commits to provisioning.HistoryItem format
-	ret := make([]provisioning.HistoryItem, 0, len(commits))
-	for _, commit := range commits {
-		authors := make([]provisioning.Author, 0)
-
-		// Add author if available
-		if commit.Author.Name != "" {
-			authors = append(authors, provisioning.Author{
-				Name: commit.Author.Name,
-				// Use email for username as it's the only way to get a unique identifier
-				Username: commit.Author.Email,
-				// No avatar URL available in Git commits
-				AvatarURL: "",
-			})
-		}
-
-		// Add committer if different from author
-		if commit.Committer.Name != "" && commit.Author.Name != commit.Committer.Name {
-			authors = append(authors, provisioning.Author{
-				Name: commit.Committer.Name,
-				// Use email for username as it's the only way to get a unique identifier
-				Username: commit.Committer.Email,
-				// No avatar URL available in Git commits
-				AvatarURL: "",
-			})
-		}
-
-		ret = append(ret, provisioning.HistoryItem{
-			Ref:       commit.Hash.String(),
-			Message:   commit.Message,
-			Authors:   authors,
-			CreatedAt: commit.Time().UnixMilli(),
-		})
-	}
-
-	return ret, nil
+func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provisioning.HistoryItem, error) {
+	return nil, &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusNotImplemented,
+		Reason:  metav1.StatusReasonMethodNotAllowed,
+		Message: "history is not supported for pure git repositories",
+	}}
 }
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
@@ -707,7 +650,6 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 // createSignature creates author and committer signatures using the context signature if available,
 // falling back to default Grafana signature
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
-	// TODO: improve nanogit library to have a Signature type
 	author := nanogit.Author{
 		Name:  "Grafana",
 		Email: "noreply@grafana.com",
