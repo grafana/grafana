@@ -65,7 +65,7 @@ export function TableCellNG(props: TableCellNGProps) {
     }
     return getCellColors(theme, cellOptions, displayValue);
   }, [theme, cellOptions, displayValue, rowBg, rowIdx]);
-  const styles = useStyles2(getStyles, isRightAligned, colors);
+  const styles = useStyles2(getStyles, height, isRightAligned, colors);
 
   // TODO
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
@@ -184,11 +184,15 @@ export function TableCellNG(props: TableCellNGProps) {
       ref={divWidthRef}
       className={styles.cell}
       onFocus={hasActions ? () => setIsHovered(true) : undefined}
-      onMouseOver={hasActions ? () => setIsHovered(true) : undefined}
+      onMouseEnter={hasActions ? () => setIsHovered(true) : undefined}
       onBlur={hasActions ? () => setIsHovered(false) : undefined}
       onMouseLeave={hasActions ? () => setIsHovered(false) : undefined}
     >
       {renderedCell}
+      {/* TODO: I really wanted to avoid the `isHovered` state, and just mount all of these
+        icons, unhiding them using CSS, but rendering the IconButton is very expensive and
+        makes the scroll performance terrible. I think it's because of the Tooltip.
+        */}
       {isHovered && hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
@@ -237,9 +241,12 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
+const getStyles = (theme: GrafanaTheme2, defaultRowHeight: number, isRightAligned: boolean, color: CellColors) => ({
   cell: css({
     height: '100%',
+    // this minHeight interacts with the `fit-content` property on
+    // the container for table cell overflow rendering.
+    minHeight: defaultRowHeight - 1,
     alignContent: 'center',
     paddingInline: TABLE.CELL_PADDING,
     // TODO: follow-up on this: change styles on hover on table row level
