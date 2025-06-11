@@ -124,48 +124,18 @@ describe('Dashboard', () => {
 
     cy.wait(100); // cy too fast and executes next command before resizing is done
 
-    // changing to 900 custom width to have each panel span the whole row to verify offset
-    let prevOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!prevOffset) {
-        prevOffset = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(prevOffset);
-        prevOffset = elOffset;
-      }
-    });
+    // // changing to 900 custom width to have each panel span the whole row to verify offset
+    e2e.flows.scenes.verifyPanelsStackedVertically();
 
     e2e.flows.scenes.saveDashboard();
     cy.reload();
 
-    let reloadedPrevOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!reloadedPrevOffset) {
-        reloadedPrevOffset = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(reloadedPrevOffset);
-        reloadedPrevOffset = elOffset;
-      }
-    });
+    e2e.flows.scenes.verifyPanelsStackedVertically();
 
     e2e.components.NavToolbar.editDashboard.editButton().click();
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth().should('have.value', '900');
 
-    let reloadedPrevOffsetEdit = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!reloadedPrevOffsetEdit) {
-        reloadedPrevOffsetEdit = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(reloadedPrevOffsetEdit);
-        reloadedPrevOffsetEdit = elOffset;
-      }
-    });
+    e2e.flows.scenes.verifyPanelsStackedVertically();
 
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth().should('be.visible').click();
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('have.value', 'Standard');
@@ -186,48 +156,18 @@ describe('Dashboard', () => {
     cy.get('[id=combobox-option-1]').click();
 
     // changing to 1 max column to have each panel span the whole row to verify offset
-    let prevOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!prevOffset) {
-        prevOffset = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(prevOffset);
-        prevOffset = elOffset;
-      }
-    });
+    e2e.flows.scenes.verifyPanelsStackedVertically();
 
     e2e.flows.scenes.saveDashboard();
     cy.reload();
 
-    let reloadedPrevOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!reloadedPrevOffset) {
-        reloadedPrevOffset = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(reloadedPrevOffset);
-        reloadedPrevOffset = elOffset;
-      }
-    });
+    e2e.flows.scenes.verifyPanelsStackedVertically();
 
     e2e.components.NavToolbar.editDashboard.editButton().click();
 
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns().should('have.value', '1');
 
-    let reloadedEditPrevOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel').each((el) => {
-      if (!reloadedEditPrevOffset) {
-        reloadedEditPrevOffset = el.offset().top;
-      } else {
-        const elOffset = el.offset().top;
-        expect(elOffset).to.be.greaterThan(reloadedEditPrevOffset);
-        reloadedEditPrevOffset = elOffset;
-      }
-    });
+    e2e.flows.scenes.verifyPanelsStackedVertically();
   });
 
   it('can change row height in auto grid layout', () => {
