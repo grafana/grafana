@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { PanelModel } from './dashboard';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
@@ -100,13 +101,13 @@ export type PluginExtensionAddedFunctionConfig<Signature = unknown> = PluginExte
 
 export type PluginAddedLinksConfigureFunc<Context extends object> = (context: Readonly<Context> | undefined) =>
   | Partial<{
-      title: string;
-      description: string;
-      path: string;
-      onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-      icon: IconName;
-      category: string;
-    }>
+    title: string;
+    description: string;
+    path: string;
+    onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+    icon: IconName;
+    category: string;
+  }>
   | undefined;
 
 export type PluginExtensionAddedLinkConfig<Context extends object = object> = PluginExtensionConfigBase & {
@@ -194,6 +195,8 @@ export enum PluginExtensionPoints {
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  DashboardDropzone = 'grafana/dashboard/dropzone/v1',
+  DashboardPaste = 'grafana/dashboard/paste/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -236,6 +239,13 @@ export type PluginExtensionDataSourceConfigContext<
   setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
+export type PluginExtensionDropAndPasteResponse = {
+  title: string;
+  icon: IconName;
+  confidence: number;
+  component?: React.ComponentType<{ addPanel: (p: PanelModel) => void }>;
+  panel?: PanelModel;
+};
 export type PluginExtensionCommandPaletteContext = {};
 
 export type PluginExtensionResourceAttributesContext = {

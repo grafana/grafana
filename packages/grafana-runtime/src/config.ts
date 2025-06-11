@@ -131,6 +131,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     webVitalsInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
   };
+  pluginEnableDropAndPasteHook: string[] = [];
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;

@@ -930,4 +930,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagDashboardDropAndPaste
+	// Enables the drop and paste handlers on dashboards
+	FlagDashboardDropAndPaste = "dashboardDropAndPaste"
 )

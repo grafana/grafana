@@ -564,6 +564,7 @@ export {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
   type PluginExtensionResourceAttributesContext,
+  type PluginExtensionDropAndPasteResponse,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

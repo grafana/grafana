@@ -1025,4 +1025,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the drop and paste handlers on dashboards
+  * @default false
+  */
+  dashboardDropAndPaste?: boolean;
 }
