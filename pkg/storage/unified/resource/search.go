@@ -394,7 +394,11 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 	for _, info := range stats {
 		group.Go(func() error {
 			if rebuild {
-				// on rebuilds, clear the cache, so we get the latest usage insights data
+				// only periodically rebuild the dashboard index, specifically to update the usage insights data
+				if info.Resource != dashboardv1.DASHBOARD_RESOURCE {
+					return nil
+				}
+				// we need to clear the cache to make sure we get the latest usage insights data
 				s.builders.clearNamespacedCache(info.NamespacedResource)
 			}
 			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
