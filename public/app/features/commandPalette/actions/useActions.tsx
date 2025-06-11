@@ -75,7 +75,7 @@ export function useRegisterScopesActions(
   const { updateNode, selectScope, deselectScope, apply, resetSelection, searchAllNodes } =
     services.scopesSelectorService;
 
-  // Initialize the scopes first time this runs and reset the scopes that were selected on unmount.
+  // Initialize the scopes the first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
     updateNode('', true, '');
     resetSelection();
@@ -109,7 +109,6 @@ export function useRegisterScopesActions(
       for (const node of Object.values(globalNodes)) {
         actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
       }
-      console.log('actions global', actions);
       return actions;
     }
     return mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
@@ -171,7 +170,6 @@ function useGlobalScopesSearch(
   // Load next level of scopes when the parentId changes.
   useEffect(() => {
     if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
-      console.log('searching global', searchQuery);
       // We only search globally if there is no parentId
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
