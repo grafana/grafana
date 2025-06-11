@@ -177,6 +177,36 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		}))
 	})
 
+	// This is a general test for the unified storage list operation. We don't have a common test
+	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
+	t.Run("make sure list works with continue tokens", func(t *testing.T) {
+		modes := []grafanarest.DualWriterMode{
+			grafanarest.Mode1,
+			grafanarest.Mode2,
+			grafanarest.Mode3,
+			grafanarest.Mode4,
+			grafanarest.Mode5,
+		}
+		for _, mode := range modes {
+			t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+				doListFoldersTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:    true,
+					DisableAnonymous:     true,
+					APIServerStorageType: "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						folders.RESOURCEGROUP: {
+							DualWriterMode: mode,
+						},
+					},
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagKubernetesClientDashboardsFolders,
+						featuremgmt.FlagNestedFolders,
+					},
+				}))
+			})
+		}
+	})
+
 	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
 		doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
@@ -486,6 +516,41 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	}, &folder.Folder{})
 	require.NotEmpty(t, create.Response)
 	require.Equal(t, 400, create.Response.StatusCode)
+}
+
+func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	for i := 0; i < 3; i++ {
+		payload := fmt.Sprintf(`{
+		"title": "Test-%d",
+		"uid": "uid-%d"
+		}`, i, i)
+		parentCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(payload),
+		}, &folder.Folder{})
+		require.NotNil(t, parentCreate.Result)
+		require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+	}
+	res, err := client.Resource.List(context.Background(), metav1.ListOptions{
+		Limit: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Items, 1)
+	require.Equal(t, "uid-0", res.Items[0].GetName())
+
+	res, err = client.Resource.List(context.Background(), metav1.ListOptions{
+		Limit:    1,
+		Continue: res.GetContinue(),
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Items, 1)
+	require.Equal(t, "uid-1", res.Items[0].GetName())
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {

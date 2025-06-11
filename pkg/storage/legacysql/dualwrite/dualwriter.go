@@ -2,7 +2,10 @@ package dualwrite
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -67,31 +70,90 @@ func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOp
 }
 
 func (d *dualWriter) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	// If we read from unified, we can just do that and return.
-	if d.readUnified {
-		return d.unified.List(ctx, options)
-	}
-	// If legacy is still the main store, lets first read from it.
-	legacyList, err := d.legacy.List(ctx, options)
+	// Always work on *copies* so we never mutate the caller's ListOptions.
+	var (
+		legacyOptions  = options.DeepCopy()
+		unifiedOptions = options.DeepCopy()
+		unifiedToken   = ""
+		log            = logging.FromContext(ctx).With("method", "List")
+	)
+
+	// Split a dualwriter continue token (legacy, unified) if we received one.
+	// Otherwise, only populated `legacyToken` with the legacy token seperated
+	// by `|`.
+	legacyToken, unifiedToken, err := parseContinueTokens(options.Continue)
 	if err != nil {
 		return nil, err
 	}
+
+	legacyOptions.Continue = legacyToken
+	unifiedOptions.Continue = unifiedToken
+
+	// If we read from unified, we can just do that and return.
+	if d.readUnified {
+		unifiedList, err := d.unified.List(ctx, unifiedOptions)
+		if err != nil {
+			return nil, err
+		}
+		unifiedMeta, err := meta.ListAccessor(unifiedList)
+		if err != nil {
+			return nil, err
+		}
+		unifiedMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
+			strings.Join([]string{"", unifiedMeta.GetContinue()}, ","))))
+		return unifiedList, nil
+	}
+	// If legacy is still the main store, lets first read from it.
+	legacyList, err := d.legacy.List(ctx, legacyOptions)
+	if err != nil {
+		return nil, err
+	}
+	legacyMeta, err := meta.ListAccessor(legacyList)
+	if err != nil {
+		return nil, err
+	}
+	legacyToken = legacyMeta.GetContinue()
+
 	// Once we have successfully listed from legacy, we can check if we want to fail on a unified list.
 	// If we allow the unified list to fail, we can do it in the background and return.
 	if d.errorIsOK {
+		// We want to slow down this operation at most 300ms, by waiting in the background for the right continue token.
+		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Millisecond*300)
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
-			if _, err := d.unified.List(ctxBg, options); err != nil {
+			defer timeoutCancel()
+			unifiedList, err := d.unified.List(ctxBg, options)
+			if err != nil {
+				log.Error("failed background LIST to unified", "err", err)
+				return
+			}
+			unifiedMeta, err := meta.ListAccessor(unifiedList)
+			if err != nil {
 				log := logging.FromContext(ctxBg).With("method", "List")
 				log.Error("failed background LIST to unified", "err", err)
 			}
+			unifiedToken = unifiedMeta.GetContinue()
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
+		<-timeoutCtx.Done()
+		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
+			log.Warn("timeout while waiting on the unified storage continue token")
+		}
+		legacyMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
+			strings.Join([]string{legacyToken, unifiedToken}, ","))))
 		return legacyList, nil
 	}
 	// If it's not okay to fail, we have to check it in the foreground.
-	if _, err := d.unified.List(ctx, options); err != nil {
+	unifiedList, err := d.unified.List(ctx, unifiedOptions)
+	if err != nil {
 		return nil, err
 	}
+	unifiedMeta, err := meta.ListAccessor(unifiedList)
+	if err != nil {
+		return nil, err
+	}
+	unifiedToken = unifiedMeta.GetContinue()
+	legacyMeta.SetContinue(base64.StdEncoding.EncodeToString([]byte(
+		strings.Join([]string{legacyToken, unifiedToken}, ","))))
 	return legacyList, nil
 }
 
