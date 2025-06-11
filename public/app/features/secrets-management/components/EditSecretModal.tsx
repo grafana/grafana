@@ -6,9 +6,9 @@ import { t } from '@grafana/i18n/internal';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Modal, Spinner, Text } from '@grafana/ui';
 
-import { useGetSecretQuery, useSecretMutation } from '../api/secretsManagementApi';
+import { useGetSecretQuery, useSecretMutation } from '../api';
 import { SecretFormValues } from '../types';
-import { getErrorMessage, getFieldErrors, secretFormValuesToSecret, secretToSecretFormValues } from '../utils';
+import { getErrorMessage, getFieldErrors, secretToSecretFormValues } from '../utils';
 
 import { SecretForm } from './SecretForm';
 
@@ -25,7 +25,7 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
     data: secret,
     isLoading,
     isUninitialized,
-  } = useGetSecretQuery(name as string, {
+  } = useGetSecretQuery(name ?? '', {
     skip: !name,
   });
   const isNew = isUninitialized;
@@ -41,17 +41,21 @@ export function EditSecretModal({ isOpen, onDismiss, name }: EditSecretModalProp
 
   const handleSubmit = useCallback(
     (data: SecretFormValues) => {
-      const secretData = secretFormValuesToSecret({ ...secret, ...data });
-      return mutation(secretData);
+      return mutation(data);
     },
-    [secret, mutation]
+    [mutation]
   );
 
   useEffect(() => {
     if (isSuccess) {
+      const name = response.metadata.name;
       const message = isNew
-        ? t('secrets.mutation-success.create', 'Secret "{{name}}" was created successfully', response.metadata)
-        : t('secrets.mutation-success.update', 'Secret "{{name}}" was updated successfully', response.metadata);
+        ? t('secrets.mutation-success.create', 'Secret "{{name}}" was created successfully', {
+            name,
+          })
+        : t('secrets.mutation-success.update', 'Secret "{{name}}" was updated successfully', {
+            name,
+          });
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: [message],

@@ -3,8 +3,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { createBaseQuery } from 'app/api/createBaseQuery';
 import { getAPIBaseURL } from 'app/api/utils';
 
-import { Secret, SecretsListResponse, SecretsListResponseItem } from '../types';
-import { transformFromSecret, transformToSecret } from '../utils';
+import { Secret, SecretFormValues, SecretsListResponse, SecretsListResponseItem } from './types';
+import { payloadFromFormValues, transformToSecret } from './utils';
 
 const baseURL = getAPIBaseURL('secret.grafana.app', 'v0alpha1');
 
@@ -19,9 +19,14 @@ export const secretsManagementApi = createApi({
         method: 'GET',
       }),
       providesTags: (result) =>
-        result ? [...result.map(({ name }) => ({ type: 'Secret' as const, id: name })), 'Secret'] : ['Secret'],
+        result
+          ? [
+              ...result.map<{ type: 'Secret'; id: string } | 'Secret'>(({ name }) => ({ type: 'Secret', id: name })),
+              'Secret',
+            ]
+          : ['Secret'],
       transformResponse: (response: SecretsListResponse) => {
-        return (response?.items?.map(transformToSecret) as Secret[]) ?? [];
+        return response?.items?.map(transformToSecret) ?? [];
       },
     }),
     getSecret: builder.query<Secret, string>({
@@ -56,13 +61,13 @@ export const secretsManagementApi = createApi({
         }
       },
     }),
-    createSecret: builder.mutation({
-      query: (data) => ({
+    createSecret: builder.mutation<SecretsListResponseItem, SecretFormValues>({
+      query: (formValues) => ({
         url: '/securevalues',
         method: 'POST',
-        body: transformFromSecret(data),
+        body: payloadFromFormValues(formValues),
       }),
-      invalidatesTags: (result, error, arg, meta) => {
+      invalidatesTags: (_result, error) => {
         if (!!error) {
           return [null];
         }
@@ -70,13 +75,13 @@ export const secretsManagementApi = createApi({
         return ['Secret'];
       },
     }),
-    updateSecret: builder.mutation<Secret, Partial<Secret> & Pick<Secret, 'name'>>({
-      query: (secret) => ({
-        url: `/securevalues/${encodeURIComponent(secret.name)}`,
+    updateSecret: builder.mutation<SecretsListResponseItem, SecretFormValues>({
+      query: (formValues) => ({
+        url: `/securevalues/${encodeURIComponent(formValues.name)}`,
         method: 'PUT',
-        body: transformFromSecret(secret),
+        body: payloadFromFormValues(formValues),
       }),
-      invalidatesTags: (result, error, arg) => [{ type: 'Secret', id: arg.name }],
+      invalidatesTags: (_result, _error, arg) => [{ type: 'Secret', id: arg.name }],
     }),
   }),
 });

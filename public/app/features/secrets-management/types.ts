@@ -1,4 +1,7 @@
 import { HTMLProps, ReactNode } from 'react';
+import { FieldPath } from 'react-hook-form';
+
+import { AllowedDecrypter } from './constants';
 
 export enum SecretStatusPhase {
   Succeeded = 'Succeeded',
@@ -32,25 +35,40 @@ export interface SecretsListResponseItem {
   kind: 'SecureValue';
   metadata: Metadata;
   spec: {
-    decrypters: string[] | null;
+    decrypters: AllowedDecrypter[] | null;
     description: string;
     keeper?: string;
   };
   status?: SecretStatus;
 }
 
-type Decrypter = `${string}/${string}`;
+type Decrypter = string;
 
-// Minimum required fields to create a secret
+export type SecretPayload = CreateSecretPayload | UpdateSecretPayload;
+
 export interface CreateSecretPayload {
   metadata: {
     name: string;
+    labels?: Record<string, string>;
   };
 
   spec: {
-    title: string;
-    decrypter: Decrypter[];
+    description: string;
     value: string;
+    decrypters?: Decrypter[];
+  };
+}
+
+export interface UpdateSecretPayload {
+  metadata: {
+    name?: never;
+    labels?: Record<string, string>;
+  };
+
+  spec: {
+    description: string;
+    value?: string;
+    decrypters?: Decrypter[];
   };
 }
 
@@ -65,31 +83,24 @@ export interface Secret {
   name: SecretsListResponseItem['metadata']['name'];
   description: SecretsListResponseItem['spec']['description'];
   decrypters: SecretsListResponseItem['spec']['decrypters'];
-  keeper?: SecretsListResponseItem['spec']['keeper'];
   uid: SecretsListResponseItem['metadata']['uid'];
-  value?: string; // Only present when editing a secret
-  status?: SecretStatus['phase'];
   created: SecretsListResponseItem['metadata']['creationTimestamp'];
+  labels: Array<{ name: string; value: string }>;
+  keeper?: SecretsListResponseItem['spec']['keeper'];
+  status?: SecretStatus['phase'];
   createdBy?: MetaDataAnnotations['grafana.app/createdBy'];
   modified?: MetaDataAnnotations['grafana.app/updatedTimestamp'];
   modifiedBy?: MetaDataAnnotations['grafana.app/updatedBy'];
-  labels: Array<{ name: string; value: string }>;
-}
-
-export interface NewSecret extends Omit<Secret, 'uid'> {
-  uid: never;
-  value: string;
 }
 
 export interface SecretFormValues {
   name: string;
   description: string;
-  value?: string;
-  uid?: string;
-  enabled?: boolean;
   decrypters: Array<{ label: string; value: string }>;
-  keeper?: string;
   labels: Array<{ name: string; value: string }>;
+  uid?: string;
+  keeper?: string;
+  value?: string;
 }
 
 // TypeScript doesn't like `import { Props as InputProps } from '@grafana/ui/src/components/Input/Input'`, this is a copy-paste of the InputProps interface
@@ -118,3 +129,5 @@ export type Entries<T> = Array<
     [K in keyof T]-?: [K, T[K]];
   }[keyof T]
 >;
+
+export type FieldErrorMap = Partial<Record<FieldPath<SecretFormValues>, { message: string }>>;

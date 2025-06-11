@@ -3,12 +3,12 @@ import { FormEvent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n/internal';
 
-import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
+import { DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
 import {
-  CreateSecretPayload,
-  NewSecret,
+  FieldErrorMap,
   Secret,
   SecretFormValues,
+  SecretPayload,
   SecretsListResponseItem,
   SecretStatusPhase,
 } from './types';
@@ -32,24 +32,51 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
   };
 }
 
-export function transformFromSecret(
-  secret: (Partial<Secret> & { value?: string }) | SecretFormValues
-): CreateSecretPayload | Omit<CreateSecretPayload, CreateSecretPayload['spec']['value']> {
-  const labels = (secret?.labels ?? []).reduce<SecretsListResponseItem['metadata']['labels']>((acc, label) => {
-    acc![label.name] = label.value;
-    return acc;
-  }, {});
+/**
+ * Converts form values into a payload that can be sent to the backend API.
+ *
+ * @param {SecretFormValues} formValues
+ * @return {SecretPayload}
+ */
+export function payloadFromFormValues(formValues: SecretFormValues): SecretPayload {
+  const isNew = !!formValues.uid;
+  const decrypters = formValues.decrypters.map((decrypter) => decrypter.value);
+  const labels = (formValues?.labels ?? []).reduce<{ labels: Record<string, string> } | undefined>((acc, label) => {
+    if (!acc) {
+      acc = { labels: {} };
+    }
 
+    acc.labels[label.name] = label.value;
+
+    return acc;
+  }, undefined);
+
+  const { name, description, value } = formValues;
+
+  // A new secret must have a name and a value
+  if (isNew) {
+    return {
+      metadata: {
+        name,
+        ...labels,
+      },
+      spec: {
+        description,
+        value: value ?? '',
+      },
+    };
+  }
+
+  // An existing secret cannot update name
   return {
     metadata: {
-      name: secret.name,
-      ...(!!secret.uid ? { uid: secret.uid } : undefined),
-      ...(!!secret?.labels?.length ? { labels } : undefined),
+      ...labels,
     },
     spec: {
-      description: secret.description,
-      decrypters: secret.decrypters ?? [],
-      ...(!!secret.value ? { value: secret.value } : undefined),
+      description,
+      decrypters,
+      // Omit value property, unless it happens to not be undefined
+      ...(!!formValues.value ? { value: formValues.value } : undefined),
     },
   };
 }
@@ -63,30 +90,16 @@ export function secretToSecretFormValues(secret?: Secret): SecretFormValues | un
       name: secret.name,
       description: secret.description,
       decrypters:
-        secret.decrypters?.map((audience) => {
-          if (audience in DECRYPT_ALLOW_LIST_LABEL_MAP) {
-            return { label: DECRYPT_ALLOW_LIST_LABEL_MAP[audience as AllowedDecrypter], value: audience };
+        secret.decrypters?.map((decrypter) => {
+          if (decrypter in DECRYPT_ALLOW_LIST_LABEL_MAP) {
+            return { label: DECRYPT_ALLOW_LIST_LABEL_MAP[decrypter], value: decrypter };
           }
 
-          return { label: `Unsupported (${audience})`, value: audience };
+          return { label: `Unsupported (${decrypter})`, value: decrypter };
         }) ?? [],
       labels: secret.labels,
     };
   }
-}
-
-export function secretFormValuesToSecret(secretFormValues: SecretFormValues): NewSecret | Secret {
-  const decrypters = secretFormValues.decrypters?.map((decrypter) => decrypter.value) ?? [];
-  const secret = {
-    ...secretFormValues,
-    decrypters,
-  };
-
-  if (!!secretFormValues.uid) {
-    return secret as Secret;
-  }
-
-  return secret as NewSecret;
 }
 
 export function isSecretPending(secret: Pick<Secret, 'status'>): boolean {
@@ -184,7 +197,7 @@ export function checkLabelNameAvailability(
   name: Secret['labels'][number]['name'],
   index: number,
   { labels }: Pick<SecretFormValues, 'labels'>
-) {
+): true | string {
   const validation = validateSecretLabel('name', name);
   if (validation !== true) {
     return validation;
@@ -244,7 +257,7 @@ export function isFieldInvalid(fieldName: string, errors: Record<string, { messa
   return fieldName in errors ? true : undefined;
 }
 
-export function getErrorMessage(error: any) {
+export function getErrorMessage(error: unknown) {
   const fallback = t('secrets.error-state.unknown-error', 'Unknown error');
   if (typeof error === 'string') {
     return error;
@@ -254,7 +267,14 @@ export function getErrorMessage(error: any) {
     if ('message' in error && typeof error.message === 'string') {
       return error.message;
     }
-    if ('data' in error && 'message' in error.data && typeof error.data.message === 'string') {
+
+    if (
+      'data' in error &&
+      error.data &&
+      typeof error.data === 'object' &&
+      'message' in error.data &&
+      typeof error.data.message === 'string'
+    ) {
       return error.data.message;
     }
   }
@@ -262,12 +282,13 @@ export function getErrorMessage(error: any) {
   return fallback;
 }
 
-export function getFieldErrors(error: any): Record<string, { message: string }> | undefined {
+export function getFieldErrors(error: unknown): FieldErrorMap | undefined {
   if (
     error &&
     typeof error === 'object' &&
     'data' in error &&
     error.data &&
+    typeof error.data === 'object' &&
     'message' in error.data &&
     typeof error.data.message === 'string'
   ) {

@@ -52,7 +52,7 @@ describe('SecretForm', () => {
     ['Value *', 'secret-value!', validateSecretValue, HTMLTextAreaElement],
   ])(
     'should focus and validate input ("%s")',
-    async (byText: string, value: string, validationFunction: Function, instanceOf?: any) => {
+    async (byText: string, value: string, validationFunction: Function, instanceOf?: unknown) => {
       renderSecretForm();
       // Clicking label should focus correct input
       await userEvent.click(screen.getByText(byText));

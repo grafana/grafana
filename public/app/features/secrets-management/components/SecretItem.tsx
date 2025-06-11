@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { Trans, useTranslate } from '@grafana/i18n';
 import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
 
-import { AllowedDecrypter, DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
+import { DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
 import { Secret } from '../types';
 import { isSecretPending } from '../utils';
 
@@ -150,14 +150,16 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
             <Trans i18nKey="secrets.item.label-decrypters">Decrypters:</Trans>
           </strong>
           <div className={styles.row}>
-            {secret.decrypters?.map((item) => (
-              <Badge
-                className={styles.audienceBadge}
-                color="blue"
-                key={item}
-                text={DECRYPT_ALLOW_LIST_LABEL_MAP[item as AllowedDecrypter] ?? item}
-              />
-            ))}
+            {secret.decrypters?.map((item) => {
+              return (
+                <Badge
+                  className={styles.audienceBadge}
+                  color="blue"
+                  key={item}
+                  text={DECRYPT_ALLOW_LIST_LABEL_MAP[item] ?? item}
+                />
+              );
+            })}
           </div>
         </div>
 

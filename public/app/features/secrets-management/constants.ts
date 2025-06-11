@@ -1,7 +1,5 @@
-import { Entries } from './types';
-
 // @see https://github.com/grafana/grafana-enterprise/blob/secret-service/feature-branch/src/pkg/extensions/secret/decrypt/allow_list.go
-export const DECRYPT_ALLOW_LIST = ['k6', 'synthetic-monitoring'] as const;
+export const DECRYPT_ALLOW_LIST = ['k6', 'synthetic-monitoring'];
 export type AllowedDecrypter = (typeof DECRYPT_ALLOW_LIST)[number];
 
 export const DECRYPT_ALLOW_LIST_LABEL_MAP: Record<AllowedDecrypter, string> = {
@@ -9,9 +7,7 @@ export const DECRYPT_ALLOW_LIST_LABEL_MAP: Record<AllowedDecrypter, string> = {
   'synthetic-monitoring': 'Synthetic Monitoring',
 };
 
-export const DECRYPT_ALLOW_LIST_OPTIONS = (
-  Object.entries(DECRYPT_ALLOW_LIST_LABEL_MAP) as Entries<typeof DECRYPT_ALLOW_LIST_LABEL_MAP>
-).map(([value, label]) => {
+export const DECRYPT_ALLOW_LIST_OPTIONS = Object.entries(DECRYPT_ALLOW_LIST_LABEL_MAP).map(([value, label]) => {
   return { label, value };
 });
 
