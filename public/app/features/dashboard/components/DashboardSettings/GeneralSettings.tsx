@@ -165,16 +165,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker
-              value={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-              initialTitle={dashboard.meta.folderTitle}
-              inputId="dashboard-folder-input"
-              enableCreateNew
-              dashboardId={dashboard.id}
-              skipInitialLoad
-            />
+            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
           </Field>
 
           <Field

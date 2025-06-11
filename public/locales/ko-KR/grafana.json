@@ -4408,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "선택",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5223,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "메시지",
-      "body-dashboard-drastically-changed": "새로운 Grafana 대시보드 스키마 형식에서만 지원되는 새 대시보드 기능을 사용하고 있기 때문에 대시보드가 새 형식으로 저장됩니다. 이 동작을 수행할지 아니면 대시보드를 새 복사본으로 저장할지 확인하세요.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "취소"
       },
@@ -5239,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "동적 대시보드 기능은 실험 단계이며 현재 대시보드 동작과 모든 기능이 동일하지는 않습니다. 이 기능은 라이브러리 패널을 지원하지 않는 새로운 스키마 형식을 기반으로 합니다. 즉, 다른 인스턴스에서 사용하기 위해 대시보드를 내보낼 때 라이브러리 패널이 포함되지 않는다는 것을 의미합니다. Grafana는 기능 <2>수명 주기</2>가 진행됨에 따라 이를 지원할 계획입니다.",
       "schema-v2-library-panels-export-title": "대시보드 스키마 V2는 아직 다른 인스턴스에서 사용할 라이브러리 패널 내보내기를 지원하지 않습니다",
-      "title-dashboard-drastically-changed": "대시보드가 대폭 변경됨"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "현재 새로 고침을 새로운 기본값으로 설정합니다",
@@ -7689,6 +7690,8 @@
       },
       "enable-highlighting": "강조 표시 활성화",
       "escape-newlines": "로그 줄에서 잘못된 줄 바꿈 및 탭 시퀀스 수정",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",

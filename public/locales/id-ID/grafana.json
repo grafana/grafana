@@ -4408,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Pilih",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5223,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "pesan",
-      "body-dashboard-drastically-changed": "Anda menggunakan fitur dasbor baru yang hanya didukung pada format skema dasbor Grafana baru, jadi dasbor akan disimpan dalam format baru. Pastikan Anda ingin melakukan tindakan ini atau Anda lebih suka menyimpan dasbor sebagai salinan baru.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Batalkan"
       },
@@ -5239,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "Fungsionalitas dasbor dinamis bersifat eksperimen, dan tidak memiliki paritas fitur penuh dengan perilaku dasbor saat ini. Ini didasarkan pada format skema baru, yang tidak mendukung panel pustaka. Ini berarti ketika mengekspor dasbor untuk menggunakannya di instans lain, kami tidak akan menyertakan panel pustaka. Kami bermaksud untuk mendukung seiring fitur <2>siklus pengembangan</2> fitur.",
       "schema-v2-library-panels-export-title": "Skema Dasbor V2 belum mendukung ekspor panel pustaka untuk digunakan di instans lain",
-      "title-dashboard-drastically-changed": "Dasbor berubah drastis"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Akan menjadikan muat ulang saat ini sebagai default baru",
@@ -7689,6 +7690,8 @@
       },
       "enable-highlighting": "Aktifkan penyorotan",
       "escape-newlines": "Perbaiki escape sequence baris baru dan tab yang salah di baris log",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
       "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
