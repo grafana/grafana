@@ -7008,6 +7008,10 @@
       "update": "Update"
     }
   },
+  "dragndrop": {
+    "alternative-cta": "Want a different look? Select another visualization",
+    "drop-hover-text": "Drop a file to bring your data into the dashboard"
+  },
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",

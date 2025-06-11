@@ -294,9 +294,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   const scopeMeta =
     config.featureToggles.scopeFilters && oldModel.scopeMeta
       ? {
-        trait: oldModel.scopeMeta.trait,
-        groups: oldModel.scopeMeta.groups,
-      }
+          trait: oldModel.scopeMeta.trait,
+          groups: oldModel.scopeMeta.groups,
+        }
       : undefined;
 
   // Create profiler once and reuse to avoid duplicate metadata setting
@@ -480,9 +480,9 @@ export function buildVizPanelForPanel(panel: PanelModel): VizPanel {
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
-      variableName: panel.repeat,
-      repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
-    }
+        variableName: panel.repeat,
+        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
+      }
     : {};
 
   const body = buildVizPanelForPanel(panel);

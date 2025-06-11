@@ -397,7 +397,7 @@ export function createAddedLinkConfig<T extends object>(
 
 function assertLinkConfig<T extends object>(
   config: PluginExtensionAddedLinkConfig<T>
-): asserts config is PluginExtensionAddedLinkConfig { }
+): asserts config is PluginExtensionAddedLinkConfig {}
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {

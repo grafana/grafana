@@ -1109,4 +1109,8 @@ const (
 	// FlagKubernetesAnnotations
 	// Enables app platform API for annotations
 	FlagKubernetesAnnotations = "kubernetesAnnotations"
+
+	// FlagDashboardDropAndPaste
+	// Enables the drop and paste handlers on dashboards
+	FlagDashboardDropAndPaste = "dashboardDropAndPaste"
 )

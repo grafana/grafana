@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { PanelModel } from './dashboard';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
@@ -218,6 +219,8 @@ export enum PluginExtensionPoints {
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
+  DashboardDropzone = 'grafana/dashboard/dropzone/v1',
+  DashboardPaste = 'grafana/dashboard/paste/v1',
 }
 
 // Don't use directly in a plugin!
@@ -280,6 +283,13 @@ export type PluginExtensionDataSourceConfigContext<
   setSecureJsonData: (secureJsonData: SecureJsonData) => void;
 };
 
+export type PluginExtensionDropAndPasteResponse = {
+  title: string;
+  icon: IconName;
+  confidence: number;
+  component?: React.ComponentType<{ addPanel: (p: PanelModel) => void }>;
+  panel?: PanelModel;
+};
 export type PluginExtensionCommandPaletteContext = {};
 
 export type PluginExtensionResourceAttributesContext = {

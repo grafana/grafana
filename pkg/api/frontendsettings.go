@@ -311,6 +311,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
+		PluginEnableDropAndPasteHook:        hs.Cfg.PluginEnableDropAndPasteHook,
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,
