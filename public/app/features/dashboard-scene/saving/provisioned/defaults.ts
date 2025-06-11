@@ -21,6 +21,8 @@ export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
     ref = config.branch;
   }
 
+  // TODO: There is some issue with the git workflow. It doesn't have the ref
+
   // Return the workflows in the configured order
   return config.workflows.map((value) => {
     switch (value) {
