@@ -1,3 +1,8 @@
+import { ReactNode } from 'react';
+import * as React from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+
 import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
@@ -159,4 +164,31 @@ export const getContentItems = (
   }
 
   return rows;
+};
+
+export const extractTextFromReactNode = (node: ReactNode): string => {
+  if (node === null || node === undefined) {
+    return '';
+  }
+
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node);
+  }
+
+  if (React.isValidElement(node)) {
+    const tempDiv = document.createElement('div');
+    const root = createRoot(tempDiv);
+
+    flushSync(() => {
+      root.render(node);
+    });
+
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    root.unmount();
+    tempDiv.remove();
+
+    return textContent;
+  }
+
+  return String(node);
 };
