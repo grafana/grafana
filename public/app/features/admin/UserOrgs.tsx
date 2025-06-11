@@ -3,7 +3,7 @@ import { createRef, PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   Button,
   ConfirmButton,

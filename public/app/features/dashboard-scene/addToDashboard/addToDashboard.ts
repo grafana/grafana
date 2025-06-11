@@ -1,5 +1,5 @@
 import { locationUtil, TimeRange } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import store from 'app/core/store';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -12,7 +12,6 @@ import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 
 function Home() {
-  const { t } = useTranslate();
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');

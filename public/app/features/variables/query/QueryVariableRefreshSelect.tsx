@@ -1,7 +1,7 @@
 import { PropsWithChildren, useMemo } from 'react';
 
 import { VariableRefresh } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
@@ -23,7 +23,6 @@ export function QueryVariableRefreshSelect({ onChange, refresh, testId }: PropsW
     () => REFRESH_OPTIONS.find((o) => o.value === refresh)?.value ?? REFRESH_OPTIONS[0].value,
     [refresh]
   );
-  const { t } = useTranslate();
 
   return (
     <Field

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
@@ -12,7 +12,7 @@ interface LimitSectionProps {
 
 export const LimitSection: React.FC<LimitSectionProps> = (props) => {
   const { buildAndUpdateQuery } = props;
-  const { t } = useTranslate();
+
   const [limit, setLimit] = useState<number>(1000);
 
   const handleQueryLimitUpdate = (newLimit: number) => {

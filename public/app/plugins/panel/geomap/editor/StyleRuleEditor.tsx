@@ -5,7 +5,7 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { comparisonOperationOptions } from '@grafana/ui/internal';
@@ -27,7 +27,6 @@ export interface StyleRuleEditorSettings {
 type Props = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown>;
 
 export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
-  const { t } = useTranslate();
   const settings = item.settings;
   if (!settings) {
     // Shouldn't be possible to hit this block, but just in case

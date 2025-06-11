@@ -4,8 +4,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -46,7 +45,6 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
       setFocusInput(false);
     }
   }, [focusInput, inputRef]);
-  const { t } = useTranslate();
 
   const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
@@ -165,7 +163,6 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       setFocusInput(false);
     }
   }, [focusInput, inputRef]);
-  const { t } = useTranslate();
 
   const minWidthOptions: Array<ComboboxOption<AutoGridRowHeight>> = [
     'short' as const,

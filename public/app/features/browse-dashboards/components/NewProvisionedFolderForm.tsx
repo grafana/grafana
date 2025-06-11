@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
@@ -61,8 +61,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repository));
   }, [repository, setValue]);
-
-  const { t } = useTranslate();
 
   useEffect(() => {
     const appEvents = getAppEvents();

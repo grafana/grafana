@@ -2,7 +2,7 @@ import React, { type ComponentType, Fragment, type ReactElement, useCallback, us
 
 import { type ComponentTypeWithExtensionMeta, type UrlQueryValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -59,8 +59,6 @@ type TabInfo = {
 };
 
 function useTabInfoById(components: Props['components'], general: React.ReactNode): Record<string, TabInfo> {
-  const { t } = useTranslate();
-
   return useMemo(() => {
     const tabs: Record<string, TabInfo> = {
       [GENERAL_SETTINGS_TAB]: {
@@ -85,7 +83,7 @@ function useTabInfoById(components: Props['components'], general: React.ReactNod
       acc[tabId].components.push(component);
       return acc;
     }, tabs);
-  }, [components, general, t]);
+  }, [components, general]);
 }
 
 function useActiveTab(tabs: Record<string, TabInfo>): [TabInfo | undefined, (tabId: string) => void] {

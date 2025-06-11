@@ -3,7 +3,7 @@ import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -43,7 +43,6 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { t } = useTranslate();
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {

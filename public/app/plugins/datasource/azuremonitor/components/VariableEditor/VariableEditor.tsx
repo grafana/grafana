@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, Field, Select, Space } from '@grafana/ui';
 
@@ -28,7 +28,7 @@ const removeOption: SelectableValue = { label: '-', value: '' };
 
 const VariableEditor = (props: Props) => {
   const { query, onChange, datasource } = props;
-  const { t } = useTranslate();
+
   const AZURE_QUERY_VARIABLE_TYPE_OPTIONS = [
     { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
     { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },

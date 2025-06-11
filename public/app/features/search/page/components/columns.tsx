@@ -11,7 +11,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';

@@ -19,7 +19,7 @@ import {
   StreamingDataFrame,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/ui';
 

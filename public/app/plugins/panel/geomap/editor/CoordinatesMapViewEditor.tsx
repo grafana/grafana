@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -11,7 +11,6 @@ type Props = {
 };
 
 export const CoordinatesMapViewEditor = ({ labelWidth, value, onChange }: Props) => {
-  const { t } = useTranslate();
   const onLatitudeChange = (latitude: number | undefined) => {
     onChange({ ...value, lat: latitude });
   };

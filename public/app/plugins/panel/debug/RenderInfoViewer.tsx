@@ -10,7 +10,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { Options, UpdateConfig } from './panelcfg.gen';

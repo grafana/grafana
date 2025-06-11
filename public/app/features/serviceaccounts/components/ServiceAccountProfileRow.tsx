@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -26,8 +26,6 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
       focusInput();
     }
   }, [isEditing]);
-
-  const { t } = useTranslate();
 
   const onEditClick = () => {
     setIsEditing(true);

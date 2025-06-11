@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -6,7 +6,6 @@ import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import MuteTimingForm from './MuteTimingForm';
 
 function NewMuteTimingPage() {
-  const { t } = useTranslate();
   return (
     <AlertmanagerPageWrapper
       navId="am-routes"

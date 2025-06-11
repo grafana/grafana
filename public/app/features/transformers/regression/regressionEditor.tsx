@@ -9,7 +9,7 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
@@ -32,7 +32,6 @@ export const RegressionTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
-  const { t } = useTranslate();
   const modelTypeOptions = [
     {
       label: t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear'),

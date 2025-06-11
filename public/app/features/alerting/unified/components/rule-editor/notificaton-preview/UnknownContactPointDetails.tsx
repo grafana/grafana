@@ -1,9 +1,7 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Tooltip } from '@grafana/ui';
 
 const UnknownContactPointDetails = ({ receiverName }: { receiverName?: string }) => {
-  const { t } = useTranslate();
-
   return (
     <span style={{ cursor: 'help' }}>
       <Tooltip

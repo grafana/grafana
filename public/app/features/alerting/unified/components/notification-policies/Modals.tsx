@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -41,7 +41,7 @@ const useAddPolicyModal = (
   }, []);
 
   const [error, setError] = useState<Error | undefined>(undefined);
-  const { t } = useTranslate();
+
   const modalElement = useMemo(
     () =>
       loading ? (
@@ -80,7 +80,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError, t]
+    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -108,7 +108,6 @@ const useEditPolicyModal = (
     setRoute(route);
     setShowModal(true);
   }, []);
-  const { t } = useTranslate();
 
   const modalElement = useMemo(
     () =>
@@ -198,7 +197,6 @@ const useDeletePolicyModal = (
     setRoute(route);
     setShowModal(true);
   }, []);
-  const { t } = useTranslate();
 
   const modalElement = useMemo(
     () =>
@@ -230,7 +228,7 @@ const useDeletePolicyModal = (
           </Modal.ButtonRow>
         </Modal>
       ),
-    [handleDismiss, loading, showModal, error, route, handleDelete, t]
+    [handleDismiss, loading, showModal, error, route, handleDelete]
   );
 
   return [modalElement, handleShow, handleDismiss];

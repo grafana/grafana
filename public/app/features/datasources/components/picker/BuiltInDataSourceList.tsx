@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TFunction, useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataSourceRef } from '@grafana/schema';
 
 import { useDatasources } from '../../hooks';
@@ -8,7 +8,7 @@ import { useDatasources } from '../../hooks';
 import { DataSourceCard } from './DataSourceCard';
 import { isDataSourceMatch } from './utils';
 
-function getCustomDescription(datasourceUid: string, t: TFunction) {
+function getCustomDescription(datasourceUid: string) {
   switch (datasourceUid) {
     case 'grafana':
       return t('data-source-picker.built-in-list.description-grafana', 'Discover visualizations using mock data');
@@ -72,8 +72,6 @@ export function BuiltInDataSourceList({
     logs,
   });
 
-  const { t } = useTranslate();
-
   const filteredResults = grafanaDataSources.filter((ds) => (filter ? filter?.(ds) : true) && !!ds.meta.builtIn);
 
   return (
@@ -83,7 +81,7 @@ export function BuiltInDataSourceList({
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            description={getCustomDescription(ds.uid, t)}
+            description={getCustomDescription(ds.uid)}
             selected={isDataSourceMatch(ds, current)}
             onClick={() => onChange(ds)}
           />

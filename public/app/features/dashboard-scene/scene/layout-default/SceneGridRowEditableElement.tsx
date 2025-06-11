@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Alert, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';

@@ -32,7 +32,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -381,8 +381,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       );
     }
   });
-
-  const { t } = useTranslate();
 
   const updatePanelState = useCallback(
     (logsPanelState: Partial<ExploreLogsPanelState>) => {

@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -10,7 +10,6 @@ export interface HistoryErrorMessageProps {
 }
 
 export function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
-  const { t } = useTranslate();
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="History" />;
   }

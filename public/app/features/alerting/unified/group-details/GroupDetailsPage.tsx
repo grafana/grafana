@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { FolderDTO } from 'app/types';
@@ -78,7 +78,6 @@ function GroupDetailsPage() {
       ? { rulerConfig: dsFeatures?.rulerConfig, namespace: namespaceId, group: groupName }
       : skipToken
   );
-  const { t } = useTranslate();
 
   const ruleSourceName = isGrafanaRuleGroup ? GRAFANA_RULES_SOURCE_NAME : getDataSourceByUid(dataSourceUid)?.name;
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleGroupLoading;
@@ -246,7 +245,6 @@ function GroupDetails({ group }: GroupDetailsProps) {
 }
 
 function RulesTable({ rules }: { rules: RuleDetails[] }) {
-  const { t } = useTranslate();
   const rows = rules.map((rule: RuleDetails, index) => ({
     id: index,
     data: rule,

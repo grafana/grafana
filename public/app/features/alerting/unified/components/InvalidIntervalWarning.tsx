@@ -1,10 +1,8 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 const EvaluationIntervalLimitExceeded = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert
       severity="warning"

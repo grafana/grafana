@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -67,7 +67,7 @@ export const StateFilterValues = {
 
 export const CentralAlertHistoryScene = () => {
   //track the loading of the central alert state history
-  const { t } = useTranslate();
+
   useEffect(() => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
   }, []);
@@ -215,7 +215,7 @@ export class ClearFilterButtonScenesObject extends SceneObjectBase {
 export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
   // This make sure the component is re-rendered when the variables change
   model.useState();
-  const { t } = useTranslate();
+
   const labelsFilter = sceneGraph.interpolate(model, '${LABELS_FILTER}');
   const stateTo = sceneGraph.interpolate(model, '${STATE_FILTER_TO}');
   const stateFrom = sceneGraph.interpolate(model, '${STATE_FILTER_FROM}');

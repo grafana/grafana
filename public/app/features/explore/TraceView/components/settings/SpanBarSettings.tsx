@@ -7,7 +7,7 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
@@ -28,7 +28,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (
@@ -87,7 +87,6 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 }
 
 export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
-  const { t } = useTranslate();
   let suffix = options.type;
   suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#span-bar' : '/#span-bar';
 

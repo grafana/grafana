@@ -1,13 +1,12 @@
 import { FormEvent } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { TableImageCellOptions } from '@grafana/schema';
 import { Field, Input } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
 export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableImageCellOptions>) => {
-  const { t } = useTranslate();
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {
     cellOptions.alt = e.currentTarget.value;
     onChange(cellOptions);

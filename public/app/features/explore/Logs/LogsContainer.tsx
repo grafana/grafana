@@ -21,7 +21,7 @@ import {
   DataSourceWithQueryModificationSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';

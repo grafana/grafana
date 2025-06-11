@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select } from '@grafana/ui';
 
@@ -27,7 +27,7 @@ interface TableSectionProps {
 
 export const TableSection: React.FC<TableSectionProps> = (props) => {
   const { allColumns, query, tables, buildAndUpdateQuery, templateVariableOptions, isLoadingSchema } = props;
-  const { t } = useTranslate();
+
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 

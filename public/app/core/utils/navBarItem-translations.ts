@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';

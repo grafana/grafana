@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Alert, EmptyState, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -34,7 +34,7 @@ export default function RepositoryStatusPage() {
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const settings = useGetFrontendSettingsQuery();
-  const { t } = useTranslate();
+
   const tab = queryParams['tab'] ?? TabSelection.Overview;
 
   const notFound = query.isError && isNotFoundError(query.error);

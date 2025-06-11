@@ -6,7 +6,7 @@ import {
   CalculateFieldTransformerOptions,
   checkBinaryValueType,
 } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -16,7 +16,6 @@ export const BinaryOperationOptionsEditor = (props: {
   onChange: (options: CalculateFieldTransformerOptions) => void;
   names: string[];
 }) => {
-  const { t } = useTranslate();
   const { options, onChange } = props;
   const newLeft = checkBinaryValueType(props.options.binary?.left ?? '', props.names);
   const newRight = checkBinaryValueType(props.options.binary?.right ?? '', props.names);

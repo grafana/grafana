@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -15,7 +15,7 @@ import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
 export function usePauseRuleInGroup() {
   const [produceNewRuleGroup] = useProduceNewRuleGroup();
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
-  const { t } = useTranslate();
+
   const rulePausedMessage = t('alerting.rules.pause-rule.success', 'Rule evaluation paused');
   const ruleResumedMessage = t('alerting.rules.resume-rule.success', 'Rule evaluation resumed');
 

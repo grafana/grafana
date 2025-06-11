@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
@@ -30,7 +30,6 @@ export function useEditConfigurationDrawer() {
     setActiveTab('configuration');
     setOpen(false);
   }, []);
-  const { t } = useTranslate();
 
   const drawer = useMemo(() => {
     if (!open) {

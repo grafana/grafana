@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
 import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   ScaleDimensionConfig,
   ResourceDimensionConfig,
@@ -55,7 +55,6 @@ export interface StyleEditorOptions {
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
 export const StyleEditor = (props: Props) => {
-  const { t } = useTranslate();
   const { value, onChange, item } = props;
   const context = useMemo(() => {
     if (!item.settings?.frameMatcher) {

@@ -4,7 +4,7 @@ import { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, useTheme2 } from '@grafana/ui';
 
 import { HoverState } from './NodeGraph';
@@ -83,7 +83,6 @@ export const Node = memo(function Node(props: {
   onMouseLeave: (id: string) => void;
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
 }) {
-  const { t } = useTranslate();
   const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
   const theme = useTheme2();
   const styles = getStyles(theme, hovering);

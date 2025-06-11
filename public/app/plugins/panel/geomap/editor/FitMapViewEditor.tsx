@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -34,7 +34,6 @@ const DataScopeOptions: Array<SelectableValue<DataScopeValues>> = ScopeOptions.m
 }));
 
 export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props) => {
-  const { t } = useTranslate();
   const layers = useMemo(() => {
     if (context.options?.layers) {
       return context.options.layers.map((layer) => ({

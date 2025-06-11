@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -35,7 +35,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
-  const { t } = useTranslate();
 
   return (
     <>
@@ -80,7 +79,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',

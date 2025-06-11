@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, Input, Stack } from '@grafana/ui';
 
 interface Props {
@@ -10,7 +10,6 @@ interface Props {
 }
 
 export const ParamsEditor = ({ value, onChange }: Props) => {
-  const { t } = useTranslate();
   const [paramName, setParamName] = useState('');
   const [paramValue, setParamValue] = useState('');
 

@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -20,7 +20,7 @@ export interface Props {
 
 export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned }: Props) {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 

@@ -12,7 +12,7 @@ import {
   PluginExtensionResourceAttributesContext,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';

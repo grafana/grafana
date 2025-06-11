@@ -1,14 +1,12 @@
 import { useCallback, useMemo, useRef } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 export function useVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
-  const { t } = useTranslate();
-
   return useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.edit-pane.variable.selection-options.category', 'Selection options'),
@@ -54,7 +52,7 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
           render: () => <AllowCustomSwitch variable={variable} />,
         })
       );
-  }, [variable, t]);
+  }, [variable]);
 }
 
 function MultiValueSwitch({ variable }: { variable: MultiValueVariable }) {

@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { DetailsField } from '../DetailsField';
@@ -8,7 +8,6 @@ interface Props {
 }
 
 const RuleDetailsFederatedSources = ({ group }: Props) => {
-  const { t } = useTranslate();
   const sourceTenants = group.source_tenants ?? [];
 
   return (

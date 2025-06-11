@@ -188,10 +188,6 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
   return tFunc(id, defaultMessage, values);
 };
 
-export function useTranslate() {
-  return { t };
-}
-
 export function Trans(props: TransProps) {
   const Component = transComponent ?? I18NextTrans;
   return <Component shouldUnescape {...props} />;

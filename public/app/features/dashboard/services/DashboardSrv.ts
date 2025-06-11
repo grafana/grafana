@@ -1,5 +1,5 @@
 import { AppEvents } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';

@@ -14,7 +14,7 @@ import {
   FieldConfigSource,
   DataFrame,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 

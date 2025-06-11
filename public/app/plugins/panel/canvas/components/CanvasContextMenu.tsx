@@ -4,7 +4,7 @@ import * as React from 'react';
 import { first } from 'rxjs/operators';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
@@ -22,7 +22,6 @@ type Props = {
 };
 
 export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) => {
-  const { t } = useTranslate();
   const inlineEditorOpen = panel.state.openInlineEdit;
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [anchorPoint, setAnchorPoint] = useState<AnchorPoint>({ x: 0, y: 0 });

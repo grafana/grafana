@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import {

@@ -4,7 +4,7 @@ import { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';

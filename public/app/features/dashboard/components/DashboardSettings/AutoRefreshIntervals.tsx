@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Input, defaultIntervals, Field } from '@grafana/ui';
 
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -57,7 +57,6 @@ export const AutoRefreshIntervals = ({
     },
     [getIntervalsFunc, intervals, onRefreshIntervalChange, validateIntervalsFunc]
   );
-  const { t } = useTranslate();
 
   return (
     <Field

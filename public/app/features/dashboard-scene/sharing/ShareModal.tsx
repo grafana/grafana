@@ -1,6 +1,6 @@
 import { ComponentProps } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';

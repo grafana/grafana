@@ -2,7 +2,7 @@ import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';

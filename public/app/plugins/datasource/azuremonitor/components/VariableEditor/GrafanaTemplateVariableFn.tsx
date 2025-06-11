@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
 import DataSource from '../../datasource';
@@ -17,7 +17,6 @@ const GrafanaTemplateVariableFnInput = ({
   datasource: DataSource;
 }) => {
   const [inputVal, setInputVal] = useState('');
-  const { t } = useTranslate();
 
   useEffect(() => {
     setInputVal(query.grafanaTemplateVariableFn?.rawQuery || '');
