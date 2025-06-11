@@ -29,12 +29,12 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, http.Header, error)
-	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, http.Header, error)
-	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, http.Header, error)
-	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, http.Header, error)
-	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error)
-	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error)
+	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
+	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
+	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error)
+	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }
 
 // PyroscopeDatasource is a datasource for querying application performance profiles.
@@ -109,7 +109,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		}
 	}
 
-	types, respHeaders, err := d.client.ProfileTypes(ctx, start, end)
+	types, err := d.client.ProfileTypes(ctx, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
@@ -119,7 +119,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: respHeaders, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -146,7 +146,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 		return fmt.Errorf("failed parsing label selector: %v", err)
 	}
 
-	labelNames, respHeaders, err := d.client.LabelNames(ctx, labelSelector, start, end)
+	labelNames, err := d.client.LabelNames(ctx, labelSelector, start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
@@ -167,7 +167,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: respHeaders, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -195,7 +195,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
 	label := query.Get("label")
 
-	res, respHeaders, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
+	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelValues: %v", err)
@@ -207,7 +207,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 		return err
 	}
 
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: respHeaders, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -255,7 +255,7 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 	// request succeeded or failed, we set the window to be small.
 	start := time.Unix(1, 0).UnixMilli()
 	end := time.Unix(4, 0).UnixMilli()
-	if _, _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
+	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}

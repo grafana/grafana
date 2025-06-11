@@ -19,7 +19,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 	t.Run("GetSeries", func(t *testing.T) {
 		limit := int64(42)
-		resp, _, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15)
+		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15)
 		require.Nil(t, err)
 
 		series := &SeriesResponse{
@@ -34,7 +34,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 	t.Run("GetProfile", func(t *testing.T) {
 		maxNodes := int64(-1)
-		resp, _, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
 		require.Nil(t, err)
 
 		series := &ProfileResponse{
@@ -56,7 +56,7 @@ func Test_PyroscopeClient(t *testing.T) {
 	t.Run("GetProfile with empty response", func(t *testing.T) {
 		connectClient.SendEmptyProfileResponse = true
 		maxNodes := int64(-1)
-		resp, _, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
 		require.Nil(t, err)
 		// Mainly ensuring this does not panic like before
 		require.Nil(t, resp)
