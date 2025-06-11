@@ -30,17 +30,20 @@ export async function loadPluginResources(id: string, language: string, loaders?
 }
 
 // exported for testing
-export async function initDefaultI18nInstance() {
+export function initDefaultI18nInstance() {
   // If the resources are not an object, we need to initialize the plugin translations
   if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
     return;
   }
 
-  await getI18nInstance().use(initReactI18next).init({
+  const initPromise = getI18nInstance().use(initReactI18next).init({
     resources: {},
     returnEmptyString: false,
     lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
   });
+  tFunc = getI18nInstance().t;
+  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape {...props} />;
+  return initPromise;
 }
 
 // exported for testing
@@ -171,6 +174,7 @@ export function addResourceBundle(language: string, namespace: string, resources
 }
 
 export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  initDefaultI18nInstance();
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
@@ -189,10 +193,12 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
 };
 
 export function useTranslate() {
+  initDefaultI18nInstance();
   return { t };
 }
 
 export function Trans(props: TransProps) {
+  initDefaultI18nInstance();
   const Component = transComponent ?? I18NextTrans;
   return <Component shouldUnescape {...props} />;
 }
