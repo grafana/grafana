@@ -1,6 +1,6 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, DataGridHandle, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
@@ -16,10 +16,12 @@ import {
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { Trans } from '../../../utils/i18n';
+import { Trans, t } from '../../../utils/i18n';
+import { ContextMenu } from '../../ContextMenu/ContextMenu';
+import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
-import { TableCellInspectorMode } from '../TableCellInspector';
+import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { TableCellNG } from './Cells/TableCellNG';
@@ -75,14 +77,6 @@ export function TableNG(props: TableNGProps) {
   const panelContext = usePanelContext();
 
   const [isInspecting, setIsInspecting] = useState(false);
-  const [contextMenuProps, setContextMenuProps] = useState<{
-    rowIdx?: number;
-    value: string;
-    mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-    top?: number;
-    left?: number;
-  } | null>(null);
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
 
   const gridHandle = useRef<DataGridHandle>(null);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
@@ -95,6 +89,31 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer.length &&
       footerOptions.reducer[0] === ReducerID.count
   );
+
+  const [contextMenuProps, setContextMenuProps] = useState<{
+    rowIdx?: number;
+    value: string;
+    mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+    top?: number;
+    left?: number;
+  } | null>(null);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isContextMenuOpen) {
+      return;
+    }
+
+    function onClick(_event: MouseEvent) {
+      setIsContextMenuOpen(false);
+    }
+
+    window.addEventListener('click', onClick);
+
+    return () => {
+      window.removeEventListener('click', onClick);
+    };
+  }, [isContextMenuOpen]);
 
   const memoizedRows = useMemo(() => frameToRecords(data), [data]);
   const columnTypes = useColumnTypes(data.fields);
@@ -289,6 +308,20 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           // draggable: true,
         }}
+        onCellContextMenu={({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
+
+          const cellValue = row[column.key];
+          setContextMenuProps({
+            // rowIdx: rows.indexOf(row),
+            value: String(cellValue ?? ''),
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        }}
         onColumnWidthsChange={(widths) => {
           for (const [key, entry] of widths) {
             onColumnResize?.(key, entry.width);
@@ -325,6 +358,34 @@ export function TableNG(props: TableNGProps) {
             </div>
           )}
         </div>
+      )}
+
+      {isContextMenuOpen && (
+        <ContextMenu
+          x={contextMenuProps?.left || 0}
+          y={contextMenuProps?.top || 0}
+          renderMenuItems={() => (
+            <MenuItem
+              label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
+              onClick={() => {
+                setIsInspecting(true);
+              }}
+              className={styles.menuItem}
+            />
+          )}
+          focusOnOpen={false}
+        />
+      )}
+
+      {isInspecting && (
+        <TableCellInspector
+          mode={contextMenuProps?.mode ?? TableCellInspectorMode.text}
+          value={contextMenuProps?.value}
+          onDismiss={() => {
+            setIsInspecting(false);
+            setContextMenuProps(null);
+          }}
+        />
       )}
     </>
   );
@@ -468,6 +529,9 @@ const getStyles2 = (
   dataGridHeaderRow: css({
     paddingBlockStart: 0,
     ...(noHeader && { display: 'none' }),
+  }),
+  menuItem: css({
+    maxWidth: '200px',
   }),
 });
 
