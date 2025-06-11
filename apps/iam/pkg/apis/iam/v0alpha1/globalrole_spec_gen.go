@@ -30,5 +30,7 @@ type GlobalRoleSpec struct {
 
 // NewGlobalRoleSpec creates a new GlobalRoleSpec object.
 func NewGlobalRoleSpec() *GlobalRoleSpec {
-	return &GlobalRoleSpec{}
+	return &GlobalRoleSpec{
+		Permissions: []GlobalRolespecPermission{},
+	}
 }

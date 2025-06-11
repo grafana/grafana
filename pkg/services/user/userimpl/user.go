@@ -32,6 +32,7 @@ type Service struct {
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
+	db           db.DB
 }
 
 func ProvideService(
@@ -50,6 +51,7 @@ func ProvideService(
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
+		db:           db,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -172,35 +174,35 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 	}
 
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
-
-	// create org user link
-	if !cmd.SkipOrgSetup && !usr.IsProvisioned {
-		orgUser := org.OrgUser{
-			OrgID:   orgID,
-			UserID:  usr.ID,
-			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
-			if len(cmd.DefaultOrgRole) > 0 {
-				orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
-			} else {
-				orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
-			}
-		}
-		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
-			err := s.store.Delete(ctx, usr.ID)
-			return usr, err
+			return err
 		}
-	}
-	return usr, nil
+
+		// create org user link
+		if !cmd.SkipOrgSetup && !usr.IsProvisioned {
+			orgUser := org.OrgUser{
+				OrgID:   orgID,
+				UserID:  usr.ID,
+				Role:    org.RoleAdmin,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+				}
+			}
+			_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
+			return err
+		}
+		return nil
+	})
+	return usr, err
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {

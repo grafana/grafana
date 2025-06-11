@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 import { RadioButtonDot } from './RadioButtonDot';
 
