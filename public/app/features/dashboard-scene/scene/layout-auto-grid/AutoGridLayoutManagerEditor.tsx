@@ -3,6 +3,7 @@ import { capitalize } from 'lodash';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useTranslate } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { Button, Combobox, ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
@@ -109,6 +110,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             options={minWidthOptions}
             value={columnWidth}
             onChange={onNamedMinWidthChanged}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth}
           />
         ) : (
           <Input
@@ -120,6 +122,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             min={50}
             max={2000}
             invalid={customMinWidthError}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth}
             suffix={
               <Button
                 size="sm"
@@ -127,6 +130,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
                 icon="times"
                 tooltip={t('dashboard.auto-grid.options.min-width-custom-clear', 'Back to standard min column width')}
                 onClick={onClearCustomMinWidth}
+                data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth}
               >
                 {t('dashboard.auto-grid.options.custom-min-width.clear', 'Clear')}
               </Button>
@@ -141,6 +145,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
           value={String(maxColumnCount)}
           onChange={({ value }) => layoutManager.onMaxColumnCountChanged(parseInt(value, 10))}
           width={6.5}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns}
         />
       </Field>
     </Stack>
@@ -217,7 +222,13 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
         className={styles.wideSelector}
       >
         {isStandardHeight ? (
-          <Combobox id="min-height" options={minWidthOptions} value={rowHeight} onChange={onNamedMinHeightChanged} />
+          <Combobox
+            id="min-height"
+            options={minWidthOptions}
+            value={rowHeight}
+            onChange={onNamedMinHeightChanged}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight}
+          />
         ) : (
           <Input
             id="min-height"
@@ -228,6 +239,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             min={50}
             max={2000}
             invalid={customMinWidthError}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight}
             suffix={
               <Button
                 size="sm"
@@ -235,6 +247,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
                 icon="times"
                 tooltip={t('dashboard.auto-grid.options.min-width-custom-clear', 'Back to standard min column width')}
                 onClick={onClearCustomRowHeight}
+                data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight}
               >
                 {t('dashboard.auto-grid.options.custom-min-height.clear', 'Clear')}
               </Button>
@@ -247,6 +260,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           id="fill-screen-toggle"
           value={fillScreen}
           onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
         />
       </Field>
     </Stack>
