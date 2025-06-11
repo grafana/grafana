@@ -4408,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "選択する",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5223,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "メッセージ",
-      "body-dashboard-drastically-changed": "新しいGrafanaダッシュボードスキーマ形式でのみサポートされている新たなダッシュボード機能を使用しているため、ダッシュボードは新形式で保存されます。この操作を実行するか、ダッシュボードを新しいコピーとして保存するかを選択してください。",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "キャンセル"
       },
@@ -5239,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "動的ダッシュボード機能は実験的なもので、現在のダッシュボード動作と完全な機能互換性はありません。この機能は、ライブラリパネルをサポートしていない新しいスキーマ形式に基づいています。そのため、別のインスタンスで使用する目的でダッシュボードをエクスポートした場合、ライブラリパネルは含まれません。機能の<2>ライフサイクル</2>が進むにつれ、これらをサポートする予定です。",
       "schema-v2-library-panels-export-title": "現在ダッシュボードスキーマV2では、別のインスタンスでの使用目的でのライブラリパネルのエクスポートをサポートしていません",
-      "title-dashboard-drastically-changed": "ダッシュボードが大幅に変更されました"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "現在の更新を新しいデフォルトに設定",
@@ -7689,6 +7690,8 @@
       },
       "enable-highlighting": "ハイライトを有効にする",
       "escape-newlines": "ログ行で誤ってエスケープされた改行とタブシーケンスを修正",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
       "newest-first": "最新のログ順に並び替え - クリックして最も古いログを最初に表示",

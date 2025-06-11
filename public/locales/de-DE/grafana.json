@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Auswählen",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "Nachricht",
-      "body-dashboard-drastically-changed": "Da Sie neue Dashboard-Funktionen nutzen, die nur im neuen Dashboard-Schema-Format von Grafana unterstützt werden, wird das Dashboard im neuen Format gespeichert. Bitte prüfen Sie, ob Sie diese Aktion wirklich ausführen möchten, oder ob Sie das Dashboard lieber als neue Kopie speichern möchten.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Abbrechen"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "Die dynamische Dashboard-Funktionalität ist experimentell und weist keine vollständige Funktionsparität mit dem aktuellen Dashboard-Verhalten auf. Sie basiert auf einem neuen Schemaformat, das keine Bibliotheks-Panels unterstützt. Das bedeutet, dass wir bei einem Export des Dashboards für die Nutzung in einer anderen Instanz keine Bibliotheks-Panels einbeziehen. Wir planen, sie im weiteren Verlauf des <2>Lebenszyklus</2> der Funktion zu unterstützen.",
       "schema-v2-library-panels-export-title": "Das Dashboard-Schema V2 unterstützt noch keinen Export von Bibliotheks-Panels für die Verwendung in einer anderen Instanz",
-      "title-dashboard-drastically-changed": "Dashboard erheblich verändert"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Macht die aktuelle Aktualisierung zum neuen Standard",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Markierung aktivieren",
       "escape-newlines": "Falsch dargestellte Zeilenumbrüche und Tab-Sequenzen in Log-Zeilen korrigieren",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Zeitstempel ausblenden",
       "hide-unique-labels": "Eindeutige Labels ausblenden",
       "newest-first": "Sortiert nach neuesten Logs zuerst – klicken Sie, um die ältesten zuerst anzuzeigen",

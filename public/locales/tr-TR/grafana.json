@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Seçin",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "mesaj",
-      "body-dashboard-drastically-changed": "Yalnızca yeni Grafana pano şema biçiminde desteklenen yeni pano özelliklerini kullandığınız için pano yeni biçimde kaydedilecektir. Lütfen bu işlemi yapmak istediğinizden emin olun veya panoyu yeni bir kopya olarak kaydetmeyi tercih edin.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "İptal"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "Dinamik pano işlevi henüz test aşamasındadır ve mevcut panoların tüm işlevlerini tam olarak karşılamamaktadır. Yeni şema biçimi henüz kütüphane panellerini desteklemiyor. Bu nedenle, dışa aktarılan panolarda kütüphane panelleri yer almayacaktır. Özellik <2>geliştirme süreci</2> ilerledikçe bu desteğin eklenmesi planlanmaktadır.",
       "schema-v2-library-panels-export-title": "Pano Şeması V2, kütüphane panellerinin başka bir örnekte kullanılmak üzere dışa aktarılmasını henüz desteklememektedir",
-      "title-dashboard-drastically-changed": "Pano büyük ölçüde değişti"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Mevcut yenilemeyi yeni varsayılan yapacak",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Vurgulamayı etkinleştir",
       "escape-newlines": "Günlük kaydı satırlarındaki kaçış karakterli satır sonu ve sekme dizilerini düzelt",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
