@@ -1361,17 +1361,65 @@
       }
     },
     "/convert/api/v1/alerts": {
+      "get": {
+        "description": "Returns a specific imported Alertmanager configuration by its identifier.",
+        "produces": [
+          "application/yaml"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Get extra Alertmanager configuration from Grafana.",
+        "operationId": "RouteConvertPrometheusGetAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for the Alertmanager configuration to retrieve.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableAlertmanagerUserConfig",
+            "schema": {
+              "$ref": "#/definitions/GettableAlertmanagerUserConfig"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      },
       "post": {
+        "description": "This endpoint allows importing Alertmanager configurations to Grafana. Each configuration is identified by\na unique identifier and can include merge matchers to select which alerts should be handled by\nthis specific configuration.",
         "produces": [
           "application/json"
         ],
         "tags": [
           "convert_prometheus"
         ],
-        "summary": "Load Alertmanager configuration to Grafana and merge it with the existing configuration.",
+        "summary": "Load extra Alertmanager configuration to Grafana and merge it with the existing configuration.",
         "operationId": "RouteConvertPrometheusPostAlertmanagerConfig",
         "parameters": [
           {
+            "type": "string",
+            "description": "Unique identifier for this Alertmanager configuration.\nThis identifier is used to distinguish between different imported configurations.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          },
+          {
+            "type": "string",
+            "example": "'environment=production,team=backend' will only apply this",
+            "description": "Comma-separated list of label matchers in 'key=value' format.\nThese matchers determine which alerts this configuration should handle.",
+            "name": "x-grafana-alerting-merge-matchers",
+            "in": "header"
+          },
+          {
+            "description": "Alertmanager configuration including routing rules, receivers, and template files",
             "name": "Body",
             "in": "body",
             "schema": {
@@ -1394,6 +1442,39 @@
           }
         },
         "x-raw-request": "true"
+      },
+      "delete": {
+        "description": "The main Grafana Alertmanager configuration remains unaffected.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Delete extra Alertmanager configuration from Grafana by its identifier.",
+        "operationId": "RouteConvertPrometheusDeleteAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for the Alertmanager configuration to delete.",
+            "name": "x-grafana-alerting-config-identifier",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertPrometheusResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertPrometheusResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
       }
     },
     "/convert/prometheus/config/v1/rules": {
@@ -4788,6 +4869,12 @@
       "properties": {
         "alertmanager_config": {
           "$ref": "#/definitions/Config"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -5616,6 +5703,20 @@
         "$ref": "#/definitions/Frame"
       }
     },
+    "GettableAlertmanagerUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "type": "string"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "GettableAlertmanagers": {
       "type": "object",
       "properties": {
@@ -6247,7 +6348,11 @@
       "type": "object",
       "properties": {
         "equal": {
-          "$ref": "#/definitions/LabelNames"
+          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "source_match": {
           "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
@@ -6368,17 +6473,6 @@
         "Name": {
           "type": "string"
         }
-      }
-    },
-    "LabelName": {
-      "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-      "type": "string"
-    },
-    "LabelNames": {
-      "type": "array",
-      "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-      "items": {
-        "$ref": "#/definitions/LabelName"
       }
     },
     "LabelSet": {
@@ -7883,8 +7977,8 @@
       }
     },
     "Route": {
+      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
-      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -7925,6 +8019,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"
