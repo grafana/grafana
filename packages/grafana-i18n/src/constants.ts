@@ -15,6 +15,8 @@ export const HUNGARIAN_HUNGARY = 'hu-HU';
 export const PORTUGUESE_PORTUGAL = 'pt-PT';
 export const POLISH_POLAND = 'pl-PL';
 export const SWEDISH_SWEDEN = 'sv-SE';
+export const FINNISH_FINLAND = 'fi-FI';
+export const ARABIC_SAUDI_ARABIA = 'ar-SA';
 export const TURKISH_TURKEY = 'tr-TR';
 export const CHINESE_TRADITIONAL = 'zh-Hant';
 

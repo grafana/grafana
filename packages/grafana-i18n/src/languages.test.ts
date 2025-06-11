@@ -19,6 +19,8 @@ const expectedLanguages = [
   { code: 'pt-PT', name: 'Português' },
   { code: 'pl-PL', name: 'Polski' },
   { code: 'sv-SE', name: 'Svenska' },
+  { code: 'fi-FI', name: 'Suomi' },
+  { code: 'ar-SA', name: 'عربي' },
   { code: 'tr-TR', name: 'Türkçe' },
 ];
 

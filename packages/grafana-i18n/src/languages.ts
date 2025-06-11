@@ -19,6 +19,8 @@ import {
   SWEDISH_SWEDEN,
   TURKISH_TURKEY,
   PSEUDO_LOCALE,
+  FINNISH_FINLAND,
+  ARABIC_SAUDI_ARABIA,
 } from './constants';
 
 interface TranslationDefinition {
@@ -48,6 +50,8 @@ export const LANGUAGES: TranslationDefinition[] = [
   { code: PORTUGUESE_PORTUGAL, name: 'Português' },
   { code: POLISH_POLAND, name: 'Polski' },
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
+  { code: FINNISH_FINLAND, name: 'Suomi' },
+  { code: ARABIC_SAUDI_ARABIA, name: 'عربي' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
 ];
 
