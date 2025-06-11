@@ -34,8 +34,9 @@ func Verify(
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
 	}).
-		WithMountedTemp("/var/lib/grafana/plugins").
+		WithMountedTemp("/var/lib/grafana/plugins", dagger.ContainerWithMountedTempOpts{}).
 		Import(image).
+		WithEnvVariable("GF_LOG_LEVEL", "error").
 		WithExposedPort(3000)
 
 		// TODO: Add LICENSE to containers and implement validation

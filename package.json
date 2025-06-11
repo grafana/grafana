@@ -6,7 +6,7 @@
   "version": "12.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js --progress",
+    "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build -- --env noMinify=1",
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
@@ -444,11 +444,7 @@
     "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
-    "packages": [
-      "packages/*",
-      "public/app/plugins/*/*",
-      "e2e/test-plugins/*"
-    ]
+    "packages": ["packages/*", "public/app/plugins/*/*", "e2e/test-plugins/*"]
   },
   "engines": {
     "node": ">= 22 <23"
@@ -460,8 +456,6 @@
     }
   },
   "msw": {
-    "workerDirectory": [
-      "public"
-    ]
+    "workerDirectory": ["public"]
   }
 }

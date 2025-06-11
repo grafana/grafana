@@ -8,8 +8,8 @@ on:
         description: The branches to use as the Grafana source for the build
   push:
     branches:
-      include:
-        - "km/prerelease-builds-gha"
+      - "km/prerelease-builds-gha"
+
 permissions:
   contents: read
 
@@ -45,50 +45,72 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    name: ${{ matrix.name }}
     strategy:
       matrix:
         # The artifacts in these lists are grouped by their os+arch because the
         # build process can reuse the binaries for each artifact.
         # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
         # This could be a future improvement.
-        artifacts:
-          # linux/amd64 artifacts
-          - targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
-          # linux/arm64 artifacts
-          - targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
-          # linux/arm/v7 artifacts
-          - targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
-          # linux/arm/v6 artifacts
-          - targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
-          # windows/amd64 artifacts
-          - targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
-          # windows/arm64 artifacts
-          - targz:grafana:windows/arm64,zip:grafana:windows/arm64
-          # darwin/amd64 artifacts
-          - targz:grafana:darwin/amd64
-          # darwin/arm64 artifacts
-          - targz:grafana:darwin/arm64
+        include:
+          - name: linux-amd64
+            artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+          - name: linux-arm64
+            artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+          - name: linux-s390x
+            artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+          - name: linux-armv7
+            artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+          - name: linux-armv6
+            artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+          - name: windows-amd64
+            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+          - name: windows-arm64
+            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+          - name: darwin-amd64
+            artifacts: targz:grafana:darwin/amd64
+          - name: darwin-arm64
+            artifacts: targz:grafana:darwin/arm64
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: actions/checkout@v4
         with:
           repository: grafana/grafana
           persist-credentials: false
-      - run: echo "GRAFANA_VERSION=v${BRANCH#release-}" >> "${GITHUB_ENV}"
+      # - run: echo "GRAFANA_VERSION=v${BRANCH#release-}" >> "${GITHUB_ENV}"
+      #   env:
+      #     BRANCH: ${{ github.ref_name }}
+      - run: echo "GRAFANA_VERSION=v12.1.0-${RUN_NUMBER}" >> "${GITHUB_ENV}"
         env:
-          BRANCH: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
       - uses: ./.github/actions/build-package
         id: build
         with:
           artifacts: ${{ matrix.artifacts }}
+          checksum: true
           grafana-path: .
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ env.GRAFANA_VERSION }}
+          output: artifacts-${{ matrix.name }}.txt
+          verify: true
       - name: Log in to GCS
         id: login-to-gcs
         uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        with:
+          environment: prod
       - name: Upload artifacts
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
         with:
           bucket: ${{ steps.login-to-gcs.outputs.bucket }}
           environment: prod
+          parent: false
+          path: ${{ steps.build.outputs.dist-dir }}
+          bucket_path: ${{ env.GRAFANA_VERSION }}
+      - name: Upload manifest
+        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        with:
+          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
+          environment: prod
+          path: ${{ steps.build.outputs.file }}
           bucket_path: ${{ env.GRAFANA_VERSION }}
