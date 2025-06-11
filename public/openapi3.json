@@ -3048,6 +3048,12 @@
         "properties": {
           "alertmanager_config": {
             "$ref": "#/components/schemas/Config"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -5905,6 +5911,20 @@
         },
         "type": "object"
       },
+      "GettableAlertmanagerUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "type": "string"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "GettableAlertmanagers": {
         "properties": {
           "data": {
@@ -6758,7 +6778,11 @@
         "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
         "properties": {
           "equal": {
-            "$ref": "#/components/schemas/LabelNames"
+            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "source_match": {
             "additionalProperties": {
@@ -6933,17 +6957,6 @@
         },
         "title": "Label is a key/value pair of strings.",
         "type": "object"
-      },
-      "LabelName": {
-        "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-        "type": "string"
-      },
-      "LabelNames": {
-        "items": {
-          "$ref": "#/components/schemas/LabelName"
-        },
-        "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-        "type": "array"
       },
       "LabelSet": {
         "additionalProperties": {
@@ -10077,6 +10090,7 @@
         "type": "object"
       },
       "Route": {
+        "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
           "active_time_intervals": {
             "items": {
@@ -10118,6 +10132,12 @@
             },
             "type": "array"
           },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
           "receiver": {
             "type": "string"
           },
@@ -10131,7 +10151,6 @@
             "type": "array"
           }
         },
-        "title": "A Route is a node that contains definitions of how to handle alerts.",
         "type": "object"
       },
       "RouteExport": {
@@ -12457,6 +12476,9 @@
       "UpdateTeamCommand": {
         "properties": {
           "Email": {
+            "type": "string"
+          },
+          "ExternalUID": {
             "type": "string"
           },
           "ID": {
