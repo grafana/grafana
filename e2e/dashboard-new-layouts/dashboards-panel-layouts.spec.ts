@@ -18,10 +18,14 @@ describe('Dashboard', () => {
 
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen().should('exist');
+    const checkInputs = () => {
+      e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('be.visible');
+      e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns().should('be.visible');
+      e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('be.visible');
+      e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen().should('exist');
+    };
+
+    checkInputs();
 
     e2e.flows.scenes.saveDashboard();
     cy.reload();
@@ -30,10 +34,7 @@ describe('Dashboard', () => {
 
     e2e.components.NavToolbar.editDashboard.editButton().click();
 
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('be.visible');
-    e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen().should('exist');
+    checkInputs();
   });
 
   it('can change min column width in auto grid layout', () => {
@@ -65,20 +66,24 @@ describe('Dashboard', () => {
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('be.visible').click();
     cy.get('[id=combobox-option-narrow]').click();
 
-    // narrow min column width will have all panels on the same row
-    let firstNarrowPanelTopOffset = 0;
+    const checkOffset = () => {
+      // narrow min column width will have all panels on the same row
+      let narrowPanelTopOffset = 0;
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        firstNarrowPanelTopOffset = el.offset().top;
-      });
+      e2e.components.Panels.Panel.title('New panel')
+        .first()
+        .then((el) => {
+          narrowPanelTopOffset = el.offset().top;
+        });
 
-    e2e.components.Panels.Panel.title('New panel')
-      .last()
-      .then((el) => {
-        expect(el.offset().top).to.eq(firstNarrowPanelTopOffset);
-      });
+      e2e.components.Panels.Panel.title('New panel')
+        .last()
+        .then((el) => {
+          expect(el.offset().top).to.eq(narrowPanelTopOffset);
+        });
+    };
+
+    checkOffset();
 
     e2e.flows.scenes.saveDashboard();
     cy.reload();
@@ -87,19 +92,7 @@ describe('Dashboard', () => {
 
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth().should('have.value', 'Narrow');
 
-    let reloadedFirstNarrowPanelTopOffset = 0;
-
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        reloadedFirstNarrowPanelTopOffset = el.offset().top;
-      });
-
-    e2e.components.Panels.Panel.title('New panel')
-      .last()
-      .then((el) => {
-        expect(el.offset().top).to.eq(reloadedFirstNarrowPanelTopOffset);
-      });
+    checkOffset();
   });
 
   it('can change to custom min column width in auto grid layout', () => {
@@ -201,31 +194,28 @@ describe('Dashboard', () => {
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('be.visible').click();
     cy.get('[id=combobox-option-tall]').click();
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(regularRowHeight);
-      });
+    const checkHeight = () => {
+      e2e.components.Panels.Panel.title('New panel')
+        .first()
+        .then((el) => {
+          expect(el.height()).to.be.greaterThan(regularRowHeight);
+        });
+    };
+
+    checkHeight();
 
     e2e.flows.scenes.saveDashboard();
     cy.reload();
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(regularRowHeight);
-      });
+    checkHeight();
 
     e2e.components.NavToolbar.editDashboard.editButton().click();
 
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('have.value', 'Tall');
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(regularRowHeight);
-      });
+    checkHeight();
   });
+
   it('can change to custom row height in auto grid layout', () => {
     e2e.flows.scenes.importV2Dashboard({ title: 'Set custom row height' });
 
@@ -273,7 +263,8 @@ describe('Dashboard', () => {
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight().should('be.visible').click();
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight().should('have.value', 'Standard');
   });
-  it('can change fill scree in auto grid layout', () => {
+
+  it('can change fill screen in auto grid layout', () => {
     e2e.flows.scenes.importV2Dashboard({ title: 'Set fill screen' });
 
     e2e.components.NavToolbar.editDashboard.editButton().click();
@@ -297,28 +288,22 @@ describe('Dashboard', () => {
 
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen().click({ force: true });
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(initialHeight);
-      });
+    const checkHeight = () => {
+      e2e.components.Panels.Panel.title('New panel')
+        .first()
+        .then((el) => {
+          expect(el.height()).to.be.greaterThan(initialHeight);
+        });
+    };
 
+    checkHeight();
     e2e.flows.scenes.saveDashboard();
     cy.reload();
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(initialHeight);
-      });
-
+    checkHeight();
     e2e.components.NavToolbar.editDashboard.editButton().click();
     e2e.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen().should('be.checked');
 
-    e2e.components.Panels.Panel.title('New panel')
-      .first()
-      .then((el) => {
-        expect(el.height()).to.be.greaterThan(initialHeight);
-      });
+    checkHeight();
   });
 });
