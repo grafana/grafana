@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -61,9 +61,14 @@ describe('ImportToGMARules', () => {
   describe('existing datasource', () => {
     it('should render datasource options', async () => {
       const { user } = render(<ImportToGMARules />);
-
-      // Wait for the data source picker to be ready
       const dsPicker = await ui.dsImport.dsPicker.find();
+      // Wait for the data source picker to be ready
+      await waitFor(
+        () => {
+          expect(dsPicker).toBeEnabled();
+        },
+        { timeout: 5000 }
+      );
 
       await user.click(dsPicker);
       await user.click(await ui.dsImport.mimirDsOption.find());
