@@ -600,7 +600,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/explore/NodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/FlameGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
-/public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
 
 /public/api-merged.json @grafana/grafana-backend-group
 /public/api-enterprise-spec.json @grafana/grafana-backend-group
@@ -689,6 +688,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/rendering/ @grafana/sharing-squad
+/public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/grafana-datasources-core-services
