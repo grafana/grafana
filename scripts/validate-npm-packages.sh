@@ -15,5 +15,4 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 done
 
 echo "🚀 All NPM package checks passed! 🚀"
-
 exit 0
