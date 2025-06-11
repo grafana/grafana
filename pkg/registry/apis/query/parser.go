@@ -167,14 +167,8 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				q, ok := queryRefIDs[refId]
 
 				if !ok {
-					_, isSQLCMD := target.Command.(*expr.SQLCommand)
-					if isSQLCMD {
-						continue
-					} else {
-						target, ok = expressions[refId]
-						if !ok {
-							return rsp, makeDependencyError(exp.RefID, refId)
-						}
+					if target, ok = expressions[refId]; !ok {
+						return rsp, makeDependencyError(exp.RefID, refId)
 					}
 				}
 

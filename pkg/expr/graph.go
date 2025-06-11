@@ -328,14 +328,6 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				_, ok := cmdNode.Command.(*SQLCommand)
-				// If the SSE is a SQL expression, and the node can't be found, it might be a CTE table name
-				// CTEs are calculated during the evaluation of the SQL, so we won't have a node for them
-				// So we `continue` in order to support CTE functionality
-				// TODO: remove CTE table names from the list of table names during parsing of the SQL
-				if ok {
-					continue
-				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
