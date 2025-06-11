@@ -1,46 +1,33 @@
 import { useEffect } from 'react';
 
-import { mousetrap } from 'app/core/services/mousetrap';
-
 import { useLogListSearchContext } from './LogListSearchContext';
+
+/**
+ * Handles toggling of the search box of virtualized Logs Panel.
+ * Mousetrap cannot be used because of the following issues:
+ * - https://github.com/ccampbell/mousetrap/issues/442
+ * - https://github.com/ccampbell/mousetrap/issues/162
+ */
 
 export const useKeyBindings = () => {
   const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
   useEffect(() => {
-    mousetrap.bind(
-      'esc',
-      () => {
-        if (searchVisible) {
-          hideSearch();
-        }
-        return true;
-      },
-      'keydown'
-    );
+    function handleToggleSearch(event: KeyboardEvent) {
+      const isMac = navigator.userAgent.includes('Mac');
+      const isFKey = event.key === 'f' || event.key === 'F';
 
-    mousetrap.bind(
-      'ctrl+f',
-      () => {
+      if ((isMac && event.metaKey && isFKey) || (!isMac && event.ctrlKey && isFKey)) {
         showSearch();
-        return true;
-      },
-      'keydown'
-    );
-
-    mousetrap.bind(
-      'meta+f',
-      () => {
-        showSearch();
-        return true;
-      },
-      'keydown'
-    );
-
+        return;
+      }
+      if (event.key === 'Escape' && searchVisible) {
+        hideSearch();
+      }
+    }
+    document.addEventListener('keydown', handleToggleSearch);
     return () => {
-      mousetrap.unbind('ctrl+f', 'keydown');
-      mousetrap.unbind('meta+f', 'keydown');
-      mousetrap.unbind('esc', 'keydown');
+      document.removeEventListener('keydown', handleToggleSearch);
     };
   });
 };
