@@ -3,7 +3,7 @@ import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -28,6 +28,7 @@ import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
+import { TABLE } from '../constants';
 
 export function TableCellNG(props: TableCellNGProps) {
   const {
@@ -35,7 +36,7 @@ export function TableCellNG(props: TableCellNGProps) {
     frame,
     value,
     theme,
-    timeRange,
+    timeRange = getDefaultTimeRange(),
     height,
     rowIdx,
     justifyContent,
@@ -263,7 +264,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
   cell: css({
     height: '100%',
     alignContent: 'center',
-    paddingInline: '8px',
+    paddingInline: TABLE.CELL_PADDING,
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
