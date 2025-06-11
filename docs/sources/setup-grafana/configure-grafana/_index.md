@@ -56,7 +56,7 @@ Otherwise, add a configuration file named `custom.ini` to the `conf` directory t
 
 ### Grafana Cloud
 
-While there is no local configuration file for Grafana Cloud stacks, many of these settings are still configurable. To edit configurable settings, open a support ticket.
+There is no local configuration file for Grafana Cloud stacks, burt many of these settings are still configurable. To edit configurable settings, open a support ticket.
 
 ## Remove comments in the .ini files
 
