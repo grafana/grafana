@@ -314,7 +314,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n\nAuthor: ${{ github.event.pull_request.user.login }}"
                     },
                     {
                       "type": "mrkdwn",
