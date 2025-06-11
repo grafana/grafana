@@ -48,6 +48,8 @@ jobs:
             **/Dockerfile
             **/.dockerignore
             **.go
+            apps/**
+            !apps/**.md
             pkg/**
             !pkg/**.md
             scripts/grafana-server/**
