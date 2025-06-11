@@ -33,13 +33,13 @@ export const formatEndpoints = () => (endpointsInput: string | string[]) => {
 };
 
 // List of created or modified files
-export const getFilesToFormat = (groupName: string, isEnterprise = false) => {
+export const getFilesToFormat = (groupName: string, version: string, isEnterprise = false) => {
   const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
   const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
 
   return [
-    `${apiClientBasePath}/${groupName}/baseAPI.ts`,
-    `${apiClientBasePath}/${groupName}/index.ts`,
+    `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`,
+    `${apiClientBasePath}/${groupName}/${version}/index.ts`,
     generateScriptPath,
     ...(isEnterprise ? [] : [`public/app/core/reducers/root.ts`, `public/app/store/configureStore.ts`]),
   ];

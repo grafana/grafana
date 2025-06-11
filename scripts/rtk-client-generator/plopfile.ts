@@ -27,7 +27,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
   plop.setHelper('formatEndpoints', formatEndpoints());
 
   const generateRtkApiActions = (data: PlopData) => {
-    const { reducerPath, groupName, isEnterprise } = data;
+    const { reducerPath, groupName, version, isEnterprise } = data;
 
     const apiClientBasePath = isEnterprise ? 'public/app/extensions/api/clients' : 'public/app/api/clients';
     const generateScriptPath = isEnterprise ? 'local/generate-enterprise-apis.ts' : 'scripts/generate-rtk-apis.ts';
@@ -46,7 +46,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
     const actions: ActionConfig[] = [
       {
         type: 'add',
-        path: path.join(basePath, `${apiClientBasePath}/${groupName}/baseAPI.ts`),
+        path: path.join(basePath, `${apiClientBasePath}/${groupName}/${version}/baseAPI.ts`),
         templateFile: './templates/baseAPI.ts.hbs',
       },
       {
@@ -58,7 +58,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
       },
       {
         type: 'add',
-        path: path.join(basePath, `${apiClientBasePath}/${groupName}/index.ts`),
+        path: path.join(basePath, `${apiClientBasePath}/${groupName}/${version}/index.ts`),
         templateFile: './templates/index.ts.hbs',
       },
     ];
@@ -70,7 +70,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
           type: 'modify',
           path: path.join(basePath, 'public/app/core/reducers/root.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
@@ -82,7 +82,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
           type: 'modify',
           path: path.join(basePath, 'public/app/store/configureStore.ts'),
           pattern: '// PLOP_INJECT_IMPORT',
-          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}';\n// PLOP_INJECT_IMPORT`,
+          template: `import { ${reducerPath} } from '${clientImportPath}/${groupName}/${version}';\n// PLOP_INJECT_IMPORT`,
         },
         {
           type: 'modify',
@@ -97,7 +97,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
     actions.push(
       {
         type: 'formatFiles',
-        files: getFilesToFormat(groupName, isEnterprise),
+        files: getFilesToFormat(groupName, version, isEnterprise),
       },
       {
         type: 'runGenerateApis',
@@ -140,10 +140,12 @@ export default function plopGenerator(plop: NodePlopAPI) {
       {
         type: 'input',
         name: 'reducerPath',
-        message: 'Reducer path (e.g. dashboardAPI):',
-        default: (answers: { groupName?: string }) => `${answers.groupName}API`,
+        message: 'Reducer path (e.g. dashboardAPIv0alpha1):',
+        default: (answers: { groupName?: string; version?: string }) => `${answers.groupName}API${answers.version}`,
         validate: (input: string) =>
-          input?.endsWith('API') ? true : 'Reducer path should end with "API" (e.g. dashboardAPI)',
+          input?.endsWith('API') || input?.match(/API[a-z]\d+[a-z]*\d*$/)
+            ? true
+            : 'Reducer path should end with "API" or "API<version>" (e.g. dashboardAPI, dashboardAPIv0alpha1)',
       },
       {
         type: 'input',
