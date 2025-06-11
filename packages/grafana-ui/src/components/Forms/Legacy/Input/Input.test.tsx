@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ValidationEvents } from '../../../../types';
-import { EventsWithValidation } from '../../../../utils';
+import { ValidationEvents } from '../../../../types/input';
+import { EventsWithValidation } from '../../../../utils/validate';
 
 import { Input } from './Input';
 
