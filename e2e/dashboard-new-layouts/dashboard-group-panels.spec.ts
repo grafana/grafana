@@ -5,10 +5,6 @@ describe('Grouping panels', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  after(() => {
-    e2e.flows.revertAllChanges();
-  });
-
   /*
    * Rows
    */
