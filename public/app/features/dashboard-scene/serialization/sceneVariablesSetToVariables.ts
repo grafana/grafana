@@ -168,7 +168,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       // @ts-expect-error
-      const defaultVariableOption: VariableOption = variable.state.defaultValue
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
         ? {
             value: variable.state.defaultValue?.value,
             text: variable.state.defaultValue?.text,
@@ -423,7 +423,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       options = variableValueOptionsToVariableOptions(variable.state);
 
       // @ts-expect-error
-      const defaultVariableOption: VariableOption = variable.state.defaultValue
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
         ? {
             value: variable.state.defaultValue?.value,
             text: variable.state.defaultValue?.text,
