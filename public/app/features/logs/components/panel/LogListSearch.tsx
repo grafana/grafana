@@ -83,8 +83,9 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
   useEffect(() => {
     const newMatchingUids = matches.map((log) => log.uid);
+    const sameLogs = matchingUids ? shallowCompare(matchingUids, newMatchingUids) : false;
 
-    if (matchingUids && !shallowCompare(matchingUids, newMatchingUids)) {
+    if (matchingUids && !sameLogs) {
       // Cleanup previous matches
       logs
         .filter((log) => matchingUids.includes(log.uid))
@@ -93,7 +94,11 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     }
 
     setContextSearch(search ? search : undefined);
-    setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
+    if (!sameLogs) {
+      setMatchingUids(newMatchingUids.length ? newMatchingUids : null);
+    } else if (!matches.length) {
+      setMatchingUids(null);
+    }
   }, [logs, matches, matchingUids, search, setContextSearch, setMatchingUids]);
 
   if (!searchVisible) {
