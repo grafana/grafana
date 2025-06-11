@@ -574,7 +574,6 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 			require.Equal(t, "", continueToken)
 		})
 	}
-
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {

@@ -110,6 +110,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// In some cases, where the stores are not in sync yet, the unified storage continue token might already
 	// be empty, while the legacy one is not, as it has more data. In that case we don't want to issue a new
 	// request with an empty continue token, resulting in getting the first page again.
+	// nolint:staticcheck
 	shouldDoUnifiedRequest := true
 	if options.Continue != "" && unifiedToken == "" {
 		shouldDoUnifiedRequest = false
