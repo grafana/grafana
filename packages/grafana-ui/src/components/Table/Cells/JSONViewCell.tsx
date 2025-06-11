@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { getCellLinks } from '../../../utils';
+import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';

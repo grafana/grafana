@@ -158,8 +158,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          folderUIDs,
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -193,8 +193,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:          []string{namespace.UID},
-		ImportedPrometheusRule: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -251,8 +251,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -288,9 +288,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
-		RuleGroups:             []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		RuleGroups:                  []string{group},
 	}
 	groupsWithFolders, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -473,9 +473,12 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		}
 	}
 	group := prom.PrometheusRuleGroup{
-		Name:     promGroup.Name,
-		Interval: promGroup.Interval,
-		Rules:    rules,
+		Name:        promGroup.Name,
+		Interval:    promGroup.Interval,
+		Rules:       rules,
+		QueryOffset: promGroup.QueryOffset,
+		Limit:       promGroup.Limit,
+		Labels:      promGroup.Labels,
 	}
 
 	converter, err := prom.NewConverter(
@@ -508,6 +511,18 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	}
 
 	return grafanaGroup, nil
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header

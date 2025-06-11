@@ -138,8 +138,18 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       if (!query.step) {
         return true;
       }
-      return typeof query.step === 'string' && isValidGrafanaDuration(query.step) && !isNaN(parseInt(query.step, 10));
-    }, [query.step]);
+
+      if (typeof query.step === 'string') {
+        // If we use a variable as step, we consider it valid
+        if (datasource.getVariables().includes(query.step)) {
+          return true;
+        }
+        // Check if the step is a valid Grafana duration
+        return isValidGrafanaDuration(query.step) && !isNaN(parseInt(query.step, 10));
+      }
+
+      return false;
+    }, [query.step, datasource]);
 
     return (
       <EditorRow>

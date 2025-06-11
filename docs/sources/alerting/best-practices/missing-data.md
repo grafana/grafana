@@ -88,8 +88,7 @@ The following tables illustrate both scenarios using the previous example, with 
 | :---- | :--------- | :--------- | :--------------------------- |
 | 00:00 | 1.5s 🟢    | 1s 🟢      | ✅ No Alert                  |
 | 01:00 | No Data ⚠️ | No Data ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 02:00 | No Data ⚠️ | No Data ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 03:00 | 1.4s 🟢    | 1s 🟢      | ✅ No Alert                  |
+| 02:00 | 1.4s 🟢    | 1s 🟢      | ✅ No Alert                  |
 
 **MissingSeries Scenario:** Only a specific series (`region2`) disappears:
 
@@ -97,8 +96,7 @@ The following tables illustrate both scenarios using the previous example, with 
 | :---- | :------ | :---------------- | :--------------------------- |
 | 00:00 | 1.5s 🟢 | 1s 🟢             | ✅ No Alert                  |
 | 01:00 | 1.6s 🟢 | Missing Series ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 02:00 | 1.6s 🟢 | Missing Series ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 03:00 | 1.4s 🟢 | 1s 🟢             | ✅ No Alert                  |
+| 02:00 | 1.4s 🟢 | 1s 🟢             | ✅ No Alert                  |
 
 In both cases, something broke silently.
 
@@ -162,14 +160,13 @@ Grafana marks missing series as [**stale**](ref:stale-alert-instances) after two
 
 If an alert instance becomes stale, you’ll find it in the [alert history](ref:alert-history) as `Normal (Missing Series)` before it disappears. This table shows the eviction process from the previous example:
 
-| Time  | region1               | region2                            | Alert triggered                                                                                |
-| :---- | :-------------------- | :--------------------------------- | :--------------------------------------------------------------------------------------------- |
-| 00:00 | 1.5s 🟢               | 1s 🟢                              | 🟢🟢 No Alerts                                                                                 |
-| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`              | 🔴🔴 Alert instances triggered for both regions                                                |
-| 02:00 | 1.6s 🟢               | MissingSeries ⚠️ <br> `Alerting` ️ | 🟢🔴 Region2 missing, state maintained.                                                        |
-| 03:00 | 1.6s 🟢               | MissingSeries ⚠️ `Alerting`️       | 🟢🔴Region2 missing, state maintained.                                                         |
-| 04:00 | 1.4s 🟢               | —                                  | 🟢 🟢 `region2` Normal (Missing Series), resolved, and instance evicted; 📩 Notification sent. |
-| 05:00 | 1.4s 🟢               | —                                  | 🟢 No Alerts                                                                                   |
+| Time  | region1               | region2                               | Alert triggered                                                          |
+| :---- | :-------------------- | :------------------------------------ | :----------------------------------------------------------------------- |
+| 00:00 | 1.5s 🟢               | 1s 🟢                                 | 🟢🟢 No Alerts                                                           |
+| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`                 | 🔴🔴 Alert instances triggered for both regions                          |
+| 02:00 | 1.6s 🟢               | `(MissingSeries)`⚠️ <br> `Alerting` ️ | 🟢🔴 Region2 missing, state maintained.                                  |
+| 03:00 | 1.4s 🟢               | `(MissingSeries)` <br> `Normal`       | 🟢🟢 `region2` was resolved, 📩 notification sent, and instance evicted. |
+| 04:00 | 1.4s 🟢               | —                                     | 🟢 No Alerts. `region2` was evicted.                                     |
 
 ###
 
@@ -200,8 +197,9 @@ Missing data isn’t always a failure. It’s a common scenario in dynamic envir
 
 Grafana Alerting handles distinct scenarios automatically. Here’s how to think about it:
 
-- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
 - Understand `DatasourceNoData` and `MissingSeries` notifications, since they don’t behave like regular alerts.
+- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
+- When _NoData_ is not an issue, consider rewriting the query to always return data — for example, in Prometheus, use `your_metric_query OR on() vector(0)` to return `0` when `your_metric_query` returns nothing.
 - Use `absent()` or `absent_over_time()` in Prometheus for fine-grained detection when a metric or label disappears entirely.
 - Don’t alert on every instance by default. In dynamic environments, it’s better to aggregate and alert on symptoms — unless a missing individual instance directly impacts users.
 - If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State`, or routing those alerts differently.
