@@ -391,8 +391,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       // roles: () => contextSrv.evaluatePermission([AccessControlAction.SecretsManagementRead]),
       component: config.featureToggles.grafanaAPIServerWithExperimentalAPIs
         ? SafeDynamicImport(
-          () => import(/* webpackChunkName: "SecretsManagementPage" */ 'app/features/secrets-management/SecretsManagementPage')
-        )
+            () =>
+              import(
+                /* webpackChunkName: "SecretsManagementPage" */ 'app/features/secrets-management/SecretsManagementPage'
+              )
+          )
         : () => <Navigate replace to="/admin" />,
     },
     // LOGIN / SIGNUP
