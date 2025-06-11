@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 
 import { ConfirmButton, Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';

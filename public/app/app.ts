@@ -1,6 +1,7 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
+import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -18,7 +19,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { initTranslations } from '@grafana/i18n/internal';
+import { initializeI18n } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -125,15 +126,22 @@ export class GrafanaApp {
       await preInitTasks();
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+      const regionalFormat = config.featureToggles.localeFormatPreference
+        ? config.locale
+        : config.bootData.user.language;
+
+      const initI18nPromise = initializeI18n(
+        {
+          language: config.bootData.user.language,
+          ns: NAMESPACES,
+          module: loadTranslations,
+        },
+        regionalFormat
+      );
 
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
       // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
-      const initI18nPromise = initTranslations({
-        language: config.bootData.user.language,
-        ns: NAMESPACES,
-        module: loadTranslations,
-      });
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);

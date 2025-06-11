@@ -90,7 +90,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
             value={options.byField}
             onChange={onSelectField}
             /* don't translate here as this references a field name */
-            /* eslint-disable-next-line @grafana/no-untranslated-strings */
+            /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
           />

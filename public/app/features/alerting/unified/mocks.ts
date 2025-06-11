@@ -232,6 +232,8 @@ export const mockGrafanaPromAlertingRule = (
     uid: 'mock-rule-uid-123',
     folderUid: 'NAMESPACE_UID',
     isPaused: false,
+    totals: { alerting: 1 },
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };

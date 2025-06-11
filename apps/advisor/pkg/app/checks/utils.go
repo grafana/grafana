@@ -18,6 +18,7 @@ const (
 	RetryAnnotation           = "advisor.grafana.app/retry"
 	IgnoreStepsAnnotation     = "advisor.grafana.app/ignore-steps"
 	IgnoreStepsAnnotationList = "advisor.grafana.app/ignore-steps-list"
+	NameAnnotation            = "advisor.grafana.app/checktype-name"
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )

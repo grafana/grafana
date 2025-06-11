@@ -1,7 +1,6 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, useTranslate } from '@grafana/i18n';
 import { DataSourceRef } from '@grafana/schema';
 
 import { useDatasources } from '../../hooks';

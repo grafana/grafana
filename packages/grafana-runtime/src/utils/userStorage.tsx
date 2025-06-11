@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { usePluginContext } from '@grafana/data';
+import { usePluginContext, type UserStorage as UserStorageType } from '@grafana/data';
 
 import { config } from '../config';
 import { BackendSrvRequest, getBackendSrv } from '../services';
@@ -40,7 +40,7 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
  * A class for interacting with the backend user storage.
  * Exposed internally only to avoid misuse (wrong service name)..
  */
-export class UserStorage {
+export class UserStorage implements UserStorageType {
   private service: string;
   private resourceName: string;
   private userUID: string;
@@ -141,21 +141,8 @@ export class UserStorage {
   }
 }
 
-export interface PluginUserStorage {
-  /**
-   * Retrieves an item from the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to retrieve.
-   * @returns A promise that resolves to the item value or null if not found.
-   */
-  getItem(key: string): Promise<string | null>;
-  /**
-   * Sets an item in the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to set.
-   * @param value - The value of the item to set.
-   * @returns A promise that resolves when the item is set.
-   */
-  setItem(key: string, value: string): Promise<void>;
-}
+// This is a type alias to avoid breaking changes
+export interface PluginUserStorage extends UserStorageType {}
 
 /**
  * A hook for interacting with the backend user storage (or local storage if not enabled).

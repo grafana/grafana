@@ -58,7 +58,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         size={buttonSize}
         key="edit"
         variant="secondary"
-        icon="pen"
+        fill="text"
         href={editURL}
       >
         <Trans i18nKey="common.edit">Edit</Trans>
@@ -67,10 +67,11 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   }
 
   return (
-    <Stack gap={1} alignItems="center" wrap="nowrap">
+    <Stack gap={0} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
         buttonSize={buttonSize}
+        fill="text"
         rulerRule={rule}
         promRule={promRule}
         groupIdentifier={groupIdentifier}

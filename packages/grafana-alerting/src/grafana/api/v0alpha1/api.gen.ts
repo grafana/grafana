@@ -1239,7 +1239,7 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type Integration = {
+export type ReceiverIntegration = {
   disableResolveMessage?: boolean;
   secureFields?: {
     [key: string]: boolean;
@@ -1251,8 +1251,58 @@ export type Integration = {
   uid?: string;
 };
 export type ReceiverSpec = {
-  integrations: Integration[];
+  integrations: ReceiverIntegration[];
   title: string;
+};
+export type ReceiverstatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type ReceiverStatus = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: ReceiverstatusOperatorState;
+  };
+};
+export type Receiver = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Receiver */
+  spec: ReceiverSpec;
+  status: ReceiverStatus;
+};
+export type ListMeta = {
+  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
+  continue?: string;
+  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
+  remainingItemCount?: number;
+  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
+  resourceVersion?: string;
+  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
+  selfLink?: string;
+};
+export type ReceiverList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: Receiver[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ListMeta;
 };
 export type StatusCause = {
   /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
@@ -1280,16 +1330,6 @@ export type StatusDetails = {
   /** UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ListMeta = {
-  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
-  continue?: string;
-  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
-  remainingItemCount?: number;
-  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
-  resourceVersion?: string;
-  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
-  selfLink?: string;
-};
 export type Status = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1308,51 +1348,56 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
-export type Receiver = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata: ObjectMeta;
-  /** Spec is the spec of the Receiver */
-  spec: ReceiverSpec;
-  status: Status;
-};
-export type ReceiverList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: Receiver[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata: ListMeta;
-};
 export type Patch = object;
-export type RouteDefaults = {
+export type RoutingTreeRouteDefaults = {
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
   receiver: string;
   repeat_interval?: string;
 };
-export type Matcher = {
+export type RoutingTreeMatcher = {
   label: string;
   type: string;
   value: string;
 };
-export type Route = {
+export type RoutingTreeRoute = {
+  active_time_intervals?: string[];
   continue: boolean;
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
-  matchers?: Matcher[];
+  matchers?: RoutingTreeMatcher[];
   mute_time_intervals?: string[];
   receiver?: string;
   repeat_interval?: string;
-  routes?: Route[];
+  routes?: RoutingTreeRoute[];
 };
-export type RoutingtreeSpec = {
-  defaults: RouteDefaults;
-  routes: Route[];
+export type RoutingTreeSpec = {
+  defaults: RoutingTreeRouteDefaults;
+  routes: RoutingTreeRoute[];
+};
+export type RoutingTreestatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type RoutingTreeStatus = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: RoutingTreestatusOperatorState;
+  };
 };
 export type RoutingTree = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1361,8 +1406,8 @@ export type RoutingTree = {
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the RoutingTree */
-  spec: RoutingtreeSpec;
-  status: Status;
+  spec: RoutingTreeSpec;
+  status: RoutingTreeStatus;
 };
 export type RoutingTreeList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1372,9 +1417,31 @@ export type RoutingTreeList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TemplategroupSpec = {
+export type TemplateGroupSpec = {
   content: string;
   title: string;
+};
+export type TemplateGroupstatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type TemplateGroupStatus = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: TemplateGroupstatusOperatorState;
+  };
 };
 export type TemplateGroup = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1383,8 +1450,8 @@ export type TemplateGroup = {
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the TemplateGroup */
-  spec: TemplategroupSpec;
-  status: Status;
+  spec: TemplateGroupSpec;
+  status: TemplateGroupStatus;
 };
 export type TemplateGroupList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1394,21 +1461,43 @@ export type TemplateGroupList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type TimeRange = {
+export type TimeIntervalTimeRange = {
   end_time: string;
   start_time: string;
 };
-export type Interval = {
+export type TimeIntervalInterval = {
   days_of_month?: string[];
   location?: string;
   months?: string[];
-  times?: TimeRange[];
+  times?: TimeIntervalTimeRange[];
   weekdays?: string[];
   years?: string[];
 };
-export type TimeintervalSpec = {
+export type TimeIntervalSpec = {
   name: string;
-  time_intervals: Interval[];
+  time_intervals: TimeIntervalInterval[];
+};
+export type TimeIntervalstatusOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: object;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation. */
+  state: string;
+};
+export type TimeIntervalStatus = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: object;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: TimeIntervalstatusOperatorState;
+  };
 };
 export type TimeInterval = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1417,8 +1506,8 @@ export type TimeInterval = {
   kind?: string;
   metadata: ObjectMeta;
   /** Spec is the spec of the TimeInterval */
-  spec: TimeintervalSpec;
-  status: Status;
+  spec: TimeIntervalSpec;
+  status: TimeIntervalStatus;
 };
 export type TimeIntervalList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

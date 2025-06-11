@@ -2,7 +2,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
-import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
+import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -32,17 +32,21 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const { body } = dashboard.useState();
 
     const dashboardOptions = useMemo(() => {
+      const dashboardTitleInputId = 'dashboard-title-input';
+      const dashboardDescriptionInputId = 'dashboard-description-input';
       const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.title-option', 'Title'),
-            render: () => <DashboardTitleInput dashboard={dashboard} />,
+            id: dashboardTitleInputId,
+            render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.options.description', 'Description'),
-            render: () => <DashboardDescriptionInput dashboard={dashboard} />,
+            id: dashboardDescriptionInputId,
+            render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
           })
         );
 
@@ -63,27 +67,30 @@ export class DashboardEditableElement implements EditableDashboardElement {
           size="sm"
           onClick={() => this.dashboard.onOpenSettings()}
           tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+          icon="sliders-v-alt"
+          iconPlacement="right"
         >
-          <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
-            <span>
-              <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-            </span>
-            <Icon name="sliders-v-alt" />
-          </Stack>
+          <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
         </Button>
       </>
     );
   }
 }
 
-export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {
+export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { title } = dashboard.useState();
 
-  return <Input value={title} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  return <Input id={id} value={title} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
 }
 
-export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
+export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { description } = dashboard.useState();
 
-  return <TextArea value={description} onChange={(e) => dashboard.setState({ description: e.currentTarget.value })} />;
+  return (
+    <TextArea
+      id={id}
+      value={description}
+      onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
+    />
+  );
 }

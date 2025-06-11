@@ -6,30 +6,32 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
-import { OnNodeUpdate } from './types';
+import { TreeNode } from './types';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
-  nodePath: string[];
-  query: string;
-  onNodeUpdate: OnNodeUpdate;
+  treeNode: TreeNode;
+  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({ anyChildExpanded, treeNode, onNodeUpdate }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
-  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({ value: query, dirty: false });
+  const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
+    value: treeNode.query,
+    dirty: false,
+  });
 
   useEffect(() => {
-    if (!inputState.dirty && inputState.value !== query) {
-      setInputState({ value: query, dirty: false });
+    if (!inputState.dirty && inputState.value !== treeNode.query) {
+      setInputState({ value: treeNode.query, dirty: false });
     }
-  }, [inputState, query]);
+  }, [inputState, treeNode.query]);
 
   useDebounce(
     () => {
       if (inputState.dirty) {
-        onNodeUpdate(nodePath, true, inputState.value);
+        onNodeUpdate(treeNode.scopeNodeId, true, inputState.value);
       }
     },
     500,

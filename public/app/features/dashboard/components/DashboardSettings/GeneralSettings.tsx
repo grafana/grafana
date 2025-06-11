@@ -116,8 +116,8 @@ export function GeneralSettingsUnconnected({
   };
 
   const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.editable', 'Editable'), value: true },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.readonly', 'Read-only'), value: false },
   ];
 
   return (
@@ -165,16 +165,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker
-              value={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-              initialTitle={dashboard.meta.folderTitle}
-              inputId="dashboard-folder-input"
-              enableCreateNew
-              dashboardId={dashboard.id}
-              skipInitialLoad
-            />
+            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
           </Field>
 
           <Field

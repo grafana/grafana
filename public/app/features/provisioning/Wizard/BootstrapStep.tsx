@@ -5,17 +5,18 @@ import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 
+import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
-import { StepStatusInfo, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
-interface Props {
+export interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+  const { setStepStatusInfo } = useStepStatus();
   const {
     register,
     control,
@@ -29,10 +30,14 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
   const selectedTarget = watch('repository.sync.target');
   const options = useModeOptions(repoName, settingsData);
+  const { target } = options[0];
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStats.data),
     [filesQuery.data, resourceStats.data]
   );
+  const requiresMigration = settingsData?.legacyStorage || resourceCount > 0;
+  const isLoading = resourceStats.isLoading || filesQuery.isLoading;
+  const { t } = useTranslate();
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -49,22 +54,15 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   }, [getValues, setValue]);
 
   useEffect(() => {
-    const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [filesQuery.isLoading, onStepStatusUpdate, resourceStats.isLoading]);
+    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+  }, [isLoading, setStepStatusInfo]);
 
-  // Auto select the first option on mount
   useEffect(() => {
-    const { target } = options[0];
     setValue('repository.sync.target', target);
-    onOptionSelect(settingsData?.legacyStorage || resourceCount > 0);
-    // Only run this effect on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    onOptionSelect(requiresMigration);
+  }, [target, setValue, onOptionSelect, requiresMigration]);
 
-  const { t } = useTranslate();
-
-  if (resourceStats.isLoading || filesQuery.isLoading) {
+  if (isLoading) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
@@ -107,13 +105,14 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
           control={control}
           render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {options.map((action, index) => (
+              {options.map((action) => (
                 <Card
                   key={action.target}
                   isSelected={action.target === selectedTarget}
                   onClick={() => {
                     onChange(action.target);
                   }}
+                  noMargin
                   {...field}
                 >
                   <Card.Heading>{action.label}</Card.Heading>
@@ -140,8 +139,10 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
             error={errors.repository?.title?.message}
             invalid={!!errors.repository?.title}
             required
+            noMargin
           >
             <Input
+              id="repository-title"
               {...register('repository.title', {
                 required: t('provisioning.bootstrap-step.error-field-required', 'This field is required.'),
               })}

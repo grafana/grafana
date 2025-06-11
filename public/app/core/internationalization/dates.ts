@@ -1,4 +1,3 @@
-import '@formatjs/intl-durationformat/polyfill';
 import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 

@@ -21,7 +21,7 @@ type DecryptStorage interface {
 
 // DecryptAuthorizer is the interface for authorizing decryption requests.
 type DecryptAuthorizer interface {
-	Authorize(ctx context.Context, secureValueDecrypters []string) (identity string, allowed bool)
+	Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool)
 }
 
 // TEMPORARY: Needed to pass it with wire.

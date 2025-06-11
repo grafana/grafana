@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -140,7 +141,7 @@ export const usePluginDetailsTabs = (
 
       if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
         navModelChildren.push({
-          text: 'Dashboards',
+          text: t('plugins.use-plugin-details-tabs.nav-model-children.text.dashboards', 'Dashboards'),
           icon: 'apps',
           id: PluginTabIds.DASHBOARDS,
           url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,

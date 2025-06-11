@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
@@ -36,6 +37,7 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
 }
 
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();
@@ -93,9 +95,11 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                           target="__blank"
                           className={styles.link}
                           rel="noopener"
-                          aria-label="View alert rule"
+                          aria-label={t('alertlist.ungrouped-mode-view.aria-label-view-alert-rule', 'View alert rule')}
                         >
-                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert rule</span>
+                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>
+                            <Trans i18nKey="alertlist.ungrouped-mode-view.view-alert-rule">View alert rule</Trans>
+                          </span>
                           <Icon name={'external-link-alt'} size="sm" />
                         </a>
                       )}
@@ -105,15 +109,14 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {alertStateToReadable(alertingRule.state)}
                       </span>{' '}
                       {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
-                        <>
-                          for{' '}
-                          <span>
-                            {intervalToAbbreviatedDurationString({
-                              start: firstActiveAt,
-                              end: Date.now(),
-                            })}
-                          </span>
-                        </>
+                        <Trans
+                          i18nKey="alertlist.ungrouped-mode-view.active-for"
+                          values={{
+                            duration: intervalToAbbreviatedDurationString({ start: firstActiveAt, end: Date.now() }),
+                          }}
+                        >
+                          for <span>{'{{duration}}'}</span>
+                        </Trans>
                       )}
                     </div>
                   </div>

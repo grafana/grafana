@@ -87,9 +87,18 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   const { t } = useTranslate();
 
   const tabInfo = [
-    { value: TabSelection.File, label: 'File (from repository)' },
-    { value: TabSelection.Existing, label: 'Existing (from grafana)' },
-    { value: TabSelection.DryRun, label: 'Dry Run (result after apply)' },
+    {
+      value: TabSelection.File,
+      label: t('provisioning.resource-view.tab-info.label.file-from-repository', 'File (from repository)'),
+    },
+    {
+      value: TabSelection.Existing,
+      label: t('provisioning.resource-view.tab-info.label.existing-from-grafana', 'Existing (from Grafana)'),
+    },
+    {
+      value: TabSelection.DryRun,
+      label: t('provisioning.resource-view.tab-info.label.dry-run-result-after-apply', 'Dry run (result after apply)'),
+    },
   ];
 
   return (
@@ -158,7 +167,10 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
                   name: repo,
                   path: wrap.path!,
                   body: JSON.parse(jsonView),
-                  message: 'updated from repo test UI',
+                  message: t(
+                    'provisioning.resource-view.message.updated-from-repo-test-ui',
+                    'updated from repo test UI'
+                  ),
                 });
               }}
             >
@@ -173,7 +185,10 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
                 deleteFile({
                   name: repo,
                   path: wrap.path!,
-                  message: 'removed from repo test UI',
+                  message: t(
+                    'provisioning.resource-view.message.removed-from-repo-test-ui',
+                    'removed from repo test UI'
+                  ),
                 });
               }}
             />

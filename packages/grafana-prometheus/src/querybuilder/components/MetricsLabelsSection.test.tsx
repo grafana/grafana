@@ -33,6 +33,7 @@ const createMockDatasource = () => {
       fetchSeriesValuesWithMatch: jest.fn().mockResolvedValue(['value1', 'value2']),
       getLabelValues: jest.fn().mockResolvedValue(['value1', 'value2']),
       getSeries: jest.fn().mockResolvedValue({ __name__: ['metric1', 'metric2'] }),
+      getSeriesValues: jest.fn().mockResolvedValue(['metric1', 'metric2']),
       loadMetricsMetadata: jest.fn().mockResolvedValue({}),
       metricsMetadata: { metric1: { type: 'counter', help: 'help text' } },
     },

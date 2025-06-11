@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EmptyState, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,6 +9,7 @@ import { ConfigForm } from '../Config/ConfigForm';
 import { PROVISIONING_URL } from '../constants';
 
 export default function EditRepositoryPage() {
+  const { t } = useTranslate();
   const { name = '' } = useParams();
   const query = useGetRepositoryQuery({ name });
   //@ts-expect-error TODO add error types
@@ -16,7 +17,13 @@ export default function EditRepositoryPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
+      pageNav={{
+        text: t('provisioning.edit-repository-page.text.configure-repository', 'Configure repository'),
+        subTitle: t(
+          'provisioning.edit-repository-page.subTitle.configure-repository-storing-resources',
+          'Configure a repository for storing your resources.'
+        ),
+      }}
     >
       <Page.Contents isLoading={query.isLoading}>
         {notFound ? (

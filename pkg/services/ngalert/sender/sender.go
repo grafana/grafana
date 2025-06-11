@@ -46,6 +46,7 @@ type ExternalAlertmanager struct {
 type ExternalAMcfg struct {
 	URL     string
 	Headers http.Header
+	Timeout time.Duration
 }
 
 type Option func(*ExternalAlertmanager)
@@ -181,14 +182,14 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
 
-		s.logger.Debug("msg",
+		s.logger.Debug(
 			"Sending alert",
 			"alert",
-			a,
+			na.String(),
 			"starts_at",
-			a.StartsAt,
+			na.StartsAt,
 			"ends_at",
-			a.EndsAt)
+			na.EndsAt)
 	}
 
 	s.manager.Send(as...)
@@ -229,11 +230,16 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 			},
 		}
 
+		timeout := am.Timeout
+		if timeout == 0 {
+			timeout = defaultTimeout
+		}
+
 		amConfig := &config.AlertmanagerConfig{
 			APIVersion:              config.AlertmanagerAPIVersionV2,
 			Scheme:                  u.Scheme,
 			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(defaultTimeout),
+			Timeout:                 model.Duration(timeout),
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 

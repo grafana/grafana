@@ -1,6 +1,8 @@
+import { PropsOf } from '@emotion/react';
+
 import { AppEvents } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
-import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
@@ -25,6 +27,7 @@ interface Props {
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
+  fill?: PropsOf<typeof Button>['fill'];
 }
 
 /**
@@ -41,6 +44,7 @@ const AlertRuleMenu = ({
   handleDuplicateRule,
   onPauseChange,
   buttonSize,
+  fill,
 }: Props) => {
   // check all abilities and permissions
   const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Pause);
@@ -145,8 +149,8 @@ const AlertRuleMenu = ({
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-      <MoreButton size={buttonSize} />
+    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
+      <MoreButton size={buttonSize} fill={fill} />
     </Dropdown>
   );
 };

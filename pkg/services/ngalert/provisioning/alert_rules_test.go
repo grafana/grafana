@@ -1924,8 +1924,8 @@ func TestDeleteRuleGroups(t *testing.T) {
 
 	t.Run("when filtering by imported Prometheus rules", func(t *testing.T) {
 		filterOpts := &FilterOptions{
-			ImportedPrometheusRule: util.Pointer(true),
-			NamespaceUIDs:          []string{"namespace1"},
+			HasPrometheusRuleDefinition: util.Pointer(true),
+			NamespaceUIDs:               []string{"namespace1"},
 		}
 
 		t.Run("when the group is not imported", func(t *testing.T) {

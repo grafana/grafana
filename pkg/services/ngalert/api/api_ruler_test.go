@@ -974,7 +974,6 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 		authz:              accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		amConfigStore:      &fakeAMRefresher{},
 		amRefresher:        &fakeAMRefresher{},
-		featureManager:     featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		userService:        userService,
 		conditionValidator: &recordingConditionValidator{},
 	}

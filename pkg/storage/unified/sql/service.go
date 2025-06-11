@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -13,6 +17,9 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/grafana/authlib/grpcutils"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/netutil"
+	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -62,7 +69,8 @@ type service struct {
 
 	docBuilders resource.DocumentBuilderSupplier
 
-	distributor *resource.Distributor
+	storageRing *ring.Ring
+	lifecycler  *ring.BasicLifecycler
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -74,7 +82,8 @@ func ProvideUnifiedStorageGrpcService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-	distributor *resource.Distributor,
+	storageRing *ring.Ring,
+	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
 	tracer := otel.Tracer("unified-storage")
 
@@ -102,7 +111,43 @@ func ProvideUnifiedStorageGrpcService(
 		docBuilders:    docBuilders,
 		storageMetrics: storageMetrics,
 		indexMetrics:   indexMetrics,
-		distributor:    distributor,
+		storageRing:    storageRing,
+	}
+
+	if cfg.EnableSharding {
+		ringStore, err := kv.NewClient(
+			memberlistKVConfig,
+			ring.GetCodec(),
+			kv.RegistererWithKVName(reg, resource.RingName),
+			log,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create KV store client: %s", err)
+		}
+
+		lifecyclerCfg, err := toLifecyclerConfig(cfg, log)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
+		}
+
+		// Define lifecycler delegates in reverse order (last to be called defined first because they're
+		// chained via "next delegate").
+		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resource.RingNumTokens))
+		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
+		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
+
+		s.lifecycler, err = ring.NewBasicLifecycler(
+			lifecyclerCfg,
+			resource.RingName,
+			resource.RingKey,
+			ringStore,
+			delegate,
+			log,
+			reg,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
+		}
 	}
 
 	// This will be used when running as a dskit service
@@ -122,7 +167,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features, s.distributor)
+	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
 	if err != nil {
 		return err
 	}
@@ -149,6 +194,26 @@ func (s *service) start(ctx context.Context) error {
 	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
 	if err != nil {
 		return err
+	}
+
+	if s.cfg.EnableSharding {
+		err = s.lifecycler.StartAsync(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to start the lifecycler: %s", err)
+		}
+
+		s.log.Info("waiting until resource server is JOINING in the ring")
+		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		if err := ring.WaitInstanceState(lfcCtx, s.storageRing, s.lifecycler.GetInstanceID(), ring.JOINING); err != nil {
+			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
+		}
+		s.log.Info("resource server is JOINING in the ring")
+
+		if err := s.lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		}
+		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
 	// start the gRPC server
@@ -271,4 +336,40 @@ func (s *service) stopping(err error) error {
 		return err
 	}
 	return nil
+}
+
+func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
+	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, err
+	}
+
+	instanceId := cfg.InstanceID
+	if instanceId == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return ring.BasicLifecyclerConfig{}, err
+		}
+
+		instanceId = hostname
+	}
+
+	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
+	}
+
+	grpcPort, err := strconv.Atoi(grpcPortStr)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
+	}
+
+	return ring.BasicLifecyclerConfig{
+		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
+		ID:                  instanceId,
+		HeartbeatPeriod:     15 * time.Second,
+		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
+		TokensObservePeriod: 0,
+		NumTokens:           resource.RingNumTokens,
+	}, nil
 }

@@ -317,11 +317,7 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	if !ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagGrafanaManagedRecordingRules) {
-		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
-		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
-	}
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -653,24 +649,20 @@ func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig
 	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-			cfg := writer.DatasourceWriterConfig{
-				Timeout:              settings.Timeout,
-				DefaultDatasourceUID: settings.DefaultDatasourceUID,
-			}
-
-			logger.Info("Setting up remote write using data sources",
-				"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
-
-			return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
-		} else {
-			logger.Info("Setting up remote write using static configuration")
-			return writer.NewPrometheusWriterWithSettings(settings, httpClientProvider, clock, logger, m)
+		cfg := writer.DatasourceWriterConfig{
+			Timeout:              settings.Timeout,
+			CustomHeaders:        settings.CustomHeaders,
+			DefaultDatasourceUID: settings.DefaultDatasourceUID,
 		}
+
+		logger.Info("Setting up remote write using data sources",
+			"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
+
+		return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
 	}
 
 	return writer.NoopWriter{}, nil

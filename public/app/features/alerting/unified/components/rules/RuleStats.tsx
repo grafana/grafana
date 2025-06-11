@@ -1,4 +1,4 @@
-import { isUndefined, omitBy, pick, sum } from 'lodash';
+import { isUndefined, omitBy } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
 import { Fragment, useDeferredValue, useMemo } from 'react';
@@ -12,6 +12,8 @@ import {
   CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+import { totalFromStats } from '../../utils/ruleStats';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -78,15 +80,6 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   });
 
   return stats;
-}
-
-export function totalFromStats(stats: AlertGroupTotals): number {
-  // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should
-  // not be counted because they are already counted by their state
-  const countableStats = pick(stats, ['alerting', 'pending', 'inactive', 'recording', 'recovering']);
-  const total = sum(Object.values(countableStats));
-
-  return total;
 }
 
 export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {

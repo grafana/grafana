@@ -15,6 +15,7 @@ import {
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
+  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -97,12 +98,12 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the options properties that need to be
+    // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.options) {
+    if (annoQuerySpec?.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.options,
+        ...annoQuerySpec.legacyOptions,
       };
     }
     return new DashboardAnnotationsDataLayer({
@@ -198,7 +199,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
-          version: 1,
         }),
       ],
       $data: new DashboardDataLayerSet({
@@ -227,17 +227,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
-  if (dashboard.variables.length) {
-    if (isSnapshot) {
-      variables = createVariablesForSnapshot(dashboard);
-    } else {
-      variables = createVariablesForDashboard(dashboard);
-    }
+  if (isSnapshot) {
+    variables = createVariablesForSnapshot(dashboard);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(dashboard);
   }
 
   return variables;
@@ -256,6 +249,10 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
+
+  if (config.featureToggles.scopeFilters) {
+    variableObjects.push(new ScopesVariable({ enable: true }));
+  }
 
   return new SceneVariableSet({
     variables: variableObjects,

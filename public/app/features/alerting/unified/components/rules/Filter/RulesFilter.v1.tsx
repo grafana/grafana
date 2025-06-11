@@ -26,7 +26,7 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+import { RulesViewModeSelector, SupportedView } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
   { label: 'Alert ', value: PromRuleType.Alerting },
@@ -44,6 +44,8 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
 
 interface RulesFilerProps {
   onClear?: () => void;
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
 const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -51,7 +53,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
   value,
 }));
 
-const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
@@ -259,8 +261,8 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -317,7 +319,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             <Label>
               <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
             </Label>
-            <RulesViewModeSelector />
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
           </div>
         </Stack>
         {hasActiveFilters && (

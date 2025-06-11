@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { useTranslate } from '@grafana/i18n';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 
@@ -39,10 +40,14 @@ const EditTimingRoute = () => {
 };
 
 function EditMuteTimingPage() {
+  const { t } = useTranslate();
   return (
     <AlertmanagerPageWrapper
       navId="am-routes"
-      pageNav={{ id: 'alert-policy-edit', text: 'Edit time interval' }}
+      pageNav={{
+        id: 'alert-policy-edit',
+        text: t('alerting.edit-mute-timing-page.text.edit-time-interval', 'Edit time interval'),
+      }}
       accessType="notification"
     >
       <EditTimingRoute />

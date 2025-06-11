@@ -40,7 +40,15 @@ export const CloudEvaluationBehavior = () => {
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
             <Input
-              {...register('forTime', { pattern: { value: /^\d+$/, message: 'Must be a positive integer.' } })}
+              {...register('forTime', {
+                pattern: {
+                  value: /^\d+$/,
+                  message: t(
+                    'alerting.cloud-evaluation-behavior.message.must-be-a-positive-integer',
+                    'Must be a positive integer.'
+                  ),
+                },
+              })}
               width={8}
             />
           </Field>

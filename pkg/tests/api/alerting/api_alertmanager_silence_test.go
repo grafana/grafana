@@ -37,12 +37,6 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	adminApiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	// Create the namespace we'll save our alerts to.

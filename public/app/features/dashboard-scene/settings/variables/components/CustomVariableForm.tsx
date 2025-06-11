@@ -48,7 +48,7 @@ export function CustomVariableForm({
       <VariableTextAreaField
         name="Values separated by comma"
         defaultValue={query}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
         required

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -34,9 +35,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
 		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
@@ -57,10 +55,6 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
 			dbstore := db.InitTestDB(t)
@@ -104,9 +98,6 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("Skipping benchmark on Spanner")
-	}
 
 	ctx := context.Background()
 
@@ -144,9 +135,6 @@ func TestClientServer(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := db.InitTestDB(t)
@@ -157,7 +145,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

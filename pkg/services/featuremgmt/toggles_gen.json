@@ -7,7 +7,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleA",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -21,7 +22,8 @@
       "metadata": {
         "name": "ABTestFeatureToggleB",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2025-01-13T21:13:13Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z",
+        "deletionTimestamp": "2025-05-27T18:50:27Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -56,6 +58,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichment",
+        "resourceVersion": "1749210731545",
+        "creationTimestamp": "2025-06-06T11:52:11Z"
+      },
+      "spec": {
+        "description": "Enable configuration of alert enrichments in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -153,6 +170,35 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingImportAlertmanagerAPI",
+        "resourceVersion": "1749365901136",
+        "creationTimestamp": "2025-06-08T06:58:21Z"
+      },
+      "spec": {
+        "description": "Enables the API to import Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingImportYAMLUI",
+        "resourceVersion": "1747836716080",
+        "creationTimestamp": "2025-05-21T14:11:56Z"
+      },
+      "spec": {
+        "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -765,6 +811,21 @@
     },
     {
       "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1747744953711",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "deletionTimestamp": "2025-04-03T07:52:54Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-11-13T08:51:21Z"
@@ -1223,7 +1284,8 @@
       "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-05-10T13:37:04Z"
+        "creationTimestamp": "2023-05-10T13:37:04Z",
+        "deletionTimestamp": "2025-05-19T15:29:06Z"
       },
       "spec": {
         "description": "Enables extra themes",
@@ -1401,7 +1463,8 @@
       "metadata": {
         "name": "grafanaManagedRecordingRules",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-04-22T17:53:16Z"
+        "creationTimestamp": "2024-04-22T17:53:16Z",
+        "deletionTimestamp": "2025-05-16T18:56:20Z"
       },
       "spec": {
         "description": "Enables Grafana-managed recording rules.",
@@ -1416,6 +1479,7 @@
         "name": "grafanaManagedRecordingRulesDatasources",
         "resourceVersion": "1746998568254",
         "creationTimestamp": "2025-03-07T13:30:40Z",
+        "deletionTimestamp": "2025-05-19T10:18:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
         }
@@ -1501,7 +1565,8 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-09-25T17:20:04Z"
+        "creationTimestamp": "2024-09-25T17:20:04Z",
+        "deletionTimestamp": "2025-05-20T16:08:36Z"
       },
       "spec": {
         "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
@@ -2222,7 +2287,8 @@
       "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-01-15T11:43:19Z"
+        "creationTimestamp": "2024-01-15T11:43:19Z",
+        "deletionTimestamp": "2025-05-14T09:11:28Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
@@ -2871,13 +2937,28 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-11-14T20:08:03Z"
+        "creationTimestamp": "2024-11-14T20:08:03Z",
+        "deletionTimestamp": "2025-05-28T13:44:54Z"
       },
       "spec": {
         "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
         "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "restoreDashboards",
+        "resourceVersion": "1748002635285",
+        "creationTimestamp": "2025-05-23T12:17:15Z"
+      },
+      "spec": {
+        "description": "Enables restore deleted dashboards feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "expression": "false"
       }
     },
     {
@@ -2960,6 +3041,24 @@
     },
     {
       "metadata": {
+        "name": "skipTokenRotationIfRecent",
+        "resourceVersion": "1748363818965",
+        "creationTimestamp": "2025-05-27T16:30:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-06-06T16:28:52Z"
@@ -3013,15 +3112,19 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "resourceVersion": "1749024523226",
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-04 08:08:43.226801 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -3090,6 +3193,21 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersTempo",
+        "resourceVersion": "1747930192816",
+        "creationTimestamp": "2025-05-20T14:50:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-22 16:09:52.816517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {

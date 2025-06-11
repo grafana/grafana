@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { TFunction, Trans, useTranslate } from '@grafana/i18n';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -77,7 +76,7 @@ export const ConfigureCorrelationSourceForm = () => {
           <span className={styles.variable} key={i}>
             {name}
             {i < variables.length - 1
-              ? // eslint-disable-next-line @grafana/no-untranslated-strings
+              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 ', '
               : ''}
           </span>

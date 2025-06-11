@@ -29,6 +29,7 @@ export function PartitionByValuesEditor({
   options,
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
+  const { t } = useTranslate();
   const names = useFieldDisplayNames(input);
   const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
@@ -64,13 +65,19 @@ export function PartitionByValuesEditor({
   }
 
   const namingModesOptions = [
-    { label: 'As label', value: namingModes.asLabels },
-    { label: 'As frame name', value: namingModes.frameName },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-label', 'As label'),
+      value: namingModes.asLabels,
+    },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-frame-name', 'As frame name'),
+      value: namingModes.frameName,
+    },
   ];
 
   const KeepFieldsOptions = [
-    { label: 'Yes', value: true },
-    { label: 'No', value: false },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.yes', 'Yes'), value: true },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.no', 'No'), value: false },
   ];
 
   const removeField = useCallback(
@@ -90,7 +97,6 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
-  const { t } = useTranslate();
 
   if (input.length > 1) {
     return (

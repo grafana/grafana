@@ -123,6 +123,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	if err != nil {
 		return fmt.Errorf("error initializing check: %w", err)
 	}
+	failures := []advisorv0alpha1.CheckReportFailure{}
 	item, err := check.Item(ctx, itemToRetry)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -131,27 +132,29 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		}
 		return fmt.Errorf("error initializing check: %w", err)
 	}
-	// Get the check type
-	var checkType resource.Object
-	checkType, err = typesClient.Get(ctx, resource.Identifier{
-		Namespace: obj.GetNamespace(),
-		Name:      check.ID(),
-	})
-	if err != nil {
-		return err
-	}
-	// Run the steps
-	steps, err := filterSteps(checkType, check.Steps())
-	if err != nil {
-		return err
-	}
-	failures, err := runStepsInParallel(ctx, log, &c.Spec, steps, []any{item})
-	if err != nil {
-		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
-		if setErr != nil {
-			return setErr
+	if item != nil {
+		// Get the check type
+		var checkType resource.Object
+		checkType, err = typesClient.Get(ctx, resource.Identifier{
+			Namespace: obj.GetNamespace(),
+			Name:      check.ID(),
+		})
+		if err != nil {
+			return err
 		}
-		return fmt.Errorf("error running steps: %w", err)
+		// Run the steps
+		steps, err := filterSteps(checkType, check.Steps())
+		if err != nil {
+			return err
+		}
+		failures, err = runStepsInParallel(ctx, log, &c.Spec, steps, []any{item})
+		if err != nil {
+			setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
+			if setErr != nil {
+				return setErr
+			}
+			return fmt.Errorf("error running steps: %w", err)
+		}
 	}
 	// Pull failures from the report for the items to retry
 	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {

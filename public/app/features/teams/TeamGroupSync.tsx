@@ -167,7 +167,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 &&
           !isAdding &&
           (highlightTrial() ? (
-            <TeamSyncUpgradeContent action={{ onClick: this.onToggleAdding, text: 'Add group' }} />
+            <TeamSyncUpgradeContent
+              action={{ onClick: this.onToggleAdding, text: t('teams.team-group-sync.text.add-group', 'Add group') }}
+            />
           ) : (
             <EmptyListCTA
               onClick={this.onToggleAdding}
