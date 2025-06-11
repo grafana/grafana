@@ -215,23 +215,56 @@ const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: Lo
         <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       )}
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) =>
-          field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} key={field} styles={styles} />
-          ) : (
-            <span className="field" title={field} key={field}>
-              {log.getDisplayedFieldValue(field)}
-            </span>
-          )
-        )
+        <DisplayedFields displayedFields={displayedFields} log={log} styles={styles} />
       ) : (
         <LogLineBody log={log} styles={styles} />
       )}
     </>
   );
 });
-
 Log.displayName = 'Log';
+
+const DisplayedFields = ({
+  displayedFields,
+  log,
+  styles,
+}: {
+  displayedFields: string[];
+  log: LogListModel;
+  styles: LogLineStyles;
+}) => {
+  const { matchingUids, search } = useLogListSearchContext();
+
+  const searchWords = useMemo(() => {
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    if (search && matchingUids?.includes(log.uid)) {
+      searchWords.push(search);
+    }
+    if (!searchWords.length) {
+      return undefined;
+    }
+    return searchWords;
+  }, [log.searchWords, log.uid, matchingUids, search]);
+
+  return displayedFields.map((field) =>
+    field === LOG_LINE_BODY_FIELD_NAME ? (
+      <LogLineBody log={log} key={field} styles={styles} />
+    ) : (
+      <span className="field" title={field} key={field}>
+        {searchWords ? (
+          <Highlighter
+            textToHighlight={log.getDisplayedFieldValue(field)}
+            searchWords={searchWords}
+            findChunks={findHighlightChunksInText}
+            highlightClassName={styles.matchHighLight}
+          />
+        ) : (
+          log.getDisplayedFieldValue(field)
+        )}
+      </span>
+    )
+  );
+};
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
   const { syntaxHighlighting } = useLogListContext();

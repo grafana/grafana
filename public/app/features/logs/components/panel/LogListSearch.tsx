@@ -6,6 +6,7 @@ import { GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
+import { useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 
@@ -25,6 +26,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     searchVisible,
     toggleFilterLogs,
   } = useLogListSearchContext();
+  const { displayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const styles = useStyles2(getStyles);
@@ -34,11 +36,8 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     if (!search || !searchVisible) {
       return [];
     }
-    const regex = new RegExp(search, 'i');
-    const newMatches = logs.filter((log) => log.entry.match(regex) !== null);
-    newMatches.forEach((log) => log.setCurrentSearch(search));
-    return newMatches;
-  }, [logs, search, searchVisible]);
+    return findMatchingLogs(logs, search, displayedFields);
+  }, [displayedFields, logs, search, searchVisible]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
@@ -174,3 +173,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
+
+function findMatchingLogs(logs: LogListModel[], search: string, displayedFields: string[]) {
+  const regex = new RegExp(search, 'i');
+  const newMatches = logs.filter((log) => {
+    if (log.entry.match(regex)) {
+      return true;
+    }
+
+    return displayedFields.some((field) => log.getDisplayedFieldValue(field).match(regex));
+  });
+  newMatches.forEach((log) => log.setCurrentSearch(search));
+  return newMatches;
+}
