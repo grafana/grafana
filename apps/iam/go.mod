@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/iam
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/grafana/grafana-app-sdk v0.38.2
