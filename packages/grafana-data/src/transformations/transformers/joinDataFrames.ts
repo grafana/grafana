@@ -255,7 +255,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   let joined: Array<Array<number | string | null | undefined>> = [];
 
   if (options.mode === JoinMode.outerTabular) {
-    joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
+    joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length);
   } else if (options.mode === JoinMode.inner) {
     joined = joinInner(allData);
   } else {
@@ -276,12 +276,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 // http://www.silota.com/docs/recipes/sql-join-tutorial-javascript-examples.html
 // The frame field value which is used join on is sorted to the 0 position of each table data in both tables and nullModes
 // (not sure if we need nullModes) for nullModes, the field to join on is given NULL_REMOVE and all other fields are given NULL_EXPAND
-function joinOuterTabular(
-  tables: AlignedData[],
-  originalFieldsOrderByFrame: number[][],
-  numberOfFields: number,
-  nullModes?: number[][]
-) {
+function joinOuterTabular(tables: AlignedData[], originalFieldsOrderByFrame: number[][], numberOfFields: number) {
   // we will iterate through all frames and check frames for matches preventing duplicates.
   // we will store each matched frame "row" or field values at the same index in the following hash.
   let duplicateHash: { [key: string]: Array<number | string | null | undefined> } = {};
@@ -381,7 +376,7 @@ function joinOuterTabular(
  *
  * @returns {Array<Array<string | number | null | undefined>>} The joined tables as an array of arrays, where each array represents a row in the joined table.
  */
-function joinInner(tables: AlignedData[]) {
+function joinInner(tables: AlignedData[], outer = false) {
   let ltable = tables[0];
   let lfield = ltable[0];
 
@@ -410,6 +405,10 @@ function joinInner(tables: AlignedData[]) {
     }
     // console.timeEnd('index right');
 
+    let matchedKeys = new Set();
+    let unmatchedLeft = [];
+    let unmatchedRight = [];
+
     // console.time('match left');
     let matched = [];
     let count = 0;
@@ -422,13 +421,27 @@ function joinInner(tables: AlignedData[]) {
         if (idxs != null) {
           matched.push([i, idxs]);
           count += idxs.length;
-          // mark as matched, so does not get double added if full outer or right
-        } else {
-          // if left join, include
+          outer && matchedKeys.add(v);
+        } else if (outer) {
+          unmatchedLeft.push(i);
         }
+      } else if (outer) {
+        unmatchedLeft.push(i);
       }
     }
+    count += unmatchedLeft.length;
     // console.timeEnd('match left');
+
+    // console.time('unmatched right');
+    if (outer) {
+      for (let k in index) {
+        if (!matchedKeys.has(k)) {
+          unmatchedRight.push(...index[k]);
+        }
+      }
+      count += unmatchedRight.length;
+    }
+    // console.timeEnd('unmatched right');
 
     // console.time('materialize');
     let outFieldsTpl = Array.from({ length: ltable.length + rtable.length - 1 }, () => `Array(${count})`).join(',');
@@ -436,11 +449,17 @@ function joinInner(tables: AlignedData[]) {
     // (skips join field in right table)
     let copyRightRowTpl = rtable
       .slice(1)
-      .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridxs[j]]`)
+      .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
       .join(';');
+
+    let nullLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = null`).join(';');
+    // (skips join field in right table)
+    let nullRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = null`);
 
     let materialize = new Function(
       'matched',
+      'unmatchedLeft',
+      'unmatchedRight',
       'ltable',
       'rtable',
       `
@@ -452,16 +471,29 @@ function joinInner(tables: AlignedData[]) {
         let [lidx, ridxs] = matched[i];
 
         for (let j = 0; j < ridxs.length; j++, rowIdx++) {
+          let ridx = ridxs[j];
           ${copyLeftRowTpl};
           ${copyRightRowTpl};
         }
       }
 
+      for (let i = 0; i < unmatchedLeft.length; i++, rowIdx++) {
+        let lidx = unmatchedLeft[i];
+        ${copyLeftRowTpl};
+        ${nullRightRowTpl};
+      }
+
+      for (let i = 0; i < unmatchedRight.length; i++, rowIdx++) {
+        let ridx = unmatchedRight[i];
+        ${nullLeftRowTpl};
+        ${copyRightRowTpl};
+      }
+
       return joined;
-    `
+      `
     );
 
-    let joined = materialize(matched, ltable, rtable);
+    let joined = materialize(matched, unmatchedLeft, unmatchedRight, ltable, rtable);
     // console.timeEnd('materialize');
 
     ltable = joined;
