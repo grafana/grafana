@@ -155,7 +155,6 @@ export interface TableCellNGProps {
   rowIdx: number;
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setIsInspecting: (isInspecting: boolean) => void;
-  shouldTextOverflow: () => boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   value: TableCellValue;

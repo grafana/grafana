@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -9,7 +9,6 @@ import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
-// import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { TABLE } from '../constants';
 import {
@@ -40,7 +39,6 @@ export function TableCellNG(props: TableCellNGProps) {
     height,
     rowIdx,
     justifyContent,
-    shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
     getActions,
@@ -48,10 +46,6 @@ export function TableCellNG(props: TableCellNGProps) {
     onCellFilterAdded,
     replaceVariables,
   } = props;
-
-  // TODO - use `onSelectedCellChange` at the top to maintain the selected state
-  // and show cell actions for accessible cell actions.
-  const isSelected = false;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
   const displayName = getDisplayName(field);
@@ -163,35 +157,7 @@ export function TableCellNG(props: TableCellNGProps) {
     return cell;
   }, [cellType, commonProps, theme, timeRange, divWidth, height, cellOptions, field, rowIdx, actions, value, frame]);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
-      tableCellDiv?.style.setProperty('white-space', 'pre-line');
-      tableCellDiv?.style.setProperty('min-height', `100%`);
-      tableCellDiv?.style.setProperty('height', `fit-content`);
-      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
-      tableCellDiv?.style.setProperty('min-width', 'min-content');
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.removeProperty('z-index');
-      tableCellDiv?.style.removeProperty('white-space');
-      tableCellDiv?.style.removeProperty('min-height');
-      tableCellDiv?.style.removeProperty('height');
-      tableCellDiv?.style.removeProperty('background');
-      tableCellDiv?.style.removeProperty('min-width');
-    }
-  };
+  const hasActions = cellInspect || showFilters;
 
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
@@ -214,10 +180,17 @@ export function TableCellNG(props: TableCellNGProps) {
   }, [displayName, onCellFilterAdded, value]);
 
   return (
-    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
+    <div
+      ref={divWidthRef}
+      className={styles.cell}
+      onFocus={hasActions ? () => setIsHovered(true) : undefined}
+      onMouseOver={hasActions ? () => setIsHovered(true) : undefined}
+      onBlur={hasActions ? () => setIsHovered(false) : undefined}
+      onMouseLeave={hasActions ? () => setIsHovered(false) : undefined}
+    >
       {renderedCell}
-      {(isHovered || isSelected) && (cellInspect || showFilters) && (
-        <div className={styles.cellActions}>
+      {isHovered && hasActions && (
+        <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
             <IconButton
               name="eye"
@@ -272,7 +245,9 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
-    '&:hover': { background: color.bgHoverColor },
+    '&:hover': {
+      background: color.bgHoverColor,
+    },
   }),
   cellActions: css({
     display: 'flex',

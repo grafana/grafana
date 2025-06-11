@@ -1,5 +1,5 @@
 import 'react-data-grid/lib/styles.css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, DataGridHandle, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
 import { useMeasure } from 'react-use';
@@ -36,7 +36,7 @@ import {
   useSortedRows,
   useTextWraps,
 } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, CellColors } from './types';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, CellColors, ColumnTypes } from './types';
 import {
   frameToRecords,
   getCellColors,
@@ -175,33 +175,19 @@ export function TableNG(props: TableNGProps) {
     return data.fields.map((field, i): TableColumn => {
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
+      const displayName = getDisplayName(field);
+      const cellClasses = getCellClasses(field, styles, columnTypes, textWraps, displayName);
+
       return {
         field,
         key: field.name,
         name: field.name,
         width: widths[i],
         headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
-        cellClass:
-          field.type === FieldType.number
-            ? styles.cellRight
-            : () => {
-                const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
-
-                switch (cellType) {
-                  case TableCellDisplayMode.Auto:
-                  case TableCellDisplayMode.ColorBackground:
-                  case TableCellDisplayMode.ColorBackgroundSolid:
-                  case TableCellDisplayMode.ColorText:
-                    return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : null;
-                  default:
-                    return null;
-                }
-              },
+        cellClass: cellClasses.length > 0 ? cx(cellClasses) : undefined,
         renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const { row } = props;
-          const displayName = getDisplayName(field);
           const value = row[displayName];
-          const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
 
           // Cell level rendering here
           return (
@@ -214,9 +200,6 @@ export function TableNG(props: TableNGProps) {
               height={defaultRowHeight}
               justifyContent={justifyColumnContent}
               rowIdx={row.__index}
-              shouldTextOverflow={() =>
-                shouldTextOverflow(displayName, columnTypes, textWraps[getDisplayName(field)], field, cellType)
-              }
               setIsInspecting={setIsInspecting}
               setContextMenuProps={setContextMenuProps}
               getActions={getActions}
@@ -229,7 +212,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
           <HeaderCell
             column={column}
-            rows={paginatedRows}
+            rows={memoizedRows}
             field={field}
             onSort={(columnKey, direction, isMultiSort) => {
               handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
@@ -269,17 +252,16 @@ export function TableNG(props: TableNGProps) {
     footerCalcs,
     getActions,
     isCountRowsSet,
+    memoizedRows,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
     replaceVariables,
-    paginatedRows,
     setFilter,
     setSortColumns,
     showTypeIcons,
     sortColumns,
-    styles.cellRight,
-    styles.cellWrapped,
+    styles,
     textWraps,
     theme,
     widths,
@@ -415,51 +397,31 @@ export function renderRow(
     return <Row key={key} {...props} aria-expanded={isExpanded} />;
   }
 
-  return (
-    <Row
-      key={key}
-      {...props}
-      onMouseEnter={() => onRowHover(rowIdx, panelContext, data, enableSharedCrosshair)}
-      onMouseLeave={() => onRowLeave(panelContext, enableSharedCrosshair)}
-    />
-  );
-}
+  const timeField = data?.fields.find((f) => f.type === FieldType.time);
+  const onRowHover =
+    enableSharedCrosshair && timeField
+      ? () => {
+          panelContext.eventBus.publish(
+            new DataHoverEvent({
+              point: {
+                time: timeField.values[rowIdx],
+              },
+            })
+          );
+        }
+      : undefined;
+  const onRowLeave = enableSharedCrosshair
+    ? () => {
+        panelContext.eventBus.publish(new DataHoverClearEvent());
+      }
+    : undefined;
 
-export function onRowHover(idx: number, panelContext: PanelContext, frame: DataFrame, enableSharedCrosshair: boolean) {
-  if (!enableSharedCrosshair) {
-    return;
-  }
-
-  const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
-
-  if (!timeField) {
-    return;
-  }
-
-  panelContext.eventBus.publish(
-    new DataHoverEvent({
-      point: {
-        time: timeField.values[idx],
-      },
-    })
-  );
-}
-
-export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: boolean) {
-  if (!enableSharedCrosshair) {
-    return;
-  }
-
-  panelContext.eventBus.publish(new DataHoverClearEvent());
+  return <Row key={key} {...props} onMouseEnter={onRowHover} onMouseLeave={onRowLeave} />;
 }
 
 const getStyles2 = (
   theme: GrafanaTheme2,
-  {
-    enablePagination,
-    noHeader,
-    defaultRowHeight,
-  }: { enablePagination?: boolean; noHeader?: boolean; defaultRowHeight?: number }
+  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
 ) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -511,6 +473,14 @@ const getStyles2 = (
   }),
   cellRight: css({
     textAlign: 'right',
+  }),
+  cellOverflow: css({
+    '&:hover': {
+      zIndex: theme.zIndex.tooltip,
+      whiteSpace: 'pre-line',
+      height: 'fit-content',
+      minWidth: 'min-content',
+    },
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -580,9 +550,40 @@ function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => 
   }
 }
 
+function getCellClasses(
+  field: Field,
+  styles: ReturnType<typeof getStyles2>,
+  columnTypes: ColumnTypes,
+  textWraps: Record<string, boolean>,
+  displayName: string
+): string[] {
+  const cellClasses = [];
+  const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+  if (field.type === FieldType.number) {
+    cellClasses.push(styles.cellRight);
+  }
+  if (shouldTextOverflow(displayName, columnTypes, textWraps[getDisplayName(field)], field, cellType)) {
+    cellClasses.push(styles.cellOverflow);
+  }
+  switch (cellType) {
+    case TableCellDisplayMode.Auto:
+    case TableCellDisplayMode.ColorBackground:
+    case TableCellDisplayMode.ColorBackgroundSolid:
+    case TableCellDisplayMode.ColorText:
+      if (field.config.custom?.cellOptions.wrapText) {
+        cellClasses.push(styles.cellWrapped);
+      }
+      break;
+    default:
+      break;
+  }
+  return cellClasses;
+}
+
 /*
 TODO:
 column width and min column width via panel config
+buggy hover overflow; smaller text looks bad
 hidden
 overlay/expand on hover
 active line and cell styling
@@ -594,4 +595,5 @@ auto-cell: can we deprecate in favor of newer RDG options?
 -----
 accessible sorting and filtering
 accessible table navigation
+action, inspect, and context UX need to be consolidated a bit
 */
