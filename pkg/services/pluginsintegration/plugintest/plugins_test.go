@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -63,25 +62,12 @@ func TestIntegrationPluginDashboards(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	provisioningFile := filepath.Join(t.TempDir(), "apps.yaml")
-	err := os.WriteFile(provisioningFile, []byte(`apiVersion: 1
-
-apps:
-  - type: test-app
-    org_id: 1
-    org_name: Main Org.
-    disabled: false
-    jsonData:
-      apiKey: "test-api-key"
-    secureJsonData:
-      secretKey: "test-secret-key"`), 0644)
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		AnonymousUserRole: org.RoleAdmin,
 	})
 
-	err = fs.CopyRecursive(provisioningFile, filepath.Join(dir, "conf", "provisioning", "plugins", "apps.yaml"))
+	appProvisioningPath := filepath.Join(".", "testdata", "provisioning", "apps.yaml")
+	err := fs.CopyRecursive(appProvisioningPath, filepath.Join(dir, "conf", "provisioning", "plugins", "apps.yaml"))
 	require.NoError(t, err)
 
 	pluginPath := filepath.Join("testdata", "test-app")
@@ -126,7 +112,7 @@ apps:
 		})
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		resp, err = http.Get(fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/1MHHlVjzz", grafanaListedAddr))
+		resp, err = http.Get(fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/wiwhfsg", grafanaListedAddr))
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		t.Cleanup(func() {
