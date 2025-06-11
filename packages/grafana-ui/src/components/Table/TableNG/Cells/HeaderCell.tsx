@@ -22,7 +22,6 @@ interface HeaderCellProps {
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   onColumnResize?: TableColumnResizeActionCallback;
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
@@ -38,7 +37,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   filter,
   setFilter,
   onColumnResize,
-  headerCellRefs,
   crossFilterOrder,
   crossFilterRows,
   showTypeIcons,
@@ -66,13 +64,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
     const isMultiSort = event.shiftKey;
     onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
   };
-
-  // collecting header cell refs to handle manual column resize
-  useLayoutEffect(() => {
-    if (headerRef.current) {
-      headerCellRefs.current[column.key] = headerRef.current;
-    }
-  }, [headerRef, column.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // TODO: this is a workaround to handle manual column resize;
   useEffect(() => {
