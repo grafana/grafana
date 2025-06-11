@@ -88,8 +88,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		locale = "en" // default to "en", not "en-US", matching the locale code
 		if urlPrefs.Locale != "" {
 			locale = urlPrefs.Locale
-		} else if prefs.JSONData.Locale != "" {
-			locale = prefs.JSONData.Locale
+		} else if prefs.JSONData.RegionalFormat != "" {
+			locale = prefs.JSONData.RegionalFormat
 		}
 	}
 
