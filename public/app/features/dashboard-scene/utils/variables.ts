@@ -135,7 +135,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   if (variable.type === 'adhoc') {
     const originFilters: AdHocVariableFilter[] = [];
     const filters: AdHocVariableFilter[] = [];
-    variable.filters.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
 
     return new AdHocFiltersVariable({
       ...commonProperties,
