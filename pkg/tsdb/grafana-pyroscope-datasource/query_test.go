@@ -2,7 +2,6 @@ package pyroscope
 
 import (
 	"context"
-	"net/http"
 	"testing"
 	"time"
 
@@ -419,7 +418,7 @@ type FakeClient struct {
 	Args []any
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, http.Header, error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	return []*ProfileType{
 		{
 			ID:    "type:1",
@@ -429,18 +428,18 @@ func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) (
 			ID:    "type:2",
 			Label: "memory",
 		},
-	}, http.Header{}, nil
+	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, http.Header, error) {
+func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
+func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -453,10 +452,10 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 			MaxSelf: 56,
 		},
 		Units: "count",
-	}, http.Header{}, nil
+	}, nil
 }
 
-func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, http.Header, error) {
+func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -469,10 +468,10 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 			MaxSelf: 56,
 		},
 		Units: "count",
-	}, http.Header{}, nil
+	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, http.Header, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error) {
 	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{
@@ -483,5 +482,5 @@ func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector
 		},
 		Units: "count",
 		Label: "test",
-	}, http.Header{}, nil
+	}, nil
 }
