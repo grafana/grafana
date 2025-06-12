@@ -2,6 +2,8 @@
 
 # 10.4.19+security-01 (2025-06-12)
 
+### Bug fixes
+
 - **Security:** Fixed CVE-2025-3415
 
 <!-- 10.4.19+security-01 END -->
