@@ -112,12 +112,6 @@ func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, crea
 		return nil, apierrors.NewBadRequest("expected LibraryPanel object")
 	}
 
-	if createValidation != nil {
-		if err := createValidation(ctx, obj); err != nil {
-			return nil, err
-		}
-	}
-
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -135,7 +129,6 @@ func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, crea
 
 	dto, err := s.LibraryElementService.CreateElement(ctx, user, *cmd)
 	if err != nil {
-		fmt.Println("CreateElement error", err)
 		if err == model.ErrLibraryElementAlreadyExists {
 			return nil, apierrors.NewAlreadyExists(s.ResourceInfo.GroupResource(), panel.Name)
 		}
@@ -239,6 +232,8 @@ func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValid
 		return nil, false, apierrors.NewUnauthorized("unable to get user from context")
 	}
 
+	// TODO: check if there are any connections to this element, and if so, that those dashboards actually exist
+	// probably should be in the validation hook instead
 	_, err = s.LibraryElementService.DeleteElement(ctx, user, name)
 	if err != nil {
 		if err == model.ErrLibraryElementNotFound {

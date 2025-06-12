@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -527,9 +528,9 @@ type libraryElementsK8sHandler struct {
 
 func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider) *libraryElementsK8sHandler {
 	gvr := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "librarypanels",
+		Group:    dashboardV0.APIGroup,
+		Version:  dashboardV0.APIVersion,
+		Resource: dashboardV0.LIBRARY_PANEL_RESOURCE,
 	}
 	return &libraryElementsK8sHandler{
 		gvr:                  gvr,
@@ -550,13 +551,22 @@ func (lk8s *libraryElementsK8sHandler) searchK8sLibraryElements(c *contextmodel.
 	}
 
 	query := strings.ToUpper(c.Query("searchString"))
+	typeFilter := c.Query("typeFilter")
+	folderFilter := c.Query("folderFilterUIDs")
+	excludeUID := c.Query("excludeUid")
 	elements := []model.LibraryElementDTO{}
 	for _, item := range out.Items {
 		dto, err := UnstructuredToLegacyLibraryPanelDTO(item)
-		if err != nil {
+		if err != nil || dto == nil {
 			continue
 		}
-		if dto == nil {
+		if typeFilter != "" && dto.Type != typeFilter {
+			continue
+		}
+		if folderFilter != "" && dto.FolderUID != folderFilter {
+			continue
+		}
+		if excludeUID != "" && dto.UID == excludeUID {
 			continue
 		}
 		if query != "" && !strings.Contains(strings.ToUpper(dto.Name), query) {
@@ -606,7 +616,7 @@ func (lk8s *libraryElementsK8sHandler) deleteK8sLibraryElement(c *contextmodel.R
 	}
 	c.JSON(http.StatusOK, model.DeleteLibraryElementResponse{
 		Message: "Library element deleted",
-		// TODO: get from annotations
+		// TODO: get ID from annotations
 		ID: 0,
 	})
 }
@@ -662,6 +672,7 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 		c.JsonApiErr(http.StatusBadRequest, "conversion error", err)
 		return
 	}
+	// TODO: set created by user & updated by user to be the user in the context
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		lk8s.writeError(c, err)

@@ -3,12 +3,9 @@ package libraryelements
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -18,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// LegacyCreateCommandToUnstructured converts a legacy CreateLibraryElementCommand to an unstructured k8s object
 func LegacyCreateCommandToUnstructured(cmd model.CreateLibraryElementCommand) (unstructured.Unstructured, error) {
+	// library variables are not a valid element kind.
 	if cmd.Kind != 1 {
 		return unstructured.Unstructured{}, model.ErrLibraryElementUnSupportedElementKind
 	}
@@ -28,42 +25,11 @@ func LegacyCreateCommandToUnstructured(cmd model.CreateLibraryElementCommand) (u
 	if err := json.Unmarshal(cmd.Model, &modelData); err != nil {
 		return unstructured.Unstructured{}, fmt.Errorf("failed to unmarshal model: %w", err)
 	}
-	panelType, _ := modelData["type"].(string)
-	description, _ := modelData["description"].(string)
-	options, _ := modelData["options"].(map[string]interface{})
-	pluginVersion, _ := modelData["pluginVersion"].(string)
-	targets, _ := modelData["targets"].([]interface{})
-	datasource, _ := modelData["datasource"].(map[string]interface{})
-	fieldConfig, _ := modelData["fieldConfig"].(map[string]interface{})
-
-	if options == nil {
-		options = make(map[string]interface{})
-	}
-	if fieldConfig == nil {
-		fieldConfig = make(map[string]interface{})
-	}
-
-	spec := map[string]interface{}{
-		"type":        panelType,
-		"title":       cmd.Name,
-		"description": description,
-		"options":     options,
-		"fieldConfig": fieldConfig,
-	}
-
-	if pluginVersion != "" {
-		spec["pluginVersion"] = pluginVersion
-	}
-	if targets != nil {
-		spec["targets"] = targets
-	}
-	if datasource != nil {
-		spec["datasource"] = datasource
-	}
+	modelData["title"] = cmd.Name
 
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"spec": spec,
+			"spec": modelData,
 		},
 	}
 
@@ -72,15 +38,19 @@ func LegacyCreateCommandToUnstructured(cmd model.CreateLibraryElementCommand) (u
 		uid = util.GenerateShortUID()
 	}
 	obj.SetName(uid)
+	obj.SetNamespace("default") // TODO: hack
 
-	// TODO
-	//obj.SetFolder(cmd.FolderUID)
-	//obj.SetDeprecatedInternalID()
+	meta, err := utils.MetaAccessor(&obj)
+	if err != nil {
+		return obj, err
+	}
+	if cmd.FolderUID != nil {
+		meta.SetFolder(*cmd.FolderUID)
+	}
 
 	return obj, nil
 }
 
-// LegacyPatchCommandToUnstructured converts a legacy PatchLibraryElementCommand to an unstructured k8s object
 func LegacyPatchCommandToUnstructured(cmd model.PatchLibraryElementCommand) (unstructured.Unstructured, error) {
 	var modelData map[string]interface{}
 	if cmd.Model != nil {
@@ -90,39 +60,11 @@ func LegacyPatchCommandToUnstructured(cmd model.PatchLibraryElementCommand) (uns
 	} else {
 		modelData = make(map[string]interface{})
 	}
-
-	spec := make(map[string]interface{})
-
-	spec["title"] = cmd.Name
-	if modelData["type"] != nil {
-		spec["type"] = modelData["type"]
-	}
-	if modelData["description"] != nil {
-		spec["description"] = modelData["description"]
-	}
-	if modelData["options"] != nil {
-		spec["options"] = modelData["options"]
-	} else {
-		spec["options"] = make(map[string]interface{})
-	}
-	if modelData["fieldConfig"] != nil {
-		spec["fieldConfig"] = modelData["fieldConfig"]
-	} else {
-		spec["fieldConfig"] = make(map[string]interface{})
-	}
-	if modelData["pluginVersion"] != nil {
-		spec["pluginVersion"] = modelData["pluginVersion"]
-	}
-	if modelData["targets"] != nil {
-		spec["targets"] = modelData["targets"]
-	}
-	if modelData["datasource"] != nil {
-		spec["datasource"] = modelData["datasource"]
-	}
+	modelData["title"] = cmd.Name
 
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"spec": spec,
+			"spec": modelData,
 		},
 	}
 
@@ -132,73 +74,65 @@ func LegacyPatchCommandToUnstructured(cmd model.PatchLibraryElementCommand) (uns
 	}
 	obj.SetName(uid)
 
+	// TODO: folder moving?
+
 	return obj, nil
 }
 
-// UnstructuredToLegacyLibraryPanelDTO converts an unstructured k8s object to a legacy LibraryElementDTO
 func UnstructuredToLegacyLibraryPanelDTO(item unstructured.Unstructured) (*model.LibraryElementDTO, error) {
 	spec, exists := item.Object["spec"].(map[string]interface{})
 	if !exists {
 		return nil, fmt.Errorf("spec not found in unstructured object")
 	}
 
-	// Reconstruct the model JSON from the spec
-	modelData := make(map[string]interface{})
-
-	if spec["type"] != nil {
-		modelData["type"] = spec["type"]
-	}
-	if spec["title"] != nil {
-		modelData["title"] = spec["title"]
-	}
-	if spec["description"] != nil {
-		modelData["description"] = spec["description"]
-	}
-	if spec["options"] != nil {
-		modelData["options"] = spec["options"]
-	}
-	if spec["fieldConfig"] != nil {
-		modelData["fieldConfig"] = spec["fieldConfig"]
-	}
-	if spec["pluginVersion"] != nil {
-		modelData["pluginVersion"] = spec["pluginVersion"]
-	}
-	if spec["targets"] != nil {
-		modelData["targets"] = spec["targets"]
-	}
-	if spec["datasource"] != nil {
-		modelData["datasource"] = spec["datasource"]
-	}
-
-	modelJSON, err := json.Marshal(modelData)
+	modelJSON, err := json.Marshal(spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal model: %w", err)
 	}
 
-	title, _ := spec["title"].(string)
-	panelType, _ := spec["type"].(string)
 	description, _ := spec["description"].(string)
+	name, _ := spec["title"].(string)
+	panelType, _ := spec["type"].(string)
 
 	dto := &model.LibraryElementDTO{
+		// TODO: orgID
 		UID:         item.GetName(),
-		Name:        title,
+		Name:        name,
+		Kind:        int64(model.PanelElement),
 		Type:        panelType,
 		Description: description,
 		Model:       modelJSON,
-		Kind:        int64(model.PanelElement),
-		// TODO
-		Version: 1,
+		// TODO: Version
+		// TODO: Meta
+		/*
+			type LibraryElementDTOMeta struct {
+				FolderName          string `json:"folderName"` // note: use "General" if not set
+				FolderUID           string `json:"folderUid"`
+				ConnectedDashboards int64  `json:"connectedDashboards"`
+
+				Created time.Time `json:"created"`
+				Updated time.Time `json:"updated"`
+
+				CreatedBy librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
+				UpdatedBy librarypanel.LibraryElementDTOMetaUser `json:"updatedBy"`
+			}
+		*/
+		// TODO: SchemaVersion
 	}
 
 	meta, err := utils.MetaAccessor(&item)
 	if err == nil {
 		dto.ID = meta.GetDeprecatedInternalID() // nolint:staticcheck
+		// TODO: is folderID needed?
+		folderUID := meta.GetFolder()
+		if folderUID != "" {
+			dto.FolderUID = folderUID
+		}
 	}
 
 	return dto, nil
 }
 
-// ConvertToK8sResource converts a legacy LibraryElementDTO to a k8s LibraryPanel resource
 func ConvertToK8sResource(dto *model.LibraryElementDTO, namespacer request.NamespaceMapper) (*dashboardV0.LibraryPanel, error) {
 	var modelData map[string]interface{}
 	if err := json.Unmarshal(dto.Model, &modelData); err != nil {
@@ -206,48 +140,27 @@ func ConvertToK8sResource(dto *model.LibraryElementDTO, namespacer request.Names
 	}
 
 	spec := dashboardV0.LibraryPanelSpec{
-		Type:        dto.Type,
-		Title:       dto.Name,
-		Description: dto.Description,
-	}
-
-	if options, exists := modelData["options"]; exists {
-		spec.Options = common.Unstructured{Object: options.(map[string]interface{})}
-	} else {
-		spec.Options = common.Unstructured{Object: make(map[string]interface{})}
-	}
-
-	if fieldConfig, exists := modelData["fieldConfig"]; exists {
-		spec.FieldConfig = common.Unstructured{Object: fieldConfig.(map[string]interface{})}
-	} else {
-		spec.FieldConfig = common.Unstructured{Object: make(map[string]interface{})}
-	}
-
-	if pluginVersion, exists := modelData["pluginVersion"].(string); exists {
-		spec.PluginVersion = pluginVersion
-	}
-
-	createdTime := time.Now()
-	if !dto.Meta.Created.IsZero() {
-		createdTime = dto.Meta.Created
+		Type:          dto.Type,
+		PluginVersion: modelData["pluginVersion"].(string),
+		Title:         dto.Name,
+		Description:   dto.Description,
+		Options:       common.Unstructured{Object: modelData["options"].(map[string]interface{})},
+		FieldConfig:   common.Unstructured{Object: modelData["fieldConfig"].(map[string]interface{})},
+		//Datasource:    modelData["datasource"].(string),
+		//Targets:       modelData["targets"].([]interface{}),
 	}
 
 	panel := &dashboardV0.LibraryPanel{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              dto.UID,
-			UID:               types.UID(dto.UID),
-			ResourceVersion:   strconv.FormatInt(dto.Version, 10),
-			CreationTimestamp: metav1.NewTime(createdTime),
-			Namespace:         namespacer(dto.OrgID),
+			Name:      dto.UID,
+			Namespace: namespacer(dto.OrgID),
 		},
 		Spec: spec,
 	}
 
+	// TODO: created at, created by, etc
 	meta, err := utils.MetaAccessor(panel)
 	if err == nil {
-		if !dto.Meta.Updated.IsZero() {
-			meta.SetUpdatedTimestamp(&dto.Meta.Updated)
-		}
 		if dto.ID > 0 {
 			meta.SetDeprecatedInternalID(dto.ID) // nolint:staticcheck
 		}
@@ -260,27 +173,16 @@ func ConvertToK8sResource(dto *model.LibraryElementDTO, namespacer request.Names
 	return panel, nil
 }
 
-// ConvertToLegacyCreateCommand converts a k8s LibraryPanel to a legacy CreateLibraryElementCommand
 func ConvertToLegacyCreateCommand(panel *dashboardV0.LibraryPanel, orgID int64) (*model.CreateLibraryElementCommand, error) {
-	spec := panel.Spec
 	modelData := map[string]interface{}{
-		"type":        spec.Type,
-		"title":       spec.Title,
-		"description": spec.Description,
-		"options":     spec.Options.Object,
-		"fieldConfig": spec.FieldConfig.Object,
-	}
-
-	if spec.PluginVersion != "" {
-		modelData["pluginVersion"] = spec.PluginVersion
-	}
-
-	if spec.Targets != nil && len(spec.Targets) > 0 {
-		modelData["targets"] = spec.Targets
-	}
-
-	if spec.Datasource != nil {
-		modelData["datasource"] = spec.Datasource
+		"type":          panel.Spec.Type,
+		"title":         panel.Spec.Title,
+		"description":   panel.Spec.Description,
+		"options":       panel.Spec.Options.Object,
+		"fieldConfig":   panel.Spec.FieldConfig.Object,
+		"pluginVersion": panel.Spec.PluginVersion,
+		"targets":       panel.Spec.Targets,
+		"datasource":    panel.Spec.Datasource,
 	}
 
 	modelJSON, err := json.Marshal(modelData)
@@ -289,10 +191,10 @@ func ConvertToLegacyCreateCommand(panel *dashboardV0.LibraryPanel, orgID int64) 
 	}
 
 	cmd := &model.CreateLibraryElementCommand{
-		UID:   panel.Name,
-		Name:  spec.Title,
+		Name:  panel.Spec.Title,
 		Model: modelJSON,
 		Kind:  int64(model.PanelElement),
+		UID:   panel.Name,
 	}
 
 	meta, err := utils.MetaAccessor(panel)
@@ -306,28 +208,16 @@ func ConvertToLegacyCreateCommand(panel *dashboardV0.LibraryPanel, orgID int64) 
 	return cmd, nil
 }
 
-// ConvertToLegacyPatchCommand converts a k8s LibraryPanel to a legacy PatchLibraryElementCommand
 func ConvertToLegacyPatchCommand(panel *dashboardV0.LibraryPanel, orgID int64, version int64) (*model.PatchLibraryElementCommand, error) {
-	spec := panel.Spec
-
 	modelData := map[string]interface{}{
-		"type":        spec.Type,
-		"title":       spec.Title,
-		"description": spec.Description,
-		"options":     spec.Options.Object,
-		"fieldConfig": spec.FieldConfig.Object,
-	}
-
-	if spec.PluginVersion != "" {
-		modelData["pluginVersion"] = spec.PluginVersion
-	}
-
-	if spec.Targets != nil && len(spec.Targets) > 0 {
-		modelData["targets"] = spec.Targets
-	}
-
-	if spec.Datasource != nil {
-		modelData["datasource"] = spec.Datasource
+		"type":          panel.Spec.Type,
+		"title":         panel.Spec.Title,
+		"description":   panel.Spec.Description,
+		"options":       panel.Spec.Options.Object,
+		"fieldConfig":   panel.Spec.FieldConfig.Object,
+		"pluginVersion": panel.Spec.PluginVersion,
+		"targets":       panel.Spec.Targets,
+		"datasource":    panel.Spec.Datasource,
 	}
 
 	modelJSON, err := json.Marshal(modelData)
@@ -337,7 +227,7 @@ func ConvertToLegacyPatchCommand(panel *dashboardV0.LibraryPanel, orgID int64, v
 
 	cmd := &model.PatchLibraryElementCommand{
 		UID:     panel.Name,
-		Name:    spec.Title,
+		Name:    panel.Spec.Title,
 		Model:   modelJSON,
 		Kind:    int64(model.PanelElement),
 		Version: version,
@@ -352,13 +242,4 @@ func ConvertToLegacyPatchCommand(panel *dashboardV0.LibraryPanel, orgID int64, v
 	}
 
 	return cmd, nil
-}
-
-// getLegacyID reads legacy ID from metadata annotations
-func getLegacyLibraryPanelID(item *unstructured.Unstructured) int64 {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return 0
-	}
-	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }

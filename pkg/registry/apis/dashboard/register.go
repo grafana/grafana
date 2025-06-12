@@ -191,7 +191,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
 
-	if a.GetKind().Kind == "LibraryPanel" {
+	if a.GetResource().Resource == dashv0.LIBRARY_PANEL_RESOURCE {
 		return nil
 	}
 
