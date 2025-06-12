@@ -81,6 +81,13 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("folder delete not supported")
 	}
 
+	// First ensure the branch exists if we're using a GitHub repository
+	if githubRepo, ok := r.repo.(repository.GithubRepository); ok && opts.Ref != "" {
+		if err := githubRepo.EnsureBranchExists(ctx, opts.Ref); err != nil {
+			return nil, fmt.Errorf("ensure branch exists: %w", err)
+		}
+	}
+
 	file, err := r.repo.Read(ctx, opts.Path, opts.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
