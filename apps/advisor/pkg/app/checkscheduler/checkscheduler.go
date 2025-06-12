@@ -165,16 +165,16 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 		return fmt.Errorf("error listing check types: %w", err)
 	}
 	// This may be run before the check types are registered, so we need to wait for them to be registered.
-	allCheckRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
+	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
 	retryCount := 0
-	for !allCheckRegistered && retryCount < waitMaxRetries {
+	for !allChecksRegistered && retryCount < waitMaxRetries {
 		logger.Error("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
 		time.Sleep(waitInterval)
 		list, err = r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("error listing check types: %w", err)
 		}
-		allCheckRegistered = len(list.GetItems()) == len(r.checkRegistry.Checks())
+		allChecksRegistered = len(list.GetItems()) == len(r.checkRegistry.Checks())
 		retryCount++
 	}
 
