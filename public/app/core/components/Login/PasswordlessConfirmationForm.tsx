@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -55,7 +55,6 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
       setValue('name', queryValues.get('name') || '');
     }
   }, [setValue, handleSubmit, onSubmit, setSignup]);
-  const { t } = useTranslate();
 
   return (
     <div className={styles.wrapper}>

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { ActionModel, ActionVariableInput } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';

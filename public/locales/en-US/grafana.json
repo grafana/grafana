@@ -1518,6 +1518,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
@@ -1795,7 +1799,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when to only send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
@@ -4423,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Choose",
       "variable-options": {
         "label": {
           "disable-repeating": "Disable repeating",
@@ -5117,6 +5122,11 @@
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -5239,7 +5249,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "message",
-      "body-dashboard-drastically-changed": "Because you're using new dashboards features only supported on new Grafana dashboard schema format, the dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to save the dashboard as a new copy.",
+      "body-dashboard-drastically-changed": "The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a copy instead. If you’re seeing this message in a production environment, contact Support to have the feature disabled.",
       "cancel-button": {
         "cancel": "Cancel"
       },
@@ -5255,7 +5265,7 @@
       },
       "schema-v2-library-panels-export": "The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards behaviour. It is based on a new schema format, that does not support library panels. This means that when exporting the dashboard to use it in another instance, we will not include library panels. We intend to support them as we progress in the feature <2>life cycle</2>.",
       "schema-v2-library-panels-export-title": "Dashboard Schema V2 does not support exporting library panels to be used in another instance yet",
-      "title-dashboard-drastically-changed": "Dashboard drastically changed"
+      "title-dashboard-drastically-changed": "Dashboard irreversibly changed"
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
@@ -7711,6 +7721,8 @@
       },
       "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
+      "font-size-default": "Use small font size",
+      "font-size-small": "Use default font size",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",

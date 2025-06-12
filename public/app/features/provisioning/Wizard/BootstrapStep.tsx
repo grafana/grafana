@@ -1,21 +1,22 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 
+import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
-import { StepStatusInfo, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
 export interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+  const { setStepStatusInfo } = useStepStatus();
   const {
     register,
     control,
@@ -36,7 +37,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   );
   const requiresMigration = settingsData?.legacyStorage || resourceCount > 0;
   const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-  const { t } = useTranslate();
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -53,8 +53,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   }, [getValues, setValue]);
 
   useEffect(() => {
-    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [isLoading, onStepStatusUpdate]);
+    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+  }, [isLoading, setStepStatusInfo]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);

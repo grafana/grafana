@@ -4,7 +4,7 @@ import Calendar, { CalendarType } from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, WeekStart } from '../WeekStartPicker';
@@ -105,6 +105,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
       '&:disabled': {
         color: theme.colors.action.disabledText,
+        cursor: 'not-allowed',
       },
     }),
     body: css({
@@ -153,12 +154,17 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
           outline: 0,
         },
 
-      [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--active:hover`]: {
+      [`${hasActiveSelector}, .react-calendar__tile--active`]: {
         color: theme.colors.primary.contrastText,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.primary.main,
         border: '0px',
       },
+
+      '.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--rangeEnd):not(.react-calendar__tile--rangeStart)':
+        {
+          backgroundColor: theme.colors.action.hover,
+        },
 
       '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
         padding: 0,

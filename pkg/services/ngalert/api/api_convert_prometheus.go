@@ -473,9 +473,12 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		}
 	}
 	group := prom.PrometheusRuleGroup{
-		Name:     promGroup.Name,
-		Interval: promGroup.Interval,
-		Rules:    rules,
+		Name:        promGroup.Name,
+		Interval:    promGroup.Interval,
+		Rules:       rules,
+		QueryOffset: promGroup.QueryOffset,
+		Limit:       promGroup.Limit,
+		Labels:      promGroup.Labels,
 	}
 
 	converter, err := prom.NewConverter(
@@ -508,6 +511,18 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	}
 
 	return grafanaGroup, nil
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header

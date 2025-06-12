@@ -6,7 +6,7 @@ import {
   WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -17,7 +17,6 @@ export const WindowOptionsEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
-  const { t } = useTranslate();
   const { options, names, onChange } = props;
   const { window } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));

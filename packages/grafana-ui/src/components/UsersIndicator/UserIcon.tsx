@@ -3,9 +3,9 @@ import { useMemo, PropsWithChildren } from 'react';
 
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { UserView } from './types';
 
