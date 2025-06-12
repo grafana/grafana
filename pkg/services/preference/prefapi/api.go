@@ -20,6 +20,8 @@ func UpdatePreferencesFor(ctx context.Context,
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
+	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	// nolint:staticcheck
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
@@ -34,6 +36,7 @@ func UpdatePreferencesFor(ctx context.Context,
 			dashboardID = queryResult.ID
 		}
 	}
+	// nolint:staticcheck
 	dtoCmd.HomeDashboardID = dashboardID
 
 	saveCmd := pref.SavePreferenceCommand{
@@ -45,6 +48,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		Timezone:          dtoCmd.Timezone,
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		HomeDashboardUID:  dtoCmd.HomeDashboardUID,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
 		Navbar:            dtoCmd.Navbar,
@@ -71,26 +75,15 @@ func GetPreferencesFor(ctx context.Context,
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	var dashboardUID string
-	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
-	if preference.HomeDashboardID != 0 {
-		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
-		queryResult, err := dashboardService.GetDashboard(ctx, &query)
-		if err == nil {
-			dashboardUID = queryResult.UID
-		}
-	}
-
 	dto := preferences.Spec{}
-
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
 		dto.WeekStart = preference.WeekStart
 	}
 	if preference.Theme != "" {
 		dto.Theme = &preference.Theme
 	}
-	if dashboardUID != "" {
-		dto.HomeDashboardUID = &dashboardUID
+	if preference.HomeDashboardUID != "" {
+		dto.HomeDashboardUID = &preference.HomeDashboardUID
 	}
 	if preference.Timezone != "" {
 		dto.Timezone = &preference.Timezone

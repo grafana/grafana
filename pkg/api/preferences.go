@@ -30,8 +30,8 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	cmd.UserID = userID
 	cmd.OrgID = c.GetOrgID()
 
-	// the default value of HomeDashboardID is taken from input, when HomeDashboardID is set also,
-	// UID is used in preference to identify dashboard
+	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	// nolint:staticcheck
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
@@ -46,6 +46,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
+	// nolint:staticcheck
 	cmd.HomeDashboardID = dashboardID
 
 	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
@@ -76,7 +77,7 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 //
 // Update user preferences.
 //
-// Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.
+// Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.
 //
 // Responses:
 // 200: okResponse
@@ -127,6 +128,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	}
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	// nolint:staticcheck
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
@@ -142,6 +144,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 			dashboardID = &queryResult.ID
 		}
 	}
+	// nolint:staticcheck
 	dtoCmd.HomeDashboardID = dashboardID
 
 	patchCmd := pref.PatchPreferenceCommand{
@@ -151,7 +154,8 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Theme:             dtoCmd.Theme,
 		Timezone:          dtoCmd.Timezone,
 		WeekStart:         dtoCmd.WeekStart,
-		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		HomeDashboardID:   dtoCmd.HomeDashboardID, // nolint:staticcheck
+		HomeDashboardUID:  dtoCmd.HomeDashboardUID,
 		Language:          dtoCmd.Language,
 		Locale:            dtoCmd.Locale,
 		QueryHistory:      dtoCmd.QueryHistory,
