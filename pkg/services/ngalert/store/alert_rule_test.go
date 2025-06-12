@@ -839,7 +839,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
