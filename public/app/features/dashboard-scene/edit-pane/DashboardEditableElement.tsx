@@ -99,7 +99,11 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
       onBlur={(e) => {
         // If the title input is currently focused and we click undo/redo
         // we don't want to mess with the stack
-        if (e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId)) {
+        const clickedUndoRedo =
+          e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
+        const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = titleUnchanged || clickedUndoRedo;
+        if (shouldSkip) {
           return;
         }
 
