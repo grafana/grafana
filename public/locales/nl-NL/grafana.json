@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Kies",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "bericht",
-      "body-dashboard-drastically-changed": "Omdat je nieuwe dashboardfuncties gebruikt die alleen worden ondersteund in de nieuwe indeling van het Grafana-dashboardschema, wordt het dashboard opgeslagen in de nieuwe indeling. Beslis of je deze actie wilt uitvoeren of dat je het dashboard liever als een nieuwe kopie opslaat.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Annuleren"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "De dynamische dashboardfunctionaliteit is experimenteel en heeft geen volledige functiepariteit met het huidige gedrag van dashboards. Het is gebaseerd op een nieuw schemaformaat, dat geen bibliotheekpanelen ondersteunt. Dit betekent dat we bij het exporteren van het dashboard om het in een andere instantie te gebruiken, geen bibliotheekpanelen opnemen. We zijn van plan om ze te ondersteunen naarmate we verder komen in de <2>levenscyclus</2> van de functie.",
       "schema-v2-library-panels-export-title": "Dashboardschema V2 biedt nog geen ondersteuning voor het exporteren van bibliotheekpanelen die in een andere instantie kunnen worden gebruikt",
-      "title-dashboard-drastically-changed": "Dashboard is drastisch gewijzigd"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Maakt de huidige vernieuwing de nieuwe standaard",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Markeren inschakelen",
       "escape-newlines": "Corrigeer onjuist escaped nieuwe lijn en tabbladsequenties in logregels",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Tijdstempels verbergen",
       "hide-unique-labels": "Unieke labels verbergen",
       "newest-first": "Gesorteerd op nieuwste logboeken eerst - klik om oudste eerst weer te geven",
