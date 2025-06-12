@@ -17,8 +17,7 @@ type KVStorageBackend struct {
 	kv        KV
 	dataStore *dataStore
 	metaStore *metadataStore
-
-	events chan *WrittenEvent // TODO: replace with a poller base
+	notifier  *kvNotifier
 }
 
 func NewKVStorageBackend(kv KV) *KVStorageBackend {
@@ -26,7 +25,7 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 		kv:        kv,
 		dataStore: newDataStore(kv),
 		metaStore: newMetadataStore(kv),
-		events:    make(chan *WrittenEvent, 100),
+		notifier:  newKVNotifier(kv, KVNotifierOptions{}), // TODO: make this configurable
 	}
 }
 
@@ -94,19 +93,16 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 	// TODO: Emit an event
-	select {
-	case k.events <- &WrittenEvent{
-		Key: &resourcepb.ResourceKey{
-			Namespace: event.Key.Namespace,
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Name:      event.Key.Name,
-		},
-		Type:  event.Type,
-		Value: event.Value,
-	}:
-	default:
-		fmt.Println("event channel is full, dropping event")
+	err = k.notifier.Send(ctx, Event{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+		Name:      event.Key.Name,
+		UID:       uid,
+		Action:    action,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to send event: %w", err)
 	}
 	return rvFromUID(uid)
 }
@@ -290,9 +286,36 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 100) // TODO: make this configurable
+
+	notifierEvents, err := k.notifier.Notify(ctx)
+	if err != nil {
+		return nil, err
+	}
 	go func() {
-		for event := range k.events {
-			events <- event
+		for event := range notifierEvents {
+			// fetch the data
+			data, err := k.dataStore.Get(ctx, DataKey{
+				Namespace: event.Namespace,
+				Group:     event.Group,
+				Resource:  event.Resource,
+				Name:      event.Name,
+				UID:       event.UID,
+				Action:    event.Action,
+			})
+			if err != nil {
+				// TODO: handle error
+				continue
+			}
+			events <- &WrittenEvent{
+				Key: &resourcepb.ResourceKey{
+					Namespace: event.Namespace,
+					Group:     event.Group,
+					Resource:  event.Resource,
+					Name:      event.Name,
+				},
+				Type:  resourcepb.WatchEvent_ADDED,
+				Value: data,
+			}
 		}
 		close(events)
 	}()
