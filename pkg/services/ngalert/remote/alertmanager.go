@@ -142,6 +142,17 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	}
 	logger := log.New("ngalert.remote.alertmanager")
 
+	smtp := remoteClient.SmtpConfig{
+		EhloIdentity:   cfg.Smtp.EhloIdentity,
+		FromAddress:    cfg.Smtp.FromAddress,
+		FromName:       cfg.Smtp.FromName,
+		Host:           cfg.Smtp.Host,
+		Password:       cfg.Smtp.Password,
+		SkipVerify:     cfg.Smtp.SkipVerify,
+		StartTLSPolicy: cfg.Smtp.StartTLSPolicy,
+		StaticHeaders:  cfg.Smtp.StaticHeaders,
+		User:           cfg.Smtp.User,
+	}
 	mcCfg := &remoteClient.Config{
 		Logger:        logger,
 		Password:      cfg.BasicAuthPassword,
@@ -149,6 +160,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+
+		Smtp: smtp,
 
 		// TODO: Remove once everything can be sent in the 'Smtp' field.
 		SmtpFrom:      cfg.SmtpFrom,
