@@ -27,4 +27,10 @@ files: [
     "type": "i18next_json",
     "dest": "packages/grafana-sql/en-US/%original_file_name%"
   },
+  {
+    "source": "packages/grafana-prometheus/src/locales/en-US/grafana-prometheus.json",
+    "translation": "packages/grafana-prometheus/src/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "packages/grafana-prometheus/en-US/%original_file_name%"
+  },
 ]

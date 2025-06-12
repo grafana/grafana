@@ -2,9 +2,10 @@
 import { css } from '@emotion/css';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
+import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
@@ -24,8 +25,10 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
   return (
     <>
       {options.access === 'direct' && (
-        <Alert title="Error" severity="error">
-          Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
+        <Alert title={t('configuration.config-editor.title-error', 'Error')} severity="error">
+          <Trans i18nKey="configuration.config-editor.browser-access-mode-error">
+            Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
+          </Trans>
         </Alert>
       )}
       <DataSourceDescription
@@ -41,8 +44,11 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
       <hr />
       <ConfigSection
         className={styles.advancedSettings}
-        title="Advanced settings"
-        description="Additional settings are optional settings that can be configured for more control over your data source."
+        title={t('configuration.config-editor.title-advanced-settings', 'Advanced settings')}
+        description={t(
+          'configuration.config-editor.description-advanced-settings',
+          'Additional settings are optional settings that can be configured for more control over your data source.'
+        )}
       >
         <AdvancedHttpSettings
           className={styles.advancedHTTPSettingsMargin}
@@ -65,9 +71,9 @@ export function docsTip(url?: string) {
   const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
 
   return (
-    <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
-      Visit docs for more details here.
-    </a>
+    <TextLink href={url ? url : docsUrl} external>
+      <Trans i18nKey="configuration.docs-tip.visit-docs-for-more-details-here">Visit docs for more details here.</Trans>
+    </TextLink>
   );
 }
 
