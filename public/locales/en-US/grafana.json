@@ -5006,6 +5006,11 @@
         }
       }
     },
+    "delete-provisioned-dashboard-form": {
+      "cancel": "Cancel",
+      "delete": "Delete dashboard",
+      "deleting": "Deleting..."
+    },
     "description-label": {
       "description": "Description"
     },

@@ -202,6 +202,13 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		ref = r.config.Spec.GitHub.Branch
 	}
 
+	// Ensure branch exists for non-default branches
+	if ref != r.config.Spec.GitHub.Branch {
+		if err := r.ensureBranchExists(ctx, ref); err != nil {
+			return nil, err
+		}
+	}
+
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, filePath)
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
@@ -7,18 +7,19 @@ import { Trans, useTranslate } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
 import { RepositoryView } from 'app/api/clients/provisioning';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { validateBranchName } from 'app/features/provisioning/utils/git';
 
+import { CommentField } from '../../components/Provisioned/CommentField';
+import { PathField } from '../../components/Provisioned/PathField';
+import { WorkflowFields } from '../../components/Provisioned/WorkflowFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 
@@ -64,14 +65,8 @@ export function SaveProvisionedDashboardForm({
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-    control,
-    reset,
-  } = useForm<FormData>({ defaultValues });
+  const methods = useForm<FormData>({ defaultValues });
+  const { handleSubmit, watch, control, reset, register } = methods;
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
@@ -161,147 +156,103 @@ export function SaveProvisionedDashboardForm({
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
   const readOnly = !repository?.workflows?.length;
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
-      <Stack direction="column" gap={2}>
-        {readOnly && (
-          <Alert
-            title={t(
-              'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
-              'This repository is read only'
-            )}
-          >
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
-              If you have direct access to the target, copy the JSON and paste it there.
-            </Trans>
-          </Alert>
-        )}
-
-        {isNew && (
-          <>
-            <Field
-              noMargin
-              label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
-              invalid={!!errors.title}
-              error={errors.title?.message}
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
+        <Stack direction="column" gap={2}>
+          {readOnly && (
+            <Alert
+              title={t(
+                'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
+                'This repository is read only'
+              )}
             >
-              <Input
-                id="dashboard-title"
-                {...register('title', {
-                  required: t(
-                    'dashboard-scene.save-provisioned-dashboard-form.title-required',
-                    'Dashboard title is required'
-                  ),
-                  validate: validateTitle,
-                })}
-              />
-            </Field>
-            <Field
-              noMargin
-              label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
-              invalid={!!errors.description}
-              error={errors.description?.message}
-            >
-              <TextArea id="dashboard-description" {...register('description')} />
-            </Field>
-
-            <Field
-              noMargin
-              label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
-            >
-              <Controller
-                control={control}
-                name={'folder'}
-                render={({ field: { ref, value, onChange, ...field } }) => {
-                  return (
-                    <FolderPicker
-                      onChange={async (uid?: string, title?: string) => {
-                        onChange({ uid, title });
-                        // Update folderUid URL param
-                        updateURLParams('folderUid', uid);
-                        const meta = await getProvisionedMeta(uid);
-                        dashboard.setState({
-                          meta: {
-                            ...meta,
-                            folderUid: uid,
-                          },
-                        });
-                      }}
-                      value={value.uid}
-                      {...field}
-                    />
-                  );
-                }}
-              />
-            </Field>
-          </>
-        )}
-
-        {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
-
-        <Field
-          noMargin
-          label={t('dashboard-scene.save-provisioned-dashboard-form.label-path', 'Path')}
-          description={t(
-            'dashboard-scene.save-provisioned-dashboard-form.description-inside-repository',
-            'File path inside the repository (.json or .yaml)'
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
+                If you have direct access to the target, copy the JSON and paste it there.
+              </Trans>
+            </Alert>
           )}
-        >
-          <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
-        </Field>
 
-        <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
-          <TextArea
-            id="dashboard-comment"
-            {...register('comment')}
-            disabled={readOnly}
-            placeholder={t(
-              'dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
-              'Add a note to describe your changes (optional)'
-            )}
-            rows={5}
-          />
-        </Field>
-
-        {isGitHub && !readOnly && (
-          <>
-            <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
-              <Controller
-                control={control}
-                name="workflow"
-                render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup id="dashboard-workflow" {...field} options={workflowOptions} />
-                )}
-              />
-            </Field>
-            {workflow === 'branch' && (
+          {isNew && (
+            <>
               <Field
                 noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
-                description={t(
-                  'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
-                  'Branch name in GitHub'
-                )}
-                invalid={!!errors.ref}
-                error={errors.ref && <BranchValidationError />}
+                label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
+                invalid={!!methods.formState.errors.title}
+                error={methods.formState.errors.title?.message}
               >
-                <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
+                <Input
+                  id="dashboard-title"
+                  {...register('title', {
+                    required: t(
+                      'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                      'Dashboard title is required'
+                    ),
+                    validate: validateTitle,
+                  })}
+                />
               </Field>
-            )}
-          </>
-        )}
+              <Field
+                noMargin
+                label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
+                invalid={!!methods.formState.errors.description}
+                error={methods.formState.errors.description?.message}
+              >
+                <TextArea id="dashboard-description" {...register('description')} />
+              </Field>
 
-        <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
-            {request.isLoading
-              ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-              : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-          </Button>
-          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-          </Button>
+              <Field
+                noMargin
+                label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+              >
+                <Controller
+                  control={control}
+                  name={'folder'}
+                  render={({ field: { ref, value, onChange, ...field } }) => {
+                    return (
+                      <FolderPicker
+                        onChange={async (uid?: string, title?: string) => {
+                          onChange({ uid, title });
+                          // Update folderUid URL param
+                          updateURLParams('folderUid', uid);
+                          const meta = await getProvisionedMeta(uid);
+                          dashboard.setState({
+                            meta: {
+                              ...meta,
+                              folderUid: uid,
+                            },
+                          });
+                        }}
+                        value={value.uid}
+                        {...field}
+                      />
+                    );
+                  }}
+                />
+              </Field>
+            </>
+          )}
+
+          {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+
+          <PathField readOnly={!isNew} />
+
+          <CommentField disabled={readOnly} />
+
+          {isGitHub && !readOnly && <WorkflowFields workflow={workflow} workflowOptions={workflowOptions} />}
+
+          <Stack gap={2}>
+            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
+              {request.isLoading
+                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+            </Button>
+            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
-    </form>
+      </form>
+    </FormProvider>
   );
 }
 
