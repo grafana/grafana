@@ -411,6 +411,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     displayHorizontalScroll: false,
     displayVerticalScroll: false,
   });
+  scene.infiniteViewer.setZoom(scene.scale);
+  scene.infiniteViewer.scrollTo(scene.scrollLeft, scene.scrollTop);
 
   // Handles context menu activation
   // Uses openContextMenu with coordinates when available (after CanvasContextMenu mounts), but
@@ -485,5 +487,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   scene.infiniteViewer!.on('scroll', () => {
     scene.updateConnectionsSize();
     scene.scale = scene.infiniteViewer!.getZoom();
+
+    scene.scrollLeft = scene.infiniteViewer!.getScrollLeft();
+    scene.scrollTop = scene.infiniteViewer!.getScrollTop();
   });
 };
