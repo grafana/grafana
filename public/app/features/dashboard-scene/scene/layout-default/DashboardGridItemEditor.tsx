@@ -70,7 +70,14 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
     <RadioButtonGroup
       options={directionOptions}
       value={repeatDirection ?? 'h'}
-      onChange={(value) => gridItem.setRepeatDirection(value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-direction', 'Change panel repeat direction'),
+          source: gridItem,
+          perform: () => gridItem.setRepeatDirection(value),
+          undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
+        });
+      }}
     />
   );
 }
@@ -86,7 +93,14 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
     <Select
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
-      onChange={(value) => gridItem.setMaxPerRow(value.value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Change max panel repeats per row'),
+          source: gridItem,
+          perform: () => gridItem.setMaxPerRow(value.value),
+          undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
+        });
+      }}
     />
   );
 }
