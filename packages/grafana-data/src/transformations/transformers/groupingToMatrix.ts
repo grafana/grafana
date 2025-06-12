@@ -126,6 +126,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
+          // the names of these columns need to be the selected column values, and not be overridden with the display name
+          delete valueField.config.displayName;
+
           fields.push({
             name: columnName?.toString() ?? null,
             values: values,
