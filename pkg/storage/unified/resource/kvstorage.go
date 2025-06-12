@@ -70,6 +70,8 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		action = MetaDataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
 		action = MetaDataActionDeleted
+	default:
+		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
 	err = k.metaStore.Save(ctx, MetaDataObj{
 		Key: MetaDataKey{

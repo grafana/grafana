@@ -190,7 +190,7 @@ func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceK
 
 			// If the current key is not the same as the previous key, we need to yield the selected object
 			if selectedKey.Namespace != key.Namespace || selectedKey.Group != key.Group || selectedKey.Resource != key.Resource || selectedKey.Name != key.Name {
-				if key.Action != MetaDataActionDeleted {
+				if selectedKey.Action != MetaDataActionDeleted {
 					metaObj, err := d.kv.Get(ctx, selectedPath)
 					if err != nil {
 						yield(MetaDataObj{}, err)
