@@ -224,7 +224,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
       continue; // skip the frame
     }
 
-    if (originalFields.length === 0 || options.mode === JoinMode.outerTabular) {
+    if (originalFields.length === 0) {
       originalFields.push(join); // first join field
     }
 
@@ -338,21 +338,18 @@ function joinTabular(tables: AlignedData[], outer = false) {
     }
     // console.timeEnd('unmatched right');
 
-    let length = ltable.length + rtable.length - (outer ? 0 : 1);
-
     // console.time('materialize');
-    let outFieldsTpl = Array.from({ length }, () => `Array(${count})`).join(',');
+    let outFieldsTpl = Array.from({ length: ltable.length + rtable.length - 1 }, () => `Array(${count})`).join(',');
     let copyLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ltable[${i}][lidx]`).join(';');
     // (skips join field in right table)
-    let copyRightRowTpl = (
-      outer
-        ? rtable.map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i}][ridx]`)
-        : rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
-    ).join(';');
+    let copyRightRowTpl = rtable
+      .slice(1)
+      .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
+      .join(';');
 
-    let nullLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = null`).join(';');
+    let nullLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ${i === 0 ? `rtable[${i}][ridx]` : `null`}`).join(';');
     // (skips join field in right table)
-    let nullRightRowTpl = rtable.slice(outer ? 0 : 1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = null`);
+    let nullRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = null`);
 
     let materialize = new Function(
       'matched',

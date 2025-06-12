@@ -182,7 +182,7 @@ describe('align frames', () => {
               "FEMALE",
               "NON-BINARY",
               "COW",
-              null,
+              "DOG",
             ],
           },
           {
@@ -209,19 +209,6 @@ describe('align frames', () => {
               7,
               1,
               null,
-            ],
-          },
-          {
-            "name": "gender",
-            "values": [
-              "NON-BINARY",
-              "MALE",
-              "MALE",
-              "FEMALE",
-              "FEMALE",
-              "NON-BINARY",
-              null,
-              "DOG",
             ],
           },
           {
