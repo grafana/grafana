@@ -33,10 +33,11 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		}
 
 		return resource.SearchOptions{
-			Backend:       bleve,
-			Resources:     docs,
-			WorkerThreads: cfg.IndexWorkers,
-			InitMinCount:  cfg.IndexMinCount,
+			Backend:         bleve,
+			Resources:       docs,
+			WorkerThreads:   cfg.IndexWorkers,
+			InitMinCount:    cfg.IndexMinCount,
+			RebuildInterval: cfg.IndexRebuildInterval,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil
