@@ -36,6 +36,7 @@ export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDa
 export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
 export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
 export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
+export const setDataSourceDescription = createAction<string>('dataSources/setDataSourceDescription');
 export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
 export const setIsSortAscending = createAction<boolean>('dataSources/setIsSortAscending');
 
@@ -93,6 +94,10 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 
   if (setDataSourceName.match(action)) {
     return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
+  }
+
+  if (setDataSourceDescription.match(action)) {
+    return { ...state, dataSource: { ...state.dataSource, description: action.payload } };
   }
 
   if (setIsDefault.match(action)) {

@@ -19,6 +19,7 @@ import {
   initialDataSourceSettingsState,
   initialState,
   setDataSourceName,
+  setDataSourceDescription,
   setDataSourcesLayoutMode,
   setDataSourcesSearchQuery,
   setDataSourceTypeSearchQuery,
@@ -131,6 +132,15 @@ describe('dataSourcesReducer', () => {
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourceName('some name'))
         .thenStateShouldEqual({ ...initialState, dataSource: { name: 'some name' } } as DataSourcesState);
+    });
+  });
+
+  describe('when setDataSourceDescription is dispatched', () => {
+    it('then state should be correct', () => {
+      reducerTester<DataSourcesState>()
+        .givenReducer(dataSourcesReducer, initialState)
+        .whenActionIsDispatched(setDataSourceDescription('some description'))
+        .thenStateShouldEqual({ ...initialState, dataSource: { description: 'some description' } } as DataSourcesState);
     });
   });
 

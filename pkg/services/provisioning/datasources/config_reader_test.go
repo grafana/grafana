@@ -33,7 +33,86 @@ var (
 
 	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
 	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
+	withDescription                    = "testdata/with-description"
 )
+
+func TestDatasourceAsConfigWithDescription(t *testing.T) {
+	t.Run("can provision datasources with descriptions from config", func(t *testing.T) {
+		store := &spyStore{}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+
+		err := dc.applyChanges(context.Background(), withDescription)
+		require.NoError(t, err)
+
+		// Should have inserted 4 datasources
+		require.Equal(t, 4, len(store.inserted))
+
+		// Test datasource with description
+		promDs := findDataSourceByName(store.inserted, "prometheus-with-description")
+		require.NotNil(t, promDs)
+		require.Equal(t, "This is a Prometheus datasource with a detailed description for monitoring metrics", promDs.Description)
+		require.Equal(t, "prometheus", promDs.Type)
+
+		// Test datasource with empty description
+		lokiDs := findDataSourceByName(store.inserted, "loki-with-empty-description")
+		require.NotNil(t, lokiDs)
+		require.Equal(t, "", lokiDs.Description)
+		require.Equal(t, "loki", lokiDs.Type)
+
+		// Test datasource without description field
+		testDataDs := findDataSourceByName(store.inserted, "testdata-no-description")
+		require.NotNil(t, testDataDs)
+		require.Equal(t, "", testDataDs.Description) // Should default to empty
+		require.Equal(t, "grafana-testdata-datasource", testDataDs.Type)
+
+		// Test datasource with long description
+		postgresDs := findDataSourceByName(store.inserted, "postgres-long-description")
+		require.NotNil(t, postgresDs)
+		require.Contains(t, postgresDs.Description, "This is a very long description")
+		require.Contains(t, postgresDs.Description, "comprehensive documentation")
+		require.Equal(t, "grafana-postgresql-datasource", postgresDs.Type)
+	})
+
+	t.Run("can update datasource descriptions", func(t *testing.T) {
+		// Start with existing datasource
+		existingDs := &datasources.DataSource{
+			Name:        "prometheus-with-description",
+			Description: "Old description",
+			Type:        "prometheus",
+			OrgID:       1,
+			ID:          1,
+			UID:         "prometheus_desc_test",
+		}
+
+		store := &spyStore{items: []*datasources.DataSource{existingDs}}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+
+		err := dc.applyChanges(context.Background(), withDescription)
+		require.NoError(t, err)
+
+		// Should have updated the existing datasource
+		require.Equal(t, 1, len(store.updated))
+		require.Equal(t, 3, len(store.inserted)) // Other 3 are new
+
+		updatedDs := store.updated[0]
+		require.Equal(t, "prometheus-with-description", updatedDs.Name)
+		require.Equal(t, "This is a Prometheus datasource with a detailed description for monitoring metrics", updatedDs.Description)
+	})
+}
+
+// Helper function to find a datasource by name in a slice
+func findDataSourceByName(datasources []*datasources.AddDataSourceCommand, name string) *datasources.AddDataSourceCommand {
+	for _, ds := range datasources {
+		if ds.Name == name {
+			return ds
+		}
+	}
+	return nil
+}
 
 func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("when some values missing should apply default on insert", func(t *testing.T) {

@@ -18,6 +18,7 @@ import { DataSourceSettingsState, useDispatch } from 'app/types';
 import {
   dataSourceLoaded,
   setDataSourceName,
+  setDataSourceDescription,
   setIsDefault,
   useDataSource,
   useDataSourceExploreUrl,
@@ -64,6 +65,7 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onUpdate = useUpdateDatasource();
   const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
   const onNameChange = (name: string) => dispatch(setDataSourceName(name));
+  const onDescriptionChange = (description: string) => dispatch(setDataSourceDescription(description));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
 
   return (
@@ -77,6 +79,7 @@ export function EditDataSource({ uid, pageId }: Props) {
       onDelete={onDelete}
       onDefaultChange={onDefaultChange}
       onNameChange={onNameChange}
+      onDescriptionChange={onDescriptionChange}
       onOptionsChange={onOptionsChange}
       onTest={onTest}
       onUpdate={onUpdate}
@@ -94,6 +97,7 @@ export type ViewProps = {
   onDelete: () => void;
   onDefaultChange: (isDefault: boolean) => AnyAction;
   onNameChange: (name: string) => AnyAction;
+  onDescriptionChange: (description: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
   onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
@@ -109,6 +113,7 @@ export function EditDataSourceView({
   onDelete,
   onDefaultChange,
   onNameChange,
+  onDescriptionChange,
   onOptionsChange,
   onTest,
   onUpdate,
@@ -175,9 +180,11 @@ export function EditDataSourceView({
 
       <BasicSettings
         dataSourceName={dataSource.name}
+        description={dataSource.description}
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
+        onDescriptionChange={onDescriptionChange}
         disabled={readOnly || !hasWriteRights}
       />
 
