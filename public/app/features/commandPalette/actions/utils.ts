@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';

@@ -41,10 +41,13 @@ export function useRegisterScopesActions(
   const globalScopeActions = useGlobalScopesSearch(searchQuery, parentId);
   const scopeTreeActions = useScopeTreeActions(searchQuery, parentId);
 
+  // If we have global search actions we use those. Inside the hook the search should be conditional based on where
+  // in the command palette we are.
   const nodesActions = globalScopeActions || scopeTreeActions;
 
   useRegisterActions(nodesActions, [nodesActions]);
 
+  // Returns a component to show what scopes are selected or applied.
   return useScopesRow(onApply);
 }
 
@@ -68,11 +71,8 @@ function useScopeTreeActions(searchQuery: string, parentId?: string | null) {
 
   // Load the next level of scopes when the parentId changes.
   useEffect(() => {
-    // This is the case where we do global search instead of loading the nodes in a tree.
-    if (!parentId || (parentId === 'scopes' && searchQuery)) {
-      return;
-    }
-    updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
+    const parentScopeId = !parentId || parentId === 'scopes' ? '' : last(parentId.split('/'))!;
+    updateNode(parentScopeId, true, searchQuery);
   }, [updateNode, searchQuery, parentId]);
 
   return useMemo(
@@ -149,8 +149,11 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
         if (searchQueryRef.current === searchQuery) {
+          // Only show leaf nodes because otherwise there are issues with navigating to a category without knowing
+          // where in the tree it is.
+          const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
           const actions = [getScopesParentAction()];
-          for (const node of nodes) {
+          for (const node of leafNodes) {
             actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
           }
           setActions(actions);
