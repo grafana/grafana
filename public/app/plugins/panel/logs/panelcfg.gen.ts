@@ -39,6 +39,7 @@ export interface Options {
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
 }
 

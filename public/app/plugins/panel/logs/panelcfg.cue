@@ -35,6 +35,7 @@ composableKinds: PanelCfg: {
 					wrapLogMessage:           bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
+					syntaxHighlighting?:      bool
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool

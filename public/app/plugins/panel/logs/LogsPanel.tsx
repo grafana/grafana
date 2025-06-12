@@ -152,6 +152,7 @@ export const LogsPanel = ({
     enableInfiniteScrolling,
     onNewLogsReceived,
     fontSize,
+    syntaxHighlighting,
     ...options
   },
   id,
@@ -568,7 +569,7 @@ export const LogsPanel = ({
               showTime={showTime}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
-              syntaxHighlighting={prettifyLogMessage}
+              syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
