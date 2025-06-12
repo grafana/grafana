@@ -19,6 +19,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { initializeI18n } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -51,7 +52,6 @@ import {
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { initializeI18n } from '../../packages/grafana-i18n/src/i18n';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';

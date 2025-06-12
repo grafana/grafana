@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,
@@ -214,7 +214,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed alert rules',
+    title: t('alerting.get-grafana-managed-scenes.title.grafanamanaged-alert-rules', 'Grafana-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -304,7 +304,7 @@ function getGrafanaManagedScenes() {
 
 function getGrafanaAlertmanagerScenes() {
   return new NestedScene({
-    title: 'Grafana Alertmanager',
+    title: t('alerting.get-grafana-alertmanager-scenes.title.grafana-alertmanager', 'Grafana Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -327,7 +327,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir Alertmanager',
+    title: t('alerting.get-cloud-scenes.title.mimir-alertmanager', 'Mimir Alertmanager'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -361,7 +361,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed alert rules',
+    title: t('alerting.get-mimir-managed-rules-scenes.title.mimirmanaged-alert-rules', 'Mimir-managed alert rules'),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -402,14 +402,17 @@ function getMimirManagedRulesScenes() {
 
 function getMimirManagedRulesPerGroupScenes() {
   const ruleGroupHandler = new QueryVariable({
-    label: 'Rule Group',
+    label: t('alerting.get-mimir-managed-rules-per-group-scenes.rule-group-handler.label.rule-group', 'Rule Group'),
     name: 'rule_group',
     datasource: cloudUsageDs,
     query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
   });
 
   return new NestedScene({
-    title: 'Mimir-managed alert rules - per rule group',
+    title: t(
+      'alerting.get-mimir-managed-rules-per-group-scenes.title.mimirmanaged-alert-rules-per-rule-group',
+      'Mimir-managed alert rules - per rule group'
+    ),
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

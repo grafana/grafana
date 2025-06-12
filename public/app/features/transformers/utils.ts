@@ -9,6 +9,7 @@ import {
   VariableOrigin,
   VariableSuggestion,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 
 export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
@@ -89,8 +90,8 @@ export function getTimezoneOptions(includeInternal: boolean) {
   // Browser and UTC. We add the manually to avoid
   // funky string manipulation.
   if (includeInternal) {
-    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.browser', 'Browser'), value: 'browser' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.utc', 'UTC'), value: 'utc' });
   }
 
   // Add all other timezones

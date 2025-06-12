@@ -57,9 +57,6 @@ export function QueryEditor({
   if (VariableQueryEditor && isQueryEditor(VariableQueryEditor, datasource)) {
     return (
       <Box marginBottom={2}>
-        <Text variant="bodySmall" weight="medium">
-          <Trans i18nKey="dashboard-scene.query-editor.query">Query</Trans>
-        </Text>
         <Box marginTop={0.25}>
           <VariableQueryEditor
             key={datasource.uid}

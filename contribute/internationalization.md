@@ -2,7 +2,7 @@
 
 Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend.
 
-## TL;DR
+## tl;dr
 
 **Note:** We don't currently accept contributions for translations. Please don't submit pull requests translating `grafana.json` files - they will be rejected. We do accept contributions to mark up phrases for translation.
 
@@ -75,9 +75,8 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
 
 ```jsx
-import { useTranslate } from "@grafana/i18n"
+import { t } from "@grafana/i18n"
 
-const { t } = useTranslate();
 const placeholder = t('form.username-placeholder','Username');
 
 return <input type="value" placeholder={placeholder}>
@@ -211,9 +210,8 @@ import { Trans } from '@grafana/i18n';
 ```
 
 ```js
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
-const { t } = useTranslate();
 const translatedString = t('inbox.heading', 'You got {{count}} messages', { count: messages.length });
 ```
 

@@ -3,11 +3,11 @@ import { isObject } from 'lodash';
 import { HTMLProps } from 'react';
 import * as React from 'react';
 import { useAsyncFn } from 'react-use';
-import { AsyncState } from 'react-use/lib/useAsync';
+import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { InlineLabel } from '../Forms/InlineLabel';
 

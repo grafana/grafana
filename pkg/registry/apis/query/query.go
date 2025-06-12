@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
@@ -91,17 +92,39 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-
+		traceId := span.SpanContext().TraceID()
+		connectLogger := b.log.New("traceId", traceId.String())
 		responder := newResponderWrapper(incomingResponder,
-			func(statusCode int, obj runtime.Object) {
-				if statusCode >= 400 {
-					r.logger.Debug("error found in success handler in connect", "statuscode", strconv.Itoa(statusCode))
-					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
+			func(statusCode *int, obj runtime.Object) {
+				if *statusCode/100 == 4 {
+					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+				}
+
+				if *statusCode >= 500 {
+					o, ok := obj.(*query.QueryDataResponse)
+					if ok && o.Responses != nil {
+						for refId, response := range o.Responses {
+							if response.ErrorSource == backend.ErrorSourceDownstream {
+								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
+								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
+								span.SetAttributes(attribute.String("error.source", "downstream"))
+								break
+							} else if response.Error != nil {
+								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
+								span.SetStatus(codes.Error, "500 error without downstream error source")
+							} else {
+								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
+								span.SetAttributes(attribute.String("error.ref_id", refId))
+							}
+						}
+					}
 				}
 			},
+
 			func(err error) {
-				r.logger.Debug("error caught in handler", "err", err)
+				connectLogger.Error("error caught in handler", "err", err)
 				span.SetStatus(codes.Error, "query error")
+
 				if err == nil {
 					return
 				}
@@ -160,8 +183,14 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
 
-		// Actually run the query
-		rsp, err := b.execute(ctx, req)
+		// Fetch information on the grafana instance (e.g. feature toggles)
+		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
+		if err != nil {
+			b.log.Error("failed to get instance configuration settings", "err", err)
+		}
+
+		// Actually run the query (includes expressions)
+		rsp, err := b.execute(ctx, req, instanceConfig)
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(rsp), "err", err)
 			if rsp != nil { // if we have a response, we assume the err is set in the response
@@ -183,14 +212,14 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
+func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, instanceConfig clientapi.InstanceConfigurationSettings) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
 		b.log.Debug("executing empty query")
 		qdr = &backend.QueryDataResponse{}
 	case 1:
 		b.log.Debug("executing single query")
-		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0], instanceConfig)
 		if err != nil {
 			b.log.Debug("handleQuerySingleDatasource failed", err)
 		}
@@ -203,12 +232,11 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
-		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
+		qdr, err = b.executeConcurrentQueries(ctx, req.Requests, instanceConfig)
 		if err != nil {
 			b.log.Debug("error in executeConcurrentQueries", "err", err)
 		}
 	}
-
 	if err != nil {
 		b.log.Debug("error in query phase, skipping expressions", "error", err)
 		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
@@ -235,7 +263,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*backend.QueryDataResponse, error) {
 	ctx, span := b.tracer.Start(ctx, "Query.handleQuerySingleDatasource")
 	defer span.End()
 	span.SetAttributes(
@@ -254,13 +282,14 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	client, err := b.client.GetDataSourceClient(
+	client, err := b.clientSupplier.GetDataSourceClient(
 		ctx,
 		v0alpha1.DataSourceRef{
 			Type: req.PluginId,
 			UID:  req.UID,
 		},
 		req.Headers,
+		instanceConfig,
 	)
 	if err != nil {
 		b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
@@ -269,6 +298,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	rsp, err := client.QueryData(ctx, *req.Request)
+
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
@@ -306,7 +336,7 @@ func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResp
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*backend.QueryDataResponse, error) {
 	ctx, span := b.tracer.Start(ctx, "Query.executeConcurrentQueries")
 	defer span.End()
 
@@ -337,7 +367,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 		g.Go(func() error {
 			defer recoveryFn(req)
 
-			dqr, err := b.handleQuerySingleDatasource(ctx, req)
+			dqr, err := b.handleQuerySingleDatasource(ctx, req, instanceConfig)
 			if err == nil {
 				rchan <- dqr
 			} else {
@@ -467,11 +497,11 @@ func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req data
 
 type responderWrapper struct {
 	wrapped    rest.Responder
-	onObjectFn func(statusCode int, obj runtime.Object)
+	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
 }
 
-func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
+func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
 	return &responderWrapper{
 		wrapped:    responder,
 		onObjectFn: onObjectFn,
@@ -481,7 +511,7 @@ func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode in
 
 func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
 	if r.onObjectFn != nil {
-		r.onObjectFn(statusCode, obj)
+		r.onObjectFn(&statusCode, obj)
 	}
 
 	r.wrapped.Object(statusCode, obj)

@@ -3,7 +3,7 @@ import pluralize from 'pluralize';
 import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
@@ -181,7 +181,7 @@ export function RecordingRuleListItem({
     <ListItem
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink color="primary" href={href} inline={false}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
@@ -323,7 +323,6 @@ export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition 
     };
     logError(new Error('unknown rule type'), ruleContext);
   }, [ruleName, groupIdentifier]);
-  const { t } = useTranslate();
 
   return (
     <Alert

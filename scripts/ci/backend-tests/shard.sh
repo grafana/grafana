@@ -100,7 +100,7 @@ if [[ $n -gt $m ]]; then
     exit 1
 fi
 if [[ ${#dirs[@]} -eq 0 ]]; then
-    dirs+=("./...")
+    readarray -t dirs <<< "$(find . -type f -name 'go.mod' -exec dirname '{}' ';' | awk '{ print $1 "/..."; }')"
 fi
 # If dirs is just ("-"), read from stdin instead.
 if [[ ${#dirs[@]} -eq 1 && "${dirs[0]}" == "-" ]]; then

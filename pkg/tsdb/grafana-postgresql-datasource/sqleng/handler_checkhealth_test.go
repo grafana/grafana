@@ -51,11 +51,11 @@ func TestErrToHealthCheckResult(t *testing.T) {
 		},
 		{
 			name: "invalid port specifier error",
-			err:  fmt.Errorf("%w %q: %w", ErrInvalidPortSpecified, `"foo.bar.co"`, errors.New(`strconv.Atoi: parsing "foo.bar.co": invalid syntax`)),
+			err:  fmt.Errorf("%w %q: %w", ErrParsingPostgresURL, `"foo.bar.co"`, errors.New(`strconv.Atoi: parsing "foo.bar.co": invalid syntax`)),
 			want: &backend.CheckHealthResult{
 				Status:      backend.HealthStatusError,
-				Message:     "Connection string error: invalid port in host specifier",
-				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"invalid port in host specifier \"\\\"foo.bar.co\\\"\": strconv.Atoi: parsing \"foo.bar.co\": invalid syntax"}`),
+				Message:     "Connection string error: error parsing postgres url",
+				JSONDetails: []byte(`{"errorDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/postgres","verboseMessage":"error parsing postgres url \"\\\"foo.bar.co\\\"\": strconv.Atoi: parsing \"foo.bar.co\": invalid syntax"}`),
 			},
 		},
 	}

@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -70,7 +69,7 @@ type Service struct {
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
-	tracer   tracing.Tracer
+	tracer   trace.Tracer
 }
 
 func ProvideService(
@@ -86,7 +85,7 @@ func ProvideService(
 	publicDashboardService publicdashboards.ServiceWrapper,
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
@@ -125,7 +124,7 @@ func ProvideService(
 			sorter,
 		)
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
@@ -169,10 +168,6 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
-		} else if db.GetDialect().DriverName() == migrator.Spanner {
-			// We may eventually make this migration work with Spanner, but for now don't do anything.
-			// We intend to store dashboards and folders only in unified storage when using spanner.
-			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`

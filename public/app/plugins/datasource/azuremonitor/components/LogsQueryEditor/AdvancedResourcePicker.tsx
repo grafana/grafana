@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
 
@@ -17,7 +17,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<string>) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   useEffect(() => {
     // Ensure there is at least one resource
@@ -74,7 +73,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
               id={`input-advanced-resource-picker-${index + 1}`}
               value={resource}
               onChange={(event) => onResourceChange(index, event.currentTarget.value)}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="ex: /subscriptions/$subId"
               data-testid={`input-advanced-resource-picker-${index + 1}`}
             />

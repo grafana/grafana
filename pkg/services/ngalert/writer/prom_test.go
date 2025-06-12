@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"reflect"
 	"slices"
@@ -18,73 +19,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-func TestValidateSettings(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		settings setting.RecordingRuleSettings
-		err      bool
-	}{
-		{
-			name: "invalid url",
-			settings: setting.RecordingRuleSettings{
-				URL: "invalid url",
-			},
-			err: true,
-		},
-		{
-			name: "missing password",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-			},
-			err: true,
-		},
-		{
-			name: "timeout is 0",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           0,
-			},
-			err: true,
-		},
-		{
-			name: "valid settings w/ auth",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           10,
-			},
-			err: false,
-		},
-		{
-			name: "valid settings w/o auth",
-			settings: setting.RecordingRuleSettings{
-				URL:     "http://localhost:9090",
-				Timeout: 10,
-			},
-			err: false,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			err := validateSettings(tc.settings)
-			if tc.err {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestPointsFromFrames(t *testing.T) {
 	extraLabels := map[string]string{"extra": "label"}
@@ -169,6 +108,27 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
 		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+	})
+
+	t.Run("handle connection failures", func(t *testing.T) {
+		dnsErr := &net.DNSError{
+			Err:        "no such host",
+			Name:       "host.example.com",
+			Server:     "10.0.0.1:53",
+			IsTimeout:  false,
+			IsNotFound: true,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, testClientWriteError{
+				statusCode: 0,
+				err:        dnsErr,
+			}
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrConnectionFailure)
+		require.Contains(t, err.Error(), dnsErr.Error())
 	})
 
 	t.Run("writes expected points", func(t *testing.T) {
@@ -539,6 +499,7 @@ func (c *testClient) WriteTimeSeries(
 type testClientWriteError struct {
 	statusCode int
 	msg        *string
+	err        error
 }
 
 func (e testClientWriteError) StatusCode() int {
@@ -546,8 +507,11 @@ func (e testClientWriteError) StatusCode() int {
 }
 
 func (e testClientWriteError) Error() string {
-	if e.msg == nil {
-		return "test error"
+	if e.err != nil {
+		return e.err.Error()
 	}
-	return *e.msg
+	if e.msg != nil {
+		return *e.msg
+	}
+	return "test client error"
 }

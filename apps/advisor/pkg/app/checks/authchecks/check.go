@@ -29,6 +29,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Name() string {
+	return "SSO setting"
+}
+
 func (c *check) Init(ctx context.Context) error {
 	return nil
 }

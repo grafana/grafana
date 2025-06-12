@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
 import { copyStringToClipboard } from 'app/core/utils/explore';
@@ -27,8 +27,6 @@ interface ShortLinkMenuItemData {
 }
 
 export function ShortLinkButtonMenu() {
-  const { t } = useTranslate();
-
   const defaultMode: ShortLinkMenuItemData = {
     key: 'copy-link',
     label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),

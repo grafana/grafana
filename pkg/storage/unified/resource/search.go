@@ -540,13 +540,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
+	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
 		return nil, 0, err
 	}
 	fields := s.builders.GetFields(nsr)
 
-	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
+	logger.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
@@ -559,8 +561,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Collect all documents in a single bulk request
-			items := make([]*BulkIndexItem, 0)
+			// Process documents in batches to avoid memory issues
+			// When dealing with large collections (e.g., 100k+ documents),
+			// loading all documents into memory at once can cause OOM errors.
+			items := make([]*BulkIndexItem, 0, maxBatchSize)
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -578,7 +582,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					s.log.Error("error building search document", "key", SearchID(key), "err", err)
+					logger.Error("error building search document", "key", SearchID(key), "err", err)
 					continue
 				}
 
@@ -587,9 +591,21 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Action: ActionIndex,
 					Doc:    doc,
 				})
+
+				// When we reach the batch size, perform bulk index and reset the batch.
+				if len(items) >= maxBatchSize {
+					if err = index.BulkIndex(&BulkIndexRequest{
+						Items: items,
+					}); err != nil {
+						return err
+					}
+
+					// Reset the slice for the next batch while preserving capacity.
+					items = items[:0]
+				}
 			}
 
-			// Perform single bulk index operation
+			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
@@ -609,7 +625,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	// Record the number of objects indexed for the kind/resource
 	docCount, err := index.DocCount(ctx, "")
 	if err != nil {
-		s.log.Warn("error getting doc count", "error", err)
+		logger.Warn("error getting doc count", "error", err)
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))

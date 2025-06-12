@@ -98,12 +98,12 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the options properties that need to be
+    // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.options) {
+    if (annoQuerySpec?.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.options,
+        ...annoQuerySpec.legacyOptions,
       };
     }
     return new DashboardAnnotationsDataLayer({
@@ -199,7 +199,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
-          version: 1,
         }),
       ],
       $data: new DashboardDataLayerSet({

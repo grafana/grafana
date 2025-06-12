@@ -78,6 +78,7 @@ export interface GroupByVariableModel extends VariableWithOptions {
   datasource: DataSourceRef | null;
   multi: true;
   allowCustomValue?: boolean;
+  defaultValue?: VariableOption;
 }
 
 export interface VariableOption {

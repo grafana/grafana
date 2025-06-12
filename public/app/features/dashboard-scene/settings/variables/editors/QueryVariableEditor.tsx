@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
@@ -108,7 +108,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
 export function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslate();
+
   const onRunQuery = () => {
     variable.refreshOptions();
   };
@@ -124,6 +124,7 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
           onClick={() => setIsOpen(true)}
           size="sm"
           fullWidth
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
         >
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
@@ -135,10 +136,20 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
       >
         <Editor variable={variable} />
         <Modal.ButtonRow>
-          <Button variant="primary" fill="outline" onClick={onRunQuery}>
+          <Button
+            variant="primary"
+            fill="outline"
+            onClick={onRunQuery}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
           </Button>
-          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="secondary"
+            fill="outline"
+            onClick={() => setIsOpen(false)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
           </Button>
         </Modal.ButtonRow>
@@ -163,7 +174,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
@@ -195,7 +206,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
   const isHasVariableOptions = hasVariableOptions(variable);
 
   return (
-    <>
+    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}>
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
@@ -235,7 +246,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
             </Trans>
           </div>
         }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
@@ -255,7 +266,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
       />
 
       {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
-    </>
+    </div>
   );
 }
 

@@ -37,6 +37,7 @@ composableKinds: PanelCfg: {
 					enableInfiniteScrolling?: bool
 					onLogOptionsChange?:      _
 					onNewLogsReceived?:       _
+					controlsStorageKey?:      string
 				} @cuetsy(kind="interface")
 			}
 		}]

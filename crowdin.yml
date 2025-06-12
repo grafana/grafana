@@ -15,4 +15,22 @@ files: [
     "type": "i18next_json",
     "dest": "plugins/azuremonitor/en-US/%original_file_name%"
   },
+  {
+    "source": "public/app/plugins/datasource/mssql/locales/en-US/mssql.json",
+    "translation": "public/app/plugins/datasource/mssql/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "plugins/mssql/en-US/%original_file_name%"
+  },
+  {
+    "source": "packages/grafana-sql/src/locales/en-US/grafana-sql.json",
+    "translation": "packages/grafana-sql/src/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "packages/grafana-sql/en-US/%original_file_name%"
+  },
+  {
+    "source": "packages/grafana-prometheus/src/locales/en-US/grafana-prometheus.json",
+    "translation": "packages/grafana-prometheus/src/locales/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "packages/grafana-prometheus/en-US/%original_file_name%"
+  },
 ]

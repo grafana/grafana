@@ -1,4 +1,4 @@
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
 
 export const iconOptions: Record<string, string | undefined> = {
   None: undefined,
