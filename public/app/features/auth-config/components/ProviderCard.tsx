@@ -1,6 +1,6 @@
 import { isIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Card, Icon } from '@grafana/ui';
+import { Badge, Card, Icon, Link, TextLink } from '@grafana/ui';
 
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
@@ -35,6 +35,52 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
           }
           color={enabled ? 'green' : 'blue'}
         />
+      </Card.Actions>
+    </Card>
+  );
+}
+
+export function ProviderSAMLCard() {
+  return (
+    <Card noMargin>
+      <Card.Heading>SAML</Card.Heading>
+      <Card.Meta>
+        <TextLink
+          external
+          variant="bodySmall"
+          color="secondary"
+          href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/"
+        >
+          {t('auth-config.provider-card.enterprise-learn-more', 'Learn more about SAML support.')}
+        </TextLink>
+      </Card.Meta>
+      <Card.Actions>
+        <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
+        <Badge text={'Enterprise only'} color={'purple'} tooltip={'Only available in Grafana Enterprise'} />
+      </Card.Actions>
+    </Card>
+  );
+}
+
+export function ProviderSCIMCard() {
+  return (
+    <Card noMargin>
+      <Card.Heading>SCIM</Card.Heading>
+      <Card.Meta>
+        <div>
+          <TextLink
+            external
+            variant="bodySmall"
+            color="secondary"
+            href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/"
+          >
+            {t('auth-config.provider-card.enterprise-learn-more', ' Sync users and teams with SCIM.')}
+          </TextLink>
+        </div>
+      </Card.Meta>
+      <Card.Actions>
+        <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
+        <Badge text={'Enterprise only'} color={'purple'} tooltip={'Only available in Grafana Enterprise'} />
       </Card.Actions>
     </Card>
   );
