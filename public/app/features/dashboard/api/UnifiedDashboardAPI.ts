@@ -56,8 +56,8 @@ export class UnifiedDashboardAPI
    * Steps:
    * 1. Call v1 client to get all deleted dashboards
    * 2. Check if any items have failed conversion from v2 versions
-   * 3. If v2 dashboards detected (mixed or pure v2), also call v2 client
-   * 4. Filter and combine responses to avoid conversion errors
+   * 3. If v2 dashboards are detected, call v2 client
+   * 4. Filter and combine v1 and v2 dashboards into one response
    */
   async listDeletedDashboards(
     options: ListDeletedDashboardsOptions
