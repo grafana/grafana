@@ -426,7 +426,6 @@ export const browseDashboardsAPI = createApi({
         const dashboards = await api.listDeletedDashboards({});
         const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
         if (dashboard) {
-          // const response = await getBackendSrv().post<Resource<DashboardDataDTO>>(baseURL, dashboard);
           const response = await api.restoreDashboard(dashboard);
           const name = response.spec.title;
 
