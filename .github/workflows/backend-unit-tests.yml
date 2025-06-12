@@ -113,7 +113,7 @@ jobs:
 
           SUITE_REPO_DIRS=""
           for PACKAGE in "${PACKAGES[@]}"; do
-            SUITE_REPO_DIRS+="--suite-repo-dirs $PACKAGE "
+            SUITE_REPO_DIRS+="$PACKAGE "
           done
 
           grafana-bench test --grafana-version 12.0.0-test --test-runner go --go-retries 2 --go-test-args "-short -v -timeout=30m" --go-test-packages ${SUITE_REPO_DIRS}
