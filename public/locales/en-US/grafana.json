@@ -8914,7 +8914,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
-      "enterprise-plugin-info": "This plugin is only available with Grafana Enterprise.",
+      "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise .",
       "learn-more": "Learn more",
       "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
