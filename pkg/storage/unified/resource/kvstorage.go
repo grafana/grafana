@@ -38,9 +38,14 @@ func rvFromUID(uid uuid.UUID) (int64, error) {
 	if uid.Version() != 7 {
 		return 0, fmt.Errorf("invalid uuid version: %d", uid.Version())
 	}
-	s, ns := uid.Time().UnixTime()
+	ms := (int64(uid[0]) << 40) |
+		(int64(uid[1]) << 32) |
+		(int64(uid[2]) << 24) |
+		(int64(uid[3]) << 16) |
+		(int64(uid[4]) << 8) |
+		int64(uid[5])
 	seq := (int64(uid[6]&0x0F) << 8) | int64(uid[7])
-	return (s * 1000000) + ns/1000 + seq, nil
+	return (ms * 1000) + seq, nil
 }
 
 // // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -95,13 +100,14 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 	// TODO: Emit an event
 	err = k.notifier.Send(ctx, Event{
-		Namespace: event.Key.Namespace,
-		Group:     event.Key.Group,
-		Resource:  event.Key.Resource,
-		Name:      event.Key.Name,
-		UID:       uid,
-		Action:    action,
-		Folder:    event.Object.GetFolder(),
+		Namespace:  event.Key.Namespace,
+		Group:      event.Key.Group,
+		Resource:   event.Key.Resource,
+		Name:       event.Key.Name,
+		UID:        uid,
+		Action:     action,
+		Folder:     event.Object.GetFolder(),
+		PreviousRV: event.PreviousRV,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to send event: %w", err)
@@ -320,6 +326,7 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 			case MetaDataActionDeleted:
 				t = resourcepb.WatchEvent_DELETED
 			}
+
 			events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
 					Namespace: event.Namespace,
@@ -331,8 +338,8 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Folder:          event.Folder,
 				Value:           data,
 				ResourceVersion: rv,
-				// Timestamp:       event.Timestamp, TODO: add this
-				// PreviousRV:      event.PreviousRV, TODO: add this
+				PreviousRV:      event.PreviousRV,
+				Timestamp:       rv / 1000000, // convert to seconds
 			}
 		}
 		close(events)

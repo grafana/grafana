@@ -29,13 +29,14 @@ type kvNotifier struct {
 }
 
 type Event struct {
-	Namespace string         `json:"namespace"`
-	Group     string         `json:"group"`
-	Resource  string         `json:"resource"`
-	Name      string         `json:"name"`
-	UID       uuid.UUID      `json:"uid"`
-	Action    MetaDataAction `json:"action"`
-	Folder    string         `json:"folder"`
+	Namespace  string         `json:"namespace"`
+	Group      string         `json:"group"`
+	Resource   string         `json:"resource"`
+	Name       string         `json:"name"`
+	UID        uuid.UUID      `json:"uid"`
+	Action     MetaDataAction `json:"action"`
+	Folder     string         `json:"folder"`
+	PreviousRV int64          `json:"previous_rv"`
 }
 
 type KVNotifierOptions struct {
