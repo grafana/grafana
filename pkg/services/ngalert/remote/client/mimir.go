@@ -48,7 +48,7 @@ type Mimir struct {
 	metrics       *metrics.RemoteAlertmanager
 	promoteConfig bool
 	externalURL   string
-	smtp          SmtpConfig
+	smtpConfig    SmtpConfig
 
 	// TODO: Remove once everything can be sent in the 'smtp' field.
 	smtpFrom      string
@@ -123,7 +123,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		metrics:       metrics,
 		promoteConfig: cfg.PromoteConfig,
 		externalURL:   cfg.ExternalURL,
-		smtp:          cfg.Smtp,
+		smtpConfig:    cfg.Smtp,
 
 		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		smtpFrom:      cfg.SmtpFrom,

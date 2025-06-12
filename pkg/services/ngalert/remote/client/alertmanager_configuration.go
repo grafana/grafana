@@ -60,7 +60,7 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 		Default:                   isDefault,
 		Promoted:                  mc.promoteConfig,
 		ExternalURL:               mc.externalURL,
-		SmtpConfig:                mc.smtp,
+		SmtpConfig:                mc.smtpConfig,
 	})
 	if err != nil {
 		return err

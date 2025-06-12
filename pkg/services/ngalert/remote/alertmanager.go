@@ -89,8 +89,8 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// Smtp has all the necessary settings for the remote Alertmanager to create an email sender.
-	Smtp remoteClient.SmtpConfig
+	// SmtpConfig has all the necessary settings for the remote Alertmanager to create an email sender.
+	SmtpConfig remoteClient.SmtpConfig
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
@@ -138,7 +138,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
 
-		Smtp: cfg.Smtp,
+		Smtp: cfg.SmtpConfig,
 
 		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		SmtpFrom:      cfg.SmtpFrom,
@@ -215,10 +215,10 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		syncInterval:      cfg.SyncInterval,
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
-		smtp:              cfg.Smtp,
+		smtp:              cfg.SmtpConfig,
 
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
-		smtpFrom: cfg.Smtp.FromAddress,
+		smtpFrom: cfg.SmtpConfig.FromAddress,
 	}, nil
 }
 

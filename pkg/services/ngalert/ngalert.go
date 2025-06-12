@@ -206,7 +206,7 @@ func (ng *AlertNG) init() error {
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			Smtp:              smtpCfg,
+			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 
 			// TODO: Remove once everything can be sent in the 'smtp_config' field.
