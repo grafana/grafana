@@ -22,6 +22,11 @@ var (
 	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
 
 	sqlKeeperListByName = mustTemplate("keeper_listByName.sql")
+
+	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
+	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
+	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
+	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -104,3 +109,34 @@ type listByNameKeeper struct {
 func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
+
+/*************************************/
+/**-- Secure Value Outbox Queries --**/
+/*************************************/
+type appendSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	Row *outboxMessageDB
+}
+
+func (appendSecureValueOutbox) Validate() error { return nil }
+
+type receiveNSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	ReceiveLimit uint
+}
+
+func (receiveNSecureValueOutbox) Validate() error { return nil }
+
+type deleteSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	MessageID string
+}
+
+func (deleteSecureValueOutbox) Validate() error { return nil }
+
+type incrementReceiveCountOutbox struct {
+	sqltemplate.SQLTemplate
+	MessageIDs []string
+}
+
+func (incrementReceiveCountOutbox) Validate() error { return nil }
