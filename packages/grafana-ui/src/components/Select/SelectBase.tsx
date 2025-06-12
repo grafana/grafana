@@ -13,7 +13,7 @@ import Creatable from 'react-select/creatable';
 
 import { SelectableValue, toOption } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 

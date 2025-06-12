@@ -5,7 +5,7 @@ import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
@@ -97,8 +97,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
     [isLeftPane, isLargerPane]
   );
-
-  const { t } = useTranslate();
 
   const refreshPickerLabel = loading
     ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')

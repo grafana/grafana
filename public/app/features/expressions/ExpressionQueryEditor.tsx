@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
@@ -65,8 +65,6 @@ export function ExpressionQueryEditor(props: Props) {
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
   }, [query.expression, query.type, setCachedExpression]);
-
-  const { t } = useTranslate();
 
   const onSelectExpressionType = useCallback(
     (item: SelectableValue<ExpressionQueryType>) => {

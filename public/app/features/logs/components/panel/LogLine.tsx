@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -17,7 +17,7 @@ import {
   hasUnderOrOverflow,
   getLineHeight,
   LogFieldDimension,
-  TRUNCATION_LINE_COUNT,
+  getTruncationLineCount,
 } from './virtualization';
 
 export interface Props {
@@ -27,7 +27,7 @@ export interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
-  onClick: (log: LogListModel) => void;
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
@@ -45,8 +45,15 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, dedupStrategy, enableLogDetails, hasLogsWithErrors, hasSampledLogs, onLogLineHover } =
-    useLogListContext();
+  const {
+    detailsDisplayed,
+    dedupStrategy,
+    enableLogDetails,
+    fontSize,
+    hasLogsWithErrors,
+    hasSampledLogs,
+    onLogLineHover,
+  } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
@@ -84,17 +91,19 @@ export const LogLine = ({
     onOverflow?.(index, log.uid);
   }, [collapsed, index, log, onOverflow]);
 
-  const { t } = useTranslate();
-  const handleClick = useCallback(() => {
-    onClick(log);
-  }, [log, onClick]);
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      onClick(e, log);
+    },
+    [log, onClick]
+  );
 
   const detailsShown = detailsDisplayed(log);
 
   return (
     <div style={style}>
       <div
-        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
@@ -143,6 +152,7 @@ export const LogLine = ({
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          style={collapsed ? { maxHeight: `${getTruncationLineCount() * getLineHeight()}px` } : undefined}
           onClick={handleClick}
         >
           <Log
@@ -192,7 +202,7 @@ interface LogProps {
   wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
+const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
@@ -217,7 +227,9 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
       )}
     </>
   );
-};
+});
+
+Log.displayName = 'Log';
 
 const LogLineBody = ({ log }: { log: LogListModel }) => {
   const { syntaxHighlighting } = useLogListContext();
@@ -266,6 +278,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
         background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
@@ -315,6 +328,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '& .no-highlighting': {
         color: theme.colors.text.primary,
       },
+    }),
+    fontSizeSmall: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
       background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
@@ -415,7 +432,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     collapsedLogLine: css({
-      maxHeight: `${TRUNCATION_LINE_COUNT * getLineHeight()}px`,
       overflow: 'hidden',
     }),
     expandCollapseControl: css({
