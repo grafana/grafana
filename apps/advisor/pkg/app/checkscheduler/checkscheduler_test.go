@@ -104,6 +104,8 @@ func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
 }
 
 func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return nil, errors.New("create error")
@@ -121,16 +123,19 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client:      mockClient,
-		typesClient: mockTypesClient,
-		log:         logging.DefaultLogger,
+		checkRegistry: mockCheckService,
+		client:        mockClient,
+		typesClient:   mockTypesClient,
+		log:           logging.DefaultLogger,
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), logging.DefaultLogger)
 	assert.Error(t, err)
 }
 
 func TestRunner_createChecks_Success(t *testing.T) {
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return &advisorv0alpha1.Check{}, nil
@@ -148,12 +153,13 @@ func TestRunner_createChecks_Success(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client:      mockClient,
-		typesClient: mockTypesClient,
-		log:         logging.DefaultLogger,
+		checkRegistry: mockCheckService,
+		client:        mockClient,
+		typesClient:   mockTypesClient,
+		log:           logging.DefaultLogger,
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), logging.DefaultLogger)
 	assert.NoError(t, err)
 }
 
@@ -333,4 +339,27 @@ func (m *MockClient) Delete(ctx context.Context, identifier resource.Identifier,
 
 func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
 	return m.patchFunc(ctx, identifier, patch, options, into)
+}
+
+type MockCheckService struct {
+	checks []checks.Check
+}
+
+func (m *MockCheckService) Checks() []checks.Check {
+	return m.checks
+}
+
+type mockCheck struct {
+	checks.Check
+
+	id    string
+	steps []checks.Step
+}
+
+func (m *mockCheck) ID() string {
+	return m.id
+}
+
+func (m *mockCheck) Steps() []checks.Step {
+	return m.steps
 }
