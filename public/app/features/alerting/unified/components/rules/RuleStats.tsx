@@ -3,7 +3,7 @@ import pluralize from 'pluralize';
 import * as React from 'react';
 import { Fragment, useDeferredValue, useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import {
   AlertGroupTotals,
@@ -109,7 +109,6 @@ export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
 export function getComponentsFromStats(
   stats: Partial<Record<AlertInstanceTotalState | 'paused' | 'recording', number>>
 ) {
-  const { t } = useTranslate();
   const statsComponents: React.ReactNode[] = [];
 
   if (stats[AlertInstanceTotalState.Alerting]) {

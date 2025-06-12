@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
@@ -9,7 +9,7 @@ import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryVa
 
 export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
   const [basicLogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
-  const { t } = useTranslate();
+
   return (
     <>
       <ConfirmModal

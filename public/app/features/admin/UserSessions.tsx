@@ -1,7 +1,6 @@
 import { createRef, PureComponent } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';

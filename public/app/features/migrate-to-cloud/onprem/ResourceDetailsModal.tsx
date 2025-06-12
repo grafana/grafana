@@ -1,4 +1,4 @@
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';
@@ -11,7 +11,7 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode'], t: TFunction): string {
+function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
   switch (errorCode) {
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
@@ -75,11 +75,10 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode'], t: TFun
 }
 
 export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
-  const { t } = useTranslate();
   const { resource, onClose } = props;
 
   const refId = resource?.refId;
-  const typeName = resource && prettyTypeName(resource.type, t);
+  const typeName = resource && prettyTypeName(resource.type);
   const hasError = resource?.errorCode || resource?.message;
 
   let msgTitle = t('migrate-to-cloud.resource-details.generic-title', 'Resource migration details:');
@@ -107,7 +106,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode, t) ||
+                {getTMessage(resource?.errorCode) ||
                   resource?.message ||
                   'There has been an error while migrating. Please check the cloud migration logs for more information.'}
               </Text>

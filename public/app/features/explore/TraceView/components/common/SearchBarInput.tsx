@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { IconButton, Input } from '@grafana/ui';
 
 type Props = {

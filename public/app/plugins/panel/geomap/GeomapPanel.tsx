@@ -13,7 +13,7 @@ import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';

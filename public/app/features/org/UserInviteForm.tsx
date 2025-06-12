@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -62,7 +62,7 @@ const defaultValues: FormModel = {
 
 export const UserInviteForm = () => {
   const dispatch = useDispatch();
-  const { t } = useTranslate();
+
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
     locationService.push('/admin/users/');

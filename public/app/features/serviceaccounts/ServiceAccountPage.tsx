@@ -3,7 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -63,7 +63,6 @@ export const ServiceAccountPageUnconnected = ({
   loadServiceAccountTokens,
   updateServiceAccount,
 }: Props): JSX.Element => {
-  const { t } = useTranslate();
   const [newToken, setNewToken] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

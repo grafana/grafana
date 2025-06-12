@@ -10,7 +10,7 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/internal';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -21,7 +21,6 @@ export function FormatTimeTransfomerEditor({
   options,
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
-  const { t } = useTranslate();
   const timeFields: Array<SelectableValue<string>> = [];
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 

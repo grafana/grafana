@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
@@ -83,7 +83,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       setTop(top);
     }
   }, [containerRef]);
-  const { t } = useTranslate();
+
   const height = windowHeight - top - 32;
 
   const countWarning =

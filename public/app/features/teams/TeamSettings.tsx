@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { ConnectedProps, connect } from 'react-redux';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
@@ -32,8 +32,6 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     register,
     formState: { errors },
   } = useForm<Team>({ defaultValues: team });
-
-  const { t } = useTranslate();
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { LocalValueVariable } from '@grafana/scenes';
 import { Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';

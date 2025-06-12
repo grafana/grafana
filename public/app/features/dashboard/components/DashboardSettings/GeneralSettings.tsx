@@ -2,7 +2,7 @@ import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
@@ -44,7 +44,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
-  const { t } = useTranslate();
+
   const pageNav = sectionNav.node.parentItem;
 
   const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {

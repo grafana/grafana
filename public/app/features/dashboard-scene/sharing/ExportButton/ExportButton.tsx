@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Icon } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -20,7 +20,6 @@ export default function ExportButton({ dashboard }: Props) {
   const onMenuClick = useCallback((isOpen: boolean) => {
     setIsOpen(isOpen);
   }, []);
-  const { t } = useTranslate();
 
   const MenuActions = () => <ExportMenu dashboard={dashboard} />;
 

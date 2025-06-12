@@ -1,11 +1,10 @@
 import { NavModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 function FeatureTogglePage() {
-  const { t } = useTranslate();
   const navModel: NavModel = {
     node: {
       text: t('alerting.feature-toggle-page.nav-model.text.alerting-is-not-enabled', 'Alerting is not enabled'),

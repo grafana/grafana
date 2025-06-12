@@ -1,7 +1,7 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
@@ -76,8 +76,6 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 }
 
 export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
-  const { t } = useTranslate();
-
   return (
     <ConfirmModal
       isOpen={true}
@@ -112,8 +110,6 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
 }
 
 function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModalProps) {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={true}

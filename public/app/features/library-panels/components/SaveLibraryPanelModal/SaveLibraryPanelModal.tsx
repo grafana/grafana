@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 
 import { getConnectedDashboards } from '../../state/api';
@@ -56,8 +56,6 @@ export const SaveLibraryPanelModal = ({
   const discardAndClose = useCallback(() => {
     onDiscard();
   }, [onDiscard]);
-
-  const { t } = useTranslate();
 
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 

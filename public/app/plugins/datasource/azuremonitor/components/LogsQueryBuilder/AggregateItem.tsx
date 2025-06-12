@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Label, Input } from '@grafana/ui';
 
@@ -28,7 +28,6 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   columns,
   templateVariableOptions,
 }) => {
-  const { t } = useTranslate();
   const isPercentile = aggregate.reduce?.name === 'percentile';
   const isCountAggregate = aggregate.reduce?.name?.includes('count');
 

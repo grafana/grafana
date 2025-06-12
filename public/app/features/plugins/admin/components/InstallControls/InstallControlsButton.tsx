@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -67,8 +67,6 @@ export function InstallControlsButton({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const { t } = useTranslate();
 
   const onInstall = async () => {
     trackPluginInstalled(trackingProps);

@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
 
 import { ClassicCondition, ExpressionQuery } from '../types';
@@ -14,8 +14,6 @@ interface Props {
 }
 
 export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
-  const { t } = useTranslate();
-
   const onConditionChange = (condition: ClassicCondition, index: number) => {
     if (query.conditions) {
       onChange({

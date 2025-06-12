@@ -1,5 +1,5 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
 import grafanaIconSvg from 'img/grafana_icon.svg';

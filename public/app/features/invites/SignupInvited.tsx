@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
@@ -53,8 +53,6 @@ export const SignupInvitedPage = () => {
     setGreeting(invite.name || invite.email || invite.username);
     setInvitedBy(invite.invitedBy);
   }, [code]);
-
-  const { t } = useTranslate();
 
   const onSubmit = async (formData: FormModel) => {
     await getBackendSrv().post('/api/user/invite/complete', { ...formData, inviteCode: code });

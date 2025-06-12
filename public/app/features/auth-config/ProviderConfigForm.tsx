@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import {
   Box,
@@ -51,7 +51,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const dataSubmitted = isSubmitted && !submitError;
   const sections = useMemo(() => getSectionFields()[provider], [provider]);
   const [resetConfig, setResetConfig] = useState(false);
-  const { t } = useTranslate();
 
   const additionalActionsMenu = (
     <Menu>

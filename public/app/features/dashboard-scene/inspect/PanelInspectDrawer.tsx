@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -100,7 +100,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
   const { tabs, pluginNotLoaded, panelRef } = model.useState();
   const location = useLocation();
-  const { t } = useTranslate();
+
   const queryParams = new URLSearchParams(location.search);
 
   if (!tabs) {

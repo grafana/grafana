@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
@@ -14,7 +14,6 @@ interface Props {
 }
 
 export const DocsCard = ({ card }: Props) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles, card.done);
 
   return (

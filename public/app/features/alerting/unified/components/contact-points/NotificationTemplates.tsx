@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -10,7 +10,7 @@ import { useNotificationTemplates } from './useNotificationTemplates';
 export const NotificationTemplates = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { data: templates, isLoading, error } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
-  const { t } = useTranslate();
+
   if (error) {
     return (
       <Alert

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types';
@@ -15,7 +15,6 @@ export interface Props {
 }
 
 export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
-  const { t } = useTranslate();
   const variables = useSelector((state) => {
     return getVariablesByKey(getLastKey(state), state);
   });
@@ -41,7 +40,7 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
     });
 
     return options;
-  }, [variables, t]);
+  }, [variables]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
 
@@ -56,7 +55,6 @@ interface Props2 {
 }
 
 export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2) => {
-  const { t } = useTranslate();
   const sceneVars = useMemo(() => sceneGraph.getVariables(sceneContext.getRoot()), [sceneContext]);
   const variables = sceneVars.useState().variables;
 
@@ -72,7 +70,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [variables, t]);
+  }, [variables]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 

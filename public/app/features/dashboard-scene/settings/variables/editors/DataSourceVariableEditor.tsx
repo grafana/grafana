@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { DataSourceVariable, SceneVariable } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';

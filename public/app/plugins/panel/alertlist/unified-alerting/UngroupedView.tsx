@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
@@ -37,7 +37,6 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
 }
 
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();

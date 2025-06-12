@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../../core/core';
@@ -29,7 +29,7 @@ export function ConnectionsRedirectNotice() {
     contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ||
     contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const [showNotice, setShowNotice] = useState(canAccessDataSources);
-  const { t } = useTranslate();
+
   return showNotice ? (
     <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>

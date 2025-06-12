@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
@@ -13,7 +13,6 @@ import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 type Props = StandardEditorProps<FeatureStyleConfig[], StyleRuleEditorSettings, unknown>;
 
 export const GeomapStyleRulesEditor = ({ value, onChange, context, item }: Props) => {
-  const { t } = useTranslate();
   const theme = useTheme2();
 
   const settings = item.settings;

@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -35,7 +35,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const [templateToDelete, setTemplateToDelete] = useState<NotificationTemplate | undefined>();
-  const { t } = useTranslate();
+
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
       try {
@@ -125,7 +125,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
 
   const [isExpanded, setIsExpanded] = useState(false);
   const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
-  const { t } = useTranslate();
+
   const { uid, title: name, content: template, missing } = notificationTemplate;
   const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
   return (

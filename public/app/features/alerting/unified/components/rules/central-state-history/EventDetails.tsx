@@ -3,7 +3,7 @@ import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -237,7 +237,6 @@ interface ValueInTransitionProps {
   record: LogRecord;
 }
 function ValueInTransition({ record }: ValueInTransitionProps) {
-  const { t } = useTranslate();
   const values = record?.line?.values
     ? JSON.stringify(record.line.values)
     : t('alerting.central-alert-history.details.no-values', 'No values');

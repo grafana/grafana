@@ -3,7 +3,7 @@ import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Box,
@@ -82,7 +82,6 @@ const ImportToGMARules = () => {
   const [formImportPayload, setFormImportPayload] = useState<ImportFormValues | null>(null);
   const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
 
-  const { t } = useTranslate();
   const onSubmit: SubmitHandler<ImportFormValues> = async (formData) => {
     setFormImportPayload(formData);
   };
@@ -240,7 +239,6 @@ const ImportToGMARules = () => {
 };
 
 function YamlFileUpload() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
   } = useFormContext<ImportFormValues>();
@@ -294,7 +292,6 @@ function YamlFileUpload() {
 }
 
 function YamlTargetDataSourceField() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
     setValue,
@@ -344,7 +341,6 @@ function YamlTargetDataSourceField() {
 }
 
 function TargetDataSourceForRecordingRulesField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -391,7 +387,6 @@ function TargetDataSourceForRecordingRulesField() {
 }
 
 function TargetFolderField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -440,7 +435,6 @@ function TargetFolderField() {
 }
 
 function DataSourceField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },

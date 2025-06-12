@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/internal';
@@ -40,7 +40,6 @@ export const DatagridContextMenu = ({
   columnFreezeIndex,
   renameColumnClicked,
 }: ContextMenuProps) => {
-  const { t } = useTranslate();
   let selectedRows: number[] = [];
   let selectedColumns: number[] = [];
   const { row, column, x, y, isHeaderMenu } = menuData;

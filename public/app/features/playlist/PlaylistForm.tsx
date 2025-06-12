@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
@@ -27,7 +27,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
   }, []);
 
   const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
-  const { t } = useTranslate();
+
   const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
     onSubmit({

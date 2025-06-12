@@ -3,7 +3,7 @@ import history from 'history';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
 import { Prompt } from './Prompt';
@@ -96,8 +96,6 @@ interface UnsavedChangesModalProps {
 }
 
 const UnsavedChangesModal = ({ onDiscard, onBackToForm, isOpen }: UnsavedChangesModalProps) => {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={isOpen}

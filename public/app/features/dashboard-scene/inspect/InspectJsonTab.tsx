@@ -3,8 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneDataTransformer,

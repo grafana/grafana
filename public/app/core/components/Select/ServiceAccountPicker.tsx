@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';

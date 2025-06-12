@@ -2,7 +2,7 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Label, Switch, TimeRangeInput, Stack, VerticalGroup } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -21,8 +21,6 @@ export const Configuration = ({
   register: UseFormRegister<ConfigPublicDashboardForm>;
   timeRange: TimeRange;
 }) => {
-  const { t } = useTranslate();
-
   return (
     <>
       <FieldSet disabled={disabled}>

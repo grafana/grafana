@@ -17,7 +17,7 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Modal, useTheme2 } from '@grafana/ui';
@@ -489,7 +489,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   }, [context.above.rows, scrollToCenter]);
 
   useAsync(updateContextQuery, [getRowContextQuery, row]);
-  const { t } = useTranslate();
 
   const loadingStateAbove = context.above.loadingState;
   const loadingStateBelow = context.below.loadingState;

@@ -19,7 +19,7 @@ import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -70,8 +70,6 @@ export const GroupToNestedTableTransformerEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onChange]
   );
-
-  const { t } = useTranslate();
 
   // See if there's both an aggregation and grouping field configured
   // for calculations. If not we display a warning because there
@@ -142,7 +140,6 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     },
     [config, onConfigChange]
   );
-  const { t } = useTranslate();
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>

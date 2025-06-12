@@ -4,7 +4,7 @@ import Tree, { TreeNodeProps } from 'rc-tree';
 import { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
@@ -23,7 +23,6 @@ import { getTreeData, onNodeDrop, TreeElement } from './tree';
 let allowSelection = true;
 
 export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, TreeViewEditorProps, Options>) => {
-  const { t } = useTranslate();
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);

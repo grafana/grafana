@@ -1,6 +1,6 @@
 import { useLocalStorage } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton, Stack } from '@grafana/ui';
 
 type Props = {
@@ -18,7 +18,7 @@ export function DrilldownAlertBox(props: Props) {
   ].includes(props.datasourceType);
 
   const [dismissed, setDismissed] = useLocalStorage('grafana.explore.drilldownsBoxDismissed', false);
-  const { t } = useTranslate();
+
   return (
     isDsCompatibleWithDrilldown &&
     !dismissed && (

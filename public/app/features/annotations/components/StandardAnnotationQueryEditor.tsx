@@ -11,8 +11,7 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';

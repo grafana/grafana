@@ -1,5 +1,5 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';

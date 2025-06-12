@@ -2,7 +2,7 @@ import { defaults } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
@@ -125,7 +125,6 @@ export const NotificationPoliciesList = () => {
 
     return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
-  const { t } = useTranslate();
 
   const refetchPolicies = () => {
     refetchNotificationPolicyRoute();

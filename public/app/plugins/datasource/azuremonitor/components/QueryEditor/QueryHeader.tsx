@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, LoadingState, PanelData, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
@@ -36,7 +36,6 @@ export const QueryHeader = ({
 
   const [showModeSwitchWarning, setShowModeSwitchWarning] = useState(false);
   const [pendingModeChange, setPendingModeChange] = useState<LogsEditorMode | null>(null);
-  const { t } = useTranslate();
 
   const currentMode = query.azureLogAnalytics?.mode;
 

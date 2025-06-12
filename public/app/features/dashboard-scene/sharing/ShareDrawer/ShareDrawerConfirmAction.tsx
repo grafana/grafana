@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2, Spinner, Stack, Text } from '@grafana/ui';
 import { ConfirmContent, ConfirmContentProps } from '@grafana/ui/internal';
 
@@ -17,7 +17,6 @@ export function ShareDrawerConfirmAction({
   'description' | 'onConfirm' | 'onDismiss' | 'confirmButtonLabel'
 >) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const ConfirmBody = () => (
     <div className={styles.bodyContainer}>

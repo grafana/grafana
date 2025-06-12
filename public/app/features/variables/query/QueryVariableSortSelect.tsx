@@ -1,7 +1,7 @@
 import { PropsWithChildren, useMemo } from 'react';
 
 import { SelectableValue, VariableSort } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
 
@@ -25,7 +25,6 @@ const SORT_OPTIONS = [
 
 export function QueryVariableSortSelect({ onChange, sort, testId }: PropsWithChildren<Props>) {
   const value = useMemo(() => SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0], [sort]);
-  const { t } = useTranslate();
 
   return (
     <VariableSelectField

@@ -4,7 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -55,7 +55,6 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // in here we'll track the configs we are comparing
   const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
-  const { t } = useTranslate();
 
   const {
     currentData: historicalConfigs = [],

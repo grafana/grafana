@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
@@ -10,7 +10,7 @@ import { WizardFormData } from './types';
 
 export function FinishStep() {
   const { register, watch, setValue } = useFormContext<WizardFormData>();
-  const { t } = useTranslate();
+
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
   const isGithub = type === 'github';
   const isPublic = checkPublicAccess();

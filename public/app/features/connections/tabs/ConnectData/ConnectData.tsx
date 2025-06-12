@@ -3,7 +3,7 @@ import { useMemo, useState, MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -67,7 +67,7 @@ export function AddNewConnection() {
     },
     sortBy
   );
-  const { t } = useTranslate();
+
   const filterByOptions = [
     { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
     { value: 'installed', label: t('connections.add-new-connection.filter-by-options.label.installed', 'Installed') },

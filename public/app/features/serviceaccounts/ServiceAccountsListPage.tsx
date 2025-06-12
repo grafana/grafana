@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   ConfirmModal,
   FilterInput,
@@ -98,8 +98,6 @@ export const ServiceAccountsListPageUnconnected = ({
       fetchACOptions();
     }
   }, [fetchACOptions, fetchServiceAccounts]);
-
-  const { t } = useTranslate();
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;

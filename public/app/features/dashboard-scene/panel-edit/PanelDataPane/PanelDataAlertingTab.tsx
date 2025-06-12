@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
@@ -62,7 +62,6 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     dashboardUID: model.getDashboardUID(),
     panelId: model.getLegacyPanelId(),
   });
-  const { t } = useTranslate();
 
   const alert = errors.length ? (
     <Alert

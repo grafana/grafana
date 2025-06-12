@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -42,7 +42,7 @@ export const UsersTable = ({
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
-  const { t } = useTranslate();
+
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -190,7 +190,7 @@ export const UsersTable = ({
         },
       },
     ],
-    [showLicensedRole, showBelongsTo, t]
+    [showLicensedRole, showBelongsTo]
   );
   return (
     <Stack direction={'column'} gap={2}>

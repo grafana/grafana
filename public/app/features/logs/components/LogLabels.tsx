@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, forwardRef, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
@@ -41,8 +41,6 @@ export const LogLabels = memo(
       () => allLabels.slice(0, !displayAll && displayMax ? displayMax : Infinity),
       [allLabels, displayAll, displayMax]
     );
-
-    const { t } = useTranslate();
 
     if (displayLabels.length === 0 && emptyMessage) {
       return (
@@ -106,7 +104,6 @@ interface LogLabelsArrayProps {
 
 export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <span className={styles.logsLabels}>

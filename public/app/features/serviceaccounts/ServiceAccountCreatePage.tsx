@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
@@ -73,8 +73,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       fetchOptions();
     }
   }, [currentOrgId]);
-
-  const { t } = useTranslate();
 
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {

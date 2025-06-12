@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, Drawer, useStyles2, Text } from '@grafana/ui';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 import grotNewsSvg from 'img/grot-news.svg';
@@ -16,7 +16,7 @@ interface NewsContainerProps {
 
 export function NewsContainer({ onClose }: NewsContainerProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <Drawer
       title={

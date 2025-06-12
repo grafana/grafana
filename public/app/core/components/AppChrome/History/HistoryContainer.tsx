@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { RecordHistoryEntryEvent } from 'app/types/events';
@@ -47,7 +47,6 @@ export function HistoryContainer() {
       };
     });
   }, []);
-  const { t } = useTranslate();
 
   return (
     <>

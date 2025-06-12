@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
@@ -91,7 +91,6 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
     },
     [validateAndDoChange, value]
   );
-  const { t } = useTranslate();
 
   const val = value ?? {};
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);

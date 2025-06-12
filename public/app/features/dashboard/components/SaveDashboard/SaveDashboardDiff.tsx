@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
@@ -59,7 +59,6 @@ export const SaveDashboardDiff = ({
       jsonView: <DiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
-  const { t } = useTranslate();
 
   const { value } = loader;
 

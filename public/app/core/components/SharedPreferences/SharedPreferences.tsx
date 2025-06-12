@@ -4,8 +4,7 @@ import * as React from 'react';
 
 import { FeatureState, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PSEUDO_LOCALE, Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { PSEUDO_LOCALE, t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 import {

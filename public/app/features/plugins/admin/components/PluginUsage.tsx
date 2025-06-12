@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -38,8 +38,6 @@ export function PluginUsage({ plugin }: Props) {
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
-
-  const { t } = useTranslate();
 
   const found = results.value;
   if (found?.totalRows) {

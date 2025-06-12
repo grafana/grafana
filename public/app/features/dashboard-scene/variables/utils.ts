@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { safeStringifyValue } from 'app/core/utils/explore';

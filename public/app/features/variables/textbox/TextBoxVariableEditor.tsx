@@ -2,7 +2,7 @@ import { FormEvent, ReactElement, useCallback } from 'react';
 
 import { TextBoxVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
@@ -19,8 +19,6 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
     },
     [onPropChange]
   );
-
-  const { t } = useTranslate();
 
   const onChange = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, false), [updateVariable]);
   const onBlur = useCallback((e: FormEvent<HTMLInputElement>) => updateVariable(e, true), [updateVariable]);

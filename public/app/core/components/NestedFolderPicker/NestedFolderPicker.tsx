@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -250,7 +250,6 @@ export function NestedFolderPicker({
     },
     [flatTree]
   );
-  const { t } = useTranslate();
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
 

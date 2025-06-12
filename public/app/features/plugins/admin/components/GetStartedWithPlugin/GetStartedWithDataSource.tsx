@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { ROUTES } from 'app/features/connections/constants';
@@ -26,8 +26,6 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
     dispatch(addDataSource(meta, ROUTES.DataSourcesEdit));
   }, [dispatch, plugin]);
-
-  const { t } = useTranslate();
 
   if (!isDataSourceEditor()) {
     return null;

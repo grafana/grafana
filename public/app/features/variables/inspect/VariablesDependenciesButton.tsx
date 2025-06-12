@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
@@ -15,7 +15,7 @@ interface Props {
 export const VariablesDependenciesButton = ({ variables }: Props) => {
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
-  const { t } = useTranslate();
+
   if (!edges.length) {
     return null;
   }

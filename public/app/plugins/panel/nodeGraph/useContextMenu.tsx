@@ -3,7 +3,7 @@ import { MouseEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { DataFrame, Field, GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
@@ -200,7 +200,6 @@ function HeaderRow({ label, value }: { label: string; value: string }) {
  * Shows some field values in a table on top of the context menu.
  */
 function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
-  const { t } = useTranslate();
   const rows = [];
   if (nodes) {
     const fields = getNodeFields(nodes);
@@ -232,7 +231,6 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
  * Shows some of the field values in a table on top of the context menu.
  */
 function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
-  const { t } = useTranslate();
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
   const valueSource = fields.source?.values[index] || '';

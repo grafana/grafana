@@ -3,7 +3,7 @@ import { useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Input, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 export interface LayerNameProps {
@@ -18,7 +18,6 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideS
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { t } = useTranslate();
 
   const onEditLayer = (event: React.SyntheticEvent) => {
     setIsEditing(true);

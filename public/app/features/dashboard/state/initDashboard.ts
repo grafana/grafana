@@ -1,5 +1,5 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';

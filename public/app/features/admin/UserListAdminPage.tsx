@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -69,8 +69,6 @@ const UserListAdminPageUnConnected = ({
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-
-  const { t } = useTranslate();
 
   return (
     <Page.Contents>

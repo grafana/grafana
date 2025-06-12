@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -27,7 +26,6 @@ export class SharePanelInternally extends ShareLinkTab {
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef } = model.useState();
 

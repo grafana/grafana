@@ -14,8 +14,7 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';

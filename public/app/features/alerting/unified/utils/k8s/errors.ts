@@ -1,6 +1,6 @@
 import { get } from 'lodash';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { FetchError, isFetchError } from '@grafana/runtime';
 
 export type SupportedErrors = 'alerting.notifications.conflict' | string;

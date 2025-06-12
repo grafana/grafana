@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -17,7 +17,7 @@ const GrafanaMuteTimingsExporterPreview = ({ exportFormat, onClose }: MuteTiming
   const { currentData: muteTimingsDefinition = '', isFetching } = alertRuleApi.useExportMuteTimingsQuery({
     format: exportFormat,
   });
-  const { t } = useTranslate();
+
   const downloadFileName = `mute-timings-${new Date().getTime()}`;
 
   if (isFetching) {
@@ -47,7 +47,7 @@ const GrafanaMuteTimingExporterPreview = ({
     format: exportFormat,
     muteTiming: muteTimingName,
   });
-  const { t } = useTranslate();
+
   const downloadFileName = `mute-timing-${muteTimingName}-${new Date().getTime()}`;
 
   if (isFetching) {

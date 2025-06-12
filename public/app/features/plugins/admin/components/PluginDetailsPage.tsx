@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -39,7 +39,6 @@ export function PluginDetailsPage({
   notFoundComponent = <NotFoundPlugin />,
   notFoundNavModel,
 }: Props) {
-  const { t } = useTranslate();
   const location = useLocation();
   const notFoundModel = notFoundNavModel ?? {
     text: t('plugins.plugin-details-page.not-found-model.text.unknown-plugin', 'Unknown plugin'),
@@ -130,8 +129,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function NotFoundPlugin() {
-  const { t } = useTranslate();
-
   return (
     <Stack justifyContent="center" alignItems="center" height="100%">
       <Box>

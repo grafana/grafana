@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
 
@@ -17,7 +17,6 @@ export const PermanentlyDeleteModal = ({
   isLoading,
   ...props
 }: PermanentlyDeleteModalProps) => {
-  const { t } = useTranslate();
   const numberOfDashboards = selectedDashboards.length;
 
   const onDelete = async () => {

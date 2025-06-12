@@ -1,7 +1,7 @@
 import { isString as _isString } from 'lodash';
 
 import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';

@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -193,7 +193,6 @@ function useColumns(
   showNextEvaluationColumn: boolean,
   isRulerLoading: boolean
 ) {
-  const { t } = useTranslate();
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
       {
@@ -310,7 +309,7 @@ function useColumns(
     });
 
     return columns;
-  }, [t, showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
+  }, [showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
 }
 
 function RuleStateCell({ rule }: { rule: CombinedRule }) {

@@ -14,7 +14,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -80,8 +80,6 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
     []
   );
-
-  const { t } = useTranslate();
 
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering

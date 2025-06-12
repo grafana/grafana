@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { News } from 'app/plugins/panel/news/component/News';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
@@ -20,7 +20,6 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
   useEffect(() => {
     getNews();
   }, [getNews]);
-  const { t } = useTranslate();
 
   if (state.error) {
     return <div className={styles.innerWrapper}>{state.error && state.error.message}</div>;

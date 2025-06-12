@@ -3,7 +3,7 @@ import { HTMLAttributes } from 'react';
 
 import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
@@ -41,7 +41,7 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
 
 const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
@@ -83,7 +83,7 @@ interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
 
 const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = {
     content: css({
       color: theme.colors.text.secondary,

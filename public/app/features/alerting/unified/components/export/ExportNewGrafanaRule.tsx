@@ -1,11 +1,10 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
 function ExportNewGrafanaRulePage() {
-  const { t } = useTranslate();
   return (
     <AlertingPageWrapper
       navId="alert-list"

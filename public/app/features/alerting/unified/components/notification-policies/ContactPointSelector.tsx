@@ -2,7 +2,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, IconButton, Select, SelectCommonProps, Stack, Text, useStyles2 } from '@grafana/ui';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
@@ -67,7 +67,6 @@ export const ContactPointSelector = ({
       onError(new Error(`Contact point "${selectedContactPointName}" could not be found`));
     }
   }, [isLoading, matchedContactPoint, onError, selectedContactPointName]);
-  const { t } = useTranslate();
 
   // TODO error handling
   if (error) {

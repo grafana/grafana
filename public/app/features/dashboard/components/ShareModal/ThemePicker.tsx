@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Field } from '@grafana/ui';
 
 interface Props {
@@ -9,8 +9,6 @@ interface Props {
 }
 
 export const ThemePicker = ({ selectedTheme = 'current', onChange, description }: Props) => {
-  const { t } = useTranslate();
-
   const themeOptions: Array<SelectableValue<string>> = [
     {
       label: t('share-modal.theme-picker.current', `Current`),

@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -110,7 +110,6 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     500,
     [dashboardFilter]
   );
-  const { t } = useTranslate();
 
   const DashboardRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
     const dashboard = filteredDashboards[index];

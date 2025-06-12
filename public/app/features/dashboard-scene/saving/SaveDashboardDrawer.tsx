@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';

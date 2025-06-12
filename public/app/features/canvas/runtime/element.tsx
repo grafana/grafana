@@ -11,7 +11,7 @@ import {
   OneClickMode,
   ActionModel,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';

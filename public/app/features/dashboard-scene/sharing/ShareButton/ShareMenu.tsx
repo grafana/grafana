@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
@@ -40,7 +40,6 @@ export function resetDashboardShareDrawerItems() {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const { t } = useTranslate();
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -85,7 +84,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel, t]);
+  }, [panel]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

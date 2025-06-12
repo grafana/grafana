@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
@@ -24,7 +24,6 @@ export function GrafanaExportDrawer({
   formatProviders,
   title = 'Export',
 }: GrafanaExportDrawerProps) {
-  const { t } = useTranslate();
   const grafanaRulesTabs = Object.values(formatProviders).map((provider) => ({
     label: provider.name,
     value: provider.exportFormat,

@@ -10,7 +10,7 @@ import {
   PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';

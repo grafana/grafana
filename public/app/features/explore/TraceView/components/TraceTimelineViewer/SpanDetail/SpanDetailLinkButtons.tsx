@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { CoreApp, IconName, LinkModel, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
@@ -130,7 +130,6 @@ export const getSpanDetailLinkButtons = (props: Props) => {
 
 const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { t } = useTranslate();
 
   const menu = (
     <Menu>

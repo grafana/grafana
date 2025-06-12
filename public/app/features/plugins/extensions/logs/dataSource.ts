@@ -10,7 +10,7 @@ import {
   LoadingState,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { RuntimeDataSource, SceneDataQuery } from '@grafana/scenes';
 
 import { ExtensionsLog, ExtensionsLogItem } from './log';

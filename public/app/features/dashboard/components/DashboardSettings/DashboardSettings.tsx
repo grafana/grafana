@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -88,7 +88,6 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 }
 
 function getSettingsPages(dashboard: DashboardModel) {
-  const { t } = useTranslate();
   const pages: SettingsPage[] = [];
 
   const generalTitle = t('dashboard-settings.general.title', 'General');
@@ -182,7 +181,6 @@ function getSectionNav(
   location: H.Location,
   dashboardUid: string
 ): NavModel {
-  const { t } = useTranslate();
   const main: NavModelItem = {
     text: t('dashboard-settings.settings.title', 'Settings'),
     children: [],

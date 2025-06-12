@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, InternalTimeZones, StandardEditorProps } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { OptionsWithTimezones } from '@grafana/schema';
 import { IconButton, TimeZonePicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string[], unknown, OptionsWithTimezones>;
 
 export const TimezonesEditor = ({ value, onChange }: Props) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   if (!value || value.length < 1) {

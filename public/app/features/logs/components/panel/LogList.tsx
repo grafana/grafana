@@ -19,7 +19,7 @@ import {
   store,
   TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -259,7 +259,6 @@ const LogListComponent = ({
     popoverState,
     showDisablePopoverOptions,
   } = usePopoverMenu(wrapperRef.current);
-  const { t } = useTranslate();
 
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {

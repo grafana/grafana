@@ -1,6 +1,6 @@
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FieldSet } from '@grafana/ui';
 
 import { PlaylistTableRows } from './PlaylistTableRows';
@@ -13,8 +13,6 @@ interface Props {
 }
 
 export const PlaylistTable = ({ items, deleteItem, moveItem }: Props) => {
-  const { t } = useTranslate();
-
   const onDragEnd = (d: DropResult) => {
     if (d.destination) {
       moveItem(d.source.index, d.destination?.index);

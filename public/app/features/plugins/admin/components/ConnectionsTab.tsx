@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
@@ -50,7 +50,7 @@ export function ConnectionsList({
   plugin,
 }: ListProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (!isLoading && dataSourcesCount === 0) {
     return (
       <EmptyState

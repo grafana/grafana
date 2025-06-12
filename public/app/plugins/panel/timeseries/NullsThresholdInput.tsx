@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { rangeUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
 export enum InputPrefix {
@@ -17,7 +17,6 @@ type Props = {
 };
 
 export const NullsThresholdInput = ({ value, onChange, inputPrefix, isTime }: Props) => {
-  const { t } = useTranslate();
   let defaultValue = rangeUtil.secondsToHms(value / 1000);
   if (!isTime) {
     defaultValue = '10';

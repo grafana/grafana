@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
 export interface ScopesDashboardsTreeSearchProps {
@@ -32,8 +32,6 @@ export function ScopesDashboardsTreeSearch({ disabled, query, onChange }: Scopes
       setInputState({ value: query, dirty: false });
     }
   }, [getDebounceState, inputState, query]);
-
-  const { t } = useTranslate();
 
   return (
     <div className={styles.container}>

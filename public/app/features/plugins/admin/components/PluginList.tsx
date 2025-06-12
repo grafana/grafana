@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
 
@@ -15,7 +15,7 @@ interface Props {
 
 export const PluginList = ({ plugins, isLoading }: Props) => {
   const { pathname } = useLocation();
-  const { t } = useTranslate();
+
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   if (!isLoading && plugins.length === 0) {

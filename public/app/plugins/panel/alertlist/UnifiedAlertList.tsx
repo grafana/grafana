@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
@@ -95,7 +95,6 @@ const fetchPromAndRuler = ({
 };
 
 function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
-  const { t } = useTranslate();
   const dispatch = useDispatch();
   const [limitInstances, toggleLimit] = useToggle(true);
   const [, gmaViewAllowed] = useAlertingAbility(AlertingAction.ViewAlertRule);
@@ -452,7 +451,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {
-  const { t } = useTranslate();
   const [, gmaReadAllowed] = useAlertingAbility(AlertingAction.ViewAlertRule);
   const [, externalReadAllowed] = useAlertingAbility(AlertingAction.ViewExternalAlertRule);
 

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ClipboardButton,
@@ -90,8 +90,6 @@ export function ConfigPublicDashboardBase({
       isPaused: !publicDashboard?.isEnabled,
     },
   });
-
-  const { t } = useTranslate();
 
   const onPublicDashboardUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;

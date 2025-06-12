@@ -1,7 +1,7 @@
 import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,

@@ -1,8 +1,7 @@
 import { saveAs } from 'file-saver';
 import { PureComponent } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
