@@ -365,11 +365,8 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	// Ensure branch exists for non-default branches
-	if ref != r.config.Spec.GitHub.Branch {
-		if err := r.ensureBranchExists(ctx, ref); err != nil {
-			return err
-		}
+	if err := r.ensureBranchExists(ctx, ref); err != nil {
+		return err
 	}
 
 	// TODO: should add some protection against deleting the root directory?
