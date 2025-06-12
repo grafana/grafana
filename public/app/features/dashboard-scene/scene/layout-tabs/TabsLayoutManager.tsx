@@ -10,7 +10,7 @@ import {
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import {
-  NewObjectAddedToCanvasEvent,
+  dashboardEditActions,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
@@ -146,8 +146,23 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       newTab.setState({ title: newTitle });
     }
 
-    this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
+    dashboardEditActions.addElement({
+      addedObject: newTab,
+      source: this,
+      perform: () => this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length }),
+      undo: () => {
+        const indexOfNewTab = this.state.tabs.findIndex((t) => t === newTab);
+        this.setState({
+          tabs: this.state.tabs.filter((t) => t !== newTab),
+          // if the new tab was the current tab, set the current tab to the previous tab
+          currentTabIndex:
+            this.state.currentTabIndex === indexOfNewTab
+              ? Math.max(0, this.state.currentTabIndex - 1)
+              : this.state.currentTabIndex,
+        });
+      },
+    });
+
     return newTab;
   }
 
@@ -191,9 +206,17 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const currentTab = this.getCurrentTab();
 
     if (currentTab === tabToRemove) {
-      const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
-      this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
-      this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
+      const currentTabIndex = this.state.currentTabIndex;
+      const nextTabIndex = currentTabIndex > 0 ? currentTabIndex - 1 : 0;
+
+      dashboardEditActions.removeElement({
+        removedObject: tabToRemove,
+        source: this,
+        perform: () =>
+          this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex }),
+        undo: () => this.setState({ tabs: [...this.state.tabs, tabToRemove], currentTabIndex }),
+      });
+
       return;
     }
 
