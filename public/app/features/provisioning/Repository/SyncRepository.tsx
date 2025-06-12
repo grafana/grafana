@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
 
@@ -15,7 +15,7 @@ export function SyncRepository({ repository }: Props) {
   const [createJob, jobQuery] = useCreateRepositoryJobsMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { t } = useTranslate();
+
   const name = repository.metadata?.name;
 
   const onClick = () => {
