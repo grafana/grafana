@@ -8,6 +8,12 @@ interface PathFieldProps {
   readOnly?: boolean;
 }
 
+/**
+ * @description
+ * PathField component for the Save/Delete Provisioned Dashboard form. This component renders an input field
+ * for the file path inside the repository where the dashboard will be saved or deleted.
+ */
+
 export const PathField = memo<PathFieldProps>(({ readOnly = false }) => {
   const { register } = useFormContext();
   const { t } = useTranslate();

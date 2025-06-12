@@ -8,8 +8,8 @@ import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisi
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
+import { useProvisionedDashboardData } from '../saving/provisioned/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedDashboardData } from '../utils/useProvisionedDashboardData';
 
 import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
 

@@ -8,6 +8,11 @@ interface CommentFieldProps {
   disabled?: boolean;
 }
 
+/**
+ * @description
+ * CommentField component for the Save/Delete Provisioned Dashboard form.
+ */
+
 export const CommentField = memo<CommentFieldProps>(({ disabled = false }) => {
   const { register } = useFormContext();
   const { t } = useTranslate();

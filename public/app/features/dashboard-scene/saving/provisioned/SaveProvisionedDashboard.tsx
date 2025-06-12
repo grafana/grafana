@@ -1,9 +1,9 @@
 import { DashboardScene } from '../../scene/DashboardScene';
-import { useProvisionedDashboardData } from '../../utils/useProvisionedDashboardData';
 import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../shared';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+import { useProvisionedDashboardData } from './hooks';
 
 export interface SaveProvisionedDashboardProps {
   dashboard: DashboardScene;

@@ -12,6 +12,13 @@ interface WorkflowFieldsProps {
   workflowOptions: Array<{ label: string; value: string }>;
 }
 
+/**
+ * @description
+ * WorkflowFields component for the Save/Delete Provisioned Dashboard form.
+ * This component renders a radio button group for selecting the workflow
+ * (e.g., 'branch', 'write') and an input field for the branch name if the workflow is 'branch'.
+ */
+
 export const WorkflowFields = memo<WorkflowFieldsProps>(({ workflow, workflowOptions }) => {
   const {
     control,

@@ -68,6 +68,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     );
   }
 
+  console.log('DashboardPreviewBanner', file.data);
+
   // Check if this is a GitHub link
   const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
   if (githubURL) {
@@ -112,6 +114,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
   const provisioningEnabled = config.featureToggles.provisioning;
+  console.log(queryParams, route, slug, path);
   if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
     return null;
   }

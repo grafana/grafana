@@ -15,35 +15,21 @@ import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
-import { WorkflowOption } from 'app/features/provisioning/types';
 
 import { CommentField } from '../../components/Provisioned/CommentField';
 import { PathField } from '../../components/Provisioned/PathField';
 import { WorkflowFields } from '../../components/Provisioned/WorkflowFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
+import { ProvisionedDashboardFormData } from '../shared';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getWorkflowOptions } from './defaults';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';
 
-type FormData = {
-  ref?: string;
-  path: string;
-  comment?: string;
-  repo: string;
-  workflow?: WorkflowOption;
-  title: string;
-  description: string;
-  folder: {
-    uid?: string;
-    title?: string;
-  };
-};
-
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
-  defaultValues: FormData;
+  defaultValues: ProvisionedDashboardFormData;
   isGitHub: boolean;
   repository?: RepositoryView;
   loadedFromRef?: string;
@@ -65,7 +51,7 @@ export function SaveProvisionedDashboardForm({
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const methods = useForm<FormData>({ defaultValues });
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, control, reset, register } = methods;
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
@@ -128,7 +114,7 @@ export function SaveProvisionedDashboardForm({
   }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow, t]);
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     if (!repo || !path) {
       return;
     }
@@ -260,7 +246,7 @@ export function SaveProvisionedDashboardForm({
  * Dashboard title validation to ensure it's not the same as the folder name
  * and meets other naming requirements.
  */
-async function validateTitle(title: string, formValues: FormData) {
+async function validateTitle(title: string, formValues: ProvisionedDashboardFormData) {
   if (title === formValues.folder.title?.trim()) {
     return t(
       'dashboard-scene.save-provisioned-dashboard-form.title-same-as-folder',

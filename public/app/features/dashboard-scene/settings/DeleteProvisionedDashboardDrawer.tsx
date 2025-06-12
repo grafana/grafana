@@ -9,8 +9,9 @@ import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDel
 import { CommentField } from '../components/Provisioned/CommentField';
 import { PathField } from '../components/Provisioned/PathField';
 import { WorkflowFields } from '../components/Provisioned/WorkflowFields';
+import { ProvisionedDashboardData } from '../saving/provisioned/hooks';
+import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { ProvisionedDashboardData, ProvisionedDashboardFormData } from '../utils/useProvisionedDashboardData';
 
 interface Props {
   dashboard: DashboardScene;
@@ -18,6 +19,10 @@ interface Props {
   onDismiss: () => void;
 }
 
+/**
+ * @description
+ * Drawer component for deleting a git provisioned dashboard.
+ */
 export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboardData, onDismiss }: Props) {
   const { t } = useTranslate();
 
@@ -37,15 +42,13 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
       // Extract required values for deletion
       const repositoryName = data.repo || repository?.name;
       const filePath = path;
-      const branchRef = workflow === 'write' ? loadedFromRef : ref; // If user is writing to the original branch, override ref with whatever we loaded from
-      const commitMessage = data.comment || `Delete dashboard: ${dashboard.state.title}`;
-
-      console.log('branchRef', branchRef, ref);
-
       if (!repositoryName || !filePath) {
         console.error('Missing required fields for deletion:', { repositoryName, filePath });
         return;
       }
+
+      const branchRef = workflow === 'write' ? loadedFromRef : ref; // If user is writing to the original branch, override ref with whatever we loaded from
+      const commitMessage = data.comment || `Delete dashboard: ${dashboard.state.title}`;
 
       // Call delete API
       await deleteRepoFile({
@@ -58,18 +61,23 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
       // Show success message
       getAppEvents().publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard deleted successfully'],
+        payload: [t('dashboard-scene.delete-provisioned-dashboard-form.success', 'Dashboard deleted successfully')],
       });
 
-      // Reset form and close drawer
-      onDismiss();
-      reset();
-      dashboard.onDashboardDelete();
+      if (workflow === 'branch') {
+        // Reset form and close drawer
+        onDismiss();
+        reset();
+        // TODO: this is a temporary solution to navigate back to the dashboard view, add a proper solution later
+        // add maybe navigate back to dashboard with pull request option etc.
+        window.history.back();
+        return;
+      }
     } catch (error) {
       console.error('Error deleting dashboard:', error);
       getAppEvents().publish({
         type: AppEvents.alertError.name,
-        payload: ['Failed to delete dashboard', error],
+        payload: [t('dashboard-scene.delete-provisioned-dashboard-form.error', 'Failed to push delete changes'), error],
       });
     }
   };
@@ -83,8 +91,12 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
+            {/* file path in git */}
             <PathField readOnly={readOnly} />
+
+            {/* Changes comment */}
             <CommentField disabled={readOnly} />
+
             {/* GitHub workflow fields */}
             {isGitHub && !readOnly && <WorkflowFields workflow={workflow} workflowOptions={workflowOptions} />}
 
@@ -93,10 +105,10 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
               <Button variant="destructive" type="submit" disabled={request.isLoading || readOnly}>
                 {request.isLoading
                   ? t('dashboard-scene.delete-provisioned-dashboard-form.deleting', 'Deleting...')
-                  : t('dashboard-scene.delete-provisioned-dashboard-form.delete', 'Delete dashboard')}
+                  : t('dashboard-scene.delete-provisioned-dashboard-form.delete-action', 'Delete dashboard')}
               </Button>
               <Button variant="secondary" onClick={onDismiss} fill="outline">
-                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.cancel">Cancel</Trans>
+                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.cancel-action">Cancel</Trans>
               </Button>
             </Stack>
           </Stack>
