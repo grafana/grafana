@@ -261,10 +261,6 @@ export interface FeatureToggles {
   */
   sseGroupByDatasource?: boolean;
   /**
-  * Enables RBAC support for library panels
-  */
-  libraryPanelRBAC?: boolean;
-  /**
   * Enables running Loki queries in parallel
   */
   lokiRunQueriesInParallel?: boolean;

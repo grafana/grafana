@@ -171,20 +171,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
-			if !allowed {
-				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
-			}
-			if err != nil {
-				return err
-			}
-		} else {
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-			// nolint:staticcheck
-			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
-				return err
-			}
+		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
+		if !allowed {
+			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
+		}
+		if err != nil {
+			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
 			if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
@@ -236,13 +228,6 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-
-		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			// nolint:staticcheck
-			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-				return err
-			}
-		}
 
 		dashboardIDs := []int64{}
 		// get all connections for this element
@@ -582,20 +567,6 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
-	}
-
-	if !l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
-		// FolderID was provided in the PATCH request
-		if toFolderID != -1 && toFolderID != fromFolderID {
-			if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
-				return err
-			}
-		}
-
-		// Always check permissions for the folder where library element resides
-		if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
-			return err
-		}
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
