@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   LinkButton,
@@ -23,6 +22,7 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {
   AlertInstanceTotalState,
+  AlertInstanceTotals,
   CombinedRule,
   RuleGroupIdentifierV2,
   RuleHealth,
@@ -87,7 +87,7 @@ const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
-  const { t } = useTranslate();
+
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
@@ -95,7 +95,6 @@ const RuleViewer = () => {
   const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
-  const isAlertType = prometheusRuleType.alertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = rulerRuleType.grafana.rule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
@@ -115,7 +114,7 @@ const RuleViewer = () => {
         <Title
           name={title}
           paused={isPaused}
-          state={isAlertType ? promRule.state : undefined}
+          state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -332,7 +331,6 @@ const PrometheusConsistencyCheck = withErrorBoundary(
         waitAction.execute(ruleLocation.groupIdentifier);
       }
     }, [ruleLocation, hasRuler, waitAction]);
-    const { t } = useTranslate();
 
     if (isError(waitState)) {
       return (
@@ -406,8 +404,8 @@ function usePageNav(rule: CombinedRule) {
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
-  const isGrafanaAlertRule = rulerRuleType.grafana.rule(rulerRule) && isAlertType;
-  const grafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
+  const isGrafanaAlertRule = rulerRuleType.grafana.alertingRule(rulerRule);
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rulerRule);
   const isRecordingRuleType = prometheusRuleType.recordingRule(promRule);
 
   const pageNav: NavModelItem = {
@@ -453,7 +451,7 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.VersionHistory);
         },
-        hideFromTabs: !isGrafanaAlertRule && !grafanaRecordingRule,
+        hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
       },
     ],
     parentItem: {
@@ -476,7 +474,7 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
-export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
   return chain(stats)
     .pick([
       AlertInstanceTotalState.Alerting,

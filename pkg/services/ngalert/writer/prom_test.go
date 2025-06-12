@@ -19,73 +19,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-func TestValidateSettings(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		settings setting.RecordingRuleSettings
-		err      bool
-	}{
-		{
-			name: "invalid url",
-			settings: setting.RecordingRuleSettings{
-				URL: "invalid url",
-			},
-			err: true,
-		},
-		{
-			name: "missing password",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-			},
-			err: true,
-		},
-		{
-			name: "timeout is 0",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           0,
-			},
-			err: true,
-		},
-		{
-			name: "valid settings w/ auth",
-			settings: setting.RecordingRuleSettings{
-				URL:               "http://localhost:9090",
-				BasicAuthUsername: "user",
-				BasicAuthPassword: "password",
-				Timeout:           10,
-			},
-			err: false,
-		},
-		{
-			name: "valid settings w/o auth",
-			settings: setting.RecordingRuleSettings{
-				URL:     "http://localhost:9090",
-				Timeout: 10,
-			},
-			err: false,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			err := validateSettings(tc.settings)
-			if tc.err {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestPointsFromFrames(t *testing.T) {
 	extraLabels := map[string]string{"extra": "label"}

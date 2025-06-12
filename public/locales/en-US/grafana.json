@@ -948,9 +948,6 @@
       "title-search-panel": "Search panel",
       "title-select-dashboard-and-panel": "Select dashboard and panel"
     },
-    "data-source-section": {
-      "import-to-grafana": "Import to Grafana rules"
-    },
     "datasource-not-found": {
       "card-description": "The datasource for this query was not found, it was either removed or is not installed correctly.",
       "remove-query": "Remove query",
@@ -1200,10 +1197,6 @@
       "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
       "error": "Failed to execute action for folder: {{error}}",
-      "more-button": {
-        "title": "Folder actions",
-        "tooltip": "Folder actions"
-      },
       "pause": {
         "button": {
           "label": "Pause all rules"
@@ -1213,9 +1206,6 @@
         "button": {
           "label": "Resume all rules"
         }
-      },
-      "view": {
-        "folder": "View folder"
       }
     },
     "folder-selector": {
@@ -1509,12 +1499,6 @@
       "label-insights": "Insights",
       "title-alerting": "Alerting"
     },
-    "import-from-dsrules": {
-      "description-folder-import-rules": "The folder to import the rules to",
-      "message": {
-        "please-select-a-target-data-source": "Please select a target data source"
-      }
-    },
     "import-to-gma": {
       "action-button": "Import",
       "additional-settings": "Additional settings",
@@ -1522,8 +1506,9 @@
       "confirm-modal": {
         "confirm": "Import",
         "loading": "Loading...",
-        "loading-body": "Preparing data to be imported.This can take a while...",
+        "loading-body": "Preparing data to be imported. This can take a while...",
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
+        "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
@@ -1533,6 +1518,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
@@ -1542,11 +1531,12 @@
         "label": "Group"
       },
       "import-location-and-filters": "Import location and filters",
+      "import-source": "Import source",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
       },
-      "pageTitle": "Import alert rules from a data source to Grafana-managed rules",
+      "pageTitle": "Import alert rules",
       "pause": {
         "label": "Pause imported alerting rules"
       },
@@ -1554,10 +1544,26 @@
         "label": "Pause imported recording rules"
       },
       "recording-rules": "Recording rules",
+      "source": {
+        "datasource": "Existing data source-managed rules",
+        "datasource-description": "Import rules from existing data sources",
+        "yaml": "Prometheus YAML file",
+        "yaml-description": "Import rules from a Prometheus YAML file."
+      },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
+        "description": "The folder to import the rules to",
         "label": "Target folder"
-      }
+      },
+      "yaml": {
+        "description": "Select a Prometheus-compatible YAML file to import",
+        "label": "Prometheus YAML file",
+        "required-message": "Please select a file",
+        "target-datasource": "Target data source",
+        "target-datasource-description": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "target-datasource-required": "Please select a target data source"
+      },
+      "yaml-error": "Failed to parse YAML file: {{error}}"
     },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
@@ -1654,6 +1660,20 @@
         "new-recording-rule": "New recording rule",
         "no-rules-created": "You haven't created any rules yet",
         "provisioning": "You can also define rules through file provisioning or Terraform"
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Folder actions",
+          "title": "Actions"
+        },
+        "export": {
+          "aria-label": "Export rules folder",
+          "label": "Export rules folder"
+        },
+        "view": {
+          "aria-label": "View folder",
+          "label": "View folder"
+        }
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
@@ -1779,7 +1799,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when to only send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
@@ -2137,7 +2157,8 @@
     },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
-      "label-target-data-source": "Target data source"
+      "label-target-data-source": "Target data source",
+      "target-data-source-required": "Please select a target data source"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
@@ -2319,7 +2340,6 @@
     "rule-group-action": {
       "details": "rule group details",
       "edit": "edit rule group",
-      "export-rules-folder": "Export rules folder",
       "go-to-folder": "go to folder",
       "manage-permissions": "manage permissions"
     },
@@ -2348,11 +2368,15 @@
       "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
+      "ds-error": {
+        "title": "Cannot load rules for this datasource"
+      },
       "ds-error-boundary": {
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
       "empty-data-source": "No rules found",
+      "error-button": "Error",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2364,6 +2388,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
+      "loading-more-groups": "Loading more groups...",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -2397,6 +2422,9 @@
     "rule-list-v1": {
       "collapse-all": "Collapse all",
       "expand-all": "Expand all"
+    },
+    "rule-list-v2": {
+      "import-to-gma": "Import alert rules"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",
@@ -2890,6 +2918,36 @@
       "body": "The YAML content in the editor only contains alert rule configuration <1></1>To configure Prometheus, you need to provide the rest of the <4>configuration file content.</4>"
     }
   },
+  "alertlist": {
+    "group-by": {
+      "aria-label-group-by-label-keys": "group by label keys",
+      "placeholder-group-by": "Group by"
+    },
+    "ungrouped-mode-view": {
+      "active-for": "for <1>{{duration}}</1>",
+      "aria-label-view-alert-rule": "View alert rule",
+      "view-alert-rule": "View alert rule"
+    },
+    "unified-alert-list": {
+      "clear": "Clear",
+      "text-loading": "Loading..."
+    },
+    "unified-alert-list-panel": {
+      "body-permission-required": "Sorry, you do not have the required permissions to read alert rules.",
+      "title-permission-required": "Permission required"
+    }
+  },
+  "annolist": {
+    "anno-list-panel": {
+      "aria-label-remove-filter": "Remove filter: {{filterToRemove}}",
+      "filter": "Filter:",
+      "loading": "Loading...",
+      "no-annotations-found": "No annotations found"
+    },
+    "annotation-list-item": {
+      "tooltip-created-by": "Created by:<1></1> {{email}}"
+    }
+  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Annotation",
@@ -2908,51 +2966,6 @@
       "no-query-editor": "Annotations are not supported. This datasource needs to export a QueryEditor",
       "test-annotation-query": "Test annotation query",
       "title-query-result": "Query result"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Search keys"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Include expired keys"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Delete API key",
-      "content-this-api-key-has-expired": "This API key has expired.",
-      "expires": "Expires",
-      "last-used-at": "Last used at",
-      "migrate-to-service-account": "Migrate to service account",
-      "name": "Name",
-      "role": "Role"
-    },
-    "empty-state": {
-      "message": "No API keys found"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "No API keys were found. If you reload the browser, this page will not be available anymore.",
-      "body-switch-service-accounts": "API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will continue to work as they were. We encourage you to migrate your API keys to service accounts now. <docsLink />",
-      "docs-link": {
-        "about-migration": "Find out more about the migration here."
-      },
-      "migrate-all-service-accounts": "Migrate all service accounts",
-      "migration-box-desc": {
-        "migrating": "Migrating all API keys will hide the API keys tab."
-      },
-      "modal-title": "Migrate API keys to service accounts",
-      "title-no-api-keys-found": "No API keys found",
-      "title-switch-service-accounts": "Switch from API keys to service accounts"
-    },
-    "migration-summary": {
-      "close": "Close",
-      "failed": "<0>Failed: </0>{{failed}}",
-      "failed-details": "<0>Failed details: </0>{{details}}",
-      "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
-      "migrated": "<0>Migrated: </0>{{migrated}}",
-      "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
-      "migration-successful": "Migration Successful!",
-      "title-migration-summary": "Migration summary",
-      "total": "<0>Total: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -3094,7 +3107,10 @@
       "use-refresh-token-description": "If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.",
       "use-refresh-token-label": "Use refresh token",
       "validate-hosted-domain-description": "If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the \"{{ allowedDomainsLabel }}\" list specified by the user.",
-      "validate-hosted-domain-label": "Validate hosted domain"
+      "validate-hosted-domain-label": "Validate hosted domain",
+      "workload-identity-token-file-description": "The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to \"workload_identity\". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.",
+      "workload-identity-token-file-label": "{{ workloadIdentityLabel }} token file",
+      "workload-identity-token-file-required": "This field must be set when client authentication is set to \"Workload identity\"."
     },
     "get-page-nav": {
       "subTitle": {
@@ -3137,6 +3153,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
+  },
+  "barchart": {
+    "tick-spacing-editor": {
+      "content-require-space-from-the-right-side": "Require space from the right side",
+      "label-rtl": "RTL"
+    }
   },
   "bookmarks-page": {
     "empty": {
@@ -3266,6 +3288,17 @@
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "canvas": {
+    "apieditor": {
+      "label-endpoint": "Endpoint",
+      "label-header-parameters": "Header parameters",
+      "label-method": "Method",
+      "label-payload": "Payload",
+      "label-query-parameters": "Query parameters",
+      "render-test-apibutton": {
+        "test-api": "Test API",
+        "title-test-api": "Test API"
+      }
+    },
     "button-item": {
       "label": {
         "center": "Center",
@@ -3274,6 +3307,28 @@
       },
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "button-style-editor": {
+      "label-variant": "Variant"
+    },
+    "canvas-context-menu": {
+      "close-editor": "Close Editor",
+      "open-editor": "Open Editor",
+      "render-menu-items": {
+        "add-item-menu-item": {
+          "label-add-item": "Add item"
+        },
+        "edit-element-menu-item": {
+          "label-edit": "Edit"
+        },
+        "label-bring-to-front": "Bring to front",
+        "label-delete": "Delete",
+        "label-duplicate": "Duplicate",
+        "label-send-to-back": "Send to back",
+        "set-background-menu-item": {
+          "label-set-background": "Set background"
+        }
       }
     },
     "cloud-item": {
@@ -3302,6 +3357,17 @@
         "auto": "Auto"
       }
     },
+    "inline-edit": {
+      "canvas-inline-editor": "Canvas Inline Editor",
+      "tooltip-close-inline-editor": "Close inline editor"
+    },
+    "inline-edit-body": {
+      "label-add-item": "Add item",
+      "please-select-an-element": "Please select an element"
+    },
+    "line-style-editor": {
+      "label-animate": "Animate"
+    },
     "metric-value-item": {
       "label": {
         "bottom": "Bottom",
@@ -3318,6 +3384,14 @@
     "not-found-display": {
       "not-found": "<0>Not found: </0><config />"
     },
+    "pan-zoom-help": {
+      "ctrl-right-mouse": "CTRL + right mouse",
+      "middle-mouse": "Middle mouse",
+      "pan-title": "Pan:",
+      "reset-double-click": "Reset: Double click",
+      "title-pan-and-zoom-controls": "Pan and zoom controls",
+      "zoom-scroll-wheel": "Zoom: Scroll wheel"
+    },
     "parallelogram-item": {
       "label": {
         "bottom": "Bottom",
@@ -3330,6 +3404,25 @@
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "params-editor": {
+      "aria-label-add": "Add",
+      "aria-label-delete": "Delete",
+      "placeholder-key": "Key",
+      "placeholder-value": "Value"
+    },
+    "placement-editor": {
+      "label-constraints": "Constraints",
+      "label-position": "Position",
+      "loading": "Loading..."
+    },
+    "quick-positioning": {
+      "tooltip-align-bottom": "Align bottom",
+      "tooltip-align-horizontal-centers": "Align horizontal centers",
+      "tooltip-align-left": "Align left",
+      "tooltip-align-right": "Align right",
+      "tooltip-align-top": "Align top",
+      "tooltip-align-vertical-centers": "Align vertical centers"
     },
     "rectangle-item": {
       "label": {
@@ -3359,6 +3452,22 @@
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "tree-navigation-editor": {
+      "clear-selection": "Clear selection",
+      "frame-selection": "Frame selection",
+      "label-add-item": "Add item",
+      "missing-layer": "Missing layer?",
+      "no-settings": "No settings",
+      "switcher-icon": {
+        "title-node-icon": "Node Icon"
+      }
+    },
+    "tree-node-title": {
+      "title-duplicate": "Duplicate",
+      "title-remove": "Remove",
+      "tooltip-duplicate": "Duplicate",
+      "tooltip-remove": "Remove"
     },
     "triangle-item": {
       "label": {
@@ -3919,6 +4028,15 @@
         "tooltip-remove-property": "Remove property"
       }
     },
+    "edit-actions": {
+      "add": "Add {{typeName}}",
+      "panel-background": "Change panel background",
+      "panel-description": "Change panel description",
+      "panel-title": "Change panel title",
+      "paste-panel": "Paste panel",
+      "remove": "Remove {{typeName}}",
+      "switch-layout": "Switch layout"
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
@@ -4309,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Choose",
       "variable-options": {
         "label": {
           "disable-repeating": "Disable repeating",
@@ -4471,18 +4590,6 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-new": {
-        "button": {
-          "label": "Add",
-          "tooltip": "Add panels and other elements"
-        },
-        "menu": {
-          "lib-panel": "Library panel",
-          "panel": "Panel",
-          "row": "Row",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Alert rules",
       "back-to-dashboard": "Back to dashboard",
       "dashboard-settings": {
@@ -4948,6 +5055,7 @@
       }
     },
     "group-by-variable-form": {
+      "alert-not-supported": "This data source does not support group by variables",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
@@ -5013,6 +5121,11 @@
     "name-already-exists-error": {
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
+    },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
     },
     "on-remove-panel": {
       "text": {
@@ -5136,7 +5249,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "message",
-      "body-dashboard-drastically-changed": "Because you're using new dashboards features only supported on new Grafana dashboard schema format, the dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to save the dashboard as a new copy.",
+      "body-dashboard-drastically-changed": "The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a copy instead. If you’re seeing this message in a production environment, contact Support to have the feature disabled.",
       "cancel-button": {
         "cancel": "Cancel"
       },
@@ -5152,7 +5265,7 @@
       },
       "schema-v2-library-panels-export": "The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards behaviour. It is based on a new schema format, that does not support library panels. This means that when exporting the dashboard to use it in another instance, we will not include library panels. We intend to support them as we progress in the feature <2>life cycle</2>.",
       "schema-v2-library-panels-export-title": "Dashboard Schema V2 does not support exporting library panels to be used in another instance yet",
-      "title-dashboard-drastically-changed": "Dashboard drastically changed"
+      "title-dashboard-drastically-changed": "Dashboard irreversibly changed"
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
@@ -5467,6 +5580,25 @@
       "message": "No data sources found"
     }
   },
+  "datagrid": {
+    "add-column": {
+      "placeholder-column-name": "Column name"
+    },
+    "datagrid-context-menu": {
+      "render-context-menu-items": {
+        "label-clear-column": "Clear column",
+        "label-clear-row": "Clear row",
+        "label-remove-all-data": "Remove all data",
+        "label-search": "Search..."
+      },
+      "render-header-menu-items": {
+        "label-clear-column": "Clear column",
+        "label-delete-column": "Delete column",
+        "label-rename-column": "Rename column",
+        "label-set-field-type": "Set field type"
+      }
+    }
+  },
   "datasources": {
     "add-new-data-source-button": {
       "tooltip-no-permission": "You do not have permission to configure new data sources"
@@ -5649,6 +5781,26 @@
       }
     }
   },
+  "debug": {
+    "cursor-view": {
+      "no-events-yet": "No events yet"
+    },
+    "render-info-viewer": {
+      "data-counter": "Data: {{numDataChanges}} ",
+      "elapsed-time": "Time: {{elapsed}}ms",
+      "field": "Field",
+      "last": "Last",
+      "render-counter": "Render: {{numRenders}} ",
+      "schema-counter": "Schema: {{numSchemaChanges}} ",
+      "title-reset-counters": "Reset counters",
+      "tooltip-step-back": "Step back",
+      "type": "Type"
+    },
+    "state-view": {
+      "current-value": "Current value: {{currentValue}} ",
+      "label-state-name": "State name"
+    }
+  },
   "dimensions": {
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -5781,6 +5933,7 @@
   },
   "explore": {
     "accordian-logs": {
+      "events": "Events",
       "footer": "Event timestamps are relative to the start time of the full trace."
     },
     "accordian-references": {
@@ -6497,9 +6650,101 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "geomap": {
+    "coordinates-map-view-editor": {
+      "label-latitude": "Latitude",
+      "label-longitude": "Longitude"
+    },
+    "debug-overlay": {
+      "center": "Center:",
+      "zoom": "Zoom:"
+    },
+    "fit-map-view-editor": {
+      "all-layers-editor-fragment": {
+        "label-layer": "Layer"
+      },
+      "label-data": "Data",
+      "last-only-editor-fragment": {
+        "label-padding": "Padding",
+        "tooltip-padding-relative-percent-beyond-extent": "Sets padding in relative percent beyond data extent"
+      }
+    },
+    "frame-multi-selection-editor": {
+      "placeholder-change-filter": "Change filter"
+    },
+    "frame-selection-editor": {
+      "placeholder-change-filter": "Change filter"
+    },
+    "geomap-panel": {
+      "aria-label-map": "Navigable map"
+    },
+    "geomap-style-rules-editor": {
+      "aria-label-add-geomap-style-rule": "Add geomap style rule"
+    },
+    "layers-editor": {
+      "label-add-layer": "Add layer",
+      "no-layers": "No layers?"
+    },
+    "map-view-editor": {
+      "label-max-zoom": "Max Zoom",
+      "label-view": "View",
+      "label-zoom": "Zoom",
+      "use-current-map-settings": "Use current map settings"
+    },
+    "markers-legend": {
+      "title-symbol": "Symbol"
+    },
+    "measure-overlay": {
+      "tooltip-show-measure-tools": "Show measure tools"
+    },
+    "plugin": {
+      "basemap-layer-configured-server-admin": "The basemap layer is configured by the server admin."
+    },
+    "style-editor": {
+      "label-align": "Align",
+      "label-baseline": "Baseline",
+      "label-color": "Color",
+      "label-fill-opacity": "Fill opacity",
+      "label-font-size": "Font size",
+      "label-opacity": "Opacity",
+      "label-rotation-angle": "Rotation angle",
+      "label-size": "Size",
+      "label-symbol": "Symbol",
+      "label-symbol-horizontal-align": "Symbol horizontal align",
+      "label-symbol-vertical-align": "Symbol vertical align",
+      "label-text-label": "Text label",
+      "label-x-offset": "X offset",
+      "label-y-offset": "Y offset"
+    },
+    "style-rule-editor": {
+      "aria-label-comparison-operator": "Comparison operator",
+      "aria-label-comparison-value": "Comparison value",
+      "aria-label-delete-style-rule": "Delete style rule",
+      "aria-label-feature-property": "Feature property",
+      "label-rule": "Rule",
+      "placeholder-feature-property": "Feature property",
+      "placeholder-numeric-value": "Numeric value",
+      "placeholder-value": "value"
+    }
+  },
   "get-enterprise": {
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
+  },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "complete",
+      "learn-how": "Learn how in the docs"
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "To advanced tutorials",
+      "aria-label-to-basic-tutorials": "To basic tutorials",
+      "checking-completed-setup-steps": "Checking completed setup steps",
+      "remove-this-panel": "Remove this panel"
+    },
+    "tutorial-card": {
+      "complete": "complete"
+    }
   },
   "gops": {
     "config-card": {
@@ -6988,6 +7233,11 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
+  "histogram": {
+    "histogram-panel": {
+      "no-histogram-found-in-response": "No histogram found in response"
+    }
+  },
   "inspector": {
     "inspect-data-tab": {
       "loading": "Loading",
@@ -7299,8 +7549,26 @@
       "discard-local-changes": "Discard local changes",
       "title-dashboard-changed": "Dashboard changed"
     },
+    "live-channel-editor": {
+      "description-grafana-live": "This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the interfaces and structures to change as this becomes more production ready.",
+      "namespace": "Namespace",
+      "path": "Path",
+      "placeholder-select-watchable-resource": "Select watchable resource",
+      "scope": "Scope",
+      "title-grafana-live": "Grafana Live"
+    },
     "live-connection-warning": {
       "title-connection-to-server-is-lost": "Connection to server is lost..."
+    },
+    "live-panel": {
+      "error": "Error",
+      "grafana-requires-feature": "Grafana live requires a feature flag to run",
+      "panel-editor-channel": "Use the panel editor to pick a channel",
+      "title-grafana-live": "Grafana Live",
+      "waiting-for-data": "Waiting for data:"
+    },
+    "live-publish": {
+      "publish": "Publish"
     }
   },
   "lock-icon": "lock icon",
@@ -7453,6 +7721,8 @@
       },
       "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
+      "font-size-default": "Use small font size",
+      "font-size-small": "Use default font size",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7472,6 +7742,11 @@
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "start-of-range": "Start of range"
+    },
+    "logs-panel": {
+      "render-common-labels": {
+        "common-labels": "Common labels:"
+      }
     },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "End of the selected time range."
@@ -7854,10 +8129,6 @@
       "subtitle": "See recently deleted alert rules",
       "title": "Recently deleted"
     },
-    "api-keys": {
-      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-      "title": "API keys"
-    },
     "application": {
       "title": "Application"
     },
@@ -8194,7 +8465,56 @@
       "close": "Close drawer"
     },
     "link-title": "Go to Grafana labs blog",
+    "news-panel": {
+      "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
+      "loading": "Loading...",
+      "title-error-loading-rss-feed": "Error loading RSS feed"
+    },
     "title": "Latest from the blog"
+  },
+  "nodeGraph": {
+    "arc-options-editor": {
+      "add-arc": "Add arc",
+      "title-remove-arc": "Remove arc"
+    },
+    "edge": {
+      "aria-label-from-to": "Edge from: {{from}} to: {{to}}"
+    },
+    "edge-header": {
+      "label-source-target": "Source → Target"
+    },
+    "marker": {
+      "100-node-count": ">100 nodes",
+      "aria-label-hidden-marker": "Hidden nodes marker: {{marker}}",
+      "node-count_one": "{{count}} node",
+      "node-count_other": "{{count}} nodes"
+    },
+    "node": {
+      "aria-label-node-title": "Node: {{nodeName}}"
+    },
+    "node-graph": {
+      "aria-label-layered-layout-performance-warning": "Layered layout performance warning",
+      "aria-label-nodes-hidden-warning": "Nodes hidden warning",
+      "computing-layout": "Computing layout",
+      "hidden-nodes_one": "<0></0> {{count}} node is hidden for performance reasons.",
+      "hidden-nodes_other": "<0></0> {{count}} nodes are hidden for performance reasons.",
+      "no-data": "No data",
+      "processed-nodes_one": "<0></0> Layered layout may be slow with {{count}} node.",
+      "processed-nodes_other": "<0></0> Layered layout may be slow with {{count}} nodes."
+    },
+    "node-graph-panel": {
+      "no-data-found-in-response": "No data found in response"
+    },
+    "node-header": {
+      "label-subtitle": "Subtitle",
+      "label-title": "Title"
+    },
+    "view-controls": {
+      "hide-config": "Hide config",
+      "show-config": "Show config",
+      "title-zoom-in": "Zoom in",
+      "title-zoom-out": "Zoom out"
+    }
   },
   "notifications": {
     "empty-state": {
@@ -9984,6 +10304,12 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "status-history": {
+    "status-history-panel": {
+      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
+      "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
+    }
+  },
   "support-bundles": {
     "new-bundle-button": {
       "new-support-bundle": "New support bundle"
@@ -10009,10 +10335,35 @@
     "login": "Login"
   },
   "table": {
+    "auto-cell-options-editor": {
+      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
+      "label-wrap-text": "Wrap text"
+    },
+    "bar-gauge-cell-options-editor": {
+      "label-gauge-display-mode": "Gauge display mode",
+      "label-value-display": "Value display"
+    },
+    "color-background-cell-options-editor": {
+      "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
+      "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
+      "label": {
+        "text-alpha": "Alpha"
+      },
+      "label-apply-to-entire-row": "Apply to entire row",
+      "label-background-display-mode": "Background display mode",
+      "label-wrap-text": "Wrap text",
+      "wrap-text": "Wrap text"
+    },
     "container": {
       "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
+    },
+    "image-cell-options-editor": {
+      "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
+      "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
+      "label-alt-text": "Alt text",
+      "label-title-text": "Title text"
     }
   },
   "tag-filter": {
@@ -10169,6 +10520,42 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "timeseries": {
+    "annotation-editor2": {
+      "add-annotation": "Add annotation",
+      "cancel": "Cancel",
+      "edit-annotation": "Edit annotation",
+      "label-description": "Description",
+      "label-tags": "Tags",
+      "placeholder-add-tags": "Add tags",
+      "save": "Save",
+      "saving": "Saving"
+    },
+    "annotation-tooltip2": {
+      "tooltip-delete": "Delete",
+      "tooltip-edit": "Edit"
+    },
+    "line-style-editor": {
+      "title-the-input-expects-a-segment-list": "The input expects a segment list",
+      "tooltip-help": "Help"
+    },
+    "nulls-threshold-input": {
+      "placeholder-never": "Never"
+    },
+    "outside-range-plugin": {
+      "data-outside-time-range": "Data outside time range",
+      "zoom-to-data": "Zoom to data"
+    },
+    "timezones-editor": {
+      "tooltip-add-timezone": "Add timezone",
+      "tooltip-remove-timezone": "Remove timezone"
+    }
+  },
+  "traces": {
+    "traces-panel": {
+      "no-data-found-in-response": "No data found in response"
     }
   },
   "transformations": {
@@ -10787,6 +11174,26 @@
   "visualization": {
     "data-hover-view": {
       "link": "Link"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "Need help?",
+      "welcome-to-grafana": "Welcome to Grafana"
+    }
+  },
+  "xychart": {
+    "series-editor": {
+      "add-series": "Add series",
+      "aria-label-select-series": "Select series {{seriesNum}}",
+      "label-color-field": "Color field",
+      "label-frame": "Frame",
+      "label-size-field": "Size field",
+      "label-x-field": "X field",
+      "label-y-field": "Y field",
+      "placeholder-all-frames": "All frames",
+      "placeholder-select-frame": "Select frame",
+      "tooltip-delete-series": "Delete series"
     }
   }
 }

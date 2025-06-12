@@ -1,6 +1,6 @@
 import { AsyncState } from 'react-use/lib/useAsync';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafana/ui';
@@ -37,7 +37,6 @@ export function ResourceExport({
   onShareExternallyChange,
   onViewYAML,
 }: Props) {
-  const { t } = useTranslate();
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
   const isV2Dashboard =
@@ -74,6 +73,25 @@ export function ResourceExport({
             />
           </Stack>
         )}
+        {initialSaveModelVersion === 'v2' && (
+          <Stack alignItems="center">
+            <Label>{switchExportModeLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                {
+                  label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
+                  value: ExportMode.V2Resource,
+                },
+                {
+                  label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
+                  value: ExportMode.V1Resource,
+                },
+              ]}
+              value={exportMode}
+              onChange={(value) => onExportModeChange(value)}
+            />
+          </Stack>
+        )}
         {exportMode !== ExportMode.Classic && (
           <Stack gap={1} alignItems="center">
             <Label>{switchExportFormatLabel}</Label>
@@ -87,7 +105,9 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        {(isV2Dashboard || exportMode === ExportMode.Classic) && (
+        {(isV2Dashboard ||
+          exportMode === ExportMode.Classic ||
+          (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />

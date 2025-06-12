@@ -13,7 +13,7 @@ import {
   getTimeZones,
 } from '@grafana/data';
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions';
@@ -32,7 +32,6 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const { t } = useTranslate();
   const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
@@ -174,7 +173,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                 >
                   <Input
                     value={c.dateFormat}
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                     placeholder={'e.g. YYYY-MM-DD'}
                     onChange={onInputFormat(idx)}
                     width={24}
@@ -193,7 +192,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                     >
                       <Input
                         value={c.joinWith}
-                        // eslint-disable-next-line @grafana/no-untranslated-strings
+                        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                         placeholder={'JSON'}
                         onChange={onJoinWithChange(idx)}
                         width={16}
@@ -211,7 +210,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                       >
                         <Input
                           value={c.dateFormat}
-                          // eslint-disable-next-line @grafana/no-untranslated-strings
+                          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                           placeholder={'e.g. YYYY-MM-DD'}
                           onChange={onInputFormat(idx)}
                           width={24}
