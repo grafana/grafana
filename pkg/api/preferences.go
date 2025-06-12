@@ -44,7 +44,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 			}
 			dashboardID = queryResult.ID
 		}
-	} else if cmd.HomeDashboardID != 0 {
+	} else if cmd.HomeDashboardID != 0 { // nolint:staticcheck
 		// make sure uid is always set if id is set
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{ID: cmd.HomeDashboardID, OrgID: cmd.OrgID}) // nolint:staticcheck
 		if err != nil {
