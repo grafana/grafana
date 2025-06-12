@@ -20,7 +20,11 @@ const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
-const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor', 'public/app/plugins/datasource/mssql'];
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/mssql',
+];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -124,7 +128,7 @@ module.exports = [
             {
               group: ['react-i18next', 'i18next'],
               importNames: ['t'],
-              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+              message: 'Please import from @grafana/i18n instead',
             },
             {
               group: ['react-i18next'],
@@ -300,6 +304,8 @@ module.exports = [
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [

@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 

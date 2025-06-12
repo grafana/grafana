@@ -111,9 +111,10 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 		}
 
 		t := team.Team{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Updated: time.Now(),
+			Name:        cmd.Name,
+			Email:       cmd.Email,
+			ExternalUID: cmd.ExternalUID,
+			Updated:     time.Now(),
 		}
 
 		sess.MustCols("email")

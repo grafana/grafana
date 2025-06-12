@@ -7,9 +7,8 @@ const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
 const packageName = '@grafana/i18n';
 
 const TRANS_IMPORT = `import { Trans } from '${packageName}';`;
-const T_IMPORT = `import { t } from '${packageName}/internal';`;
-const USE_TRANSLATE_IMPORT = `import { useTranslate } from '${packageName}';`;
-const TRANS_AND_USE_TRANSLATE_IMPORT = `import { Trans, useTranslate } from '${packageName}';`;
+const T_IMPORT = `import { t } from '${packageName}';`;
+const TRANS_AND_T_IMPORT = `import { Trans, t } from '${packageName}';`;
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -330,7 +329,7 @@ const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-featur
     },
 
     {
-      name: 'Fixes basic prop case and adds useTranslate',
+      name: 'Fixes basic prop case',
       code: `
 const Foo = () => {
   const fooBar = 'a';
@@ -346,10 +345,9 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-${USE_TRANSLATE_IMPORT}
+${T_IMPORT}
 const Foo = () => {
-  const { t } = useTranslate();
-const fooBar = 'a';
+  const fooBar = 'a';
   return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
   )
@@ -429,10 +427,9 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-${TRANS_AND_USE_TRANSLATE_IMPORT}
+${TRANS_AND_T_IMPORT}
 const Foo = () => {
-  const { t } = useTranslate();
-return (
+  return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
   )
 }`,
@@ -463,36 +460,6 @@ const Foo = () => {
   return {
     foo: <div title={t("some-feature.foo.title-foo", "foo")} />
   }
-}`,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'Fixes correctly when useTranslate already exists',
-      code: `
-${USE_TRANSLATE_IMPORT}
-const Foo = () => {
-  const { t } = useTranslate();
-  return (
-    <div title="foo" />
-  )
-}`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStringsProp',
-          suggestions: [
-            {
-              messageId: 'wrapWithT',
-              output: `
-${USE_TRANSLATE_IMPORT}
-const Foo = () => {
-  const { t } = useTranslate();
-  return (
-    <div title={t("some-feature.foo.title-foo", "foo")} />
-  )
 }`,
             },
           ],
@@ -564,41 +531,6 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
     },
 
     {
-      name: 'Fixes correctly when useTranslate import already exists',
-      code: `
-${USE_TRANSLATE_IMPORT}
-const Foo = () => {
-  const { t } = useTranslate();
-  return (<>
-    <div title={t("some-feature.foo.title-foo", "foo")} />
-    <div title={"bar"} />
-  </>)
-}
-`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStringsProp',
-          suggestions: [
-            {
-              messageId: 'wrapWithT',
-              output: `
-${USE_TRANSLATE_IMPORT}
-const Foo = () => {
-  const { t } = useTranslate();
-  return (<>
-    <div title={t("some-feature.foo.title-foo", "foo")} />
-    <div title={t("some-feature.foo.title-bar", "bar")} />
-  </>)
-}
-`,
-            },
-          ],
-        },
-      ],
-    },
-
-    {
       name: 'Fixes correctly when no return statement',
       code: `
 const Foo = () => {
@@ -637,8 +569,7 @@ const Foo = () => <div title="foo" />`,
             {
               messageId: 'wrapWithT',
               output: `
-${T_IMPORT}
-${TRANS_IMPORT}
+${TRANS_AND_T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
@@ -787,10 +718,9 @@ const Foo = () => {
             {
               messageId: 'wrapWithT',
               output: `
-${USE_TRANSLATE_IMPORT}
+${T_IMPORT}
 const Foo = () => {
-  const { t } = useTranslate();
-const thing = {
+  const thing = {
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
   }
 
@@ -893,10 +823,9 @@ const Foo = () => {
       filename,
       options: [{ forceFix: ['public/app/features/some-feature'] }],
       output: `
-${USE_TRANSLATE_IMPORT}
+${T_IMPORT}
 const Foo = () => {
-  const { t } = useTranslate();
-return <div title={t("some-feature.foo.title-foo", "foo")} />
+  return <div title={t("some-feature.foo.title-foo", "foo")} />
 }`,
       errors: [
         {
@@ -905,10 +834,9 @@ return <div title={t("some-feature.foo.title-foo", "foo")} />
             {
               messageId: 'wrapWithT',
               output: `
-${USE_TRANSLATE_IMPORT}
+${T_IMPORT}
 const Foo = () => {
-  const { t } = useTranslate();
-return <div title={t("some-feature.foo.title-foo", "foo")} />
+  return <div title={t("some-feature.foo.title-foo", "foo")} />
 }`,
             },
           ],

@@ -15,8 +15,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -169,6 +168,7 @@ export function TraceView(props: Props) {
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const datasourceUid = datasource ? datasource?.uid : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
@@ -204,6 +204,7 @@ export function TraceView(props: Props) {
             trace={traceProp}
             traceToProfilesOptions={traceToProfilesOptions}
             datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
             spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}
@@ -227,7 +228,6 @@ export function TraceView(props: Props) {
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}

@@ -5,7 +5,7 @@ import { IconSize } from '../../types/icon';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { TooltipPlacement } from '../Tooltip';
+import { TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';

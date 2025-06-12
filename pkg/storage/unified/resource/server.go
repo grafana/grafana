@@ -158,6 +158,9 @@ type SearchOptions struct {
 
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
+
+	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
+	RebuildInterval time.Duration
 }
 
 type ResourceServerOptions struct {
