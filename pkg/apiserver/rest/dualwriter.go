@@ -145,56 +145,44 @@ func SetDualWritingMode(
 		}
 	}
 
-	// Handle transitions to the desired mode.
-	switch {
-	case cfg.Mode == Mode2 || cfg.Mode == Mode1:
-		// Transitioning to Mode1 or Mode2 from any mode.
-		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
-			return Mode0, errDualWriterSetCurrentMode
-		}
-		return cfg.Mode, nil
-	case cfg.Mode >= Mode3 && currentMode < Mode3:
-		// Transitioning to Mode3 or higher from Mode0, Mode1, or Mode2.
-
-		// If SkipDataSync is enabled, we can set the mode directly without running the syncer.
-		if cfg.SkipDataSync {
-			if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
-				return Mode0, errDualWriterSetCurrentMode
-			}
-			return cfg.Mode, nil
-		}
-
-		// Transitioning to Mode3 or higher requires data synchronization.
-		cfgModeTmp := cfg.Mode
-		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
-		// once in the current active mode before we can upgrade.
-		cfg.Mode = currentMode
-		syncOk, err := runDataSyncer(ctx, cfg)
-		// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
-		cfg.Mode = cfgModeTmp
-		if err != nil {
-			klog.Error("data syncer failed for mode:", kvMode, "err", err)
-			return currentMode, nil
-		}
-		if !syncOk {
-			klog.Info("data syncer not ok for mode:", kvMode)
-			return currentMode, nil
-		}
-		// If sync is successful, update the mode to the desired one.
+	isUpgradeToReadUnifiedMode := currentMode < Mode3 && cfg.Mode >= Mode3
+	if !isUpgradeToReadUnifiedMode {
 		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
 		return cfg.Mode, nil
-	case cfg.Mode >= Mode3 && currentMode >= Mode3:
-		// Transitioning to Mode3 or higher from Mode3 or higher.
-		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(currentMode)); err != nil {
+	}
+
+	// If SkipDataSync is enabled, we can set the mode directly without running the syncer.
+	if cfg.SkipDataSync {
+		if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
 		return cfg.Mode, nil
-	default:
-		// Handle any unexpected cases (should not normally happen).
+	}
+
+	// Transitioning to Mode3 or higher from Mode0, Mode1, or Mode2.
+	// We need to run the syncer in the current mode before we can upgrade to Mode3 or higher.
+	cfgModeTmp := cfg.Mode
+	// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
+	// once in the current active mode before we can upgrade.
+	cfg.Mode = currentMode
+	syncOk, err := runDataSyncer(ctx, cfg)
+	// Once we are done with running the syncer, we can change the mode back on the config to the desired one.
+	cfg.Mode = cfgModeTmp
+	if err != nil {
+		klog.Error("data syncer failed for mode:", kvMode, "err", err)
+		return currentMode, nil
+	}
+	if !syncOk {
+		klog.Info("data syncer not ok for mode:", kvMode)
+		return currentMode, nil
+	}
+	// If sync is successful, update the mode to the desired one.
+	if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
 		return Mode0, errDualWriterSetCurrentMode
 	}
+	return cfg.Mode, nil
 }
 
 var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
