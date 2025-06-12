@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
@@ -43,7 +42,7 @@ type StatusReader interface {
 }
 
 type ProvenanceStore interface {
-	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]ngmodels.Provenance, error)
 }
 
 type PrometheusSrv struct {
