@@ -312,6 +312,7 @@ type Cfg struct {
 	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
+	QuickRanges QuickRanges
 
 	// User
 	UserInviteMaxLifetime        time.Duration
@@ -1387,6 +1388,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// Time picker settings
+	if err := cfg.readTimePicker(); err != nil {
+		return err
+	}
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
