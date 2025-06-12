@@ -40,14 +40,6 @@ const createDefaultProps = () => {
 };
 
 describe('LokiQueryBuilder', () => {
-  const originalLokiQueryHints = config.featureToggles.lokiQueryHints;
-  beforeEach(() => {
-    config.featureToggles.lokiQueryHints = true;
-  });
-
-  afterEach(() => {
-    config.featureToggles.lokiQueryHints = originalLokiQueryHints;
-  });
   it('tries to load label names', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);

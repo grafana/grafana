@@ -729,16 +729,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			// this is mainly used as a way to quickly disable query hints as a safeguard for our infrastructure
-			Name:           "lokiQueryHints",
-			Description:    "Enables query hints for Loki",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true",
-			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: false,
-		},
-		{
 			Name:              "kubernetesFeatureToggles",
 			Description:       "Use the kubernetes API for feature toggle management in the frontend",
 			Stage:             FeatureStageExperimental,

@@ -438,11 +438,6 @@ export interface FeatureToggles {
   */
   regressionTransformation?: boolean;
   /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
-  /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
   kubernetesFeatureToggles?: boolean;

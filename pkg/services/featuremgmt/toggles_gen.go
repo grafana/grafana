@@ -395,10 +395,6 @@ const (
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
-
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"

@@ -32,7 +32,7 @@ export function UnwrapParamEditor({
       inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
-        if (datasource instanceof LokiDatasource && config.featureToggles.lokiQueryHints) {
+        if (datasource instanceof LokiDatasource) {
           setState({ isLoading: true });
           const options = await loadUnwrapOptions(query, datasource, queryModeller, timeRange);
           setState({ options, isLoading: undefined });
