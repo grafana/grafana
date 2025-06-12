@@ -40,14 +40,6 @@
         "title-remove-group-by-column": "Remove group by column"
       }
     },
-    "max-lifetime-field": {
-      "content-max-lifetime": "The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.",
-      "max-lifetime": "Max lifetime"
-    },
-    "max-open-connections-field": {
-      "content-max-open": "The maximum number of open connections to the database. If <1>Max idle connections</1> is greater than 0 and the <3>Max open connections</3> is less than <5>Max idle connections</5>, then<7>Max idle connections</7> will be reduced to match the <9>Max open connections</9> limit. If set to 0, there is no limit on the number of open connections.",
-      "max-open": "Max open"
-    },
     "order-by-row": {
       "aria-label-order-by": "Order by",
       "label-limit": "Limit",
