@@ -4,6 +4,26 @@ const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
 
+const BORDER_RADIUS_PROPERTIES = [
+  'borderRadius',
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomLeftRadius',
+  'borderBottomRightRadius',
+];
+
+function isValidBorderRadiusLiteralValue(node) {
+  if (node.type !== AST_NODE_TYPES.Literal) {
+    return true;
+  }
+
+  if (node.value === 0 || node.value === '0px') {
+    return true;
+  }
+
+  return false;
+}
+
 const borderRadiusRule = createRule({
   create(context) {
     return {
@@ -11,8 +31,8 @@ const borderRadiusRule = createRule({
         if (
           node.type === AST_NODE_TYPES.Property &&
           node.key.type === AST_NODE_TYPES.Identifier &&
-          node.key.name === 'borderRadius' &&
-          node.value.type === AST_NODE_TYPES.Literal
+          BORDER_RADIUS_PROPERTIES.includes(node.key.name) &&
+          !isValidBorderRadiusLiteralValue(node.value)
         ) {
           context.report({
             node,
