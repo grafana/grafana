@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
+	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -187,7 +188,7 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if remotePrimary || remoteSecondary {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-		smtpCfg := remote.SmtpConfig{
+		smtpCfg := remoteClient.SmtpConfig{
 			FromAddress:    ng.Cfg.Smtp.FromAddress,
 			FromName:       ng.Cfg.Smtp.FromName,
 			Host:           ng.Cfg.Smtp.Host,
@@ -208,7 +209,7 @@ func (ng *AlertNG) init() error {
 			Smtp:              smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 
-			// TODO: Remove once everything can be sent in the 'Smtp' field.
+			// TODO: Remove once everything can be sent in the 'smtp_config' field.
 			SmtpFrom:      ng.Cfg.Smtp.FromAddress,
 			StaticHeaders: ng.Cfg.Smtp.StaticHeaders,
 		}

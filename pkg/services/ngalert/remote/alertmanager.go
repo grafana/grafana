@@ -71,19 +71,7 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp SmtpConfig
-}
-
-type SmtpConfig struct {
-	EhloIdentity   string
-	FromAddress    string
-	FromName       string
-	Host           string
-	Password       string
-	SkipVerify     bool
-	StartTLSPolicy string
-	StaticHeaders  map[string]string
-	User           string
+	smtp remoteClient.SmtpConfig
 }
 
 type AlertmanagerConfig struct {
@@ -102,18 +90,18 @@ type AlertmanagerConfig struct {
 	PromoteConfig bool
 
 	// Smtp has all the necessary settings for the remote Alertmanager to create an email sender.
-	Smtp SmtpConfig
-
-	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
-	// TODO: Remove once everything can be send in the 'Smtp' field.
-	SmtpFrom      string
-	StaticHeaders map[string]string
+	Smtp remoteClient.SmtpConfig
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
+
+	// TODO: Remove once everything can be send in the 'smtp_config' field.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
+	StaticHeaders map[string]string
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -142,17 +130,6 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	}
 	logger := log.New("ngalert.remote.alertmanager")
 
-	smtp := remoteClient.SmtpConfig{
-		EhloIdentity:   cfg.Smtp.EhloIdentity,
-		FromAddress:    cfg.Smtp.FromAddress,
-		FromName:       cfg.Smtp.FromName,
-		Host:           cfg.Smtp.Host,
-		Password:       cfg.Smtp.Password,
-		SkipVerify:     cfg.Smtp.SkipVerify,
-		StartTLSPolicy: cfg.Smtp.StartTLSPolicy,
-		StaticHeaders:  cfg.Smtp.StaticHeaders,
-		User:           cfg.Smtp.User,
-	}
 	mcCfg := &remoteClient.Config{
 		Logger:        logger,
 		Password:      cfg.BasicAuthPassword,
@@ -161,9 +138,9 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
 
-		Smtp: smtp,
+		Smtp: cfg.Smtp,
 
-		// TODO: Remove once everything can be sent in the 'Smtp' field.
+		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
@@ -240,8 +217,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		url:               cfg.URL,
 		smtp:              cfg.Smtp,
 
-		// TODO: Remove once it can be sent in the 'smtp' field.
-		smtpFrom: cfg.SmtpFrom,
+		// TODO: Remove once it can be sent only in the 'smtp_config' field.
+		smtpFrom: cfg.Smtp.FromAddress,
 	}, nil
 }
 
@@ -722,6 +699,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
+	// TODO: Remove when the from address can be sent only in the 'smtp_config' field.
 	if rc.SmtpFrom != am.smtpFrom {
 		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true

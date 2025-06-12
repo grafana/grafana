@@ -77,7 +77,7 @@ type Config struct {
 	ExternalURL   string
 	Smtp          SmtpConfig
 
-	// TODO: Remove once everything can be sent in the 'Smtp' field.
+	// TODO: Remove once everything can be sent in the 'smtp_config' field.
 	SmtpFrom      string
 	StaticHeaders map[string]string
 }
@@ -125,7 +125,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		externalURL:   cfg.ExternalURL,
 		smtp:          cfg.Smtp,
 
-		// TODO: Remove once everything can be sent in the 'smtp' field.
+		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		smtpFrom:      cfg.SmtpFrom,
 		staticHeaders: cfg.StaticHeaders,
 	}, nil
