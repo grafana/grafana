@@ -112,6 +112,11 @@ func RegisterAPIService(
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
+	// Don't register the API.
+	if cfg.StackID != "" {
+		return nil, nil
+	}
+
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
