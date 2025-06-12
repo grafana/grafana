@@ -1,8 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
-import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -67,13 +66,10 @@ export class DashboardEditableElement implements EditableDashboardElement {
           size="sm"
           onClick={() => this.dashboard.onOpenSettings()}
           tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+          icon="sliders-v-alt"
+          iconPlacement="right"
         >
-          <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
-            <span>
-              <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
-            </span>
-            <Icon name="sliders-v-alt" />
-          </Stack>
+          <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
         </Button>
       </>
     );

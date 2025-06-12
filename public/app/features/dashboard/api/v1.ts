@@ -1,5 +1,5 @@
 import { locationUtil } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { backendSrv } from 'app/core/services/backend_srv';

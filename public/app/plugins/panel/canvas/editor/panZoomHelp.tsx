@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 
 import { StandardEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/';
 
 export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, unknown>) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return (

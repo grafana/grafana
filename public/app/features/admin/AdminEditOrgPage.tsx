@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -50,8 +50,6 @@ const AdminEditOrgPage = () => {
     fetchOrg();
     fetchOrgUsers(page);
   }, [fetchOrg, fetchOrgUsers, page]);
-
-  const { t } = useTranslate();
 
   const onUpdateOrgName = async ({ orgName }: OrgNameDTO) => {
     await updateOrgName(orgName, orgId);

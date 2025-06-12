@@ -5,8 +5,7 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Box,
   Button,
@@ -118,7 +117,6 @@ export function GrafanaEvaluationBehaviorStep({
   existing: boolean;
   enableProvisionedGroups: boolean;
 }) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
 
@@ -415,7 +413,6 @@ function EvaluationGroupCreationModal({
   onCreate: (group: string, evaluationInterval: string) => void;
   groupfoldersForGrafana?: RulerRulesConfigDTO | null;
 }): React.ReactElement {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { watch } = useFormContext<RuleFormValues>();
 
