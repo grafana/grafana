@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, TextArea } from '@grafana/ui';
 
 interface CommentFieldProps {
@@ -15,7 +15,6 @@ interface CommentFieldProps {
 
 export const CommentField = memo<CommentFieldProps>(({ disabled = false }) => {
   const { register } = useFormContext();
-  const { t } = useTranslate();
 
   return (
     <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>

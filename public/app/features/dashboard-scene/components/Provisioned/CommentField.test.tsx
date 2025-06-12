@@ -7,9 +7,7 @@ import { CommentField } from './CommentField';
 
 // Mock the i18n hook since it's used in the component
 jest.mock('@grafana/i18n', () => ({
-  useTranslate: () => ({
-    t: (_: string, defaultValue: string) => defaultValue,
-  }),
+  t: (_: string, defaultValue: string) => defaultValue,
 }));
 
 interface FormData {

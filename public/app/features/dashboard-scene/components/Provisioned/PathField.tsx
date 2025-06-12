@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input } from '@grafana/ui';
 
 interface PathFieldProps {
@@ -16,7 +16,6 @@ interface PathFieldProps {
 
 export const PathField = memo<PathFieldProps>(({ readOnly = false }) => {
   const { register } = useFormContext();
-  const { t } = useTranslate();
 
   return (
     <Field
@@ -27,7 +26,7 @@ export const PathField = memo<PathFieldProps>(({ readOnly = false }) => {
         'File path inside the repository (.json or .yaml)'
       )}
     >
-      <Input id="dashboard-path" {...register('path')} readOnly={readOnly} />
+      <Input id="dashboard-path" type="text" {...register('path')} readOnly={readOnly} />
     </Field>
   );
 });

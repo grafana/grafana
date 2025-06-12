@@ -1,7 +1,7 @@
 import { useForm, FormProvider } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, Drawer, Stack } from '@grafana/ui';
 import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDeleteRepositoryFiles';
@@ -24,8 +24,6 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboardData, onDismiss }: Props) {
-  const { t } = useTranslate();
-
   const { defaultValues, repository, loadedFromRef, readOnly, isGitHub, workflowOptions } = provisionedDashboardData;
   if (!defaultValues) {
     return null;
@@ -64,15 +62,12 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
         payload: [t('dashboard-scene.delete-provisioned-dashboard-form.success', 'Dashboard deleted successfully')],
       });
 
-      if (workflow === 'branch') {
-        // Reset form and close drawer
-        onDismiss();
-        reset();
-        // TODO: this is a temporary solution to navigate back to the dashboard view, add a proper solution later
-        // add maybe navigate back to dashboard with pull request option etc.
-        window.history.back();
-        return;
-      }
+      // Reset form and close drawer
+      onDismiss();
+      reset();
+      // TODO: this is a temporary solution to navigate back to the dashboard view, add a proper solution later
+      // add maybe navigate back to dashboard with pull request option etc.
+      window.history.back();
     } catch (error) {
       console.error('Error deleting dashboard:', error);
       getAppEvents().publish({

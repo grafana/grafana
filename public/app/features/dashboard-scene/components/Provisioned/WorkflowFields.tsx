@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input, RadioButtonGroup } from '@grafana/ui';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -25,7 +25,6 @@ export const WorkflowFields = memo<WorkflowFieldsProps>(({ workflow, workflowOpt
     register,
     formState: { errors },
   } = useFormContext();
-  const { t } = useTranslate();
 
   return (
     <>
@@ -38,10 +37,7 @@ export const WorkflowFields = memo<WorkflowFieldsProps>(({ workflow, workflowOpt
               id="dashboard-workflow"
               {...field}
               options={workflowOptions}
-              onChange={(value) => {
-                console.log('🔧 Workflow changed to:', value);
-                field.onChange(value);
-              }}
+              onChange={(value) => field.onChange(value)}
             />
           )}
         />

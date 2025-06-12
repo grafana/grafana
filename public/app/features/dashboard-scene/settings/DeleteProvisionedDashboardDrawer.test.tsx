@@ -297,33 +297,6 @@ describe('DeleteProvisionedDashboardDrawer', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Error deleting dashboard:', error);
       consoleSpy.mockRestore();
     });
-
-    it('should not navigate back when workflow is not branch', async () => {
-      mockDeleteRepoFile.mockResolvedValue({});
-
-      const writeWorkflowProps = {
-        ...defaultProps,
-        provisionedDashboardData: {
-          ...defaultProvisionedData,
-          defaultValues: {
-            ...defaultProvisionedData.defaultValues,
-            workflow: 'write' as const,
-          },
-        },
-      };
-
-      render(<DeleteProvisionedDashboardDrawer {...writeWorkflowProps} />);
-
-      const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
-      await userEvent.click(deleteButton);
-
-      await waitFor(() => {
-        expect(mockDeleteRepoFile).toHaveBeenCalled();
-      });
-
-      expect(defaultProps.onDismiss).not.toHaveBeenCalled();
-      expect(window.history.back).not.toHaveBeenCalled();
-    });
   });
 
   describe('Loading State', () => {

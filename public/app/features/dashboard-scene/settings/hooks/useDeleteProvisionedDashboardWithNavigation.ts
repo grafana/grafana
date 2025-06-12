@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDeleteRepositoryFiles';
 
@@ -26,7 +26,6 @@ export function useDeleteProvisionedDashboardWithNavigation({
   onDismiss,
   onReset,
 }: DeleteDashboardWithNavigationOptions) {
-  const { t } = useTranslate();
   const [deleteRepoFile, request] = useDeleteRepositoryFiles();
 
   const deleteWithNavigation = useCallback(
