@@ -130,17 +130,13 @@ func TestMetadataStore_Save(t *testing.T) {
 		Name:      "test-deployment",
 	}
 
-	uid := uuid.New()
-	metadata := MetaData{
-		Folder:  "test-folder",
-		Deleted: false,
-		UID:     uid,
-	}
-
 	err := store.Save(ctx, MetaDataObj{
-		Key:   key,
-		UID:   uid,
-		Value: metadata,
+		Key: key,
+		UID: uuid.New(),
+		Value: MetaData{
+			Folder:  "test-folder",
+			Deleted: false,
+		},
 	})
 	require.NoError(t, err)
 }
@@ -160,7 +156,6 @@ func TestMetadataStore_Get(t *testing.T) {
 	metadata := MetaData{
 		Folder:  "test-folder",
 		Deleted: false,
-		UID:     uid,
 	}
 
 	// Save first
@@ -217,9 +212,9 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Save multiple versions (uid3 should be latest)
-	metadata1 := MetaData{Folder: "folder1", Deleted: false, UID: uid1}
-	metadata2 := MetaData{Folder: "folder2", Deleted: false, UID: uid2}
-	metadata3 := MetaData{Folder: "folder3", Deleted: false, UID: uid3}
+	metadata1 := MetaData{Folder: "folder1", Deleted: false}
+	metadata2 := MetaData{Folder: "folder2", Deleted: false}
+	metadata3 := MetaData{Folder: "folder3", Deleted: false}
 
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -260,14 +255,14 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 		Name:      "test-deployment",
 	}
 
-	uid := uuid.New()
 	metadata := MetaData{
 		Folder:  "test-folder",
 		Deleted: true, // Marked as deleted
-		UID:     uid,
 	}
+	uid, err := uuid.NewV7()
+	require.NoError(t, err)
 
-	err := store.Save(ctx, MetaDataObj{
+	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
 		UID:   uid,
 		Value: metadata,
@@ -348,7 +343,7 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "no latest version found")
 }
 
-func TestMetadataStore_List(t *testing.T) {
+func TestMetadataStore_ListAll(t *testing.T) {
 	store := newMetadataStore(setupTestKV(t))
 	ctx := context.Background()
 
@@ -379,8 +374,8 @@ func TestMetadataStore_List(t *testing.T) {
 		Name:      "deployment2",
 	}
 
-	metadata1 := MetaData{Folder: "folder1", Deleted: false, UID: uid1}
-	metadata2 := MetaData{Folder: "folder2", Deleted: false, UID: uid2}
+	metadata1 := MetaData{Folder: "folder1", Deleted: false}
+	metadata2 := MetaData{Folder: "folder2", Deleted: false}
 
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key1,
@@ -397,7 +392,7 @@ func TestMetadataStore_List(t *testing.T) {
 
 	// List all metadata objects
 	var results []MetaDataObj
-	for obj, err := range store.List(ctx, key) {
+	for obj, err := range store.ListAll(ctx, key) {
 		require.NoError(t, err)
 		results = append(results, obj)
 	}
@@ -414,7 +409,53 @@ func TestMetadataStore_List(t *testing.T) {
 	assert.True(t, foundNames["deployment2"])
 }
 
-// Test PrefixRangeEnd function
+func TestMetadataStore_ListLatest(t *testing.T) {
+	store := newMetadataStore(setupTestKV(t))
+	ctx := context.Background()
+
+	key := resourcepb.ResourceKey{
+		Group:     "apps",
+		Resource:  "deployments",
+		Namespace: "default",
+		Name:      "test-deployment",
+	}
+
+	// Save multiple metadata objects
+	uid1, err := uuid.NewV7()
+	require.NoError(t, err)
+	uid2, err := uuid.NewV7()
+	require.NoError(t, err)
+
+	metadata1 := MetaData{Folder: "folder1", Deleted: false}
+	metadata2 := MetaData{Folder: "folder2", Deleted: false}
+
+	err = store.Save(ctx, MetaDataObj{
+		Key:   key,
+		UID:   uid1,
+		Value: metadata1,
+	})
+	require.NoError(t, err)
+
+	err = store.Save(ctx, MetaDataObj{
+		Key:   key,
+		UID:   uid2,
+		Value: metadata2,
+	})
+	require.NoError(t, err)
+
+	// List latest metadata objects
+	var results []MetaDataObj
+	for obj, err := range store.ListLatest(ctx, key) {
+		require.NoError(t, err)
+		results = append(results, obj)
+	}
+
+	assert.Len(t, results, 1)
+	assert.Equal(t, key, results[0].Key)
+	assert.Equal(t, uid2, results[0].UID)
+	assert.Equal(t, metadata2, results[0].Value)
+}
+
 func TestPrefixRangeEnd(t *testing.T) {
 	prefix := "/unified/meta/apps/"
 	expected := "/unified/meta/apps0" // '/' + 1 = '0'

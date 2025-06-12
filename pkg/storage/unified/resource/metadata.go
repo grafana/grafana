@@ -23,7 +23,7 @@ type MetaData struct {
 }
 
 type MetaDataObj struct {
-	Key   resourcepb.ResourceKey
+	Key   resourcepb.ResourceKey // Let's create another key that contains the UUID
 	UID   uuid.UUID
 	Value MetaData
 }
@@ -142,7 +142,103 @@ func (d *metadataStore) GetLatest(ctx context.Context, key resourcepb.ResourceKe
 	return MetaDataObj{}, fmt.Errorf("no latest version found")
 }
 
-func (d *metadataStore) List(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[MetaDataObj, error] {
+// TODO: replace the key with to not use the resourcepb.ResourceKey
+func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[MetaDataObj, error] {
+	prefix, err := d.getPrefix(key)
+	if err != nil {
+		return func(yield func(MetaDataObj, error) bool) {
+			yield(MetaDataObj{}, err)
+		}
+	}
+	iter := d.kv.List(ctx, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	})
+	return func(yield func(MetaDataObj, error) bool) {
+		var currentKey *resourcepb.ResourceKey // The current key we are iterating over
+		var latestPath string
+		var latestUID uuid.UUID
+		for k, err := range iter {
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			// Parse the key to get the resource key and uid
+			key, uid, err := d.parseKey(k)
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			if currentKey == nil { // First iteration
+				currentKey = &key
+			}
+
+			// If the current key is not the same as the previous key, we need to yield the selected object
+			if currentKey.Namespace != key.Namespace || currentKey.Group != key.Group || currentKey.Resource != key.Resource || currentKey.Name != key.Name {
+				metaObj, err := d.kv.Get(ctx, latestPath)
+				if err != nil {
+					yield(MetaDataObj{}, err)
+					return
+				}
+				var meta MetaData
+				if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
+					yield(MetaDataObj{}, err)
+					return
+				}
+
+				if !meta.Deleted {
+					yield(MetaDataObj{
+						Key: resourcepb.ResourceKey{
+							Namespace: currentKey.Namespace,
+							Group:     currentKey.Group,
+							Resource:  currentKey.Resource,
+							Name:      currentKey.Name,
+						},
+						UID:   latestUID,
+						Value: meta,
+					}, nil)
+				}
+				currentKey = &key // Update the current key to the new key
+				latestPath = k
+				latestUID = uid
+			} else {
+				// We are still iterating over the same key, so we need to update the latest path and uid
+				latestPath = k
+				latestUID = uid
+			}
+		}
+		if latestPath != "" {
+			// TODO: this is dupplicated code. Refactor it
+			// Process the last key
+			metaObj, err := d.kv.Get(ctx, latestPath)
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			var meta MetaData
+			if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+
+			if !meta.Deleted {
+				yield(MetaDataObj{
+					Key: resourcepb.ResourceKey{
+						Namespace: currentKey.Namespace,
+						Group:     currentKey.Group,
+						Resource:  currentKey.Resource,
+						Name:      currentKey.Name,
+					},
+					UID:   latestUID,
+					Value: meta,
+				}, nil)
+			}
+		}
+	}
+}
+
+// ListAll lists all metadata objects for a given resource key.
+func (d *metadataStore) ListAll(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[MetaDataObj, error] {
 	prefix, err := d.getPrefix(key)
 	if err != nil {
 		return func(yield func(MetaDataObj, error) bool) {
