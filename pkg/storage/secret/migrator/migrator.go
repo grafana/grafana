@@ -14,6 +14,7 @@ import (
 const (
 	TableNameKeeper            = "secret_keeper"
 	TableNameSecureValueOutbox = "secret_secure_value_outbox"
+	TableNameEncryptedValue    = "secret_encrypted_value"
 )
 
 type SecretDB struct {
@@ -66,6 +67,18 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
 		},
+	})
+
+	tables = append(tables, migrator.Table{
+		Name: TableNameEncryptedValue,
+		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},     // Fixed size of a UUID.
+			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
 	})
 
 	tables = append(tables, migrator.Table{
