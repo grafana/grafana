@@ -4588,6 +4588,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "title": {
+      "action": "Change dashboard title"
+    },
     "toolbar": {
       "add": "Add",
       "alert-rules": "Alert rules",
