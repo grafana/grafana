@@ -349,7 +349,9 @@ function joinTabular(tables: AlignedData[], outer = false) {
       .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
       .join(';');
 
-    let nullLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ${i === 0 ? `rtable[${i}][ridx]` : `null`}`).join(';');
+    let nullLeftRowTpl = ltable
+      .map((c, i) => `joined[${i}][rowIdx] = ${i === 0 ? `rtable[${i}][ridx]` : `null`}`)
+      .join(';');
     // (skips join field in right table)
     let nullRightRowTpl = rtable.slice(1).map((c, i) => `joined[${ltable.length + i}][rowIdx] = null`);
 
