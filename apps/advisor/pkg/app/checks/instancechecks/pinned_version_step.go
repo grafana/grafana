@@ -28,7 +28,9 @@ func (s *pinnedVersionStep) Description() string {
 }
 
 func (s *pinnedVersionStep) Resolution() string {
-	return "You may miss out on security updates and bug fixes if you use a pinned version. Contact your Grafana administrator."
+	return "You may miss out on security updates and bug fixes if you use a pinned version. " +
+		"Contact your Grafana administrator and open a " +
+		"<a href='https://grafana.com/profile/org#support' target=_blank>support ticket</a> to help you get unpinned."
 }
 
 func (s *pinnedVersionStep) ID() string {
