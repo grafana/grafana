@@ -34,6 +34,9 @@ const borderRadiusRule = createRule({
             context.report({
               node,
               messageId: 'borderRadiusNoZeroValue',
+              fix(fixer) {
+                return fixer.replaceText(node.value, "'unset'");
+              },
             });
           } else {
             // Otherwise, require theme tokens are used
@@ -49,6 +52,7 @@ const borderRadiusRule = createRule({
   name: 'no-border-radius-literal',
   meta: {
     type: 'problem',
+    fixable: 'code',
     docs: {
       description: 'Check if border-radius theme tokens are used',
     },
