@@ -124,9 +124,9 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 
 	t.Run("should set page to 1 when limit is set without continue token", func(t *testing.T) {
 		options := &metainternalversion.ListOptions{
-			Limit: 2,
+			Limit: 3,
 		}
-		folders := make([]*folder.Folder, 2)
+		folders := make([]*folder.Folder, 5)
 		for i := range folders {
 			folders[i] = &folder.Folder{
 				UID:   fmt.Sprintf("folder-%d", i),
@@ -141,8 +141,8 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		require.True(t, ok)
 		token, err := base64.StdEncoding.DecodeString(list.Continue)
 		require.NoError(t, err)
-		require.Equal(t, "", string(token))
-		require.Equal(t, int64(2), folderService.LastQuery.Limit)
+		require.Equal(t, "3|2", string(token))
+		require.Equal(t, int64(3), folderService.LastQuery.Limit)
 		require.Equal(t, int64(1), folderService.LastQuery.Page)
 	})
 }
