@@ -17,7 +17,7 @@ import { isString } from 'lodash';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 
 const buttonLabels = {
@@ -65,7 +65,6 @@ export const widgets: Widgets = {
   datetime: {
     ...BasicConfig.widgets.datetime,
     factory: function DateTimeInput(props: WidgetProps) {
-      const { t } = useTranslate();
       if (props?.operator === Op.MACROS) {
         return (
           <Select
@@ -123,7 +122,6 @@ export const settings: Settings = {
   deleteLabel: buttonLabels.remove,
   // This is the component that renders conjunctions (logical operators)
   renderConjs: function Conjunctions(conjProps) {
-    const { t } = useTranslate();
     return (
       <Select
         id={conjProps?.id}
@@ -138,7 +136,6 @@ export const settings: Settings = {
   },
   // This is the component that renders fields
   renderField: function Field(fieldProps) {
-    const { t } = useTranslate();
     const fields = fieldProps?.config?.fields || {};
     return (
       <Select
@@ -165,7 +162,6 @@ export const settings: Settings = {
   },
   // This is the component used for the Add/Remove buttons
   renderButton: function RAQBButton(buttonProps) {
-    const { t } = useTranslate();
     return (
       <Button
         type="button"
@@ -181,7 +177,6 @@ export const settings: Settings = {
   },
   // This is the component used for the fields operator selector
   renderOperator: function Operator(operatorProps) {
-    const { t } = useTranslate();
     return (
       <Select
         options={operatorProps?.items.map((op) => ({ label: op.label, value: op.key }))}
@@ -249,7 +244,6 @@ const noop = () => '';
 
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
-  const { t } = useTranslate();
 
   // IN operator expects array, override IN formatter for multi-value variables
   const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp?.bind(config.ctx) || noop;

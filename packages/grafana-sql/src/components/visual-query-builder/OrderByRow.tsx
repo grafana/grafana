@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Input, RadioButtonGroup, Select, Space } from '@grafana/ui';
 
@@ -23,7 +23,6 @@ const sortOrderOptions = [
 ];
 
 export function OrderByRow({ sql, onSqlChange, columns, showOffset }: OrderByRowProps) {
-  const { t } = useTranslate();
   const onSortOrderChange = useCallback(
     (item: 'ASC' | 'DESC') => {
       const newSql: SQLExpression = { ...sql, orderByDirection: item };

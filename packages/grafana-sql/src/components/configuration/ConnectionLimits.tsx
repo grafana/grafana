@@ -1,5 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
@@ -14,7 +14,6 @@ interface Props<T> {
 }
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
-  const { t } = useTranslate();
   const { onOptionsChange, options } = props;
   const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;

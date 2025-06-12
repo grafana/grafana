@@ -3,7 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
@@ -44,7 +44,6 @@ export function QueryHeader({
   query,
   queryRowFilter,
 }: QueryHeaderProps) {
-  const { t } = useTranslate();
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);

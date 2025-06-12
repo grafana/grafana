@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 
 import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
@@ -19,7 +19,6 @@ interface VisualEditorProps extends QueryEditorProps {
 }
 
 export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, range }: VisualEditorProps) => {
-  const { t } = useTranslate();
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;

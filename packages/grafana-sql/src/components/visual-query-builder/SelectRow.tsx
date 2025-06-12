@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 
@@ -23,7 +23,6 @@ interface SelectRowProps {
 }
 
 export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
   const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];

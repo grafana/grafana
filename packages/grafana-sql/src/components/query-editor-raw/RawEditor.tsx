@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -21,7 +21,6 @@ interface RawEditorProps extends Omit<QueryEditorProps, 'onChange'> {
 }
 
 export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryToValidate, range }: RawEditorProps) {
-  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(false);

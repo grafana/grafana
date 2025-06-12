@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps, SQLDialect, toOption } from '../types';
@@ -34,7 +34,6 @@ export const DatasetSelector = ({
   */
   // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
   // OR if 2) the datasource is Postgres. In either case the only option available to the user is the preconfigured database.
-  const { t } = useTranslate();
   const hasPreconfigCondition = !!preconfiguredDataset || dialect === 'postgres';
 
   const state = useAsync(async () => {

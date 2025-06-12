@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
@@ -16,7 +16,6 @@ interface QueryToolboxProps extends Omit<QueryValidatorProps, 'onValidate'> {
 }
 
 export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ...validatorProps }: QueryToolboxProps) {
-  const { t } = useTranslate();
   const theme = useTheme2();
   const [validationResult, setValidationResult] = useState<boolean>();
 

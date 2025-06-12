@@ -2,7 +2,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps } from '../types';
@@ -16,7 +16,6 @@ export interface TableSelectorProps extends ResourceSelectorProps {
 }
 
 export const TableSelector = ({ db, dataset, table, className, onChange, inputId }: TableSelectorProps) => {
-  const { t } = useTranslate();
   const state = useAsync(async () => {
     // No need to attempt to fetch tables for an unknown dataset.
     if (!dataset) {
