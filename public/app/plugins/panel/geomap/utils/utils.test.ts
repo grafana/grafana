@@ -7,8 +7,6 @@ import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
-import { getTemplateSrv } from '@grafana/runtime';
-
 // Mock the config module to avoid undefined panels error
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: jest.fn(),
