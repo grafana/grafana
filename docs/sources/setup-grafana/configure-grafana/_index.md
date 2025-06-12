@@ -2820,7 +2820,7 @@ Set the default set of quick relative offset time ranges that show up in the rig
 
 The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
 
-If no configuration is provided, Grafana's default time ranges will be used.
+If no configuration is provided, the default time ranges will be used.
 
 For example:
 
