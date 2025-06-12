@@ -3,14 +3,14 @@ import { t } from '@grafana/i18n/internal';
 import { FetchError, getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
-import { Resource, ListOptions, ResourceList } from 'app/features/apiserver/types';
+import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI } from './types';
+import { DashboardAPI, ListDeletedDashboardsOptions } from './types';
 
 export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   constructor() {}
@@ -53,7 +53,7 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
   /**
    * No-op for legacy API
    */
-  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>): Promise<ResourceList<Dashboard>> {
+  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<Dashboard>> {
     return Promise.resolve({
       apiVersion: 'v1',
       kind: 'List',
