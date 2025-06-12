@@ -338,6 +338,10 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
 }
 
+export function isDataSourceRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.manageRecordingRulesTarget !== false; //if this prop is undefined it defaults to true
+}
+
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     return { uid: GrafanaRulesSourceSymbol, name: GRAFANA_RULES_SOURCE_NAME, ruleSourceType: 'grafana' };
