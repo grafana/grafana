@@ -21,7 +21,7 @@ title: 'Preferences API'
 Keys:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
-- **homeDashboardUID**: The `:uid` of a favorited dashboard
+- **homeDashboardUID**: The `:uid` of a dashboard
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the
