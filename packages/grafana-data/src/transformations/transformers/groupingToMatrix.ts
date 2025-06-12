@@ -60,7 +60,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       numFields += frame.fields.length;
     }
 
-    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
+    return `Grouping to matrix requires at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
