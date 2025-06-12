@@ -218,7 +218,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		smtp:              cfg.SmtpConfig,
 
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
-		smtpFrom: cfg.SmtpConfig.FromAddress,
+		smtpFrom: cfg.SmtpFrom,
 	}, nil
 }
 
