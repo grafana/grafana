@@ -65,6 +65,8 @@ export class Scene {
   width = 0;
   height = 0;
   scale = 1;
+  scrollLeft = 0;
+  scrollTop = 0;
   // style doesn't seem to be used anywhere
   // style: CSSProperties = {};
   data?: PanelData;
@@ -181,6 +183,12 @@ export class Scene {
     setTimeout(() => {
       // if (this.div) {
       if (this.viewportDiv && this.viewerDiv) {
+        if (!this.shouldPanZoom) {
+          this.scale = 1;
+          this.scrollLeft = 0;
+          this.scrollTop = 0;
+        }
+
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
         initMoveable(destroySelecto, enableEditing, this);
@@ -191,10 +199,6 @@ export class Scene {
         // update initial connections svg size
         this.updateConnectionsSize();
         this.fitContent(this, zoomToContent);
-
-        if (!this.shouldPanZoom) {
-          this.scale = 1;
-        }
       }
     });
     return this.root;
