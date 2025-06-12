@@ -3,7 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -83,7 +83,10 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    subTitle: 'Manage settings for an individual service account.',
+    subTitle: t(
+      'serviceaccounts.service-account-page-unconnected.page-nav.subTitle.manage-settings-individual-service-account',
+      'Manage settings for an individual service account.'
+    ),
   };
 
   useEffect(() => {
@@ -93,8 +96,6 @@ export const ServiceAccountPageUnconnected = ({
       fetchACOptions();
     }
   }, [loadServiceAccount, loadServiceAccountTokens, id]);
-
-  const { t } = useTranslate();
 
   const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
     updateServiceAccount(serviceAccount);

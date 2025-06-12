@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,34 +18,6 @@ type sqlStore struct {
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) (res []*apikey.APIKey, err error) {
-	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var sess *xorm.Session
-
-		if query.IncludeExpired {
-			sess = dbSession.Limit(100, 0).
-				Where("org_id=?", query.OrgID).
-				Asc("name")
-		} else {
-			sess = dbSession.Limit(100, 0).
-				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgID, timeNow().Unix()).
-				Asc("name")
-		}
-
-		sess = sess.Where("service_account_id IS NULL")
-
-		filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
-		if err != nil {
-			return err
-		}
-		sess.And(filter.Where, filter.Args...)
-
-		res = make([]*apikey.APIKey, 0)
-		return sess.Find(&res)
-	})
-	return res, err
-}
-
 func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	result := make([]*apikey.APIKey, 0)
 	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -59,42 +28,6 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 		return sess.Find(&result)
 	})
 	return result, err
-}
-
-func (ss *sqlStore) CountAPIKeys(ctx context.Context, orgID int64) (int64, error) {
-	type result struct {
-		Count int64
-	}
-
-	r := result{}
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ? and service_account_id IS NULL"
-		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return 0, err
-	}
-	return r.Count, err
-}
-
-func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
-		result, err := sess.Exec(rawSQL, cmd.ID, cmd.OrgID)
-		if err != nil {
-			return err
-		}
-		n, err := result.RowsAffected()
-		if err != nil {
-			return err
-		} else if n == 0 {
-			return apikey.ErrNotFound
-		}
-		return nil
-	})
 }
 
 func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res *apikey.APIKey, err error) {
@@ -131,23 +64,6 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res 
 			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
 		res = &t
-		return nil
-	})
-	return res, err
-}
-
-func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (res *apikey.APIKey, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var key apikey.APIKey
-		has, err := sess.ID(query.ApiKeyID).Get(&key)
-
-		if err != nil {
-			return err
-		} else if !has {
-			return apikey.ErrInvalid
-		}
-
-		res = &key
 		return nil
 	})
 	return res, err

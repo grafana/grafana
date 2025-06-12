@@ -9,6 +9,7 @@ import {
   DataHoverClearEvent,
   BusEventBase,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { CustomScrollbar } from '@grafana/ui';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
@@ -58,13 +59,19 @@ export class CursorView extends Component<Props, State> {
   render() {
     const { event } = this.state;
     if (!event) {
-      return <div>no events yet</div>;
+      return (
+        <div>
+          <Trans i18nKey="debug.cursor-view.no-events-yet">No events yet</Trans>
+        </div>
+      );
     }
     const { type, payload, origin } = event;
     return (
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-        <h3>Origin: {(origin as any)?.path}</h3>
-        <span>Type: {type}</span>
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+        <h3>event.origin: {(origin as any)?.path}</h3>
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+        <span>event.type: {type}</span>
         {Boolean(payload) && (
           <>
             <pre>{JSON.stringify(payload.point, null, '  ')}</pre>

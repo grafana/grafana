@@ -1,6 +1,7 @@
 import { partition } from 'lodash';
 
 import { DataFrame, Field, FieldWithIndex, LinkModel, LogRowModel, ScopedVars } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -65,7 +66,7 @@ export const getDataframeFields = (row: LogRowModel, getFieldLinks?: GetFieldLin
   return nonEmptyVisibleFields.map((field) => {
     const vars: ScopedVars = {
       __labels: {
-        text: 'Labels',
+        text: t('logs.get-dataframe-fields.vars.text.labels', 'Labels'),
         value: {
           tags: { ...row.labels },
         },

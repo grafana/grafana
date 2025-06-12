@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -67,6 +67,7 @@ export const StateFilterValues = {
 
 export const CentralAlertHistoryScene = () => {
   //track the loading of the central alert state history
+
   useEffect(() => {
     logInfo(LogMessages.loadedCentralAlertStateHistory);
   }, []);
@@ -78,14 +79,17 @@ export const CentralAlertHistoryScene = () => {
     // textbox variable for filtering by labels
     const labelsFilterVariable = new TextBoxVariable({
       name: LABELS_FILTER,
-      label: 'Labels: ',
+      label: t('alerting.central-alert-history-scene.scene.labels-filter-variable.label.labels', 'Labels: '),
     });
 
     //custom variable for filtering by the current state
     const transitionsToFilterVariable = new CustomVariable({
       name: STATE_FILTER_TO,
       value: StateFilterValues.all,
-      label: 'End state:',
+      label: t(
+        'alerting.central-alert-history-scene.scene.transitions-to-filter-variable.label.end-state',
+        'End state:'
+      ),
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending},To Recovering : ${StateFilterValues.recovering}`,
     });
@@ -94,7 +98,10 @@ export const CentralAlertHistoryScene = () => {
     const transitionsFromFilterVariable = new CustomVariable({
       name: STATE_FILTER_FROM,
       value: StateFilterValues.all,
-      label: 'Start state:',
+      label: t(
+        'alerting.central-alert-history-scene.scene.transitions-from-filter-variable.label.start-state',
+        'Start state:'
+      ),
       hide: VariableHide.dontHide,
       query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending},From Recovering : ${StateFilterValues.recovering}`,
     });
@@ -208,7 +215,7 @@ export class ClearFilterButtonScenesObject extends SceneObjectBase {
 export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
   // This make sure the component is re-rendered when the variables change
   model.useState();
-  const { t } = useTranslate();
+
   const labelsFilter = sceneGraph.interpolate(model, '${LABELS_FILTER}');
   const stateTo = sceneGraph.interpolate(model, '${STATE_FILTER_TO}');
   const stateFrom = sceneGraph.interpolate(model, '${STATE_FILTER_FROM}');

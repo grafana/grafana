@@ -1,7 +1,7 @@
 import { useAsyncFn } from 'react-use';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import ShareMenu from '../../../sharing/ShareButton/ShareMenu';
 import { buildShareUrl } from '../../../sharing/ShareButton/utils';
@@ -17,7 +17,6 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
     DashboardInteractions.toolbarShareClick();
     return await buildShareUrl(dashboard);
   }, [dashboard]);
-  const { t } = useTranslate();
 
   return (
     <ShareExportDashboardButton

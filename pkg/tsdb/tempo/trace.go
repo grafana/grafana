@@ -123,7 +123,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		}
 
 		frame.Meta.Custom = map[string]interface{}{
-			"partial": tr.GetStatus() == tempopb.TraceByIDResponse_PARTIAL,
+			"partial": tr.GetStatus() == tempopb.PartialStatus_PARTIAL,
 			"message": tr.GetMessage(),
 		}
 	}

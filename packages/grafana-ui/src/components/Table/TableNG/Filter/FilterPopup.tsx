@@ -3,9 +3,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ButtonSelect, ClickOutsideWrapper, FilterInput, Label, Stack } from '../../..';
-import { useStyles2, useTheme2 } from '../../../../themes';
+import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { t, Trans } from '../../../../utils/i18n';
+import { Button } from '../../../Button/Button';
+import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
+import { FilterInput } from '../../../FilterInput/FilterInput';
+import { Label } from '../../../Forms/Label';
+import { Stack } from '../../../Layout/Stack/Stack';
 import { FilterType } from '../types';
 
 import { FilterList } from './FilterList';

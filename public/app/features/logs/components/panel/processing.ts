@@ -14,6 +14,7 @@ export class LogListModel implements LogRowModel {
   collapsed: boolean | undefined = undefined;
   datasourceType: string | undefined;
   dataFrame: DataFrame;
+  datasourceUid?: string;
   displayLevel: string;
   duplicates: number | undefined;
   entry: string;
@@ -66,6 +67,7 @@ export class LogListModel implements LogRowModel {
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
     this.uniqueLabels = log.uniqueLabels;
+    this.datasourceUid = log.datasourceUid;
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);

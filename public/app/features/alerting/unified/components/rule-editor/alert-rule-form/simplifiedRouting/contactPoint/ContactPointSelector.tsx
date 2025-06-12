@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -41,7 +41,6 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   useEffect(() => {
     validateContactPoint();
   }, [validateContactPoint]);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column">
@@ -78,7 +77,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
             rules={{
               required: {
                 value: true,
-                message: 'Contact point is required.',
+                message: t(
+                  'alerting.contact-point-selector.message.contact-point-is-required',
+                  'Contact point is required.'
+                ),
               },
             }}
             control={control}
@@ -90,7 +92,6 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   );
 }
 function LinkToContactPoints() {
-  const { t } = useTranslate();
   const hrefToContactPoints = '/alerting/notifications';
   return (
     <TextLink

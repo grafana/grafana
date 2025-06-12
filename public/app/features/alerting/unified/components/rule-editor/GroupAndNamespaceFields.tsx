@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
@@ -40,7 +40,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
     () => (namespace && namespaceGroups.get(namespace)?.map((group) => ({ label: group, value: group }))) || [],
     [namespace, namespaceGroups]
   );
-  const { t } = useTranslate();
 
   return (
     <div className={style.flexRow}>
@@ -49,7 +48,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         label={t('alerting.group-and-namespace-fields.namespace-picker-label-namespace', 'Namespace')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description="Type to search for an existing namespace or create a new one"
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
@@ -73,7 +72,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           name="namespace"
           control={control}
           rules={{
-            required: { value: true, message: 'Required.' },
+            required: { value: true, message: t('alerting.group-and-namespace-fields.message.required', 'Required.') },
           }}
         />
       </Field>
@@ -82,7 +81,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description="Type to search for an existing group or create a new one"
         error={errors.group?.message}
         invalid={!!errors.group?.message}
@@ -105,7 +104,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           name="group"
           control={control}
           rules={{
-            required: { value: true, message: 'Required.' },
+            required: { value: true, message: t('alerting.group-and-namespace-fields.message.required', 'Required.') },
           }}
         />
       </Field>

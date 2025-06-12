@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -42,7 +42,7 @@ export const LogsMetaRow = memo(
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
       logsMetaItem.push({
-        label: 'Deduplication count',
+        label: t('explore.logs-meta-row.label.deduplication-count', 'Deduplication count'),
         value: dedupCount,
         kind: LogsMetaKind.Number,
       });
@@ -52,7 +52,7 @@ export const LogsMetaRow = memo(
     if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
-          label: 'Showing only selected fields',
+          label: t('explore.logs-meta-row.label.showing-only-selected-fields', 'Showing only selected fields'),
           value: <LogLabelsList labels={displayedFields} />,
         },
         {
@@ -77,11 +77,11 @@ export const LogsMetaRow = memo(
 
     const downloadMenu = (
       <Menu>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="txt" onClick={() => download(DownloadFormat.Text)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="json" onClick={() => download(DownloadFormat.Json)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
       </Menu>
     );

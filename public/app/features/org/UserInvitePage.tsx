@@ -1,4 +1,4 @@
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -13,7 +13,11 @@ export function UserInvitePage() {
   );
 
   return (
-    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page
+      navId="global-users"
+      pageNav={{ text: t('org.user-invite-page.text.invite-user', 'Invite user') }}
+      subTitle={subTitle}
+    >
       <Page.Contents>
         <UserInviteForm />
       </Page.Contents>
