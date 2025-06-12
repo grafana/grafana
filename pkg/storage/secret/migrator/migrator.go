@@ -13,6 +13,7 @@ import (
 
 const (
 	TableNameKeeper            = "secret_keeper"
+	TableNameSecureValue       = "secret_secure_value"
 	TableNameSecureValueOutbox = "secret_secure_value_outbox"
 	TableNameEncryptedValue    = "secret_encrypted_value"
 )
