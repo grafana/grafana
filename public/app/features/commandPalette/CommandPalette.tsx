@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
@@ -69,7 +69,6 @@ function CommandPaletteContents() {
   useEffect(() => {
     reportInteraction('command_palette_opened');
   }, []);
-  const { t } = useTranslate();
 
   return (
     <KBarPositioner className={styles.positioner}>
@@ -138,7 +137,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const { results: kbarResults, rootActionId } = useMatches();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
-  const { t } = useTranslate();
+
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
