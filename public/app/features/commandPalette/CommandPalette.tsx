@@ -42,24 +42,28 @@ function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery, currentRootActionId } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
   }));
 
-  useRegisterRecentDashboardsActions(searchQuery);
+  useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
 
-  // Dashboards and folders
-  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
+  // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
+  // dashboards category right now, so if any category is selected, we don't show these).
+  // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
+  // the currentRootActionId. Because these search results are manually added to the list later, they would show every
+  // time.
+  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
-    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
 
