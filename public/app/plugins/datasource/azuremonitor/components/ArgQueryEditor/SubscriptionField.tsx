@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -18,7 +18,6 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
   const [error, setError] = useState<boolean>(false);
   const [values, setValues] = useState<Array<SelectableValue<string>>>([]);
   const options = useMemo(() => [...subscriptions, variableOptionGroup], [subscriptions, variableOptionGroup]);
-  const { t } = useTranslate();
 
   useEffect(() => {
     if (query.subscriptions && query.subscriptions.length > 0) {
