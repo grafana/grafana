@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -17,7 +17,7 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
-  const { t } = useTranslate();
+
   const onSubmit = async (playlist: Playlist) => {
     replacePlaylist({
       name: playlist.metadata.name ?? '',

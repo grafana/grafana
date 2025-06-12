@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
@@ -55,7 +55,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const { folder } = useFolder(folderUID);
 
   const { canEditRules } = useRulesAccess();
-  const { t } = useTranslate();
+
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
