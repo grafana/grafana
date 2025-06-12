@@ -51,7 +51,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
           <span>
             {isOpenSource && (
               <Trans i18nKey="plugins.install-controls-warning.enterprise-plugin-info">
-                This plugin is only available with Grafana Enterprise.
+                This plugin is only available in Grafana Cloud and Grafana Enterprise .
               </Trans>
             )}
             {isEnterprise && (
