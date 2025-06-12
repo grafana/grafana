@@ -28,7 +28,7 @@ import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
-import { PAGE_SIZE } from './services';
+import { PAGE_SIZE, getDeletedDashboardByUID } from './services';
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -422,10 +422,9 @@ export const browseDashboardsAPI = createApi({
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       queryFn: async ({ dashboardUID }, _api, _extraOptions) => {
-        const api = getDashboardAPI();
-        const dashboards = await api.listDeletedDashboards({});
-        const dashboard = dashboards.items.find((d) => d.metadata.name === dashboardUID);
+        const dashboard = await getDeletedDashboardByUID(dashboardUID);
         if (dashboard) {
+          const api = getDashboardAPI();
           const response = await api.restoreDashboard(dashboard);
           const name = response.spec.title;
 

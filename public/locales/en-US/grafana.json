@@ -3285,6 +3285,9 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
+    },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "canvas": {
@@ -9709,7 +9712,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {

@@ -1,4 +1,5 @@
 import { config, getBackendSrv } from '@grafana/runtime';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { NestedFolderDTO } from 'app/features/search/service/types';
@@ -68,4 +69,10 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
 
     return viewItem;
   });
+}
+
+export async function getDeletedDashboardByUID(dashboardUID: string) {
+  const api = getDashboardAPI();
+  const dashboards = await api.listDeletedDashboards({});
+  return dashboards.items.find((d) => d.metadata.name === dashboardUID);
 }
