@@ -27,8 +27,7 @@ jobs:
     strategy:
       matrix:
         shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
+          1/4, 2/4, 3/4, 4/4,
         ]
       fail-fast: false
 
@@ -63,8 +62,7 @@ jobs:
     strategy:
       matrix:
         shard: [
-          1/8, 2/8, 3/8, 4/8,
-          5/8, 6/8, 7/8, 8/8,
+          1/4, 2/4, 3/4, 4/4,
         ]
       fail-fast: false
 
@@ -113,4 +111,9 @@ jobs:
 
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
 
-          grafana-bench test --grafana-version 12.0.0-test --test-runner go --go-retries 2 --go-test-args "-short -v -timeout=30m" --go-test-packages "${PACKAGES[@]}"
+          SUITE_REPO_DIRS=""
+          for PACKAGE in "${PACKAGES[@]}"; do
+            SUITE_REPO_DIRS+="--suite-repo-dirs $PACKAGE "
+          done
+
+          grafana-bench test --grafana-version 12.0.0-test --test-runner go --go-retries 2 --go-test-args "-short -v -timeout=30m" --go-test-packages ${SUITE_REPO_DIRS}
