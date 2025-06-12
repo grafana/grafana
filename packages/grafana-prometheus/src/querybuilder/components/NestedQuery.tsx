@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { GrafanaTheme2, toOption } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
@@ -29,7 +30,9 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.name}>Operator</div>
+        <div className={styles.name}>
+          <Trans i18nKey="querybuilder.nested-query.operator">Operator</Trans>
+        </div>
         <Select
           width="auto"
           options={operators}
@@ -41,15 +44,17 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
             });
           }}
         />
-        <div className={styles.name}>Vector matches</div>
+        <div className={styles.name}>
+          <Trans i18nKey="querybuilder.nested-query.vector-matches">Vector matches</Trans>
+        </div>
         <div className={styles.vectorMatchWrapper}>
           <Select<PromVisualQueryBinary['vectorMatchesType']>
             width="auto"
             value={nestedQuery.vectorMatchesType || 'on'}
             allowCustomValue
             options={[
-              { value: 'on', label: 'on' },
-              { value: 'ignoring', label: 'ignoring' },
+              { value: 'on', label: t('querybuilder.nested-query.label.on', 'On') },
+              { value: 'ignoring', label: t('querybuilder.nested-query.label.ignoring', 'Ignoring') },
             ]}
             onChange={(val) => {
               onChange(index, {
@@ -72,7 +77,12 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
           />
         </div>
         <FlexItem grow={1} />
-        <IconButton name="times" size="sm" onClick={() => onRemove(index)} tooltip="Remove match" />
+        <IconButton
+          name="times"
+          size="sm"
+          onClick={() => onRemove(index)}
+          tooltip={t('querybuilder.nested-query.tooltip-remove-match', 'Remove match')}
+        />
       </div>
       <div className={styles.body}>
         <EditorRows>
