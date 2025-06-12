@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -54,8 +54,6 @@ export const SaveDashboardAsForm = ({
   onCancel,
   onSuccess,
 }: SaveDashboardAsFormProps) => {
-  const { t } = useTranslate();
-
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     description: dashboard.description,
@@ -179,10 +177,6 @@ export const SaveDashboardAsForm = ({
                   {...field}
                   onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
-                  // Old folder picker fields
-                  initialTitle={dashboard.meta.folderTitle}
-                  dashboardId={dashboard.id}
-                  enableCreateNew
                 />
               )}
               control={control}

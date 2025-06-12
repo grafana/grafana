@@ -1,26 +1,18 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { useTranslate } from '@grafana/i18n';
-
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
-// Mock the useTranslate hook
+// Mock the t function
 jest.mock('@grafana/i18n', () => ({
-  useTranslate: jest.fn(),
-}));
-
-describe('ExtensionToolbarItemButton', () => {
-  const mockTranslate = (_: string, fallback: string, values?: Record<string, string>) => {
+  t: (_: string, fallback: string, values?: Record<string, string>) => {
     if (values) {
       return fallback.replace('{{title}}', values.title);
     }
     return fallback;
-  };
+  },
+}));
 
-  beforeEach(() => {
-    (useTranslate as jest.Mock).mockReturnValue({ t: mockTranslate });
-  });
-
+describe('ExtensionToolbarItemButton', () => {
   it('renders open button with default tooltip when no title is provided', () => {
     render(<ExtensionToolbarItemButton isOpen={false} />);
 

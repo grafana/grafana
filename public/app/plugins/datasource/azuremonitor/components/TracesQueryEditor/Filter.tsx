@@ -5,7 +5,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import {
   HorizontalGroup,
@@ -209,7 +209,6 @@ const Filter = (
   const [selected, setSelected] = useState<SelectableValue[]>(
     item.filters ? item.filters.map((filter) => ({ value: filter, label: filter === '' ? '<Empty>' : filter })) : []
   );
-  const { t } = useTranslate();
 
   const loadOptions = async () => {
     setLoading(true);

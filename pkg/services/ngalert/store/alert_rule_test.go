@@ -839,7 +839,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
@@ -1743,7 +1743,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
 		ruleGen.WithOrgID(orgID),
 	)
-	t.Run("filter by ImportedPrometheusRule", func(t *testing.T) {
+	t.Run("filter by HasPrometheusRuleDefinition", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
 		importedRule := createRule(t, store, ruleGen.With(
@@ -1773,8 +1773,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		for _, tt := range tc {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
-					OrgID:                  orgID,
-					ImportedPrometheusRule: tt.importedPrometheusRule,
+					OrgID:                       orgID,
+					HasPrometheusRuleDefinition: tt.importedPrometheusRule,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)

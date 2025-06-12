@@ -9,6 +9,7 @@ import { NavLinkDTO } from './navModel';
 import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
+import { TimeOption } from './time';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -73,6 +74,8 @@ export interface UnifiedAlertingConfig {
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
   recordingRulesEnabled?: boolean;
+  // will be undefined if no default datasource is configured
+  defaultRecordingRulesTargetDatasourceUID?: string;
 }
 
 /** Supported OAuth services
@@ -238,6 +241,7 @@ export interface GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
   exploreHideLogsDownload?: boolean;
+  quickRanges?: TimeOption[];
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
