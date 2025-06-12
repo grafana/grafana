@@ -1,6 +1,6 @@
 import { MouseEvent, memo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
@@ -21,7 +21,6 @@ interface Props {
 }
 
 export const Edge = memo(function Edge(props: Props) {
-  const { t } = useTranslate();
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace, processedNodesLength } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references

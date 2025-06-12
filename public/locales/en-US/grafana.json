@@ -5125,6 +5125,11 @@
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
