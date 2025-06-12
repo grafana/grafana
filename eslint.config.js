@@ -13,13 +13,18 @@ const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const bettererConfig = require('./.betterer.eslint.config');
 const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
-const pluginsToTranslate = ['public/app/plugins/datasource/azuremonitor', 'public/app/plugins/datasource/mssql'];
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/mssql',
+];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -294,6 +299,7 @@ module.exports = [
     name: 'grafana/i18n-overrides',
     plugins: {
       '@grafana': grafanaPlugin,
+      '@grafana/i18n': grafanaI18nPlugin,
     },
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
@@ -309,8 +315,8 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
-      '@grafana/no-translation-top-level': 'error',
+      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
   {

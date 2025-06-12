@@ -103,7 +103,7 @@ function getGlobalActions(): CommandPaletteAction[] {
   ];
 
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable @grafana/no-untranslated-strings
+    // eslint-disable @grafana/i18n/no-untranslated-strings
     const section = 'Dev tooling';
     const currentState = currentMockApiState();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
@@ -128,7 +128,7 @@ function getGlobalActions(): CommandPaletteAction[] {
         togglePseudoLocale();
       },
     });
-    // eslint-enable @grafana/no-untranslated-strings
+    // eslint-enable @grafana/i18n/no-untranslated-strings
   }
 
   return actions;

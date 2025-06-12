@@ -78,11 +78,11 @@ export const LogsMetaRow = memo(
 
     const downloadMenu = (
       <Menu>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="txt" onClick={() => download(DownloadFormat.Text)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="json" onClick={() => download(DownloadFormat.Json)} />
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
       </Menu>
     );

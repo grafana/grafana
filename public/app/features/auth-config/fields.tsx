@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
-import { isSelectableValue } from './utils/guards';
+import { isSelectableValue, isSelectableValueArray } from './utils/guards';
 import { isUrlValid } from './utils/url';
 
 type Section = Record<
@@ -53,7 +53,7 @@ export const getSectionFields = (): Section => {
         fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
       },
       {
-        name: 'Extra security measures',
+        name: extraSecurityLabel,
         id: 'extra',
         fields: [
           'allowedOrganizations',
@@ -66,6 +66,7 @@ export const getSectionFields = (): Section => {
           'tlsClientCert',
           'tlsClientKey',
           'tlsClientCa',
+          'workloadIdentityTokenFile',
         ],
       },
     ],
@@ -284,6 +285,7 @@ const authURLLabel = 'Auth URL';
 const tokenURLLabel = 'Token URL';
 const apiURLLabel = 'API URL';
 const jmesPathLabel = 'JMESPath';
+const workloadIdentityLabel = 'Workload identity';
 
 /**
  * List all the fields that can be used in the form
@@ -357,6 +359,32 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'The audience of the federated identity credential of your OAuth2 app.'
       ),
     },
+    workloadIdentityTokenFile: {
+      label: t('auth-config.fields.workload-identity-token-file-label', '{{ workloadIdentityLabel }} token file', {
+        workloadIdentityLabel,
+      }),
+      type: 'text',
+      description: t(
+        'auth-config.fields.workload-identity-token-file-description',
+        'The file path to the token file used to authenticate to the OAuth2 provider. This is only required when client authentication is set to "workload_identity". Defaults to /var/run/secrets/azure/tokens/azure-identity-token.'
+      ),
+      validation: {
+        validate: (value, formValues) => {
+          let clientAuth = formValues.clientAuthentication;
+          if (isSelectableValue<string>(clientAuth)) {
+            clientAuth = clientAuth.value;
+          }
+          if (clientAuth === 'workload_identity') {
+            return !!value;
+          }
+          return true;
+        },
+        message: t(
+          'auth-config.fields.workload-identity-token-file-required',
+          'This field must be set when client authentication is set to "Workload identity".'
+        ),
+      },
+    },
     allowedOrganizations: {
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
       type: 'select',
@@ -405,13 +433,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       multi: false,
       options: [
-        /* eslint-disable @grafana/no-untranslated-strings */
+        /* eslint-disable @grafana/i18n/no-untranslated-strings */
         { value: 'AutoDetect', label: 'AutoDetect' },
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
       ],
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
-      /* eslint-enable @grafana/no-untranslated-strings */
+      /* eslint-enable @grafana/i18n/no-untranslated-strings */
     },
     tokenUrl: {
       label: tokenURLLabel,
@@ -465,7 +493,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return uuidValidate(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && uuidValidate(v.value));
                 }
                 return true;
@@ -809,7 +837,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 if (typeof value === 'string') {
                   return isNumeric(value);
                 }
-                if (isSelectableValue(value)) {
+                if (isSelectableValueArray(value)) {
                   return value.every((v) => v?.value && isNumeric(v.value));
                 }
                 return true;
@@ -886,13 +914,14 @@ function orgMappingDescription(provider: string): string {
 
 function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
   // Other options are purposefully not translated
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   switch (provider) {
     case 'azuread':
       return [
         { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
         { value: 'client_secret_post', label: 'Client secret' },
         { value: 'managed_identity', label: 'Managed identity' },
+        { value: 'workload_identity', label: 'Workload identity' },
       ];
     // Other providers ...
     default:
@@ -901,5 +930,5 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
         { value: 'client_secret_post', label: 'Client secret' },
       ];
   }
-  /* eslint-enable @grafana/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }

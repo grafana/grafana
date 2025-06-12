@@ -177,13 +177,6 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
-	t.Run("with prometheus writer", func(t *testing.T) {
-		writeTarget := writer.NewTestRemoteWriteTarget(t)
-		defer writeTarget.Close()
-		writerReg := prometheus.NewPedanticRegistry()
-		writer := setupPrometheusWriter(t, writeTarget, writerReg)
-		testRecordingRule_Integration(t, writeTarget, writer, writerReg, "")
-	})
 	t.Run("with datasource writer", func(t *testing.T) {
 		writeTarget := writer.NewTestRemoteWriteTarget(t)
 		defer writeTarget.Close()
@@ -796,14 +789,6 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 			},
 		}
 	}
-}
-
-func setupPrometheusWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
-	provider := testClientProvider{}
-	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriterWithSettings(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
-	require.NoError(t, err)
-	return wr
 }
 
 func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {

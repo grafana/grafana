@@ -180,7 +180,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.tenantId || ''}
               onChange={onTenantIdChange}
@@ -197,7 +197,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientId || ''}
               onChange={onClientIdChange}
@@ -242,7 +242,7 @@ export const AzureCredentialsForm = (props: Props) => {
                 <Input
                   width={45}
                   aria-label={t('azureauth.azure-credentials-form.aria-label-client-secret', 'Client Secret')}
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
                   onChange={onClientSecretChange}

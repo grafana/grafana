@@ -118,7 +118,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
@@ -138,11 +138,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             content={`${lastEvaluationDuration}s`}
             theme="info"
           >
-            <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
+            <span>{Time({ timeInMs: lastEvaluationDuration, humanize: true })}</span>
           </Tooltip>
         </DetailsField>
       )}

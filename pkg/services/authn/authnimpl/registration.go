@@ -135,11 +135,14 @@ func ProvideRegistration(
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
-	authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 40)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
+
+	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
+		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
+	}
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {

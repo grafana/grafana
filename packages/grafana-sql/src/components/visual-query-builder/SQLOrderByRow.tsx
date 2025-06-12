@@ -3,6 +3,7 @@ import { useTranslate } from '@grafana/i18n';
 
 import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLQuery } from '../../types';
+import { getColumnsWithIndices } from '../../utils/getColumnsWithIndices';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { OrderByRow } from './OrderByRow';
@@ -17,26 +18,6 @@ type SQLOrderByRowProps = {
 export function SQLOrderByRow({ fields, query, onQueryChange, db }: SQLOrderByRowProps) {
   const { t } = useTranslate();
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
-  let columnsWithIndices: SelectableValue[] = [];
-
-  if (fields) {
-    const options = query.sql?.columns?.map((c, i) => {
-      const value = c.name ? `${c.name}(${c.parameters?.map((p) => p.name)})` : c.parameters?.map((p) => p.name);
-      return {
-        value,
-        label: `${i + 1} - ${value}`,
-      };
-    });
-    columnsWithIndices = [
-      {
-        value: '',
-        label: t('components.sqlorder-by-row.label.selected-columns', 'Selected columns'),
-        options,
-        expanded: true,
-      },
-      ...fields,
-    ];
-  }
-
+  let columnsWithIndices: SelectableValue[] = getColumnsWithIndices(query, fields);
   return <OrderByRow sql={query.sql!} onSqlChange={onSqlChange} columns={columnsWithIndices} />;
 }

@@ -85,7 +85,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pr := prometheus.ProvideService(hcp)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
-	pg := postgres.ProvideService(features)
+	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})

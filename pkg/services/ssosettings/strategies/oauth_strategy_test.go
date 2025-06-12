@@ -24,6 +24,7 @@ var (
 	client_secret = test_client_secret
 	managed_identity_client_id = test_managed_identity_client_id
 	federated_credential_audience = test_federated_credential_audience
+	workload_identity_token_file = test_workload_identity_token_file
 	scopes = openid, profile, email
 	empty_scopes = false
 	email_attribute_name = email:primary
@@ -70,6 +71,7 @@ var (
 		"client_secret":                 "test_client_secret",
 		"managed_identity_client_id":    "test_managed_identity_client_id",
 		"federated_credential_audience": "test_federated_credential_audience",
+		"workload_identity_token_file":  "test_workload_identity_token_file",
 		"scopes":                        "openid, profile, email",
 		"empty_scopes":                  false,
 		"email_attribute_name":          "email:primary",
@@ -125,6 +127,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	[auth.azuread]
 	force_use_graph_api = true
 	allowed_organizations = org1, org2
+	workload_identity_token_file = azuread_token_file
 
 	[auth.github]
 	team_ids = first, second
@@ -159,6 +162,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 
 		require.Equal(t, true, result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
+		require.Equal(t, "azuread_token_file", result["workload_identity_token_file"])
 	})
 
 	t.Run(social.GitHubProviderName, func(t *testing.T) {
@@ -210,7 +214,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -225,7 +229,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -240,7 +244,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -255,7 +259,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,

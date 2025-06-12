@@ -23,7 +23,7 @@ export function ActiveTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
       data-testid="am-active-timing-select"
       description={t(
         'alerting.mute-timing-fields.am-active-timing-select-description-active-timings',
-        'Select a time interval to define when not to send notifications for this alert rule'
+        'Select a time interval to define when to only send notifications for this alert rule'
       )}
       className={styles.muteTimingField}
       invalid={!!errors.contactPoints?.[alertmanager]?.activeTimeIntervals}

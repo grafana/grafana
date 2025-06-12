@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { useTranslate } from '@grafana/i18n';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
-import { Select } from '@grafana/ui';
+import { Combobox, ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -61,30 +61,38 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   const variables = sceneVars.useState().variables;
 
   const variableOptions = useMemo(() => {
-    const options: Array<SelectableValue<string | null>> = variables.map((item) => ({
+    const options: ComboboxOption[] = variables.map((item) => ({
       label: item.state.name,
       value: item.state.name,
     }));
 
-    if (options.length === 0) {
-      options.unshift({
-        label: t(
-          'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
-          'No template variables found'
-        ),
-        value: null,
-      });
-    }
-
     options.unshift({
       label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
-      value: null,
+      value: '',
     });
 
     return options;
   }, [variables, t]);
 
-  const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
+  const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
-  return <Select inputId={id} value={repeat} onChange={onSelectChange} options={variableOptions} />;
+  const isDisabled = !repeat && variableOptions.length <= 1;
+
+  return (
+    <Combobox
+      id={id}
+      value={repeat}
+      onChange={onSelectChange}
+      options={variableOptions}
+      disabled={isDisabled}
+      placeholder={
+        isDisabled
+          ? t(
+              'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
+              'No template variables found'
+            )
+          : t('dashboard.repeat-row-select2.placeholder', 'Choose')
+      }
+    />
+  );
 };

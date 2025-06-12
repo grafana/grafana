@@ -6,7 +6,7 @@ import { Combobox, ComboboxOption, Field, Stack } from '@grafana/ui';
 
 import { useGetNameSpacesByDatasourceName } from '../rule-editor/useAlertRuleSuggestions';
 
-import { ImportFormValues } from './ImportFromDSRules';
+import { ImportFormValues } from './ImportToGMARules';
 
 interface Props {
   rulesSourceName?: string;

@@ -44,6 +44,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
           ? t('components.table-selector.placeholder-loading', 'Loading tables')
           : t('components.table-selector.placeholder-select-table', 'Select table')
       }
+      allowCustomValue={true}
     />
   );
 };

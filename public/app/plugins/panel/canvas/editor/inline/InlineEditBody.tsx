@@ -5,6 +5,7 @@ import { useObservable } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { NestedValueAccess, PanelOptionsSupplier } from '@grafana/data/internal';
+import { useTranslate, Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
@@ -25,6 +26,7 @@ import { getLayerEditor } from '../layer/layerEditor';
 import { TabsEditor } from './TabsEditor';
 
 export function InlineEditBody() {
+  const { t } = useTranslate();
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
   const styles = useStyles2(getStyles);
@@ -103,12 +105,20 @@ export function InlineEditBody() {
     <>
       <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
       <div style={topLevelItemsContainerStyle}>
-        <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
+        <AddLayerButton
+          onChange={(sel) => onAddItem(sel, rootLayer)}
+          options={typeOptions}
+          label={t('canvas.inline-edit-body.label-add-item', 'Add item')}
+        />
       </div>
       <div style={topLevelItemsContainerStyle}>
         <TabsEditor onTabChange={onTabChange} />
         {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
-        {noElementSelected && <div className={styles.selectElement}>Please select an element</div>}
+        {noElementSelected && (
+          <div className={styles.selectElement}>
+            <Trans i18nKey="canvas.inline-edit-body.please-select-an-element">Please select an element</Trans>
+          </div>
+        )}
       </div>
     </>
   );
