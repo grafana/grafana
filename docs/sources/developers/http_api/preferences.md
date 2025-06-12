@@ -21,6 +21,7 @@ title: 'Preferences API'
 Keys:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
+- **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
 - **homeDashboardUID**: The `:uid` of a dashboard
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 

@@ -134,7 +134,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 	})
 
 	t.Run("ignore other user's preferences", func(t *testing.T) {
-		prefService.GetDefaults().HomeDashboardID = 1
+		prefService.GetDefaults().HomeDashboardID = 1 // nolint:staticcheck
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 2}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)

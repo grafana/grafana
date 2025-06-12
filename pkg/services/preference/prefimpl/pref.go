@@ -153,7 +153,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
-	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.HomeDashboardID = cmd.HomeDashboardID // nolint:staticcheck
 	if cmd.HomeDashboardUID != nil {
 		preference.HomeDashboardUID = *cmd.HomeDashboardUID
 	}

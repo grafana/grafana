@@ -35,6 +35,13 @@ func UpdatePreferencesFor(ctx context.Context,
 			}
 			dashboardID = queryResult.ID
 		}
+	} else if dtoCmd.HomeDashboardID != 0 {
+		// make sure uid is always set if id is set
+		queryResult, err := dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: dtoCmd.HomeDashboardID, OrgID: orgID}) // nolint:staticcheck
+		if err != nil {
+			return response.Error(http.StatusNotFound, "Dashboard not found", err)
+		}
+		dtoCmd.HomeDashboardUID = &queryResult.UID
 	}
 	// nolint:staticcheck
 	dtoCmd.HomeDashboardID = dashboardID

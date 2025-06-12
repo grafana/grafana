@@ -513,6 +513,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 JSON Body Schema:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
+- **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
 - **homeDashboardUID** - The `:uid` of a dashboard
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
