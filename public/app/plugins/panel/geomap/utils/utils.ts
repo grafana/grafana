@@ -1,5 +1,17 @@
 import { Map as OpenLayersMap } from 'ol';
+import Geometry from 'ol/geom/Geometry';
+import Point from 'ol/geom/Point';
 import { defaults as interactionDefaults } from 'ol/interaction';
+import BaseLayer from 'ol/layer/Base';
+import LayerGroup from 'ol/layer/Group';
+import ImageLayer from 'ol/layer/Image';
+import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints';
+import ImageSource from 'ol/source/Image';
+import TileSource from 'ol/source/Tile';
+import VectorSource from 'ol/source/Vector';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
@@ -143,3 +155,39 @@ export const isUrl = (url: string) => {
     return false;
   }
 };
+
+/**
+ * Checks if a layer has data to display
+ * @param layer The OpenLayers layer to check
+ * @returns boolean indicating if the layer has data
+ */
+export function hasLayerData(
+  layer:
+    | LayerGroup
+    | VectorLayer<VectorSource<Geometry>>
+    | VectorImage<VectorSource<Geometry>>
+    | WebGLPointsLayer<VectorSource<Point>>
+    | TileLayer<TileSource>
+    | ImageLayer<ImageSource>
+    | BaseLayer
+): boolean {
+  if (layer instanceof LayerGroup) {
+    return layer
+      .getLayers()
+      .getArray()
+      .some((subLayer) => hasLayerData(subLayer));
+  }
+  if (layer instanceof VectorLayer || layer instanceof VectorImage) {
+    const source = layer.getSource();
+    return source != null && source.getFeatures().length > 0;
+  }
+  if (layer instanceof WebGLPointsLayer) {
+    const source = layer.getSource();
+    return source != null && source.getFeatures().length > 0;
+  }
+  if (layer instanceof TileLayer || layer instanceof ImageLayer) {
+    // For tile/image layers, check if they have a source
+    return Boolean(layer.getSource());
+  }
+  return false;
+}
