@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -29,7 +28,7 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 	}
 }
 
-// This returns the resource version in nanoseconds timestamp
+// This returns the resource version as a microseconds unix timestamp
 // UUIDv7 includes the time in ms but in the first 7 bytes.
 // The last 2 bytes are the version and a unique sequence number.
 // The sequence number is really useful to avoid conflicts when writing
@@ -39,7 +38,9 @@ func rvFromUID(uid uuid.UUID) (int64, error) {
 	if uid.Version() != 7 {
 		return 0, fmt.Errorf("invalid uuid version: %d", uid.Version())
 	}
-	return int64(binary.BigEndian.Uint64(uid[:8])), nil
+	s, ns := uid.Time().UnixTime()
+	seq := (int64(uid[6]&0x0F) << 8) | int64(uid[7])
+	return (s * 1000000) + ns/1000 + seq, nil
 }
 
 // // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -161,7 +162,7 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		offset = token.StartOffset
 		resourceVersion = token.ResourceVersion
 	}
-	listRV := time.Now().UnixNano() // For now we return the current time as the resource version
+	listRV := time.Now().UnixMicro() // For now we return the current time as the resource version
 	if resourceVersion > 0 {
 		listRV = resourceVersion
 	}
@@ -304,15 +305,12 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Action:    event.Action,
 			})
 			if err != nil {
-				fmt.Errorf("some error", err)
 				return
 			}
 			rv, err := rvFromUID(event.UID)
 			if err != nil {
-				fmt.Errorf("some error parsing the uid", err)
 				return
 			}
-			fmt.Println("Final event", event.UID.String(), event.UID.Time(), event.Name, event.Action, rv)
 			var t resourcepb.WatchEvent_Type
 			switch event.Action {
 			case MetaDataActionCreated:
@@ -333,6 +331,8 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Folder:          event.Folder,
 				Value:           data,
 				ResourceVersion: rv,
+				// Timestamp:       event.Timestamp, TODO: add this
+				// PreviousRV:      event.PreviousRV, TODO: add this
 			}
 		}
 		close(events)

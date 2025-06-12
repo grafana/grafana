@@ -136,7 +136,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 			case <-ctx.Done():
 				return
 			case <-time.After(n.opts.PollInterval):
-				startKey := n.getKey(lastUID) // TODO : lookback here is critical
+				startKey := n.getKey(lastUID) // TODO : implement lookback to ensure we don't miss any events
 				for k, err := range n.kv.List(ctx, ListOptions{StartKey: startKey, EndKey: PrefixRangeEnd(prefixEvents)}) {
 					if err != nil {
 						// TODO: Handle error
