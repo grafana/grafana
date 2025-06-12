@@ -155,14 +155,6 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
           outline: 0,
         },
 
-      [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
-        {
-          color: theme.colors.primary.contrastText,
-          fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.primary.main,
-          border: '0px',
-        },
-
       // The --hover modifier is active when the user is selecting a range and hovering over a tile - it shows the pending range.
       // It is applied to all dates between the clicked date and the hovered date.
       // The *clicked* date should have primary bg, while *pending* range dates should have hover bg.
@@ -188,11 +180,6 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
           borderRadius: theme.shape.radius.pill,
         },
 
-      '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
-        color: theme.colors.primary.contrastText,
-        background: theme.colors.primary.main,
-      },
-
       // When the user is selecting a range (they've clicked one date, tiles have --hover), both --rangeStart and --rangeEnd are on the tile.
       // The --hover classes above  handle the rounding of the tiles so they're contigious with the range
       [`${hasActiveSelector}, .react-calendar__tile--rangeStart:not(.react-calendar__tile--hover)`]: {
@@ -204,6 +191,14 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         borderTopRightRadius: theme.shape.radius.pill,
         borderBottomRightRadius: theme.shape.radius.pill,
       },
+
+      [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
+        {
+          color: theme.colors.primary.contrastText,
+          fontWeight: theme.typography.fontWeightMedium,
+          background: theme.colors.primary.main,
+          border: '0px',
+        },
     }),
   };
 };

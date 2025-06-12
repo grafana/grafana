@@ -45,6 +45,7 @@ export class KeybindingSrv {
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
       this.bind('?', this.showHelpModal);
+
       this.bind('g h', this.goToHome);
       this.bind('g d', this.goToDashboards);
       this.bind('g e', this.goToExplore);
@@ -52,6 +53,13 @@ export class KeybindingSrv {
       this.bind('g p', this.goToProfile);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
+
+      if (process.env.NODE_ENV === 'development') {
+        this.bind('`', () => {
+          console.log('Hitting breakpoint - make sure your browser dev tools allows debugger statements');
+          debugger;
+        });
+      }
     }
 
     this.bind('c t', () => toggleTheme(false));
