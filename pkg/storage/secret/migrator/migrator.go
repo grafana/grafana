@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	TableNameKeeper = "secret_keeper"
+	TableNameKeeper            = "secret_keeper"
+	TableNameSecureValueOutbox = "secret_secure_value_outbox"
 )
 
 type SecretDB struct {
@@ -64,6 +65,29 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+		},
+	})
+
+	tables = append(tables, migrator.Table{
+		Name: TableNameSecureValueOutbox,
+		Columns: []*migrator.Column{
+			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: true},
+			{Name: "keeper_name", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
+			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true},  // Fixed size of a UUID.
+			{Name: "receive_count", Type: migrator.DB_SmallInt, Nullable: false},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			// There's only one operation per secret in the queue at all times,
+			// meaning the namespace + name combination should be unique
+			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
+			// Used for sorting
+			{Cols: []string{"created"}, Type: migrator.IndexType},
 		},
 	})
 
