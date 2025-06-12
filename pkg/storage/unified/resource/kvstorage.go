@@ -154,17 +154,37 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
+	resourceVersion := req.ResourceVersion
+	offset := int64(0)
+	if req.NextPageToken != "" {
+		token, err := GetContinueToken(req.NextPageToken)
+		if err != nil {
+			return 0, err
+		}
+		offset = token.StartOffset
+		resourceVersion = token.ResourceVersion
+	}
+	listRV := time.Now().UnixNano() // For now we return the current time as the resource version
+	if resourceVersion > 0 {
+		listRV = resourceVersion
+	}
 
 	// Fetch the latest objects
 	keys := make([]MetaDataObj, 0, req.Limit)
+	idx := 0
 	for metaObj, err := range k.metaStore.ListAt(ctx, ListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
 		Name:      req.Options.Key.Name,
-	}, req.ResourceVersion) {
+	}, resourceVersion) {
 		if err != nil {
 			return 0, err
+		}
+		// Skip the first offset items. This is not efficient, but it's a simple way to implement it for now.
+		if idx < int(offset) {
+			idx++
+			continue
 		}
 		keys = append(keys, MetaDataObj{ // TODO: do we need a copy here?
 			Key:   metaObj.Key,
@@ -175,13 +195,16 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		keys:         keys,
 		currentIndex: -1,
 		ctx:          ctx,
+		listRV:       listRV,
+		offset:       offset,
 		dataStore:    k.dataStore,
 	}
 	err := cb(&iter)
 	if err != nil {
 		return 0, err
 	}
-	return time.Now().UnixNano(), nil // For now we return the current time as the resource version
+
+	return listRV, nil
 }
 
 // kvListIterator implements ListIterator for KV storage
@@ -190,6 +213,8 @@ type kvListIterator struct {
 	keys         []MetaDataObj
 	currentIndex int
 	dataStore    *dataStore
+	listRV       int64
+	offset       int64
 
 	// current
 	rv    int64
@@ -217,6 +242,9 @@ func (i *kvListIterator) Next() bool {
 		Action:    i.keys[i.currentIndex].Key.Action,
 	})
 
+	// increment the offset
+	i.offset++
+
 	return true
 }
 
@@ -225,7 +253,10 @@ func (i *kvListIterator) Error() error {
 }
 
 func (i *kvListIterator) ContinueToken() string {
-	return "" // TODO: implement this
+	return ContinueToken{
+		StartOffset:     i.offset,
+		ResourceVersion: i.listRV,
+	}.String()
 }
 
 func (i *kvListIterator) ResourceVersion() int64 {
