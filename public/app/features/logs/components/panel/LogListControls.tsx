@@ -43,11 +43,13 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     dedupStrategy,
     downloadLogs,
     filterLevels,
+    fontSize,
     forceEscape,
     hasUnescapedContent,
     prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setFontSize,
     setForceEscape,
     setPrettifyJSON,
     setShowTime,
@@ -98,6 +100,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     },
     [filterLevels, setFilterLevels]
   );
+
+  const onFontSizeClick = useCallback(() => {
+    const newSize = fontSize === 'default' ? 'small' : 'default';
+    reportInteraction('logs_log_list_controls_font_size_clicked', {
+      size: newSize,
+    });
+    setFontSize(newSize);
+  }, [fontSize, setFontSize]);
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
@@ -320,6 +330,20 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                     syntaxHighlighting
                       ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
                       : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+                  }
+                  size="lg"
+                />
+              )}
+              {config.featureToggles.newLogsPanel && (
+                <IconButton
+                  name="text-fields"
+                  className={fontSize === 'small' ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={Boolean(fontSize)}
+                  onClick={onFontSizeClick}
+                  tooltip={
+                    fontSize === 'default'
+                      ? t('logs.logs-controls.font-size-default', 'Use small font size')
+                      : t('logs.logs-controls.font-size-small', 'Use default font size')
                   }
                   size="lg"
                 />
