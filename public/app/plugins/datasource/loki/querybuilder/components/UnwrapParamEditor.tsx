@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
 import { QueryBuilderOperationParamEditorProps, VisualQueryModeller } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';

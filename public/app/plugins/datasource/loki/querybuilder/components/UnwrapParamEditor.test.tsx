@@ -4,7 +4,6 @@ import { ComponentProps } from 'react';
 
 import { DataFrame, DataSourceApi, FieldType, toDataFrame } from '@grafana/data';
 import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';

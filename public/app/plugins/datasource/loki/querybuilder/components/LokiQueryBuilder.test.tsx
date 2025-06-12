@@ -2,7 +2,6 @@ import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
