@@ -174,7 +174,10 @@ function useGlobalScopesSearch(
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
         if (searchQueryRef.current === searchQuery) {
-          const nodesMap = fromPairs(nodes.map((n) => [n.metadata.name, n]));
+          // Only show leaf nodes because otherwise there are issues with navigating to a category without knowing
+          // where in the tree it is.
+          const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
+          const nodesMap = fromPairs(leafNodes.map((n) => [n.metadata.name, n]));
           setNodes(nodesMap);
         }
       });
