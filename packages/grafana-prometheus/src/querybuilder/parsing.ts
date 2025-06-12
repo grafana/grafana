@@ -49,9 +49,9 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
  * It traverses the tree and uses sort of state machine to update the query model.
  * The query model is modified during the traversal and sent to each handler as context.
  */
-export function buildVisualQueryFromString(expr: string): Context {
+export function buildVisualQueryFromString(expr: string): Omit<Context, 'replacements'> {
   expr = replaceBuiltInVariable(expr);
-  const replacedExpr = replaceVariables(expr);
+  const { replacedExpr, replacedVariables } = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
 
@@ -64,6 +64,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   const context: Context = {
     query: visQuery,
     errors: [],
+    replacements: replacedVariables,
   };
 
   try {
@@ -83,6 +84,9 @@ export function buildVisualQueryFromString(expr: string): Context {
     context.errors = [];
   }
 
+  // No need to return replaced variables
+  delete context.replacements;
+
   return context;
 }
 
@@ -96,6 +100,7 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
+  replacements?: Record<string, string>;
 }
 
 /**
@@ -353,12 +358,17 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    // This means there was a custom variable which we replaced in the beginning using parsingUtils::replaceVariables
     case VectorSelector: {
-      const identifierNode = node.getChild(Identifier);
-      const customVarName = getString(expr, identifierNode);
-      op.params.push(customVarName);
-      break;
+      // When we replace a custom variable to prevent errors during parsing we receive VectorSelector and Identifier in it.
+      // But this is also a normal case for a normal function body. i.e. topk(5, http_requests_total{})
+      // In such cases we got identifier as http_requests_total. So we shouldn't push this as param.
+      // So we check whether the given VectorSelector is something we replaced earlier.
+      if (context.replacements?.[expr.substring(node.from, node.to)]) {
+        const identifierNode = node.getChild(Identifier);
+        const customVarName = getString(expr, identifierNode);
+        op.params.push(customVarName);
+        break;
+      }
     }
 
     default: {
@@ -431,6 +441,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
+      replacements: context.replacements,
     });
   }
 }
