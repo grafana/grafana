@@ -2,6 +2,10 @@
 
 # 11.2.10+security-01 (2025-06-12)
 
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
 <!-- 11.2.10+security-01 END -->
 <!-- 11.2.9 START -->
 
