@@ -22,7 +22,7 @@ interface Props {
    * Callback function to delete a subform field. Removal requires side effects
    * like settings and secure fields cleanup.
    */
-  onDelete?: (propertyName: string) => void;
+  onDelete?: (settingsPath: string, option: NotificationChannelOption) => void;
   onResetSecureField?: (propertyName: string) => void;
 }
 
@@ -46,7 +46,7 @@ export const SubformField = ({
   const [show, setShow] = useState(!!value);
 
   const onDeleteClick = () => {
-    onDelete?.(option.propertyName);
+    onDelete?.(name, option);
     setShow(false);
   };
 
@@ -71,9 +71,9 @@ export const SubformField = ({
                 readOnly={readOnly}
                 getOptionMeta={getOptionMeta}
                 onResetSecureField={onResetSecureField}
+                onDeleteSubform={onDelete}
                 secureFields={secureFields}
                 defaultValue={defaultValue?.[subOption.propertyName]}
-                parentOption={option}
                 key={subOption.propertyName}
                 option={subOption}
                 pathPrefix={`${name}.`}
