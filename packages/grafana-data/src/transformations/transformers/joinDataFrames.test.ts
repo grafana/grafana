@@ -182,7 +182,7 @@ describe('align frames', () => {
               "FEMALE",
               "NON-BINARY",
               "COW",
-              "DOG",
+              null,
             ],
           },
           {
@@ -195,7 +195,7 @@ describe('align frames', () => {
               "Tuesday",
               "Monday",
               "Monday",
-              undefined,
+              null,
             ],
           },
           {
@@ -208,7 +208,20 @@ describe('align frames', () => {
               71,
               7,
               1,
-              undefined,
+              null,
+            ],
+          },
+          {
+            "name": "gender",
+            "values": [
+              "NON-BINARY",
+              "MALE",
+              "MALE",
+              "FEMALE",
+              "FEMALE",
+              "NON-BINARY",
+              null,
+              "DOG",
             ],
           },
           {
@@ -220,7 +233,7 @@ describe('align frames', () => {
               201,
               201,
               95,
-              undefined,
+              null,
               6,
             ],
           },
