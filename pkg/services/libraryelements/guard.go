@@ -24,8 +24,6 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	switch kind {
 	case model.PanelElement:
 		return nil
-	case model.VariableElement:
-		return nil
 	default:
 		return model.ErrLibraryElementUnSupportedElementKind
 	}
