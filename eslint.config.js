@@ -128,7 +128,7 @@ module.exports = [
             {
               group: ['react-i18next', 'i18next'],
               importNames: ['t'],
-              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+              message: 'Please import from @grafana/i18n instead',
             },
             {
               group: ['react-i18next'],
