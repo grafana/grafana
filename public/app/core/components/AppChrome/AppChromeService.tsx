@@ -66,6 +66,10 @@ export class AppChromeService {
     }
   }
 
+  public getCurrentRoutePath() {
+    return this.currentRoute?.path;
+  }
+
   public update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
     const newState: AppChromeState = {

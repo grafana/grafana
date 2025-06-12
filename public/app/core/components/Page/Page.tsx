@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { addRecentAction } from 'app/core/services/recentActionsSrv';
 
 import NativeScrollbar from '../NativeScrollbar';
 
@@ -34,6 +35,33 @@ export const Page: PageType = ({
   const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
+
+  // We use useEffect here to add the current navigation node to the list of recent actions
+  // It checks if navModel.node is valid and compares the current URL with navModel.main.children to find a matching child
+  // If a match is found, it uses the child’s ID and text as metadata for the recent action
+  // This helps keep track of recently visited pages.
+  useEffect(() => {
+    if (navModel?.node && navModel.node.url && navModel.node.text) {
+      const url = chrome.getCurrentRoutePath();
+
+      const children = navModel?.main.children;
+      let matchingChild: typeof children = [];
+      if (children) {
+        for (const child of children) {
+          if (child.url === url) {
+            matchingChild.push(child);
+          }
+        }
+      }
+      const title = matchingChild?.at(0)?.text;
+
+      addRecentAction({
+        id: matchingChild?.at(0)?.id || navModel.node.id || navId || navModel.node.text,
+        title: title ?? navModel.node.text,
+        url: url ?? navModel.node.url,
+      });
+    }
+  }, [chrome, navId, navModel?.node, navModel?.node?.url, navModel?.main.children]);
 
   const pageHeaderNav = pageNav ?? navModel?.node;
 

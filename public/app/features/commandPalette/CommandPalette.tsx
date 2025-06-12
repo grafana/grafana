@@ -20,6 +20,7 @@ import {
   useRegisterRecentScopesActions,
   useRegisterScopesActions,
   useRegisterStaticActions,
+  useRecentGeneralActions,
 } from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
@@ -53,6 +54,8 @@ function CommandPaletteContents() {
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+
+  useRecentGeneralActions(searchQuery);
 
   // Dashboards and folders
   const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
