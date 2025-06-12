@@ -880,3 +880,4 @@ export {
 } from './rbac/rbac';
 
 export { type UserStorage } from './types/userStorage';
+export { type PluginExtensionPopupContext } from './types/pluginExtensions';

@@ -194,6 +194,7 @@ export enum PluginExtensionPoints {
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  PopupExtension = 'grafana/app/popup',
 }
 
 export type PluginExtensionPanelContext = {
@@ -251,4 +252,8 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+export type PluginExtensionPopupContext = {
+  onClose: () => void;
 };

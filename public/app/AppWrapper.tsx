@@ -12,6 +12,7 @@ import { store } from 'app/store/store';
 import { GrafanaApp } from './app';
 import { ExtensionSidebarContextProvider } from './core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { GlobalStylesWrapper } from './core/components/AppChrome/ExtensionSidebar/GlobalStylesWrapper';
+import { PopupExtension } from './core/components/PopupExtension/PopupExtension';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
@@ -127,6 +128,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                             <RouterWrapper {...routerWrapperProps} />
                             <LiveConnectionWarning />
                             <PortalContainer />
+                            <PopupExtension />
                           </div>
                         </MaybeExtensionSidebarProvider>
                       </ExtensionRegistriesProvider>
