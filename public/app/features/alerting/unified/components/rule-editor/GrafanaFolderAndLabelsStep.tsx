@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
 import { KBObjectArray, RuleFormValues } from '../../types/rule-form';

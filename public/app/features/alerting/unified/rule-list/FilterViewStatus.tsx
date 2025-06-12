@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Text } from '@grafana/ui';
 
 export type FilterProgressState = 'searching' | 'done' | 'aborted';

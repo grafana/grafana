@@ -4,7 +4,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';

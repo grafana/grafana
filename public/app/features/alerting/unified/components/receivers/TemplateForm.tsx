@@ -7,7 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,

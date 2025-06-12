@@ -22,7 +22,7 @@ export const ConditionalRenderingGroupVisibility = ({ itemType, value, onChange 
       { label: t('dashboard.conditional-rendering.conditions.group.visibility.show', 'Show'), value: 'show' },
       { label: t('dashboard.conditional-rendering.conditions.group.visibility.hide', 'Hide'), value: 'hide' },
     ],
-    [t]
+    []
   );
 
   return (

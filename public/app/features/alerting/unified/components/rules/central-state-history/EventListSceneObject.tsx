@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   SceneComponentProps,

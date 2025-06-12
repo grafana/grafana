@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState } from '@grafana/ui';
 import { SearchState } from 'app/features/search/types';
 

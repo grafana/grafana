@@ -309,7 +309,7 @@ function useColumns(
     });
 
     return columns;
-  }, [t, showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
+  }, [showNextEvaluationColumn, showSummaryColumn, showGroupColumn, isRulerLoading]);
 }
 
 function RuleStateCell({ rule }: { rule: CombinedRule }) {

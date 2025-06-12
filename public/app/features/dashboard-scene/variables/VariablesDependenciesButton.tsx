@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';

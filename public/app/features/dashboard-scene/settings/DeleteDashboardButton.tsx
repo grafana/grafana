@@ -1,7 +1,7 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 

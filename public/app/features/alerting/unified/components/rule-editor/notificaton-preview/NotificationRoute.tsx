@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';

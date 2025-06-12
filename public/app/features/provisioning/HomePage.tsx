@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -35,7 +35,7 @@ export default function HomePage() {
         title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
       },
     ],
-    [t]
+    []
   );
 
   // Early return for onboarding

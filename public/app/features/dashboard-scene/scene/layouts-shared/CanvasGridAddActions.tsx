@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';

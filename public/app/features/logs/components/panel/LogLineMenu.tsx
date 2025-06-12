@@ -132,7 +132,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       pinned,
       shouldlogSupportsContext,
       showContext,
-      t,
       toggleLogDetails,
       togglePinning,
     ]

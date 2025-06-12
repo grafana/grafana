@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
@@ -76,7 +76,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [t, canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
+    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
   );
 
   return (

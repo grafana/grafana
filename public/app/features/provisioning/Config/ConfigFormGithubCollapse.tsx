@@ -1,6 +1,6 @@
 import { UseFormRegister } from 'react-hook-form';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Text, TextLink } from '@grafana/ui';
 
 import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';

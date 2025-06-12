@@ -172,7 +172,6 @@ export const InfiniteScroll = ({
       sortOrder,
       styles,
       wrapLogMessage,
-      t,
     ]
   );
 

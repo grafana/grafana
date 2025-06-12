@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
 

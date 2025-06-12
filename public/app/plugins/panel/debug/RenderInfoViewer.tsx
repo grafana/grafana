@@ -9,7 +9,7 @@ import {
   PanelProps,
   ReducerID,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { Options, UpdateConfig } from './panelcfg.gen';

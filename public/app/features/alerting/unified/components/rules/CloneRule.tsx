@@ -1,7 +1,7 @@
 import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 

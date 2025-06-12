@@ -418,7 +418,7 @@ const getUseTranslateFixer = (node, fixer, context) => {
   // - The method name starts with a capital letter
   // - There is not already a call to `useTranslate` in the parent method
   // In that scenario, we assume that we can fix and add a usage of the hook to the start of the body of the method
-  return fixer.insertTextBefore(parentMethod.body.body[0], '\n');
+  return fixer.insertTextBefore(parentMethod.body.body[0], 'const { t } = useTranslate();\n');
 };
 
 /**

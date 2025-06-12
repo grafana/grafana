@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 

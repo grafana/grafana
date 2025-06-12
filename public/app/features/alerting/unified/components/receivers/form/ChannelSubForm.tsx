@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';

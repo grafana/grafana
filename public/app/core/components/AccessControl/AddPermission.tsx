@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';

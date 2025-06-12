@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 

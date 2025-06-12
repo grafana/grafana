@@ -1,7 +1,7 @@
 import { SyntheticEvent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { FieldSet, Input, Field, TextLink } from '@grafana/ui';
 

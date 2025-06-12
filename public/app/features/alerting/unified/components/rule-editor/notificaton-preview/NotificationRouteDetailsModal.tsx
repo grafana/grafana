@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';

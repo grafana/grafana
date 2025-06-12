@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,

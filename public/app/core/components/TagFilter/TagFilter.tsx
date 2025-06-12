@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 
 import { TagBadge, getStyles as getTagBadgeStyles } from './TagBadge';

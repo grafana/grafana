@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -139,7 +139,7 @@ export const CentralAlertHistoryScene = () => {
         ],
       }),
     });
-  }, [t]);
+  }, []);
 
   // we need to call this to sync the url with the scene state
   const isUrlSyncInitialized = useUrlSync(scene);

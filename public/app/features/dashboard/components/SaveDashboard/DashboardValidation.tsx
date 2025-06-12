@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FetchError } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';

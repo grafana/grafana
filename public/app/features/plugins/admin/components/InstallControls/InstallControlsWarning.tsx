@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, LinkButton, useStyles2, Alert, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';

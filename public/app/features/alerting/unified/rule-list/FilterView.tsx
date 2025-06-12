@@ -2,7 +2,7 @@ import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
 import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';

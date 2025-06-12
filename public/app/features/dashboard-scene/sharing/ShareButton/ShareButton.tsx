@@ -4,7 +4,7 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
 

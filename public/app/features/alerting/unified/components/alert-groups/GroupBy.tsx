@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 

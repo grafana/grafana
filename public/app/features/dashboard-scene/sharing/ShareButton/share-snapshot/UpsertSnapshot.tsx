@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 

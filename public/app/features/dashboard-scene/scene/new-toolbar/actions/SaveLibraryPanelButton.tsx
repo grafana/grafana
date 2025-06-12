@@ -1,5 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 import { ToolbarActionProps } from '../types';

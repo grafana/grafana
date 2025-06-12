@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Label, Input } from '@grafana/ui';
 

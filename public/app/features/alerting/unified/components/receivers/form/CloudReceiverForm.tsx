@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';

@@ -1,5 +1,5 @@
 import { NavModelItem } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
 

@@ -1,5 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';

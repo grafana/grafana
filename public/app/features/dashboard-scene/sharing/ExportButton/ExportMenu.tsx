@@ -51,7 +51,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [t]);
+  }, []);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

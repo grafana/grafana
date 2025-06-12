@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';

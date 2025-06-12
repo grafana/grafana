@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 

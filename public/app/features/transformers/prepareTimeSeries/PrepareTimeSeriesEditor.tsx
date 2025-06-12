@@ -9,7 +9,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

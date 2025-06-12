@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
 import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 

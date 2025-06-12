@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column, Stack } from '@grafana/ui';
 import { LdapRole } from 'app/types';
 
@@ -42,7 +42,7 @@ export const LdapUserGroups = ({ groups }: Props) => {
           ),
       },
     ],
-    [t]
+    []
   );
 
   return (

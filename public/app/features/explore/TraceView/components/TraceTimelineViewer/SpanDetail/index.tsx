@@ -29,7 +29,7 @@ import {
   PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';

@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { FolderDTO } from 'app/types';
@@ -295,7 +295,7 @@ function RulesTable({ rules }: { rules: RuleDetails[] }) {
         size: 0.3,
       },
     ];
-  }, [t]);
+  }, []);
 
   return <DynamicTable items={rows} cols={columns} />;
 }

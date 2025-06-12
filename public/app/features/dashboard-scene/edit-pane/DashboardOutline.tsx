@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 

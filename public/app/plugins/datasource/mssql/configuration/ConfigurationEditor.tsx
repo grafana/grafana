@@ -10,7 +10,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';

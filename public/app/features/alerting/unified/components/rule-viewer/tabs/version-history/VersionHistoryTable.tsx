@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Checkbox, Column, InteractiveTable, Stack, Text } from '@grafana/ui';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';

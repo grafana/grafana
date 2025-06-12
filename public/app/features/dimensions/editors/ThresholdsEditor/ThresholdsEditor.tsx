@@ -12,7 +12,7 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [

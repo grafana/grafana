@@ -10,7 +10,7 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/internal';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

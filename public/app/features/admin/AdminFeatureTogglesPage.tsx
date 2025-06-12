@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 

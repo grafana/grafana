@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';

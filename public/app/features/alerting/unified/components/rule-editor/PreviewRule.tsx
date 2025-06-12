@@ -6,7 +6,7 @@ import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 

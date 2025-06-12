@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, List, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';

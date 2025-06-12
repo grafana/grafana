@@ -3,7 +3,7 @@ import { chain } from 'lodash';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
 import { isPrivateLabel } from '../utils/labels';

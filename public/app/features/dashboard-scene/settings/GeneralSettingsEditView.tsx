@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';

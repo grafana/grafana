@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 

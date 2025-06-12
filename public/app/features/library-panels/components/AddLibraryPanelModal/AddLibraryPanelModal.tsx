@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal, Stack } from '@grafana/ui';

@@ -9,7 +9,7 @@ import {
   GrafanaTheme2,
   parseLiveChannelAddress,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { discoveryResources, getAPIGroupDiscoveryList, GroupDiscoveryResource } from 'app/features/apiserver/discovery';

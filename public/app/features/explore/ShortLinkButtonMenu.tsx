@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
 import { copyStringToClipboard } from 'app/core/utils/explore';

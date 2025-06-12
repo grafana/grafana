@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
 interface UnsavedChangesModalProps {

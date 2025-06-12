@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { useWizardContext } from '../components/Wizard/wizardContext';

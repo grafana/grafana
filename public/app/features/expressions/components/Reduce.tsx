@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
 
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';

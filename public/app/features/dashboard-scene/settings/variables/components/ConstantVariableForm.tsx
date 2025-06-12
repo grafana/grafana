@@ -1,7 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextField } from './VariableTextField';

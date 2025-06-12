@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';

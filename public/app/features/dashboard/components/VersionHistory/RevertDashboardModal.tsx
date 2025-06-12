@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
 import { useDashboardRestore } from './useDashboardRestore';

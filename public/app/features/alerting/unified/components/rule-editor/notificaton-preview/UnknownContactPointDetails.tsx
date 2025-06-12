@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip } from '@grafana/ui';
 
 const UnknownContactPointDetails = ({ receiverName }: { receiverName?: string }) => {

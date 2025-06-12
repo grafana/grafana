@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';

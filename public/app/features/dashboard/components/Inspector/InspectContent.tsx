@@ -11,7 +11,7 @@ import {
   LoadingState,
   DataQueryError,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';

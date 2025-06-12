@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Collapse,
   Alert,

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { PanelPlugin, PanelProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Dropdown, Menu, Stack } from '@grafana/ui';

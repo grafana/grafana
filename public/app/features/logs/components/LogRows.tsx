@@ -10,7 +10,7 @@ import {
   DataFrame,
   LogRowContextOptions,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';

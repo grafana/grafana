@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,

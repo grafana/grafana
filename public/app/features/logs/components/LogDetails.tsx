@@ -11,7 +11,7 @@ import {
   PluginExtensionPoints,
   PluginExtensionResourceAttributesContext,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
 
 type LiveTailButtonProps = {

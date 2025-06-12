@@ -3,7 +3,7 @@ import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';

@@ -3,7 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { isUndefined } from 'lodash';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';

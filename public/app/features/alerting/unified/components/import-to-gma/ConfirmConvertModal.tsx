@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';

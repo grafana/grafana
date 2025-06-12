@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Drawer,

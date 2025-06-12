@@ -3,7 +3,7 @@ import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,

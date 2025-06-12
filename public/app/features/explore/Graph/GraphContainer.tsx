@@ -11,7 +11,7 @@ import {
   ThresholdsConfig,
   TimeRange,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 

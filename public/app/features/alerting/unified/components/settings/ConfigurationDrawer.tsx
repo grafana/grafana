@@ -93,16 +93,7 @@ export function useEditConfigurationDrawer() {
         )}
       </Drawer>
     );
-  }, [
-    open,
-    dataSourceName,
-    readOnly,
-    handleDismiss,
-    activeTab,
-    updateAlertmanagerSettings,
-    resetAlertmanagerSettings,
-    t,
-  ]);
+  }, [open, dataSourceName, readOnly, handleDismiss, activeTab, updateAlertmanagerSettings, resetAlertmanagerSettings]);
 
   return [drawer, showConfiguration, handleDismiss] as const;
 }

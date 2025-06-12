@@ -4,7 +4,7 @@ import { FC, ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

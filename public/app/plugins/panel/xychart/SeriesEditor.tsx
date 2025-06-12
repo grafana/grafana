@@ -12,7 +12,7 @@ import {
   FieldType,
   GrafanaTheme2,
 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';

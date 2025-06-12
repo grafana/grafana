@@ -3,7 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,

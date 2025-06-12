@@ -348,7 +348,7 @@ const Foo = () => {
               output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
 const fooBar = 'a';
   return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
@@ -431,7 +431,7 @@ const Foo = () => {
               output: `
 ${TRANS_AND_USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
 return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
   )
@@ -474,7 +474,7 @@ const Foo = () => {
       code: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
   return (
     <div title="foo" />
   )
@@ -489,7 +489,7 @@ const Foo = () => {
               output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
   return (
     <div title={t("some-feature.foo.title-foo", "foo")} />
   )
@@ -568,7 +568,7 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
       code: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
   return (<>
     <div title={t("some-feature.foo.title-foo", "foo")} />
     <div title={"bar"} />
@@ -585,7 +585,7 @@ const Foo = () => {
               output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
   return (<>
     <div title={t("some-feature.foo.title-foo", "foo")} />
     <div title={t("some-feature.foo.title-bar", "bar")} />
@@ -789,7 +789,7 @@ const Foo = () => {
               output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
 const thing = {
     label: t(\"some-feature.foo.thing.label.test\", \"test\"),
   }
@@ -895,7 +895,7 @@ const Foo = () => {
       output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
 return <div title={t("some-feature.foo.title-foo", "foo")} />
 }`,
       errors: [
@@ -907,7 +907,7 @@ return <div title={t("some-feature.foo.title-foo", "foo")} />
               output: `
 ${USE_TRANSLATE_IMPORT}
 const Foo = () => {
-  
+  const { t } = useTranslate();
 return <div title={t("some-feature.foo.title-foo", "foo")} />
 }`,
             },

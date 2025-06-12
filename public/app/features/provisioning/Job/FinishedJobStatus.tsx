@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
 import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
 

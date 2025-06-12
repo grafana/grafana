@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
 

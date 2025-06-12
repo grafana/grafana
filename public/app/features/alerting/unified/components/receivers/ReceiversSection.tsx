@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';

@@ -3,7 +3,7 @@ import pluralize from 'pluralize';
 import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';

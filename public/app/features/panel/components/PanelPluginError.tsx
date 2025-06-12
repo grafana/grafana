@@ -3,7 +3,7 @@ import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
 import grafanaIconSvg from 'img/grafana_icon.svg';

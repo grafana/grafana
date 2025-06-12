@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { Alert, ScrollContainer, TextLink } from '@grafana/ui';
 

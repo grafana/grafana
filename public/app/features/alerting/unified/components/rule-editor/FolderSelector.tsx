@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
 

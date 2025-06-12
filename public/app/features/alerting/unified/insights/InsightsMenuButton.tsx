@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,

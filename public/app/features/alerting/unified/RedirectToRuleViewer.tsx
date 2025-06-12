@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 

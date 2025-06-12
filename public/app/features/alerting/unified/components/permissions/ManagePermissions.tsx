@@ -1,6 +1,6 @@
 import { ComponentProps, useState } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 

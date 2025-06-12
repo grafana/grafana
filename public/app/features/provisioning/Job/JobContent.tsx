@@ -1,4 +1,4 @@
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning';
 

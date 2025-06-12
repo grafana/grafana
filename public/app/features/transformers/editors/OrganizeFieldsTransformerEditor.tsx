@@ -11,7 +11,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { createOrderFieldsComparer, OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Input,
   IconButton,

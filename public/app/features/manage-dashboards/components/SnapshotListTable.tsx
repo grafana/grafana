@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
 import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
 

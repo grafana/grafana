@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 

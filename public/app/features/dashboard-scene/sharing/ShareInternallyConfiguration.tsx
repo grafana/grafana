@@ -1,5 +1,5 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Label, Spinner, Stack, Switch } from '@grafana/ui';
 
 import { ThemePicker } from '../../dashboard/components/ShareModal/ThemePicker';

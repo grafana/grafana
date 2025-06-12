@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';

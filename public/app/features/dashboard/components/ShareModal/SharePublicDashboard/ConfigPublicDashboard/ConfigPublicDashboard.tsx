@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ClipboardButton,

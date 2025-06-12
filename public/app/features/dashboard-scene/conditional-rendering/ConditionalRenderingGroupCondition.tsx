@@ -20,7 +20,7 @@ export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) =
       { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'Match all'), value: 'and' },
       { label: t('dashboard.conditional-rendering.conditions.group.condition.any', 'Match any'), value: 'or' },
     ],
-    [t]
+    []
   );
 
   return (

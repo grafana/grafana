@@ -1,5 +1,5 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;

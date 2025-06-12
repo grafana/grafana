@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
@@ -56,7 +56,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
         },
       },
     ],
-    [t]
+    []
   );
 
   const data = useMemo<ServerInfo[]>(() => ldapConnectionInfo, [ldapConnectionInfo]);

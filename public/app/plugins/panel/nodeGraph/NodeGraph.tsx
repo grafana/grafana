@@ -4,7 +4,7 @@ import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } f
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';

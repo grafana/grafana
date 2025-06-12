@@ -3,7 +3,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';

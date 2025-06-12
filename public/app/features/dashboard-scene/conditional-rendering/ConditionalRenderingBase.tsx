@@ -1,6 +1,6 @@
 import { ReactElement } from 'react';
 
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 

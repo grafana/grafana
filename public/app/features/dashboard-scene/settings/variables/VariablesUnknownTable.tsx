@@ -3,7 +3,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
