@@ -155,7 +155,10 @@ func SetDualWritingMode(
 		}
 	case cfg.Mode >= Mode3 && currentMode < Mode3:
 		if cfg.SkipDataSync {
-			return currentMode, nil
+			if err := kvs.Set(ctx, cfg.Kind, fmt.Sprint(cfg.Mode)); err != nil {
+				return Mode0, errDualWriterSetCurrentMode
+			}
+			return cfg.Mode, nil
 		}
 
 		// Transitioning to Mode3 or higher requires data synchronization.
