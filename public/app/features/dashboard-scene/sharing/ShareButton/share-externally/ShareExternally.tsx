@@ -3,8 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -58,7 +57,7 @@ function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>
 
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
-  const { t } = useTranslate();
+
   const onRevokeClick = () => {
     setShowRevokeAccess(true);
   };

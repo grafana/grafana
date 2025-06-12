@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import {
@@ -24,7 +24,7 @@ export interface Props {
 export const ChangePasswordForm = ({ user, onChangePassword, isSaving }: Props) => {
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
-  const { t } = useTranslate();
+
   const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
