@@ -16,6 +16,8 @@ type KVStorageBackend struct {
 	kv        KV
 	dataStore *dataStore
 	metaStore *metadataStore
+
+	events chan *WrittenEvent // TODO: replace with a poller base
 }
 
 func NewKVStorageBackend(kv KV) *KVStorageBackend {
@@ -23,6 +25,7 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 		kv:        kv,
 		dataStore: newDataStore(kv),
 		metaStore: newMetadataStore(kv),
+		events:    make(chan *WrittenEvent, 100),
 	}
 }
 
@@ -90,6 +93,20 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 	// TODO: Emit an event
+	select {
+	case k.events <- &WrittenEvent{
+		Key: &resourcepb.ResourceKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
+		},
+		Type:  event.Type,
+		Value: event.Value,
+	}:
+	default:
+		fmt.Println("event channel is full, dropping event")
+	}
 	return rvFromUID(uid)
 }
 
@@ -239,11 +256,17 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 100) // TODO: make this configurable
-	close(events)                           // TODO: remove this
+	go func() {
+		for event := range k.events {
+			events <- event
+		}
+		close(events)
+	}()
 	return events, nil
 }
 
 // GetResourceStats returns resource stats within the storage backend.
 func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+	// stats := make([]ResourceStats, 0)
 	return []ResourceStats{}, nil
 }

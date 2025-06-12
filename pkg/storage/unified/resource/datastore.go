@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -43,7 +42,7 @@ type DataKey struct {
 	IsDeleted bool
 }
 
-func (d *dataStore) getPrefix(key resourcepb.ResourceKey) (string, error) {
+func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
 	if key.Namespace == "" || key.Group == "" || key.Resource == "" {
 		return "", fmt.Errorf("namespace, group, and resource are required")
 	}
@@ -90,7 +89,7 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 	}, nil
 }
 
-func (d *dataStore) List(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[DataObj, error] {
+func (d *dataStore) List(ctx context.Context, key ListRequestKey) iter.Seq2[DataObj, error] {
 	prefix, err := d.getPrefix(key)
 	if err != nil {
 		return func(yield func(DataObj, error) bool) {

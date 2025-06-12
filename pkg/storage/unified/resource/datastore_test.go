@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +22,7 @@ func TestNewDataStore(t *testing.T) {
 func TestDataStore_GetPrefix(t *testing.T) {
 	ds := setupTestDataStore(t)
 
-	key := resourcepb.ResourceKey{
+	key := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
 		Resource:  "test-resource",
@@ -269,7 +268,7 @@ func TestDataStore_List(t *testing.T) {
 	ds := setupTestDataStore(t)
 	ctx := context.Background()
 
-	resourceKey := resourcepb.ResourceKey{
+	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
 		Resource:  "test-resource",
@@ -348,7 +347,7 @@ func TestDataStore_List(t *testing.T) {
 	})
 
 	t.Run("list empty", func(t *testing.T) {
-		emptyResourceKey := resourcepb.ResourceKey{
+		emptyResourceKey := ListRequestKey{
 			Namespace: "empty-namespace",
 			Group:     "empty-group",
 			Resource:  "empty-resource",
@@ -365,7 +364,7 @@ func TestDataStore_List(t *testing.T) {
 	})
 
 	t.Run("list with deleted keys", func(t *testing.T) {
-		deletedResourceKey := resourcepb.ResourceKey{
+		deletedResourceKey := ListRequestKey{
 			Namespace: "deleted-namespace",
 			Group:     "deleted-group",
 			Resource:  "deleted-resource",
@@ -408,7 +407,7 @@ func TestDataStore_Integration(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("full lifecycle test", func(t *testing.T) {
-		resourceKey := resourcepb.ResourceKey{
+		resourceKey := ListRequestKey{
 			Namespace: "integration-ns",
 			Group:     "integration-group",
 			Resource:  "integration-resource",
