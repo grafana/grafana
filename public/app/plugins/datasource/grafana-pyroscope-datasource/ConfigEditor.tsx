@@ -57,6 +57,7 @@ export const ConfigEditor = (props: Props) => {
 
           <ConfigSubSection title="Querying">
             <Field
+              noMargin
               label="Minimal step"
               htmlFor="minimal-step"
               description="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
