@@ -49,33 +49,65 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+  transformations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  alerting:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  visualizations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  variables:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  annotate-visualizations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  set-up-grafana-monitoring:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+  configure-mssql-data-source:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
+
+
 ---
 
 # Microsoft SQL Server (MSSQL) data source
 
-Grafana ships with built-in support for Microsoft SQL Server (MS SQL).
-You can query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
+Grafana ships with built-in support for Microsoft SQL Server (MSSQL).
+You can query and visualize data from any Microsoft SQL Server 2005 or newer, including the Microsoft Azure SQL Database.
 
-This topic explains configuration specific to the Microsoft SQL Server data source.
+The following documentation will help you get started working with the Microsoft SQL Server (MSSQL) data source:
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+- [Configure the  Microsoft SQL Server data source](ref:configure-mssql-data-source)
+- [Microsoft SQL Server query editor]()
+- [Microsoft SQL Server template variables]()
 
-Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+<!-- Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore). -->
 
 
+## Get the most out of the data source
 
-## Query the data source
+After installing and configuring the Microsoft SQL Server data source, you can:
 
-You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
-
-For details, refer to the [query editor documentation](query-editor/).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation](template-variables/).
+- Create a wide variety of [visualizations](ref:visualizations)
+- Configure and use [templates and variables](ref:variables)
+- Add [transformations](ref:transformations)
+- Add [annotations](ref:annotate-visualizations)
+- Set up [alerting](ref:alerting)

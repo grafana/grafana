@@ -43,10 +43,17 @@ refs:
 
 # Microsoft SQL Server query editor
 
-You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
+You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MSSQL data source.
 
-This topic explains querying specific to the MS SQL data source.
+This topic explains querying specific to the MSSQL data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+
+## Query the data source
+
+You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MSSQL data source.
+
+For details, refer to the [query editor documentation](query-editor/).
+
 
 ## Choose a query editing mode
 
@@ -67,15 +74,15 @@ The query editor also provides:
 
 ## Configure common options
 
-You can configure a MS SQL-specific response format in the query editor regardless of its mode.
+You can configure a MSSQL-specific response format in the query editor regardless of its mode.
 
 ### Choose a response format
 
-Grafana can format the response from MS SQL as either a table or as a time series.
+Grafana can format the response from MSSQL as either a table or as a time series.
 
 To choose a response format, select either the **Table** or **Time series** formats from the **Format** dropdown.
 
-To use the time series format, you must name one of the MS SQL columns `time`.
+To use the time series format, you must name one of the MSSQL columns `time`.
 You can use time series queries, but not table queries, in alerting conditions.
 
 For details about using these formats, refer to [Use table queries](#use-table-queries) and [Use time series queries](#use-time-series-queries).
@@ -472,7 +479,7 @@ In this case the stored procedure accepts two parameters `@from` and `@to` of `i
 which will be used to filter the data to return from the stored procedure.
 
 We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions, and that's why there are a lot of lengthy expressions needed -
-these could be extracted to MS SQL functions, if wanted.
+these could be extracted to MSSQL functions, if wanted.
 
 ```sql
 CREATE PROCEDURE sp_test_epoch(
@@ -524,7 +531,7 @@ In this case the stored procedure accepts two parameters `@from` and `@to` of `d
 which will be used to filter the data to return from the stored procedure.
 
 We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
-these could be extracted to MS SQL functions, if wanted.
+these could be extracted to MSSQL functions, if wanted.
 
 ```sql
 CREATE PROCEDURE sp_test_datetime(

@@ -45,9 +45,17 @@ Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
 
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation](template-variables/).
+
 ## Query variable
 
-If you add a template variable of the type `Query`, you can write a MS SQL query that can
+If you add a template variable of the type `Query`, you can write a MSSQL query that can
 return things like measurement names, key names or key values that are shown as a dropdown select box.
 
 For example, you can have a variable that contains all values for the `hostname` column in a table if you specify a query like this in the templating variable **Query** setting.
