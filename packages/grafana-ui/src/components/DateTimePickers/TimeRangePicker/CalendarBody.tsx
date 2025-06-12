@@ -92,6 +92,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
   // If a time range is part of only 1 day but does not encompass the whole day,
   // the class that react-calendar uses is '--hasActive' by itself (without being part of a '--range')
   const hasActiveSelector = `.react-calendar__tile--hasActive:not(.react-calendar__tile--range)`;
+
   return {
     title: css({
       color: theme.colors.text.primary,
@@ -161,10 +162,32 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         border: '0px',
       },
 
-      '.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--rangeEnd):not(.react-calendar__tile--rangeStart)':
-        {
-          backgroundColor: theme.colors.action.hover,
-        },
+      '.react-calendar__tile--hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
+
+      // '.react-calendar__tile--hoverStart': {
+      //   borderTopRightRadius: '0 !important',
+      //   borderBottomRightRadius: '0 !important',
+      //   borderTopLeftRadius: '20px',
+      //   borderBottomLeftRadius: '20px',
+      // },
+
+      // '.react-calendar__tile--hoverEnd': {
+      //   borderTopLeftRadius: '0 !important',
+      //   borderBottomLeftRadius: '0 !important',
+      //   borderTopRightRadius: '20px',
+      //   borderBottomRightRadius: '20px',
+      // },
+
+      // '.react-calendar__tile--hoverBothEnds': {
+      //   borderRadius: '20px',
+      // },
+
+      // '.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--rangeEnd):not(.react-calendar__tile--rangeStart)':
+      //   {
+      //     backgroundColor: theme.colors.action.hover,
+      //   },
 
       '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
         padding: 0,
@@ -174,8 +197,8 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.primary.main,
 
         abbr: {
-          backgroundColor: theme.colors.primary.main,
-          borderRadius: theme.shape.radius.pill,
+          // backgroundColor: theme.colors.primary.main,
+          // borderRadius: theme.shape.radius.pill,
           display: 'block',
           paddingTop: '2px',
           height: '26px',
