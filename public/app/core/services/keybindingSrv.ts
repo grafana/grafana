@@ -53,13 +53,6 @@ export class KeybindingSrv {
       this.bind('g p', this.goToProfile);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
-
-      if (process.env.NODE_ENV === 'development') {
-        this.bind('`', () => {
-          console.log('Hitting breakpoint - make sure your browser dev tools allows debugger statements');
-          debugger;
-        });
-      }
     }
 
     this.bind('c t', () => toggleTheme(false));
