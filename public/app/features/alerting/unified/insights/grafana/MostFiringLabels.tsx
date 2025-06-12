@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, TestDataSourceResponse } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   PanelBuilders,

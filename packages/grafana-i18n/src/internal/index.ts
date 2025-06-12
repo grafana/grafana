@@ -17,5 +17,4 @@ export {
   getLanguage,
   getResolvedLanguage,
   initializeI18n,
-  t,
 } from '../i18n';

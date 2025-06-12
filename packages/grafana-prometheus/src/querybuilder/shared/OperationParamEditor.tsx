@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';
@@ -86,7 +87,7 @@ function SelectInputParamEditor({
         <Button
           size="sm"
           variant="secondary"
-          title={`Add ${paramDef.name}`}
+          title={t('querybuilder.operation-param-editor.title-add', 'Add {{name}}', { name: paramDef.name })}
           icon="plus"
           onClick={() => onChange(index, selectOptions[0].value)}
         >
@@ -114,7 +115,7 @@ function SelectInputParamEditor({
           fill="text"
           icon="times"
           variant="secondary"
-          title={`Remove ${paramDef.name}`}
+          title={t('querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', { name: paramDef.name })}
           onClick={() => onChange(index, '')}
         />
       )}

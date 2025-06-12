@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
@@ -40,7 +40,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
     () => (namespace && namespaceGroups.get(namespace)?.map((group) => ({ label: group, value: group }))) || [],
     [namespace, namespaceGroups]
   );
-  const { t } = useTranslate();
 
   return (
     <div className={style.flexRow}>
