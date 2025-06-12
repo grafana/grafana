@@ -202,13 +202,6 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	// Ensure branch exists for non-default branches
-	if ref != r.config.Spec.GitHub.Branch {
-		if err := r.ensureBranchExists(ctx, ref); err != nil {
-			return nil, err
-		}
-	}
-
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, filePath)
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
@@ -372,8 +365,11 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return err
+	// Ensure branch exists for non-default branches
+	if ref != r.config.Spec.GitHub.Branch {
+		if err := r.ensureBranchExists(ctx, ref); err != nil {
+			return err
+		}
 	}
 
 	// TODO: should add some protection against deleting the root directory?

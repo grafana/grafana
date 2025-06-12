@@ -13,7 +13,7 @@ import { ProvisionedDashboardData } from '../saving/provisioned/hooks';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 
-interface Props {
+export interface Props {
   dashboard: DashboardScene;
   provisionedDashboardData: ProvisionedDashboardData;
   onDismiss: () => void;

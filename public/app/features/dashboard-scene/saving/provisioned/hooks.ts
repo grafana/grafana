@@ -69,7 +69,7 @@ export interface ProvisionedDashboardData {
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   defaultValues: ProvisionedDashboardFormData | null;
-  repository: RepositoryView | null;
+  repository?: RepositoryView;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   isNew: boolean;
@@ -103,7 +103,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
       isLoading,
       setIsLoading,
       defaultValues: null,
-      repository: null,
+      repository: undefined,
       loadedFromRef,
       workflowOptions: [],
       isNew: false,
