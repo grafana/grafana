@@ -269,7 +269,7 @@ export function getValueFormat(id?: string | null): ValueFormatter {
           if (!symbol) {
             return toFixedUnit(''); // fallback for empty symbol
           }
-          const asSuffix = keySplit[2] === 'suffix' || keySplit[2] === 'true';
+          const asSuffix = keySplit[2] === 'suffix';
           return fullCurrency(symbol, asSuffix);
         } else {
           return currency(sub);
