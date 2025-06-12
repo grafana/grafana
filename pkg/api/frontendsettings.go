@@ -247,6 +247,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                      hs.Cfg.DateFormats,
+		QuickRanges:                      hs.Cfg.QuickRanges,
 		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
