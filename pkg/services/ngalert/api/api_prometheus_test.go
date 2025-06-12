@@ -1984,6 +1984,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, "webhook-a", rg.Rules[0].NotificationSettings.Receiver)
 		})
 	})
+
+	t.Run("provenance as expected", func(t *testing.T) {
+		// TODO: add test which checks that the basic provenance is empty for rules that are not provisioned
+		// TODO: add test which verifies rule that has provenance record is returned with appropriate provenance
+		// TODO: add test which verifies a mix of rules with and without provenance is returned correctly
+	})
 }
 
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {

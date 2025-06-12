@@ -289,12 +289,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.store, RuleGroupStatusesOptions{
-		Ctx:               c.Req.Context(),
-		OrgID:             c.OrgID,
-		Query:             c.Req.Form,
-		AllowedNamespaces: allowedNamespaces,
-	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager), provenanceRecords)
+	ruleResponse = PrepareRuleGroupStatuses(
+		srv.log,
+		srv.store,
+		RuleGroupStatusesOptions{
+			Ctx:               c.Req.Context(),
+			OrgID:             c.OrgID,
+			Query:             c.Req.Form,
+			AllowedNamespaces: allowedNamespaces,
+		},
+		RuleStatusMutatorGenerator(srv.status),
+		RuleAlertStateMutatorGenerator(srv.manager),
+		provenanceRecords,
+	)
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
