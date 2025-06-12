@@ -392,12 +392,13 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 	}
 
 	for _, info := range stats {
+		// only periodically rebuild the dashboard index, specifically to update the usage insights data
+		if rebuild && info.Resource != dashboardv1.DASHBOARD_RESOURCE {
+			continue
+		}
+
 		group.Go(func() error {
 			if rebuild {
-				// only periodically rebuild the dashboard index, specifically to update the usage insights data
-				if info.Resource != dashboardv1.DASHBOARD_RESOURCE {
-					return nil
-				}
 				// we need to clear the cache to make sure we get the latest usage insights data
 				s.builders.clearNamespacedCache(info.NamespacedResource)
 			}
@@ -548,7 +549,7 @@ func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
 			return
 		case <-ticker.C:
 			s.log.Info("starting periodic index rebuild")
-			if err := s.rebuildAllIndexes(ctx); err != nil {
+			if err := s.rebuildDashboardIndexes(ctx); err != nil {
 				s.log.Error("error during periodic index rebuild", "error", err)
 			} else {
 				s.log.Info("periodic index rebuild completed successfully")
@@ -557,8 +558,8 @@ func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
 	}
 }
 
-func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildAllIndexes")
+func (s *searchSupport) rebuildDashboardIndexes(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildDashboardIndexes")
 	defer span.End()
 
 	start := time.Now()
@@ -566,12 +567,12 @@ func (s *searchSupport) rebuildAllIndexes(ctx context.Context) error {
 
 	totalBatchesIndexed, err := s.buildIndexes(ctx, true)
 	if err != nil {
-		return fmt.Errorf("failed to rebuild indexes: %w", err)
+		return fmt.Errorf("failed to rebuild dashboard indexes: %w", err)
 	}
 
 	end := time.Now()
 	duration := end.Sub(start)
-	s.log.Info("completed rebuilding all search indexes",
+	s.log.Info("completed rebuilding all dashboard search indexes",
 		"duration", duration,
 		"rebuilt_indexes", totalBatchesIndexed,
 		"total_docs", s.search.TotalDocs())
