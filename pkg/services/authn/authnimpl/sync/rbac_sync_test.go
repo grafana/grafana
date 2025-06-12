@@ -571,9 +571,6 @@ func setupTestEnv(t *testing.T) *RBACSync {
 	}
 	permRegistry := permreg.ProvidePermissionRegistry(t)
 
-
-	// Register additional folder actions that are returned by the mapping registry
-	// but not included in the default test registry
 	require.NoError(t, permRegistry.RegisterPermission("folders:write", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("folders:create", "folders:uid:"))
 	require.NoError(t, permRegistry.RegisterPermission("folders:delete", "folders:uid:"))
