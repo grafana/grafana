@@ -272,6 +272,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
  * but rather uses the 0th position of the arrays (AlignedData[0]) to determine the joining keys.
  */
 function joinTabular(tables: AlignedData[], outer = false) {
+  console.time('joinTabular');
+
   let ltable = tables[0];
   let lfield = ltable[0];
 
@@ -394,6 +396,8 @@ function joinTabular(tables: AlignedData[], outer = false) {
     ltable = joined;
     lfield = ltable[0];
   }
+
+  console.timeEnd('joinTabular');
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return ltable as Array<Array<string | number | null | undefined>>;
