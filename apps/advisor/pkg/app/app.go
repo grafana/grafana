@@ -71,7 +71,7 @@ func New(cfg app.Config) (app.App, error) {
 										logger.Error("Error getting requester", "error", err)
 										return
 									}
-									ctx = identity.WithRequester(context.Background(), requester)
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
 									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check", "error", err)
@@ -87,7 +87,7 @@ func New(cfg app.Config) (app.App, error) {
 										logger.Error("Error getting requester", "error", err)
 										return
 									}
-									ctx = identity.WithRequester(context.Background(), requester)
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
 									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
 										logger.Error("Error processing check retry", "error", err)
