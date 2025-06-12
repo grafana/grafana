@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -85,7 +84,7 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 	}, nil
 }
 
-func (d *metadataStore) getPrefix(key resourcepb.ResourceKey) (string, error) {
+func (d *metadataStore) getPrefix(key ListRequestKey) (string, error) {
 	if key.Namespace == "" || key.Group == "" || key.Resource == "" {
 		return "", fmt.Errorf("namespace, group, and resource are required")
 	}
@@ -107,7 +106,7 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	return meta, nil
 }
 
-func (d *metadataStore) GetLatest(ctx context.Context, key resourcepb.ResourceKey) (MetaDataObj, error) {
+func (d *metadataStore) GetLatest(ctx context.Context, key ListRequestKey) (MetaDataObj, error) {
 	if key.Namespace == "" {
 		return MetaDataObj{}, fmt.Errorf("namespace is required")
 	}
@@ -120,45 +119,35 @@ func (d *metadataStore) GetLatest(ctx context.Context, key resourcepb.ResourceKe
 	if key.Name == "" {
 		return MetaDataObj{}, fmt.Errorf("name is required")
 	}
+	iter := d.ListLatest(ctx, key)
+	for obj, err := range iter {
+		if err != nil {
+			return MetaDataObj{}, err
+		}
+		return obj, nil
+	}
+	return MetaDataObj{}, ErrNotFound
+}
 
-	prefix, err := d.getPrefix(key)
-	if err != nil {
-		return MetaDataObj{}, err
-	}
-	for k, err := range d.kv.List(ctx, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Sort:     SortOrderDesc,
-		Limit:    1,
-	}) {
-		if err != nil {
-			return MetaDataObj{}, err
-		}
-		key, err := d.parseKey(k)
-		if err != nil {
-			return MetaDataObj{}, err
-		}
-		if key.Action == MetaDataActionDeleted {
-			return MetaDataObj{}, ErrNotFound
-		}
-		metaObj, err := d.kv.Get(ctx, k)
-		if err != nil {
-			return MetaDataObj{}, err
-		}
-		var meta MetaData
-		if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
-			return MetaDataObj{}, err
-		}
-		return MetaDataObj{
-			Key:   key,
-			Value: meta,
-		}, nil
-	}
-	return MetaDataObj{}, fmt.Errorf("no latest version found")
+type ListRequestKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string
 }
 
 // TODO: replace the key with to not use the resourcepb.ResourceKey
-func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[MetaDataObj, error] {
+func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
+	if key.Group == "" {
+		return func(yield func(MetaDataObj, error) bool) {
+			yield(MetaDataObj{}, fmt.Errorf("group is required"))
+		}
+	}
+	if key.Resource == "" {
+		return func(yield func(MetaDataObj, error) bool) {
+			yield(MetaDataObj{}, fmt.Errorf("resource is required"))
+		}
+	}
 	prefix, err := d.getPrefix(key)
 	if err != nil {
 		return func(yield func(MetaDataObj, error) bool) {
@@ -238,7 +227,7 @@ func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceK
 }
 
 // ListAll lists all metadata objects for a given resource key.
-func (d *metadataStore) ListAll(ctx context.Context, key resourcepb.ResourceKey) iter.Seq2[MetaDataObj, error] {
+func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
 	prefix, err := d.getPrefix(key)
 	if err != nil {
 		return func(yield func(MetaDataObj, error) bool) {

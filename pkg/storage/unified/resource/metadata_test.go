@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,7 +92,7 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 func TestMetadataStore_GetPrefix(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
-	key := resourcepb.ResourceKey{
+	key := ListRequestKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
@@ -244,7 +243,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get latest should return uid3
-	latestObj, err := store.GetLatest(ctx, resourcepb.ResourceKey{
+	latestObj, err := store.GetLatest(ctx, ListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -279,7 +278,7 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetLatest(ctx, resourcepb.ResourceKey{
+	_, err = store.GetLatest(ctx, ListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -294,11 +293,11 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name string
-		key  resourcepb.ResourceKey
+		key  ListRequestKey
 	}{
 		{
 			name: "missing namespace",
-			key: resourcepb.ResourceKey{
+			key: ListRequestKey{
 				Group:    "apps",
 				Resource: "deployments",
 				Name:     "test-deployment",
@@ -306,7 +305,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing group",
-			key: resourcepb.ResourceKey{
+			key: ListRequestKey{
 				Namespace: "default",
 				Resource:  "deployments",
 				Name:      "test-deployment",
@@ -314,7 +313,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing resource",
-			key: resourcepb.ResourceKey{
+			key: ListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
 				Name:      "test-deployment",
@@ -322,7 +321,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing name",
-			key: resourcepb.ResourceKey{
+			key: ListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "deployments",
@@ -346,7 +345,7 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 	store := newMetadataStore(kv)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := ListRequestKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
@@ -361,13 +360,6 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 func TestMetadataStore_ListAll(t *testing.T) {
 	store := newMetadataStore(setupTestKV(t))
 	ctx := context.Background()
-
-	key := resourcepb.ResourceKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "", // Empty name for listing
-	}
 
 	// Save multiple metadata objects
 	uid1, err := uuid.NewV7()
@@ -409,7 +401,12 @@ func TestMetadataStore_ListAll(t *testing.T) {
 
 	// List all metadata objects
 	var results []MetaDataObj
-	for obj, err := range store.ListAll(ctx, key) {
+	for obj, err := range store.ListAll(ctx, ListRequestKey{
+		Group:     "apps",
+		Resource:  "deployments",
+		Namespace: "default",
+		Name:      "", // Empty name for listing
+	}) {
 		require.NoError(t, err)
 		results = append(results, obj)
 	}
@@ -464,7 +461,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 
 	// List latest metadata objects
 	var results []MetaDataObj
-	for obj, err := range store.ListLatest(ctx, resourcepb.ResourceKey{
+	for obj, err := range store.ListLatest(ctx, ListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
