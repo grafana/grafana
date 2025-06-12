@@ -353,6 +353,14 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
+    // This means there was a custom variable which we replaced in the beginning using parsingUtils::replaceVariables
+    case VectorSelector: {
+      const identifierNode = node.getChild(Identifier);
+      const customVarName = getString(expr, identifierNode);
+      op.params.push(customVarName);
+      break;
+    }
+
     default: {
       // Means we get to something that does not seem like simple function arg and is probably nested query so jump
       // back to main context
