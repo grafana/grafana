@@ -10,21 +10,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type CorrelationAppProvider struct {
+type PrometheusAppProvider struct {
 	app.Provider
-	cfg     *setting.Cfg
+	cfg *setting.Cfg
 }
 
 func RegisterApp(
 	cfg *setting.Cfg,
-) *CorrelationAppProvider {
-	provider := &CorrelationAppProvider{
-		cfg:     cfg
+) *PrometheusAppProvider {
+	provider := &PrometheusAppProvider{
+		cfg: cfg,
 	}
 	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter: correlationv0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds: correlationapp.GetKinds(),
+		OpenAPIDefGetter: prometheusv0alpha1.GetOpenAPIDefinitions,
+		ManagedKinds:     prometheusapp.GetKinds(),
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, correlationapp.New)
+	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, prometheusapp.New)
 	return provider
 }
