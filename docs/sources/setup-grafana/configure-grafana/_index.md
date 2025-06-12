@@ -2816,70 +2816,11 @@ This section controls system-wide defaults for the time picker, such as the defa
 
 #### `quick_ranges`
 
-Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry should have a `from`, `to` and `display`field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry must have a `from`, `to` and `display` field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
 
-The following format is used for the `from` and `to` fields:
+The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
 
-```
-now-<offset>/<unit>
-```
-
-The `<offset>` is a number and the `<unit>` is a time unit. Omitting `to` will result in the `from` value being used in both fields.
-
-The following time units are supported:
-
-- `m` for minutes
-- `h` for hours
-- `d` for days
-- `w` for weeks
-- `M` for months
-- `y` for years
-- `fy` for fiscal years
-- `fQ` for fiscal quarters
-
-Usage of now:
-
-- `now` is the current time
-- `now-X` is the current time minus time unit(s)
-- `now/X` is the current time divided by X. Essentially the current time rounded down to the nearest X time unit.
-- `now-X/X` is the current time minus X time unit(s) and then rounded down to the nearest X time unit. This is useful for getting the start of a previous time unit
-
-The following quick ranges are the default if no configuration is provided:
-
-- Last 5 minutes
-- Last 15 minutes
-- Last 30 minutes
-- Last 1 hour
-- Last 6 hours
-- Last 12 hours
-- Last 24 hours
-- Last 2 days
-- Last 7 days
-- Last 30 days
-- Last 90 days
-- Last 6 months
-- Last 1 year
-- Last 5 years
-- Yesterday
-- Day before yesterday
-- This day last week
-- Previous week
-- Previous month
-- Previous fiscal quarter
-- Previous year
-- Previous fiscal year
-- Today
-- Today so far
-- This week
-- This week so far
-- This month
-- This month so far
-- This year
-- This year so far
-- This fiscal quarter so far
-- This fiscal quarter
-- This fiscal year so far
-- This fiscal year
+If no configuration is provided, Grafana's default time ranges will be used.
 
 For example:
 
