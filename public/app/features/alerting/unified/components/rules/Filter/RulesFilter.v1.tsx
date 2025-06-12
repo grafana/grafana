@@ -235,7 +235,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
               <Field
                 label={
                   <Label htmlFor="contactPointFilter">
-                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                    <Trans i18nKey="alerting.contact-points.contact-point">Contact point</Trans>
                   </Label>
                 }
               >

@@ -40,16 +40,16 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   });
   const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
 
+  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
+    setSelectedContactPointWithMetadata(contactPoint);
+  };
+
   useEffect(() => {
     if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
       onSelectContactPoint(contactPointWithMetadata);
     }
   }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
   const { t } = useTranslate();
-
-  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
-    setSelectedContactPointWithMetadata(contactPoint);
-  };
 
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
@@ -63,7 +63,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         <div className={styles.alertManagerName}>
           <Trans i18nKey="alerting.rule-form.simple-routing.alertmanager-label">Alertmanager:</Trans>
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
-          {alertManagerName}
+          <span>{alertManagerName}</span>
         </div>
         <div className={styles.secondAlertManagerLine} />
       </Stack>
