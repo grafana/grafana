@@ -8,10 +8,11 @@ import (
 var _ resource.ListIterator = (*listIter)(nil)
 
 type listIter struct {
-	rows    db.Rows
-	offset  int64
-	listRV  int64
-	sortAsc bool
+	rows         db.Rows
+	offset       int64
+	listRV       int64
+	sortAsc      bool
+	useCurrentRV bool
 
 	// any error
 	err error
@@ -29,11 +30,10 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
+	if l.useCurrentRV {
+		return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
+	}
 	return resource.ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
-}
-
-func (l *listIter) ContinueTokenWithCurrentRV() string {
-	return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 }
 
 func (l *listIter) Error() error {

@@ -1,23 +1,23 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   hasUnderOrOverflow,
   getLineHeight,
   LogFieldDimension,
-  TRUNCATION_LINE_COUNT,
+  getTruncationLineCount,
 } from './virtualization';
 
 export interface Props {
@@ -27,7 +27,7 @@ export interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
-  onClick: (log: LogListModel) => void;
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
@@ -45,12 +45,21 @@ export const LogLine = ({
   variant,
   wrapLogMessage,
 }: Props) => {
-  const { detailsDisplayed, onLogLineHover } = useLogListContext();
+  const {
+    detailsDisplayed,
+    dedupStrategy,
+    enableLogDetails,
+    fontSize,
+    hasLogsWithErrors,
+    hasSampledLogs,
+    onLogLineHover,
+  } = useLogListContext();
   const [collapsed, setCollapsed] = useState<boolean | undefined>(
     wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
   );
   const logLineRef = useRef<HTMLDivElement | null>(null);
   const pinned = useLogIsPinned(log);
+  const permalinked = useLogIsPermalinked(log);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -82,26 +91,68 @@ export const LogLine = ({
     onOverflow?.(index, log.uid);
   }, [collapsed, index, log, onOverflow]);
 
-  const { t } = useTranslate();
-  const handleClick = useCallback(() => {
-    onClick(log);
-  }, [log, onClick]);
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      onClick(e, log);
+    },
+    [log, onClick]
+  );
 
   const detailsShown = detailsDisplayed(log);
 
   return (
     <div style={style}>
       <div
-        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''}`}
+        className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${fontSize === 'small' ? styles.fontSizeSmall : ''}`}
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
       >
         <LogLineMenu styles={styles} log={log} />
+        {dedupStrategy !== LogsDedupStrategy.none && (
+          <div className={`${styles.duplicates}`}>
+            {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
+          </div>
+        )}
+        {hasLogsWithErrors && (
+          <div className={`${styles.hasError}`}>
+            {log.hasError && (
+              <Tooltip
+                content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', {
+                  errorMessage: log.errorMessage,
+                })}
+                placement="right"
+                theme="error"
+              >
+                <Icon
+                  className={styles.logIconError}
+                  name="exclamation-triangle"
+                  aria-label={t('logs.log-line.has-error', 'Has errors')}
+                  size="xs"
+                />
+              </Tooltip>
+            )}
+          </div>
+        )}
+        {hasSampledLogs && (
+          <div className={`${styles.isSampled}`}>
+            {log.isSampled && (
+              <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
+                <Icon
+                  className={styles.logIconInfo}
+                  name="info-circle"
+                  size="xs"
+                  aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+                />
+              </Tooltip>
+            )}
+          </div>
+        )}
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
-          className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''}`}
+          className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+          style={collapsed ? { maxHeight: `${getTruncationLineCount() * getLineHeight()}px` } : undefined}
           onClick={handleClick}
         >
           <Log
@@ -151,44 +202,9 @@ interface LogProps {
   wrapLogMessage: boolean;
 }
 
-const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
-  const { dedupStrategy } = useLogListContext();
-  const { t } = useTranslate();
+const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
-      {dedupStrategy !== LogsDedupStrategy.none && (
-        <span className={`${styles.duplicates} field`}>
-          {log.duplicates && log.duplicates > 0 ? `${log.duplicates + 1}x` : null}
-        </span>
-      )}
-      {log.hasError && (
-        <span className={`${styles.hasError} field`}>
-          <Tooltip
-            content={t('logs.log-line.tooltip-error', 'Error: {{errorMessage}}', { errorMessage: log.errorMessage })}
-            placement="right"
-            theme="error"
-          >
-            <Icon
-              className={styles.logIconError}
-              name="exclamation-triangle"
-              aria-label={t('logs.log-line.has-error', 'Has errors')}
-              size="xs"
-            />
-          </Tooltip>
-        </span>
-      )}
-      {log.isSampled && (
-        <span className={`${styles.isSampled} field`}>
-          <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
-            <Icon
-              className={styles.logIconInfo}
-              name="info-circle"
-              size="xs"
-              aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
-            />
-          </Tooltip>
-        </span>
-      )}
       {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
@@ -211,7 +227,9 @@ const Log = ({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProp
       )}
     </>
   );
-};
+});
+
+Log.displayName = 'Log';
 
 const LogLineBody = ({ log }: { log: LogListModel }) => {
   const { syntaxHighlighting } = useLogListContext();
@@ -260,9 +278,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.fontSize,
+      lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
-        background: `hsla(0, 0%, 0%, 0.2)`,
+        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -310,10 +329,17 @@ export const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     }),
+    fontSizeSmall: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
     detailsDisplayed: css({
-      background: `hsla(0, 0%, 0%, 0.2)`,
+      background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
     }),
     pinnedLogLine: css({
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+    }),
+    permalinkedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({
@@ -330,12 +356,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'inline-block',
     }),
     duplicates: css({
-      display: 'inline-block',
+      flexShrink: 0,
       textAlign: 'center',
       width: theme.spacing(4.5),
     }),
     hasError: css({
-      display: 'inline-block',
+      flexShrink: 0,
       width: theme.spacing(2),
       '& svg': {
         position: 'relative',
@@ -343,7 +369,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     isSampled: css({
-      display: 'inline-block',
+      flexShrink: 0,
       width: theme.spacing(2),
       '& svg': {
         position: 'relative',
@@ -385,15 +411,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
     overflows: css({
       outline: 'solid 1px red',
     }),
-    unwrappedLogLine: css({
+    clickable: css({
       cursor: 'pointer',
+    }),
+    unwrappedLogLine: css({
       display: 'grid',
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
-      cursor: 'pointer',
       alignSelf: 'flex-start',
       paddingBottom: theme.spacing(0.75),
       whiteSpace: 'pre-wrap',
@@ -405,7 +432,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     collapsedLogLine: css({
-      maxHeight: `${TRUNCATION_LINE_COUNT * getLineHeight()}px`,
       overflow: 'hidden',
     }),
     expandCollapseControl: css({

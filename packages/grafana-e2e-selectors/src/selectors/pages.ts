@@ -511,6 +511,9 @@ export const versionedPages = {
             datasourceSelect: {
               [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource type',
             },
+            nameFilter: {
+              [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource name filter',
+            },
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: {

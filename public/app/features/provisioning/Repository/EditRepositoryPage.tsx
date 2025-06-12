@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
@@ -16,7 +16,13 @@ export default function EditRepositoryPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
+      pageNav={{
+        text: t('provisioning.edit-repository-page.text.configure-repository', 'Configure repository'),
+        subTitle: t(
+          'provisioning.edit-repository-page.subTitle.configure-repository-storing-resources',
+          'Configure a repository for storing your resources.'
+        ),
+      }}
     >
       <Page.Contents isLoading={query.isLoading}>
         {notFound ? (

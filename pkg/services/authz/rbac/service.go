@@ -107,15 +107,15 @@ func NewService(
 func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.Check")
 	defer span.End()
-	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", req.GetSubject(),
+		"namespace", req.GetNamespace(),
+		"group", req.GetGroup(),
+		"resource", req.GetResource(),
+		"verb", req.GetVerb(),
+	)
 	defer func(start time.Time) {
-		ctxLogger.Debug("Check execution time",
-			"subject", req.GetSubject(),
-			"namespace", req.GetNamespace(),
-			"group", req.GetGroup(),
-			"resource", req.GetResource(),
-			"verb", req.GetVerb(),
-			"duration", time.Since(start).Milliseconds())
+		ctxLogger.Debug("Check execution time", "duration", time.Since(start).Milliseconds())
 	}(time.Now())
 
 	deny := &authzv1.CheckResponse{Allowed: false}
@@ -184,15 +184,15 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
-	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", req.GetSubject(),
+		"namespace", req.GetNamespace(),
+		"group", req.GetGroup(),
+		"resource", req.GetResource(),
+		"verb", req.GetVerb(),
+	)
 	defer func(start time.Time) {
-		ctxLogger.Debug("List execution time",
-			"subject", req.GetSubject(),
-			"namespace", req.GetNamespace(),
-			"group", req.GetGroup(),
-			"resource", req.GetResource(),
-			"verb", req.GetVerb(),
-			"duration", time.Since(start).Milliseconds())
+		ctxLogger.Debug("List execution time", "duration", time.Since(start).Milliseconds())
 	}(time.Now())
 
 	listReq, err := s.validateListRequest(ctx, req)

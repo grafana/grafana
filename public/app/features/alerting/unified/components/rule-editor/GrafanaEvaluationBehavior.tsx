@@ -5,8 +5,7 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Box,
   Button,
@@ -74,7 +73,7 @@ const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => 
 const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluateFor: string }> => ({
   required: {
     value: true,
-    message: 'Required.',
+    message: t('alerting.for-validation-options.message.required', 'Required.'),
   },
   validate: (value) => {
     // parsePrometheusDuration does not allow 0 but does allow 0s
@@ -237,7 +236,13 @@ export function GrafanaEvaluationBehaviorStep({
                 name="group"
                 control={control}
                 rules={{
-                  required: { value: true, message: 'Must enter a group name' },
+                  required: {
+                    value: true,
+                    message: t(
+                      'alerting.grafana-evaluation-behavior-step.message.must-enter-a-group-name',
+                      'Must enter a group name'
+                    ),
+                  },
                 }}
               />
             </Field>
@@ -380,7 +385,13 @@ export function GrafanaEvaluationBehaviorStep({
                   )}
                   id="missing-series-resolve"
                   {...register('missingSeriesEvalsToResolve', {
-                    pattern: { value: /^\d+$/, message: 'Must be a positive integer.' },
+                    pattern: {
+                      value: /^\d+$/,
+                      message: t(
+                        'alerting.grafana-evaluation-behavior-step.message.must-be-a-positive-integer',
+                        'Must be a positive integer.'
+                      ),
+                    },
                   })}
                   width={21}
                 />
@@ -477,7 +488,12 @@ function EvaluationGroupCreationModal({
               autoFocus={true}
               id={evaluationGroupNameId}
               placeholder={t('alerting.evaluation-group-creation-modal.placeholder-enter-a-name', 'Enter a name')}
-              {...register('group', { required: { value: true, message: 'Required.' } })}
+              {...register('group', {
+                required: {
+                  value: true,
+                  message: t('alerting.evaluation-group-creation-modal.message.required', 'Required.'),
+                },
+              })}
             />
           </Field>
 

@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 import { SelectableValue } from './select';
 
@@ -18,6 +18,7 @@ export interface Action {
   [ActionType.Fetch]: FetchOptions;
   confirmation?: string;
   oneClick?: boolean;
+  variables?: ActionVariable[];
   style?: ActionButtonCssProperties;
 }
 
@@ -26,10 +27,21 @@ export interface Action {
  */
 export interface ActionModel<T = any> {
   title: string;
-  onClick: (event: any, origin?: any) => void;
-  confirmation?: string;
+  onClick: (event: any, origin?: any, actionVars?: ActionVariableInput) => void;
+  confirmation: (actionVars?: ActionVariableInput) => ReactNode;
   oneClick?: boolean;
   style: ActionButtonCssProperties;
+  variables?: ActionVariable[];
+}
+
+export type ActionVariable = {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+};
+
+export enum ActionVariableType {
+  String = 'string',
 }
 
 interface FetchOptions {
@@ -70,3 +82,5 @@ export const defaultActionConfig: Action = {
     headers: [['Content-Type', 'application/json']],
   },
 };
+
+export type ActionVariableInput = { [key: string]: string };

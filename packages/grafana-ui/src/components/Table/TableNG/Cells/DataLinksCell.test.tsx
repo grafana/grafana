@@ -70,7 +70,7 @@ describe('DataLinksCell', () => {
           expect(screen.getByRole('link', { name: link.title })).toHaveAttribute('href', link.href);
         } else {
           expect(screen.queryByRole('link', { name: link.title })).not.toBeInTheDocument();
-          expect(screen.getByText(link.title)).toBeInTheDocument();
+          expect(screen.queryByText(link.title)).not.toBeInTheDocument();
         }
       });
     });

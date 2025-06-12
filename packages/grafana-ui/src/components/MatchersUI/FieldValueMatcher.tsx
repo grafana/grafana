@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';

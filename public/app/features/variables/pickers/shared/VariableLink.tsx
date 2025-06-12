@@ -3,7 +3,7 @@ import { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/internal';
 
@@ -70,7 +70,6 @@ interface VariableLinkTextProps {
 
 const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <span className={styles.textAndTags}>

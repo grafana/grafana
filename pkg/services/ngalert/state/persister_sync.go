@@ -94,6 +94,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
+			FiredAt:           s.FiredAt,
 			ResolvedAt:        s.ResolvedAt,
 			LastSentAt:        s.LastSentAt,
 			ResultFingerprint: s.ResultFingerprint.String(),
