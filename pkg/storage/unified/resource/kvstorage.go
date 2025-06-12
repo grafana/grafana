@@ -100,6 +100,7 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:      event.Key.Name,
 		UID:       uid,
 		Action:    action,
+		Folder:    event.Object.GetFolder(),
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to send event: %w", err)
@@ -285,7 +286,7 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 // WatchWriteEvents returns a channel that receives write events.
 func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
-	events := make(chan *WrittenEvent, 100) // TODO: make this configurable
+	events := make(chan *WrittenEvent) // TODO: make this configurable
 
 	notifierEvents, err := k.notifier.Notify(ctx)
 	if err != nil {
@@ -303,8 +304,23 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Action:    event.Action,
 			})
 			if err != nil {
-				// TODO: handle error
-				continue
+				fmt.Errorf("some error", err)
+				return
+			}
+			rv, err := rvFromUID(event.UID)
+			if err != nil {
+				fmt.Errorf("some error parsing the uid", err)
+				return
+			}
+			fmt.Println("Final event", event.UID.String(), event.UID.Time(), event.Name, event.Action, rv)
+			var t resourcepb.WatchEvent_Type
+			switch event.Action {
+			case MetaDataActionCreated:
+				t = resourcepb.WatchEvent_ADDED
+			case MetaDataActionUpdated:
+				t = resourcepb.WatchEvent_MODIFIED
+			case MetaDataActionDeleted:
+				t = resourcepb.WatchEvent_DELETED
 			}
 			events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
@@ -313,8 +329,10 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 					Resource:  event.Resource,
 					Name:      event.Name,
 				},
-				Type:  resourcepb.WatchEvent_ADDED,
-				Value: data,
+				Type:            t,
+				Folder:          event.Folder,
+				Value:           data,
+				ResourceVersion: rv,
 			}
 		}
 		close(events)

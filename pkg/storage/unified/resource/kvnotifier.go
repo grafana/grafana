@@ -13,7 +13,7 @@ import (
 const (
 	prefixEvents          = "/unified/events"
 	defaultLookbackPeriod = 1 * time.Minute
-	defaultPollInterval   = 200 * time.Millisecond
+	defaultPollInterval   = 100 * time.Millisecond
 	defaultEventCacheSize = 10000
 )
 
@@ -35,6 +35,7 @@ type Event struct {
 	Name      string         `json:"name"`
 	UID       uuid.UUID      `json:"uid"`
 	Action    MetaDataAction `json:"action"`
+	Folder    string         `json:"folder"`
 }
 
 type KVNotifierOptions struct {
@@ -81,9 +82,7 @@ func parseEvent(value []byte) (Event, error) {
 }
 
 func (n *kvNotifier) getKey(uid uuid.UUID) string {
-	t, _ := uid.Time().UnixTime()
-	t = time.Unix(t, 0).Truncate(n.opts.LookbackPeriod).Unix()
-	return fmt.Sprintf("%s/%d/%s", prefixEvents, t, uid)
+	return fmt.Sprintf("%s/%s", prefixEvents, uid)
 }
 
 // markUIDSeen adds a UID to the tracking system, removing the oldest if we exceed maxSeenUIDs
@@ -129,7 +128,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 	events := make(chan *Event, n.opts.BufferSize)
-	lastTime := time.Now()
+	lastUID, _ := uuid.NewV7()
 	go func() {
 		defer close(events)
 		for {
@@ -137,8 +136,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 			case <-ctx.Done():
 				return
 			case <-time.After(n.opts.PollInterval):
-				t := lastTime.Add(-n.opts.LookbackPeriod).Unix()
-				startKey := fmt.Sprintf("%s/%d", prefixEvents, t)
+				startKey := n.getKey(lastUID) // TODO : lookback here is critical
 				for k, err := range n.kv.List(ctx, ListOptions{StartKey: startKey, EndKey: PrefixRangeEnd(prefixEvents)}) {
 					if err != nil {
 						// TODO: Handle error
@@ -163,6 +161,11 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 					// Mark this UID as seen before sending the event
 					n.markUIDSeen(ev.UID)
 
+					rv, _ := rvFromUID(ev.UID)
+					lastRV, _ := rvFromUID(lastUID)
+					if rv > lastRV {
+						lastUID = ev.UID
+					}
 					// Send the event
 					select {
 					case events <- &ev:
