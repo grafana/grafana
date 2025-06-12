@@ -97,12 +97,12 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
 	}
-	meta, err := k.metaStore.GetLatest(ctx, ListRequestKey{
+	meta, err := k.metaStore.GetAt(ctx, ListRequestKey{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Name:      req.Key.Name,
-	})
+	}, req.ResourceVersion)
 	if err == ErrNotFound {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
 	} else if err != nil {
@@ -135,14 +135,15 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
+
 	// Fetch the latest objects
 	keys := make([]MetaDataObj, 0, req.Limit)
-	for metaObj, err := range k.metaStore.ListLatest(ctx, ListRequestKey{
+	for metaObj, err := range k.metaStore.ListAt(ctx, ListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
 		Name:      req.Options.Key.Name,
-	}) {
+	}, req.ResourceVersion) {
 		if err != nil {
 			return 0, err
 		}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
+	"math"
 	"strings"
 
 	"github.com/google/uuid"
@@ -107,6 +108,13 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 }
 
 func (d *metadataStore) GetLatest(ctx context.Context, key ListRequestKey) (MetaDataObj, error) {
+	return d.GetAt(ctx, key, 0)
+}
+
+func (d *metadataStore) GetAt(ctx context.Context, key ListRequestKey, rv int64) (MetaDataObj, error) {
+	if rv == 0 {
+		rv = math.MaxInt64
+	}
 	if key.Namespace == "" {
 		return MetaDataObj{}, fmt.Errorf("namespace is required")
 	}
@@ -119,7 +127,7 @@ func (d *metadataStore) GetLatest(ctx context.Context, key ListRequestKey) (Meta
 	if key.Name == "" {
 		return MetaDataObj{}, fmt.Errorf("name is required")
 	}
-	iter := d.ListLatest(ctx, key)
+	iter := d.ListAt(ctx, key, rv)
 	for obj, err := range iter {
 		if err != nil {
 			return MetaDataObj{}, err
@@ -136,8 +144,15 @@ type ListRequestKey struct {
 	Name      string
 }
 
-// TODO: replace the key with to not use the resourcepb.ResourceKey
 func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
+	return d.ListAt(ctx, key, math.MaxInt64)
+}
+
+// ListAt lists all metadata objects for a given resource key and resource version.
+func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
+	if rv == 0 {
+		rv = math.MaxInt64
+	}
 	if key.Group == "" {
 		return func(yield func(MetaDataObj, error) bool) {
 			yield(MetaDataObj{}, fmt.Errorf("group is required"))
@@ -158,9 +173,61 @@ func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 	})
+
 	return func(yield func(MetaDataObj, error) bool) {
 		var selectedKey *MetaDataKey // The current key we are iterating over
 		var selectedPath string
+
+		// Yield is a helper function to yield a metadata object from a given path.
+		// It parses the key and yields the metadata object if it is not deleted.
+		yieldPath := func(path string, key MetaDataKey) {
+			if key.Action != MetaDataActionDeleted {
+				metaObj, err := d.kv.Get(ctx, path)
+				if err != nil {
+					yield(MetaDataObj{}, err)
+					return
+				}
+				var meta MetaData
+				if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
+					yield(MetaDataObj{}, err)
+					return
+				}
+				yield(MetaDataObj{
+					Key:   key,
+					Value: meta,
+				}, nil)
+			}
+		}
+
+		// keyMatches checks if the keys are the same
+		keyMatches := func(current, selection MetaDataKey) bool {
+			// If the keys are different, we need to yield the selected object
+			if current.Namespace != selection.Namespace {
+				return false
+			}
+			if current.Group != selection.Group {
+				return false
+			}
+			if current.Resource != selection.Resource {
+				return false
+			}
+			if current.Name != selection.Name {
+				return false
+			}
+			return true
+		}
+
+		// rvMatches checks if the rv from the uid is lower than the target rv
+		rvMatches := func(uid uuid.UUID) bool {
+			// The key is the same, we pick the one with the higher RV
+			uidRV, err := rvFromUID(uid)
+			if err != nil {
+				return false // TODO: handle error
+			}
+
+			return uidRV <= rv
+		}
+
 		for k, err := range iter {
 			if err != nil {
 				yield(MetaDataObj{}, err)
@@ -172,56 +239,28 @@ func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if selectedKey == nil { // First iteration
+			if selectedKey == nil && rvMatches(key.UID) { // First candidate
 				selectedKey = &key
 				selectedPath = k
 			}
 
-			// If the current key is not the same as the previous key, we need to yield the selected object
-			if selectedKey.Namespace != key.Namespace || selectedKey.Group != key.Group || selectedKey.Resource != key.Resource || selectedKey.Name != key.Name {
-				if selectedKey.Action != MetaDataActionDeleted {
-					metaObj, err := d.kv.Get(ctx, selectedPath)
-					if err != nil {
-						yield(MetaDataObj{}, err)
-						return
-					}
-					var meta MetaData
-					if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
-						yield(MetaDataObj{}, err)
-						return
-					}
-					yield(MetaDataObj{
-						Key:   *selectedKey,
-						Value: meta,
-					}, nil)
-				}
-				selectedKey = &key // Update the current key to the new key
-				selectedPath = k
-			} else {
-				// We are still iterating over the same key, so we need to update the latest path and uid
-				selectedPath = k
+			if selectedKey == nil {
+				continue
+			}
+			// If the current key is not the same as the previous key, or if the rv
+			// is greater than the target rv, we need to yield the selected object.
+			if !keyMatches(key, *selectedKey) || !rvMatches(key.UID) {
+				yieldPath(selectedPath, *selectedKey)
+				selectedKey = nil
+				selectedPath = ""
+			}
+			if rvMatches(key.UID) {
 				selectedKey = &key
+				selectedPath = k
 			}
 		}
-		if selectedPath != "" {
-			// TODO: this is dupplicated code. Refactor it
-			// Process the last key
-			if selectedKey.Action != MetaDataActionDeleted {
-				metaObj, err := d.kv.Get(ctx, selectedPath)
-				if err != nil {
-					yield(MetaDataObj{}, err)
-					return
-				}
-				var meta MetaData
-				if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
-					yield(MetaDataObj{}, err)
-					return
-				}
-				yield(MetaDataObj{
-					Key:   *selectedKey,
-					Value: meta,
-				}, nil)
-			}
+		if selectedKey != nil { // Yield the last selected object
+			yieldPath(selectedPath, *selectedKey)
 		}
 	}
 }
