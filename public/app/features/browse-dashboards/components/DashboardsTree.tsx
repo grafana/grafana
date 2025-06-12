@@ -7,7 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 
@@ -55,7 +55,6 @@ export function DashboardsTree({
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
@@ -98,7 +97,7 @@ export function DashboardsTree({
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, canSelect, t]);
+  }, [onFolderClick, canSelect]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;

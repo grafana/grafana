@@ -3,7 +3,7 @@ import { debounce, uniqueId } from 'lodash';
 import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -17,7 +17,7 @@ export const SilencesFilter = () => {
   const [queryParams, setQueryParams] = useQueryParams();
   const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     setQueryParams({ queryString: target.value || null });

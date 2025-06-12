@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Button, Field, Modal, Input, Alert, TextLink } from '@grafana/ui';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -26,8 +26,6 @@ export const RowOptionsForm = ({ repeat, title, sceneContext, isUsingDashboardDS
   const { handleSubmit, register } = useForm({
     defaultValues: { title },
   });
-
-  const { t } = useTranslate();
 
   const submit = (formData: { title: string }) => {
     onUpdate(formData.title, newRepeat);

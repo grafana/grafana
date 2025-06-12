@@ -1,7 +1,7 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { NavModel, NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
@@ -10,7 +10,6 @@ import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types';
 
 export function useDataSourceSettingsNav(pageIdParam?: string) {
-  const { t } = useTranslate();
   const { uid = '' } = useParams<{ uid: string }>();
   const location = useLocation();
   const datasource = useDataSource(uid);

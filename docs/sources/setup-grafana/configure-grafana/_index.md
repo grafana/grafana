@@ -54,6 +54,10 @@ By default, the configuration file is located at `/opt/homebrew/etc/grafana/graf
 For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly.
 Otherwise, add a configuration file named `custom.ini` to the `conf` directory to override the settings defined in `conf/defaults.ini`.
 
+### Grafana Cloud
+
+There is no local configuration file for Grafana Cloud stacks, but many of these settings are still configurable. To edit configurable settings, open a support ticket.
+
 ## Remove comments in the .ini files
 
 Grafana uses semicolons (`;`) to comment out lines in the INI file.
@@ -1981,6 +1985,16 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.prometheus_conversion]`
+
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+
+#### `rule_query_offset`
+
+Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`
@@ -2091,7 +2105,7 @@ Setting `0` means the short links are cleaned up approximately every 10 minutes.
 A negative value such as `-1` disables expiry.
 
 {{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted.
+Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
 {{< /admonition >}}
 
 <hr>

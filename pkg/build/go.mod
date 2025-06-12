@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.24.3
+go 1.24.4
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -82,6 +82,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/google/go-github/v70 v70.0.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
+	github.com/urfave/cli/v3 v3.3.3
 )
 
 require (
