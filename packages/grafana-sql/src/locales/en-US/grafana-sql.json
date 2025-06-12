@@ -12,7 +12,9 @@
       "auto-max-idle": "Auto max idle",
       "content-auto-max-idle": "If enabled, automatically set the number of <1>Maximum idle connections</1> to the same value as<3> Max open connections</3>. If the number of maximum open connections is not set it will be set to the default ({{defaultMaxIdle}}).",
       "content-max-idle": "The maximum number of connections in the idle connection pool.If <1>Max open connections</1> is greater than 0 but less than the <3>Max idle connections</3>, then the <5>Max idle connections</5> will be reduced to match the <8>Max open connections</8> limit. If set to 0, no idle connections are retained.",
+      "content-max-open": "The maximum number of open connections to the database. If <1>Max idle connections</1> is greater than 0 and the <3>Max open connections</3> is less than <5>Max idle connections</5>, then<7>Max idle connections</7> will be reduced to match the <9>Max open connections</9> limit. If set to 0, there is no limit on the number of open connections.",
       "max-idle": "Max idle",
+      "max-open": "Max open",
       "title-connection-limits": "Connection limits"
     },
     "dataset-selector": {
@@ -123,11 +125,6 @@
     "sql-query-editor-lazy": {
       "text-loading-editor": "Loading editor"
     },
-    "sqlorder-by-row": {
-      "label": {
-        "selected-columns": "Selected columns"
-      }
-    },
     "table-selector": {
       "aria-label-table-selector": "Table selector",
       "placeholder-loading": "Loading tables",
@@ -147,6 +144,11 @@
     },
     "widgets": {
       "aria-label-macros-value-selector": "Macros value selector"
+    }
+  },
+  "utils": {
+    "get-columns-width-indices": {
+      "label-selected-columns": "Selected columns"
     }
   }
 }
