@@ -1,8 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import {
+  ColumnDefinition,
   CompletionItemKind,
   CompletionItemPriority,
-  getStandardSQLCompletionProvider,
   LanguageCompletionProvider,
   LinkedToken,
   PositionContext,
@@ -14,14 +14,32 @@ import {
 } from '@grafana/plugin-ui';
 
 interface CompletionProviderGetterArgs {
-  getMeta: (t: TableIdentifier) => Promise<TableDefinition[]>;
+  getMeta: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
   refIds: Array<SelectableValue<string>>;
 }
 
+// set the language to undefined so autocomplete only shows what we specify
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
   (args) => (monaco, language) => ({
-    ...(language && getStandardSQLCompletionProvider(monaco, language)),
-    customSuggestionKinds: customSuggestionKinds(args),
+    ...language,
+    tables: {
+      resolve: async () => {
+        const refIdsToTableDefs = args.refIds.map((refId) => {
+          const tableDef: TableDefinition = {
+            name: refId.label || refId.value || '',
+            completion: refId.label || refId.value || '',
+          };
+          return tableDef;
+        });
+        return refIdsToTableDefs;
+      },
+    },
+    columns: {
+      resolve: async (t?: TableIdentifier) => {
+        return await args.getMeta({ table: t?.table });
+      },
+    },
+    //customSuggestionKinds: customSuggestionKinds(args),
   });
 
 export const customSuggestionKinds: (args: CompletionProviderGetterArgs) => SuggestionKindProvider = (args) => () => [
