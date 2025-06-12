@@ -47,7 +47,7 @@ To create a contact point with MQTT integration, complete the following steps.
 1. From the **Integration** list, select **MQTT**.
 1. Enter your broker URL in the **Broker URL** field. Supports `tcp`, `ssl`, `mqtt`, `mqtts`, `ws`, `wss` schemes. For example: `tcp://127.0.0.1:1883`.
 1. Enter the MQTT topic name in the **Topic** field.
-1. (Optional) Configure [additional settings](#webhook-settings).
+1. (Optional) Configure [additional settings](#optional-settings).
 1. Click **Save contact point**.
 
 For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
