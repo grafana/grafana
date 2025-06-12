@@ -26,6 +26,7 @@ const (
 	StorageTypeEtcd        StorageType = "etcd"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+	StorageTypeUnifiedKV   StorageType = "unified-kv"
 
 	// Deprecated: legacy is a shim that is no longer necessary
 	StorageTypeLegacy StorageType = "legacy"
@@ -94,7 +95,7 @@ func (o *StorageOptions) Validate() []error {
 	// nolint:staticcheck
 	case StorageTypeLegacy:
 		// no-op
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedKV:
 		// no-op
 	default:
 		// nolint:staticcheck

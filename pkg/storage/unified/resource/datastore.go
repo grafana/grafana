@@ -44,7 +44,8 @@ type DataKey struct {
 
 func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
 	if key.Namespace == "" {
-		return "", fmt.Errorf("namespace is required")
+		// return "", fmt.Errorf("namespace is required") ???
+		return fmt.Sprintf("%s/", prefixData), nil
 	}
 	if key.Group == "" {
 		return fmt.Sprintf("%s/%s/", prefixData, key.Namespace), nil

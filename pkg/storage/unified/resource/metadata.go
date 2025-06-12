@@ -17,7 +17,7 @@ const (
 
 // Metadata store
 type MetaData struct {
-	Folder string `json:"folder,omitempty"`
+	Folder string `json:"folder"`
 }
 
 type MetaDataAction string
