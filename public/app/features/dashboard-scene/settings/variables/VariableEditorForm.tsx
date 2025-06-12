@@ -5,7 +5,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
@@ -55,8 +55,6 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     },
     [variable, nameError]
   );
-
-  const { t } = useTranslate();
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
     if (!nameError) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
@@ -25,7 +25,7 @@ export function FolderActionsButton({ folder }: Props) {
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
-  const { t } = useTranslate();
+
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
   // Can only move folders when nestedFolders is enabled and the folder is not provisioned

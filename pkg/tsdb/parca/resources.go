@@ -65,7 +65,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: res.Header(), Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -98,7 +98,7 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: res.Header(), Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -142,7 +142,7 @@ func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.Call
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: res.Header(), Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)

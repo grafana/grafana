@@ -128,7 +128,7 @@ module.exports = [
             {
               group: ['react-i18next', 'i18next'],
               importNames: ['t'],
-              message: 'Please import useTranslate from @grafana/i18n and use the t function instead',
+              message: 'Please import from @grafana/i18n instead',
             },
             {
               group: ['react-i18next'],
@@ -304,6 +304,8 @@ module.exports = [
     files: [
       'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
       'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
       ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
     ],
     ignores: [
