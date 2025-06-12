@@ -186,8 +186,9 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Fetch information on the grafana instance (e.g. feature toggles)
 		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 		if err != nil {
-			b.log.Error("failed to get instance configuration settings", "err", err)
-			responder.Error(err)
+			msg := "failed to get instance configuration settings"
+			b.log.Error(msg, "err", err)
+			responder.Error(errors.New(msg))
 			return
 		}
 
