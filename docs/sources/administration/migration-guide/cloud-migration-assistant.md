@@ -186,6 +186,10 @@ The migration assistant can migrate the majority of Grafana Alerting resources t
 - Notification policy tree
 - Notification templates
 
+{{< admonition type="note">}}
+Unless edited or updated from its defaults, the `grafana-default-email` contact point that is provisioned with every new Grafana instance will not be migrated.
+{{< /admonition >}}
+
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
 
 Migration of Silences is not supported by the migration assistant and needs to be configured manually. Alert History is also not available for migration.

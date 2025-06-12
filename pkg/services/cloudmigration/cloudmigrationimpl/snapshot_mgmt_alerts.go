@@ -92,6 +92,12 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	contactPoints := make([]contactPoint, 0, len(embeddedContactPoints))
 
 	for _, embeddedContactPoint := range embeddedContactPoints {
+		// This happens in the default contact point, and would otherwise fail to migrate because it has no UID.
+		// If that contact point is edited in any way, an UID is generated.
+		if embeddedContactPoint.UID == "" {
+			continue
+		}
+
 		contactPoints = append(contactPoints, contactPoint{
 			UID:                   embeddedContactPoint.UID,
 			Name:                  embeddedContactPoint.Name,
