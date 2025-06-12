@@ -160,6 +160,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       // The *clicked* date should have primary bg, while *pending* range dates should have hover bg.
       '.react-calendar__tile--hover': {
         backgroundColor: theme.colors.action.hover,
+        // eslint-disable-next-line @grafana/no-border-radius-literal
         borderRadius: 0,
       },
 
