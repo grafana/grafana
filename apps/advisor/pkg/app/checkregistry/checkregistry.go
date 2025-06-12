@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/configchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/instancechecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -81,6 +82,7 @@ func (s *Service) Checks() []checks.Check {
 		),
 		authchecks.New(s.ssoSettingsSvc),
 		configchecks.New(s.cfg),
+		instancechecks.New(s.cfg),
 	}
 }
 
