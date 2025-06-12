@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
@@ -21,7 +21,7 @@ export const BUTTON_TITLE = 'Add annotation query';
 
 export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
 
   const getAnnotationName = (anno: AnnotationQuery) => {

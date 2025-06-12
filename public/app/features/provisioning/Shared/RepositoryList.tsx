@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -15,7 +15,7 @@ interface Props {
 
 export function RepositoryList({ items }: Props) {
   const [query, setQuery] = useState('');
-  const { t } = useTranslate();
+
   const filteredItems = items.filter((item) => item.metadata?.name?.includes(query));
   const { instanceConnected } = checkSyncSettings(items);
   return (

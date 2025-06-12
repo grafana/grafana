@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
 
 import { JSONPath } from '../types';
@@ -15,7 +14,7 @@ interface Props {
 
 export function JSONPathEditor({ options, onChange }: Props) {
   const [paths, setPaths] = useState<JSONPath[]>(options);
-  const { t } = useTranslate();
+
   const tooltips = getTooltips();
   const style = getStyle();
 

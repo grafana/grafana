@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
@@ -78,7 +78,7 @@ export function QueryVariableEditorForm({
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   return (

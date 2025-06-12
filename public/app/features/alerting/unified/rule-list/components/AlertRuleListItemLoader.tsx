@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { stringifyErrorLike } from '../../utils/misc';
@@ -28,7 +28,6 @@ export function RulerRuleLoadingError({
   ruleIdentifier: GrafanaRuleIdentifier;
   error?: unknown;
 }) {
-  const { t } = useTranslate();
   const errorMessage = error
     ? stringifyErrorLike(error)
     : t('alerting.rule-list.rulerrule-loading-error', 'Failed to load the rule');

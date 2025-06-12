@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 
 import { RepositorySpec } from '../../../api/clients/provisioning/v0alpha1';
 import { RepositoryFormData } from '../types';

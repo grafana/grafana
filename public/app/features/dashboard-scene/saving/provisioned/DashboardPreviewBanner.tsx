@@ -1,5 +1,5 @@
 import { textUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -27,7 +27,7 @@ const commonAlertProps = {
 function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
   const prParam = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
-  const { t } = useTranslate();
+
   if (file.data?.errors) {
     return (
       <Alert
