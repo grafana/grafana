@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -15,7 +16,6 @@ import {
   Resource,
   ResourceClient,
   ResourceForCreate,
-  ListOptions,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -23,7 +23,7 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 import { isDashboardV2Spec } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
@@ -35,7 +35,7 @@ export const K8S_V2_DASHBOARD_API_CONFIG = {
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
 {
-  private client: ResourceClient<DashboardV2Spec>;
+  private client: ResourceClient<DashboardV2Spec, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
@@ -168,7 +168,7 @@ export class K8sDashboardV2API
     };
   }
 
-  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
+  listDeletedDashboards(options: ListDeletedDashboardsOptions) {
     return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
