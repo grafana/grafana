@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { SQLQuery } from '../types';
 
@@ -20,7 +21,7 @@ export function getColumnsWithIndices(query: SQLQuery, fields: SelectableValue[]
   return [
     {
       value: '',
-      label: 'Selected columns',
+      label: t('utils.get-columns-width-indices.label-selected-columns', 'Selected columns'),
       options,
       expanded: true,
     },
