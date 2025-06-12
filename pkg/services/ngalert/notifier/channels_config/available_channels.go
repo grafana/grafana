@@ -1406,7 +1406,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					},
 					InputType:    InputTypeText,
 					Placeholder:  "json",
-					Description:  "The format of the message to be sent. If set to 'json', the message will be sent as a JSON object. If set to 'text', the message will be sent as a plain text string. By default json is used.",
+					Description:  "If set to 'json', the notification message is the default JSON payload, and the Message field sets only the message field in the payload. If set to 'text', the Message field defines the entire payload. The default is 'json'.",
 					PropertyName: "messageFormat",
 					Required:     false,
 				},
@@ -1422,6 +1422,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
+					Description:  "In 'json' Message format, sets the message field of the default JSON payload. In 'text' Message format, defines the entire payload.",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
