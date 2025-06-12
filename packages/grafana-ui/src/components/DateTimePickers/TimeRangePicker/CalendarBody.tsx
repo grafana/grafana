@@ -155,64 +155,54 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
           outline: 0,
         },
 
-      [`${hasActiveSelector}, .react-calendar__tile--active`]: {
-        color: theme.colors.primary.contrastText,
-        fontWeight: theme.typography.fontWeightMedium,
-        background: theme.colors.primary.main,
-        border: '0px',
-      },
+      [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
+        {
+          color: theme.colors.primary.contrastText,
+          fontWeight: theme.typography.fontWeightMedium,
+          background: theme.colors.primary.main,
+          border: '0px',
+        },
 
+      // The --hover modifier is active when the user is selecting a range and hovering over a tile - it shows the pending range.
+      // It is applied to all dates between the clicked date and the hovered date.
+      // The *clicked* date should have primary bg, while *pending* range dates should have hover bg.
       '.react-calendar__tile--hover': {
         backgroundColor: theme.colors.action.hover,
+        borderRadius: 0,
       },
 
-      // '.react-calendar__tile--hoverStart': {
-      //   borderTopRightRadius: '0 !important',
-      //   borderBottomRightRadius: '0 !important',
-      //   borderTopLeftRadius: '20px',
-      //   borderBottomLeftRadius: '20px',
-      // },
+      '.react-calendar__tile--hoverStart': {
+        borderTopLeftRadius: theme.shape.radius.pill,
+        borderBottomLeftRadius: theme.shape.radius.pill,
+      },
 
-      // '.react-calendar__tile--hoverEnd': {
-      //   borderTopLeftRadius: '0 !important',
-      //   borderBottomLeftRadius: '0 !important',
-      //   borderTopRightRadius: '20px',
-      //   borderBottomRightRadius: '20px',
-      // },
+      '.react-calendar__tile--hoverEnd': {
+        borderTopRightRadius: theme.shape.radius.pill,
+        borderBottomRightRadius: theme.shape.radius.pill,
+      },
 
-      // '.react-calendar__tile--hoverBothEnds': {
-      //   borderRadius: '20px',
-      // },
-
-      // '.react-calendar__tile:hover:not(.react-calendar__tile--active):not(.react-calendar__tile--rangeEnd):not(.react-calendar__tile--rangeStart)':
-      //   {
-      //     backgroundColor: theme.colors.action.hover,
-      //   },
+      // Addiitonally, when hovering a date before clicking any, it should show the hover bg.
+      '.react-calendar__tile:hover:not(.react-calendar__tile--hover):not(.react-calendar__tile--active):not(.react-calendar__tile--hasActive)':
+        {
+          backgroundColor: theme.colors.action.hover,
+          borderRadius: theme.shape.radius.pill,
+        },
 
       '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
-        padding: 0,
-        border: '0px',
         color: theme.colors.primary.contrastText,
-        fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.primary.main,
-
-        abbr: {
-          // backgroundColor: theme.colors.primary.main,
-          // borderRadius: theme.shape.radius.pill,
-          display: 'block',
-          paddingTop: '2px',
-          height: '26px',
-        },
       },
 
-      [`${hasActiveSelector}, .react-calendar__tile--rangeStart`]: {
-        borderTopLeftRadius: '20px',
-        borderBottomLeftRadius: '20px',
+      // When the user is selecting a range (they've clicked one date, tiles have --hover), both --rangeStart and --rangeEnd are on the tile.
+      // The --hover classes above  handle the rounding of the tiles so they're contigious with the range
+      [`${hasActiveSelector}, .react-calendar__tile--rangeStart:not(.react-calendar__tile--hover)`]: {
+        borderTopLeftRadius: theme.shape.radius.pill,
+        borderBottomLeftRadius: theme.shape.radius.pill,
       },
 
-      [`${hasActiveSelector}, .react-calendar__tile--rangeEnd`]: {
-        borderTopRightRadius: '20px',
-        borderBottomRightRadius: '20px',
+      [`${hasActiveSelector}, .react-calendar__tile--rangeEnd:not(.react-calendar__tile--hover)`]: {
+        borderTopRightRadius: theme.shape.radius.pill,
+        borderBottomRightRadius: theme.shape.radius.pill,
       },
     }),
   };
