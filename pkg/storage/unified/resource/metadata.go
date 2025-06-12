@@ -17,14 +17,28 @@ const (
 
 // Metadata store
 type MetaData struct {
-	Namespace string `json:"namespace,omitempty"`
-	Folder    string `json:"folder,omitempty"`
-	Deleted   bool   `json:"deleted"`
+	Folder string `json:"folder,omitempty"`
+}
+
+type MetaDataAction string
+
+const (
+	MetaDataActionCreated MetaDataAction = "created"
+	MetaDataActionUpdated MetaDataAction = "updated"
+	MetaDataActionDeleted MetaDataAction = "deleted"
+)
+
+type MetaDataKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string
+	UID       uuid.UUID
+	Action    MetaDataAction
 }
 
 type MetaDataObj struct {
-	Key   resourcepb.ResourceKey // Let's create another key that contains the UUID
-	UID   uuid.UUID
+	Key   MetaDataKey
 	Value MetaData
 }
 
@@ -38,30 +52,37 @@ func newMetadataStore(kv KV) *metadataStore {
 	}
 }
 
-func (d *metadataStore) getKey(key resourcepb.ResourceKey, uid uuid.UUID) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s/%s", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name, uid.String())
+func (d *metadataStore) getKey(key MetaDataKey) string {
+	return fmt.Sprintf("%s/%s/%s/%s/%s/%s~%s", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name, key.UID.String(), key.Action)
 }
 
-func (d *metadataStore) parseKey(key string) (resourcepb.ResourceKey, uuid.UUID, error) {
+func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 	if !strings.HasPrefix(key, prefixMeta+"/") {
-		return resourcepb.ResourceKey{}, uuid.UUID{}, fmt.Errorf("invalid key: %s", key)
+		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 	key = strings.TrimPrefix(key, prefixMeta+"/")
 
 	parts := strings.Split(key, "/")
 	if len(parts) < 4 {
-		return resourcepb.ResourceKey{}, uuid.UUID{}, fmt.Errorf("invalid key: %s", key)
+		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	uid, err := uuid.Parse(parts[4])
+
+	uidActionParts := strings.Split(parts[4], "~")
+	if len(uidActionParts) != 2 {
+		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
+	}
+	uid, err := uuid.Parse(uidActionParts[0])
 	if err != nil {
-		return resourcepb.ResourceKey{}, uuid.UUID{}, fmt.Errorf("invalid uuid: %s", uid)
+		return MetaDataKey{}, fmt.Errorf("invalid uuid: %s", uid)
 	}
-	return resourcepb.ResourceKey{
+	return MetaDataKey{
 		Namespace: parts[2],
 		Group:     parts[0],
 		Resource:  parts[1],
 		Name:      parts[3],
-	}, uid, nil
+		UID:       uid,
+		Action:    MetaDataAction(uidActionParts[1]),
+	}, nil
 }
 
 func (d *metadataStore) getPrefix(key resourcepb.ResourceKey) (string, error) {
@@ -74,8 +95,8 @@ func (d *metadataStore) getPrefix(key resourcepb.ResourceKey) (string, error) {
 	return fmt.Sprintf("%s/%s/%s/%s/%s/", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name), nil
 }
 
-func (d *metadataStore) Get(ctx context.Context, key resourcepb.ResourceKey, uid uuid.UUID) (MetaData, error) {
-	obj, err := d.kv.Get(ctx, d.getKey(key, uid))
+func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, error) {
+	obj, err := d.kv.Get(ctx, d.getKey(key))
 	if err != nil {
 		return MetaData{}, err
 	}
@@ -113,6 +134,13 @@ func (d *metadataStore) GetLatest(ctx context.Context, key resourcepb.ResourceKe
 		if err != nil {
 			return MetaDataObj{}, err
 		}
+		key, err := d.parseKey(k)
+		if err != nil {
+			return MetaDataObj{}, err
+		}
+		if key.Action == MetaDataActionDeleted {
+			return MetaDataObj{}, ErrNotFound
+		}
 		metaObj, err := d.kv.Get(ctx, k)
 		if err != nil {
 			return MetaDataObj{}, err
@@ -121,21 +149,8 @@ func (d *metadataStore) GetLatest(ctx context.Context, key resourcepb.ResourceKe
 		if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
 			return MetaDataObj{}, err
 		}
-		if meta.Deleted {
-			return MetaDataObj{}, ErrNotFound
-		}
-		_, uid, err := d.parseKey(k)
-		if err != nil {
-			return MetaDataObj{}, err
-		}
 		return MetaDataObj{
-			Key: resourcepb.ResourceKey{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-				Name:      key.Name,
-			},
-			UID:   uid,
+			Key:   key,
 			Value: meta,
 		}, nil
 	}
@@ -155,27 +170,55 @@ func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceK
 		EndKey:   PrefixRangeEnd(prefix),
 	})
 	return func(yield func(MetaDataObj, error) bool) {
-		var currentKey *resourcepb.ResourceKey // The current key we are iterating over
-		var latestPath string
-		var latestUID uuid.UUID
+		var selectedKey *MetaDataKey // The current key we are iterating over
+		var selectedPath string
 		for k, err := range iter {
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
 			// Parse the key to get the resource key and uid
-			key, uid, err := d.parseKey(k)
+			key, err := d.parseKey(k)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if currentKey == nil { // First iteration
-				currentKey = &key
+			if selectedKey == nil { // First iteration
+				selectedKey = &key
+				selectedPath = k
 			}
 
 			// If the current key is not the same as the previous key, we need to yield the selected object
-			if currentKey.Namespace != key.Namespace || currentKey.Group != key.Group || currentKey.Resource != key.Resource || currentKey.Name != key.Name {
-				metaObj, err := d.kv.Get(ctx, latestPath)
+			if selectedKey.Namespace != key.Namespace || selectedKey.Group != key.Group || selectedKey.Resource != key.Resource || selectedKey.Name != key.Name {
+				if key.Action != MetaDataActionDeleted {
+					metaObj, err := d.kv.Get(ctx, selectedPath)
+					if err != nil {
+						yield(MetaDataObj{}, err)
+						return
+					}
+					var meta MetaData
+					if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
+						yield(MetaDataObj{}, err)
+						return
+					}
+					yield(MetaDataObj{
+						Key:   *selectedKey,
+						Value: meta,
+					}, nil)
+				}
+				selectedKey = &key // Update the current key to the new key
+				selectedPath = k
+			} else {
+				// We are still iterating over the same key, so we need to update the latest path and uid
+				selectedPath = k
+				selectedKey = &key
+			}
+		}
+		if selectedPath != "" {
+			// TODO: this is dupplicated code. Refactor it
+			// Process the last key
+			if selectedKey.Action != MetaDataActionDeleted {
+				metaObj, err := d.kv.Get(ctx, selectedPath)
 				if err != nil {
 					yield(MetaDataObj{}, err)
 					return
@@ -185,51 +228,8 @@ func (d *metadataStore) ListLatest(ctx context.Context, key resourcepb.ResourceK
 					yield(MetaDataObj{}, err)
 					return
 				}
-
-				if !meta.Deleted {
-					yield(MetaDataObj{
-						Key: resourcepb.ResourceKey{
-							Namespace: currentKey.Namespace,
-							Group:     currentKey.Group,
-							Resource:  currentKey.Resource,
-							Name:      currentKey.Name,
-						},
-						UID:   latestUID,
-						Value: meta,
-					}, nil)
-				}
-				currentKey = &key // Update the current key to the new key
-				latestPath = k
-				latestUID = uid
-			} else {
-				// We are still iterating over the same key, so we need to update the latest path and uid
-				latestPath = k
-				latestUID = uid
-			}
-		}
-		if latestPath != "" {
-			// TODO: this is dupplicated code. Refactor it
-			// Process the last key
-			metaObj, err := d.kv.Get(ctx, latestPath)
-			if err != nil {
-				yield(MetaDataObj{}, err)
-				return
-			}
-			var meta MetaData
-			if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
-				yield(MetaDataObj{}, err)
-				return
-			}
-
-			if !meta.Deleted {
 				yield(MetaDataObj{
-					Key: resourcepb.ResourceKey{
-						Namespace: currentKey.Namespace,
-						Group:     currentKey.Group,
-						Resource:  currentKey.Resource,
-						Name:      currentKey.Name,
-					},
-					UID:   latestUID,
+					Key:   *selectedKey,
 					Value: meta,
 				}, nil)
 			}
@@ -265,19 +265,13 @@ func (d *metadataStore) ListAll(ctx context.Context, key resourcepb.ResourceKey)
 				yield(MetaDataObj{}, err)
 				return
 			}
-			k, uid, err := d.parseKey(k)
+			k, err := d.parseKey(k)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
 			yield(MetaDataObj{
-				Key: resourcepb.ResourceKey{
-					Namespace: k.Namespace,
-					Group:     k.Group,
-					Resource:  k.Resource,
-					Name:      k.Name,
-				},
-				UID:   uid,
+				Key:   k,
 				Value: meta,
 			}, nil)
 		}
@@ -289,5 +283,5 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, d.getKey(obj.Key, obj.UID), valueBytes, SaveOptions{})
+	return d.kv.Save(ctx, d.getKey(obj.Key), valueBytes, SaveOptions{})
 }

@@ -62,17 +62,26 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 
 	// Write metadata
+	var action MetaDataAction
+	switch event.Type {
+	case resourcepb.WatchEvent_ADDED:
+		action = MetaDataActionCreated
+	case resourcepb.WatchEvent_MODIFIED:
+		action = MetaDataActionUpdated
+	case resourcepb.WatchEvent_DELETED:
+		action = MetaDataActionDeleted
+	}
 	err = k.metaStore.Save(ctx, MetaDataObj{
-		Key: resourcepb.ResourceKey{
+		Key: MetaDataKey{
 			Namespace: event.Key.Namespace,
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Name:      event.Key.Name,
+			UID:       uid,
+			Action:    action,
 		},
-		UID: uid,
 		Value: MetaData{
-			Folder:  event.Object.GetFolder(),
-			Deleted: event.Type == resourcepb.WatchEvent_DELETED,
+			Folder: event.Object.GetFolder(),
 		},
 	})
 	if err != nil {
@@ -97,12 +106,12 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Name:      req.Key.Name,
-		UUID:      meta.UID,
+		UUID:      meta.Key.UID,
 	})
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
 	}
-	rv, err := rvFromUID(meta.UID)
+	rv, err := rvFromUID(meta.Key.UID)
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
 	}
@@ -125,14 +134,8 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return 0, err
 		}
-		keys = append(keys, MetaDataObj{
-			Key: resourcepb.ResourceKey{
-				Namespace: metaObj.Key.Namespace,
-				Group:     metaObj.Key.Group,
-				Resource:  metaObj.Key.Resource,
-				Name:      metaObj.Key.Name,
-			},
-			UID:   metaObj.UID,
+		keys = append(keys, MetaDataObj{ // TODO: do we need a copy here?
+			Key:   metaObj.Key,
 			Value: metaObj.Value,
 		})
 	}
@@ -169,7 +172,7 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.rv, i.err = rvFromUID(i.keys[i.currentIndex].UID)
+	i.rv, i.err = rvFromUID(i.keys[i.currentIndex].Key.UID)
 	if i.err != nil {
 		return true
 	}
@@ -178,7 +181,7 @@ func (i *kvListIterator) Next() bool {
 		Group:     i.keys[i.currentIndex].Key.Group,
 		Resource:  i.keys[i.currentIndex].Key.Resource,
 		Name:      i.keys[i.currentIndex].Key.Name,
-		UUID:      i.keys[i.currentIndex].UID,
+		UUID:      i.keys[i.currentIndex].Key.UID,
 	})
 
 	return true

@@ -32,17 +32,18 @@ func TestNewMetadataStore(t *testing.T) {
 func TestMetadataStore_GetKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
-	key := resourcepb.ResourceKey{
+	uid := uuid.New()
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "test-deployment",
+		UID:       uid,
+		Action:    MetaDataActionCreated,
 	}
 
-	uid := uuid.New()
-
-	expectedKey := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String()
-	actualKey := store.getKey(key, uid)
+	expectedKey := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String() + "~" + string(MetaDataActionCreated)
+	actualKey := store.getKey(key)
 
 	assert.Equal(t, expectedKey, actualKey)
 }
@@ -51,16 +52,17 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
 	uid := uuid.New()
-	key := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String()
+	key := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String() + "~" + string(MetaDataActionCreated)
 
-	resourceKey, parsedUID, err := store.parseKey(key)
+	resourceKey, err := store.parseKey(key)
 
 	require.NoError(t, err)
 	assert.Equal(t, "apps", resourceKey.Group)
 	assert.Equal(t, "deployments", resourceKey.Resource)
 	assert.Equal(t, "default", resourceKey.Namespace)
 	assert.Equal(t, "test-deployment", resourceKey.Name)
-	assert.Equal(t, uid, parsedUID)
+	assert.Equal(t, uid, resourceKey.UID)
+	assert.Equal(t, MetaDataActionCreated, resourceKey.Action)
 }
 
 func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
@@ -82,7 +84,7 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := store.parseKey(tt.key)
+			_, err := store.parseKey(tt.key)
 			assert.Error(t, err)
 		})
 	}
@@ -123,20 +125,22 @@ func TestMetadataStore_Save(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "test-deployment",
+		UID:       uuid.New(),
+		Action:    MetaDataActionCreated,
+	}
+
+	metadata := MetaData{
+		Folder: "test-folder",
 	}
 
 	err := store.Save(ctx, MetaDataObj{
-		Key: key,
-		UID: uuid.New(),
-		Value: MetaData{
-			Folder:  "test-folder",
-			Deleted: false,
-		},
+		Key:   key,
+		Value: metadata,
 	})
 	require.NoError(t, err)
 }
@@ -145,29 +149,28 @@ func TestMetadataStore_Get(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "test-deployment",
+		UID:       uuid.New(),
+		Action:    MetaDataActionCreated,
 	}
 
-	uid := uuid.New()
 	metadata := MetaData{
-		Folder:  "test-folder",
-		Deleted: false,
+		Folder: "test-folder",
 	}
 
 	// Save first
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid,
 		Value: metadata,
 	})
 	require.NoError(t, err)
 
 	// Get it back
-	retrievedMetadata, err := store.Get(ctx, key, uid)
+	retrievedMetadata, err := store.Get(ctx, key)
 	require.NoError(t, err)
 
 	assert.Equal(t, metadata, retrievedMetadata)
@@ -177,16 +180,16 @@ func TestMetadataStore_Get_NotFound(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "test-deployment",
+		UID:       uuid.New(),
+		Action:    MetaDataActionCreated,
 	}
 
-	uid := uuid.New()
-
-	_, err := store.Get(ctx, key, uid)
+	_, err := store.Get(ctx, key)
 	assert.Equal(t, ErrNotFound, err)
 }
 
@@ -194,7 +197,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
@@ -212,35 +215,44 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Save multiple versions (uid3 should be latest)
-	metadata1 := MetaData{Folder: "folder1", Deleted: false}
-	metadata2 := MetaData{Folder: "folder2", Deleted: false}
-	metadata3 := MetaData{Folder: "folder3", Deleted: false}
+	metadata1 := MetaData{Folder: "folder1"}
+	metadata2 := MetaData{Folder: "folder2"}
+	metadata3 := MetaData{Folder: "folder3"}
 
+	key.UID = uid1
+	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid1,
 		Value: metadata1,
 	})
 	require.NoError(t, err)
+
+	key.UID = uid2
+	key.Action = MetaDataActionUpdated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid2,
 		Value: metadata2,
 	})
 	require.NoError(t, err)
+
+	key.UID = uid3
+	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid3,
 		Value: metadata3,
 	})
 	require.NoError(t, err)
 
 	// Get latest should return uid3
-	latestObj, err := store.GetLatest(ctx, key)
+	latestObj, err := store.GetLatest(ctx, resourcepb.ResourceKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, key, latestObj.Key)
-	assert.Equal(t, uid3, latestObj.UID)
 	assert.Equal(t, metadata3, latestObj.Value)
 }
 
@@ -248,28 +260,31 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "test-deployment",
+		UID:       uuid.New(),
+		Action:    MetaDataActionDeleted,
 	}
 
 	metadata := MetaData{
-		Folder:  "test-folder",
-		Deleted: true, // Marked as deleted
+		Folder: "test-folder",
 	}
-	uid, err := uuid.NewV7()
-	require.NoError(t, err)
 
-	err = store.Save(ctx, MetaDataObj{
+	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid,
 		Value: metadata,
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetLatest(ctx, key)
+	_, err = store.GetLatest(ctx, resourcepb.ResourceKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	})
 	assert.Equal(t, ErrNotFound, err)
 }
 
@@ -360,32 +375,34 @@ func TestMetadataStore_ListAll(t *testing.T) {
 	uid2, err := uuid.NewV7()
 	require.NoError(t, err)
 
-	key1 := resourcepb.ResourceKey{
+	key1 := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "deployment1",
+		UID:       uid1,
+		Action:    MetaDataActionCreated,
 	}
 
-	key2 := resourcepb.ResourceKey{
+	key2 := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
 		Name:      "deployment2",
+		UID:       uid2,
+		Action:    MetaDataActionCreated,
 	}
 
-	metadata1 := MetaData{Folder: "folder1", Deleted: false}
-	metadata2 := MetaData{Folder: "folder2", Deleted: false}
+	metadata1 := MetaData{Folder: "folder1"}
+	metadata2 := MetaData{Folder: "folder2"}
 
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key1,
-		UID:   uid1,
 		Value: metadata1,
 	})
 	require.NoError(t, err)
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key2,
-		UID:   uid2,
 		Value: metadata2,
 	})
 	require.NoError(t, err)
@@ -413,7 +430,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	store := newMetadataStore(setupTestKV(t))
 	ctx := context.Background()
 
-	key := resourcepb.ResourceKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "deployments",
 		Namespace: "default",
@@ -426,33 +443,40 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	uid2, err := uuid.NewV7()
 	require.NoError(t, err)
 
-	metadata1 := MetaData{Folder: "folder1", Deleted: false}
-	metadata2 := MetaData{Folder: "folder2", Deleted: false}
+	metadata1 := MetaData{Folder: "folder1"}
+	metadata2 := MetaData{Folder: "folder2"}
 
+	key.UID = uid1
+	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid1,
 		Value: metadata1,
 	})
 	require.NoError(t, err)
 
+	key.UID = uid2
+	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
-		UID:   uid2,
 		Value: metadata2,
 	})
 	require.NoError(t, err)
 
 	// List latest metadata objects
 	var results []MetaDataObj
-	for obj, err := range store.ListLatest(ctx, key) {
+	for obj, err := range store.ListLatest(ctx, resourcepb.ResourceKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}) {
 		require.NoError(t, err)
 		results = append(results, obj)
 	}
 
 	assert.Len(t, results, 1)
 	assert.Equal(t, key, results[0].Key)
-	assert.Equal(t, uid2, results[0].UID)
+	assert.Equal(t, uid2, results[0].Key.UID)
 	assert.Equal(t, metadata2, results[0].Value)
 }
 
