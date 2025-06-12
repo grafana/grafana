@@ -988,6 +988,10 @@ export class DashboardMigrator {
     }
   }
 
+  // Migrates CloudWatch annotation queries that use multiple statistics into separate queries.
+  // For example, if an annotation query uses ['Max', 'Min'] statistics, it will be split into
+  // two separate annotation queries - one with 'Max' and another with 'Min'.
+  // The new annotation queries are added to the end of the annotations list.
   migrateCloudWatchAnnotationQuery() {
     for (const annotation of this.dashboard.annotations.list) {
       if (isLegacyCloudWatchAnnotationQuery(annotation)) {
