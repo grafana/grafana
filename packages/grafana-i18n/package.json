@@ -35,7 +35,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
