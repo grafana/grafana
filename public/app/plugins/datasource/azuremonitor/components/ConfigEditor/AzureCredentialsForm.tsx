@@ -46,28 +46,31 @@ export const AzureCredentialsForm = (props: Props) => {
     let opts: Array<SelectableValue<AzureAuthType>> = [
       {
         value: 'clientsecret',
-        label: 'App Registration',
+        label: t(
+          'azuremonitor.azure-credentials-form.auth-type-options.opts.label.app-registration',
+          'App Registration'
+        ),
       },
     ];
 
     if (managedIdentityEnabled) {
       opts.push({
         value: 'msi',
-        label: 'Managed Identity',
+        label: t('azuremonitor.azure-credentials-form.auth-type-options.label.managed-identity', 'Managed Identity'),
       });
     }
 
     if (workloadIdentityEnabled) {
       opts.push({
         value: 'workloadidentity',
-        label: 'Workload Identity',
+        label: t('azuremonitor.azure-credentials-form.auth-type-options.label.workload-identity', 'Workload Identity'),
       });
     }
 
     if (userIdentityEnabled) {
       opts.unshift({
         value: 'currentuser',
-        label: 'Current User',
+        label: t('azuremonitor.azure-credentials-form.auth-type-options.label.current-user', 'Current User'),
       });
     }
 

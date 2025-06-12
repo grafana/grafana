@@ -43,8 +43,8 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
       >
         <RadioButtonGroup
           options={[
-            { label: 'Analytics', value: false },
-            { label: 'Basic', value: true },
+            { label: t('azuremonitor.logs-management.label.options-analytics', 'Analytics'), value: false },
+            { label: t('azuremonitor.logs-management.label.options-basic', 'Basic'), value: true },
           ]}
           value={query.azureLogAnalytics?.basicLogsQuery ?? false}
           size={'md'}

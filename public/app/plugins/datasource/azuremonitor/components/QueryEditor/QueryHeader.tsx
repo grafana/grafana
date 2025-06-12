@@ -41,10 +41,13 @@ export const QueryHeader = ({
   const currentMode = query.azureLogAnalytics?.mode;
 
   const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
-    { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
-    { value: AzureQueryType.LogAnalytics, label: 'Logs' },
-    { value: AzureQueryType.AzureTraces, label: 'Traces' },
-    { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
+    { value: AzureQueryType.AzureMonitor, label: t('azuremonitor.query-header.query-types.label.metrics', 'Metrics') },
+    { value: AzureQueryType.LogAnalytics, label: t('azuremonitor.query-header.query-types.label.logs', 'Logs') },
+    { value: AzureQueryType.AzureTraces, label: t('azuremonitor.query-header.query-types.label.traces', 'Traces') },
+    {
+      value: AzureQueryType.AzureResourceGraph,
+      label: t('azuremonitor.query-header.query-types.label.azure-resource-graph', 'Azure Resource Graph'),
+    },
   ];
 
   const handleChange = useCallback(

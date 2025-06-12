@@ -102,12 +102,48 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const buildAuthenticationOptions = (): Array<SelectableValue<MSSQLAuthenticationType>> => {
     const basicAuthenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
-      { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
-      { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
-      { value: MSSQLAuthenticationType.kerberosRaw, label: 'Windows AD: Username + password' },
-      { value: MSSQLAuthenticationType.kerberosKeytab, label: 'Windows AD: Keytab file' },
-      { value: MSSQLAuthenticationType.kerberosCredentialCache, label: 'Windows AD: Credential cache' },
-      { value: MSSQLAuthenticationType.kerberosCredentialCacheLookupFile, label: 'Windows AD: Credential cache file' },
+      {
+        value: MSSQLAuthenticationType.sqlAuth,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.sql-server-authentication',
+          'SQL Server Authentication'
+        ),
+      },
+      {
+        value: MSSQLAuthenticationType.windowsAuth,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.windows-authentication',
+          'Windows Authentication'
+        ),
+      },
+      {
+        value: MSSQLAuthenticationType.kerberosRaw,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.windows-ad-username-password',
+          'Windows AD: Username + password'
+        ),
+      },
+      {
+        value: MSSQLAuthenticationType.kerberosKeytab,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.windows-ad-keytab-file',
+          'Windows AD: Keytab file'
+        ),
+      },
+      {
+        value: MSSQLAuthenticationType.kerberosCredentialCache,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.windows-ad-credential-cache',
+          'Windows AD: Credential cache'
+        ),
+      },
+      {
+        value: MSSQLAuthenticationType.kerberosCredentialCacheLookupFile,
+        label: t(
+          'mssql.configuration-editor.build-authentication-options.basic-authentication-options.label.windows-ad-credential-cache-file',
+          'Windows AD: Credential cache file'
+        ),
+      },
     ];
 
     if (azureAuthIsSupported) {
@@ -121,9 +157,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   };
 
   const encryptOptions: Array<SelectableValue<string>> = [
-    { value: MSSQLEncryptOptions.disable, label: 'disable' },
-    { value: MSSQLEncryptOptions.false, label: 'false' },
-    { value: MSSQLEncryptOptions.true, label: 'true' },
+    {
+      value: MSSQLEncryptOptions.disable,
+      label: t('mssql.configuration-editor.encrypt-options.label.disable', 'disable'),
+    },
+    { value: MSSQLEncryptOptions.false, label: t('mssql.configuration-editor.encrypt-options.label.false', 'false') },
+    { value: MSSQLEncryptOptions.true, label: t('mssql.configuration-editor.encrypt-options.label.true', 'true') },
   ];
 
   return (

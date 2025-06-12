@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
@@ -58,6 +58,7 @@ const LogsQueryEditor = ({
   timeRange,
   data,
 }: LogsQueryEditorProps) => {
+  const { t } = useTranslate();
   const migrationError = useMigrations(datasource, query, onChange);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
@@ -318,9 +319,15 @@ const LogsQueryEditor = ({
                 setError={setError}
                 inputId={'azure-monitor-logs'}
                 options={[
-                  { label: 'Log', value: ResultFormat.Logs },
-                  { label: 'Time series', value: ResultFormat.TimeSeries },
-                  { label: 'Table', value: ResultFormat.Table },
+                  { label: t('azuremonitor.logs-query-editor.label.options-log', 'Log'), value: ResultFormat.Logs },
+                  {
+                    label: t('azuremonitor.logs-query-editor.label.options-time-series', 'Time series'),
+                    value: ResultFormat.TimeSeries,
+                  },
+                  {
+                    label: t('azuremonitor.logs-query-editor.label.options-table', 'Table'),
+                    value: ResultFormat.Table,
+                  },
                 ]}
                 defaultValue={ResultFormat.Logs}
                 setFormatAs={setFormatAs}

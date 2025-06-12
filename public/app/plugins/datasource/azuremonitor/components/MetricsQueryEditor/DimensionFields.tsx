@@ -74,7 +74,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
     { label: '!=', value: 'ne' },
-    { label: 'starts with', value: 'sw' },
+    { label: t('azuremonitor.dimension-fields.dimension-operators.label.starts-with', 'starts with'), value: 'sw' },
   ];
 
   const validDimensionOptions = useMemo(() => {

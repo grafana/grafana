@@ -71,7 +71,7 @@ const QueryEditor = ({
     app !== CoreApp.UnifiedAlerting &&
     app !== CoreApp.CloudAlerting;
   const variableOptionGroup = {
-    label: 'Template Variables',
+    label: t('azuremonitor.query-editor.variable-option-group.label.template-variables', 'Template Variables'),
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 

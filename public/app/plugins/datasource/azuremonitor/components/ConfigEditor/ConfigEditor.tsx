@@ -86,7 +86,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
       if (isFetchError(err)) {
         this.setState({
           error: {
-            title: 'Error requesting subscriptions',
+            title: t(
+              'azuremonitor.config-editor.title.error-requesting-subscriptions',
+              'Error requesting subscriptions'
+            ),
             description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
             details: err?.data?.message,
           },
