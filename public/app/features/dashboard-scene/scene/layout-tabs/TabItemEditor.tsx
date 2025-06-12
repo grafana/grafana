@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Input, Field, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -18,7 +18,6 @@ import { TabItem } from './TabItem';
 
 export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
-  const { t } = useTranslate();
 
   const tabCategory = useMemo(
     () =>
@@ -28,7 +27,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
           render: () => <TabTitleInput tab={model} isNewElement={isNewElement} />,
         })
       ),
-    [model, isNewElement, t]
+    [model, isNewElement]
   );
 
   const repeatCategory = useMemo(
@@ -47,7 +46,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
           render: () => <TabRepeatSelect tab={model} />,
         })
       ),
-    [model, t]
+    [model]
   );
 
   const layoutCategory = useLayoutCategory(layout);
@@ -68,7 +67,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
 
 function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: boolean }) {
   const { title } = tab.useState();
-  const { t } = useTranslate();
+
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = tab.hasUniqueTitle();
 

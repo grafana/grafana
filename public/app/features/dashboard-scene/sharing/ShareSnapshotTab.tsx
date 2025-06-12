@@ -2,8 +2,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
@@ -22,7 +21,6 @@ import { SceneShareTabState, ShareView } from './types';
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 export const getExpireOptions = () => {
-  const { t } = useTranslate();
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
     label: t('share-modal.snapshot.expire-week', '1 Week'),
     value: 60 * 60 * 24 * 7,
@@ -170,7 +168,6 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
   const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
     return await getBackendSrv().get(url);
   });
-  const { t } = useTranslate();
 
   // If snapshot has been deleted - show message and allow to close modal
   if (deleteSnapshotResult.value) {

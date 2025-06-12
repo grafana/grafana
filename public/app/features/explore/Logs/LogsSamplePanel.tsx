@@ -13,7 +13,7 @@ import {
   SupplementaryQueryType,
   TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -41,7 +41,7 @@ export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {

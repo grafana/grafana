@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -73,8 +73,6 @@ export const TeamList = ({
       fetchRoleOptions().then((roles) => setRoleOptions(roles));
     }
   }, []);
-
-  const { t } = useTranslate();
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
@@ -225,7 +223,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles, t]
+    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles]
   );
 
   return (

@@ -14,8 +14,13 @@ import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
+<<<<<<< HEAD
 import { t } from '@grafana/i18n/internal';
 import { config, locationService } from '@grafana/runtime';
+=======
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+>>>>>>> 2b8c74de2e9 (i18n: removes useTranslate hook (#106556))
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { VariablesChanged } from 'app/features/variables/types';

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -24,7 +24,6 @@ interface Props extends SceneComponentProps<SharePublicDashboardTab> {
 }
 
 export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: Props) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);

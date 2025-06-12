@@ -4,7 +4,7 @@ import { uniqueId } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
 
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
@@ -23,8 +23,6 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   useEffect(() => {
     updateRows(buildEditRowModels(value));
   }, [value]);
-
-  const { t } = useTranslate();
 
   const onDragEnd = (result: DropResult) => {
     if (!value || !result.destination) {

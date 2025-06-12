@@ -1,6 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,

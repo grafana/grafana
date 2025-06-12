@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   LinkButton,
@@ -88,7 +87,7 @@ const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
-  const { t } = useTranslate();
+
   // this will be used to track if we are in the process of cloning a rule
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
@@ -332,7 +331,6 @@ const PrometheusConsistencyCheck = withErrorBoundary(
         waitAction.execute(ruleLocation.groupIdentifier);
       }
     }, [ruleLocation, hasRuler, waitAction]);
-    const { t } = useTranslate();
 
     if (isError(waitState)) {
       return (

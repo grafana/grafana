@@ -3,7 +3,7 @@ import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEve
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -91,7 +91,6 @@ export const LogLine = ({
     onOverflow?.(index, log.uid);
   }, [collapsed, index, log, onOverflow]);
 
-  const { t } = useTranslate();
   const handleClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
       onClick(e, log);

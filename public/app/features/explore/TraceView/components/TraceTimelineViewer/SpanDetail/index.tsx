@@ -29,7 +29,7 @@ import {
   PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -261,7 +261,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
-  const { t } = useTranslate();
+
   const { timeZone } = props;
   let overviewItems = [
     {

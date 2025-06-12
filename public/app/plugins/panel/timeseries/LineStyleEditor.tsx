@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LineStyle } from '@grafana/schema';
 import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -56,7 +56,6 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
-  const { t } = useTranslate();
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {

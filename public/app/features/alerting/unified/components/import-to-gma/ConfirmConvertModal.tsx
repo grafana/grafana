@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import { ComponentProps, useMemo } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -32,8 +32,6 @@ type ModalProps = Pick<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onDismis
 };
 
 const AlertSomeRulesSkipped = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert
       title={t(
@@ -112,7 +110,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
 
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   if (isloadingCloudRules) {
     return (
       <Modal
@@ -344,7 +342,6 @@ const getStyles = () => ({
 
 function TargetFolderNotEmptyWarning({ targetFolderRules }: { targetFolderRules: RulerRulesConfigDTO }) {
   const [showTargetRules, toggleShowTargetRules] = useToggle(false);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={2}>

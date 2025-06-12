@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
@@ -8,7 +8,6 @@ import { StepStatusProvider } from './StepStatusContext';
 import { RepoType } from './types';
 
 export default function ConnectPage() {
-  const { t } = useTranslate();
   const { type } = useParams<{ type: RepoType }>();
 
   if (!type) {

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 
@@ -44,7 +44,7 @@ export type TracePageActionsProps = {
 export default function TracePageActions(props: TracePageActionsProps) {
   const { traceId, data, app } = props;
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme);
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
 

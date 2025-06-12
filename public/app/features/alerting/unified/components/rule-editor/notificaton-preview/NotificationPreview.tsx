@@ -1,7 +1,7 @@
 import { compact } from 'lodash';
 import { Suspense, lazy } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -35,7 +35,6 @@ export const NotificationPreview = ({
   const previewEndpoint = alertRuleApi.endpoints.preview;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = previewEndpoint.useMutation();
-  const { t } = useTranslate();
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances

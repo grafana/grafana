@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 import { PanelEditor } from '../../../panel-edit/PanelEditor';
@@ -9,7 +9,7 @@ import { ToolbarActionProps } from '../types';
 
 export const DiscardPanelButton = ({ dashboard }: ToolbarActionProps) => {
   const isEditedPanelDirty = usePanelEditDirty(dashboard.state.editPanel);
-  const { t } = useTranslate();
+
   return (
     <Button
       onClick={() => dashboard.state.editPanel?.onDiscard()}

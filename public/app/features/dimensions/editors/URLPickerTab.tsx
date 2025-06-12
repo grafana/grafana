@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input, Label, useStyles2 } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
@@ -18,7 +18,7 @@ interface Props {
 export const URLPickerTab = (props: Props) => {
   const { newValue, setNewValue, mediaType } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const imgSrc = getPublicOrAbsoluteUrl(newValue!);
 
   let shortName = newValue?.substring(newValue.lastIndexOf('/') + 1, newValue.lastIndexOf('.'));

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Modal, useStyles2, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -43,7 +43,6 @@ const ResourcePicker = ({
   selectionNotice,
 }: ResourcePickerProps<string | AzureMonitorResource>) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const [isLoading, setIsLoading] = useState(false);
   const [rows, setRows] = useState<ResourceRowGroup>([]);

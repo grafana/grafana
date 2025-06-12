@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
 import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';

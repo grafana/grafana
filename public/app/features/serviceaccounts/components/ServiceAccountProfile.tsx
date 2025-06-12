@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole, TimeZone, dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
@@ -45,8 +45,6 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
       fetchOptions();
     }
   }, [serviceAccount.orgId]);
-
-  const { t } = useTranslate();
 
   return (
     <div className={styles.section}>

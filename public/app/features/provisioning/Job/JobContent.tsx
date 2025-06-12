@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning';
 
@@ -13,8 +13,6 @@ export interface JobContentProps {
 }
 
 export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
-  const { t } = useTranslate();
-
   if (!job?.status) {
     return null;
   }

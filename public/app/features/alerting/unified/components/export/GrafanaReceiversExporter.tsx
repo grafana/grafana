@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -20,7 +20,6 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
     decrypt: decrypt,
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   const downloadFileName = `contact-points-${new Date().getTime()}`;
 

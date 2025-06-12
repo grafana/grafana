@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -36,7 +36,7 @@ export const SignupPage = ({ queryParams }: Props) => {
     register,
     getValues,
   } = useForm<SignupDTO>({ defaultValues: { email: queryParams.email, code: queryParams.code } });
-  const { t } = useTranslate();
+
   const onSubmit = async (formData: SignupDTO) => {
     if (formData.name === '') {
       delete formData.name;

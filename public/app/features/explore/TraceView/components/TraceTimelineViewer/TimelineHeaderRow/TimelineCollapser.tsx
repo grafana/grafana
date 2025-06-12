@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
@@ -37,7 +37,6 @@ type CollapserProps = {
 export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <div className={styles.TimelineCollapser} data-testid="TimelineCollapser">

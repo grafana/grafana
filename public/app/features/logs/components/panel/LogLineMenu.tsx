@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, MouseEvent } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
@@ -81,8 +81,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
-  const { t } = useTranslate();
-
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -134,7 +132,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       pinned,
       shouldlogSupportsContext,
       showContext,
-      t,
       toggleLogDetails,
       togglePinning,
     ]

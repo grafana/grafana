@@ -2,7 +2,7 @@ import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
@@ -25,7 +25,6 @@ interface Props {
 }
 
 export const GroupBy = (props: Props) => {
-  const { t } = useTranslate();
   const { onChange, id, defaultValue, dataSource } = props;
   const dispatch = useDispatch();
 

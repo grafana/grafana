@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
@@ -19,7 +19,7 @@ type Props = {
 export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
   const [annotations, updateAnnotations] = useState(dashboard.annotations.list);
-  const { t } = useTranslate();
+
   const onMove = (idx: number, direction: number) => {
     dashboard.annotations.list = arrayUtils.moveItemImmutably(annotations, idx, idx + direction);
     updateAnnotations(dashboard.annotations.list);

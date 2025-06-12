@@ -3,7 +3,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -13,7 +13,6 @@ import { HistoryEntry } from '../types';
 import { logClickUnifiedHistoryEntryEvent, logUnifiedHistoryShowMoreEvent } from './eventsTracking';
 
 export function HistoryWrapper({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslate();
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
     return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
   });
@@ -89,7 +88,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [isExpanded, setIsExpanded] = useState(isSelected && entry.views.length > 0);
-  const { t } = useTranslate();
+
   const { breadcrumbs, views, time, url, sparklineData } = entry;
   const expandedLabel = isExpanded
     ? t('nav.history-wrapper.collapse', 'Collapse')

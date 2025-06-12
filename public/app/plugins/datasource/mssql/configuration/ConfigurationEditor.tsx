@@ -10,7 +10,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
@@ -46,7 +46,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   useMigrateDatabaseFields(props);
 
   const { options: dsSettings, onOptionsChange } = props;
-  const { t } = useTranslate();
+
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
   const azureAuthIsSupported = config.azureAuthEnabled;

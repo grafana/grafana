@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, Button, Stack } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -16,8 +16,6 @@ export const VersionsHistoryButtons = ({
   getDiff,
   isLastPage,
 }: VersionsButtonsType) => {
-  const { t } = useTranslate();
-
   return (
     <Stack>
       {hasMore && (

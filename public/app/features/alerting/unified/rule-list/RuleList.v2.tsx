@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
@@ -32,8 +32,6 @@ function RuleList() {
 }
 
 export function RuleListActions() {
-  const { t } = useTranslate();
-
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
@@ -78,7 +76,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [t, canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
+    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA]
   );
 
   return (

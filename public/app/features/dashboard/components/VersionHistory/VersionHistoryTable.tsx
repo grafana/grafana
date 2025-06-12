@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
@@ -17,7 +17,7 @@ type VersionsTableProps = {
 
 export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.margin}>
       <table className="filter-table">

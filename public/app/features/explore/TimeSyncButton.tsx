@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Tooltip, ToolbarButton } from '@grafana/ui';
 
 interface TimeSyncButtonProps {
@@ -8,7 +8,7 @@ interface TimeSyncButtonProps {
 
 export function TimeSyncButton(props: TimeSyncButtonProps) {
   const { onClick, isSynced } = props;
-  const { t } = useTranslate();
+
   const syncTimesTooltip = () => {
     const { isSynced } = props;
     const tooltip = isSynced ? 'Unsync all views' : 'Sync all views to this time range';

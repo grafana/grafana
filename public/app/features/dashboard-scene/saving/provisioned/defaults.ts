@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { RepositoryView } from 'app/api/clients/provisioning';
 
 export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {

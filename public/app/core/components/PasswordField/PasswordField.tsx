@@ -1,7 +1,7 @@
 import { forwardRef, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Input, IconButton } from '@grafana/ui';
 import { InputProps } from '@grafana/ui/internal';
 
@@ -9,7 +9,7 @@ interface Props extends Omit<InputProps, 'type'> {}
 
 export const PasswordField = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [showPassword, setShowPassword] = useState(false);
-  const { t } = useTranslate();
+
   return (
     <Input
       {...props}

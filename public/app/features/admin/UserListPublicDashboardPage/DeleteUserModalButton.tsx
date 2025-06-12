@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -11,7 +11,7 @@ import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardA
 const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: () => void }) => {
   const [revokeAllAccess] = useRevokeAllAccessMutation();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const onRevokeAccessClick = () => {
     revokeAllAccess({ email: user.email });
     hideModal();
@@ -61,8 +61,6 @@ const DeleteUserModal = ({ user, hideModal }: { user: SessionUser; hideModal: ()
 };
 
 export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
-  const { t } = useTranslate();
-
   const translatedDeleteUserText = t(
     'public-dashboard-users-access-list.delete-user-modal.delete-user-button-text',
     'Delete user'

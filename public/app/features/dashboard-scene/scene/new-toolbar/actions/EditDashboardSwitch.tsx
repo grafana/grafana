@@ -1,5 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ToolbarActionProps } from '../types';
@@ -7,8 +7,6 @@ import { ToolbarActionProps } from '../types';
 import { ToolbarSwitch } from './ToolbarSwitch';
 
 export const EditDashboardSwitch = ({ dashboard }: ToolbarActionProps) => {
-  const { t } = useTranslate();
-
   return (
     <ToolbarSwitch
       checked={!!dashboard.state.isEditing}

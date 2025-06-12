@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -40,7 +40,7 @@ const StateHistory = ({ ruleUID }: Props) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(ruleUID);
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (loading && !error) {
     return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }

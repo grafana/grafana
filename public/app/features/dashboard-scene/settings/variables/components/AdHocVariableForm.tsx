@@ -2,7 +2,7 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
@@ -46,7 +46,6 @@ export function AdHocVariableForm({
     },
     [onDefaultKeysChange]
   );
-  const { t } = useTranslate();
 
   return (
     <>

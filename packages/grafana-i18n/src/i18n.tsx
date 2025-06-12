@@ -192,11 +192,6 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
   return tFunc(id, defaultMessage, values);
 };
 
-export function useTranslate() {
-  initDefaultI18nInstance();
-  return { t };
-}
-
 export function Trans(props: TransProps) {
   initDefaultI18nInstance();
   const Component = transComponent ?? I18NextTrans;

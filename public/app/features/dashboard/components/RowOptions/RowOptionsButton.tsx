@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, ModalsController } from '@grafana/ui';
 
 import { OnRowOptionsUpdate } from './RowOptionsForm';
@@ -14,8 +14,6 @@ export interface RowOptionsButtonProps {
 }
 
 export const RowOptionsButton = ({ repeat, title, onUpdate, warning }: RowOptionsButtonProps) => {
-  const { t } = useTranslate();
-
   const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
     onUpdate(title, repeat);
     hideModal();

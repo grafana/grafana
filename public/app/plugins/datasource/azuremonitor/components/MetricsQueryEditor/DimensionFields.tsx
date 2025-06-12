@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorList, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
 
@@ -63,7 +63,6 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
 };
 
 const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: DimensionFieldsProps) => {
-  const { t } = useTranslate();
   const dimensionFilters = useMemo(
     () => query.azureMonitor?.dimensionFilters ?? [],
     [query.azureMonitor?.dimensionFilters]

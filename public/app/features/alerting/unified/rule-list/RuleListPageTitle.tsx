@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
 
@@ -6,8 +6,6 @@ import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
 
 export function RuleListPageTitle({ title }: { title: string }) {
-  const { t } = useTranslate();
-
   const shouldShowV2Toggle = config.featureToggles.alertingListViewV2PreviewToggle ?? false;
 
   const listViewV2Enabled = shouldUseAlertingListViewV2();

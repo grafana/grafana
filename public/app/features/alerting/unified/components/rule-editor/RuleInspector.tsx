@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
@@ -27,7 +27,7 @@ export const RuleInspector = ({ onClose }: Props) => {
   const [activeTab, setActiveTab] = useState('yaml');
   const { setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(drawerStyles);
-  const { t } = useTranslate();
+
   const onApply = (formValues: RuleFormValues) => {
     // Need to loop through all values and set them individually
     // TODO this is not type-safe :(

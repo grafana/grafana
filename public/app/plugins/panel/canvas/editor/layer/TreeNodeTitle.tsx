@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -18,7 +18,6 @@ interface Props {
 }
 
 export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) => {
-  const { t } = useTranslate();
   const element = nodeData.dataRef;
   const name = nodeData.dataRef.getName();
 

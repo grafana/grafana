@@ -11,7 +11,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
@@ -46,7 +46,6 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
   const { value: ds } = useAsync(() => {
     return getDataSourceSrv().get(annotation.datasource);
   }, [annotation.datasource]);
-  const { t } = useTranslate();
 
   const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
 

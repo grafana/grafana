@@ -2,7 +2,7 @@ import { identity } from 'lodash';
 import { useState } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
@@ -66,7 +66,7 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   const diff = jsonDiff(preprocessVersion(oldVersion), preprocessVersion(newVersion));
   const noHumanReadableDiffs = Object.entries(diff).length === 0;
   const [showJsonDiff, setShowJsonDiff] = useState(noHumanReadableDiffs);
-  const { t } = useTranslate();
+
   return (
     <Stack gap={2} direction="column">
       <Box>

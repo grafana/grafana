@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -25,7 +25,7 @@ export const MuteTimingTimeInterval = () => {
     name: 'time_intervals',
   });
   const { isGrafanaAlertmanager } = useAlertmanager();
-  const { t } = useTranslate();
+
   return (
     <FieldSet label={t('alerting.mute-timing-time-interval.label-time-intervals', 'Time intervals')}>
       <>

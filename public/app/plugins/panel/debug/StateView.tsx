@@ -1,13 +1,12 @@
 import { FormEvent } from 'react';
 
 import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Input, usePanelContext } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
 export function StateView(props: PanelProps<Options>) {
-  const { t } = useTranslate();
   const context = usePanelContext();
 
   const onChangeName = (e: FormEvent<HTMLInputElement>) => {

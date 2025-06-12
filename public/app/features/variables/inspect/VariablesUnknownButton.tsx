@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
@@ -13,7 +13,7 @@ interface Props {
 
 export const VariablesUnknownButton = ({ id, usages }: Props) => {
   const network = useMemo(() => usages.find((n) => n.variable.id === id), [id, usages]);
-  const { t } = useTranslate();
+
   if (!network) {
     return null;
   }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
@@ -53,7 +53,6 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     },
     [onEdit, value]
   );
-  const { t } = useTranslate();
 
   return !isEditing ? (
     <div className={styles.textContainer}>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
@@ -21,7 +21,6 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
   const styles = useStyles2(getStyles);
 
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
-  const { t } = useTranslate();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;

@@ -3,7 +3,7 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, FieldSet, HorizontalGroup, LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboard';
@@ -27,7 +27,7 @@ export const AcknowledgeCheckboxes = ({
   register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
 }) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const ACKNOWLEDGES: Acknowledge[] = [
     {
       type: 'publicAcknowledgment',

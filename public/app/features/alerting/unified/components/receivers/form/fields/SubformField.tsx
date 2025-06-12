@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
 
@@ -44,7 +44,7 @@ export const SubformField = ({
   const value = _watchValue === undefined ? defaultValue : _watchValue;
 
   const [show, setShow] = useState(!!value);
-  const { t } = useTranslate();
+
   const onDeleteClick = () => {
     onDelete?.(option.propertyName);
     setShow(false);

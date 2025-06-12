@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
@@ -10,7 +10,6 @@ import { GlobalConfigForm } from '../../receivers/GlobalConfigForm';
 const GlobalConfig = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
-  const { t } = useTranslate();
 
   if (isLoading && !data) {
     return 'loading...';

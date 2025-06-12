@@ -1,12 +1,11 @@
 import { PageLayoutType } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 
 export function DashboardPageError({ error, type }: { error: unknown; type?: string }) {
-  const { t } = useTranslate();
   const status = getStatusFromError(error);
   const message = getMessageFromError(error);
   const entity = type === 'snapshot' ? 'Snapshot' : 'Dashboard';

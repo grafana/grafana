@@ -1,7 +1,7 @@
 import { DropResult } from '@hello-pangea/dnd';
 
 import { StandardEditorProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
@@ -12,7 +12,6 @@ import { Options, MapLayerState, GeomapInstanceState } from '../types';
 type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapInstanceState>;
 
 export const LayersEditor = (props: LayersEditorProps) => {
-  const { t } = useTranslate();
   const { layers, selected, actions } = props.context.instanceState ?? {};
   if (!layers || !actions) {
     return (

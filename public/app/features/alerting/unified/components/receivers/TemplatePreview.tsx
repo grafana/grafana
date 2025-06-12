@@ -4,7 +4,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
@@ -36,7 +36,7 @@ export function TemplatePreview({
     onPreview,
     error: previewError,
   } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
-  const { t } = useTranslate();
+
   const previewToRender = getPreviewResults(previewError, payloadFormatError, data);
 
   return (
@@ -171,7 +171,6 @@ export function getPreviewResults(
   payloadFormatError: string | null,
   data: TemplatePreviewResponse | undefined
 ): JSX.Element {
-  const { t } = useTranslate();
   // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
   const previewErrorRequest = previewError ? stringifyErrorLike(previewError) : undefined;
   const errorToRender = payloadFormatError || previewErrorRequest;

@@ -4,8 +4,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -113,7 +112,6 @@ interface VariableTypeSelectionProps {
 function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
   const options = getVariableTypeSelectOptions();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <Stack direction={'column'} gap={0}>

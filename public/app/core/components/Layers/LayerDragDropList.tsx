@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LayerName } from './LayerName';
@@ -38,7 +38,7 @@ export const LayerDragDropList = <T extends LayerElement>({
   verifyLayerNameUniqueness,
 }: LayerDragDropListProps<T>) => {
   const style = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const getRowStyle = (isSelected: boolean) => {
     return isSelected ? `${style.row} ${style.sel}` : style.row;
   };

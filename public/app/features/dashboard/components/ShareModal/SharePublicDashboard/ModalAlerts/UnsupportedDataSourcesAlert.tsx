@@ -3,7 +3,7 @@ import cx from 'classnames';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 
@@ -11,7 +11,7 @@ const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupportedDataSources: string }) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <Alert
       severity="warning"

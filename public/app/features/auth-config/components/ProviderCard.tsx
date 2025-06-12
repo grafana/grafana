@@ -1,5 +1,5 @@
 import { isIconName } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Card, Icon } from '@grafana/ui';
 
 import { UIMap } from '../constants';
@@ -14,7 +14,6 @@ type Props = {
 };
 
 export function ProviderCard({ providerId, enabled, configPath, authType, onClick }: Props) {
-  const { t } = useTranslate();
   //@ts-expect-error
   const url = getProviderUrl({ configPath, id: providerId });
   const [iconName, displayName] = UIMap[providerId] || ['lock', providerId.toUpperCase()];

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { CalculateFieldTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineSwitch } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -10,7 +10,6 @@ export const IndexOptionsEditor = (props: {
   options: CalculateFieldTransformerOptions;
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
-  const { t } = useTranslate();
   const { options, onChange } = props;
   const { index } = options;
 

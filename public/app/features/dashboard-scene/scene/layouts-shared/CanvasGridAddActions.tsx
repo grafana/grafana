@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -23,7 +23,7 @@ export interface Props {
 export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getStyles);
   const { hasCopiedPanel } = useClipboardState();
-  const { t } = useTranslate();
+
   return (
     <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
       <Button

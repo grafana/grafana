@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
@@ -22,7 +22,6 @@ const AggregationField = ({
   aggregationOptions,
   isLoading,
 }: AggregationFieldProps) => {
-  const { t } = useTranslate();
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

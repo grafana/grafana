@@ -8,7 +8,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -28,8 +28,6 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     },
     [onChange, options]
   );
-
-  const { t } = useTranslate();
 
   return (
     <>

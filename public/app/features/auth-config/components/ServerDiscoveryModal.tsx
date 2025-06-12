@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Field, Modal } from '@grafana/ui';
 
 import { ServerDiscoveryFormData } from '../types';
@@ -24,7 +24,6 @@ export const ServerDiscoveryModal = ({ isOpen, onClose, onSuccess, isLoading }: 
       url: '',
     },
   });
-  const { t } = useTranslate();
 
   const validateUrl = (value?: string) => {
     if (value === '') {

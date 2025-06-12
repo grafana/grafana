@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
@@ -16,7 +16,6 @@ interface ConfigCardProps {
 
 export function ConfigCard({ config, handleActionClick, isLoading = false }: ConfigCardProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <Stack direction={'column'} gap={1} justifyContent={'space-around'}>

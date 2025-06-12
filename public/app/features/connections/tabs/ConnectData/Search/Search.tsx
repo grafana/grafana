@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
 
@@ -27,7 +27,7 @@ export interface Props {
 export const Search = ({ onChange, value }: Props) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
-  const { t } = useTranslate();
+
   const placeholder = t('connections.search.placeholder', 'Search all');
 
   return (

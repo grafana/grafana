@@ -4,7 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
   useStyles2,
@@ -137,7 +137,6 @@ export const LdapSettingsPage = () => {
     }
     init();
   }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
-  const { t } = useTranslate();
 
   /**
    * Display warning if the feature flag is disabled

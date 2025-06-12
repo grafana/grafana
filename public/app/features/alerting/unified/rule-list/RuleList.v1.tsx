@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -111,7 +111,6 @@ const RuleListV1 = () => {
     }
   }, [dispatch, limitAlerts]);
   useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
-  const { t } = useTranslate();
 
   // Show splash only when we loaded all of the data sources and none of them has alerts
   const hasNoAlertRulesCreatedYet =
@@ -188,7 +187,6 @@ export function CreateAlertButton() {
 }
 
 function ExportNewRuleButton() {
-  const { t } = useTranslate();
   const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -31,7 +31,7 @@ type ActiveTab = 'custom' | 'saved';
 export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
-  const { t } = useTranslate();
+
   const filterOptions = useMemo(() => {
     return (
       <PopupCard
@@ -66,7 +66,7 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
         />
       </PopupCard>
     );
-  }, [activeTab, styles.content, styles.fixTabsMargin, t]);
+  }, [activeTab, styles.content, styles.fixTabsMargin]);
 
   return (
     <Stack direction="column" gap={0}>
@@ -81,7 +81,6 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
 }
 
 const FilterOptions = () => {
-  const { t } = useTranslate();
   return (
     <Stack direction="column" alignItems="end" gap={2}>
       <Grid columns={2} gap={2} alignItems="center">
@@ -161,7 +160,6 @@ type TableColumns = {
 
 const SavedSearches = () => {
   const applySearch = useCallback((name: string) => {}, []);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-end">

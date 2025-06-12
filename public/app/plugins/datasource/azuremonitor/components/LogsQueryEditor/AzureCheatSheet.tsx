@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -42,7 +42,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchInputValue, setSearchInputValue] = useState('');
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const lang = { grammar: tokenizer, name: 'kql' };
   const dropdownMenu = useMemo(() => {
     if (cheatsheetQueries) {

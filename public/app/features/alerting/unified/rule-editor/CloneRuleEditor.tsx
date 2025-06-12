@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
@@ -16,7 +16,7 @@ import { createRelativeUrl } from '../utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
-  const { t } = useTranslate();
+
   if (loading) {
     return <LoadingPlaceholder text={t('alerting.clone-rule-editor.text-loading-the-rule', 'Loading the rule...')} />;
   }

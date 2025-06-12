@@ -3,7 +3,7 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
   Badge,
@@ -74,7 +74,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
-  const { t } = useTranslate();
+
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
 

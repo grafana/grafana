@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';
 
 import { CommonSettingsComponentProps } from '../../../types/receiver-form';
@@ -11,7 +11,6 @@ export const CloudCommonChannelSettings = ({
   readOnly = false,
 }: CommonSettingsComponentProps) => {
   const { register } = useFormContext();
-  const { t } = useTranslate();
 
   return (
     <div className={className}>

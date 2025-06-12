@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
@@ -92,7 +92,6 @@ export function AlertVersionHistory({ rule }: AlertVersionHistoryProps) {
     },
     [oldVersion, newVersion, ruleVersions]
   );
-  const { t } = useTranslate();
 
   if (error) {
     return (

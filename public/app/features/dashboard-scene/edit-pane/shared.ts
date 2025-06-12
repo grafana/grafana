@@ -1,7 +1,7 @@
 import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';

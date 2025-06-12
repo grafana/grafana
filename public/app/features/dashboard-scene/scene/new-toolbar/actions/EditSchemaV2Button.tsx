@@ -1,11 +1,9 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
 
 import { ToolbarActionProps } from '../types';
 
 export const EditSchemaV2Button = ({ dashboard }: ToolbarActionProps) => {
-  const { t } = useTranslate();
-
   return (
     <Button
       size="sm"

@@ -1,7 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 
@@ -14,8 +14,6 @@ interface TextBoxVariableFormProps {
 }
 
 export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur, inline }: TextBoxVariableFormProps) {
-  const { t } = useTranslate();
-
   return (
     <>
       {!inline && (

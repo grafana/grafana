@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -17,7 +17,7 @@ interface Props {
 }
 export function PauseUnpauseActionMenuItem({ folderUID, executeAction, isLoading, action }: Props) {
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   const label =
     action === 'pause'
       ? t('alerting.folder-bulk-actions.pause.button.label', 'Pause all rules')

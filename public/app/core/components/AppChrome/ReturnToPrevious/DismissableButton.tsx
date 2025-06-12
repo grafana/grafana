@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 
 export interface DismissableButtonProps {
@@ -13,7 +13,7 @@ export interface DismissableButtonProps {
 
 export const DismissableButton = ({ label, onClick, onDismiss }: DismissableButtonProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <ButtonGroup className={styles.buttonGroup}>
       <Button

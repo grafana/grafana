@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { DetailText } from 'app/features/inspector/DetailText';
@@ -39,7 +39,7 @@ export const InspectDataOptions = ({
   toggleDownloadForExcel,
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
-  const { t } = useTranslate();
+
   let dataSelect = dataFrames;
   if (selectedDataFrame === DataTransformerID.joinByField) {
     dataSelect = data!;

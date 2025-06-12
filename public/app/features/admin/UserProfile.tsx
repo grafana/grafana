@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, UserDTO } from 'app/types';
@@ -28,7 +27,7 @@ export function UserProfile({
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
-  const { t } = useTranslate();
+
   const deleteUserRef = useRef<HTMLButtonElement | null>(null);
   const showDeleteUserModal = (show: boolean) => () => {
     setShowDeleteModal(show);

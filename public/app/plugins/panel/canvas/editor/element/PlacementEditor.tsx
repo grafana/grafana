@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -33,7 +33,6 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
 type Props = StandardEditorProps<unknown, CanvasEditorOptions, Options>;
 
 export function PlacementEditor({ item }: Props) {
-  const { t } = useTranslate();
   const settings = item.settings;
 
   // Will force a rerender whenever the subject changes

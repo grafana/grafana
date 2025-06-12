@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -91,7 +91,6 @@ export const LdapPage = ({
 
     init();
   }, [clearUserMappingInfo, fetchUserMapping, loadLdapState, loadLdapSyncStatus, queryParams]);
-  const { t } = useTranslate();
 
   const search = ({ username }: FormModel) => {
     if (username) {

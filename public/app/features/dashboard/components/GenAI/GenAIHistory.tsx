@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
@@ -46,7 +46,6 @@ export const GenAIHistory = ({
     temperature,
     onResponse,
   });
-  const { t } = useTranslate();
 
   const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
     reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);

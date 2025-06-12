@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -82,7 +82,6 @@ function GroupEditPage() {
       getGroupAction.execute(dsFeatures.rulerConfig);
     }
   }, [namespaceId, groupName, dsFeatures?.rulerConfig, getGroupAction]);
-  const { t } = useTranslate();
 
   const isLoadingGroup = isFolderLoading || isDsFeaturesLoading || isLoading(groupRequestState);
   const { result: rulerGroup, error: ruleGroupError } = groupRequestState;
@@ -183,7 +182,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   const [deleteRuleGroup] = useDeleteRuleGroup();
   const [operations, setOperations] = useState<SwapOperation[]>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
-  const { t } = useTranslate();
+
   const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
 
   const {

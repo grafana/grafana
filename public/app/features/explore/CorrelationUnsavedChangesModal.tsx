@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
 interface UnsavedChangesModalProps {
@@ -11,8 +11,6 @@ interface UnsavedChangesModalProps {
 }
 
 export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel, message }: UnsavedChangesModalProps) => {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={true}

@@ -3,7 +3,7 @@ import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/internal';
 
@@ -58,8 +58,6 @@ export function ContentOutlineItemButton({
       setIsOverflowing(textRef.current?.scrollWidth > textRef.current?.clientWidth);
     }
   }, [title]);
-
-  const { t } = useTranslate();
 
   const body = (
     <div className={cx(styles.buttonContainer, indentStyle)}>

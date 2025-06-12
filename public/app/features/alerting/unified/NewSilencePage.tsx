@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
@@ -38,7 +38,6 @@ const SilencesEditorComponent = () => {
 };
 
 function NewSilencePage() {
-  const { t } = useTranslate();
   const pageNav = {
     id: 'silence-new',
     text: t('alerting.new-silence-page.page-nav.text.silence-alert-rule', 'Silence alert rule'),

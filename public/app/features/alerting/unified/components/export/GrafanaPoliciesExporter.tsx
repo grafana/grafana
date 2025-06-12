@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -17,7 +17,6 @@ const GrafanaPoliciesExporterPreview = ({ exportFormat, onClose }: GrafanaPolici
   const { currentData: policiesDefinition = '', isFetching } = alertRuleApi.useExportPoliciesQuery({
     format: exportFormat,
   });
-  const { t } = useTranslate();
 
   const downloadFileName = `policies-${new Date().getTime()}`;
 
