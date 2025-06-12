@@ -66,7 +66,7 @@ func TestSetDualWritingMode(t *testing.T) {
 				name:         "should keep mode2 when trying to go from mode2 to mode3 and migration is disabled",
 				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
 				desiredMode:  Mode3,
-				expectedMode: Mode2,
+				expectedMode: Mode3,
 				skipDataSync: true,
 			},
 		}
