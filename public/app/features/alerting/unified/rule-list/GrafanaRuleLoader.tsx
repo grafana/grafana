@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
@@ -46,7 +46,6 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
-  const { t } = useTranslate();
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
   const promRule = promRuleGroup?.data.groups

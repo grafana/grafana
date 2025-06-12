@@ -1,5 +1,5 @@
 import { OrgRole } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 interface Props {
@@ -16,8 +16,6 @@ const basicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
 const options = basicRoles.map((r) => ({ label: r, value: r }));
 
 export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputId, autoFocus, ...restProps }: Props) {
-  const { t } = useTranslate();
-
   return (
     <Select
       inputId={inputId}

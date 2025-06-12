@@ -1,6 +1,6 @@
 import { UseFieldArrayRemove } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 interface RemoveButtonProps {
@@ -8,7 +8,6 @@ interface RemoveButtonProps {
   index: number;
 }
 export function RemoveButton({ remove, index }: RemoveButtonProps) {
-  const { t } = useTranslate();
   return (
     <Button
       aria-label={t('alerting.remove-button.aria-label-delete-label', 'delete label')}
