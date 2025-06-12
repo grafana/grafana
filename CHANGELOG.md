@@ -1,3 +1,8 @@
+<!-- 11.4.5+security-01 START -->
+
+# 11.4.5+security-01 (2025-06-12)
+
+<!-- 11.4.5+security-01 END -->
 <!-- 11.3.7+security-01 START -->
 
 # 11.3.7+security-01 (2025-06-12)
