@@ -47,7 +47,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
           }
         >
           <SecretTextArea
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
@@ -83,7 +83,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
           }
         >
           <SecretTextArea
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
@@ -119,7 +119,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
           }
         >
           <SecretTextArea
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="-----BEGIN RSA PRIVATE KEY-----"
             cols={45}
             rows={7}

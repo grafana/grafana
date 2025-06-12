@@ -193,12 +193,16 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Max lifetime</span>
+              <span>
+                <Trans i18nKey="components.connection-limits.max-lifetime">Max lifetime</Trans>
+              </span>
               <Tooltip
                 content={
                   <span>
-                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
-                    reused forever.
+                    <Trans i18nKey="components.connection-limits.content-max-lifetime">
+                      The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                      reused forever.
+                    </Trans>
                   </span>
                 }
               >
