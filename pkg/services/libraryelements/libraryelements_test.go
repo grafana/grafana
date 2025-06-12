@@ -292,19 +292,6 @@ func getCreatePanelCommand(folderID int64, folderUID string, name string) model.
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, folderUID, name string) model.CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, folderUID, name, model.VariableElement, []byte(`
-			{
-			  "datasource": "${DS_GDEV-TESTDATA}",
-			  "name": "query0",
-			  "type": "query",
-			  "description": "A description"
-			}
-		`))
-
-	return command
-}
-
 func getCreateCommandWithModel(folderID int64, folderUID, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
 		FolderUID: &folderUID,
