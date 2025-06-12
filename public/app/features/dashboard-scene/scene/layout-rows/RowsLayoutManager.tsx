@@ -147,11 +147,17 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       return;
     }
 
+    const indexOfRowToRemove = this.state.rows.findIndex((r) => r === row);
+
     dashboardEditActions.removeElement({
       removedObject: row,
       source: this,
       perform: () => this.setState({ rows: this.state.rows.filter((r) => r !== row) }),
-      undo: () => this.setState({ rows: [...this.state.rows, row] }),
+      undo: () => {
+        const rows = [...this.state.rows];
+        rows.splice(indexOfRowToRemove, 0, row);
+        this.setState({ rows });
+      },
     });
   }
 

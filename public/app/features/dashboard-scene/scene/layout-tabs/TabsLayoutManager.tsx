@@ -207,14 +207,22 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (currentTab === tabToRemove) {
       const currentTabIndex = this.state.currentTabIndex;
+      const indexOfTabToRemove = this.state.tabs.findIndex((t) => t === tabToRemove);
       const nextTabIndex = currentTabIndex > 0 ? currentTabIndex - 1 : 0;
 
       dashboardEditActions.removeElement({
         removedObject: tabToRemove,
         source: this,
         perform: () =>
-          this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex }),
-        undo: () => this.setState({ tabs: [...this.state.tabs, tabToRemove], currentTabIndex }),
+          this.setState({
+            tabs: this.state.tabs.filter((t) => t !== tabToRemove),
+            currentTabIndex: currentTabIndex === indexOfTabToRemove ? nextTabIndex : currentTabIndex,
+          }),
+        undo: () => {
+          const tabs = [...this.state.tabs];
+          tabs.splice(indexOfTabToRemove, 0, tabToRemove);
+          this.setState({ tabs, currentTabIndex });
+        },
       });
 
       return;
