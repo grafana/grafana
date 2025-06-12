@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
 import { GrafanaTheme2, shallowCompare } from '@grafana/data';
@@ -29,6 +29,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   const { displayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
+  const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const { t } = useTranslate();
 
@@ -40,8 +41,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   }, [displayedFields, logs, search, searchVisible]);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    setSearch(input);
+    inputRef.current = e.target.value;
+    startTransition(() => {
+      setSearch(inputRef.current);
+    });
   }, []);
 
   const prevResult = useCallback(() => {
@@ -112,7 +115,6 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     <div className={styles.container}>
       <div className={styles.wrapper}>
         <Input
-          value={search}
           onChange={handleChange}
           autoFocus
           placeholder={t('logs.log-list-search.input-placeholder', 'Search in logs')}
