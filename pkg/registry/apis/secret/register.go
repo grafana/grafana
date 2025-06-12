@@ -691,6 +691,7 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		if ok && sv != nil {
 			sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 			sv.Status.Message = ""
+			sv.Status.ExternalID = ""
 		}
 	}
 
