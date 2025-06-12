@@ -57,7 +57,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
 	// TODO: this should be moved to the resource package
 	unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-		opts := badger.DefaultOptions("").WithInMemory(true)
+		opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 		db, err := badger.Open(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -69,7 +69,7 @@ func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
 		SkipTests: map[string]bool{
 			unitest.TestHappyPath:                 false,
 			unitest.TestWatchWriteEvents:          true,
-			unitest.TestList:                      true,
+			unitest.TestList:                      false,
 			unitest.TestListHistory:               true,
 			unitest.TestListHistoryErrorReporting: true,
 			unitest.TestBlobSupport:               true,

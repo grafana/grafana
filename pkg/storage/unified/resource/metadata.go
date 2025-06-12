@@ -86,8 +86,11 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 }
 
 func (d *metadataStore) getPrefix(key ListRequestKey) (string, error) {
-	if key.Namespace == "" || key.Group == "" || key.Resource == "" {
-		return "", fmt.Errorf("namespace, group, and resource are required")
+	if key.Group == "" || key.Resource == "" {
+		return "", fmt.Errorf("group and resource are required")
+	}
+	if key.Namespace == "" {
+		return fmt.Sprintf("%s/%s/%s/", prefixMeta, key.Group, key.Resource), nil
 	}
 	if key.Name == "" {
 		return fmt.Sprintf("%s/%s/%s/%s/", prefixMeta, key.Group, key.Resource, key.Namespace), nil
