@@ -5,7 +5,7 @@ import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
@@ -34,17 +34,15 @@ export function useRegisterStaticActions() {
   useRegisterActions(navTreeActions, [navTreeActions]);
 }
 
-export function useRegisterRecentDashboardsActions(searchQuery: string) {
+export function useRegisterRecentDashboardsActions() {
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
   useEffect(() => {
-    if (!searchQuery) {
-      getRecentDashboardActions()
-        .then((recentDashboardActions) => setRecentDashboardActions(recentDashboardActions))
-        .catch((err) => {
-          console.error('Error loading recent dashboard actions', err);
-        });
-    }
-  }, [searchQuery]);
+    getRecentDashboardActions()
+      .then((recentDashboardActions) => setRecentDashboardActions(recentDashboardActions))
+      .catch((err) => {
+        console.error('Error loading recent dashboard actions', err);
+      });
+  }, []);
 
   useRegisterActions(recentDashboardActions, [recentDashboardActions]);
 }
@@ -77,7 +75,7 @@ export function useRegisterScopesActions(
   const { updateNode, selectScope, deselectScope, apply, resetSelection, searchAllNodes } =
     services.scopesSelectorService;
 
-  // Initialize the scopes first time this runs and reset the scopes that were selected on unmount.
+  // Initialize the scopes the first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
     updateNode('', true, '');
     resetSelection();
@@ -90,9 +88,11 @@ export function useRegisterScopesActions(
 
   // Load the next level of scopes when the parentId changes.
   useEffect(() => {
-    if (parentId) {
-      updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
+    // This is the case where we do global search instead of loading the nodes in a tree.
+    if (!parentId || (parentId === 'scopes' && searchQuery)) {
+      return;
     }
+    updateNode(parentId === 'scopes' ? '' : last(parentId.split('/'))!, true, searchQuery);
   }, [updateNode, searchQuery, parentId]);
 
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
@@ -103,11 +103,16 @@ export function useRegisterScopesActions(
   const { nodes, scopes, tree, selectedScopes, appliedScopes } = selectorServiceState;
 
   const nodesActions = useMemo(() => {
-    // If we have nodes from global search, we show those in a flat list.
-    return globalNodes
-      ? Object.values(globalNodes).map((node) => mapScopeNodeToAction(node, selectScope))
-      : mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
-  }, [globalNodes, nodes, tree, selectedScopes, selectScope]);
+    if (globalNodes) {
+      // If we have nodes from global search, we show those in a flat list.
+      const actions = [getScopesParentAction()];
+      for (const node of Object.values(globalNodes)) {
+        actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
+      }
+      return actions;
+    }
+    return mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope);
+  }, [globalNodes, nodes, tree, selectedScopes, selectScope, parentId]);
 
   useRegisterActions(nodesActions, [nodesActions]);
 
@@ -164,12 +169,15 @@ function useGlobalScopesSearch(
 
   // Load next level of scopes when the parentId changes.
   useEffect(() => {
-    if (!parentId && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+    if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
       // We only search globally if there is no parentId
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
         if (searchQueryRef.current === searchQuery) {
-          const nodesMap = fromPairs(nodes.map((n) => [n.metadata.name, n]));
+          // Only show leaf nodes because otherwise there are issues with navigating to a category without knowing
+          // where in the tree it is.
+          const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
+          const nodesMap = fromPairs(leafNodes.map((n) => [n.metadata.name, n]));
           setNodes(nodesMap);
         }
       });
@@ -182,21 +190,23 @@ function useGlobalScopesSearch(
   return nodes;
 }
 
+function getScopesParentAction(): CommandPaletteAction {
+  return {
+    id: 'scopes',
+    section: t('command-palette.action.scopes', 'Scopes'),
+    name: t('command-palette.action.scopes', 'Scopes'),
+    keywords: 'scopes filters',
+    priority: SCOPES_PRIORITY,
+  };
+}
+
 function mapScopesNodesTreeToActions(
   nodes: NodesMap,
   tree: TreeNode,
   selectedScopes: SelectedScope[],
   selectScope: (id: string) => void
 ): CommandPaletteAction[] {
-  const actions: CommandPaletteAction[] = [
-    {
-      id: 'scopes',
-      section: t('command-palette.action.scopes', 'Scopes'),
-      name: t('command-palette.action.scopes', 'Scopes'),
-      keywords: 'scopes filters',
-      priority: SCOPES_PRIORITY,
-    },
-  ];
+  const actions: CommandPaletteAction[] = [getScopesParentAction()];
 
   const traverse = (tree: TreeNode, parentId: string | undefined) => {
     // TODO: not sure how and why a node.nodes can be undefined
