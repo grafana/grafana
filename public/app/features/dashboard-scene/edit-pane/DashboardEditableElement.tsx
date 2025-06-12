@@ -8,11 +8,10 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-import { dashboardEditActions } from './shared';
+import { dashboardEditActions, undoRedoWasClicked } from './shared';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -99,7 +98,7 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
       onBlur={(e) => {
         // If the title input is currently focused and we click undo/redo
         // we don't want to mess with the stack
-        if (e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId)) {
+        if (undoRedoWasClicked(e)) {
           return;
         }
 
@@ -116,11 +115,30 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
 export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { description } = dashboard.useState();
 
+  // We want to save the unchanged value for the 'undo' action
+  const valueBeforeEdit = useRef('');
+
   return (
     <TextArea
       id={id}
       value={description}
       onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
+      onFocus={(e) => {
+        valueBeforeEdit.current = e.currentTarget.value;
+      }}
+      onBlur={(e) => {
+        // If the title input is currently focused and we click undo/redo
+        // we don't want to mess with the stack
+        if (undoRedoWasClicked(e)) {
+          return;
+        }
+
+        dashboardEditActions.changeDescription({
+          source: dashboard,
+          oldDescription: valueBeforeEdit.current,
+          newDescription: e.currentTarget.value,
+        });
+      }}
     />
   );
 }
