@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
-// Mock the useTranslate hook
+// Mock the t function
 jest.mock('@grafana/i18n', () => ({
   t: (_: string, fallback: string, values?: Record<string, string>) => {
     if (values) {
