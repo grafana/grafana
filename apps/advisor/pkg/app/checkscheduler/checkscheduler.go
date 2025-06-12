@@ -26,8 +26,8 @@ const defaultMaxHistory = 10
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
 type Runner struct {
-	checkRegistry      checkregistry.CheckService
 	client             resource.Client
+	typesClient        resource.Client
 	evaluationInterval time.Duration
 	maxHistory         int
 	namespace          string
@@ -41,7 +41,6 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
-	checkRegistry := specificConfig.CheckRegistry
 	evalInterval, err := getEvaluationInterval(specificConfig.PluginConfig)
 	if err != nil {
 		return nil, err
@@ -61,10 +60,14 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	if err != nil {
 		return nil, err
 	}
+	typesClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	if err != nil {
+		return nil, err
+	}
 
 	return &Runner{
-		checkRegistry:      checkRegistry,
 		client:             client,
+		typesClient:        typesClient,
 		evaluationInterval: evalInterval,
 		maxHistory:         maxHistory,
 		namespace:          namespace,
@@ -73,8 +76,8 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 }
 
 func (r *Runner) Run(ctx context.Context) error {
-	lastCreated, err := r.checkLastCreated(ctx)
 	logger := r.log.WithContext(ctx)
+	lastCreated, err := r.checkLastCreated(ctx, logger)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		// Wait for interval to create the next scheduled check
@@ -113,7 +116,6 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
-			r.markUnprocessedChecksAsErrored(ctx, logger)
 			return ctx.Err()
 		}
 	}
@@ -122,7 +124,8 @@ func (r *Runner) Run(ctx context.Context) error {
 // checkLastCreated returns the creation time of the last check created
 // regardless of its ID. This assumes that the checks are created in batches
 // so a batch will have a similar creation time.
-func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
+// In case it finds an unprocessed check from a previous run, it will set it to error.
+func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time.Time, error) {
 	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
 		return time.Time{}, err
@@ -133,19 +136,40 @@ func (r *Runner) checkLastCreated(ctx context.Context) (time.Time, error) {
 		if itemCreated.After(lastCreated) {
 			lastCreated = itemCreated
 		}
+
+		// If the check is unprocessed, set it to error
+		if checks.GetStatusAnnotation(item) == "" {
+			log.Error("Check is unprocessed", "check", item.GetStaticMetadata().Identifier())
+			err := checks.SetStatusAnnotation(ctx, r.client, item, checks.StatusAnnotationError)
+			if err != nil {
+				log.Error("Error setting check status to error", "error", err)
+			}
+		}
 	}
 	return lastCreated, nil
 }
 
 // createChecks creates a new check for each check type in the registry.
 func (r *Runner) createChecks(ctx context.Context) error {
-	for _, check := range r.checkRegistry.Checks() {
+	// List existing CheckType objects
+	list, err := r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error listing check types: %w", err)
+	}
+
+	// Create checks for each CheckType
+	for _, item := range list.GetItems() {
+		checkType, ok := item.(*advisorv0alpha1.CheckType)
+		if !ok {
+			continue
+		}
+
 		obj := &advisorv0alpha1.Check{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "check-",
 				Namespace:    r.namespace,
 				Labels: map[string]string{
-					checks.TypeLabel: check.ID(),
+					checks.TypeLabel: checkType.Spec.Name,
 				},
 			},
 			Spec: advisorv0alpha1.CheckSpec{},
@@ -236,22 +260,4 @@ func getMaxHistory(pluginConfig map[string]string) (int, error) {
 		}
 	}
 	return maxHistory, nil
-}
-
-func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context, log logging.Logger) {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
-	if err != nil {
-		log.Error("Error getting checks", "error", err)
-		return
-	}
-
-	for _, check := range list.GetItems() {
-		if checks.GetStatusAnnotation(check) == "" {
-			log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
-			err := checks.SetStatusAnnotation(ctx, r.client, check, checks.StatusAnnotationError)
-			if err != nil {
-				log.Error("Error setting check status to error", "error", err)
-			}
-		}
-	}
 }

@@ -153,17 +153,23 @@ export class DefaultGridLayoutManager
     const emptySpace = findSpaceForNewPanel(this.state.grid);
     const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
 
-    dashboardEditActions.edit({
-      description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
-      addedObject: newGridItem.state.body,
-      source: this,
-      perform: () => {
-        this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
-      },
-      undo: () => {
-        this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== newGridItem) });
-      },
-    });
+    if (config.featureToggles.dashboardNewLayouts) {
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
+        addedObject: newGridItem.state.body,
+        source: this,
+        perform: () => {
+          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.grid.setState({
+            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      });
+    } else {
+      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+    }
 
     clearClipboard();
   }

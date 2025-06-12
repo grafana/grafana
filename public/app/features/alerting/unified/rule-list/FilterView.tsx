@@ -22,13 +22,11 @@ import {
   RuleWithOrigin,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
+import { FRONTEND_LIST_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
 interface FilterViewProps {
   filterState: RulesFilter;
 }
-
-const FRONTENT_PAGE_SIZE = 100;
-const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
   // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
@@ -79,10 +77,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
        * and the iterator will allow us to exhaust the iterable in a stateful way
        */
-      const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
+      const { iterable, abortController } = getFilteredRulesIterator(filterState, getApiGroupPageSize(true));
       const rulesBatchIterator = iterable
         .pipe(
-          bufferCountOrTime(FRONTENT_PAGE_SIZE, 1000),
+          bufferCountOrTime(FRONTEND_LIST_PAGE_SIZE, 1000),
           onFinished(() => setDoneSearching(true))
         )
         [Symbol.asyncIterator]();
@@ -98,7 +96,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
       let loadedRulesCount = 0;
 
-      while (loadedRulesCount < FRONTENT_PAGE_SIZE) {
+      while (loadedRulesCount < FRONTEND_LIST_PAGE_SIZE) {
         const nextRulesBatch = await rulesIterator.next();
         if (nextRulesBatch.done) {
           return;

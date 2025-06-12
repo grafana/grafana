@@ -142,7 +142,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
             content={`${lastEvaluationDuration}s`}
             theme="info"
           >
-            <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
+            <span>{Time({ timeInMs: lastEvaluationDuration, humanize: true })}</span>
           </Tooltip>
         </DetailsField>
       )}
