@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	//nolint:staticcheck
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/services/folder"

@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	//nolint:staticcheck
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
