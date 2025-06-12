@@ -14,8 +14,12 @@ RuleTester.setDefaultConfig({
   },
 });
 
-const expectedError = {
-  messageId: 'borderRadiusId',
+const useTokenError = {
+  messageId: 'borderRadiusUseTokens',
+};
+
+const noZeroValueError = {
+  messageId: 'borderRadiusNoZeroValue',
 };
 
 const ruleTester = new RuleTester();
@@ -44,28 +48,31 @@ ruleTester.run('eslint no-border-radius-literal', noBorderRadiusLiteral, {
       code: `css({ borderBottomRightRadius: theme.shape.radius.pill })`,
     },
 
-    // 0 is allowed for no border radius
+    // allow values to remove border radius
     {
-      code: `css({ borderRadius: 0 })`,
+      code: `css({ borderRadius: 'initial' })`,
+    },
+    {
+      code: `css({ borderRadius: 'unset' })`,
     },
   ],
 
   invalid: [
     {
       code: `css({ borderRadius: '2px' })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ borderRadius: 2 })`, // should error on px shorthand
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ lineHeight: 1 }, { borderRadius: '2px' })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css([{ lineHeight: 1 }, { borderRadius: '2px' }])`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       name: 'nested classes',
@@ -77,23 +84,37 @@ css({
     },
   },
 })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ borderTopLeftRadius: 1 })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ borderTopRightRadius: "2px" })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ borderBottomLeftRadius: 3 })`,
-      errors: [expectedError],
+      errors: [useTokenError],
     },
     {
       code: `css({ borderBottomRightRadius: "4px" })`,
-      errors: [expectedError],
+      errors: [useTokenError],
+    },
+
+    // should use unset or initial to remove border radius
+    {
+      code: `css({ borderRadius: 0 })`,
+      errors: [noZeroValueError],
+    },
+    {
+      code: `css({ borderRadius: '0px' })`,
+      errors: [noZeroValueError],
+    },
+    {
+      code: `css({ borderRadius: "0%" })`,
+      errors: [noZeroValueError],
     },
   ],
 });

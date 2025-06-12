@@ -12,17 +12,7 @@ const BORDER_RADIUS_PROPERTIES = [
   'borderBottomRightRadius',
 ];
 
-function isValidBorderRadiusLiteralValue(node) {
-  if (node.type !== AST_NODE_TYPES.Literal) {
-    return true;
-  }
-
-  if (node.value === 0 || node.value === '0px') {
-    return true;
-  }
-
-  return false;
-}
+const RE_ZERO_VALUE = /^0([a-zA-Z%]*)$/;
 
 const borderRadiusRule = createRule({
   create(context) {
@@ -32,12 +22,26 @@ const borderRadiusRule = createRule({
           node.type === AST_NODE_TYPES.Property &&
           node.key.type === AST_NODE_TYPES.Identifier &&
           BORDER_RADIUS_PROPERTIES.includes(node.key.name) &&
-          !isValidBorderRadiusLiteralValue(node.value)
+          node.value.type === AST_NODE_TYPES.Literal
         ) {
-          context.report({
-            node,
-            messageId: 'borderRadiusId',
-          });
+          const value = node.value.value;
+
+          if (value === 'unset' || value === 'initial') {
+            // Allow 'unset' or 'initial' to remove border radius
+            return;
+          } else if (value === 0 || RE_ZERO_VALUE.test(value)) {
+            // Require 'unset' or 'initial' to remove border radius instead of `0` or `0px`
+            context.report({
+              node,
+              messageId: 'borderRadiusNoZeroValue',
+            });
+          } else {
+            // Otherwise, require theme tokens are used
+            context.report({
+              node,
+              messageId: 'borderRadiusUseTokens',
+            });
+          }
         }
       },
     };
@@ -49,7 +53,8 @@ const borderRadiusRule = createRule({
       description: 'Check if border-radius theme tokens are used',
     },
     messages: {
-      borderRadiusId: 'Prefer using theme.shape.radius tokens instead of literal values.',
+      borderRadiusUseTokens: 'Prefer using theme.shape.radius tokens instead of literal values.',
+      borderRadiusNoZeroValue: 'Use unset or initial to remove a border radius.',
     },
     schema: [],
   },
