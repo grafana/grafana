@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,19 +53,6 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	// TODO: check we are not generating a uuid in the past?
 
 	// Write data.
-	err = k.dataStore.Save(ctx, DataKey{
-		Namespace: event.Key.Namespace,
-		Group:     event.Key.Group,
-		Resource:  event.Key.Resource,
-		Name:      event.Key.Name,
-		UUID:      uid,
-		IsDeleted: event.Type == resourcepb.WatchEvent_DELETED,
-	}, event.Value)
-	if err != nil {
-		return 0, fmt.Errorf("failed to write data: %w", err)
-	}
-
-	// Write metadata
 	var action MetaDataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
@@ -76,6 +64,19 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
+	err = k.dataStore.Save(ctx, DataKey{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+		Name:      event.Key.Name,
+		UID:       uid,
+		Action:    action,
+	}, event.Value)
+	if err != nil {
+		return 0, fmt.Errorf("failed to write data: %w", err)
+	}
+
+	// Write metadata
 	err = k.metaStore.Save(ctx, MetaDataObj{
 		Key: MetaDataKey{
 			Namespace: event.Key.Namespace,
@@ -130,7 +131,8 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Name:      req.Key.Name,
-		UUID:      meta.Key.UID,
+		UID:       meta.Key.UID,
+		Action:    meta.Key.Action,
 	})
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
@@ -211,7 +213,8 @@ func (i *kvListIterator) Next() bool {
 		Group:     i.keys[i.currentIndex].Key.Group,
 		Resource:  i.keys[i.currentIndex].Key.Resource,
 		Name:      i.keys[i.currentIndex].Key.Name,
-		UUID:      i.keys[i.currentIndex].Key.UID,
+		UID:       i.keys[i.currentIndex].Key.UID,
+		Action:    i.keys[i.currentIndex].Key.Action,
 	})
 
 	return true
@@ -266,7 +269,47 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 }
 
 // GetResourceStats returns resource stats within the storage backend.
+// TODO: this isn't very efficient, we should use a more efficient algorithm.
 func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
-	// stats := make([]ResourceStats, 0)
-	return []ResourceStats{}, nil
+	stats := make([]ResourceStats, 0)
+	res := make(map[string]map[string]bool)
+	rvs := make(map[string]int64)
+	for obj, err := range k.dataStore.List(ctx, ListRequestKey{Namespace: namespace}) {
+		if err != nil {
+			return nil, err
+		}
+		key := fmt.Sprintf("%s/%s/%s", obj.Key.Namespace, obj.Key.Group, obj.Key.Resource)
+		if _, ok := res[key]; !ok {
+			res[key] = make(map[string]bool)
+			rvs[key] = 1
+		}
+		res[key][obj.Key.Name] = obj.Key.Action != MetaDataActionDeleted
+		rv, err := rvFromUID(obj.Key.UID)
+		if err != nil {
+			return nil, err
+		}
+		rvs[key] = rv
+	}
+	for key, names := range res {
+		parts := strings.Split(key, "/")
+		count := int64(0)
+		for _, exists := range names {
+			if exists {
+				count++
+			}
+		}
+		if count <= int64(minCount) {
+			continue
+		}
+		stats = append(stats, ResourceStats{
+			NamespacedResource: NamespacedResource{
+				Namespace: parts[0],
+				Group:     parts[1],
+				Resource:  parts[2],
+			},
+			Count:           count,
+			ResourceVersion: rvs[key],
+		})
+	}
+	return stats, nil
 }

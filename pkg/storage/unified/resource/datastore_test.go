@@ -61,10 +61,10 @@ func TestDataStore_GetKey(t *testing.T) {
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
-				UUID:      testUUID,
-				IsDeleted: false,
+				UID:       testUUID,
+				Action:    MetaDataActionCreated,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String(),
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~created",
 		},
 		{
 			name: "deleted key",
@@ -73,10 +73,10 @@ func TestDataStore_GetKey(t *testing.T) {
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
-				UUID:      testUUID,
-				IsDeleted: true,
+				UID:       testUUID,
+				Action:    MetaDataActionDeleted,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "-deleted",
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~deleted",
 		},
 	}
 
@@ -102,26 +102,26 @@ func TestDataStore_ParseKey(t *testing.T) {
 	}{
 		{
 			name: "valid normal key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String(),
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~created",
 			expected: DataKey{
 				Namespace: "test-namespace",
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
-				UUID:      testUUID,
-				IsDeleted: false,
+				UID:       testUUID,
+				Action:    MetaDataActionCreated,
 			},
 		},
 		{
 			name: "valid deleted key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "-deleted",
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~deleted",
 			expected: DataKey{
 				Namespace: "test-namespace",
 				Group:     "test-group",
 				Resource:  "test-resource",
 				Name:      "test-name",
-				UUID:      testUUID,
-				IsDeleted: true,
+				UID:       testUUID,
+				Action:    MetaDataActionDeleted,
 			},
 		},
 		{
@@ -167,8 +167,8 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 		Group:     "test-group",
 		Resource:  "test-resource",
 		Name:      "test-name",
-		UUID:      testUUID,
-		IsDeleted: false,
+		UID:       testUUID,
+		Action:    MetaDataActionCreated,
 	}
 	testValue := []byte("test-value")
 
@@ -183,7 +183,7 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 
 	t.Run("save and get deleted key", func(t *testing.T) {
 		deletedKey := testKey
-		deletedKey.IsDeleted = true
+		deletedKey.Action = MetaDataActionDeleted
 		deletedValue := []byte("deleted-value")
 
 		err := ds.Save(ctx, deletedKey, deletedValue)
@@ -203,8 +203,8 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 			Group:     "test-group",
 			Resource:  "test-resource",
 			Name:      "test-name",
-			UUID:      testUUID,
-			IsDeleted: false,
+			UID:       testUUID,
+			Action:    MetaDataActionCreated,
 		}
 
 		_, err = ds.Get(ctx, nonExistentKey)
@@ -225,8 +225,8 @@ func TestDataStore_Delete(t *testing.T) {
 		Group:     "test-group",
 		Resource:  "test-resource",
 		Name:      "test-name",
-		UUID:      testUUID,
-		IsDeleted: false,
+		UID:       testUUID,
+		Action:    MetaDataActionCreated,
 	}
 	testValue := []byte("test-value")
 
@@ -255,8 +255,8 @@ func TestDataStore_Delete(t *testing.T) {
 			Group:     "test-group",
 			Resource:  "test-resource",
 			Name:      "test-name",
-			UUID:      testUUID,
-			IsDeleted: false,
+			UID:       testUUID,
+			Action:    MetaDataActionCreated,
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
@@ -288,8 +288,8 @@ func TestDataStore_List(t *testing.T) {
 		Group:     resourceKey.Group,
 		Resource:  resourceKey.Resource,
 		Name:      resourceKey.Name,
-		UUID:      testUUID1,
-		IsDeleted: false,
+		UID:       testUUID1,
+		Action:    MetaDataActionCreated,
 	}
 
 	dataKey2 := DataKey{
@@ -297,8 +297,8 @@ func TestDataStore_List(t *testing.T) {
 		Group:     resourceKey.Group,
 		Resource:  resourceKey.Resource,
 		Name:      resourceKey.Name,
-		UUID:      testUUID2,
-		IsDeleted: false,
+		UID:       testUUID2,
+		Action:    MetaDataActionCreated,
 	}
 
 	t.Run("list multiple keys", func(t *testing.T) {
@@ -322,28 +322,28 @@ func TestDataStore_List(t *testing.T) {
 		// Create a map for easier verification
 		resultMap := make(map[string]DataObj)
 		for _, result := range results {
-			resultMap[result.Key.UUID.String()] = result
+			resultMap[result.Key.UID.String()] = result
 		}
 
 		// Check first result
 		result1, exists := resultMap[testUUID1.String()]
 		require.True(t, exists)
 		assert.Equal(t, testValue1, result1.Value)
-		assert.Equal(t, testUUID1, result1.Key.UUID)
+		assert.Equal(t, testUUID1, result1.Key.UID)
 		assert.Equal(t, resourceKey.Namespace, result1.Key.Namespace)
 		assert.Equal(t, resourceKey.Group, result1.Key.Group)
 		assert.Equal(t, resourceKey.Resource, result1.Key.Resource)
-		assert.False(t, result1.Key.IsDeleted)
+		assert.Equal(t, MetaDataActionCreated, result1.Key.Action)
 
 		// Check second result
 		result2, exists := resultMap[testUUID2.String()]
 		require.True(t, exists)
 		assert.Equal(t, testValue2, result2.Value)
-		assert.Equal(t, testUUID2, result2.Key.UUID)
+		assert.Equal(t, testUUID2, result2.Key.UID)
 		assert.Equal(t, resourceKey.Namespace, result2.Key.Namespace)
 		assert.Equal(t, resourceKey.Group, result2.Key.Group)
 		assert.Equal(t, resourceKey.Resource, result2.Key.Resource)
-		assert.False(t, result2.Key.IsDeleted)
+		assert.Equal(t, MetaDataActionCreated, result2.Key.Action)
 	})
 
 	t.Run("list empty", func(t *testing.T) {
@@ -380,8 +380,8 @@ func TestDataStore_List(t *testing.T) {
 			Group:     deletedResourceKey.Group,
 			Resource:  deletedResourceKey.Resource,
 			Name:      deletedResourceKey.Name,
-			UUID:      testUUID3,
-			IsDeleted: true,
+			UID:       testUUID3,
+			Action:    MetaDataActionDeleted,
 		}
 
 		// Save deleted key
@@ -397,8 +397,8 @@ func TestDataStore_List(t *testing.T) {
 
 		require.Len(t, results, 1)
 		assert.Equal(t, testValue3, results[0].Value)
-		assert.Equal(t, testUUID3, results[0].Key.UUID)
-		assert.True(t, results[0].Key.IsDeleted)
+		assert.Equal(t, testUUID3, results[0].Key.UID)
+		assert.Equal(t, MetaDataActionDeleted, results[0].Key.Action)
 	})
 }
 
@@ -438,8 +438,8 @@ func TestDataStore_Integration(t *testing.T) {
 				Group:     resourceKey.Group,
 				Resource:  resourceKey.Resource,
 				Name:      resourceKey.Name,
-				UUID:      version.uuid,
-				IsDeleted: false,
+				UID:       version.uuid,
+				Action:    MetaDataActionCreated,
 			}
 
 			err := ds.Save(ctx, dataKey, version.value)
@@ -461,8 +461,8 @@ func TestDataStore_Integration(t *testing.T) {
 			Group:     resourceKey.Group,
 			Resource:  resourceKey.Resource,
 			Name:      resourceKey.Name,
-			UUID:      versions[1].uuid,
-			IsDeleted: false,
+			UID:       versions[1].uuid,
+			Action:    MetaDataActionCreated,
 		}
 
 		err = ds.Delete(ctx, deleteKey)
@@ -484,7 +484,7 @@ func TestDataStore_Integration(t *testing.T) {
 		// Verify remaining items
 		remainingUUIDs := make(map[string]bool)
 		for _, result := range results {
-			remainingUUIDs[result.Key.UUID.String()] = true
+			remainingUUIDs[result.Key.UID.String()] = true
 		}
 
 		assert.True(t, remainingUUIDs[versions[0].uuid.String()])

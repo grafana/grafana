@@ -38,13 +38,19 @@ type DataKey struct {
 	Group     string
 	Resource  string
 	Name      string
-	UUID      uuid.UUID
-	IsDeleted bool
+	UID       uuid.UUID // TODO: should this be UUID ?
+	Action    MetaDataAction
 }
 
 func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
-	if key.Namespace == "" || key.Group == "" || key.Resource == "" {
-		return "", fmt.Errorf("namespace, group, and resource are required")
+	if key.Namespace == "" {
+		return "", fmt.Errorf("namespace is required")
+	}
+	if key.Group == "" {
+		return fmt.Sprintf("%s/%s/", prefixData, key.Namespace), nil
+	}
+	if key.Resource == "" {
+		return fmt.Sprintf("%s/%s/%s/", prefixData, key.Namespace, key.Group), nil
 	}
 	if key.Name == "" {
 		return fmt.Sprintf("%s/%s/%s/%s/", prefixData, key.Namespace, key.Group, key.Resource), nil
@@ -53,10 +59,7 @@ func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
 }
 
 func (d *dataStore) getKey(key DataKey) string {
-	if key.IsDeleted {
-		return fmt.Sprintf("%s/%s/%s/%s/%s/%s-deleted", prefixData, key.Namespace, key.Group, key.Resource, key.Name, key.UUID.String())
-	}
-	return fmt.Sprintf("%s/%s/%s/%s/%s/%s", prefixData, key.Namespace, key.Group, key.Resource, key.Name, key.UUID.String())
+	return fmt.Sprintf("%s/%s/%s/%s/%s/%s~%s", prefixData, key.Namespace, key.Group, key.Resource, key.Name, key.UID.String(), key.Action)
 }
 
 func (d *dataStore) parseKey(key string) (DataKey, error) {
@@ -70,12 +73,11 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 	if len(parts) <= 4 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	isDeleted := false
-	if strings.HasSuffix(parts[4], "-deleted") {
-		isDeleted = true
-		parts[4] = strings.TrimSuffix(parts[4], "-deleted")
+	uidActionParts := strings.Split(parts[4], "~")
+	if len(uidActionParts) != 2 {
+		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	id, err := uuid.Parse(parts[4])
+	id, err := uuid.Parse(uidActionParts[0])
 	if err != nil {
 		return DataKey{}, fmt.Errorf("invalid uuid: %s", id)
 	}
@@ -84,8 +86,8 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 		Group:     parts[1],
 		Resource:  parts[2],
 		Name:      parts[3],
-		UUID:      id,
-		IsDeleted: isDeleted,
+		UID:       id,
+		Action:    MetaDataAction(uidActionParts[1]),
 	}, nil
 }
 
