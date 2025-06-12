@@ -20,6 +20,7 @@ import {
   ThresholdsConfig,
   applyNullInsertThreshold,
   nullToValue,
+  SpecialValueMatch,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import {
@@ -72,6 +73,12 @@ const defaultConfig: PanelFieldConfig = {
   fillOpacity: 80,
 };
 
+/** Checks if a mapped value of the specified type exists for the given field */
+export const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
+  field.config.mappings?.some(
+    (mapping: ValueMapping): boolean => mapping.type === MappingType.SpecialValue && mapping.options.match === match
+  ) || false;
+
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
@@ -94,15 +101,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     const mode = field.config?.color?.mode;
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
-
-  const hasMappedNull = (field: Field) => {
-    return (
-      field.config.mappings?.some(
-        (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === 'null'
-      ) || false
-    );
-  };
-
   const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
@@ -121,7 +119,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
-    hasMappedNull: (seriesIdx) => hasMappedNull(frame.fields[seriesIdx]),
+    hasMappedNull: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.Null) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
+    hasMappedNaN: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NaN) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
     mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,
@@ -664,7 +667,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
  * This function calculates with 30 days month and 365 days year.
  * adapted from https://gist.github.com/remino/1563878
  * @param milliSeconds The duration in milliseconds
- * @returns A formated string of the duration
+ * @returns A formatted string of the duration
  */
 export function fmtDuration(milliSeconds: number): string {
   if (milliSeconds < 0 || Number.isNaN(milliSeconds)) {

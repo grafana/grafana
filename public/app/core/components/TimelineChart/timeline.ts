@@ -47,6 +47,7 @@ export interface TimelineCoreOptions {
   mergeValues?: boolean;
   isDiscrete: (seriesIdx: number) => boolean;
   hasMappedNull: (seriesIdx: number) => boolean;
+  hasMappedNaN: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: unknown) => string;
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
@@ -64,6 +65,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     numSeries,
     isDiscrete,
     hasMappedNull,
+    hasMappedNaN,
     rowHeight = 0,
     colWidth = 0,
     showValue,
@@ -196,9 +198,9 @@ export function getConfig(opts: TimelineCoreOptions) {
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
         let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-
-        let discrete = isDiscrete(sidx);
-        let mappedNull = discrete && hasMappedNull(sidx);
+        const discrete = isDiscrete(sidx);
+        const mappedNull = discrete && hasMappedNull(sidx);
+        const mappedNaN = discrete && hasMappedNaN(sidx);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -209,7 +211,10 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
 
-              if (yVal != null || mappedNull) {
+              const shouldDrawY =
+                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+
+              if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
@@ -252,8 +257,10 @@ export function getConfig(opts: TimelineCoreOptions) {
 
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
+              const shouldDrawY =
+                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
 
-              if (yVal != null || mappedNull) {
+              if (shouldDrawY) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
                 let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
@@ -306,14 +313,18 @@ export function getConfig(opts: TimelineCoreOptions) {
             sidx,
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
               let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-
-              let discrete = isDiscrete(sidx);
-              let mappedNull = discrete && hasMappedNull(sidx);
-
               let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
+              const discrete = isDiscrete(sidx);
+              const mappedNull = discrete && hasMappedNull(sidx);
+              const mappedNaN = discrete && hasMappedNaN(sidx);
+
               for (let ix = 0; ix < dataY.length; ix++) {
-                if (dataY[ix] != null || mappedNull) {
+                const yVal = dataY[ix];
+                const shouldDrawY =
+                  !!yVal || yVal === 0 || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+
+                if (shouldDrawY) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   if (!boxRect || boxRect.x >= xDim) {
