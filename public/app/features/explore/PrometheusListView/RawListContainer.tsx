@@ -5,7 +5,7 @@ import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
 import { DataFrame, Field as DataFrameField } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
 
@@ -84,8 +84,6 @@ const RawListContainer = (props: RawListContainerProps) => {
     // After the expanded view has updated, tell the list to re-render
     listRef.current?.resetAfterIndex(0, true);
   }, [isExpandedView]);
-
-  const { t } = useTranslate();
 
   const calculateInitialHeight = (length: number): number => {
     const maxListHeight = 600;

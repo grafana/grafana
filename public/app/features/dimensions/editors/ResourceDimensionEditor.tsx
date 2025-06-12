@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
@@ -57,7 +57,6 @@ export const ResourceDimensionEditor = (
     },
     [onChange, value]
   );
-  const { t } = useTranslate();
 
   const onClear = (event: React.MouseEvent) => {
     event.stopPropagation();
