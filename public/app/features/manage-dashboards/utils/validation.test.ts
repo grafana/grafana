@@ -47,11 +47,15 @@ describe('validateUid', () => {
         getDashboardDTO: jest.fn().mockResolvedValue(legacyDashboard),
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
+        listDeletedDashboards: jest.fn(),
+        restoreDashboard: jest.fn(),
       },
       v2: {
         getDashboardDTO: jest.fn().mockResolvedValue(v2Dashboard),
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
+        listDeletedDashboards: jest.fn(),
+        restoreDashboard: jest.fn(),
       },
     });
   });
