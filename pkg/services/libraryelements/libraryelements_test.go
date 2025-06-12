@@ -114,7 +114,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
