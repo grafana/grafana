@@ -20,7 +20,7 @@ weight: 200
 
 {{< admonition type="caution" >}}
 
-Dashboard JSON schema v2 is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. To get early access to this feature, request it through [this form](https://docs.google.com/forms/d/e/1FAIpQLSd73nQzuhzcHJOrLFK4ef_uMxHAQiPQh1-rsQUT2MRqbeMLpg/viewform?usp=dialog).
+Dashboard JSON schema v2 is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `dashboardNewLayouts` feature toggle in Grafana to use this feature.
 
 **Do not enable this feature in production environments as it may result in the irreversible loss of data.**
 
