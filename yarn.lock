@@ -3523,7 +3523,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.19.0":
+"@grafana/scenes@npm:6.19.0, @grafana/scenes@npm:^6.19.0":
   version: 6.19.0
   resolution: "@grafana/scenes@npm:6.19.0"
   dependencies:
@@ -18023,7 +18023,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.6"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.19.0"
+    "@grafana/scenes": "npm:^6.19.0"
     "@grafana/scenes-react": "npm:^6.19.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
