@@ -100,7 +100,6 @@ lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
-newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -230,3 +229,4 @@ extensionsReadOnlyProxy,experimental,@grafana/plugins-platform-backend,false,fal
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
+alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false

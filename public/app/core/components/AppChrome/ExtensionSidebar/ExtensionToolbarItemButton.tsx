@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 interface ToolbarItemButtonProps {
@@ -16,7 +16,6 @@ function ExtensionToolbarItemButtonComponent(
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   if (isOpen) {
     // render button to close the sidebar

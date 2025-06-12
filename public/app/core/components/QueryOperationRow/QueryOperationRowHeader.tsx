@@ -4,7 +4,7 @@ import { MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
@@ -42,7 +42,7 @@ export const QueryOperationRowHeader = ({
   expanderMessages,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   let tooltipMessage = isContentVisible
     ? t('query-operation.header.collapse-row', 'Collapse query row')
     : t('query-operation.header.expand-row', 'Expand query row');

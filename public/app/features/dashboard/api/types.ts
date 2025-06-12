@@ -6,6 +6,8 @@ import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+export type ListDeletedDashboardsOptions = Omit<ListOptions, 'labelSelector'>;
+
 export interface DashboardAPI<G, T> {
   /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<G>;
@@ -13,8 +15,8 @@ export interface DashboardAPI<G, T> {
   saveDashboard(options: SaveDashboardCommand<T>): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
-  /** List all soft deleted dashboards */
-  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>): Promise<ResourceList<T>>;
+  /** List all deleted dashboards */
+  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<T>>;
   /**  Restore a deleted dashboard by re-creating it */
   restoreDashboard(dashboard: Resource<T>): Promise<Resource<T>>;
 }

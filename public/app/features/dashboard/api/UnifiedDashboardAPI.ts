@@ -1,13 +1,13 @@
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { isResource } from 'app/features/apiserver/guards';
+import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { Resource, ListOptions, ResourceList } from '../../apiserver/types';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
-import { isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand } from './utils';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import { isDashboardV2Spec, isV1DashboardCommand, isV2DashboardCommand, failedFromVersion } from './utils';
 import { K8sDashboardAPI } from './v1';
 import { K8sDashboardV2API } from './v2';
 
@@ -50,25 +50,36 @@ export class UnifiedDashboardAPI
     return await this.v1Client.deleteDashboard(uid, showSuccessAlert);
   }
 
+  /**
+   * List deleted dashboards handling mixed v1/v2 versions or pure v2 dashboards.
+   *
+   * Steps:
+   * 1. Call v1 client to get all deleted dashboards
+   * 2. Check if any items have failed conversion from v2 versions
+   * 3. If v2 dashboards are detected, call v2 client
+   * 4. Filter and combine v1 and v2 dashboards into one response
+   */
   async listDeletedDashboards(
-    options: Omit<ListOptions, 'labelSelector'>
+    options: ListDeletedDashboardsOptions
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    try {
-      const resp = await this.v1Client.listDeletedDashboards(options);
-      // TODO better version mismatch handling
-      if (resp.items.every((item) => item.spec === null)) {
-        throw new DashboardVersionError('unsupported version');
-      }
-      return resp;
-    } catch (error) {
-      if (error instanceof DashboardVersionError) {
-        return await this.v2Client.listDeletedDashboards(options);
-      }
-      throw error;
+    const v1Response = await this.v1Client.listDeletedDashboards(options);
+    const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, 'v2'));
+
+    if (filteredV1Items.length === v1Response.items.length) {
+      return v1Response;
     }
+
+    const v2Response = await this.v2Client.listDeletedDashboards(options);
+    const filteredV2Items = v2Response.items.filter((item) => !failedFromVersion(item, 'v1'));
+
+    return {
+      ...v2Response,
+      items: [...filteredV1Items, ...filteredV2Items],
+    };
   }
 
   async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {
+    // Await returned promise to support proper error handling with try/catch
     if (isDashboardV2Spec(dashboard.spec) && isResource<DashboardV2Spec>(dashboard)) {
       return await this.v2Client.restoreDashboard(dashboard);
     }

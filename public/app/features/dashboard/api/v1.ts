@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -17,7 +18,6 @@ import {
   AnnoKeySourcePath,
   AnnoKeyManagerAllowsEdits,
   ManagerKind,
-  ListOptions,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -25,7 +25,7 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -34,7 +34,7 @@ export const K8S_V1_DASHBOARD_API_CONFIG = {
 };
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  private client: ResourceClient<DashboardDataDTO>;
+  private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
@@ -176,16 +176,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     }
   }
 
-  /**
-   * List all soft deleted dashboards
-   */
-  listDeletedDashboards(options: Omit<ListOptions, 'labelSelector'>) {
-    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
+    return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
-  /**
-   * Restore a deleted dashboard by re-creating it
-   */
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
     // reset the resource version to create a new resource
     dashboard.metadata.resourceVersion = '';

@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
@@ -62,8 +62,6 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     setValue('workflow', getDefaultWorkflow(repository));
   }, [repository, setValue]);
 
-  const { t } = useTranslate();
-
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess && repository) {
@@ -101,18 +99,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         ],
       });
     }
-  }, [
-    request.isSuccess,
-    request.isError,
-    request.error,
-    onSubmit,
-    ref,
-    request.data,
-    workflow,
-    navigate,
-    repository,
-    t,
-  ]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, request.data, workflow, navigate, repository]);
 
   if (isLoading) {
     return <Spinner />;

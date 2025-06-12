@@ -1,4 +1,4 @@
-import { Dashboard } from '@grafana/schema/dist/esm/index';
+import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
@@ -179,81 +179,68 @@ describe('UnifiedDashboardAPI', () => {
       expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
     });
 
-    it('should fallback to v2 if v1 returns items with null specs', async () => {
+    it('should combine responses when v1 returns mixed v1/v2 dashboards', async () => {
       const mockV1Response = {
         apiVersion: 'dashboard.grafana.app/v1beta1',
         kind: 'DashboardList',
-        metadata: {
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-        },
+        metadata: { resourceVersion: '123' },
         items: [
           {
-            apiVersion: 'dashboard.grafana.app/v1beta1',
-            kind: 'Dashboard',
+            metadata: { name: 'v2-dash', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
             spec: null,
-            metadata: { name: 'dash-1', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
+            status: { conversion: { failed: true, storedVersion: 'v2alpha1', error: 'conversion failed' } },
           },
           {
-            apiVersion: 'dashboard.grafana.app/v1beta1',
             kind: 'Dashboard',
-            spec: null,
-            metadata: { name: 'dash-2', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
-          },
-          {
             apiVersion: 'dashboard.grafana.app/v1beta1',
-            kind: 'Dashboard',
-            spec: null,
-            metadata: { name: 'dash-2', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
+            metadata: { name: 'v1-dash', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
+            spec: { title: 'v1', schemaVersion: 30 },
+            status: {},
           },
         ],
       };
       const mockV2Response = {
         apiVersion: 'dashboard.grafana.app/v2alpha1',
         kind: 'DashboardList',
-        metadata: {
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-        },
+        metadata: { resourceVersion: '456' },
         items: [
           {
-            apiVersion: 'dashboard.grafana.app/v2alpha1',
             kind: 'Dashboard',
-            spec: defaultDashboardV2Spec(),
-            metadata: { name: 'dash-1', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
+            apiVersion: 'dashboard.grafana.app/v2alpha1',
+            metadata: { name: 'v2-dash', resourceVersion: '456', creationTimestamp: '2023-01-01T00:00:00Z' },
+            spec: { title: 'v2', elements: {} },
+            status: {},
           },
           {
-            apiVersion: 'dashboard.grafana.app/v2alpha1',
-            kind: 'Dashboard',
-            spec: defaultDashboardV2Spec(),
-            metadata: { name: 'dash-2', resourceVersion: '123', creationTimestamp: '2023-01-01T00:00:00Z' },
+            metadata: { name: 'v1-dash', resourceVersion: '456', creationTimestamp: '2023-01-01T00:00:00Z' },
+            spec: { title: 'v1', elements: null },
+            status: { conversion: { failed: true, storedVersion: 'v1beta1', error: 'conversion failed' } },
           },
         ],
       };
 
-      // @ts-expect-error - specs are null
-      v1Client.listDeletedDashboards.mockResolvedValue(mockV1Response);
-      v2Client.listDeletedDashboards.mockResolvedValue(mockV2Response);
-
-      const result = await api.listDeletedDashboards({ limit: 10 });
-
-      expect(result).toBe(mockV2Response);
-      expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
-      expect(v2Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
-    });
-
-    it('should fallback to v2 if v1 throws DashboardVersionError', async () => {
-      const mockV2Response = {
-        items: [{ spec: defaultDashboardV2Spec(), metadata: { name: 'dash-1' } }],
-      };
-
-      v1Client.listDeletedDashboards.mockRejectedValue(new DashboardVersionError('unsupported version'));
+      v1Client.listDeletedDashboards.mockResolvedValue(mockV1Response as ResourceList<DashboardDataDTO>);
       v2Client.listDeletedDashboards.mockResolvedValue(mockV2Response as ResourceList<DashboardV2Spec>);
 
       const result = await api.listDeletedDashboards({ limit: 10 });
 
-      expect(result).toBe(mockV2Response);
+      expect(result).toEqual({
+        ...mockV2Response,
+        items: [
+          mockV1Response.items[1], // v1 dashboard
+          mockV2Response.items[0], // v2 dashboard
+        ],
+      });
+      expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
       expect(v2Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
+    });
+
+    it('should throw error if v1 throws DashboardVersionError', async () => {
+      const mockError = new DashboardVersionError('unsupported version');
+      v1Client.listDeletedDashboards.mockRejectedValue(mockError);
+
+      await expect(api.listDeletedDashboards({ limit: 10 })).rejects.toThrow(mockError);
+      expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
     });
 
     it('should throw non-DashboardVersionError from v1', async () => {
@@ -277,23 +264,9 @@ describe('UnifiedDashboardAPI', () => {
         },
         spec: { title: 'V1 Dashboard', panels: [], schemaVersion: 30, uid: '123' },
       };
-      const mockResponse = {
-        apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'Dashboard',
-        metadata: {
-          name: 'dash-1',
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-          uid: '123',
-        },
-        spec: mockV1Dashboard.spec,
-      };
 
-      v1Client.restoreDashboard.mockResolvedValue(mockResponse);
+      await api.restoreDashboard(mockV1Dashboard);
 
-      const result = await api.restoreDashboard(mockV1Dashboard);
-
-      expect(result).toBe(mockResponse);
       expect(v1Client.restoreDashboard).toHaveBeenCalledWith(mockV1Dashboard);
       expect(v2Client.restoreDashboard).not.toHaveBeenCalled();
     });
@@ -312,22 +285,9 @@ describe('UnifiedDashboardAPI', () => {
           title: 'V2 Dashboard',
         },
       };
-      const mockResponse = {
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
-        kind: 'Dashboard',
-        metadata: {
-          name: 'dash-1',
-          resourceVersion: '123',
-          creationTimestamp: '2023-01-01T00:00:00Z',
-        },
-        spec: mockV2Dashboard.spec,
-      };
 
-      v2Client.restoreDashboard.mockResolvedValue(mockResponse);
+      await api.restoreDashboard(mockV2Dashboard);
 
-      const result = await api.restoreDashboard(mockV2Dashboard);
-
-      expect(result).toBe(mockResponse);
       expect(v2Client.restoreDashboard).toHaveBeenCalledWith(mockV2Dashboard);
       expect(v1Client.restoreDashboard).not.toHaveBeenCalled();
     });
