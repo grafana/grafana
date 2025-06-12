@@ -75,6 +75,30 @@ describe('nestedSetToLevels', () => {
     expect(levels[0]).toEqual([n1]);
     expect(levels[1]).toEqual([n2, n3, n4]);
   });
+
+  it('handles strings that collide with inherited prototype method names', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10, 5, 3, 1] },
+        { name: 'label', values: ['toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf'], type: FieldType.string },
+        { name: 'self', values: [10, 5, 3, 1] },
+      ],
+    });
+    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame, { collapsing: true }));
+
+    const n4: LevelItem = { itemIndexes: [3], start: 8, children: [], value: 1, level: 1 };
+    const n3: LevelItem = { itemIndexes: [2], start: 5, children: [], value: 3, level: 1 };
+    const n2: LevelItem = { itemIndexes: [1], start: 0, children: [], value: 5, level: 1 };
+    const n1: LevelItem = { itemIndexes: [0], start: 0, children: [n2, n3, n4], value: 10, level: 0 };
+
+    n2.parents = [n1];
+    n3.parents = [n1];
+    n4.parents = [n1];
+
+    expect(levels[0]).toEqual([n1]);
+    expect(levels[1]).toEqual([n2, n3, n4]);
+  });
 });
 
 describe('FlameGraphDataContainer', () => {
