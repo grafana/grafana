@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
@@ -9,7 +9,6 @@ import { getStylesLabelSelector } from './styles';
 import { METRIC_LABEL } from './types';
 
 export function LabelSelector() {
-  const { t } = useTranslate();
   const styles = useStyles2(getStylesLabelSelector);
   const [labelSearchTerm, setLabelSearchTerm] = useState('');
   const { labelKeys, selectedLabelKeys, onLabelKeyClick } = useMetricsBrowser();

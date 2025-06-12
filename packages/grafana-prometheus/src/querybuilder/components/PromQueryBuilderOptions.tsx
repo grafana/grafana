@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorRow, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -34,7 +34,6 @@ export interface PromQueryBuilderOptionsProps {
 
 export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
   ({ query, app, onChange, onRunQuery }) => {
-    const { t } = useTranslate();
     const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
       onChange({ ...query, format: value.value });
       onRunQuery();

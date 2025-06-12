@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
@@ -33,7 +33,6 @@ export function MetricCombobox({
   labelsFilters,
   variableEditor,
 }: Readonly<MetricComboboxProps>) {
-  const { t } = useTranslate();
   const [metricsModalOpen, setMetricsModalOpen] = useState(false);
 
   /**

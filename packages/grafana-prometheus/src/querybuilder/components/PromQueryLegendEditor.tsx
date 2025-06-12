@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { AutoSizeInput, Select } from '@grafana/ui';
 
@@ -31,7 +31,6 @@ const legendModeOptions = [
  */
 export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
   ({ legendFormat, onChange, onRunQuery }) => {
-    const { t } = useTranslate();
     const mode = getLegendMode(legendFormat);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -81,7 +80,7 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
             <AutoSizeInput
               id="legendFormat"
               minWidth={22}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="auto"
               defaultValue={legendFormat}
               onCommitChange={onLegendFormatChanged}

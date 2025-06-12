@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { AsyncSelect, Select } from '@grafana/ui';
 
@@ -36,7 +36,6 @@ export function LabelFilterItem({
   getLabelValuesAutofillSuggestions,
   debounceDuration,
 }: LabelFilterItemProps) {
-  const { t } = useTranslate();
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
     labelValues?: SelectableValue[];

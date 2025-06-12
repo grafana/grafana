@@ -4,7 +4,7 @@ import { memo } from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, Input, Space } from '@grafana/ui';
 
@@ -28,7 +28,6 @@ const PLACEHOLDER_TAGS = 'label1,label2';
  * and timestamp settings.
  */
 export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: Props) {
-  const { t } = useTranslate();
   const { annotation, onAnnotationChange, onChange, onRunQuery, query } = props;
 
   if (!annotation || !onAnnotationChange) {

@@ -4,7 +4,7 @@ import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/plugin-ui';
 import { InlineFieldRow, InlineLabel } from '@grafana/ui';
 
@@ -36,7 +36,6 @@ export function LabelFilters({
   debounceDuration,
   variableEditor,
 }: LabelFiltersProps) {
-  const { t } = useTranslate();
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
 

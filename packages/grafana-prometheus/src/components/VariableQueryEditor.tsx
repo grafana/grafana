@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { getDefaultTimeRange, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { AsyncSelect, InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -40,7 +40,6 @@ const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
 export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: Props) => {
   // to select the query type, i.e. label_names, label_values, etc.
-  const { t } = useTranslate();
   const [qryType, setQryType] = useState<number | undefined>(undefined);
   // list of variables for each function
   const [label, setLabel] = useState('');
@@ -126,7 +125,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       });
     } else {
       // fetch the labels filtered by the metric
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 

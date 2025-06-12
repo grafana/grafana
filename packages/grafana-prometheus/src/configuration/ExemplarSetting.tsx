@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
 
@@ -19,7 +19,6 @@ type Props = {
 };
 
 export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
-  const { t } = useTranslate();
   const [isInternalLink, setIsInternalLink] = useState(Boolean(value.datasourceUid));
 
   const theme = useTheme2();

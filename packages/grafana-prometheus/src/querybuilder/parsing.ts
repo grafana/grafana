@@ -26,7 +26,7 @@ import {
   Without,
 } from '@prometheus-io/lezer-promql';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {

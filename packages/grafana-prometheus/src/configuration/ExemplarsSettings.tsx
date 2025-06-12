@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { Button, useTheme2 } from '@grafana/ui';
 
@@ -18,7 +18,6 @@ type Props = {
 };
 
 export function ExemplarsSettings({ options, onChange, disabled }: Props) {
-  const { t } = useTranslate();
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
   return (

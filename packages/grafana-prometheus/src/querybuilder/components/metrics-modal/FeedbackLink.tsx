@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, useStyles2, Stack } from '@grafana/ui';
 
 export interface Props {
@@ -10,7 +10,6 @@ export interface Props {
 }
 
 export function FeedbackLink({ feedbackUrl }: Props) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   return (

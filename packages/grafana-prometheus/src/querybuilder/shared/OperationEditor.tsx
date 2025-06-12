@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';
@@ -47,7 +47,6 @@ export function OperationEditor({
   highlight,
   timeRange,
 }: Props) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);

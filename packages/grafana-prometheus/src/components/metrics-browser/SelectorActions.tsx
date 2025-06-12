@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
@@ -10,7 +10,6 @@ import { getStylesSelectorActions } from './styles';
 import { EMPTY_SELECTOR } from './types';
 
 export function SelectorActions() {
-  const { t } = useTranslate();
   const styles = useStyles2(getStylesSelectorActions);
   const { validationStatus, onValidationClick, getSelector, onChange, status, err, onClearClick } = useMetricsBrowser();
 

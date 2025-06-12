@@ -4,7 +4,7 @@ import { capitalize } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { CoreApp, DataQuery, getNextRefId, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
@@ -26,7 +26,6 @@ type Props = {
 };
 
 export const QueryPatternsModal = (props: Props) => {
-  const { t } = useTranslate();
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [selectedPatternName, setSelectedPatternName] = useState<string | null>(null);

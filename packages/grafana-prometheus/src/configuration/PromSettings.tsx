@@ -9,7 +9,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, TextLink, useTheme2 } from '@grafana/ui';
@@ -73,7 +73,6 @@ const getOptionsWithDefaults = (options: DataSourceSettings<PromOptions>) => {
 };
 
 export const PromSettings = (props: Props) => {
-  const { t } = useTranslate();
   const { onOptionsChange } = props;
   const optionsWithDefaults = getOptionsWithDefaults(props.options);
 
@@ -132,7 +131,7 @@ export const PromSettings = (props: Props) => {
                     className="width-20"
                     value={optionsWithDefaults.jsonData.timeInterval}
                     spellCheck={false}
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                     placeholder="15s"
                     onChange={onChangeHandler('timeInterval', optionsWithDefaults, onOptionsChange)}
                     onBlur={(e) =>
@@ -171,7 +170,7 @@ export const PromSettings = (props: Props) => {
                     value={optionsWithDefaults.jsonData.queryTimeout}
                     onChange={onChangeHandler('queryTimeout', optionsWithDefaults, onOptionsChange)}
                     spellCheck={false}
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                     placeholder="60s"
                     onBlur={(e) =>
                       updateValidDuration({

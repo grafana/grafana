@@ -44,7 +44,7 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
         <div className={styles.container}>
           {hints.map((hint) => {
             return (
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
                   onClick={() => {

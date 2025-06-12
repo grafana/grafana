@@ -3,7 +3,7 @@ import { cx } from '@emotion/css';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
@@ -21,7 +21,6 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
   options,
   onOptionsChange,
 }: Props<T>): JSX.Element {
-  const { t } = useTranslate();
   const theme = useTheme2();
   // imported GrafanaTheme2 from @grafana/data does not match type of same from @grafana/ui
   // @ts-ignore

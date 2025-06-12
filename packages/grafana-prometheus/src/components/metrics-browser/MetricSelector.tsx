@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
@@ -10,7 +10,6 @@ import { getStylesMetricSelector } from './styles';
 import { LIST_ITEM_SIZE } from './types';
 
 export function MetricSelector() {
-  const { t } = useTranslate();
   const styles = useStyles2(getStylesMetricSelector);
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';
@@ -67,7 +67,6 @@ function SelectInputParamEditor({
   operationId,
   onChange,
 }: QueryBuilderOperationParamEditorProps) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   let selectOptions = paramDef.options as SelectableValue[];
 

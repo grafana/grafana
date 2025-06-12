@@ -13,7 +13,7 @@ import {
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Portal, useStyles2 } from '@grafana/ui';
 
@@ -25,7 +25,6 @@ export interface Props {
 }
 
 export const OperationInfoButton = memo<Props>(({ def, operation }) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(false);
 

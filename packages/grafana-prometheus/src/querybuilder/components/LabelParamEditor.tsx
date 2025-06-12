@@ -53,7 +53,7 @@ async function loadGroupByLabels(
 
   // This function is used by both Prometheus and Loki and this the only difference.
   if (datasource.type === 'prometheus') {
-    // eslint-disable-next-line @grafana/no-untranslated-strings
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
   }
 

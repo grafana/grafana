@@ -6,8 +6,7 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t, Trans } from '@grafana/i18n';
 import { InlineFormLabel, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -23,7 +22,6 @@ export interface PromExploreExtraFieldProps {
 }
 
 export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQuery }: PromExploreExtraFieldProps) => {
-  const { t } = useTranslate();
   const rangeOptions = getQueryTypeOptions(true);
   const prevQuery = usePrevious(query);
   const styles = useStyles2(getStyles);
@@ -116,7 +114,7 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
         <input
           type={'text'}
           className="gf-form-input width-4"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="auto"
           onChange={onStepChange}
           onKeyDown={onReturnKeyDown}

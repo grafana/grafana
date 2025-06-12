@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -18,7 +18,6 @@ interface Props {
 }
 
 export function PromExemplarField({ datasource, onChange, query, ...rest }: Props) {
-  const { t } = useTranslate();
   const [error, setError] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
   const prevError = usePrevious(error);

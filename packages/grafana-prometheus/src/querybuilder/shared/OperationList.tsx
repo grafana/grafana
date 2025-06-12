@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useMountedState, usePrevious } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui';
 
 import { OperationEditor } from './OperationEditor';
@@ -31,7 +31,6 @@ export function OperationList<T extends QueryWithOperations>({
   highlightedOp,
   timeRange,
 }: Props<T>) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { operations } = query;
 

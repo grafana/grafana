@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription, AdvancedHttpSettings } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, FieldValidationMessage, TextLink, useTheme2 } from '@grafana/ui';
@@ -18,7 +18,6 @@ export const PROM_CONFIG_LABEL_WIDTH = 30;
 export type PrometheusConfigProps = DataSourcePluginOptionsEditorProps<PromOptions>;
 
 export const ConfigEditor = (props: PrometheusConfigProps) => {
-  const { t } = useTranslate();
   const { options, onOptionsChange } = props;
   const theme = useTheme2();
   const styles = overhaulStyles(theme);

@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import promqlGrammar from '../promql';
@@ -21,7 +21,6 @@ type Props = {
 };
 
 export const QueryPattern = (props: Props) => {
-  const { t } = useTranslate();
   const { pattern, onPatternSelect, hasNewQueryOption, hasPreviousQuery, selectedPatternName, setSelectedPatternName } =
     props;
 

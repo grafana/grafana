@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { metricsModaltestIds } from './MetricsModal';
@@ -18,7 +18,6 @@ type AdditionalSettingsProps = {
 };
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
-  const { t } = useTranslate();
   const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
     props;
 

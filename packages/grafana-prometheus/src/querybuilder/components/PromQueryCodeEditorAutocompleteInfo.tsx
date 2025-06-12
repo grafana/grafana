@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { IconButton, Text, Stack } from '@grafana/ui';
 
@@ -18,7 +18,6 @@ interface Props {
 }
 
 export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
-  const { t } = useTranslate();
   const [autocompleteLimit, setAutocompleteLimit] = useState('n');
   const [autocompleteLimitExceeded, setAutocompleteLimitExceeded] = useState(false);
   const handleSuggestionsIncompleteEvent = useCallback(

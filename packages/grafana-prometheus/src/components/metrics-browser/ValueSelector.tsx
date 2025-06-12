@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
@@ -10,7 +10,6 @@ import { getStylesValueSelector } from './styles';
 import { LIST_ITEM_SIZE } from './types';
 
 export function ValueSelector() {
-  const { t } = useTranslate();
   const styles = useStyles2(getStylesValueSelector);
   const [valueSearchTerm, setValueSearchTerm] = useState('');
   const { labelValues, selectedLabelValues, onLabelValueClick, onLabelKeyClick } = useMetricsBrowser();

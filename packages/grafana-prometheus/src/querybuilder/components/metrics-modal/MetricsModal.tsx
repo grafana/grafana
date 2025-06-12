@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   ButtonGroup,
@@ -57,7 +57,6 @@ export type MetricsModalProps = {
 };
 
 export const MetricsModal = (props: MetricsModalProps) => {
-  const { t } = useTranslate();
   const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
