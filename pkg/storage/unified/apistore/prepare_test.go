@@ -7,6 +7,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
+
+	//nolint:staticcheck
 	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

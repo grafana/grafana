@@ -773,6 +773,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/release-comms.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/create-next-release-branch.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/create-security-branch.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
@@ -800,6 +801,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/storybook-verification.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-monitoring
+/.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-kinds-next.yml @grafana/platform-monitoring
 /.github/workflows/publish-kinds-release.yml @grafana/platform-monitoring
 /.github/workflows/verify-kinds.yml @grafana/platform-monitoring

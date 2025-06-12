@@ -459,9 +459,12 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		}
 	}
 	group := prom.PrometheusRuleGroup{
-		Name:     promGroup.Name,
-		Interval: promGroup.Interval,
-		Rules:    rules,
+		Name:        promGroup.Name,
+		Interval:    promGroup.Interval,
+		Rules:       rules,
+		QueryOffset: promGroup.QueryOffset,
+		Limit:       promGroup.Limit,
+		Labels:      promGroup.Labels,
 	}
 
 	converter, err := prom.NewConverter(

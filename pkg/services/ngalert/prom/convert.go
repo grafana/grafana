@@ -235,6 +235,13 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
 
+	// Save the merged group-level + rule-level labels to the original rule,
+	// to ensure that they are saved to the original YAML rule definition.
+	if rule.Labels == nil {
+		rule.Labels = make(map[string]string)
+	}
+	maps.Copy(rule.Labels, labels)
+
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("failed to marshal original rule definition: %w", err)
