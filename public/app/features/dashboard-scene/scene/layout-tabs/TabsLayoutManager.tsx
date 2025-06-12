@@ -138,6 +138,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  public getOutlineChildren() {
+    return this.state.tabs;
+  }
+
   public addNewTab(tab?: TabItem) {
     const newTab = tab ?? new TabItem({});
     const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
