@@ -89,3 +89,9 @@ func TestBuildContinueToken(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidToken(t *testing.T) {
+	invalidToken := "325232ff4fF->"
+	_, _, err := parseContinueTokens(invalidToken)
+	require.Error(t, err)
+}

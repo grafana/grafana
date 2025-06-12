@@ -2,7 +2,6 @@ package dualwrite
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -75,9 +74,6 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		log            = logging.FromContext(ctx).With("method", "List")
 	)
 
-	// Split a dualwriter continue token (legacy, unified) if we received one.
-	// Otherwise, only populated `legacyToken` with the legacy token separated
-	// by `|`.
 	legacyToken, unifiedToken, err := parseContinueTokens(options.Continue)
 	if err != nil {
 		return nil, err
@@ -100,9 +96,9 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		return unifiedList, nil
 	}
 
-	// In some cases, the unified token might be there but not the legacy one.
-	// This can happen, as we iterate in unified not only based on the limit,
-	// but also in the response size. This prevents sending the first page again.
+	// In some cases, the unified token might be there but legacy token is empty (i.e. finished iteration).
+	// This can happen, as unified storage iteration is doing paging not only based on the provided limit,
+	// but also based on the response size. This check prevents starting the new iteration again.
 	if options.Continue != "" && legacyToken == "" {
 		return nil, nil
 	}
@@ -130,11 +126,13 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// Once we have successfully listed from legacy, we can check if we want to fail on a unified list.
 	// If we allow the unified list to fail, we can do it in the background and return.
 	if d.errorIsOK && shouldDoUnifiedRequest {
-		// We want to slow down this operation at most 300ms, by waiting in the background for the right continue token.
-		timeoutCtx, timeoutCancel := context.WithTimeout(ctx, time.Millisecond*300)
+		// We would like to get continue token from unified storage, but
+		// don't want to wait for unified storage too long, since we're calling
+		// unified-storage asynchronously.
+		out := make(chan string, 1)
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
-			defer timeoutCancel()
+			defer close(out)
 			unifiedList, err := d.unified.List(ctxBg, options)
 			if err != nil {
 				log.Error("failed background LIST to unified", "err", err)
@@ -145,11 +143,13 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 				log.Error("failed background LIST to unified", "err",
 					fmt.Errorf("failed to access unified List MetaData: %w", err))
 			}
-			unifiedToken = unifiedMeta.GetContinue()
+			out <- unifiedMeta.GetContinue()
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
-		<-timeoutCtx.Done()
-		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
+		select {
+		case unifiedToken = <-out:
+		case <-time.After(300 * time.Millisecond):
 			log.Warn("timeout while waiting on the unified storage continue token")
+			break
 		}
 		legacyMeta.SetContinue(buildContinueToken(legacyToken, unifiedToken))
 		return legacyList, nil
@@ -162,7 +162,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		}
 		unifiedMeta, err := meta.ListAccessor(unifiedList)
 		if err != nil {
-			return nil, fmt.Errorf("failed to access legacy List MetaData: %w", err)
+			return nil, fmt.Errorf("failed to access unified List MetaData: %w", err)
 		}
 		unifiedToken = unifiedMeta.GetContinue()
 	}

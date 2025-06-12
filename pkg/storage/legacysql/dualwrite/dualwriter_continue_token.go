@@ -7,8 +7,8 @@ import (
 )
 
 // parseContinueTokens splits a dualwriter continue token (legacy, unified) if we received one.
-// If we received a single token that is not separated by a comma, we return the token as is as legacy
-// token and an empty unified token. This is to ensure smooth transition to the new token format.
+// If we receive a single token not separated by a comma, we return the token as-is as a legacy
+// token and an empty unified token. This is to ensure a smooth transition to the new token format.
 func parseContinueTokens(token string) (string, string, error) {
 	if token == "" {
 		return "", "", nil

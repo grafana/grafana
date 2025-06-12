@@ -198,7 +198,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 							DualWriterMode: mode,
 						},
 					},
-					MaxPageSizeBytes: 1,
+					// We set it to 1 here, so we always get forced pagination based on the response size.
+					UnifiedStorageMaxPageSizeBytes: 1,
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 						featuremgmt.FlagNestedFolders,
@@ -526,42 +527,42 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 	})
 	foldersCount := 3
 	for i := 0; i < foldersCount; i++ {
-		payload := fmt.Sprintf(`{
-		"title": "Test-%d",
-		"uid": "uid-%d"
-		}`, i, i)
+		payload, err := json.Marshal(map[string]interface{}{
+			"title": fmt.Sprintf("Test-%d", i),
+			"uid":   fmt.Sprintf("uid-%d", i),
+		})
+		require.NoError(t, err)
 		parentCreate := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPost,
 			Path:   "/api/folders",
-			Body:   []byte(payload),
+			Body:   payload,
 		}, &folder.Folder{})
 		require.NotNil(t, parentCreate.Result)
 		require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
 	}
-	res, err := client.Resource.List(context.Background(), metav1.ListOptions{
-		Limit: 1,
-	})
-	require.NoError(t, err)
-	require.Len(t, res.Items, 1)
-	require.Equal(t, "uid-0", res.Items[0].GetName())
-
-	res, err = client.Resource.List(context.Background(), metav1.ListOptions{
-		Limit:    1,
-		Continue: res.GetContinue(),
-	})
-	require.NoError(t, err)
-	require.Len(t, res.Items, 1)
-	require.Equal(t, "uid-1", res.Items[0].GetName())
+	continueToken := ""
+	for i := 0; i < foldersCount; i++ {
+		res, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Limit:    1,
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Items, 1)
+		require.Equal(t, fmt.Sprintf("uid-%d", i), res.Items[0].GetName())
+		continueToken = res.GetContinue()
+	}
+	// After we did as many requests as we created items, we expect the token to be empty and have reached
+	// the last page.
+	require.Equal(t, "", continueToken)
 
 	// Now let's see if the iterator also works when we are limited by the page size, which should be set
 	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
 	// as legacy doesn't have such a page size limit.
 	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
 		t.Run("check page size iterator", func(t *testing.T) {
-			continueToken := ""
 			for i := 0; i < foldersCount; i++ {
-				res, err = client.Resource.List(context.Background(), metav1.ListOptions{
+				res, err := client.Resource.List(context.Background(), metav1.ListOptions{
 					Limit:    3,
 					Continue: continueToken,
 				})

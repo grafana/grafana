@@ -492,10 +492,10 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
-	if opts.MaxPageSizeBytes > 0 {
+	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
-		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.MaxPageSizeBytes))
+		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -562,7 +562,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-	MaxPageSizeBytes                      int
+	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
