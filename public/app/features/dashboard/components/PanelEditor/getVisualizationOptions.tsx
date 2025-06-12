@@ -10,7 +10,7 @@ import {
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { NestedValueAccess, isNestedPanelOptions, PanelOptionsSupplier } from '@grafana/data/internal';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
