@@ -1,6 +1,6 @@
 import { DataSourceSettings } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import { config } from 'app/core/config';
@@ -12,7 +12,6 @@ export interface Props {
 }
 
 export function CloudInfoBox({ dataSource }: Props) {
-  const { t } = useTranslate();
   let mainDS = '';
   let extraDS = '';
 

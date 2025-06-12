@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 function getStyles() {
@@ -27,7 +27,6 @@ interface Props<Config> {
  * Control buttons for zoom but also some layout config inputs mainly for debugging.
  */
 export function ViewControls<Config extends Record<string, any>>(props: Props<Config>) {
-  const { t } = useTranslate();
   const { config, onConfigChange, onPlus, onMinus, disableZoomOut, disableZoomIn } = props;
   const [showConfig, setShowConfig] = useState(false);
 

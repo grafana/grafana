@@ -4408,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "選擇",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5223,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "訊息",
-      "body-dashboard-drastically-changed": "由於您正在使用僅在新的 Grafana 儀表板架構格式中支援的新儀表板功能，因此儀表板將以新格式儲存。請確認您要執行此操作，還是要將儀表板儲存為新副本。",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "取消"
       },
@@ -5239,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "動態儀表板功能僅供試驗，並未與目前的儀表板行為具有完全的功能平等性。它以新的模式格式為基礎，不支援資料庫面板。這表示在匯出儀表板以便在另一個執行個體中使用時，我們不會包含資料庫面板。隨著我們在功能<2>生命週期</2>中取得進展，我們計劃為其提供支援。",
       "schema-v2-library-panels-export-title": "儀表板架構 V2 尚不支援為了在另一個執行個體中使用而匯出資料庫面板",
-      "title-dashboard-drastically-changed": "儀表板已大幅變更"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "將使目前的重新整理成為新的預設值",
@@ -7689,6 +7690,8 @@
       },
       "enable-highlighting": "啟用醒目提示",
       "escape-newlines": "修復紀錄行中新行和分頁序列的錯誤轉義",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "隱藏時間戳記",
       "hide-unique-labels": "隱藏唯一標籤",
       "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
