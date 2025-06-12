@@ -5,7 +5,7 @@ import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
-import { docsTip, overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './shared/utils';
 
 export type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;

@@ -7,7 +7,7 @@ import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
-import { docsTip, overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './shared/utils';
 
 interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}

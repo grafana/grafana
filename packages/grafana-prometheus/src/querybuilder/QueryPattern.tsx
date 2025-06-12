@@ -6,8 +6,8 @@ import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import promqlGrammar from '../promql';
 
-import { promQueryModeller } from './PromQueryModeller';
 import { RawQuery } from './shared/RawQuery';
+import { promQueryModeller } from './shared/modeller-instance';
 import { PromQueryPattern } from './types';
 
 type Props = {
@@ -33,6 +33,7 @@ export const QueryPattern = (props: Props) => {
         <RawQuery
           aria-label={`${pattern.name} raw query`}
           query={promQueryModeller.renderQuery({
+            metric: '',
             labels: [],
             operations: pattern.operations,
             binaryQueries: pattern.binaryQueries,

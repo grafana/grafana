@@ -4,17 +4,9 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { metricsModaltestIds } from './MetricsModal';
+import { metricsModaltestIds } from './shared/testIds';
+import { AdditionalSettingsProps } from './shared/types';
 import { placeholders } from './state/helpers';
-import { MetricsModalState } from './state/state';
-
-type AdditionalSettingsProps = {
-  state: MetricsModalState;
-  onChangeFullMetaSearch: () => void;
-  onChangeIncludeNullMetadata: () => void;
-  onChangeDisableTextWrap: () => void;
-  onChangeUseBackend: () => void;
-};
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
   const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =

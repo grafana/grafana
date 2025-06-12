@@ -24,10 +24,10 @@
     "./LICENSE_AGPL"
   ],
   "publishConfig": {
+    "access": "public",
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
-    "access": "public"
+    "types": "./dist/cjs/index.d.cts"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
@@ -92,6 +92,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-select-event": "5.5.1",
+    "rimraf": "6.0.1",
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
