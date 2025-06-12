@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { isEmpty, isUndefined } from 'lodash';
+import { Fragment } from 'react/jsx-runtime';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -284,12 +285,12 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
           value={
             <>
               {notificationSettings.mute_time_intervals.map((intervalName, index) => (
-                <>
+                <Fragment key={intervalName}>
                   <TextLink href={makeEditTimeIntervalLink(intervalName, { alertmanager: 'grafana' })}>
                     {intervalName}
                   </TextLink>
                   {index < notificationSettings.mute_time_intervals!.length - 1 && ', '}
-                </>
+                </Fragment>
               ))}
             </>
           }
@@ -303,12 +304,12 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
           value={
             <>
               {notificationSettings.active_time_intervals.map((intervalName, index) => (
-                <>
+                <Fragment key={intervalName}>
                   <TextLink href={makeEditTimeIntervalLink(intervalName, { alertmanager: 'grafana' })}>
                     {intervalName}
                   </TextLink>
                   {index < notificationSettings.active_time_intervals!.length - 1 && ', '}
-                </>
+                </Fragment>
               ))}
             </>
           }
