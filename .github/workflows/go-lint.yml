@@ -45,7 +45,6 @@ jobs:
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.backend-changed == 'true'
-    name: Lint Go code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
