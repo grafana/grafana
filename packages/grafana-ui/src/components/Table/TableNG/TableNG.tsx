@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, DataGridHandle, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
-import { useMeasure } from 'react-use';
 
 import {
   DataFrame,
@@ -82,7 +81,6 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   const gridHandle = useRef<DataGridHandle>(null);
-  const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -166,7 +164,6 @@ export function TableNG(props: TableNGProps) {
     height,
     hasHeader,
     hasFooter,
-    paginationHeight,
     rowHeight,
   });
 
@@ -409,7 +406,7 @@ export function TableNG(props: TableNGProps) {
         }}
       />
       {enablePagination && (
-        <div className={styles.paginationContainer} ref={paginationWrapperRef}>
+        <div className={styles.paginationContainer}>
           <Pagination
             className="table-ng-pagination"
             currentPage={page + 1}
