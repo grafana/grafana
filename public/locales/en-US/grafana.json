@@ -1528,6 +1528,10 @@
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "Rules managed by integrations or plugins should not be imported to Grafana-managed rules.",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
