@@ -1,13 +1,13 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { notifyApp } from '../../../core/actions';
-import { createSuccessNotification } from '../../../core/copy/appNotification';
-import { contextSrv } from '../../../core/services/context_srv';
-import { handleError } from '../../utils';
+import { notifyApp } from '../../../../core/actions';
+import { createSuccessNotification } from '../../../../core/copy/appNotification';
+import { contextSrv } from '../../../../core/services/context_srv';
+import { handleError } from '../../../utils';
 
 import { generatedAPI, Playlist, PlaylistSpec } from './endpoints.gen';
 
-export const playlistAPI = generatedAPI.enhanceEndpoints({
+export const playlistAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     getPlaylist: {
       transformResponse: async (response: Playlist) => {
@@ -81,7 +81,7 @@ export const {
   useGetPlaylistQuery,
   useListPlaylistQuery,
   useReplacePlaylistMutation,
-} = playlistAPI;
+} = playlistAPIv0alpha1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
 export type { Playlist } from './endpoints.gen';

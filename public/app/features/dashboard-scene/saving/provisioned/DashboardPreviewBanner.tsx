@@ -2,7 +2,7 @@ import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning';
+import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types';

@@ -6,7 +6,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist';
+import { Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';

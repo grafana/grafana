@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
-import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { RepositoryViewList, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 export function useIsProvisionedInstance(settings?: RepositoryViewList) {
   const settingsQuery = useGetFrontendSettingsQuery(

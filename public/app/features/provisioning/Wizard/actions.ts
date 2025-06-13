@@ -5,7 +5,7 @@ import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
   RepositoryViewList,
-} from 'app/api/clients/provisioning';
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { ModeOption } from './types';
 

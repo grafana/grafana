@@ -1,5 +1,5 @@
 import { InteractiveTable, Stack } from '@grafana/ui';
-import { JobResourceSummary } from 'app/api/clients/provisioning';
+import { JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
 
 type SummaryCell<T extends keyof JobResourceSummary = keyof JobResourceSummary> = {
   row: {

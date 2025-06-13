@@ -1,4 +1,4 @@
-import { ErrorDetails } from 'app/api/clients/provisioning';
+import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 
 import { WizardFormData } from '../Wizard/types';
 

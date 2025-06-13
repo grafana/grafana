@@ -1,6 +1,6 @@
 import { Trans, t } from '@grafana/i18n';
 import { Box, Text, TextLink } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import GettingStarted from './GettingStarted';

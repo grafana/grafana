@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
-import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
+import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 

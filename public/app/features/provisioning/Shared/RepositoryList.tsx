@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
 import { checkSyncSettings } from '../utils/checkSyncSettings';

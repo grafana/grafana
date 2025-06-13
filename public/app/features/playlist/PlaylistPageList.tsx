@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistCard } from './PlaylistCard';
 

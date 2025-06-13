@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { useGetPlaylistQuery } from '../../api/clients/playlist';
+import { useGetPlaylistQuery } from '../../api/clients/playlist/v0alpha1';
 
 import { playlistSrv } from './PlaylistSrv';
 
