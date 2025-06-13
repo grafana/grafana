@@ -2401,10 +2401,10 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 	})
 }
 
-// TODO: this only works on mode0-2 right now. In modes 3+, we need to start returning the connections endpoint
+// TODO: this only works on mode0-3 right now. In modes 4/5, we need to start returning the connections endpoint
 // from retrieving the panel count from search / indexing the dashboard library panels
 func TestDashboardWithLibraryPanel(t *testing.T) {
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 
