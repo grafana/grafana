@@ -44,7 +44,7 @@ jobs:
   lint-go:
     needs:
       - detect-changes
-    if: needs.detect-changes.outputs.backend-changed == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.backend-changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
