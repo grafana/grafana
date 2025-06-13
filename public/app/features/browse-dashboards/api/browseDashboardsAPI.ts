@@ -497,4 +497,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
+  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;
