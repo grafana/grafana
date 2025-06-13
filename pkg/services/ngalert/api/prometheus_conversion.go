@@ -15,6 +15,38 @@ import (
 
 var errorUnsupportedMediaType = errutil.UnsupportedMediaType("alerting.unsupportedMediaType")
 
+// parseJSONOrYAML unmarshals body into target based on content-type, defaulting to YAML
+func parseJSONOrYAML(ctx *contextmodel.ReqContext, target interface{}) error {
+	var m string
+
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = ctx.Req.Body.Close() }()
+
+	contentType := ctx.Req.Header.Get("content-type")
+
+	// Parse content-type only if it's not empty,
+	// otherwise we'll assume it's yaml
+	if contentType != "" {
+		m, _, err = mime.ParseMediaType(contentType)
+		if err != nil {
+			return err
+		}
+	}
+
+	switch m {
+	case "application/yaml", "":
+		// mimirtool does not send content-type, so if it's empty, we assume it's yaml
+		return yaml.Unmarshal(body, target)
+	case "application/json":
+		return json.Unmarshal(body, target)
+	default:
+		return errorUnsupportedMediaType.Errorf("unsupported media type: %s, only application/yaml and application/json are supported", m)
+	}
+}
+
 type ConvertPrometheusApiHandler struct {
 	svc *ConvertPrometheusSrv
 }
@@ -47,75 +79,18 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusGetRuleGroup(c
 }
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
-	body, err := io.ReadAll(ctx.Req.Body)
-	if err != nil {
-		return errorToResponse(err)
-	}
-	defer func() { _ = ctx.Req.Body.Close() }()
-
 	var promGroup apimodels.PrometheusRuleGroup
-	var m string
-
-	// Parse content-type only if it's not empty,
-	// otherwise we'll assume it's yaml
-	contentType := ctx.Req.Header.Get("content-type")
-	if contentType != "" {
-		m, _, err = mime.ParseMediaType(contentType)
-		if err != nil {
-			return errorToResponse(err)
-		}
-	}
-
-	switch m {
-	case "application/yaml", "":
-		// mimirtool does not send content-type, so if it's empty, we assume it's yaml
-		if err := yaml.Unmarshal(body, &promGroup); err != nil {
-			return errorToResponse(err)
-		}
-	case "application/json":
-		if err := json.Unmarshal(body, &promGroup); err != nil {
-			return errorToResponse(err)
-		}
-	default:
-		return errorToResponse(errorUnsupportedMediaType.Errorf("unsupported media type: %s, only application/yaml and application/json are supported", m))
+	if err := parseJSONOrYAML(ctx, &promGroup); err != nil {
+		return errorToResponse(err)
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle, promGroup)
 }
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
-	body, err := io.ReadAll(ctx.Req.Body)
-	if err != nil {
-		return errorToResponse(err)
-	}
-	defer func() { _ = ctx.Req.Body.Close() }()
-
-	var m string
-
-	// Parse content-type only if it's not empty,
-	// otherwise we'll assume it's yaml
-	contentType := ctx.Req.Header.Get("content-type")
-	if contentType != "" {
-		m, _, err = mime.ParseMediaType(contentType)
-		if err != nil {
-			return errorToResponse(err)
-		}
-	}
-
 	var promNamespaces map[string][]apimodels.PrometheusRuleGroup
-
-	switch m {
-	case "application/yaml", "":
-		// mimirtool does not send content-type, so if it's empty, we assume it's yaml
-		if err := yaml.Unmarshal(body, &promNamespaces); err != nil {
-			return errorToResponse(err)
-		}
-	case "application/json":
-		if err := json.Unmarshal(body, &promNamespaces); err != nil {
-			return errorToResponse(err)
-		}
-	default:
-		return errorToResponse(errorUnsupportedMediaType.Errorf("unsupported media type: %s, only application/yaml and application/json are supported", m))
+	if err := parseJSONOrYAML(ctx, &promNamespaces); err != nil {
+		return errorToResponse(err)
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroups(ctx, promNamespaces)
@@ -148,4 +123,22 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRule
 
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteConvertPrometheusPostRuleGroups(ctx)
+}
+
+// alertmanager
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
+	var config apimodels.AlertmanagerUserConfig
+	if err := parseJSONOrYAML(ctx, &config); err != nil {
+		return errorToResponse(err)
+	}
+
+	return f.svc.RouteConvertPrometheusPostAlertmanagerConfig(ctx, config)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusGetAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteConvertPrometheusGetAlertmanagerConfig(ctx)
+}
+
+func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusDeleteAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteConvertPrometheusDeleteAlertmanagerConfig(ctx)
 }

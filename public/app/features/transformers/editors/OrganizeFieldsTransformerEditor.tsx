@@ -18,7 +18,7 @@ import {
   OrderByType,
   OrganizeFieldsTransformerOptions,
 } from '@grafana/data/internal';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Input,
   IconButton,
@@ -46,8 +46,6 @@ interface UIOrderByItem {
 }
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
-  const { t } = useTranslate();
-
   const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
@@ -330,7 +328,7 @@ const DraggableFieldName = ({
   isDragDisabled,
 }: DraggableFieldProps) => {
   const styles = useStyles2(getFieldNameStyles);
-  const { t } = useTranslate();
+
   return (
     <Draggable draggableId={fieldName} index={index} isDragDisabled={isDragDisabled}>
       {(provided) => (
@@ -388,8 +386,6 @@ interface DraggableUIOrderByItemProps {
 }
 
 const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderByItemProps) => {
-  const { t } = useTranslate();
-
   const styles = useStyles2(getFieldNameStyles);
 
   return (

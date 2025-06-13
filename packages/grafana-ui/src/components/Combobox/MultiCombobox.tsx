@@ -2,13 +2,13 @@ import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';

@@ -7,13 +7,14 @@ import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
 
-import { generateLogGrammar } from './grammar';
+import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { getTruncationLength } from './virtualization';
 
 export class LogListModel implements LogRowModel {
   collapsed: boolean | undefined = undefined;
   datasourceType: string | undefined;
   dataFrame: DataFrame;
+  datasourceUid?: string;
   displayLevel: string;
   duplicates: number | undefined;
   entry: string;
@@ -38,6 +39,7 @@ export class LogListModel implements LogRowModel {
   uniqueLabels: Labels | undefined;
 
   private _body: string | undefined = undefined;
+  private _currentSearch: string | undefined = undefined;
   private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
@@ -66,6 +68,7 @@ export class LogListModel implements LogRowModel {
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
     this.uniqueLabels = log.uniqueLabels;
+    this.datasourceUid = log.datasourceUid;
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
@@ -106,7 +109,8 @@ export class LogListModel implements LogRowModel {
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
       this._grammar = this._grammar ?? generateLogGrammar(this);
-      this._highlightedBody = Prism.highlight(this.body, this._grammar, 'lokiql');
+      const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
+      this._highlightedBody = Prism.highlight(this.body, { ...extraGrammar, ...this._grammar }, 'lokiql');
     }
     return this._highlightedBody;
   }
@@ -147,6 +151,11 @@ export class LogListModel implements LogRowModel {
       this._highlightedBody = undefined;
     }
     this.collapsed = collapsed;
+  }
+
+  setCurrentSearch(search: string | undefined) {
+    this._currentSearch = search;
+    this._highlightedBody = undefined;
   }
 }
 
