@@ -22,8 +22,8 @@
       "inherited": "Diwarisi dari folder",
       "locked-aria-label": "Indikator izin terkunci",
       "remove-aria-label": "Hapus izin untuk {{identifier}}",
-      "tooltip-inherited-permission": "",
-      "tooltip-provisioned-permission": ""
+      "tooltip-inherited-permission": "Izin yang diwarisi",
+      "tooltip-provisioned-permission": "Izin yang disediakan"
     },
     "permissions": {
       "add-label": "Tambahkan izin",
@@ -46,7 +46,7 @@
     "action-editor": {
       "button": {
         "style": {
-          "background-color": ""
+          "background-color": "Warna"
         }
       },
       "label-headers": "Header",
@@ -86,7 +86,7 @@
       "confirm-modal-body-2": "Sebaiknya pahami implikasi dari setiap perubahan fitur sebelum melakukan modifikasi.",
       "get-stage-cell": {
         "beta": "Beta",
-        "content-general-availability": "",
+        "content-general-availability": "Ketersediaan umum",
         "deprecated": "Usang",
         "ga": "GA"
       },
@@ -112,7 +112,7 @@
     },
     "feature-listing": {
       "title-auditing": "Audit",
-      "title-custom-branding": "",
+      "title-custom-branding": "Branding kustom",
       "title-dashboard-presence-indicators": "Indikator presensi dasbor",
       "title-dashboard-usage-stats-drawer": "Panel statistik penggunaan dasbor",
       "title-data-source-permissions": "Izin sumber data",
@@ -147,8 +147,8 @@
     },
     "ldap-connection-status": {
       "columns": {
-        "content-connection-is-available": "",
-        "content-connection-is-not-available": ""
+        "content-connection-is-available": "Koneksi tersedia",
+        "content-connection-is-not-available": "Koneksi tidak tersedia"
       }
     },
     "ldap-error-box": {
@@ -185,7 +185,7 @@
     },
     "ldap-user-groups": {
       "columns": {
-        "content-no-matching-organizations-found": ""
+        "content-no-matching-organizations-found": "Tidak ditemukan organisasi yang cocok"
       },
       "no-org-found": "Tidak ada kecocokan"
     },
@@ -331,7 +331,7 @@
       "edit-tooltip": "Edit pengguna",
       "last-seen-never": "Tidak pernah",
       "no-licensed-roles": "Tidak ditugaskan",
-      "tooltip-assigned-role": ""
+      "tooltip-assigned-role": "Peran berlisensi akan ditetapkan saat pengguna ini masuk"
     }
   },
   "alert-labels": {
@@ -344,7 +344,7 @@
   },
   "alerting": {
     "active-timing-fields": {
-      "am-active-timing-select-label-active-timings": ""
+      "am-active-timing-select-label-active-timings": "Pengaturan waktu aktif"
     },
     "add-button": {
       "add-more": "Tambah lagi"
@@ -494,7 +494,7 @@
       "unprocessed-the-alert-is-received": "Belum diproses: Peringatan diterima tetapi pemberitahuannya belum diproses."
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "",
+      "content-alert-evaluation-is-currently-paused": "Evaluasi peringatan saat ini dijeda",
       "paused": "Dijeda"
     },
     "alert-warning": {
@@ -595,7 +595,7 @@
       "warning-restore-manually-title": "Memulihkan aturan secara manual"
     },
     "all-matches-indicator": {
-      "content-this-policy-matches-all-labels": ""
+      "content-this-policy-matches-all-labels": "Kebijakan ini cocok dengan semua label"
     },
     "am-root-route-form": {
       "am-group-description-label": "Waktu tunggu sebelum mengirimkan pemberitahuan pertama untuk grup peringatan baru. Default 30 detik.",
@@ -620,8 +620,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Tambahkan pencocok",
-      "am-active-timing-select-label-active-timings": "",
-      "am-mute-timing-select-description-add-active-timing-to-policy": "",
+      "am-active-timing-select-label-active-timings": "Pengaturan waktu aktif",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "Tambahkan pengaturan waktu aktif ke kebijakan",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Tambahkan pengaturan waktu senyap ke kebijakan",
       "am-mute-timing-select-label-mute-timings": "Pengaturan waktu pembisuan",
       "aria-label-group-by": "Kelompokkan berdasarkan",
@@ -669,13 +669,13 @@
     },
     "bulk-actions": {
       "delete": {
-        "success": ""
+        "success": "Aturan berhasil dihapus dari folder"
       },
       "pause": {
-        "success": ""
+        "success": "Evaluasi aturan berhasil dijeda untuk folder"
       },
       "unpause": {
-        "success": ""
+        "success": "Aturan berhasil diaktifkan kembali untuk folder ini"
       }
     },
     "central-alert-history": {
@@ -890,7 +890,7 @@
       "label": "Titik kontak"
     },
     "continue-matching-indicator": {
-      "content-route-continue-matching-other-policies": ""
+      "content-route-continue-matching-other-policies": "Rute ini akan terus mencocokkan dengan kebijakan lain"
     },
     "copy-to-clipboard": "Salin \"{{label}}\" ke papan klip",
     "create-metadata": {
@@ -929,8 +929,8 @@
       "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
       "fallback-dashboards-string": "Dasbor",
       "panel-row": {
-        "content-panel-valid-identifier": "",
-        "tooltip-alert-tab-support": ""
+        "content-panel-valid-identifier": "Panel ini tidak memiliki pengidentifikasi yang valid.",
+        "tooltip-alert-tab-support": "Tab peringatan dan anotasi peringatan hanya didukung pada grafik dan panel deret waktu (timeseries)."
       },
       "placeholder-search-dashboard": "Cari dasbor",
       "placeholder-search-panel": "Panel pencarian",
@@ -950,11 +950,11 @@
       "update-datasource": "Perbarui sumber data"
     },
     "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "",
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident tidak diinstal atau tidak dikonfigurasi dengan benar",
       "declare-incident": "Nyatakan Insiden"
     },
     "declare-incident-menu-item": {
-      "content-grafana-incident-installed-configured-correctly": "",
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident tidak diinstal atau tidak dikonfigurasi dengan benar",
       "label-declare-incident": "Nyatakan insiden"
     },
     "delete-rule-modal": {
@@ -991,7 +991,7 @@
       "unknown": "Tidak diketahui"
     },
     "disabled-tooltip": {
-      "content-appear-compatible-datasources": ""
+      "content-appear-compatible-datasources": "Anda tampaknya tidak memiliki sumber data yang kompatibel."
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluasi untuk mulai memperingatkan",
@@ -1029,8 +1029,8 @@
       }
     },
     "editor": {
-      "edit-alert-rule": "",
-      "edit-recording-rule": "",
+      "edit-alert-rule": "Edit aturan peringatan",
+      "edit-recording-rule": "Edit aturan perekaman",
       "new-alert-rule": "Aturan peringatan baru",
       "new-recording-rule": "Aturan pencatatan baru"
     },
@@ -1039,7 +1039,7 @@
       "title-something-went-wrong": "Terjadi kesalahan"
     },
     "error-summary-button": {
-      "content-show-all-errors": ""
+      "content-show-all-errors": "Tampilkan semua kesalahan"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1047,7 +1047,7 @@
       }
     },
     "evaluation-behavior-summary": {
-      "evaluate": "",
+      "evaluate": "Setiap {{interval}}",
       "label-evaluate": "Evaluasi",
       "label-evaluation-time": "Waktu evaluasi",
       "label-last-evaluation": "Evaluasi terakhir",
@@ -1129,7 +1129,7 @@
       "aria-label-nextpage": "next-page",
       "aria-label-previouspage": "previous-page",
       "no-data": "Tidak ada data",
-      "page-counter": ""
+      "page-counter": "{{pageStart}} - {{pageEnd}} dari {{numPages}}"
     },
     "feature-toggle-page": {
       "nav-model": {
@@ -1182,31 +1182,24 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": ""
+          "label": "Hapus semua aturan"
         }
       },
       "delete-modal-confirmation-text": "Hapus",
       "delete-modal-delete-button": "Hapus",
       "delete-modal-deleting": "Menghapus...",
-      "delete-modal-text": "",
+      "delete-modal-text": "Tindakan ini akan menghapus semua aturan peringatan di folder <1>{{folderName}}</1>. Folder bersarang tidak akan terpengaruh.",
       "delete-modal-title": "Hapus",
-      "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
+      "error": "Gagal menjalankan tindakan untuk folder: {{error}}",
       "pause": {
         "button": {
-          "label": ""
+          "label": "Jeda semua aturan"
         }
       },
       "unpause": {
         "button": {
-          "label": ""
+          "label": "Lanjutkan semua aturan"
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1482,7 +1475,7 @@
       "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}"
     },
     "group-status": {
-      "content-the-group-is-being-deleted": ""
+      "content-the-group-is-being-deleted": "Grup sedang dihapus"
     },
     "header": {
       "tooltip-remove": "Hapus ekspresi \"{{refId}}\""
@@ -1519,6 +1512,10 @@
         "title": "Konfirmasi impor"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Sumber data"
+        },
         "label": "Sumber data",
         "required-message": "Pilih sumber data"
       },
@@ -1648,15 +1645,29 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "",
+        "ds-no-rules": "Sumber data ini tidak memiliki aturan yang dikonfigurasi",
         "new-alert-rule": "Aturan peringatan baru",
-        "new-ds-managed-alerting-rule": "",
+        "new-ds-managed-alerting-rule": "Aturan peringatan baru yang dikelola sumber data",
         "new-ds-managed-recording-rule": "Aturan pencatatan baru yang dikelola sumber data",
         "new-grafana-alerting-rule": "Aturan peringatan baru",
-        "new-grafana-recording-rule": "",
+        "new-grafana-recording-rule": "Aturan perekaman baru",
         "new-recording-rule": "Aturan pencatatan baru",
-        "no-rules-created": "",
-        "provisioning": ""
+        "no-rules-created": "Anda belum membuat aturan",
+        "provisioning": "Anda juga dapat menentukan aturan melalui penyediaan file atau Terraform"
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Tindakan folder",
+          "title": "Tindakan"
+        },
+        "export": {
+          "aria-label": "Ekspor folder aturan",
+          "label": "Ekspor folder aturan"
+        },
+        "view": {
+          "aria-label": "Lihat folder",
+          "label": "Lihat folder"
+        }
       },
       "no-prom-or-loki-rules": "Tidak ada sumber data Prometheus atau Loki yang dikonfigurasi",
       "no-rules": "Tidak ada aturan yang ditemukan.",
@@ -1701,7 +1712,7 @@
       "error-unable-to-fetch": "Tidak dapat mengambil riwayat status peringatan",
       "loading": "Memuat...",
       "title-error-fetching-the-state-history": "Kesalahan saat mengambil riwayat status",
-      "tooltip-common-labels": ""
+      "tooltip-common-labels": "Label umum adalah label yang dilampirkan ke semua instans peringatan"
     },
     "manage-permissions": {
       "button": "Kelola izin",
@@ -1789,8 +1800,8 @@
       "label-name": "Nama"
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval-item": "",
-      "description": "",
+      "add-another-time-interval-item": "Tambahkan item interval waktu lain",
+      "description": "Item interval waktu adalah definisi untuk momen waktu tertentu. Semua bidang berupa daftar, dan setidaknya satu elemen dari daftar harus memenuhi kriteria agar cocok dengan bidang tersebut. Jika bidang dibiarkan kosong, momen waktu apa pun akan cocok dengan bidang tersebut. Agar suatu waktu cocok dengan interval waktu lengkap, semua bidang harus cocok. Interval waktu dapat berisi beberapa item interval waktu.",
       "description-dats-of-the-month": "Hari dalam sebulan, 1:31, dalam sebulan. Nilai negatif dapat digunakan untuk merepresentasikan hari yang dimulai pada akhir bulan",
       "description-months": "Bulan dalam setahun baik dalam numerik atau bulan kalender penuh",
       "label-days-of-the-month": "Hari dalam sebulan",
@@ -1807,7 +1818,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "Tambahkan rentang waktu lain",
-      "content-this-time-interval-is-disabled": "",
+      "content-this-time-interval-is-disabled": "Interval waktu ini dinonaktifkan",
       "description-time-range": "Waktu termasuk waktu mulai dan tidak termasuk waktu selesai (dalam UTC jika tidak ada lokasi yang dipilih, dan dalam waktu setempat jika ada lokasi)",
       "label-end-time": "Waktu selesai",
       "label-start-time": "Waktu mulai",
@@ -1964,7 +1975,7 @@
       "tailored-apps": "Percepat pembuatan peringatan Anda sekarang dengan menggunakan salah satu aplikasi khusus kami"
     },
     "plugin-origin-badge": {
-      "tooltip-managed-by-plugin": ""
+      "tooltip-managed-by-plugin": "Aturan ini dikelola oleh plugin {{pluginName}}"
     },
     "policies": {
       "aria-label-collapse": "Ciutkan",
@@ -2064,7 +2075,7 @@
       "title-unable-to-check-the-rule-status": "Tidak dapat memeriksa status aturan"
     },
     "provisioned-tooltip": {
-      "content-provisioned-items-cannot-edited": ""
+      "content-provisioned-items-cannot-edited": "Item yang disediakan tidak dapat diedit di UI"
     },
     "provisioning": {
       "badge-tooltip-provenance": "Sumber daya ini telah disediakan melalui {{provenance}} dan tidak dapat diedit melalui UI",
@@ -2101,7 +2112,7 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "query-preview": {
-      "relative-time-range": ""
+      "relative-time-range": "<0>{{from}}</0> hingga sekarang"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2304,14 +2315,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "",
-          "stop-alerting-bellow": "",
-          "stop-alerting-equal": "",
-          "stop-alerting-inside-range": "",
-          "stop-alerting-less": "",
-          "stop-alerting-more": "",
-          "stop-alerting-not-equal": "",
-          "stop-alerting-outside-range": "",
+          "stop-alerting-above": "Hentikan peringatan (atau status tertunda) jika di atas",
+          "stop-alerting-bellow": "Hentikan peringatan (atau status tertunda) jika di bawah",
+          "stop-alerting-equal": "Hentikan peringatan (atau status tertunda) jika sama dengan",
+          "stop-alerting-inside-range": "Hentikan peringatan (atau status tertunda) jika berada dalam rentang",
+          "stop-alerting-less": "Hentikan peringatan (atau status tertunda) jika kurang dari",
+          "stop-alerting-more": "Hentikan peringatan (atau status tertunda) jika lebih dari",
+          "stop-alerting-not-equal": "Hentikan peringatan (atau status tertunda) jika tidak sama dengan",
+          "stop-alerting-outside-range": "Hentikan peringatan (atau status tertunda) jika berada di luar rentang",
           "title": "Ambang batas pemulihan kustom"
         }
       }
@@ -2319,7 +2330,6 @@
     "rule-group-action": {
       "details": "detail grup aturan",
       "edit": "edit grup aturan",
-      "export-rules-folder": "Ekspor folder aturan",
       "go-to-folder": "buka folder",
       "manage-permissions": "kelola izin"
     },
@@ -2344,15 +2354,19 @@
       "title-inspect-alert-rule": "Periksa aturan Peringatan"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "",
-      "cannot-load-rule-details-for": "",
+      "cannot-find-rule-details-for": "Tidak dapat menemukan detail aturan untuk UID {{uid}}",
+      "cannot-load-rule-details-for": "Tidak dapat memuat detail aturan untuk UID {{uid}}",
       "configure-datasource": "Konfigurasikan",
       "draft-new-rule": "Buat draf aturan baru",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Periksa konfigurasi sumber data. Apakah sumber data mendukung API Prometheus?",
         "title": "Tidak dapat memuat aturan dari sumber data ini"
       },
-      "empty-data-source": "",
+      "empty-data-source": "Tidak ada aturan yang ditemukan",
+      "error-button": "Kesalahan",
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -2364,12 +2378,13 @@
         "new-badge": "Baru!",
         "text": "Impor ke aturan yang dikelola Grafana"
       },
+      "loading-more-groups": "",
       "more": "Lebih banyak",
       "new-alert-rule": "Aturan peringatan baru",
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",
       "new-grafana-recording-rule": "Aturan Perekaman Grafana baru",
       "pagination": {
-        "next-page": ""
+        "next-page": "Tampilkan lebih banyak..."
       },
       "recording-rules": "Aturan perekaman",
       "return-button": {
@@ -2414,7 +2429,7 @@
       "paused": "Dijeda",
       "recording-rule": "Aturan pencatatan",
       "recording-rule-state": {
-        "content-recording-rule-evaluation-is-currently-paused": ""
+        "content-recording-rule-evaluation-is-currently-paused": "Evaluasi aturan perekaman saat ini dijeda"
       }
     },
     "rule-stats": {
@@ -2674,8 +2689,8 @@
       "refresh": "Muat ulang"
     },
     "template-row": {
-      "content-templatefiles": "",
-      "content-templates": "",
+      "content-templatefiles": "template_files",
+      "content-templates": "templat",
       "tooltip-copy-template-group": "Salin grup templat",
       "tooltip-delete-template-group": "Hapus grup templat",
       "tooltip-edit-template-group": "Edit grup templat",
@@ -2704,7 +2719,7 @@
       },
       "misconfigured-badge-text": "Salah konfigurasi",
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
-      "misconfigured-warning-details": ""
+      "misconfigured-warning-details": "Templat harus ditentukan di bagian <2></2> dan <5></5> dari konfigurasi alertmanager Anda."
     },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
@@ -2729,33 +2744,33 @@
     },
     "threshold-expression-viewer": {
       "input": "Input",
-      "stop-alerting-when": ""
+      "stop-alerting-when": "Hentikan peringatan (atau status tertunda) jika "
     },
     "time-interval": {
-      "add-time-interval": "",
-      "save": "",
-      "saving": ""
+      "add-time-interval": "Tambahkan interval waktu",
+      "save": "Simpan interval waktu",
+      "saving": "Menyimpan interval waktu"
     },
     "time-interval-form": {
-      "description-unique-time-interval": "",
-      "text-loading-time-interval": "",
-      "title-no-matching-time-interval-found": ""
+      "description-unique-time-interval": "Nama unik untuk interval waktu",
+      "text-loading-time-interval": "Memuat interval waktu",
+      "title-no-matching-time-interval-found": "Tidak ditemukan interval waktu yang cocok"
     },
     "time-intervals": {
       "description": "Masukkan interval waktu tertentu saat tidak mengirim pemberitahuan atau membekukan pemberitahuan untuk periode waktu berulang.",
       "error-loading": {
-        "description": "",
-        "title": ""
+        "description": "Tidak dapat memuat interval waktu. Coba lagi nanti.",
+        "title": "Terjadi kesalahan saat memuat interval waktu"
       }
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
-      "placeholder-select-time-intervals": ""
+      "placeholder-select-time-intervals": "Pilih interval waktu..."
     },
     "time-intervals-table": {
-      "text-havent-created-time-intervals": "",
-      "text-loading-time-intervals": "",
-      "text-no-time-intervals-configured": ""
+      "text-havent-created-time-intervals": "Anda belum membuat interval waktu",
+      "text-loading-time-intervals": "Memuat interval waktu...",
+      "text-no-time-intervals-configured": "Tidak ada interval waktu yang dikonfigurasi"
     },
     "timeseries-row": {
       "time-series-data": "Data deret waktu",
@@ -2776,8 +2791,8 @@
       "add-expression": "Tambah pola"
     },
     "unknown-contact-point-details": {
-      "unknown-contact-point": "",
-      "unknown-contact-point-tooltip": ""
+      "unknown-contact-point": "Titik kontak tidak diketahui",
+      "unknown-contact-point-tooltip": "Detail tidak dapat ditemukan. Ini mungkin karena Anda tidak memiliki akses ke titik kontak"
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Jenis aturan tidak diketahui"
@@ -2940,51 +2955,6 @@
       "title-query-result": "Hasil kueri"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Kunci pencarian"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Sertakan kunci kedaluwarsa"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Hapus kunci API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Kedaluwarsa",
-      "last-used-at": "Terakhir digunakan pada",
-      "migrate-to-service-account": "Migrasi ke akun layanan",
-      "name": "Nama",
-      "role": "Peran"
-    },
-    "empty-state": {
-      "message": "Tidak ada kunci API yang ditemukan"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "Tidak ada kunci API yang ditemukan. Jika Anda memuat ulang browser, halaman ini tidak akan tersedia lagi.",
-      "body-switch-service-accounts": "Kunci API sudah usang dan akan dihapus dari Grafana pada 31 Jan 2025. Setiap kunci API akan dimigrasikan ke akun layanan dengan token dan akan terus berfungsi sebagaimana adanya. Kami mendorong Anda untuk memigrasikan kunci API Anda ke akun layanan sekarang. <docsLink />",
-      "docs-link": {
-        "about-migration": "Cari tahu lebih lanjut tentang migrasi di sini."
-      },
-      "migrate-all-service-accounts": "Migrasikan semua akun layanan",
-      "migration-box-desc": {
-        "migrating": "Memigrasikan semua kunci API akan menyembunyikan tab kunci API."
-      },
-      "modal-title": "Migrasi kunci API ke akun layanan",
-      "title-no-api-keys-found": "Tidak ada kunci API yang ditemukan",
-      "title-switch-service-accounts": "Beralih dari kunci API ke akun layanan"
-    },
-    "migration-summary": {
-      "close": "Tutup",
-      "failed": "<0>Gagal: </0>{{failed}}",
-      "failed-details": "<0>Detail gagal: </0>{{details}}",
-      "failed-ids": "<0> ID kunci API gagal: </0>{{ids}}",
-      "migrated": "<0>Dimigrasikan: </0>{{migrated}}",
-      "migration-complete": "Migrasi selesai! Harap diperhatikan, meskipun mungkin ada beberapa kunci API yang ditandai sebagai 'migrasi gagal', jangan khawatir, semua kunci API Anda berfungsi dan beroperasi xecara penuh. Silakan coba lagi atau hubungi dukungan pelanggan.",
-      "migration-successful": "Migrasi Berhasil!",
-      "title-migration-summary": "Ringkasan migrasi",
-      "total": "<0>Total: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Lewati ke konten utama",
     "top-bar": {
@@ -3022,109 +2992,109 @@
       }
     },
     "fields": {
-      "allow-assign-grafana-admin-description": "",
-      "allow-assign-grafana-admin-label": "",
-      "allow-sign-up-description": "",
-      "allow-sign-up-label": "",
-      "allowed-domains-description": "",
-      "allowed-domains-label": "",
+      "allow-assign-grafana-admin-description": "Jika diaktifkan, ini akan otomatis menyinkronkan peran administrator server Grafana.",
+      "allow-assign-grafana-admin-label": "Izinkan menetapkan admin Grafana",
+      "allow-sign-up-description": "Jika tidak diaktifkan, hanya pengguna Grafana yang sudah ada yang dapat masuk menggunakan OAuth.",
+      "allow-sign-up-label": "Izinkan pendaftaran",
+      "allowed-domains-description": "Daftar domain yang dipisahkan koma atau spasi. Pengguna harus menjadi anggota dari setidaknya \nsatu domain untuk masuk.",
+      "allowed-domains-label": "Domain yang diizinkan",
       "allowed-groups-description": "Daftar grup yang dipisahkan koma atau spasi. Pengguna harus menjadi anggota dari setidaknya satu grup untuk masuk.",
-      "allowed-groups-description-oauth": "",
-      "allowed-groups-label": "",
-      "allowed-groups-object-ids": "",
-      "allowed-organizations-description": "",
-      "allowed-organizations-label": "",
-      "allowed-organizations-placeholder": "",
+      "allowed-groups-description-oauth": "Jika Anda mengonfigurasi \"{{ allowedGroupsLabel }}\", Anda juga harus mengonfigurasi \"{{ groupsAttributePathLabel }}\".",
+      "allowed-groups-label": "Grup yang diizinkan",
+      "allowed-groups-object-ids": "{{ allowedGroupsLabel }} harus {{ objectIDsField }}.",
+      "allowed-organizations-description": "Daftar organisasi yang dipisahkan koma atau spasi. Pengguna harus menjadi anggota\ndari setidaknya satu organisasi untuk masuk.",
+      "allowed-organizations-label": "Organisasi yang diizinkan",
+      "allowed-organizations-placeholder": "Masukkan organisasi (my-team, myteam...) dan tekan Enter untuk menambahkan",
       "api-url-description": "Endpoint informasi pengguna penyedia OAuth2 Anda. Informasi yang dikembalikan oleh endpoint ini harus kompatibel dengan <2>OpenID UserInfo</2>.",
-      "api-url-required": "",
-      "auth-style-description": "",
-      "auth-style-label": "",
-      "auth-url-description": "",
-      "auth-url-required": "",
-      "auto-login-description": "",
-      "auto-login-label": "",
-      "client-authentication-description": "",
-      "client-authentication-label": "",
+      "api-url-required": "Bidang ini harus berupa URL yang valid jika ditetapkan.",
+      "auth-style-description": "Ini menentukan cara \"{{ clientIDLabel }}\" dan \"{{ clientSecretLabel }}\" dikirim ke penyedia Oauth2. Default adalah AutoDetect.",
+      "auth-style-label": "Metode autentikasi",
+      "auth-url-description": "Endpoint otorisasi penyedia OAuth2 Anda.",
+      "auth-url-required": "Bidang ini wajib diisi dan harus berupa URL yang valid.",
+      "auto-login-description": "Masuk secara otomatis, tanpa harus melalui layar login.",
+      "auto-login-label": "Login otomatis",
+      "client-authentication-description": "Metode autentikasi klien yang digunakan untuk mengautentikasi ke endpoint token.",
+      "client-authentication-label": "Autentikasi klien",
       "client-authentication-none": "Tidak ada",
-      "client-id-description": "",
-      "client-secret-description": "",
-      "define-allowed-groups-label": "",
-      "define-allowed-teams-ids-label": "",
-      "display-name-description": "",
+      "client-id-description": "{{ clientIDLabel }} dari aplikasi OAuth2 Anda.",
+      "client-secret-description": "{{ clientSecretLabel }} dari aplikasi OAuth2 Anda.",
+      "define-allowed-groups-label": "Tentukan grup yang diizinkan",
+      "define-allowed-teams-ids-label": "Tentukan ID tim yang diizinkan",
+      "display-name-description": "Akan ditampilkan di halaman login sebagai \"Masuk dengan ...\". Berguna jika Anda menggunakan lebih dari satu penyedia identitas atau protokol SSO.",
       "display-name-label": "Nama tampilan",
-      "email-attribute-name-description": "",
-      "email-attribute-name-label": "",
-      "email-attribute-path-description": "",
-      "email-attribute-path-label": "",
-      "federated-credential-audience-description": "",
-      "federated-credential-audience-label": "",
-      "force-use-graph-api-description": "",
-      "force-use-graph-api-label": "",
-      "groups-attribute-path-description": "",
-      "groups-attribute-path-label": "",
-      "hosted-domain-description": "",
-      "hosted-domain-label": "",
+      "email-attribute-name-description": "Nama kunci yang akan digunakan untuk pencarian email pengguna dalam peta atribut token ID OAuth2.",
+      "email-attribute-name-label": "Nama atribut email",
+      "email-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian email pengguna dari informasi pengguna.",
+      "email-attribute-path-label": "Jalur atribut email",
+      "federated-credential-audience-description": "Audiens dari kredensial identitas federasi pada aplikasi OAuth2 Anda.",
+      "federated-credential-audience-label": "Audiens FIC",
+      "force-use-graph-api-description": "Jika diaktifkan, Grafana akan mengambil grup pengguna menggunakan API Microsoft Graph.",
+      "force-use-graph-api-label": "Paksa penggunaan Graph API",
+      "groups-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian grup pengguna. Jika Anda mengonfigurasi \"{{ allowedGroupsLabel }}\",\nAnda juga harus mengonfigurasi \"{{ groupsAttributePathLabel }}\".",
+      "groups-attribute-path-label": "Jalur atribut grup",
+      "hosted-domain-description": "Domain tempat Grafana di-hosting dan dapat diakses.",
+      "hosted-domain-label": "Domain yang di-hosting",
       "id-token-attribute-name-description": "Nama kunci yang digunakan untuk mengekstrak token ID dari token OAuth2 yang dikembalikan.",
-      "id-token-attribute-name-label": "",
-      "login-attribute-path-description": "",
-      "login-attribute-path-label": "",
-      "managed-identity-client-id-description": "",
-      "managed-identity-client-id-label": "",
-      "name-attribute-path-description": "",
-      "name-attribute-path-label": "",
-      "org-mapping-description-azuread": "",
-      "org-mapping-description-generic": "",
-      "org-mapping-description-github": "",
-      "org-mapping-description-gitlab": "",
-      "org-mapping-description-google": "",
-      "organization-attribute-path-description": "",
-      "organization-attribute-path-label": "",
-      "organization-mapping-label": "",
-      "organization-mapping-placeholder": "",
-      "required": "",
-      "role-attribute-path-description": "",
-      "role-attribute-path-label": "",
-      "role-attribute-strict-description": "",
-      "role-attribute-strict-label": "",
-      "scopes-description": "",
+      "id-token-attribute-name-label": "Nama atribut token ID",
+      "login-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian login pengguna dari token ID pengguna.",
+      "login-attribute-path-label": "Jalur atribut login",
+      "managed-identity-client-id-description": "ID klien identitas terkelola dari kredensial identitas federasi pada aplikasi OAuth2 Anda.",
+      "managed-identity-client-id-label": "ID klien identitas yang dikelola FIC",
+      "name-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian nama pengguna dari token ID pengguna.\nNama ini akan digunakan sebagai nama tampilan pengguna.",
+      "name-attribute-path-label": "Jalur atribut nama",
+      "org-mapping-description-azuread": "Daftar pemetaan \"<GroupID>:<OrgIdOrName>:<Role>\".",
+      "org-mapping-description-generic": "Daftar pemetaan \"<ExternalName>:<OrgIdOrName>:<Role>\".",
+      "org-mapping-description-github": "Daftar pemetaan \"<GitHubTeamName>:<OrgIdOrName>:<Role>\".",
+      "org-mapping-description-gitlab": "Daftar pemetaan \"<GitlabGroupName>:<OrgIdOrName>:<Role>\".",
+      "org-mapping-description-google": "Daftar pemetaan \"<GoogleGroupName>:<OrgIdOrName>:<Role>\".",
+      "organization-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian organisasi. Jika Anda mengonfigurasi \"{{ orgMappingLabel }}\", Anda juga harus mengonfigurasi \"{{ orgAttributePathLabel }}\".",
+      "organization-attribute-path-label": "Jalur atribut organisasi",
+      "organization-mapping-label": "Pemetaan organisasi",
+      "organization-mapping-placeholder": "Masukkan pemetaan (my-team:1:Viewer...) dan tekan Enter untuk menambahkan",
+      "required": "Bidang ini wajib diisi",
+      "role-attribute-path-description": "Ekspresi {{ jmesPathLabel }} yang digunakan untuk pencarian peran Grafana.",
+      "role-attribute-path-label": "Jalur atribut peran",
+      "role-attribute-strict-description": "Jika diaktifkan, menolak login pengguna jika peran Grafana tidak dapat diekstraksi menggunakan jalur atribut Peran.",
+      "role-attribute-strict-label": "Mode ketat atribut peran",
+      "scopes-description": "Daftar {{ scopesLabel }} OAuth2 yang dipisahkan koma atau spasi.",
       "section-extra-security": "Langkah-langkah keamanan ekstra",
-      "section-general-settings": "",
-      "section-user-mapping": "",
-      "server-discovery-url-description": "",
-      "signout-redirect-url-description": "",
-      "signout-redirect-url-label": "",
-      "skip-org-role-sync-description": "",
+      "section-general-settings": "Pengaturan umum",
+      "section-user-mapping": "Pemetaan pengguna",
+      "server-discovery-url-description": "Endpoint .well known/openid-configuration untuk IdP Anda. Info yang diekstrak dari URL ini akan digunakan untuk mengisi bidang \"{{ authURLLabel }}\", \"{{ tokenURLLabel }}\", dan \"{{ apiURLLabel }}\".",
+      "signout-redirect-url-description": "URL untuk mengarahkan pengguna setelah keluar dari Grafana.",
+      "signout-redirect-url-label": "URL pengalihan setelah keluar",
+      "skip-org-role-sync-description": "Cegah sinkronisasi peran organisasi pengguna dari IdP Anda.",
       "skip-org-role-sync-label": "Lewati sinkronisasi peran organisasi",
-      "team-ids-attribute-path-description": "",
-      "team-ids-attribute-path-label": "",
-      "team-ids-attribute-path-required": "",
+      "team-ids-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian ID Tim Grafana dalam hasil yang dikembalikan oleh endpoint \"{{ teamsURLLabel }}\".",
+      "team-ids-attribute-path-label": "Jalur atribut ID Tim",
+      "team-ids-attribute-path-required": "Bidang ini harus diatur jika \"{{ teamIDsLabel }}\" dikonfigurasi.",
       "team-ids-description": "Jika diatur, pengguna harus menjadi anggota dari salah satu tim tertentu untuk masuk.",
-      "team-ids-description-oauth": "",
-      "team-ids-github": "",
-      "team-ids-label": "",
-      "team-ids-numbers": "",
+      "team-ids-description-oauth": "Jika Anda mengonfigurasi \"{{ teamIDsLabel }}\", Anda juga harus mengonfigurasi \"{{ teamsURLLabel }}\" dan \"{{ teamIDsAttributePathLabel }}\".",
+      "team-ids-github": "Daftar bilangan bulat ID Tim.",
+      "team-ids-label": "ID Tim",
+      "team-ids-numbers": "ID Tim harus berupa angka.",
       "team-ids-other": "Daftar string ID Tim.",
-      "team-ids-placeholder": "",
-      "teams-url-description": "",
-      "teams-url-description-oauth": "",
-      "teams-url-label": "",
-      "teams-url-required": "",
-      "tls-client-ca-description": "",
-      "tls-client-ca-label": "",
-      "tls-client-cert-description": "",
-      "tls-client-cert-label": "",
-      "tls-client-key-description": "",
-      "tls-client-key-label": "",
-      "tls-skip-verify-description": "",
-      "tls-skip-verify-label": "",
-      "token-url-description": "",
-      "token-url-required": "",
+      "team-ids-placeholder": "Masukkan ID Tim dan tekan Enter untuk menambahkan",
+      "teams-url-description": "URL yang digunakan untuk kueri ID Tim. Jika tidak diatur, nilai defaultnya adalah /teams.",
+      "teams-url-description-oauth": "Jika Anda mengonfigurasi \"{{ teamsURLLabel }}\", Anda juga harus mengonfigurasi \"{{ teamIDsAttributePathLabel }}\".",
+      "teams-url-label": "URL Tim",
+      "teams-url-required": "Bidang ini harus diatur jika \"{{ teamIDsLabel }}\" dikonfigurasi dan harus berupa URL yang valid.",
+      "tls-client-ca-description": "Jalur file ke daftar otoritas sertifikat tepercaya. Tidak berlaku di Grafana Cloud.",
+      "tls-client-ca-label": "CA klien TLS",
+      "tls-client-cert-description": "Jalur file ke sertifikat. Tidak berlaku di Grafana Cloud.",
+      "tls-client-cert-label": "Sertifikat klien TLS",
+      "tls-client-key-description": "Jalur file ke kunci. Tidak berlaku di Grafana Cloud.",
+      "tls-client-key-label": "Kunci klien TLS",
+      "tls-skip-verify-description": "Jika diaktifkan, klien menerima setiap sertifikat yang diberikan oleh server dan setiap nama \nhost dalam sertifikat tersebut. Anda hanya boleh menggunakan ini untuk pengujian, karena mode ini membuat \nSSL/TLS rentan terhadap serangan man-in-the-middle.",
+      "tls-skip-verify-label": "Lewati verifikasi TLS",
+      "token-url-description": "Endpoint token penyedia OAuth2 Anda.",
+      "token-url-required": "Bidang ini wajib diisi dan harus berupa URL yang valid.",
       "use-pkce-description": "Jika diaktifkan, Grafana akan menggunakan <2>Proof Key for Code Exchange (PKCE)</2> dengan Pemberian Kode Otorisasi OAuth2.",
-      "use-pkce-label": "",
-      "use-refresh-token-description": "",
-      "use-refresh-token-label": "",
-      "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": "",
+      "use-pkce-label": "Gunakan PKCE",
+      "use-refresh-token-description": "Jika diaktifkan, Grafana akan mengambil token akses baru menggunakan token muat ulang yang disediakan oleh penyedia OAuth2.",
+      "use-refresh-token-label": "Gunakan token muat ulang",
+      "validate-hosted-domain-description": "Jika diaktifkan, Grafana akan mencocokkan Domain yang Di-hosting yang diambil dari Token ID Google dengan daftar \"{{ allowedDomainsLabel }}\" yang ditentukan oleh pengguna.",
+      "validate-hosted-domain-label": "Validasi domain yang di-hosting",
       "workload-identity-token-file-description": "",
       "workload-identity-token-file-label": "",
       "workload-identity-token-file-required": ""
@@ -3146,7 +3116,7 @@
         "label-reset-to-default-values": "Atur ulang ke nilai default"
       },
       "disable": "Nonaktifkan",
-      "disabling": "",
+      "disabling": "Sedang menonaktifkan...",
       "discard": "Buang",
       "enabled-label-enabled": "Aktif",
       "label-enabled": "Diaktifkan",
@@ -3211,8 +3181,8 @@
       "button-to-recently-deleted": "Baru dihapus"
     },
     "browse-folder-alerting-page": {
-      "title-folder-not-found": "",
-      "title-ruler-namespace-error": ""
+      "title-folder-not-found": "Folder tidak ditemukan",
+      "title-ruler-namespace-error": "Tidak dapat memuat aturan"
     },
     "browse-view": {
       "this-folder-is-empty": "Folder ini kosong"
@@ -3528,14 +3498,14 @@
       "change-theme": "Ubah tema",
       "dark-theme": "Gelap",
       "light-theme": "Terang",
-      "scopes": ""
+      "scopes": "Lingkup"
     },
     "empty-state": {
       "message": "Hasil tidak ditemukan"
     },
     "scopes": {
       "apply-selected-scopes": "Terapkan",
-      "selected-scopes-label": ""
+      "selected-scopes-label": "Lingkup: "
     },
     "search-box": {
       "placeholder": "Cari atau lompat ke..."
@@ -4040,10 +4010,19 @@
         "tooltip-remove-property": "Hapus properti"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Tempel panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
-        "local-variable": "",
+        "local-variable": "Variabel lokal",
         "multiple-elements": "Beberapa elemen",
         "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
         "multiple-panels": "Beberapa panel",
@@ -4086,7 +4065,7 @@
         "open-editor-tooltip": "Untuk opsi variabel lainnya, buka editor variabel",
         "query-options": {
           "close": "Tutup",
-          "modal-title": "",
+          "modal-title": "Variabel Kueri",
           "preview": "Pratinjau"
         },
         "selection-options": {
@@ -4429,6 +4408,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Pilih",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -4591,18 +4571,6 @@
     },
     "toolbar": {
       "add": "Tambahkan",
-      "add-new": {
-        "button": {
-          "label": "Tambahkan",
-          "tooltip": "Tambahkan panel dan elemen lainnya"
-        },
-        "menu": {
-          "lib-panel": "Panel pustaka",
-          "panel": "Panel",
-          "row": "Baris",
-          "tab": "Tab"
-        }
-      },
       "alert-rules": "Aturan peringatan",
       "back-to-dashboard": "Kembali ke dasbor",
       "dashboard-settings": {
@@ -4653,7 +4621,7 @@
           "arrow": "Ekspor",
           "title": "Ekspor",
           "tooltip": {
-            "as-code": "",
+            "as-code": "Ekspor sebagai kode",
             "json": "Ekspor sebagai JSON"
           }
         },
@@ -4858,7 +4826,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Opsi ad-hoc",
-      "alert-not-supported": "",
+      "alert-not-supported": "Sumber data ini tidak mendukung filter ad hoc",
       "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
       "label-data-source": "Sumber data",
@@ -5256,7 +5224,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "pesan",
-      "body-dashboard-drastically-changed": "Anda menggunakan fitur dasbor baru yang hanya didukung pada format skema dasbor Grafana baru, jadi dasbor akan disimpan dalam format baru. Pastikan Anda ingin melakukan tindakan ini atau Anda lebih suka menyimpan dasbor sebagai salinan baru.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Batalkan"
       },
@@ -5272,7 +5240,7 @@
       },
       "schema-v2-library-panels-export": "Fungsionalitas dasbor dinamis bersifat eksperimen, dan tidak memiliki paritas fitur penuh dengan perilaku dasbor saat ini. Ini didasarkan pada format skema baru, yang tidak mendukung panel pustaka. Ini berarti ketika mengekspor dasbor untuk menggunakannya di instans lain, kami tidak akan menyertakan panel pustaka. Kami bermaksud untuk mendukung seiring fitur <2>siklus pengembangan</2> fitur.",
       "schema-v2-library-panels-export-title": "Skema Dasbor V2 belum mendukung ekspor panel pustaka untuk digunakan di instans lain",
-      "title-dashboard-drastically-changed": "Dasbor berubah drastis"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Akan menjadikan muat ulang saat ini sebagai default baru",
@@ -5388,8 +5356,8 @@
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Variabel ini tidak direferensikan oleh variabel atau dasbor apa pun.",
       "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
-      "content-variable-not-referenced-other-variables-dashboard": "",
-      "content-variable-referenced-other-variables-dashboard": ""
+      "content-variable-not-referenced-other-variables-dashboard": "Variabel ini tidak dirujuk oleh variabel atau dasbor lain.",
+      "content-variable-referenced-other-variables-dashboard": "Variabel ini dirujuk oleh variabel atau dasbor lain."
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulir editor variabel",
@@ -5524,7 +5492,7 @@
       "hide-time-picker": "Sembunyikan pemilih waktu",
       "now-delay-description": "Kecualikan data terbaru yang mungkin tidak lengkap.",
       "now-delay-label": "Sekarang tunda",
-      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-description": "Terus perbarui panel ketika rentang waktu mencakup waktu saat ini",
       "refresh-live-dashboards-label": "Muat ulang dasbor langsung",
       "time-options-label": "Opsi waktu",
       "time-zone-label": "Zona waktu",
@@ -5972,7 +5940,7 @@
       }
     },
     "correlation-editor-mode-bar": {
-      "content-correlations-editor-explore-experimental-feature": "",
+      "content-correlations-editor-explore-experimental-feature": "Editor korelasi di Telusuri adalah fitur eksperimental.",
       "exit-correlation-editor": "Keluar dari editor korelasi",
       "save": "Simpan"
     },
@@ -6175,7 +6143,7 @@
       "tooltip-select-query-visualize-table": "Pilih kueri untuk divisualisasikan pada tabel"
     },
     "logs-volume-panel": {
-      "content-streaming": ""
+      "content-streaming": "Streaming"
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "Muat ulang volume log",
@@ -6407,7 +6375,7 @@
       "label-tags": "Tag",
       "placeholder-all-service-names": "Semua nama layanan",
       "placeholder-all-span-names": "Semua nama rentang",
-      "tooltip-collapse": "",
+      "tooltip-collapse": "Filter rentang Anda di bawah ini. Anda dapat terus menerapkan filter hingga Anda mempersempit rentang hasil Anda menjadi beberapa pilihan yang paling Anda minati.",
       "tooltip-duration": "Filter menurut durasi. Unit yang diterima adalah {{units}}",
       "tooltip-tags": "Filter berdasarkan tag, tag proses, atau bidang log di rentang Anda."
     },
@@ -6478,7 +6446,7 @@
     },
     "trace-page-header": {
       "text-partial-trace": "Jejak parsial",
-      "tooltip-url": ""
+      "tooltip-url": "{{url}} atau {{target}} atau {{path}}"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tombol hapus filter",
@@ -6542,11 +6510,11 @@
       "download-button": "Unduh file",
       "download-successful_toast_message": "JSON Anda telah diunduh",
       "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
-      "export-format": "",
-      "export-mode": "",
-      "export-remove-ds-refs": "",
-      "info-text": "",
-      "title": ""
+      "export-format": "Format",
+      "export-mode": "Model",
+      "export-remove-ds-refs": "Hapus detail penyebaran",
+      "info-text": "Salin atau unduh file yang berisi definisi dasbor Anda",
+      "title": "Ekspor dasbor"
     },
     "menu": {
       "export-as-json-label": "Ekspor",
@@ -6581,7 +6549,7 @@
     },
     "math": {
       "available-math-functions": "Fungsi matematika yang tersedia",
-      "run-math-operations": "",
+      "run-math-operations": "Jalankan operasi matematika pada satu atau beberapa kueri. Anda mereferensikan kueri berdasarkan {{refExample}}, yaitu {{ref1}}, {{ref2}}, {{ref3}}, dll.<10></10>Contoh: <12>{{example}}</12>",
       "tooltip-footer": "Lihat dokumentasi tambahan kami di <2>Pola matematika</2>.",
       "tooltip-title": "Operator matematika",
       "tooltip-trigger": "Ekspresi"
@@ -6635,7 +6603,7 @@
       "new-password-label": "Kata sandi baru",
       "skip-button": "Lewati",
       "submit-button": "Kirim",
-      "tooltip-skip-button": ""
+      "tooltip-skip-button": "Jika Anda melewatkan, Anda akan diminta untuk mengubah kata sandi saat Anda masuk lagi."
     },
     "contact-admin": "Lupa nama pengguna atau email Anda? Hubungi administrator Grafana Anda.",
     "email-sent": "Email dengan tautan pengaturan ulang telah dikirim ke alamat email. Anda akan segera menerimanya.",
@@ -6851,7 +6819,7 @@
         "action-variables-title": "",
         "confirm": "Konfirmasi",
         "confirm-action": "Konfirmasi tindakan",
-        "style": "",
+        "style": "Tampilan tombol",
         "variable-value-placeholder": "Nilai"
       },
       "close": "Tutup",
@@ -7063,10 +7031,10 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "alihkan panel ciutkan",
-      "tooltip-cancel": "",
-      "tooltip-cancel-loading": "",
-      "tooltip-stop-streaming": "",
-      "tooltip-streaming": ""
+      "tooltip-cancel": "Batalkan kueri",
+      "tooltip-cancel-loading": "Batalkan kueri",
+      "tooltip-stop-streaming": "Hentikan streaming",
+      "tooltip-streaming": "Streaming"
     },
     "panel-menu": {
       "label": "Menu untuk panel {{ title }} ",
@@ -7635,7 +7603,7 @@
       "label-wrap-lines": "Terapkan wrap pada baris"
     },
     "log-details": {
-      "close": "",
+      "close": "Tutup detail log",
       "fields": "Bidang",
       "links": "Tautan",
       "log-line": "Baris log",
@@ -7655,20 +7623,20 @@
       "log-line": "baris log"
     },
     "log-line": {
-      "has-error": "",
-      "is-sampled": "",
-      "show-less": "",
-      "show-more": "",
-      "tooltip-error": ""
+      "has-error": "Memiliki kesalahan",
+      "is-sampled": "Diambil sampelnya",
+      "show-less": "tampilkan lebih sedikit",
+      "show-more": "tampilkan lebih banyak",
+      "tooltip-error": "Kesalahan: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
       "copy-log": "Salin baris log",
-      "hide-details": "",
+      "hide-details": "Tampilkan detail log",
       "icon-label": "Menu log",
       "pin-to-outline": "Sematkan log",
       "show-context": "Tampilkan konteks",
-      "show-details": "",
+      "show-details": "Sembunyikan detail log",
       "unpin-from-outline": "Buka sematan log"
     },
     "log-row-context-modal": {
@@ -7691,7 +7659,7 @@
       "ellipsis": "… ",
       "more": "lainnya",
       "see-details": "Lihat detail log",
-      "tooltip-error": ""
+      "tooltip-error": "Kesalahan: {{errorMessage}}"
     },
     "log-rows": {
       "disable-popover": {
@@ -7722,10 +7690,12 @@
       },
       "enable-highlighting": "Aktifkan penyorotan",
       "escape-newlines": "Perbaiki escape sequence baris baru dan tab yang salah di baris log",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
-      "newest-first": "",
-      "oldest-first": "",
+      "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
+      "oldest-first": "Diurutkan berdasarkan log paling lama lebih dulu - Klik untuk menampilkan yang terbaru lebih dulu",
       "prettify-json": "Perluas log JSON",
       "remove-escaping": "Hapus escape",
       "scroll-bottom": "Gulir ke bawah",
@@ -8128,10 +8098,6 @@
       "subtitle": "Lihat aturan peringatan yang baru dihapus",
       "title": "Baru dihapus"
     },
-    "api-keys": {
-      "subtitle": "Kelola dan buat kunci API yang digunakan untuk berinteraksi dengan API HTTP Grafana",
-      "title": "Kunci API"
-    },
     "application": {
       "title": "Aplikasi"
     },
@@ -8280,8 +8246,8 @@
       "title": "Panel pustaka"
     },
     "machine-learning": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Telusuri fitur AI dan pembelajaran mesin",
+      "title": "AI & pembelajaran mesin"
     },
     "manage-folder": {
       "subtitle": "Kelola dasbor dan izin folder"
@@ -8809,7 +8775,7 @@
         "available-header": "Tersedia",
         "button": "Perbarui semua ({{length}})",
         "cloud-update-message": "* Mungkin perlu beberapa menit agar plugin tersedia untuk digunakan.",
-        "error": "",
+        "error": "Terjadi kesalahan saat memperbarui plugin: {{errorMessage}}",
         "error-status-text": "gagal - melihat pesan kesalahan",
         "header": "Plugin berikut memiliki pembaruan yang tersedia",
         "installed-header": "Diinstal",
@@ -8863,7 +8829,7 @@
         "reportAbuseTooltip": "Laporkan masalah yang terkait dengan plugin jahat atau berbahaya langsung ke Grafana Labs.",
         "repository": "Repositori",
         "signature": "Tanda Tangan",
-        "sponsorDeveloper": "",
+        "sponsorDeveloper": "Sponsori developer ini",
         "status": "Status"
       },
       "modal": {
@@ -9020,7 +8986,7 @@
       "grafana-dependency": "Dependensi Grafana",
       "installed-version": "{{versionNumber}} (versi terinstal)",
       "latest-compatible-version": "{{versionNumber}} (versi kompatibel terbaru)",
-      "latest-release-date": "",
+      "latest-release-date": "Tanggal rilis terbaru",
       "no-version-history-was-found": "Tidak ada riwayat versi yang ditemukan.",
       "version": "Versi"
     }
@@ -9050,7 +9016,7 @@
       "enable-in-config": "Aktifkan profil dalam file konfigurasi Grafana."
     },
     "input-suffix": {
-      "content-login-details-locked-because-managed-another": ""
+      "content-login-details-locked-because-managed-another": "Detail login terkunci karena dikelola di sistem lain."
     },
     "user-organizations": {
       "text-loading-organizations": "Memuat organisasi..."
@@ -9657,8 +9623,8 @@
       "title-data-source-help": "Bantuan sumber data"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "",
-      "collapsed-max-data-points": "",
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Sembunyikan info waktu",
       "Query options-title-query-options": "Opsi kueri",
       "relative-time": "Waktu relatif",
@@ -10020,12 +9986,12 @@
       "title-disable-service-account": "Nonaktifkan akun layanan"
     },
     "token-expiration": {
-      "content-this-token-has-expired": "",
+      "content-this-token-has-expired": "Token ini telah kedaluwarsa",
       "expired-label": "Kedaluwarsa",
       "never": "Jangan pernah"
     },
     "token-revoked": {
-      "content-token-publicly-exposed-please-rotate": "",
+      "content-token-publicly-exposed-please-rotate": "Token ini telah diekspos secara publik. Harap rotasi token ini",
       "revoked-label": "Dicabut"
     }
   },
@@ -10064,7 +10030,7 @@
       "save-button": "Simpan ke file",
       "share-externally-label": "Ekspor untuk berbagi secara eksternal",
       "view-button": "Lihat JSON",
-      "view-button-yaml": ""
+      "view-button-yaml": "Lihat YAML"
     },
     "library": {
       "info": "Buat panel pustaka."
@@ -10486,7 +10452,7 @@
     "range-content": {
       "apply-button": "Gunakan rentang waktu",
       "default-error": "Masukkan tanggal sebelumnya atau \"{{now}}\"",
-      "fiscal-year": "",
+      "fiscal-year": "Tahun fiskal: {{from}} - {{to}}",
       "from-input": "Dari",
       "open-input-calendar": "Buka kalender",
       "range-error": "\"Dari\" tidak boleh setelah \"Hingga\"",
@@ -10507,7 +10473,7 @@
       "example-title": "Contoh rentang waktu",
       "from-label": "Dari",
       "from-to": " {{timeOptionFrom}} hingga{{timeOptionTo}} ",
-      "specify": "",
+      "specify": "Tentukan rentang waktu",
       "submit-button-label": "Tombol kirim TimePicker",
       "to-label": "Ke"
     },
@@ -10850,7 +10816,7 @@
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Nilai atau variabel",
-      "variable-regex-documentation": ""
+      "variable-regex-documentation": "Memformat variabel multi-nilai menjadi regex-string"
     },
     "regression-transformer-editor": {
       "label": {
@@ -10999,7 +10965,7 @@
       "message": "Pengguna tidak ditemukan"
     },
     "token-revoked-modal": {
-      "auto-revoked": "",
+      "auto-revoked": "Token sesi Anda dicabut secara otomatis karena Anda telah mencapai <2>jumlah maksimum {{numSessions}} sesi bersamaan</2> untuk akun Anda.",
       "resume-message": "<0>Untuk melanjutkan sesi Anda, masuk lagi.</0>Hubungi administrator Anda atau kunjungi halaman lisensi untuk meninjau kuota Anda jika Anda berulang kali keluar secara otomatis.",
       "sign-in": "Masuk",
       "title-you-have-been-automatically-signed-out": "Anda telah keluar secara otomatis"
@@ -11117,7 +11083,7 @@
       "loading": "Memuat...",
       "no-unknowns": "Tidak ada variabel yang diganti namanya atau hilang.",
       "renamed-or-missing-variables": "Variabel yang diganti namanya atau hilang",
-      "tooltip-renamed-or-missing-variables": "",
+      "tooltip-renamed-or-missing-variables": "Klik untuk memperluas daftar dengan semua referensi variabel yang telah diganti namanya atau tidak ada di dasbor.",
       "variable": "Variabel"
     },
     "variable-check-indicator": {

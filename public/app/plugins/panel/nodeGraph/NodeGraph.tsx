@@ -4,7 +4,7 @@ import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } f
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
@@ -127,7 +127,6 @@ interface Props {
   layoutAlgorithm?: LayoutAlgorithm;
 }
 export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
-  const { t } = useTranslate();
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 

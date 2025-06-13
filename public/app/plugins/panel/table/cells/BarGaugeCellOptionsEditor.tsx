@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
 
@@ -9,7 +9,7 @@ type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
 
 export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
   // Set the display mode on change
-  const { t } = useTranslate();
+
   const onCellOptionsChange = (v: BarGaugeDisplayMode) => {
     cellOptions.mode = v;
     onChange(cellOptions);

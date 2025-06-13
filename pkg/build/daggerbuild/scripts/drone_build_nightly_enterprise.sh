@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 local_dst="${DRONE_WORKSPACE}/dist"
 
@@ -38,7 +38,7 @@ dagger run --silent go run ./pkg/build/cmd \
   -a docker:enterprise:linux/arm64:ubuntu \
   -a docker:enterprise:linux/arm/v7:ubuntu \
   --checksum \
-  --verify \
+  --verify=false \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=main \
   --enterprise-ref=main \

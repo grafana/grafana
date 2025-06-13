@@ -7,7 +7,7 @@ import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { InlineLabel } from '../Forms/InlineLabel';
 

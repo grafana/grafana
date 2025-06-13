@@ -194,7 +194,7 @@ We have our time-series panel ready. Feel free to combine metrics with labels su
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
 
-## Step 2: Create alert rules to monitor CPU and memory usage
+## Step 2: Create alert rules
 
 Follow these steps to manually create alert rules and link them to a visualization.
 
@@ -259,57 +259,45 @@ You have successfully linked this alert rule to your visualization!
 
 When the CPU usage exceeds the defined threshold, an annotation should appear on the graph to mark the event. Similarly, when the alert is resolved, another annotation is added to indicate the moment it returned to normal.
 
+Try adding a second alert rule using the memory usage metric (`flask_app_memory_usage{instance="flask-prod:5000"`}) to see how combining multiple alerts can enhance your dashboard.
+
+Check how your dashboard looks now that your alert has been linked to your dashboard panel.
+
 <!-- INTERACTIVE page step5.md END -->
 <!-- INTERACTIVE page step6.md START -->
 
-## (Optional) Step 3: Create a second alert rule for memory usage
+## Step 3: Visualizing metrics and alert annotations
 
-1. Duplicate the existing alert rule (**More > Duplicate**), or create a new alert rule for memory usage, defining a threshold condition (e.g., memory usage exceeding `60%`).
-1. Give it a name. For example: `memory-usage`
-1. Query: `flask_app_memory_usage{instance="flask-prod:5000"}`
-1. Link to the same visualization to obtain memory usage annotations
+After the alert rules are linked to visualization, they should appear as **health indicators** (colored heart icons: a red heart when the alert is in **Alerting** state, and a green heart when in **Normal** state) on the linked panel. In addition, annotations provide helpful context, such as the time the alert was triggered.
 
-Check how your dashboard looks now that both alerts have been linked to your dashboard panel.
+{{< figure src="/media/docs/alerting/alert-in-panel.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
 
 <!-- INTERACTIVE page step6.md END -->
+<!-- INTERACTIVE page step7.md START -->
+
+## Step 4: Receiving notifications
+
+Finally, as part of the alerting process, you should receive notifications at the associated contact point. If you're receiving alerts via email, the default email template will include two buttons:
+
+- **View dashboard**: links to the dashboard that contains the alerting panel
+
+- **View panel**: links directly to the individual panel where the alert was triggered
+
+{{< figure src="/media/docs/alerting/email-notification-w-url.png" max-width="1200px" caption="Alert notification with links to panel and dashboard." >}}
+
+Clicking either button opens Grafana with a pre-applied time range relevant to the alert.
+
+By default, this URL includes `from` and `to` query [parameters](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/#alert) that reflect the time window around the alert event (one hour before and after the alert). This helps you land directly in the time window where the alert occurred, making it easier to analyze what happened.
+
+If you want to define a more intentional time range, you can customize your notifications using a [notification template](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). With a template, you can explicitly set `from` and `to` values for more precise control over what users see when they follow the dashboard link. The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the `from` and `to` parameters, which are calculated in the notification template.
+
+<!-- INTERACTIVE page step7.md END -->
 <!-- INTERACTIVE page finish.md START -->
 
-## Visualizing metrics and alert annotations
+## Conclusion
 
-{{< figure src="/media/docs/alerting/panel-2-queries-and-alerts.png" max-width="1200px" caption="Time series panel displaying health indicators and annotations." >}}
+You’ve now linked Prometheus-based alert rules to your Grafana visualizations, giving your dashboards real-time context with alert annotations and health indicators. By visualizing alerts alongside metrics, responders can quickly understand what’s happening and when. You also saw how alert notifications can include direct links to the affected dashboard or panel, helping teams jump straight into the right time window for faster troubleshooting.
 
-After the alert rules are created, they should appear as **health indicators** (colored heart icons: a red heart when the alert is in **Alerting** state, and a green heart when in **Normal** state) on the linked panel. In addition, annotations provide helpful context, such as the time the alert was triggered.
-
-Finally, as part of the alerting process, you should receive notifications at the associated contact point.
-
-```
-{
-  "receiver": "prod-alerts",
-  "status": "firing",
-  "alerts": [
-    {
-      "status": "firing",
-      "labels": {
-        "alertname": "cpu-usage",
-        "deployment": "prod-us-cs30",
-        "grafana_folder": "sys-metrics",
-        "instance": "flask-prod:5000",
-        "job": "flask"
-      },
-      "annotations": {},
-      "silenceURL": "http://localhost:3000/alerting/silence/new?
-      "dashboardURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006",
-      "panelURL": "http://localhost:3000/d/dc203378-1ef9-410b-a636-b533a0dd3bd8?from=1748934450000&orgId=1&to=1748938080006&viewPanel=2",
-
-... }
-```
-
-_Received alert notification in webhook Contact point_
-
-It’s worth mentioning that alert rules that are linked to a panel include a link to said visualization in the alert notifications. In the alert notification example above, the message includes useful information such as the summary, description, and a link to the relevant dashboard for the firing or resolved alert (i.e. `dashboardURL`). This helps responders quickly navigate to the appropriate context for investigation.
-
-You can extend this functionality by adding a custom annotation to your alert rules and creating a notification template that [includes a link to a dashboard with a time range.](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/#print-a-link-to-a-dashboard-with-time-range). The URL will include a time range based on the alert’s timing—starting from one hour before the alert started (`from`) to either the alert’s end time or the current time (`to`), depending on whether the alert is resolved or still firing.
-
-The final URL is constructed using a custom annotation (e.g., `MyDashboardURL`) along with the `from` and `to` parameters, which are calculated in the notification template.
+Have feedback or ideas to improve this tutorial? [Let us know](https://github.com/grafana/tutorials/issues/new).
 
 <!-- INTERACTIVE page finish.md END -->

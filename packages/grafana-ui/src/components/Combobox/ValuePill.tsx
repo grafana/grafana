@@ -3,7 +3,7 @@ import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 

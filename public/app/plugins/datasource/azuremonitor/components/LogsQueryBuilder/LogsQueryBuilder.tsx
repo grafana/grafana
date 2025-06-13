@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
@@ -49,7 +49,6 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
-  const { t } = useTranslate();
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];

@@ -405,8 +405,7 @@ type GetLibraryElementsParams struct {
 	// required:false
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// enum: 1,2
+	// enum: 1
 	Kind int `json:"kind"`
 	// Sort order of elements.
 	// in:query

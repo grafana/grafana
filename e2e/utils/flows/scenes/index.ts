@@ -8,3 +8,4 @@ export * from './saveDashboard';
 export * from './importDashboard';
 export * from './editPaneActions';
 export * from './selectPanel';
+export * from './panelPosition';

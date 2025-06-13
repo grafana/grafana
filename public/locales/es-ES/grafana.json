@@ -22,8 +22,8 @@
       "inherited": "Heredado de la carpeta",
       "locked-aria-label": "Indicador de permiso bloqueado",
       "remove-aria-label": "Eliminar permiso para {{identifier}}",
-      "tooltip-inherited-permission": "",
-      "tooltip-provisioned-permission": ""
+      "tooltip-inherited-permission": "Permiso heredado",
+      "tooltip-provisioned-permission": "Permiso aprovisionado"
     },
     "permissions": {
       "add-label": "Añadir un permiso",
@@ -46,7 +46,7 @@
     "action-editor": {
       "button": {
         "style": {
-          "background-color": ""
+          "background-color": "Color"
         }
       },
       "label-headers": "Cabeceras",
@@ -86,7 +86,7 @@
       "confirm-modal-body-2": "Aconsejamos comprender las implicaciones de cada cambio de característica antes de realizar modificaciones.",
       "get-stage-cell": {
         "beta": "Beta",
-        "content-general-availability": "",
+        "content-general-availability": "Disponibilidad general",
         "deprecated": "Obsoleto",
         "ga": "GA"
       },
@@ -112,7 +112,7 @@
     },
     "feature-listing": {
       "title-auditing": "Auditoría",
-      "title-custom-branding": "",
+      "title-custom-branding": "Marca personalizada",
       "title-dashboard-presence-indicators": "Indicadores de presencia en el dashboard",
       "title-dashboard-usage-stats-drawer": "Cajón de estadísticas de uso del dashboard",
       "title-data-source-permissions": "Permisos de la fuente de datos",
@@ -147,8 +147,8 @@
     },
     "ldap-connection-status": {
       "columns": {
-        "content-connection-is-available": "",
-        "content-connection-is-not-available": ""
+        "content-connection-is-available": "La conexión está disponible",
+        "content-connection-is-not-available": "La conexión no está disponible"
       }
     },
     "ldap-error-box": {
@@ -185,7 +185,7 @@
     },
     "ldap-user-groups": {
       "columns": {
-        "content-no-matching-organizations-found": ""
+        "content-no-matching-organizations-found": "No se han encontrado organizaciones coincidentes"
       },
       "no-org-found": "No hay coincidencias"
     },
@@ -331,7 +331,7 @@
       "edit-tooltip": "Editar usuario",
       "last-seen-never": "Nunca",
       "no-licensed-roles": "Sin asignar",
-      "tooltip-assigned-role": ""
+      "tooltip-assigned-role": "Se asignará un rol con licencia cuando este usuario inicie sesión"
     }
   },
   "alert-labels": {
@@ -344,7 +344,7 @@
   },
   "alerting": {
     "active-timing-fields": {
-      "am-active-timing-select-label-active-timings": ""
+      "am-active-timing-select-label-active-timings": "Tiempos de actividad"
     },
     "add-button": {
       "add-more": "Añadir más"
@@ -498,7 +498,7 @@
       "unprocessed-the-alert-is-received": "Sin procesar: la alerta se recibe, pero su notificación aún no se ha procesado."
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "",
+      "content-alert-evaluation-is-currently-paused": "La evaluación de alertas está en pausa",
       "paused": "En pausa"
     },
     "alert-warning": {
@@ -599,7 +599,7 @@
       "warning-restore-manually-title": "Restaurando regla manualmente"
     },
     "all-matches-indicator": {
-      "content-this-policy-matches-all-labels": ""
+      "content-this-policy-matches-all-labels": "Esta política coincide con todas las etiquetas"
     },
     "am-root-route-form": {
       "am-group-description-label": "El tiempo de espera antes de enviar la primera notificación para un nuevo grupo de alertas. Predeterminado: 30 segundos.",
@@ -624,8 +624,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Añadir buscador de coincidencias",
-      "am-active-timing-select-label-active-timings": "",
-      "am-mute-timing-select-description-add-active-timing-to-policy": "",
+      "am-active-timing-select-label-active-timings": "Tiempos de actividad",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "Añadir tiempo de actividad a la política",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Añadir tiempo de silencio a la política",
       "am-mute-timing-select-label-mute-timings": "Tiempos de silencio",
       "aria-label-group-by": "Agrupar por",
@@ -673,13 +673,13 @@
     },
     "bulk-actions": {
       "delete": {
-        "success": ""
+        "success": "Reglas eliminadas correctamente de la carpeta"
       },
       "pause": {
-        "success": ""
+        "success": "Evaluación de reglas pausada correctamente para la carpeta"
       },
       "unpause": {
-        "success": ""
+        "success": "Reglas reanudadas correctamente para esta carpeta"
       }
     },
     "central-alert-history": {
@@ -896,7 +896,7 @@
       "label": "Punto de contacto"
     },
     "continue-matching-indicator": {
-      "content-route-continue-matching-other-policies": ""
+      "content-route-continue-matching-other-policies": "Esta ruta continuará coincidiendo con otras políticas"
     },
     "copy-to-clipboard": "Copiar «{{label}}» al portapapeles",
     "create-metadata": {
@@ -935,8 +935,8 @@
       "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
       "fallback-dashboards-string": "Paneles de control",
       "panel-row": {
-        "content-panel-valid-identifier": "",
-        "tooltip-alert-tab-support": ""
+        "content-panel-valid-identifier": "Este panel no tiene un identificador válido.",
+        "tooltip-alert-tab-support": "La pestaña de alerta y las anotaciones de alerta solo son compatibles con los paneles de gráficos y series temporales."
       },
       "placeholder-search-dashboard": "Buscar dashboard",
       "placeholder-search-panel": "Buscar panel",
@@ -956,11 +956,11 @@
       "update-datasource": "Actualizar fuente de datos"
     },
     "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "",
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident no está instalado o no está configurado correctamente",
       "declare-incident": "Declarar incidente"
     },
     "declare-incident-menu-item": {
-      "content-grafana-incident-installed-configured-correctly": "",
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident no está instalado o no está configurado correctamente",
       "label-declare-incident": "Declarar incidente"
     },
     "delete-rule-modal": {
@@ -997,7 +997,7 @@
       "unknown": "Desconocido"
     },
     "disabled-tooltip": {
-      "content-appear-compatible-datasources": ""
+      "content-appear-compatible-datasources": "Parece que no tiene ninguna fuente de datos compatible."
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluaciones para iniciar alerta",
@@ -1035,8 +1035,8 @@
       }
     },
     "editor": {
-      "edit-alert-rule": "",
-      "edit-recording-rule": "",
+      "edit-alert-rule": "Editar regla de alerta",
+      "edit-recording-rule": "Editar regla de registro",
       "new-alert-rule": "Nueva regla de alerta",
       "new-recording-rule": "Nueva regla de registro"
     },
@@ -1045,7 +1045,7 @@
       "title-something-went-wrong": "Algo ha salido mal"
     },
     "error-summary-button": {
-      "content-show-all-errors": ""
+      "content-show-all-errors": "Mostrar todos los errores"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1053,7 +1053,7 @@
       }
     },
     "evaluation-behavior-summary": {
-      "evaluate": "",
+      "evaluate": "Cada {{interval}}",
       "label-evaluate": "Evaluar",
       "label-evaluation-time": "Tiempo de evaluación",
       "label-last-evaluation": "Última evaluación",
@@ -1135,7 +1135,7 @@
       "aria-label-nextpage": "página-siguiente",
       "aria-label-previouspage": "página-anterior",
       "no-data": "Sin datos",
-      "page-counter": ""
+      "page-counter": "{{pageStart}} - {{pageEnd}} de {{numPages}}"
     },
     "feature-toggle-page": {
       "nav-model": {
@@ -1188,31 +1188,24 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": ""
+          "label": "Eliminar todas las reglas"
         }
       },
       "delete-modal-confirmation-text": "Eliminar",
       "delete-modal-delete-button": "Eliminar",
       "delete-modal-deleting": "Eliminando...",
-      "delete-modal-text": "",
+      "delete-modal-text": "Esta acción eliminará todas las reglas de alerta de la carpeta <1>{{folderName}}</1>. Las carpetas anidadas no se verán afectadas.",
       "delete-modal-title": "Eliminar",
-      "error": "",
-      "more-button": {
-        "title": "",
-        "tooltip": ""
-      },
+      "error": "Error al ejecutar la acción para la carpeta: {{error}}",
       "pause": {
         "button": {
-          "label": ""
+          "label": "Pausar todas las reglas"
         }
       },
       "unpause": {
         "button": {
-          "label": ""
+          "label": "Reanudar todas las reglas"
         }
-      },
-      "view": {
-        "folder": ""
       }
     },
     "folder-selector": {
@@ -1488,7 +1481,7 @@
       "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}"
     },
     "group-status": {
-      "content-the-group-is-being-deleted": ""
+      "content-the-group-is-being-deleted": "El grupo se está eliminando"
     },
     "header": {
       "tooltip-remove": "Quitar la expresión «{{refId}}»"
@@ -1525,6 +1518,10 @@
         "title": "Confirmar importación"
       },
       "datasource": {
+        "help-info": {
+          "content": "",
+          "title": "Fuente de datos"
+        },
         "label": "Fuente de datos",
         "required-message": "Selecciona una fuente de datos"
       },
@@ -1654,15 +1651,29 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "",
+        "ds-no-rules": "Esta fuente de datos no tiene reglas configuradas",
         "new-alert-rule": "Nueva regla de alerta",
-        "new-ds-managed-alerting-rule": "",
+        "new-ds-managed-alerting-rule": "Nueva regla de alerta administrada por la fuente de datos",
         "new-ds-managed-recording-rule": "Nueva regla de registro administrada por la fuente de datos",
         "new-grafana-alerting-rule": "Nueva regla de alerta",
-        "new-grafana-recording-rule": "",
+        "new-grafana-recording-rule": "Nueva regla de registro",
         "new-recording-rule": "Nueva regla de registro",
-        "no-rules-created": "",
-        "provisioning": ""
+        "no-rules-created": "Aún no ha creado ninguna regla",
+        "provisioning": "También puede definir reglas a través del aprovisionamiento de archivos o Terraform"
+      },
+      "folder-actions": {
+        "button": {
+          "aria-label": "Acciones de carpeta",
+          "title": "Acciones"
+        },
+        "export": {
+          "aria-label": "Exportar carpeta de reglas",
+          "label": "Exportar carpeta de reglas"
+        },
+        "view": {
+          "aria-label": "Ver carpeta",
+          "label": "Ver carpeta"
+        }
       },
       "no-prom-or-loki-rules": "No hay configuradas fuentes de datos de Prometheus o Loki",
       "no-rules": "No se han encontrado reglas.",
@@ -1708,7 +1719,7 @@
       "error-unable-to-fetch": "No se puede obtener el historial de estado de alerta",
       "loading": "Cargando...",
       "title-error-fetching-the-state-history": "Error al obtener el historial de estado",
-      "tooltip-common-labels": ""
+      "tooltip-common-labels": "Las etiquetas comunes son las que se adjuntan a todas las instancias de alerta"
     },
     "manage-permissions": {
       "button": "Gestionar permisos",
@@ -1796,8 +1807,8 @@
       "label-name": "Nombre"
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval-item": "",
-      "description": "",
+      "add-another-time-interval-item": "Añadir otro elemento de intervalo de tiempo",
+      "description": "Un elemento de intervalo de tiempo es una definición de un momento en el tiempo. Todos los campos son listas, y al menos un elemento de la lista debe cumplirse para que coincida con el campo. Si un campo se deja en blanco, cualquier momento coincidirá con el campo. Para que un instante de tiempo coincida con un intervalo de tiempo completo, todos los campos deben coincidir. Un intervalo de tiempo puede contener múltiples elementos de intervalo de tiempo.",
       "description-dats-of-the-month": "Los días del mes, 1:31, de un mes. Los valores negativos se pueden utilizar para representar los días que comienzan al final del mes",
       "description-months": "Los meses del año en forma numérica o el mes calendario completo",
       "label-days-of-the-month": "Días del mes",
@@ -1814,7 +1825,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "Añadir otro intervalo de tiempo",
-      "content-this-time-interval-is-disabled": "",
+      "content-this-time-interval-is-disabled": "Este intervalo de tiempo está deshabilitado",
       "description-time-range": "La hora incluye la hora de inicio y excluye la hora de finalización (en UTC si no se ha seleccionado ninguna ubicación, de lo contrario, la hora local)",
       "label-end-time": "Hora de finalización",
       "label-start-time": "Fecha de inicio",
@@ -1971,7 +1982,7 @@
       "tailored-apps": "Acelera la creación de tus alertas utilizando una de nuestras aplicaciones a medida"
     },
     "plugin-origin-badge": {
-      "tooltip-managed-by-plugin": ""
+      "tooltip-managed-by-plugin": "Esta regla está gestionada por el plugin {{pluginName}}"
     },
     "policies": {
       "aria-label-collapse": "Contraer",
@@ -2073,7 +2084,7 @@
       "title-unable-to-check-the-rule-status": "No se puede comprobar el estado de la regla"
     },
     "provisioned-tooltip": {
-      "content-provisioned-items-cannot-edited": ""
+      "content-provisioned-items-cannot-edited": "Los elementos aprovisionados no se pueden editar en la interfaz de usuario"
     },
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso se ha aprovisionado a través de {{provenance}} y no se puede editar mediante la interfaz de usuario",
@@ -2110,7 +2121,7 @@
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
     },
     "query-preview": {
-      "relative-time-range": ""
+      "relative-time-range": "<0>{{from}}</0> hasta ahora"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2314,14 +2325,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "",
-          "stop-alerting-bellow": "",
-          "stop-alerting-equal": "",
-          "stop-alerting-inside-range": "",
-          "stop-alerting-less": "",
-          "stop-alerting-more": "",
-          "stop-alerting-not-equal": "",
-          "stop-alerting-outside-range": "",
+          "stop-alerting-above": "Dejar de alertar (o estado pendiente) cuando esté por encima de",
+          "stop-alerting-bellow": "Dejar de alertar (o estado pendiente) cuando esté por debajo de",
+          "stop-alerting-equal": "Dejar de alertar (o estado pendiente) cuando sea igual a",
+          "stop-alerting-inside-range": "Dejar de alertar (o estado pendiente) cuando esté dentro del rango",
+          "stop-alerting-less": "Dejar de alertar (o estado pendiente) cuando sea menor que",
+          "stop-alerting-more": "Dejar de alertar (o estado pendiente) cuando sea mayor que",
+          "stop-alerting-not-equal": "Dejar de alertar (o estado pendiente) cuando no sea igual a",
+          "stop-alerting-outside-range": "Dejar de alertar (o estado pendiente) cuando esté fuera del rango",
           "title": "Umbral de recuperación personalizado"
         }
       }
@@ -2329,7 +2340,6 @@
     "rule-group-action": {
       "details": "detalles del grupo de reglas",
       "edit": "editar grupo de reglas",
-      "export-rules-folder": "Exportar carpeta de reglas",
       "go-to-folder": "Ir a la carpeta",
       "manage-permissions": "gestionar permisos"
     },
@@ -2354,15 +2364,19 @@
       "title-inspect-alert-rule": "Inspeccionar regla de alerta"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "",
-      "cannot-load-rule-details-for": "",
+      "cannot-find-rule-details-for": "No se pueden encontrar los detalles de la regla para el UID {{uid}}",
+      "cannot-load-rule-details-for": "No se pueden cargar los detalles de la regla para el UID {{uid}}",
       "configure-datasource": "Configurar",
       "draft-new-rule": "Redactar una nueva regla",
+      "ds-error": {
+        "title": ""
+      },
       "ds-error-boundary": {
         "description": "Comprueba la configuración de la fuente de datos. ¿La fuente de datos es compatible con la API de Prometheus?",
         "title": "No se pueden cargar las reglas de esta fuente de datos"
       },
-      "empty-data-source": "",
+      "empty-data-source": "No se han encontrado reglas",
+      "error-button": "Error",
       "filter-view": {
         "cancel-search": "Cancelar búsqueda",
         "no-more-results": "No hay más resultados. Se han encontrado {{numberOfRules}} reglas",
@@ -2374,12 +2388,13 @@
         "new-badge": "¡Nuevo!",
         "text": "Importar a las reglas gestionadas por Grafana"
       },
+      "loading-more-groups": "",
       "more": "Más",
       "new-alert-rule": "Nueva regla de alerta",
       "new-datasource-recording-rule": "Nueva regla de registro de fuente de datos",
       "new-grafana-recording-rule": "Nueva regla de registro de Grafana",
       "pagination": {
-        "next-page": ""
+        "next-page": "Mostrar más..."
       },
       "recording-rules": "Reglas de registro",
       "return-button": {
@@ -2426,7 +2441,7 @@
       "paused": "En pausa",
       "recording-rule": "Registrando regla",
       "recording-rule-state": {
-        "content-recording-rule-evaluation-is-currently-paused": ""
+        "content-recording-rule-evaluation-is-currently-paused": "La evaluación de la regla de registro está en pausa"
       }
     },
     "rule-stats": {
@@ -2687,8 +2702,8 @@
       "refresh": "Actualizar"
     },
     "template-row": {
-      "content-templatefiles": "",
-      "content-templates": "",
+      "content-templatefiles": "template_files",
+      "content-templates": "templates",
       "tooltip-copy-template-group": "Copiar grupo de plantillas",
       "tooltip-delete-template-group": "Eliminar grupo de plantillas",
       "tooltip-edit-template-group": "Editar grupo de plantillas",
@@ -2717,7 +2732,7 @@
       },
       "misconfigured-badge-text": "Configuración incorrecta",
       "misconfigured-warning": "La configuración de esta plantilla es incorrecta.",
-      "misconfigured-warning-details": ""
+      "misconfigured-warning-details": "Las plantillas deben definirse en las secciones <2></2> y <5></5> de la configuración de Alertmanager."
     },
     "templates-picker": {
       "button-edit": "Editar {{name}}",
@@ -2742,33 +2757,33 @@
     },
     "threshold-expression-viewer": {
       "input": "Entrada",
-      "stop-alerting-when": ""
+      "stop-alerting-when": "Dejar de alertar (o estado pendiente) cuando "
     },
     "time-interval": {
-      "add-time-interval": "",
-      "save": "",
-      "saving": ""
+      "add-time-interval": "Añadir intervalo de tiempo",
+      "save": "Guardar intervalo de tiempo",
+      "saving": "Guardando intervalo de tiempo"
     },
     "time-interval-form": {
-      "description-unique-time-interval": "",
-      "text-loading-time-interval": "",
-      "title-no-matching-time-interval-found": ""
+      "description-unique-time-interval": "Un nombre único para el intervalo de tiempo",
+      "text-loading-time-interval": "Cargando intervalo de tiempo",
+      "title-no-matching-time-interval-found": "No se ha encontrado ningún intervalo de tiempo coincidente"
     },
     "time-intervals": {
       "description": "Introduce intervalos de tiempo específicos en los que no enviar notificaciones o congela las notificaciones durante periodos de tiempo recurrentes.",
       "error-loading": {
-        "description": "",
-        "title": ""
+        "description": "No se han podido cargar los intervalos de tiempo. Inténtelo más tarde.",
+        "title": "Error al cargar los intervalos de tiempo"
       }
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tiempo",
-      "placeholder-select-time-intervals": ""
+      "placeholder-select-time-intervals": "Seleccionar intervalos de tiempo..."
     },
     "time-intervals-table": {
-      "text-havent-created-time-intervals": "",
-      "text-loading-time-intervals": "",
-      "text-no-time-intervals-configured": ""
+      "text-havent-created-time-intervals": "Aún no ha creado ningún intervalo de tiempo",
+      "text-loading-time-intervals": "Cargando intervalos de tiempo...",
+      "text-no-time-intervals-configured": "No hay intervalos de tiempo configurados"
     },
     "timeseries-row": {
       "time-series-data": "Datos de series temporales",
@@ -2789,8 +2804,8 @@
       "add-expression": "Añadir expresión"
     },
     "unknown-contact-point-details": {
-      "unknown-contact-point": "",
-      "unknown-contact-point-tooltip": ""
+      "unknown-contact-point": "Punto de contacto desconocido",
+      "unknown-contact-point-tooltip": "No se han podido encontrar los detalles. Esto puede deberse a que no tiene acceso al punto de contacto"
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Tipo de regla desconocido"
@@ -2953,51 +2968,6 @@
       "title-query-result": "Resultado de la consulta"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Buscar claves"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Incluir claves caducadas"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Eliminar clave API",
-      "content-this-api-key-has-expired": "",
-      "expires": "Caduca",
-      "last-used-at": "Último uso el",
-      "migrate-to-service-account": "Migrar a cuenta de servicio",
-      "name": "Nombre",
-      "role": "Rol"
-    },
-    "empty-state": {
-      "message": "No se han encontrado claves de API"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "No se han encontrado claves API. Si vuelves a cargar el navegador, esta página ya no estará disponible.",
-      "body-switch-service-accounts": "Las claves API están obsoletas y se eliminarán de Grafana el 31 de enero de 2025. Cada clave API se migrará a una cuenta de servicio con un token y seguirá funcionando como antes. Recomendamos migrar tus claves API a cuentas de servicio ahora. <docsLink />",
-      "docs-link": {
-        "about-migration": "Encuentra más información sobre la migración aquí."
-      },
-      "migrate-all-service-accounts": "Migrar todas las cuentas de servicio",
-      "migration-box-desc": {
-        "migrating": "Al migrar todas las claves API, se ocultará la pestaña de claves API."
-      },
-      "modal-title": "Migrar claves API a cuentas de servicio",
-      "title-no-api-keys-found": "No se han encontrado claves API",
-      "title-switch-service-accounts": "Cambiar de claves API a cuentas de servicio"
-    },
-    "migration-summary": {
-      "close": "Cerrar",
-      "failed": "<0>Error: </0>{{failed}}",
-      "failed-details": "<0>Detalles del error: </0>{{details}}",
-      "failed-ids": "<0>Identificadores de claves API erróneos: </0>{{ids}}",
-      "migrated": "<0>Migradas: </0>{{migrated}}",
-      "migration-complete": "¡Migración completa! Ten en cuenta que, si bien puede haber algunas claves API marcadas como «migraciones erróneas», te aseguramos que todas tus claves API son completamente funcionales y operativas. Vuelve a intentarlo o ponte en contacto con el equipo de asistencia.",
-      "migration-successful": "¡Migración correcta!",
-      "title-migration-summary": "Resumen de la migración",
-      "total": "<0>Total: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Pasar al contenido principal",
     "top-bar": {
@@ -3035,109 +3005,109 @@
       }
     },
     "fields": {
-      "allow-assign-grafana-admin-description": "",
-      "allow-assign-grafana-admin-label": "",
-      "allow-sign-up-description": "",
-      "allow-sign-up-label": "",
-      "allowed-domains-description": "",
-      "allowed-domains-label": "",
+      "allow-assign-grafana-admin-description": "Si se ha habilitado, sincronizará automáticamente el rol de administrador del servidor de Grafana.",
+      "allow-assign-grafana-admin-label": "Permitir asignación de administrador de Grafana",
+      "allow-sign-up-description": "Si no se ha habilitado, solo los usuarios existentes de Grafana pueden iniciar sesión con OAuth.",
+      "allow-sign-up-label": "Permitir inscripción",
+      "allowed-domains-description": "Lista de dominios separados por comas o espacios. El usuario debe pertenecer al menos a \nun dominio para iniciar sesión.",
+      "allowed-domains-label": "Dominios permitidos",
       "allowed-groups-description": "Lista de grupos separados por comas o espacios. El usuario debe ser miembro de al menos un grupo para iniciar sesión.",
-      "allowed-groups-description-oauth": "",
-      "allowed-groups-label": "",
-      "allowed-groups-object-ids": "",
-      "allowed-organizations-description": "",
-      "allowed-organizations-label": "",
-      "allowed-organizations-placeholder": "",
+      "allowed-groups-description-oauth": "Si configura «{{ allowedGroupsLabel }}», también debe configurar «{{ groupsAttributePathLabel }}».",
+      "allowed-groups-label": "Grupos permitidos",
+      "allowed-groups-object-ids": "{{ allowedGroupsLabel }} debe ser {{ objectIDsField }}.",
+      "allowed-organizations-description": "Lista de organizaciones separadas por comas o espacios. El usuario debe ser miembro \nde al menos una organización para iniciar sesión.",
+      "allowed-organizations-label": "Organizaciones permitidas",
+      "allowed-organizations-placeholder": "Introduzca organizaciones (mi-equipo, miequipo...) y pulse Intro para añadirlas",
       "api-url-description": "El punto final de información del usuario de tu proveedor de OAuth2. La información devuelta por este punto final debe ser compatible con <2>OpenID UserInfo</2>.",
-      "api-url-required": "",
-      "auth-style-description": "",
-      "auth-style-label": "",
-      "auth-url-description": "",
-      "auth-url-required": "",
-      "auto-login-description": "",
-      "auto-login-label": "",
-      "client-authentication-description": "",
-      "client-authentication-label": "",
+      "api-url-required": "Este campo debe ser una URL válida si se configura.",
+      "auth-style-description": "Determina cómo se envían los valores de «{{ clientIDLabel }}» y «{{ clientSecretLabel }}» al proveedor de Oauth2. El valor predeterminado es «Detección automática».",
+      "auth-style-label": "Estilo de autenticación",
+      "auth-url-description": "El punto final de autorización de su proveedor de OAuth2.",
+      "auth-url-required": "Este campo es obligatorio y debe ser una URL válida.",
+      "auto-login-description": "Inicie sesión automáticamente, omitiendo la pantalla de inicio de sesión.",
+      "auto-login-label": "Inicio de sesión automático",
+      "client-authentication-description": "El método de autenticación del cliente utilizado para autenticarse en el punto final del token.",
+      "client-authentication-label": "Autenticación de cliente",
       "client-authentication-none": "Ninguno",
-      "client-id-description": "",
-      "client-secret-description": "",
-      "define-allowed-groups-label": "",
-      "define-allowed-teams-ids-label": "",
-      "display-name-description": "",
+      "client-id-description": "El {{ clientIDLabel }} de su aplicación OAuth2.",
+      "client-secret-description": "El {{ clientSecretLabel }} de su aplicación OAuth2.",
+      "define-allowed-groups-label": "Definir grupos permitidos",
+      "define-allowed-teams-ids-label": "Definir ID de equipos permitidos",
+      "display-name-description": "Se mostrará en la página de inicio de sesión como «Iniciar sesión con...». Resulta útil si utiliza más de un proveedor de identidad o protocolos SSO.",
       "display-name-label": "Nombre para mostrar",
-      "email-attribute-name-description": "",
-      "email-attribute-name-label": "",
-      "email-attribute-path-description": "",
-      "email-attribute-path-label": "",
-      "federated-credential-audience-description": "",
-      "federated-credential-audience-label": "",
-      "force-use-graph-api-description": "",
-      "force-use-graph-api-label": "",
-      "groups-attribute-path-description": "",
-      "groups-attribute-path-label": "",
-      "hosted-domain-description": "",
-      "hosted-domain-label": "",
+      "email-attribute-name-description": "Nombre de la clave que se utilizará para la búsqueda de correo electrónico del usuario dentro del mapa de atributos del token de identificación OAuth2.",
+      "email-attribute-name-label": "Nombre del atributo de correo electrónico",
+      "email-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de correo electrónico del usuario a partir de la información del usuario.",
+      "email-attribute-path-label": "Ruta del atributo de correo electrónico",
+      "federated-credential-audience-description": "El público de la credencial de identidad federada de su aplicación OAuth2.",
+      "federated-credential-audience-label": "Público de FIC",
+      "force-use-graph-api-description": "Si se ha habilitado, Grafana obtendrá los grupos de usuarios mediante la API de Microsoft Graph.",
+      "force-use-graph-api-label": "Forzar uso de la API de Graph",
+      "groups-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de grupos de usuarios. Si configura «{{ allowedGroupsLabel }}», \ntambién debe configurar «{{ groupsAttributePathLabel }}».",
+      "groups-attribute-path-label": "Ruta del atributo de grupo",
+      "hosted-domain-description": "El dominio en el que Grafana está alojado y es accesible.",
+      "hosted-domain-label": "Dominio alojado",
       "id-token-attribute-name-description": "El nombre de la clave utilizada para extraer el token de identificación del token OAuth2 devuelto.",
-      "id-token-attribute-name-label": "",
-      "login-attribute-path-description": "",
-      "login-attribute-path-label": "",
-      "managed-identity-client-id-description": "",
-      "managed-identity-client-id-label": "",
-      "name-attribute-path-description": "",
-      "name-attribute-path-label": "",
-      "org-mapping-description-azuread": "",
-      "org-mapping-description-generic": "",
-      "org-mapping-description-github": "",
-      "org-mapping-description-gitlab": "",
-      "org-mapping-description-google": "",
-      "organization-attribute-path-description": "",
-      "organization-attribute-path-label": "",
-      "organization-mapping-label": "",
-      "organization-mapping-placeholder": "",
-      "required": "",
-      "role-attribute-path-description": "",
-      "role-attribute-path-label": "",
-      "role-attribute-strict-description": "",
-      "role-attribute-strict-label": "",
-      "scopes-description": "",
+      "id-token-attribute-name-label": "Nombre del atributo del token de ID",
+      "login-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de inicios de sesión del usuario a partir del token de ID de usuario.",
+      "login-attribute-path-label": "Ruta del atributo de inicio de sesión",
+      "managed-identity-client-id-description": "El ID de cliente de identidad administrada de la credencial de identidad federada de su aplicación OAuth2.",
+      "managed-identity-client-id-label": "ID de cliente de identidad gestionada de FIC",
+      "name-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de nombres de usuario a partir del token de ID de usuario. \nEste nombre se utilizará como nombre para mostrar del usuario.",
+      "name-attribute-path-label": "Ruta del atributo de nombre",
+      "org-mapping-description-azuread": "Lista de asignaciones «<GroupID>:<OrgIdOrName>:<Role>».",
+      "org-mapping-description-generic": "Lista de asignaciones «<ExternalName>:<OrgIdOrName>:<Role>».",
+      "org-mapping-description-github": "Lista de asignaciones «<GitHubTeamName>:<OrgIdOrName>:<Role>».",
+      "org-mapping-description-gitlab": "Lista de asignaciones «<GitlabGroupName>:<OrgIdOrName>:<Role>».",
+      "org-mapping-description-google": "Lista de asignaciones «<GoogleGroupName>:<OrgIdOrName>:<Role>».",
+      "organization-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de organizaciones. Si configura «{{ orgMappingLabel }}», también debe configurar «{{ orgAttributePathLabel }}».",
+      "organization-attribute-path-label": "Ruta del atributo de organización",
+      "organization-mapping-label": "Asignación de organización",
+      "organization-mapping-placeholder": "Introduzca asignaciones (mi-equipo:1:Visualizador...) y pulse Intro para añadirlas",
+      "required": "Este campo es obligatorio",
+      "role-attribute-path-description": "Expresión {{ jmesPathLabel }} que se utilizará para la búsqueda de roles de Grafana.",
+      "role-attribute-path-label": "Ruta del atributo de rol",
+      "role-attribute-strict-description": "Si se ha habilitado, deniega el inicio de sesión del usuario si el rol de Grafana no se puede extraer mediante la ruta del atributo de rol.",
+      "role-attribute-strict-label": "Modo estricto del atributo de rol",
+      "scopes-description": "Lista de OAuth2 separados por comas o espacios {{ scopesLabel }}.",
       "section-extra-security": "Medidas de seguridad adicionales",
-      "section-general-settings": "",
-      "section-user-mapping": "",
-      "server-discovery-url-description": "",
-      "signout-redirect-url-description": "",
-      "signout-redirect-url-label": "",
-      "skip-org-role-sync-description": "",
+      "section-general-settings": "Ajustes generales",
+      "section-user-mapping": "Asignación de usuario",
+      "server-discovery-url-description": "El punto final .well-known/openid-configuration para su IdP La información extraída de esta URL se utilizará para rellenar los campos «{{ authURLLabel }}», «{{ tokenURLLabel }}» y «{{ apiURLLabel }}».",
+      "signout-redirect-url-description": "La URL a la que se redirigirá al usuario después de cerrar la sesión en Grafana.",
+      "signout-redirect-url-label": "URL de redirección de cierre de sesión",
+      "skip-org-role-sync-description": "Evita sincronizar los roles de organización de los usuarios desde su IdP.",
       "skip-org-role-sync-label": "Omitir sincronización de funciones de la organización",
-      "team-ids-attribute-path-description": "",
-      "team-ids-attribute-path-label": "",
-      "team-ids-attribute-path-required": "",
+      "team-ids-attribute-path-description": "La expresión JMESPath que se utilizará para la búsqueda de ID de equipo de Grafana dentro de los resultados devueltos por el punto final «{{ teamsURLLabel }}».",
+      "team-ids-attribute-path-label": "Ruta del atributo de ID de equipo",
+      "team-ids-attribute-path-required": "Este campo debe establecerse si se configuran «{{ teamIDsLabel }}».",
       "team-ids-description": "Si se establece, el usuario debe ser miembro de uno de los equipos dados para iniciar sesión.",
-      "team-ids-description-oauth": "",
-      "team-ids-github": "",
-      "team-ids-label": "",
-      "team-ids-numbers": "",
+      "team-ids-description-oauth": "Si configura «{{ teamIDsLabel }}», también debe configurar «{{ teamsURLLabel }}» y «{{ teamIDsAttributePathLabel }}».",
+      "team-ids-github": "Lista de números enteros de ID de equipo.",
+      "team-ids-label": "ID de equipo",
+      "team-ids-numbers": "Los ID de equipo deben ser números.",
       "team-ids-other": "Lista de cadenas de identificadores de equipo.",
-      "team-ids-placeholder": "",
-      "teams-url-description": "",
-      "teams-url-description-oauth": "",
-      "teams-url-label": "",
-      "teams-url-required": "",
-      "tls-client-ca-description": "",
-      "tls-client-ca-label": "",
-      "tls-client-cert-description": "",
-      "tls-client-cert-label": "",
-      "tls-client-key-description": "",
-      "tls-client-key-label": "",
-      "tls-skip-verify-description": "",
-      "tls-skip-verify-label": "",
-      "token-url-description": "",
-      "token-url-required": "",
+      "team-ids-placeholder": "Introduzca los ID de equipo y pulse Intro para añadirlos",
+      "teams-url-description": "La URL utilizada para consultar los ID de equipo. Si no se establece, el valor predeterminado es /teams.",
+      "teams-url-description-oauth": "Si configura «{{ teamsURLLabel }}», también debe configurar «{{ teamIDsAttributePathLabel }}».",
+      "teams-url-label": "URL de equipos",
+      "teams-url-required": "Este campo debe configurarse si se configuran «{{ teamIDsLabel }}» y debe ser una URL válida.",
+      "tls-client-ca-description": "La ruta del archivo a la lista de autoridades de certificación de confianza. No es aplicable en Grafana Cloud.",
+      "tls-client-ca-label": "CA del cliente TLS",
+      "tls-client-cert-description": "La ruta del archivo al certificado. No es aplicable en Grafana Cloud.",
+      "tls-client-cert-label": "Certificado de cliente TLS",
+      "tls-client-key-description": "La ruta del archivo a la clave. No es aplicable en Grafana Cloud.",
+      "tls-client-key-label": "Clave de cliente TLS",
+      "tls-skip-verify-description": "Si se ha habilitado, el cliente acepta cualquier certificado que presente el servidor y cualquier nombre de host \nen dicho certificado. Utilice esta opción solo para realizar pruebas, puesto que este modo deja \nSSL/TLS expuesto a ataques de intermediario.",
+      "tls-skip-verify-label": "Omitir verificación de TLS",
+      "token-url-description": "El punto final del token de su proveedor de OAuth2.",
+      "token-url-required": "Este campo es obligatorio y debe ser una URL válida.",
       "use-pkce-description": "Si está habilitado, Grafana utilizará la <2>clave de prueba para el intercambio de código (PKCE)</2> con la concesión de código de autorización OAuth2.",
-      "use-pkce-label": "",
-      "use-refresh-token-description": "",
-      "use-refresh-token-label": "",
-      "validate-hosted-domain-description": "",
-      "validate-hosted-domain-label": "",
+      "use-pkce-label": "Utilizar PKCE",
+      "use-refresh-token-description": "Si se ha habilitado, Grafana obtendrá un nuevo token de acceso a través del token de actualización que proporcione el proveedor de OAuth2.",
+      "use-refresh-token-label": "Usar token de actualización",
+      "validate-hosted-domain-description": "Si se ha habilitado, Grafana comparará el dominio alojado recuperado del token de ID de Google con la lista «{{ allowedDomainsLabel }}» que especifique el usuario.",
+      "validate-hosted-domain-label": "Validar dominio alojado",
       "workload-identity-token-file-description": "",
       "workload-identity-token-file-label": "",
       "workload-identity-token-file-required": ""
@@ -3159,7 +3129,7 @@
         "label-reset-to-default-values": "Restablecer a los valores predeterminados"
       },
       "disable": "Deshabilitar",
-      "disabling": "",
+      "disabling": "Deshabilitando...",
       "discard": "Descartar",
       "enabled-label-enabled": "Activado",
       "label-enabled": "Activado",
@@ -3224,8 +3194,8 @@
       "button-to-recently-deleted": "Eliminados recientemente"
     },
     "browse-folder-alerting-page": {
-      "title-folder-not-found": "",
-      "title-ruler-namespace-error": ""
+      "title-folder-not-found": "Carpeta no encontrada",
+      "title-ruler-namespace-error": "No se pueden cargar las reglas"
     },
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
@@ -3546,14 +3516,14 @@
       "change-theme": "Cambiar tema",
       "dark-theme": "Oscuro",
       "light-theme": "Claro",
-      "scopes": ""
+      "scopes": "Alcances"
     },
     "empty-state": {
       "message": "No se han encontrado resultados"
     },
     "scopes": {
       "apply-selected-scopes": "Aplicar",
-      "selected-scopes-label": ""
+      "selected-scopes-label": "Alcances: "
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -4058,10 +4028,19 @@
         "tooltip-remove-property": "Quitar propiedad"
       }
     },
+    "edit-actions": {
+      "add": "",
+      "panel-background": "",
+      "panel-description": "",
+      "panel-title": "",
+      "paste-panel": "Pegar panel",
+      "remove": "",
+      "switch-layout": ""
+    },
     "edit-pane": {
       "elements": {
         "dashboard": "Panel de control",
-        "local-variable": "",
+        "local-variable": "Variable local",
         "multiple-elements": "Múltiples elementos",
         "multiple-elements-delete-text": "¿Seguro que quieres eliminar estos elementos?",
         "multiple-panels": "Múltiples paneles",
@@ -4104,7 +4083,7 @@
         "open-editor-tooltip": "Para obtener más opciones de variables, abre el editor de variables",
         "query-options": {
           "close": "Cerrar",
-          "modal-title": "",
+          "modal-title": "Variable de consulta",
           "preview": "Vista previa"
         },
         "selection-options": {
@@ -4448,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Elegir",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -4610,18 +4590,6 @@
     },
     "toolbar": {
       "add": "Añadir",
-      "add-new": {
-        "button": {
-          "label": "Añadir",
-          "tooltip": "Añadir paneles y otros elementos"
-        },
-        "menu": {
-          "lib-panel": "Panel de librería",
-          "panel": "Panel",
-          "row": "Fila",
-          "tab": "Pestaña"
-        }
-      },
       "alert-rules": "Reglas de alerta",
       "back-to-dashboard": "Volver al panel de control",
       "dashboard-settings": {
@@ -4672,7 +4640,7 @@
           "arrow": "Exportar",
           "title": "Exportar",
           "tooltip": {
-            "as-code": "",
+            "as-code": "Exportar como código",
             "json": "Exportar como JSON"
           }
         },
@@ -4877,7 +4845,7 @@
   "dashboard-scene": {
     "ad-hoc-variable-form": {
       "adhoc-options": "Opciones específicas",
-      "alert-not-supported": "",
+      "alert-not-supported": "Esta fuente de datos no admite filtros específicos",
       "description-enables-users-custom-values": "Permite a los usuarios añadir valores personalizados a la lista",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Proporcionar dimensiones como CSV: {{name}}, {{value}}",
       "label-data-source": "Fuente de datos",
@@ -5276,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "mensaje",
-      "body-dashboard-drastically-changed": "Como estás utilizando nuevas funciones de dashboards que solo son compatibles con el nuevo formato de esquema de dashboards de Grafana, el dashboard se guardará en el nuevo formato. Asegúrate de que quieres realizar esta acción o prefieres guardar el dashboard como una nueva copia.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Cancelar"
       },
@@ -5292,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "La funcionalidad del dashboard dinámico es experimental y no tiene una paridad de características completa con el comportamiento actual de los dashboards. Se basa en un nuevo formato de esquema, que no admite paneles de librería. Esto significa que al exportar el dashboard para usarlo en otra instancia, no se incluirán paneles de librería. Tenemos la intención de admitirlos a medida que avanzamos en el <2>ciclo de vida</2> de la función.",
       "schema-v2-library-panels-export-title": "El esquema de dashboard V2 aún no admite la exportación de paneles de librería para su uso en otra instancia",
-      "title-dashboard-drastically-changed": "El dashboard ha cambiado drásticamente"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Hará que la actualización actual sea la nueva predeterminada",
@@ -5409,8 +5377,8 @@
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Esta variable no está referenciada por ninguna variable o dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variable está referenciada por otras variables o dashboards.",
-      "content-variable-not-referenced-other-variables-dashboard": "",
-      "content-variable-referenced-other-variables-dashboard": ""
+      "content-variable-not-referenced-other-variables-dashboard": "Esta variable no está referenciada por otras variables o dashboards.",
+      "content-variable-referenced-other-variables-dashboard": "Esta variable está referenciada por otras variables o dashboards."
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulario del editor de variables",
@@ -5545,7 +5513,7 @@
       "hide-time-picker": "Ocultar el selector de tiempo",
       "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
       "now-delay-label": "Retraso ahora",
-      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-description": "Actualizar continuamente los paneles cuando el intervalo de tiempo incluya la hora actual",
       "refresh-live-dashboards-label": "Actualizar paneles de control activos",
       "time-options-label": "Opciones de tiempo",
       "time-zone-label": "Huso horario",
@@ -5993,7 +5961,7 @@
       }
     },
     "correlation-editor-mode-bar": {
-      "content-correlations-editor-explore-experimental-feature": "",
+      "content-correlations-editor-explore-experimental-feature": "El editor de correlaciones en «Explorar» es una característica experimental.",
       "exit-correlation-editor": "Salir del editor de correlación",
       "save": "Guardar"
     },
@@ -6196,7 +6164,7 @@
       "tooltip-select-query-visualize-table": "Selecciona una consulta para visualizar en la tabla"
     },
     "logs-volume-panel": {
-      "content-streaming": ""
+      "content-streaming": "Transmisión"
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "Volver a cargar el volumen de logs",
@@ -6428,7 +6396,7 @@
       "label-tags": "Etiquetas",
       "placeholder-all-service-names": "Todos los nombres de servicios",
       "placeholder-all-span-names": "Todos los nombres de intervalo",
-      "tooltip-collapse": "",
+      "tooltip-collapse": "Filtre sus intervalos a continuación. Puede seguir aplicando filtros hasta que haya reducido los intervalos resultantes a los que más le interesen.",
       "tooltip-duration": "Filtra por duración. Las unidades aceptadas son {{units}}",
       "tooltip-tags": "Filtra por etiquetas, etiquetas de proceso o campos de logs en tus intervalos."
     },
@@ -6499,7 +6467,7 @@
     },
     "trace-page-header": {
       "text-partial-trace": "Traza parcial",
-      "tooltip-url": ""
+      "tooltip-url": "{{url}} o {{target}} o {{path}}"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Botón para borrar filtros",
@@ -6563,11 +6531,11 @@
       "download-button": "Descargar archivo",
       "download-successful_toast_message": "Tu JSON se ha descargado",
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
-      "export-format": "",
-      "export-mode": "",
-      "export-remove-ds-refs": "",
-      "info-text": "",
-      "title": ""
+      "export-format": "Formato",
+      "export-mode": "Modelo",
+      "export-remove-ds-refs": "Eliminar detalles de implementación",
+      "info-text": "Copiar o descargar un archivo que contenga la definición de su dashboard",
+      "title": "Exportar panel"
     },
     "menu": {
       "export-as-json-label": "Exportar",
@@ -6602,7 +6570,7 @@
     },
     "math": {
       "available-math-functions": "Funciones matemáticas disponibles",
-      "run-math-operations": "",
+      "run-math-operations": "Ejecuta operaciones matemáticas en una o más consultas. Hace referencia a la consulta por {{refExample}} es decir: {{ref1}}, {{ref2}}, {{ref3}} etc.<10></10>Ejemplo: <12>{{example}}</12>",
       "tooltip-footer": "Consulta nuestra documentación adicional sobre <2>Expresiones matemáticas</2>.",
       "tooltip-title": "Operador matemático",
       "tooltip-trigger": "Expresión"
@@ -6656,7 +6624,7 @@
       "new-password-label": "Nueva contraseña",
       "skip-button": "Omitir",
       "submit-button": "Enviar",
-      "tooltip-skip-button": ""
+      "tooltip-skip-button": "Si se omite, se le pedirá que cambie la contraseña la próxima vez que inicie sesión."
     },
     "contact-admin": "¿Has olvidado tu nombre de usuario o correo electrónico? Ponte en contacto con el administrador de Grafana.",
     "email-sent": "Se ha enviado un correo electrónico con un enlace de restablecimiento a la dirección de correo electrónico. Lo recibirás en breve.",
@@ -6872,7 +6840,7 @@
         "action-variables-title": "",
         "confirm": "Confirmar",
         "confirm-action": "Confirmar acción",
-        "style": "",
+        "style": "Estilo de botón",
         "variable-value-placeholder": "Valor"
       },
       "close": "Cerrar",
@@ -7084,10 +7052,10 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "alternar panel para contraer",
-      "tooltip-cancel": "",
-      "tooltip-cancel-loading": "",
-      "tooltip-stop-streaming": "",
-      "tooltip-streaming": ""
+      "tooltip-cancel": "Cancelar consulta",
+      "tooltip-cancel-loading": "Cancelar consulta",
+      "tooltip-stop-streaming": "Detener transmisión",
+      "tooltip-streaming": "Transmisión"
     },
     "panel-menu": {
       "label": "Menú para el panel {{ title }}",
@@ -7661,7 +7629,7 @@
       "label-wrap-lines": "Ajustar líneas"
     },
     "log-details": {
-      "close": "",
+      "close": "Cerrar detalles del log",
       "fields": "Campos",
       "links": "Enlaces",
       "log-line": "Línea de registro",
@@ -7681,20 +7649,20 @@
       "log-line": "línea de log"
     },
     "log-line": {
-      "has-error": "",
-      "is-sampled": "",
-      "show-less": "",
-      "show-more": "",
-      "tooltip-error": ""
+      "has-error": "Contiene errores",
+      "is-sampled": "Está muestreado",
+      "show-less": "mostrar menos",
+      "show-more": "mostrar más",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
       "copy-log": "Copiar línea de registro",
-      "hide-details": "",
+      "hide-details": "Mostrar detalles del log",
       "icon-label": "Menú de registro",
       "pin-to-outline": "Anclar registro",
       "show-context": "Mostrar contexto",
-      "show-details": "",
+      "show-details": "Ocultar detalles del log",
       "unpin-from-outline": "Desanclar registro"
     },
     "log-row-context-modal": {
@@ -7717,7 +7685,7 @@
       "ellipsis": "… ",
       "more": "más",
       "see-details": "Ver detalles del registro",
-      "tooltip-error": ""
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-rows": {
       "disable-popover": {
@@ -7748,10 +7716,12 @@
       },
       "enable-highlighting": "Activar resaltado",
       "escape-newlines": "Corregir las secuencias de tabulación y de nueva línea que escaparon incorrectamente en las líneas de log",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
-      "newest-first": "",
-      "oldest-first": "",
+      "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",
+      "oldest-first": "Ordenado por los logs más antiguos primero: haga clic para mostrar los más nuevos primero",
       "prettify-json": "Expandir logs JSON",
       "remove-escaping": "Eliminar escape",
       "scroll-bottom": "Desplazarse al final",
@@ -8154,10 +8124,6 @@
       "subtitle": "Ver las reglas de alerta eliminadas recientemente",
       "title": "Eliminados recientemente"
     },
-    "api-keys": {
-      "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
-      "title": "Claves API"
-    },
     "application": {
       "title": "Aplicación"
     },
@@ -8306,8 +8272,8 @@
       "title": "Paneles de librería"
     },
     "machine-learning": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Explorar las funciones de IA y aprendizaje automático",
+      "title": "IA y aprendizaje automático"
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -8838,7 +8804,7 @@
         "available-header": "Disponible",
         "button": "Actualizar todo ({{length}})",
         "cloud-update-message": "* Los complementos pueden tardar unos minutos en estar disponibles para usarlos.",
-        "error": "",
+        "error": "Error al actualizar el plugin: {{errorMessage}}",
         "error-status-text": "error: consulta los mensajes de error",
         "header": "Los siguientes complementos tienen una actualización disponible",
         "installed-header": "Instalada",
@@ -8892,7 +8858,7 @@
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",
         "repository": "Repositorio",
         "signature": "Firma",
-        "sponsorDeveloper": "",
+        "sponsorDeveloper": "Patrocinar a este desarrollador",
         "status": "Estado"
       },
       "modal": {
@@ -9049,7 +9015,7 @@
       "grafana-dependency": "Dependencia de Grafana",
       "installed-version": "{{versionNumber}} (versión instalada)",
       "latest-compatible-version": "{{versionNumber}} (última versión compatible)",
-      "latest-release-date": "",
+      "latest-release-date": "Fecha de la última publicación",
       "no-version-history-was-found": "No se ha encontrado ningún historial de versiones.",
       "version": "Versión"
     }
@@ -9079,7 +9045,7 @@
       "enable-in-config": "Habilita el perfil en el archivo de configuración de Grafana."
     },
     "input-suffix": {
-      "content-login-details-locked-because-managed-another": ""
+      "content-login-details-locked-because-managed-another": "Los datos de inicio de sesión están bloqueados porque se gestionan en otro sistema."
     },
     "user-organizations": {
       "text-loading-organizations": "Cargando organizaciones..."
@@ -9688,8 +9654,8 @@
       "title-data-source-help": "Ayuda de la fuente de datos"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "",
-      "collapsed-max-data-points": "",
+      "collapsed-interval": "Intervalo = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Ocultar información de tiempo",
       "Query options-title-query-options": "Opciones de consulta",
       "relative-time": "Tiempo relativo",
@@ -10054,12 +10020,12 @@
       "title-disable-service-account": "Deshabilitar cuenta de servicio"
     },
     "token-expiration": {
-      "content-this-token-has-expired": "",
+      "content-this-token-has-expired": "El token ha caducado",
       "expired-label": "Vencido",
       "never": "Nunca"
     },
     "token-revoked": {
-      "content-token-publicly-exposed-please-rotate": "",
+      "content-token-publicly-exposed-please-rotate": "Este token se ha expuesto públicamente. Realice una rotación de este token",
       "revoked-label": "Revocado"
     }
   },
@@ -10098,7 +10064,7 @@
       "save-button": "Guardar en archivo",
       "share-externally-label": "Exportar para compartir externamente",
       "view-button": "Ver JSON",
-      "view-button-yaml": ""
+      "view-button-yaml": "Ver YAML"
     },
     "library": {
       "info": "Cree un panel de librería."
@@ -10521,7 +10487,7 @@
     "range-content": {
       "apply-button": "Aplicar intervalo de tiempo",
       "default-error": "Introduce una fecha pasada o «{{now}}»",
-      "fiscal-year": "",
+      "fiscal-year": "Año fiscal: {{from}} - {{to}}",
       "from-input": "Desde",
       "open-input-calendar": "Abrir calendario",
       "range-error": "«Desde» no puede ser posterior a «hasta»",
@@ -10542,7 +10508,7 @@
       "example-title": "Ejemplos de intervalos de tiempo",
       "from-label": "Desde",
       "from-to": "Desde {{timeOptionFrom}} hasta {{timeOptionTo}}",
-      "specify": "",
+      "specify": "Especificar intervalo de tiempo",
       "submit-button-label": "Botón de envío de selector de tiempo",
       "to-label": "Hasta"
     },
@@ -10885,7 +10851,7 @@
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Valor o variable",
-      "variable-regex-documentation": ""
+      "variable-regex-documentation": "Formatee la variable de múltiples valores en una cadena de expresión regular"
     },
     "regression-transformer-editor": {
       "label": {
@@ -11034,7 +11000,7 @@
       "message": "No se han encontrado usuarios"
     },
     "token-revoked-modal": {
-      "auto-revoked": "",
+      "auto-revoked": "Su token de sesión se ha revocado automáticamente porque ha alcanzado <2>el número máximo de {{numSessions}} sesiones concurrentes</2> para su cuenta.",
       "resume-message": "<0>Para reanudar la sesión, vuelve a iniciar sesión.</0>Ponte en contacto con tu administrador o visita la página de licencias para revisar tu cuota si se cierra la sesión automáticamente en repetidas ocasiones.",
       "sign-in": "Iniciar sesión",
       "title-you-have-been-automatically-signed-out": "Se ha cerrado tu sesión automáticamente"
@@ -11152,7 +11118,7 @@
       "loading": "Cargando...",
       "no-unknowns": "No se han encontrado variables renombradas o que falten.",
       "renamed-or-missing-variables": "Variables renombradas o que faltan",
-      "tooltip-renamed-or-missing-variables": "",
+      "tooltip-renamed-or-missing-variables": "Haga clic para expandir una lista con todas las referencias de variables que se han renombrado o que faltan en el dashboard.",
       "variable": "Variable"
     },
     "variable-check-indicator": {

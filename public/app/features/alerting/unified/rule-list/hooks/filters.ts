@@ -14,16 +14,20 @@ import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
  */
-export function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
+export function groupFilter(
+  group: PromRuleGroupDTO,
+  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
+): boolean {
   const { name, file } = group;
+  const { namespace, groupName } = filterState;
 
   // Add fuzzy search for namespace
-  if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
+  if (namespace && !file.toLocaleLowerCase().includes(namespace.toLocaleLowerCase())) {
     return false;
   }
 
   // Add fuzzy search for group name
-  if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
+  if (groupName && !name.toLocaleLowerCase().includes(groupName.toLocaleLowerCase())) {
     return false;
   }
 

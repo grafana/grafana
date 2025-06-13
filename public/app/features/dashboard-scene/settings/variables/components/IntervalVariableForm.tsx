@@ -3,7 +3,7 @@ import { ChangeEvent, FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -39,7 +39,7 @@ export function IntervalVariableForm({
     value: count,
   }));
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const stepCount = STEP_OPTIONS.find((option) => option.value === autoStepCount) ?? STEP_OPTIONS[0];
 
   return (
