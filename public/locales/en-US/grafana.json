@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
-      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.",
+      "description-missing-series-evaluations": "The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Last updated by",
       "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
+      "notification-configuration": {
+        "active-timings": "Active time intervals",
+        "contact-point": "Contact point",
+        "group-by": "Grouped by",
+        "group-title": "Notification configuration",
+        "mute-timings": "Mute timings",
+        "timing-options": "Timings"
+      },
       "pending-period": "Pending period",
       "rule": "Rule",
       "rule-identifier": "Rule identifier",
@@ -449,6 +457,15 @@
       "export": "Export",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "Read more about stale alert instances",
+        "text1": "An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.",
+        "text2": "A stale alert instance is resolved and then evicted.",
+        "text3": "This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty.",
+        "title": "Stale alert instances"
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
@@ -4592,6 +4610,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "title": {
+      "action": "Change dashboard title"
+    },
     "toolbar": {
       "add": "Add",
       "alert-rules": "Alert rules",
@@ -5125,6 +5146,11 @@
     "name-already-exists-error": {
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
+    },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
     },
     "on-remove-panel": {
       "text": {
@@ -7669,6 +7695,14 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
@@ -7722,6 +7756,7 @@
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
       "font-size-default": "Use small font size",
       "font-size-small": "Use default font size",
+      "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7730,6 +7765,7 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",

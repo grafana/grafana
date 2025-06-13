@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker, frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/internal';

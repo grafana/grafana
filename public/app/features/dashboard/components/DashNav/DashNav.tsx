@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
@@ -93,7 +93,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   const onOpenSnapshotOriginal = () => {
     try {
       const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
