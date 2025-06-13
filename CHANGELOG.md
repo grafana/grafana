@@ -1,3 +1,12 @@
+<!-- 11.6.2+security-01 START -->
+
+# 11.6.2+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.6.2+security-01 END -->
 <!-- 11.6.1 START -->
 
 # 11.6.1 (2025-04-23)
