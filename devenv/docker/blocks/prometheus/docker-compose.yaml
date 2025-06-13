@@ -26,7 +26,7 @@
       FD_DATASOURCE: prom
 
   alertmanager:
-    image: prom/alertmanager 
+    image: prom/alertmanager
     volumes:
     - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     command: >
