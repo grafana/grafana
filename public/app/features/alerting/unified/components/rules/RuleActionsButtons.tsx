@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
@@ -55,7 +55,6 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   const isProvisioned = rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
-  const { t } = useTranslate();
 
   const canEditRule = editRuleSupported && editRuleAllowed;
 
