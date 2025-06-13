@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { CSSProperties, memo, useCallback, useEffect, useRef, useState, MouseEvent } from 'react';
+import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, MouseEvent } from 'react';
+import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
+import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
@@ -11,6 +12,7 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
@@ -213,31 +215,73 @@ const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: Lo
         <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel}</span>
       )}
       {displayedFields.length > 0 ? (
-        displayedFields.map((field) =>
-          field === LOG_LINE_BODY_FIELD_NAME ? (
-            <LogLineBody log={log} key={field} />
-          ) : (
-            <span className="field" title={field} key={field}>
-              {log.getDisplayedFieldValue(field)}
-            </span>
-          )
-        )
+        <DisplayedFields displayedFields={displayedFields} log={log} styles={styles} />
       ) : (
-        <LogLineBody log={log} />
+        <LogLineBody log={log} styles={styles} />
       )}
     </>
   );
 });
-
 Log.displayName = 'Log';
 
-const LogLineBody = ({ log }: { log: LogListModel }) => {
+const DisplayedFields = ({
+  displayedFields,
+  log,
+  styles,
+}: {
+  displayedFields: string[];
+  log: LogListModel;
+  styles: LogLineStyles;
+}) => {
+  const { matchingUids, search } = useLogListSearchContext();
+
+  const searchWords = useMemo(() => {
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    if (search && matchingUids?.includes(log.uid)) {
+      searchWords.push(search);
+    }
+    if (!searchWords.length) {
+      return undefined;
+    }
+    return searchWords;
+  }, [log.searchWords, log.uid, matchingUids, search]);
+
+  return displayedFields.map((field) =>
+    field === LOG_LINE_BODY_FIELD_NAME ? (
+      <LogLineBody log={log} key={field} styles={styles} />
+    ) : (
+      <span className="field" title={field} key={field}>
+        {searchWords ? (
+          <Highlighter
+            textToHighlight={log.getDisplayedFieldValue(field)}
+            searchWords={searchWords}
+            findChunks={findHighlightChunksInText}
+            highlightClassName={styles.matchHighLight}
+          />
+        ) : (
+          log.getDisplayedFieldValue(field)
+        )}
+      </span>
+    )
+  );
+};
+
+const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
   const { syntaxHighlighting } = useLogListContext();
+  const { matchingUids, search } = useLogListSearchContext();
+
+  const highlight = useMemo(() => {
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    if (search && matchingUids?.includes(log.uid)) {
+      searchWords.push(search);
+    }
+    if (!searchWords.length) {
+      return undefined;
+    }
+    return { searchWords, highlightClassName: styles.matchHighLight };
+  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight]);
 
   if (log.hasAnsi) {
-    const needsHighlighter =
-      log.searchWords && log.searchWords.length > 0 && log.searchWords[0] && log.searchWords[0].length > 0;
-    const highlight = needsHighlighter ? { searchWords: log.searchWords ?? [], highlightClassName: '' } : undefined;
     return (
       <span className="field no-highlighting">
         <LogMessageAnsi value={log.body} highlight={highlight} />
@@ -246,7 +290,16 @@ const LogLineBody = ({ log }: { log: LogListModel }) => {
   }
 
   if (!syntaxHighlighting) {
-    return <span className="field no-highlighting">{log.body}</span>;
+    return highlight ? (
+      <Highlighter
+        textToHighlight={log.body}
+        searchWords={highlight.searchWords}
+        findChunks={findHighlightChunksInText}
+        highlightClassName={styles.matchHighLight}
+      />
+    ) : (
+      <span className="field no-highlighting">{log.body}</span>
+    );
   }
 
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
@@ -324,10 +377,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
         '.log-token-method': {
           color: theme.colors.info.shade,
         },
+        '.log-search-match': {
+          color: theme.components.textHighlight.text,
+          backgroundColor: theme.components.textHighlight.background,
+        },
       },
       '& .no-highlighting': {
         color: theme.colors.text.primary,
       },
+    }),
+    matchHighLight: css({
+      color: theme.components.textHighlight.text,
+      backgroundColor: theme.components.textHighlight.background,
     }),
     fontSizeSmall: css({
       fontSize: theme.typography.bodySmall.fontSize,

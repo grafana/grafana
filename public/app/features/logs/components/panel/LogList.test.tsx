@@ -232,4 +232,32 @@ describe('LogList', () => {
       });
     });
   });
+  describe('Text search', () => {
+    test('Supports text search', async () => {
+      render(<LogList {...defaultProps} />);
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('log message 2')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Control>}{f}{/Control}');
+
+      expect(screen.getByPlaceholderText('Search in logs')).toBeInTheDocument();
+
+      await userEvent.type(screen.getByPlaceholderText('Search in logs'), 'message 2');
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.queryByText('log message 2')).not.toBeInTheDocument();
+      expect(screen.getByText('message 2')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Filter matching logs'));
+
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message 2')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Escape}');
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+    });
+  });
 });
