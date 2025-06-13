@@ -131,7 +131,9 @@ describe('TableNG hooks', () => {
   describe('usePaginatedRows', () => {
     it('should return defaults for pagination values when pagination is disabled', () => {
       const { rows } = setupData();
-      const { result } = renderHook(() => usePaginatedRows(rows, { height: 300, width: 800, enabled: false }));
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, { rowHeight: 30, height: 300, width: 800, enabled: false })
+      );
 
       expect(result.current.page).toBe(-1);
       expect(result.current.rowsPerPage).toBe(0);
@@ -149,7 +151,7 @@ describe('TableNG hooks', () => {
           height: 60,
           width: 800,
           paginationHeight: 20,
-          defaultRowHeight: 16,
+          rowHeight: 16,
         })
       );
 

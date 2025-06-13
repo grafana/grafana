@@ -83,8 +83,6 @@ export function TableCellNG(props: TableCellNGProps) {
   );
   const styles = useStyles2(getStyles, height, isRightAligned, colors);
 
-  const [isHovered, setIsHovered] = useState(false);
-
   const actions = useMemo(
     () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
     [getActions, frame, field, rowIdx, replaceVariables]
@@ -186,32 +184,20 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   }, [displayName, onCellFilterAdded, value]);
 
-  const handlers = useMemo(
-    () =>
-      hasActions
-        ? {
-            onFocus: () => setIsHovered(true),
-            onMouseEnter: () => setIsHovered(true),
-            onBlur: () => setIsHovered(false),
-            onMouseLeave: () => setIsHovered(false),
-          }
-        : ({} as const),
-    [hasActions]
-  );
-
   return (
-    <div ref={divWidthRef} className={styles.cell} {...handlers}>
+    <div ref={divWidthRef} className={styles.cell}>
       {renderedCell}
-      {/* TODO: I really wanted to avoid the `isHovered` state, and just mount all of these
+      {/* TODO: it would be great to avoid the `isHovered` state, and just mount all of these
         icons, unhiding them using CSS, but rendering the IconButton is very expensive and
         makes the scroll performance terrible. I think it's because of the Tooltip.
         */}
-      {isHovered && hasActions && (
+      {hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
             <IconButton
               name="eye"
-              tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+              aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+              className={styles.cellInspectButton}
               onClick={() => {
                 let inspectValue = value;
                 let mode = TableCellInspectorMode.text;
@@ -267,18 +253,30 @@ const getStyles = (theme: GrafanaTheme2, defaultRowHeight: number, isRightAligne
     color: color.textColor,
     '&:hover': {
       background: color.bgHoverColor,
+      '.table-cell-actions': {
+        display: 'flex',
+      },
     },
   }),
   cellActions: css({
-    display: 'flex',
+    display: 'none',
     position: 'absolute',
     top: 0,
     left: isRightAligned ? 0 : undefined,
     right: isRightAligned ? undefined : 0,
     margin: 'auto',
     height: '100%',
-    background: theme.colors.background.secondary,
     color: theme.colors.text.primary,
-    padding: '4px 0 4px 4px',
+  }),
+  cellInspectButton: css({
+    display: 'flex',
+    margin: 0,
+    padding: theme.spacing.x0_5,
+    [isRightAligned ? 'paddingLeft' : 'paddingRight']: theme.spacing.x1,
+    height: '100%',
+    '&:hover:before': {
+      height: '100%',
+      width: '100%',
+    },
   }),
 });
