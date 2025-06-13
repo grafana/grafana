@@ -54,26 +54,31 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  * Note that sanitized tags will be removed, such as "<script>".
  * We don't allow form or input elements.
  */
-export function sanitize(unsanitizedString: string): string {
+export function sanitize(unsanitizedString: string, allowTargetBlank = false): string {
   try {
-    // hook to handle anchor elements with target="_blank"
-    DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
-        const currentRel = node.getAttribute('rel') || '';
-        const relValues = new Set(currentRel.split(/\s+/).filter(Boolean));
-
-        relValues.add('noopener');
-        relValues.add('noreferrer');
-
-        node.setAttribute('rel', Array.from(relValues).join(' '));
-      }
-    });
-
-    return DOMPurify.sanitize(unsanitizedString, {
+    let cfg: DOMPurify.Config = {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
-      ADD_ATTR: ['target'],
-    });
+    };
+
+    if (allowTargetBlank) {
+      // hook to handle anchor elements with target="_blank"
+      DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+        if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+          const currentRel = node.getAttribute('rel') || '';
+          const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
+
+          relValues.add('noopener');
+          relValues.add('noreferrer');
+
+          node.setAttribute('rel', Array.from(relValues).join(' '));
+        }
+      });
+
+      cfg.ADD_ATTR = ['target'];
+    }
+
+    return DOMPurify.sanitize(unsanitizedString, cfg);
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
