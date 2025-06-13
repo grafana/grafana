@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
 import { Button, LinkButton, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { PROVISIONING_URL } from '../constants';

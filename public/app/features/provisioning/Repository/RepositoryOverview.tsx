@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { formatTimestamp } from '../utils/time';

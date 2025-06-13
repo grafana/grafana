@@ -12,7 +12,7 @@ import {
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning';
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 

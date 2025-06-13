@@ -1,4 +1,4 @@
-import { Folder } from 'app/api/clients/folder';
+import { Folder } from 'app/api/clients/folder/v1beta1';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { DashboardDTO } from 'app/types';
 

@@ -1,12 +1,13 @@
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
+
+import { notifyApp } from '../../../../core/actions';
+import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails } from './endpoints.gen';
-import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
-export const provisioningAPI = generatedAPI.enhanceEndpoints({
+export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
