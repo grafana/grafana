@@ -6,8 +6,8 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { withTheme2 } from '../../themes';
-import { Themeable2 } from '../../types';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { Themeable2 } from '../../types/theme';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';

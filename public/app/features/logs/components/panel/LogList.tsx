@@ -19,7 +19,7 @@ import {
   store,
   TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -30,7 +30,10 @@ import { LogLineDetails } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
+import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
+import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
 import { preProcessLogs, LogListModel } from './processing';
+import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
 import {
   calculateFieldDimensions,
@@ -185,19 +188,21 @@ export const LogList = ({
       syntaxHighlighting={syntaxHighlighting}
       wrapLogMessage={wrapLogMessage}
     >
-      <LogListComponent
-        containerElement={containerElement}
-        eventBus={eventBus}
-        getFieldLinks={getFieldLinks}
-        grammar={grammar}
-        initialScrollPosition={initialScrollPosition}
-        loading={loading}
-        loadMore={loadMore}
-        logs={logs}
-        showControls={showControls}
-        timeRange={timeRange}
-        timeZone={timeZone}
-      />
+      <LogListSearchContextProvider>
+        <LogListComponent
+          containerElement={containerElement}
+          eventBus={eventBus}
+          getFieldLinks={getFieldLinks}
+          grammar={grammar}
+          initialScrollPosition={initialScrollPosition}
+          loading={loading}
+          loadMore={loadMore}
+          logs={logs}
+          showControls={showControls}
+          timeRange={timeRange}
+          timeZone={timeZone}
+        />
+      </LogListSearchContextProvider>
     </LogListContextProvider>
   );
 };
@@ -259,7 +264,8 @@ const LogListComponent = ({
     popoverState,
     showDisablePopoverOptions,
   } = usePopoverMenu(wrapperRef.current);
-  const { t } = useTranslate();
+  useKeyBindings();
+  const { filterLogs, matchingUids, searchVisible } = useLogListSearchContext();
 
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
@@ -297,9 +303,9 @@ const LogListComponent = ({
   useEffect(() => {
     const handleResize = debounce(() => {
       setListHeight(
-        app === CoreApp.Explore
+        (app === CoreApp.Explore
           ? Math.max(window.innerHeight * 0.8, containerElement.clientHeight)
-          : containerElement.clientHeight
+          : containerElement.clientHeight) - (searchVisible ? LOG_LIST_SEARCH_HEIGHT : 0)
       );
     }, 50);
     window.addEventListener('resize', handleResize);
@@ -307,7 +313,7 @@ const LogListComponent = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [app, containerElement.clientHeight]);
+  }, [app, containerElement.clientHeight, searchVisible]);
 
   useLayoutEffect(() => {
     if (widthRef.current === widthContainer.clientWidth) {
@@ -363,10 +369,18 @@ const LogListComponent = ({
     debouncedResetAfterIndex(0);
   }, [debouncedResetAfterIndex]);
 
-  const filteredLogs = useMemo(
+  const levelFilteredLogs = useMemo(
     () =>
       filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
     [filterLevels, processedLogs]
+  );
+
+  const filteredLogs = useMemo(
+    () =>
+      matchingUids && filterLogs
+        ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
+        : levelFilteredLogs,
+    [filterLogs, levelFilteredLogs, matchingUids]
   );
 
   return (
@@ -405,6 +419,7 @@ const LogListComponent = ({
             onDismiss={onDisableCancel}
           />
         )}
+        <LogListSearch logs={levelFilteredLogs} listRef={listRef.current} />
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
@@ -474,8 +489,8 @@ function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: bo
       minWidth: theme.spacing(35),
     }),
     logListWrapper: css({
-      width: '100%',
       position: 'relative',
+      width: '100%',
     }),
     shortcut: css({
       display: 'inline-flex',

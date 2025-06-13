@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   ButtonGroup,
@@ -187,9 +188,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
     <Modal
       data-testid={metricsModaltestIds.metricModal}
       isOpen={isOpen}
-      title="Metrics explorer"
+      title={t('querybuilder.metrics-modal.title-metrics-explorer', 'Metrics explorer')}
       onDismiss={onClose}
-      aria-label="Browse metrics"
+      aria-label={t('querybuilder.metrics-modal.aria-label-browse-metrics', 'Browse metrics')}
       className={styles.modal}
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
@@ -227,7 +228,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
         <div className={styles.inputItem}>
           <Toggletip
-            aria-label="Additional settings"
+            aria-label={t('querybuilder.metrics-modal.aria-label-additional-settings', 'Additional settings')}
             content={additionalSettings}
             placement="bottom-end"
             closeButton={false}
@@ -240,7 +241,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 data-testid={metricsModaltestIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
-                Additional Settings
+                <Trans i18nKey="querybuilder.metrics-modal.additional-settings">Additional Settings</Trans>
               </Button>
               <Button
                 className={styles.noBorder}
@@ -252,12 +253,21 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
       <div className={styles.resultsData}>
-        {query.metric && <i className={styles.currentlySelected}>Currently selected: {query.metric}</i>}
+        {query.metric && (
+          <i className={styles.currentlySelected}>
+            <Trans i18nKey="querybuilder.metrics-modal.currently-selected" values={{ selected: query.metric }}>
+              Currently selected: {'{{selected}}'}
+            </Trans>
+          </i>
+        )}
         {query.labels.length > 0 && (
           <div className={styles.resultsDataFiltered}>
             <Icon name="info-circle" size="sm" />
             <div className={styles.resultsDataFilteredText}>
-              &nbsp;These metrics have been pre-filtered by labels chosen in the label filters.
+              &nbsp;
+              <Trans i18nKey="querybuilder.metrics-modal.metrics-pre-filtered">
+                These metrics have been pre-filtered by labels chosen in the label filters.
+              </Trans>
             </div>
           </div>
         )}
@@ -276,7 +286,13 @@ export const MetricsModal = (props: MetricsModalProps) => {
       </div>
       <div className={styles.resultsFooter}>
         <div className={styles.resultsAmount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
+          <Trans
+            i18nKey="querybuilder.metrics-modal.results-amount"
+            values={{ num: state.filteredMetricCount }}
+            count={state.totalMetricCount}
+          >
+            Showing {'{{num}}'} of {'{{count}}'} results
+          </Trans>
         </div>
         <Pagination
           currentPage={state.pageNum ?? 1}
@@ -287,11 +303,13 @@ export const MetricsModal = (props: MetricsModalProps) => {
           }}
         />
         <div className={styles.resultsPerPageWrapper}>
-          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
+          <p className={styles.resultsPerPageLabel}>
+            <Trans i18nKey="querybuilder.metrics-modal.results-per-page">Results per page</Trans>
+          </p>
           <Input
             data-testid={metricsModaltestIds.resultsPerPage}
             value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-            placeholder="results per page"
+            placeholder={t('querybuilder.metrics-modal.placeholder-results-per-page', 'results per page')}
             width={10}
             title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
             type="number"

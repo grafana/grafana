@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Scegli",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "messaggio",
-      "body-dashboard-drastically-changed": "Dato che stai utilizzando nuove funzionalità della dashboard supportate solo nel nuovo formato grafico della dashboard Grafana, la dashboard verrà salvata nel nuovo formato. Assicurati di voler eseguire questa azione o di voler salvare la dashboard come nuova copia.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Annulla"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "La funzionalità della dashboard dinamica è in fase sperimentale e non ha una parità di funzionalità completa con il comportamento attuale delle dashboard. Si basa su un nuovo formato di schema, che non supporta i pannelli della libreria. Ciò significa che quando si esporta la dashboard per utilizzarla in un'altra istanza, non includeremo i pannelli della libreria. Intendiamo supportarli man mano che progrediamo nel <2>ciclo di vita</2> della funzionalità.",
       "schema-v2-library-panels-export-title": "Schema Dashboard V2 non supporta ancora l'esportazione di pannelli della libreria da utilizzare in un'altra istanza",
-      "title-dashboard-drastically-changed": "La dashboard è cambiata radicalmente"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Imposterà l'aggiornamento corrente come nuovo valore predefinito",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Abilita evidenziazione",
       "escape-newlines": "Correggi le sequenze di nuove righe e tabulazioni non corrette nelle righe del registro",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Nascondi marca temporale",
       "hide-unique-labels": "Nascondi etichette univoche",
       "newest-first": "Ordine: prima i registri più recenti – Fai clic per mostrare prima i meno recenti",
