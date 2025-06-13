@@ -4531,7 +4531,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
@@ -5265,7 +5268,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Changes",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Save dashboard",
+        "title-copy": "Save dashboard copy",
+        "title-provisioned": "Provisioned dashboard"
       }
     },
     "save-dashboard-form": {
