@@ -7,16 +7,16 @@ import { config } from '@grafana/runtime';
 import { NodesMap, TreeNode } from '../../scopes/selector/types';
 
 import { useRegisterScopesActions } from './scopeActions';
-import { useScopeServicesState } from './utils';
+import { useScopeServicesState } from './scopesUtils';
 
 // Mock dependencies
 jest.mock('kbar', () => ({
   useRegisterActions: jest.fn(),
 }));
 
-jest.mock('./utils', () => {
+jest.mock('./scopesUtils', () => {
   return {
-    ...jest.requireActual('./utils'),
+    ...jest.requireActual('./scopesUtils'),
     useScopeServicesState: jest.fn(),
   };
 });

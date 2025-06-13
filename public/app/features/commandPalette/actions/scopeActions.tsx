@@ -13,7 +13,7 @@ import {
   mapScopeNodeToAction,
   mapScopesNodesTreeToActions,
   useScopeServicesState,
-} from './utils';
+} from './scopesUtils';
 
 export function useRegisterRecentScopesActions() {
   const recentScopesActions = getRecentScopesActions();

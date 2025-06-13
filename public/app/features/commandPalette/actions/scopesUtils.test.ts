@@ -5,7 +5,7 @@ import { ScopeNode } from '@grafana/data';
 import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
 import { SCOPES_PRIORITY } from '../values';
 
-import { mapScopeNodeToAction, mapScopesNodesTreeToActions } from './utils';
+import { mapScopeNodeToAction, mapScopesNodesTreeToActions } from './scopesUtils';
 
 const scopeNode: ScopeNode = {
   metadata: { name: 'scope1' },
