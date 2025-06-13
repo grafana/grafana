@@ -22,6 +22,8 @@ const esModules = [
   'vscode-languageserver-types',
   '@bsull/augurs',
   'react-data-grid',
+  '@grafana/llm',
+  'pkce-challenge',
 ].join('|');
 
 module.exports = {
