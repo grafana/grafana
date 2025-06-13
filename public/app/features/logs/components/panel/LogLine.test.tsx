@@ -9,6 +9,7 @@ import { createLogLine } from '../__mocks__/logRow';
 import { getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
+import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { getTruncationLength } from './virtualization';
@@ -307,6 +308,113 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
 
       expect(screen.queryByText('show more')).not.toBeInTheDocument();
       expect(screen.queryByText('show less')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Text search support', () => {
+    test('Highlights search text in a highlighted log line', () => {
+      log.setCurrentSearch('message');
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={true}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'message',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in a non-highlighted log line', () => {
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'message',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in a ANSI log lines', () => {
+      log = createLogLine({ labels: { place: 'luna' }, entry: 'Lorem \u001B[31mipsum\u001B[0m et dolor' });
+      log.hasAnsi = true;
+
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'olo',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} log={log} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
+      expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
+      expect(screen.getByText('olo')).toBeInTheDocument();
+    });
+
+    test('Highlights search text in displayed fields', () => {
+      render(
+        <LogListContextProvider {...contextProps} displayedFields={['place']}>
+          <LogListSearchContext.Provider
+            value={{
+              hideSearch: jest.fn(),
+              filterLogs: false,
+              matchingUids: [log.uid],
+              search: 'un',
+              searchVisible: true,
+              setMatchingUids: jest.fn(),
+              setSearch: jest.fn(),
+              showSearch: jest.fn(),
+              toggleFilterLogs: jest.fn(),
+            }}
+          >
+            <LogLine {...defaultProps} displayedFields={['place']} />
+          </LogListSearchContext.Provider>
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(log.timestamp)).toBeInTheDocument();
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.queryByText('luna')).not.toBeInTheDocument();
+      expect(screen.getByText('un')).toBeInTheDocument();
     });
   });
 });
