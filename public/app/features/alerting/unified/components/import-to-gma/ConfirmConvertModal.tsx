@@ -51,7 +51,7 @@ const AlertSomeRulesSkipped = () => {
   );
 };
 
-const WarningForNotUsingRulesManagedByIntegrations = () => {
+const WarningForImportingRulesManagedByIntegrations = () => {
   const { t } = useTranslate();
   return (
     <Alert
@@ -238,7 +238,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
           {!isEmpty(rulesThatMightBeOverwritten) && (
             <TargetFolderNotEmptyWarning targetFolderRules={rulesThatMightBeOverwritten} />
           )}
-          <WarningForNotUsingRulesManagedByIntegrations />
+          <WarningForImportingRulesManagedByIntegrations />
           {someRulesAreSkipped && <AlertSomeRulesSkipped />}
           <Text variant="h6">
             <Trans i18nKey="alerting.to-gma.confirm-modal.summary">The following alert rules will be imported:</Trans>
@@ -283,7 +283,7 @@ export function filterRulerRulesConfig(
       })
       .map((group) => {
         const filteredRules = group.rules.filter((rule) => {
-          const shouldSkip = shouldSkipRule(rule);
+          const shouldSkip = isRuleManagedByExternalSystem(rule);
           if (shouldSkip) {
             someRulesAreSkipped = true;
             return false;
@@ -307,13 +307,14 @@ export function filterRulerRulesConfig(
 }
 
 /*
-This function is used to check if the rule should be skipped.
+This function is used to check if the rule is managed by external system.
 It checks if the rule has the '__grafana_origin' label, and if the rule is from synthetics.
-If the rule has the '__grafana_origin' label, it is skipped.
-If the rule is from synthetics, it is skipped.
-If the rule is from integrations, it is skipped.
+These are the conditions for a rule to be managed by external system:
+- If the rule has the '__grafana_origin' label
+- If the rule is from synthetics
+- If the rule is from integrations
 */
-function shouldSkipRule(rule: RulerRuleDTO): boolean {
+function isRuleManagedByExternalSystem(rule: RulerRuleDTO): boolean {
   // check if the rule has the '__grafana_origin' label
   const hasGrafanaOriginLabel = isPluginProvidedRule(rule);
   if (hasGrafanaOriginLabel) {
