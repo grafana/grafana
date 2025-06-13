@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Drawer, Stack } from '@grafana/ui';
+import { Alert, Button, Drawer, Stack } from '@grafana/ui';
+import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDeleteRepositoryFiles';
 
 import { CommentField } from '../components/Provisioned/CommentField';
@@ -53,10 +55,20 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
     });
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     // This effect runs when the delete file request state changes
     // it checks if the request was successful or if there was an error
     if (request.isSuccess) {
+      if (workflow === 'branch' && ref && path) {
+        dashboard.closeModal();
+        onDismiss();
+        // Redirect to the provisioning preview pages
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+        return;
+      }
+
       // Show success message
       getAppEvents().publish({
         type: AppEvents.alertSuccess.name,
@@ -66,9 +78,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       // Reset form and close drawer
       reset();
       onDismiss();
-      // TODO: this is a temporary solution to navigate back to the dashboard view, add a proper solution later
-      // add maybe navigate back to dashboard with pull request option etc.
-      // window.history.back();
+      navigate('/dashboards');
     } else if (request.isError) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -78,7 +88,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
         ],
       });
     }
-  }, [request, onDismiss, reset]);
+  }, [request, onDismiss, reset, dashboard, workflow, ref, path, navigate, defaultValues.repo]);
 
   return (
     <Drawer
@@ -89,6 +99,19 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
+            {1 == 1 && (
+              <Alert
+                title={t(
+                  'dashboard-scene.delete-provisioned-dashboard-form.title-this-repository-is-read-only',
+                  'This repository is read only'
+                )}
+              >
+                <Trans i18nKey="dashboard-scene.delete-provisioned-dashboard-form.delete-read-only-file-message">
+                  This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete
+                  this dashboard, please remove the file from your Git repository.
+                </Trans>
+              </Alert>
+            )}
             {/* file path in git */}
             <PathField readOnly={readOnly} />
 

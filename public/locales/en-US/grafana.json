@@ -5032,9 +5032,14 @@
       }
     },
     "delete-provisioned-dashboard-form": {
-      "cancel": "Cancel",
-      "delete": "Delete dashboard",
-      "deleting": "Deleting..."
+      "api-error": "Error saving delete dashboard changes",
+      "cancel-action": "Cancel",
+      "delete-action": "Delete dashboard",
+      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
+      "deleting": "Deleting...",
+      "drawer-title": "Delete Provisioned Dashboard",
+      "success": "Dashboard deleted successfully",
+      "title-this-repository-is-read-only": "This repository is read only"
     },
     "description-label": {
       "description": "Description"

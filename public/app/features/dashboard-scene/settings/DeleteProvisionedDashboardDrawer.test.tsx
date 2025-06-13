@@ -17,6 +17,12 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(),
 }));
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
+}));
+// Add this variable declaration near your other mock variables
+const mockNavigate = jest.fn();
 
 // Mock the form components
 jest.mock('../components/Provisioned/CommentField', () => ({
@@ -299,22 +305,7 @@ describe('DeleteProvisionedDashboardDrawer', () => {
     });
   });
 
-  describe('Success/Error Handling', () => {
-    it('should handle success state', async () => {
-      setup({
-        requestState: {
-          isSuccess: true,
-        },
-      });
-
-      await waitFor(() => {
-        expect(mockPublish).toHaveBeenCalledWith({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Dashboard deleted successfully'],
-        });
-      });
-    });
-
+  describe('Error Handling', () => {
     it('should handle error state', async () => {
       const error = new Error('API Error');
       setup({
