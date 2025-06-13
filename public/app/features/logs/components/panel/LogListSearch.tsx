@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { ChangeEvent, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VariableSizeList } from 'react-window';
 
-import { GrafanaTheme2, shallowCompare } from '@grafana/data';
+import { escapeRegex, GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
@@ -181,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function findMatchingLogs(logs: LogListModel[], search: string, displayedFields: string[]) {
-  const regex = new RegExp(search, 'i');
+  const regex = new RegExp(escapeRegex(search), 'i');
   const newMatches = logs.filter((log) => {
     if (log.entry.match(regex)) {
       return true;
