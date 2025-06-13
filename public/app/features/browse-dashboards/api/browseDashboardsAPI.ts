@@ -9,6 +9,7 @@ import { folderAPI } from 'app/api/clients/folder';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -416,6 +417,19 @@ export const browseDashboardsAPI = createApi({
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
+      },
+    }),
+
+    listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+      queryFn: async () => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.listDeletedDashboards({});
+
+          return { data: response };
+        } catch (error) {
+          return handleRequestError(error);
+        }
       },
     }),
 
