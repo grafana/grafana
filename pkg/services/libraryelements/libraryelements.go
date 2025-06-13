@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -16,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:               cfg,
 		SQLStore:          sqlStore,
@@ -26,6 +27,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		log:               log.New("library-elements"),
 		features:          features,
 		AccessControl:     ac,
+		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider),
 	}
 
 	l.registerAPIEndpoints()
@@ -38,6 +40,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 type Service interface {
 	CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
+	PatchElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error)
+	DeleteElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error)
 	GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error)
 	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
@@ -55,6 +59,7 @@ type LibraryElementService struct {
 	log               log.Logger
 	features          featuremgmt.FeatureToggles
 	AccessControl     accesscontrol.AccessControl
+	k8sHandler        *libraryElementsK8sHandler
 }
 
 var _ Service = (*LibraryElementService)(nil)
@@ -67,6 +72,16 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return l.getLibraryElementByUid(c, signedInUser, cmd)
+}
+
+// PatchElement updates a Library Element.
+func (l *LibraryElementService) PatchElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+	return l.patchLibraryElement(c, signedInUser, cmd, uid)
+}
+
+// DeleteElement deletes a Library Element.
+func (l *LibraryElementService) DeleteElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
+	return l.deleteLibraryElement(c, signedInUser, uid)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
