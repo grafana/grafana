@@ -137,7 +137,7 @@ func TestKVNotifier_getKey(t *testing.T) {
 
 	uid := uuid.MustParse("019764aa-ffca-7d08-b3df-0839548b6103")
 	key := notifier.getKey(uid)
-	assert.Equal(t, "/unified/events/1749740580/019764aa-ffca-7d08-b3df-0839548b6103", key)
+	assert.Equal(t, "/unified/events/019764aa-ffca-7d08-b3df-0839548b6103", key)
 }
 
 func TestKVNotifier_UIDDeduplication(t *testing.T) {
@@ -302,4 +302,12 @@ func TestKVNotifier_Notify_Deduplication(t *testing.T) {
 
 	e2 := <-events
 	assert.Equal(t, event2.UID, e2.UID)
+}
+
+func TestUIDFromTimestamp(t *testing.T) {
+	ts := time.Now()
+	uid := uidFromTimstamp(ts)
+	rv, err := rvFromUID(uid)
+	require.NoError(t, err)
+	assert.Equal(t, ts.UnixMilli()*1000000, rv)
 }

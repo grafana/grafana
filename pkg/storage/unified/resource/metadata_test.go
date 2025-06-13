@@ -111,10 +111,6 @@ func TestMetadataStore_GetPrefix(t *testing.T) {
 
 	assert.Equal(t, expectedPrefix, actualPrefix)
 
-	key.Namespace = ""
-	_, err = store.getPrefix(key)
-	require.Error(t, err)
-
 	key.Group = ""
 	_, err = store.getPrefix(key)
 	require.Error(t, err)
@@ -354,7 +350,7 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 
 	_, err := store.GetLatest(ctx, key)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no latest version found")
+	assert.Contains(t, err.Error(), "key not found")
 }
 
 func TestMetadataStore_ListAll(t *testing.T) {

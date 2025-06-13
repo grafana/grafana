@@ -136,7 +136,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) ([]byte, error) {
 }
 
 func (d *dataStore) Save(ctx context.Context, key DataKey, value []byte) error {
-	return d.kv.Save(ctx, d.getKey(key), value, SaveOptions{})
+	return d.kv.Save(ctx, d.getKey(key), value)
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {

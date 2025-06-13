@@ -314,5 +314,5 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, d.getKey(obj.Key), valueBytes, SaveOptions{})
+	return d.kv.Save(ctx, d.getKey(obj.Key), valueBytes)
 }

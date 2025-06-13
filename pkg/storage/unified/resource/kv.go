@@ -32,9 +32,6 @@ type KVObject struct {
 	Value []byte
 }
 
-type SaveOptions struct {
-}
-
 type KV interface {
 	// List all keys in the store
 	List(ctx context.Context, opt ListOptions) iter.Seq2[string, error]
@@ -43,7 +40,7 @@ type KV interface {
 	Get(ctx context.Context, key string, opts ...GetOptions) (KVObject, error)
 
 	// Save a new value
-	Save(ctx context.Context, key string, value []byte, opts SaveOptions) error
+	Save(ctx context.Context, key string, value []byte) error
 
 	// Delete a value
 	Delete(ctx context.Context, key string) error
@@ -83,7 +80,7 @@ func (k *badgerKV) Get(ctx context.Context, key string, opts ...GetOptions) (KVO
 	return out, nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, key string, value []byte, opts SaveOptions) error {
+func (k *badgerKV) Save(ctx context.Context, key string, value []byte) error {
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 

@@ -28,7 +28,7 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 	}
 }
 
-// This returns the resource version as a microseconds unix timestamp
+// This returns the resource version as a nanoseconds unix timestamp
 // UUIDv7 includes the time in ms but in the first 7 bytes.
 // The last 2 bytes are the version and a unique sequence number.
 // The sequence number is really useful to avoid conflicts when writing
@@ -45,7 +45,7 @@ func rvFromUID(uid uuid.UUID) (int64, error) {
 		(int64(uid[4]) << 8) |
 		int64(uid[5])
 	seq := (int64(uid[6]&0x0F) << 8) | int64(uid[7])
-	return (ms * 1000) + seq, nil
+	return (ms * 1000000) + seq, nil
 }
 
 // // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -99,6 +99,9 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 	// TODO: Emit an event
+	rv, _ := rvFromUID(uid)
+	if rv > 0 {
+	}
 	err = k.notifier.Send(ctx, Event{
 		Namespace:  event.Key.Namespace,
 		Group:      event.Key.Group,
@@ -168,7 +171,9 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		offset = token.StartOffset
 		resourceVersion = token.ResourceVersion
 	}
-	listRV := time.Now().UnixMicro() // For now we return the current time as the resource version
+	// For now we return the current time as the resource version
+	uid, _ := uuid.NewV7()
+	listRV, _ := rvFromUID(uid)
 	if resourceVersion > 0 {
 		listRV = resourceVersion
 	}
@@ -293,7 +298,7 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 // WatchWriteEvents returns a channel that receives write events.
 func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
-	events := make(chan *WrittenEvent) // TODO: make this configurable
+	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
 	notifierEvents, err := k.notifier.Notify(ctx)
 	if err != nil {
@@ -339,7 +344,7 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Value:           data,
 				ResourceVersion: rv,
 				PreviousRV:      event.PreviousRV,
-				Timestamp:       rv / 1000000, // convert to seconds
+				Timestamp:       rv / time.Second.Nanoseconds(), // convert to seconds
 			}
 		}
 		close(events)

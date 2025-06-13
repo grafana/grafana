@@ -15,6 +15,7 @@ const (
 	defaultLookbackPeriod = 1 * time.Minute
 	defaultPollInterval   = 100 * time.Millisecond
 	defaultEventCacheSize = 10000
+	defaultBufferSize     = 10000
 )
 
 type kvNotifier struct {
@@ -23,8 +24,8 @@ type kvNotifier struct {
 
 	// UID deduplication tracking
 	mu         sync.RWMutex
-	seenUIDs   map[uuid.UUID]bool
-	uidHistory []uuid.UUID
+	seenUIDs   map[string]bool
+	uidHistory []string
 	uidIndex   int
 }
 
@@ -56,11 +57,14 @@ func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
 	if opts.EventCacheSize == 0 {
 		opts.EventCacheSize = defaultEventCacheSize
 	}
+	if opts.BufferSize == 0 {
+		opts.BufferSize = defaultBufferSize
+	}
 	return &kvNotifier{
 		kv:         kv,
 		opts:       opts,
-		seenUIDs:   make(map[uuid.UUID]bool),
-		uidHistory: make([]uuid.UUID, defaultEventCacheSize),
+		seenUIDs:   make(map[string]bool),
+		uidHistory: make([]string, defaultEventCacheSize),
 		uidIndex:   0,
 	}
 }
@@ -92,7 +96,7 @@ func (n *kvNotifier) markUIDSeen(uid uuid.UUID) {
 	defer n.mu.Unlock()
 
 	// If we already have this UID, no need to add it again
-	if n.seenUIDs[uid] {
+	if n.seenUIDs[uid.String()] {
 		return
 	}
 
@@ -103,8 +107,8 @@ func (n *kvNotifier) markUIDSeen(uid uuid.UUID) {
 	}
 
 	// Add the new UID
-	n.seenUIDs[uid] = true
-	n.uidHistory[n.uidIndex] = uid
+	n.seenUIDs[uid.String()] = true
+	n.uidHistory[n.uidIndex] = uid.String()
 	n.uidIndex = (n.uidIndex + 1) % n.opts.EventCacheSize
 }
 
@@ -112,7 +116,7 @@ func (n *kvNotifier) markUIDSeen(uid uuid.UUID) {
 func (n *kvNotifier) hasSeenUID(uid uuid.UUID) bool {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
-	return n.seenUIDs[uid]
+	return n.seenUIDs[uid.String()]
 }
 
 func (n *kvNotifier) Send(ctx context.Context, event Event) error {
@@ -120,15 +124,15 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 	if err != nil {
 		return err
 	}
-	err = n.kv.Save(ctx, n.getKey(event.UID), v, SaveOptions{})
+	err = n.kv.Save(ctx, n.getKey(event.UID), v)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
-	events := make(chan *Event, n.opts.BufferSize)
+func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
+	events := make(chan Event, n.opts.BufferSize)
 	lastUID, _ := uuid.NewV7()
 	go func() {
 		defer close(events)
@@ -162,14 +166,12 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 					// Mark this UID as seen before sending the event
 					n.markUIDSeen(ev.UID)
 
-					rv, _ := rvFromUID(ev.UID)
-					lastRV, _ := rvFromUID(lastUID)
-					if rv > lastRV {
+					if ev.UID.String() > lastUID.String() {
 						lastUID = ev.UID
 					}
 					// Send the event
 					select {
-					case events <- &ev:
+					case events <- ev:
 					case <-ctx.Done():
 						return
 					}
@@ -178,4 +180,21 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan *Event, error) {
 		}
 	}()
 	return events, nil
+}
+
+// WIP
+func uidFromTimstamp(ts time.Time) uuid.UUID {
+	t := ts.UnixMilli()
+	s := 0
+	var uid uuid.UUID
+	uid[0] = byte(t >> 40)
+	uid[1] = byte(t >> 32)
+	uid[2] = byte(t >> 24)
+	uid[3] = byte(t >> 16)
+	uid[4] = byte(t >> 8)
+	uid[5] = byte(t)
+
+	uid[6] = 0x70 | (0x0F & byte(s>>8))
+	uid[7] = byte(s)
+	return uid
 }

@@ -54,7 +54,7 @@ func TestBadgerKV_Save(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Save new key", func(t *testing.T) {
-		err := kv.Save(ctx, "key1", []byte("value1"), SaveOptions{})
+		err := kv.Save(ctx, "key1", []byte("value1"))
 		require.NoError(t, err)
 
 		// Verify the value was saved
@@ -66,11 +66,11 @@ func TestBadgerKV_Save(t *testing.T) {
 
 	t.Run("Save overwrite existing key", func(t *testing.T) {
 		// First save
-		err := kv.Save(ctx, "key1", []byte("oldvalue"), SaveOptions{})
+		err := kv.Save(ctx, "key1", []byte("oldvalue"))
 		require.NoError(t, err)
 
 		// Overwrite
-		err = kv.Save(ctx, "key1", []byte("newvalue"), SaveOptions{})
+		err = kv.Save(ctx, "key1", []byte("newvalue"))
 		require.NoError(t, err)
 
 		// Verify the value was updated
@@ -90,7 +90,7 @@ func TestBadgerKV_Delete(t *testing.T) {
 
 	t.Run("Delete existing key", func(t *testing.T) {
 		// First create a key
-		err := kv.Save(ctx, "key1", []byte("value1"), SaveOptions{})
+		err := kv.Save(ctx, "key1", []byte("value1"))
 		require.NoError(t, err)
 
 		// Delete it
@@ -202,7 +202,7 @@ func TestBadgerKV_Concurrent(t *testing.T) {
 				value := []byte(fmt.Sprintf("value%d", i))
 
 				// Save
-				err := kv.Save(ctx, key, value, SaveOptions{})
+				err := kv.Save(ctx, key, value)
 				require.NoError(t, err)
 
 				// Get

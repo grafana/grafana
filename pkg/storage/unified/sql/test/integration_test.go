@@ -67,9 +67,9 @@ func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
 	}, &unitest.TestOptions{
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{
-			unitest.TestHappyPath:                 false,
-			unitest.TestWatchWriteEvents:          false,
-			unitest.TestList:                      false,
+			// unitest.TestHappyPath:                 true,
+			// unitest.TestWatchWriteEvents:          true,
+			// unitest.TestList:                      true,
 			unitest.TestListHistory:               true,
 			unitest.TestListHistoryErrorReporting: true,
 			unitest.TestBlobSupport:               true,
