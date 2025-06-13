@@ -8,10 +8,10 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -321,9 +321,8 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 
 	db := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	database := database.ProvideDatabase(db)
-
-	tracer := tracing.InitializeTracerForTest()
+	tracer := noop.NewTracerProvider().Tracer("test")
+	database := database.ProvideDatabase(db, tracer)
 
 	// Initialize encryption manager and storage
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features)
@@ -352,10 +351,10 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
 	require.NoError(t, err)
 
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, allowList)
 
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
+	decryptSvc, err := ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
 	require.NoError(t, err)
 
 	return decryptSvc.(*decryptStorage), secureValueMetadataStorage, keeperService, keeperMetadataStorage

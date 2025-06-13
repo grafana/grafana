@@ -9,9 +9,12 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type SecureValueService struct {
+	tracer                     trace.Tracer
 	accessClient               claims.AccessClient
 	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -20,6 +23,7 @@ type SecureValueService struct {
 }
 
 func ProvideSecureValueService(
+	tracer trace.Tracer,
 	accessClient claims.AccessClient,
 	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -27,6 +31,7 @@ func ProvideSecureValueService(
 	encryptionManager contracts.EncryptionManager,
 ) *SecureValueService {
 	return &SecureValueService{
+		tracer:                     tracer,
 		accessClient:               accessClient,
 		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -36,6 +41,13 @@ func ProvideSecureValueService(
 }
 
 func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
+		attribute.String("name", sv.GetName()),
+		attribute.String("namespace", sv.GetNamespace()),
+		attribute.String("actor", actorUID),
+	))
+	defer span.End()
+
 	sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Creating secure value"}
 
 	var out *secretv0alpha1.SecureValue
@@ -72,11 +84,21 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 }
 
 func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	// TODO: readopts
-	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.Read", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 }
 
 func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.List", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -114,6 +136,13 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 }
 
 func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
+		attribute.String("name", newSecureValue.GetName()),
+		attribute.String("namespace", newSecureValue.GetNamespace()),
+		attribute.String("actor", actorUID),
+	))
+	defer span.End()
+
 	// True when the effects of an update can be seen immediately.
 	// Never true in this case since updating a secure value is async.
 	const updateIsSync = false
@@ -181,6 +210,12 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 }
 
 func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.Delete", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
 	// Set inside of the transaction callback
 	var out *secretv0alpha1.SecureValue
 

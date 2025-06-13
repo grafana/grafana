@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,11 +42,12 @@ type KeeperRest struct {
 	accessClient   claims.AccessClient
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
+	tracer         trace.Tracer
 }
 
 // NewKeeperRest is a returns a constructed `*KeeperRest`.
-func NewKeeperRest(storage contracts.KeeperMetadataStorage, accessClient claims.AccessClient, resource utils.ResourceInfo) *KeeperRest {
-	return &KeeperRest{storage, accessClient, resource, resource.TableConverter()}
+func NewKeeperRest(tracer trace.Tracer, storage contracts.KeeperMetadataStorage, accessClient claims.AccessClient, resource utils.ResourceInfo) *KeeperRest {
+	return &KeeperRest{storage, accessClient, resource, resource.TableConverter(), tracer}
 }
 
 // New returns an empty `*Keeper` that is used by the `Create` method.
@@ -81,6 +84,9 @@ func (s *KeeperRest) List(ctx context.Context, options *internalversion.ListOpti
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "KeeperRest.List", trace.WithAttributes(attribute.String("namespace", namespace)))
+	defer span.End()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -132,8 +138,13 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	// TODO: readopts
-	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{})
+	ctx, span := s.tracer.Start(ctx, "KeeperRest.Get", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
+	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{ForUpdate: false})
 	if err != nil {
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -155,6 +166,12 @@ func (s *KeeperRest) Create(
 	if !ok {
 		return nil, fmt.Errorf("expected Keeper for create")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "KeeperRest.Create", trace.WithAttributes(
+		attribute.String("name", kp.GetName()),
+		attribute.String("namespace", kp.GetNamespace()),
+	))
+	defer span.End()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -188,6 +205,12 @@ func (s *KeeperRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperRest.Update", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", request.NamespaceValue(ctx)),
+	))
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, false, fmt.Errorf("missing auth info in context")
@@ -241,6 +264,12 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 	if !ok {
 		return nil, false, fmt.Errorf("missing namespace")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "KeeperRest.Delete", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
 
 	err := s.storage.Delete(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
