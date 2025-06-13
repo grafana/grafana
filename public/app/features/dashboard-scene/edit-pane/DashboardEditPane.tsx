@@ -255,6 +255,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
-    this.state.selection!.markAsNewElement();
+    this.state.selection?.markAsNewElement();
   }
 }

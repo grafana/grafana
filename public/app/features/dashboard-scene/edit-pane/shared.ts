@@ -2,7 +2,14 @@ import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  SceneGridRow,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -98,6 +105,16 @@ export interface RemoveElementActionHelperProps {
   undo: () => void;
 }
 
+export interface AddVariableActionHelperProps {
+  addedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface RemoveVariableActionHelperProps {
+  removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
 export const dashboardEditActions = {
   /**
    * Registers and peforms an edit action
@@ -143,6 +160,36 @@ export const dashboardEditActions = {
       source,
       perform,
       undo,
+    });
+  },
+
+  addVariable({ source, addedObject }: AddVariableActionHelperProps) {
+    const varsBeforeAddition = [...source.state.variables];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ variables: [...varsBeforeAddition] });
+      },
+    });
+  },
+  removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
+    const varsBeforeRemoval = [...source.state.variables];
+
+    dashboardEditActions.removeElement({
+      source,
+      removedObject,
+      perform() {
+        removedObject.publishEvent(new ObjectRemovedFromCanvasEvent(removedObject), true);
+        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeRemoval });
+      },
     });
   },
 };

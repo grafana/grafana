@@ -9,7 +9,7 @@ import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
@@ -96,8 +96,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public onDelete() {
     const set = this.variable.parent!;
     if (set instanceof SceneVariableSet) {
-      this.variable.publishEvent(new ObjectRemovedFromCanvasEvent(this.variable), true);
-      set.setState({ variables: set.state.variables.filter((v) => v !== this.variable) });
+      dashboardEditActions.removeVariable({
+        source: set,
+        removedObject: this.variable,
+      });
     }
   }
 
