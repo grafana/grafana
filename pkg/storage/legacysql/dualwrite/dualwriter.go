@@ -133,7 +133,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			defer close(out)
-			unifiedList, err := d.unified.List(ctxBg, options)
+			unifiedList, err := d.unified.List(ctxBg, unifiedOptions)
 			if err != nil {
 				log.Error("failed background LIST to unified", "err", err)
 				return

@@ -541,40 +541,42 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 		require.NotNil(t, parentCreate.Result)
 		require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
 	}
-	continueToken := ""
-	for i := 0; i < foldersCount; i++ {
-		res, err := client.Resource.List(context.Background(), metav1.ListOptions{
-			Limit:    1,
-			Continue: continueToken,
-		})
-		require.NoError(t, err)
-		require.Len(t, res.Items, 1)
-		require.Equal(t, fmt.Sprintf("uid-%d", i), res.Items[0].GetName())
-		continueToken = res.GetContinue()
-	}
-	// After we did as many requests as we created items, we expect the token to be empty and have reached
-	// the last page.
-	require.Equal(t, "", continueToken)
+	fetchedFolders, fetchItemsPerCall := checkListRequest(t, 1, client)
+	require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+	require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
 
 	// Now let's see if the iterator also works when we are limited by the page size, which should be set
 	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
 	// as legacy doesn't have such a page size limit.
 	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
 		t.Run("check page size iterator", func(t *testing.T) {
-			for i := 0; i < foldersCount; i++ {
-				res, err := client.Resource.List(context.Background(), metav1.ListOptions{
-					Limit:    3,
-					Continue: continueToken,
-				})
-				require.NoError(t, err)
-				require.Len(t, res.Items, 1)
-				continueToken = res.GetContinue()
-			}
-			// After we did as many requests as we created items, we expect the token to be empty and have reached
-			// the last page.
-			require.Equal(t, "", continueToken)
+			fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
+			require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+			require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
 		})
 	}
+}
+
+func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient) ([]string, []int) {
+	fetchedFolders := make([]string, 0, 3)
+	fetchItemsPerCall := make([]int, 0, 3)
+	continueToken := ""
+	for {
+		res, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Limit:    limit,
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
+		fetchItemsPerCall = append(fetchItemsPerCall, len(res.Items))
+		for _, item := range res.Items {
+			fetchedFolders = append(fetchedFolders, item.GetName())
+		}
+		continueToken = res.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	return fetchedFolders, fetchItemsPerCall
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
