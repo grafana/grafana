@@ -3,11 +3,12 @@ import { useMemo } from 'react';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { useDispatch } from 'app/types';
+import { ShowModalReactEvent } from 'app/types/events';
 
-import appEvents from '../../../core/app_events';
-import { useDispatch } from '../../../types';
-import { ShowModalReactEvent } from '../../../types/events';
 import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
@@ -58,7 +59,14 @@ export function RecentlyDeletedActions() {
       if (!dashboard) {
         return Promise.resolve();
       }
-      return restoreDashboard({ dashboard: structuredClone(dashboard), targetFolderUID: restoreTarget });
+      // Clone the dashboard because the data from the store is immutable
+      const copy = structuredClone(dashboard);
+      copy.metadata = {
+        ...copy.metadata,
+        annotations: { ...copy.metadata?.annotations, [AnnoKeyFolder]: restoreTarget },
+      };
+
+      return restoreDashboard({ dashboard: copy });
     });
 
     await Promise.all(promises);

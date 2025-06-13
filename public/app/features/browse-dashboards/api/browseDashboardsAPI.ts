@@ -55,7 +55,6 @@ interface ImportOptions {
 
 interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
-  targetFolderUID: string;
 }
 
 interface HardDeleteDashboardArgs {
