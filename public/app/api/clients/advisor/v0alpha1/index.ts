@@ -1,6 +1,6 @@
 import { generatedAPI } from './endpoints.gen';
 
-export const advisorAPI = generatedAPI.enhanceEndpoints({
+export const advisorAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     // Need to mutate the generated query to set the Content-Type header correctly
     updateCheck: (endpointDefinition) => {
@@ -37,5 +37,5 @@ export const {
   useUpdateCheckMutation,
   useListCheckTypeQuery,
   useUpdateCheckTypeMutation,
-} = advisorAPI;
+} = advisorAPIv0alpha1;
 export { type Check, type CheckType } from './endpoints.gen'; // eslint-disable-line
