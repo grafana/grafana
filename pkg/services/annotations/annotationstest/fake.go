@@ -26,7 +26,7 @@ func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.D
 		delete(repo.annotations, params.ID)
 	} else {
 		for _, v := range repo.annotations {
-			if params.DashboardID == v.DashboardID && params.PanelID == v.PanelID {
+			if params.DashboardUID == v.DashboardUID && params.PanelID == v.PanelID {
 				delete(repo.annotations, v.ID)
 			}
 		}
@@ -70,7 +70,7 @@ func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	defer repo.mtx.Unlock()
 
 	if annotation, has := repo.annotations[query.AnnotationID]; has {
-		return []*annotations.ItemDTO{{ID: annotation.ID, DashboardID: annotation.DashboardID}}, nil
+		return []*annotations.ItemDTO{{ID: annotation.ID, DashboardID: annotation.DashboardID, DashboardUID: &annotation.DashboardUID}}, nil // nolint: staticcheck
 	}
 	annotations := []*annotations.ItemDTO{{ID: 1, DashboardID: 0}}
 	return annotations, nil

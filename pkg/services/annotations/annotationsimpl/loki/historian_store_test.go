@@ -193,7 +193,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.UnixMilli(),
 				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
@@ -243,7 +243,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID, // nolint: staticcheck
 				From:        start.Add(-2 * time.Second).UnixMilli(),
 				To:          start.Add(-1 * time.Second).UnixMilli(),
 			}
@@ -273,7 +273,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
-				DashboardID: dashboard1.ID,
+				DashboardID: dashboard1.ID,                           // nolint: staticcheck
 				From:        start.Add(-1 * time.Second).UnixMilli(), // should clamp to start
 				To:          start.Add(1 * time.Second).UnixMilli(),
 			}
@@ -294,17 +294,17 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			fakeLokiClient.cfg.MaxQueryLength = oldMax
 		})
 
-		t.Run("should sort history by time", func(t *testing.T) {
+		t.Run("should sort history by time and be able to query by dashboard uid", func(t *testing.T) {
 			fakeLokiClient.rangeQueryRes = []historian.Stream{
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
 				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
-				OrgID:       1,
-				DashboardID: dashboard1.ID,
-				From:        start.UnixMilli(),
-				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+				OrgID:        1,
+				DashboardUID: dashboard1.UID,
+				From:         start.UnixMilli(),
+				To:           start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -393,7 +393,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 				expected := &annotations.ItemDTO{
 					AlertID:      rule.ID,
-					DashboardID:  dashboard1.ID,
+					DashboardID:  dashboard1.ID, // nolint: staticcheck
 					DashboardUID: &dashboard1.UID,
 					PanelID:      *rule.PanelID,
 					Time:         transition.LastEvaluationTime.UnixMilli(),
@@ -433,6 +433,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, items, numTransitions)
 
 			for _, item := range items {
+				// nolint: staticcheck
 				require.Equal(t, dashboard1.ID, item.DashboardID)
 				require.Equal(t, dashboard1.UID, *item.DashboardUID)
 			}
@@ -464,7 +465,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 			for _, item := range items {
 				require.Zero(t, *item.DashboardUID)
-				require.Zero(t, item.DashboardID)
+				require.Zero(t, item.DashboardID) // nolint: staticcheck
 			}
 		})
 	})
@@ -553,7 +554,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should set dashboard UID from dashboard ID if query does not contain UID", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"dashboard-uid": 1,
@@ -566,7 +567,7 @@ func TestBuildHistoryQuery(t *testing.T) {
 	t.Run("should skip dashboard UID if missing from query and dashboard map", func(t *testing.T) {
 		query := buildHistoryQuery(
 			&annotations.ItemQuery{
-				DashboardID: 1,
+				DashboardID: 1, // nolint: staticcheck
 			},
 			map[string]int64{
 				"other-dashboard-uid": 2,
@@ -794,7 +795,7 @@ func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) 
 		require.Equal(t, expected.PanelID, actual.PanelID)
 	}
 	if expected.DashboardUID != nil {
-		require.Equal(t, expected.DashboardID, actual.DashboardID)
+		require.Equal(t, expected.DashboardID, actual.DashboardID) // nolint: staticcheck
 		require.Equal(t, *expected.DashboardUID, *actual.DashboardUID)
 	}
 	require.Equal(t, expected.NewState, actual.NewState)
