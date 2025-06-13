@@ -1,14 +1,13 @@
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { createReturnTo } from '../hooks/useReturnTo';
 import { GrafanaRulesSource } from '../utils/datasource';
 import { totalFromStats } from '../utils/ruleStats';
-import { rulerRuleType } from '../utils/rules';
+import { prometheusRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import {
@@ -18,10 +17,9 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
-import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 
-const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
+// const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
 interface GrafanaRuleLoaderProps {
@@ -31,14 +29,14 @@ interface GrafanaRuleLoaderProps {
 }
 
 export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
-  const {
-    data: rulerRuleGroup,
-    error: rulerRuleGroupError,
-    isLoading: isRulerRuleGroupLoading,
-  } = useGetGrafanaRulerGroupQuery({
-    folderUid: groupIdentifier.namespace.uid,
-    groupName: groupIdentifier.groupName,
-  });
+  // const {
+  //   data: rulerRuleGroup,
+  //   error: rulerRuleGroupError,
+  //   isLoading: isRulerRuleGroupLoading,
+  // } = useGetGrafanaRulerGroupQuery({
+  //   folderUid: groupIdentifier.namespace.uid,
+  //   groupName: groupIdentifier.groupName,
+  // });
   const {
     data: promRuleGroup,
     error: promRuleGroupError,
@@ -48,20 +46,35 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
     groupName: groupIdentifier.groupName,
   });
 
-  const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
+  // const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
   const promRule = promRuleGroup?.data.groups
     .flatMap((group) => group.rules)
     .find((promRule) => promRule.uid === ruleIdentifier.uid);
 
-  if (rulerRuleGroupError || promRuleGroupError) {
-    return <RulerRuleLoadingError ruleIdentifier={ruleIdentifier} error={rulerRuleGroupError || promRuleGroupError} />;
+  if (promRuleGroupError) {
+    return <RulerRuleLoadingError ruleIdentifier={ruleIdentifier} error={promRuleGroupError} />;
   }
 
-  if (isRulerRuleGroupLoading || isPromRuleGroupLoading) {
+  if (isPromRuleGroupLoading) {
     return <AlertRuleListItemSkeleton />;
   }
 
-  if (!rulerRule) {
+  // if (!rulerRule) {
+  //   return (
+  //     <Alert
+  //       title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for UID {{uid}}', {
+  //         uid: ruleIdentifier.uid,
+  //       })}
+  //       severity="error"
+  //     >
+  //       <Trans i18nKey="alerting.rule-list.cannot-find-rule-details-for">
+  //         Cannot find rule details for UID {{ uid: ruleIdentifier.uid ?? '<empty uid>' }}
+  //       </Trans>
+  //     </Alert>
+  //   );
+  // }
+
+  if (!promRule) {
     return (
       <Alert
         title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for UID {{uid}}', {
@@ -79,7 +92,7 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
   return (
     <GrafanaRuleListItem
       rule={promRule}
-      rulerRule={rulerRule}
+      // rulerRule={rulerRule}
       groupIdentifier={groupIdentifier}
       namespaceName={namespaceName}
     />
@@ -87,8 +100,8 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
 }
 
 interface GrafanaRuleListItemProps {
-  rule?: GrafanaPromRuleDTO;
-  rulerRule: RulerGrafanaRuleDTO;
+  rule: GrafanaPromRuleDTO;
+  // rulerRule: RulerGrafanaRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
   operation?: RuleOperation;
@@ -97,22 +110,17 @@ interface GrafanaRuleListItemProps {
 
 export function GrafanaRuleListItem({
   rule,
-  rulerRule,
+  // rulerRule,
   groupIdentifier,
   namespaceName,
   operation,
   showLocation = true,
 }: GrafanaRuleListItemProps) {
   const returnTo = createReturnTo();
-
-  const {
-    grafana_alert: { uid, title, provenance, is_paused },
-    annotations = {},
-    labels = {},
-  } = rulerRule;
+  const { name, uid, labels, provenance } = rule;
 
   const commonProps: RuleListItemCommonProps = {
-    name: title,
+    name,
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
     namespace: namespaceName,
@@ -121,20 +129,21 @@ export function GrafanaRuleListItem({
     error: rule?.lastError,
     labels: labels,
     isProvisioned: Boolean(provenance),
-    isPaused: rule?.isPaused ?? is_paused,
+    isPaused: rule?.isPaused,
     application: 'grafana' as const,
-    actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    // actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    actions: undefined, // TODO: add actions
     showLocation,
   };
 
-  if (rulerRuleType.grafana.alertingRule(rulerRule)) {
+  if (prometheusRuleType.grafana.alertingRule(rule)) {
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
     const instancesCount = totalFromStats(promAlertingRule?.totals ?? {});
 
     return (
       <AlertRuleListItem
         {...commonProps}
-        summary={annotations.summary}
+        summary={rule.annotations?.summary}
         state={promAlertingRule?.state}
         instancesCount={instancesCount}
         operation={operation}
@@ -142,9 +151,9 @@ export function GrafanaRuleListItem({
     );
   }
 
-  if (rulerRuleType.grafana.recordingRule(rulerRule)) {
+  if (prometheusRuleType.grafana.recordingRule(rule)) {
     return <RecordingRuleListItem {...commonProps} />;
   }
 
-  return <UnknownRuleListItem ruleName={title} groupIdentifier={groupIdentifier} ruleDefinition={rulerRule} />;
+  return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;
 }
