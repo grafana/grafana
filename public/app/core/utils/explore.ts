@@ -95,7 +95,10 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   const exploreState = JSON.stringify({
     [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
   });
-  return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
+  // NI fork: The below commented out line works correctly with the dashboardScene feature turned on,
+  // but not with it off, so we use the one below it instead.
+  // return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
+  return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
 }
 
 export function requestIdGenerator(exploreId: string) {
