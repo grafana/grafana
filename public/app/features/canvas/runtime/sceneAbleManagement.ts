@@ -471,6 +471,15 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     { passive: false }
   );
 
+  // Reset zoom and scroll position on double click
+  scene.viewerDiv!.addEventListener('dblclick', (e: MouseEvent) => {
+    // Only reset if not in edit mode and pan/zoom is enabled
+    if (!scene.editModeEnabled.getValue() && scene.shouldPanZoom && scene.infiniteViewer) {
+      scene.infiniteViewer.setZoom(1);
+      scene.infiniteViewer.scrollTo(0, 0);
+    }
+  });
+
   // Mouse scroll click
   // Only allow panning with middle mouse button (button 1)
   // Left click is reserved for selection/manipulation, right click for context menu
