@@ -363,6 +363,14 @@
       "last-updated-by": "Last updated by",
       "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
+      "notification-configuration": {
+        "active-timings": "Active time intervals",
+        "contact-point": "Contact point",
+        "group-by": "Grouped by",
+        "group-title": "Notification configuration",
+        "mute-timings": "Mute timings",
+        "timing-options": "Timings"
+      },
       "pending-period": "Pending period",
       "rule": "Rule",
       "rule-identifier": "Rule identifier",
@@ -910,6 +918,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
