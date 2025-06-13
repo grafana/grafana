@@ -476,6 +476,9 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
+	// Open feature settings
+	OpenFeature OpenFeatureSettings
+
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -551,11 +554,13 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexRebuildInterval                       time.Duration
 	EnableSharding                             bool
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
@@ -1314,6 +1319,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readExpressionsSettings()
 	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
+
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
 		return err
 	}
 

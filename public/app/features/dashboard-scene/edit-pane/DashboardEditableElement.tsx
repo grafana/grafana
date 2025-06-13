@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, TextArea } from '@grafana/ui';
@@ -7,8 +7,11 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+
+import { dashboardEditActions } from './shared';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -79,7 +82,38 @@ export class DashboardEditableElement implements EditableDashboardElement {
 export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { title } = dashboard.useState();
 
-  return <Input id={id} value={title} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  // We want to save the unchanged value for the 'undo' action
+  const valueBeforeEdit = useRef('');
+
+  return (
+    <Input
+      id={id}
+      value={title}
+      onChange={(e) => {
+        dashboard.setState({ title: e.currentTarget.value });
+      }}
+      onFocus={(e) => {
+        valueBeforeEdit.current = e.currentTarget.value;
+      }}
+      onBlur={(e) => {
+        // If the title input is currently focused and we click undo/redo
+        // we don't want to mess with the stack
+        const clickedUndoRedo =
+          e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
+        const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = titleUnchanged || clickedUndoRedo;
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeTitle({
+          source: dashboard,
+          oldTitle: valueBeforeEdit.current,
+          newTitle: e.currentTarget.value,
+        });
+      }}
+    />
+  );
 }
 
 export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {

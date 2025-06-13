@@ -1,3 +1,70 @@
+<!-- 12.0.1+security-01 START -->
+
+# 12.0.1+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 12.0.1+security-01 END -->
+<!-- 11.6.2+security-01 START -->
+
+# 11.6.2+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.6.2+security-01 END -->
+<!-- 11.5.5+security-01 START -->
+
+# 11.5.5+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.5.5+security-01 END -->
+<!-- 11.4.5+security-01 START -->
+
+# 11.4.5+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.4.5+security-01 END -->
+<!-- 11.3.7+security-01 START -->
+
+# 11.3.7+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.3.7+security-01 END -->
+<!-- 11.2.10+security-01 START -->
+
+# 11.2.10+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.2.10+security-01 END -->
+<!-- 10.4.19+security-01 START -->
+
+# 10.4.19+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 10.4.19+security-01 END -->
 <!-- 12.0.1 START -->
 
 # 12.0.1 (2025-05-22)
