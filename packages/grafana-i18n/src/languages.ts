@@ -22,8 +22,14 @@ import {
 } from './constants';
 
 interface TranslationDefinition {
+  /** IETF language tag */
   code: string;
+
+  /** The language name in its own language (e.g. "Français" for French) */
   name: string;
+
+  /** Indicates the language should be hidden from the UI, but is still a valid translation */
+  hidden?: boolean;
 }
 
 /**
@@ -49,8 +55,5 @@ export const LANGUAGES: TranslationDefinition[] = [
   { code: POLISH_POLAND, name: 'Polski' },
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
+  { code: PSEUDO_LOCALE, name: 'Pseudo-locale', hidden: process.env.NODE_ENV !== 'development' },
 ];
-
-if (process.env.NODE_ENV === 'development') {
-  LANGUAGES.push({ code: PSEUDO_LOCALE, name: 'Pseudo-locale' });
-}
