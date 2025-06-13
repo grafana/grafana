@@ -1637,15 +1637,6 @@ var (
 			Expression:        "true", // enabled by default
 		},
 		{
-			Name:              "xrayApplicationSignals",
-			Description:       "Support Application Signals queries in the X-Ray datasource",
-			Stage:             FeatureStageExperimental,
-			Owner:             awsDatasourcesSquad,
-			FrontendOnly:      true,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:         "multiTenantTempCredentials",
 			Description:  "use multi-tenant path for awsTempCredentials",
 			Stage:        FeatureStageExperimental,

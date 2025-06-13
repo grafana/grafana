@@ -954,10 +954,6 @@ export interface FeatureToggles {
   */
   alertingRuleRecoverDeleted?: boolean;
   /**
-  * Support Application Signals queries in the X-Ray datasource
-  */
-  xrayApplicationSignals?: boolean;
-  /**
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
