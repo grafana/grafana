@@ -280,7 +280,7 @@
     "@grafana/google-sdk": "0.1.2",
     "@grafana/i18n": "workspace:*",
     "@grafana/lezer-logql": "0.2.7",
-    "@grafana/llm": "0.19.2",
+    "@grafana/llm": "0.22.0",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "0.10.6",
