@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -138,6 +139,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		metrics.NewTestMetrics(),
 	)
 	require.NoError(t, err)
 

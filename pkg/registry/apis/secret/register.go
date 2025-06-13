@@ -8,6 +8,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +26,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
@@ -53,6 +55,7 @@ type SecretAPIBuilder struct {
 	accessClient               claims.AccessClient
 	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
+	metrics                    *metrics.SecretsMetrics
 }
 
 func NewSecretAPIBuilder(
@@ -66,7 +69,9 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
+	metrics := metrics.NewSecretsMetrics(registerer)
 	worker, err := worker.NewWorker(worker.Config{
 		BatchSize:                    20,
 		ReceiveTimeout:               5 * time.Second,
@@ -79,6 +84,7 @@ func NewSecretAPIBuilder(
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		metrics,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
@@ -93,6 +99,7 @@ func NewSecretAPIBuilder(
 		accessClient:               accessClient,
 		worker:                     worker,
 		decryptersAllowList:        decryptersAllowList,
+		metrics:                    metrics,
 	}, nil
 }
 
@@ -111,6 +118,7 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -140,6 +148,7 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
+		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -674,6 +683,7 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 			}
 
 			typedObj.Name = optionalPrefix + generatedName
+			logging.FromContext(ctx).Debug("generated name for secure value", "name", typedObj.Name)
 
 		case *secretv0alpha1.Keeper:
 			optionalPrefix := typedObj.GenerateName
@@ -682,6 +692,7 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 			}
 
 			typedObj.Name = optionalPrefix + generatedName
+			logging.FromContext(ctx).Debug("generated name for keeper", "name", typedObj.Name)
 		}
 	}
 

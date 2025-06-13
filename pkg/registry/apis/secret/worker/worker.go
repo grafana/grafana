@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -21,6 +22,7 @@ type Worker struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	encryptionManager          contracts.EncryptionManager
+	metrics                    *metrics.SecretsMetrics
 }
 
 type Config struct {
@@ -42,6 +44,7 @@ func NewWorker(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
 	encryptionManager contracts.EncryptionManager,
+	metrics *metrics.SecretsMetrics,
 ) (*Worker, error) {
 	if config.BatchSize == 0 {
 		return nil, fmt.Errorf("config.BatchSize is required")
@@ -64,11 +67,13 @@ func NewWorker(
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		encryptionManager:          encryptionManager,
+		metrics:                    metrics,
 	}, nil
 }
 
 // The main method to drive the worker
 func (w *Worker) ControlLoop(ctx context.Context) error {
+	logging.FromContext(ctx).Debug("starting worker control loop")
 	t := time.NewTicker(w.config.PollingInterval)
 	defer t.Stop()
 
@@ -124,6 +129,14 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
+	start := time.Now()
+	var keeperType string
+	defer func() {
+		w.metrics.OutboxMessageProcessingDuration.WithLabelValues(string(message.Type), keeperType).Observe(time.Since(start).Seconds())
+	}()
+
+	logging.FromContext(ctx).Debug("processing message", "type", message.Type, "name", message.Name, "namespace", message.Namespace, "receiveCount", message.ReceiveCount)
+
 	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
 		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
@@ -143,6 +156,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	if err != nil {
 		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
+	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", message.Namespace, "keeperName", message.KeeperName, "type", keeperCfg.Type())
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
