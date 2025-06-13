@@ -5,7 +5,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardDataDTO } from '../../../types';
 import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
-import { DashboardViewItem, DashboardViewItemKind } from '../types';
+import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
 import { SearchHit } from './unified';
@@ -153,5 +153,25 @@ export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>)
     }
 
     return hit;
+  });
+}
+
+export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
+  return searchHits.map((hit) => {
+    const dashboardHit: DashboardSearchHit = {
+      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      title: hit.title,
+      uid: hit.name, // k8s name is the uid
+      url: hit.url,
+      tags: hit.tags || [],
+      isDeleted: true, // All results from trash are deleted
+      sortMeta: 0, // Default value for deleted items
+    };
+
+    if (hit.folder && hit.folder !== 'general') {
+      dashboardHit.folderUid = hit.folder;
+    }
+
+    return dashboardHit;
   });
 }

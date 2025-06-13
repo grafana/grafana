@@ -10,7 +10,7 @@ import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../consta
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
-import { replaceCurrentFolderQuery, resourceToSearchResult } from './utils';
+import { replaceCurrentFolderQuery, resourceToSearchResult, searchHitsToDashboardSearchHits } from './utils';
 
 interface APIQuery {
   query?: string;
@@ -118,22 +118,6 @@ export class SQLSearcher implements GrafanaSearcher {
 
   // returns the appropriate sorting options
   async getSortOptions(): Promise<SelectableValue[]> {
-    // {
-    //   "sortOptions": [
-    //     {
-    //       "description": "Sort results in an alphabetically ascending order",
-    //       "displayName": "Alphabetically (A–Z)",
-    //       "meta": "",
-    //       "name": "alpha-asc"
-    //     },
-    //     {
-    //       "description": "Sort results in an alphabetically descending order",
-    //       "displayName": "Alphabetically (Z–A)",
-    //       "meta": "",
-    //       "name": "alpha-desc"
-    //     }
-    //   ]
-    // }
     const opts = await backendSrv.get<SortOptions>('/api/search/sorting');
     return opts.sortOptions.map((v) => ({
       value: v.name,
@@ -157,24 +141,7 @@ export class SQLSearcher implements GrafanaSearcher {
 
       if (isResourceList<DashboardDataDTO>(deletedResponse)) {
         const searchHits = resourceToSearchResult(deletedResponse);
-        // Transform SearchHit[] to DashboardSearchHit[]
-        rsp = searchHits.map((hit) => {
-          const dashboardHit: DashboardSearchHit = {
-            type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-            title: hit.title,
-            uid: hit.name, // k8s name is the uid
-            url: hit.url,
-            tags: hit.tags || [],
-            isDeleted: true, // All results from trash are deleted
-            sortMeta: 0, // Default value for deleted items
-          };
-
-          if (hit.folder && hit.folder !== 'general') {
-            dashboardHit.folderUid = hit.folder;
-          }
-
-          return dashboardHit;
-        });
+        rsp = searchHitsToDashboardSearchHits(searchHits);
       } else {
         rsp = [];
       }
