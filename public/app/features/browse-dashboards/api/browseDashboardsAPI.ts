@@ -9,7 +9,7 @@ import { folderAPI } from 'app/api/clients/folder';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { ResourceList } from 'app/features/apiserver/types';
+import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -29,7 +29,7 @@ import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
-import { PAGE_SIZE, getDeletedDashboardByUID } from './services';
+import { PAGE_SIZE } from './services';
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -54,7 +54,7 @@ interface ImportOptions {
 }
 
 interface RestoreDashboardArgs {
-  dashboardUID: string;
+  dashboard: Resource<Dashboard | DashboardV2Spec>;
   targetFolderUID: string;
 }
 
@@ -435,19 +435,16 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      queryFn: async ({ dashboardUID }, _api, _extraOptions) => {
-        const dashboard = await getDeletedDashboardByUID(dashboardUID);
-        if (dashboard) {
-          const api = getDashboardAPI();
-          const response = await api.restoreDashboard(dashboard);
-          const name = response.spec.title;
+      queryFn: async ({ dashboard }, _api, _extraOptions) => {
+        const api = getDashboardAPI();
+        const response = await api.restoreDashboard(dashboard);
+        const name = response.spec.title;
 
-          if (name) {
-            appEvents.publish({
-              type: AppEvents.alertSuccess.name,
-              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
-            });
-          }
+        if (name) {
+          appEvents.publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
+          });
         }
 
         return { data: undefined };

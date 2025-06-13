@@ -8,7 +8,7 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import appEvents from '../../../core/app_events';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
-import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
 
@@ -18,7 +18,7 @@ export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-
+  const deletedDashboards = useListDeletedDashboardsQuery();
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
@@ -54,7 +54,11 @@ export function RecentlyDeletedActions() {
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
+      const dashboard = deletedDashboards.data?.items.find((d) => d.metadata.name === uid);
+      if (!dashboard) {
+        return Promise.resolve();
+      }
+      return restoreDashboard({ dashboard: structuredClone(dashboard), targetFolderUID: restoreTarget });
     });
 
     await Promise.all(promises);
