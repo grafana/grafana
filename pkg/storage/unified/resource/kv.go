@@ -44,6 +44,9 @@ type KV interface {
 
 	// Delete a value
 	Delete(ctx context.Context, key string) error
+
+	// Time return the DB time. This is used to ensure the server and client are not too far apart in time.
+	// Time(ctx context.Context) (time.Time, error)
 }
 
 // Reference implementation of the KV interface using BadgerDB

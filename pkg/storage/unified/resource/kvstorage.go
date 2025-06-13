@@ -19,6 +19,8 @@ type KVStorageBackend struct {
 	notifier  *kvNotifier
 }
 
+var _ StorageBackend = &KVStorageBackend{}
+
 func NewKVStorageBackend(kv KV) *KVStorageBackend {
 	return &KVStorageBackend{
 		kv:        kv,
@@ -199,6 +201,10 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			Key:   metaObj.Key,
 			Value: metaObj.Value,
 		})
+		// Only fetch the first limit items.
+		if len(keys) >= int(req.Limit) {
+			break
+		}
 	}
 	iter := kvListIterator{
 		keys:         keys,
