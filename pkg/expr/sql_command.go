@@ -148,7 +148,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			tc,
 		)
 		return rsp, nil
-
 	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
