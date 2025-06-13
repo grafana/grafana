@@ -22,8 +22,11 @@ type UserGrafanaConfig struct {
 	Default                   bool                          `json:"default"`
 	Promoted                  bool                          `json:"promoted"`
 	ExternalURL               string                        `json:"external_url"`
-	SmtpFrom                  string                        `json:"smtp_from"`
-	StaticHeaders             map[string]string             `json:"static_headers"`
+	SmtpConfig                SmtpConfig                    `json:"smtp_config"`
+
+	// TODO: Remove once everything can be sent in the 'SmtpConfig' field.
+	SmtpFrom      string            `json:"smtp_from"`
+	StaticHeaders map[string]string `json:"static_headers"`
 }
 
 func (mc *Mimir) ShouldPromoteConfig() bool {
@@ -57,8 +60,11 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 		Default:                   isDefault,
 		Promoted:                  mc.promoteConfig,
 		ExternalURL:               mc.externalURL,
-		SmtpFrom:                  mc.smtpFrom,
-		StaticHeaders:             mc.staticHeaders,
+		SmtpConfig:                mc.smtpConfig,
+
+		// TODO: Remove once everything can be sent only in the 'smtp_config' field.
+		SmtpFrom:      mc.smtpFrom,
+		StaticHeaders: mc.staticHeaders,
 	})
 	if err != nil {
 		return err

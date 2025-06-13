@@ -188,6 +188,10 @@ func TestApplyConfig(t *testing.T) {
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
+		SmtpConfig: client.SmtpConfig{
+			FromAddress: "test-instance@grafana.net",
+		},
+
 		SmtpFrom:      "test-instance@grafana.net",
 		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 	}
@@ -259,10 +263,28 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, 3, configSyncs)
 	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
 
+	// Changing fields in the SMTP config should result in the configuration being updated.
+	cfg.SmtpConfig = client.SmtpConfig{
+		EhloIdentity:   "test",
+		FromAddress:    "test@test.com",
+		FromName:       "Test Name",
+		Host:           "test:25",
+		Password:       "test",
+		SkipVerify:     true,
+		StartTLSPolicy: "test",
+		StaticHeaders:  map[string]string{"test": "true"},
+		User:           "Test User",
+	}
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, 4, configSyncs)
+	require.Equal(t, am.smtp, configSent.SmtpConfig)
+
 	// Failing to add the auto-generated routes should result in an error.
 	_, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
 	require.ErrorIs(t, err, errTest)
-	require.Equal(t, 3, configSyncs)
+	require.Equal(t, 4, configSyncs)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
