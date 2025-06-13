@@ -1,0 +1,26 @@
+{
+  "entrypoints": {
+    "app": {
+      "assets": {
+        "js": ["public/build/app.js"],
+        "css": ["public/build/grafana.app.css"]
+      }
+    },
+    "dark": {
+      "assets": {
+        "css": ["public/build/grafana.dark.css"]
+      }
+    },
+    "light": {
+      "assets": {
+        "css": ["public/build/grafana.light.css"]
+      }
+    },
+    "swagger": {
+      "assets": {
+        "js": ["public/build/swagger.js"],
+        "css": ["public/build/grafana.swagger.css"]
+      }
+    }
+  }
+}

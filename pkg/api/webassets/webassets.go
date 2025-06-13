@@ -135,6 +135,11 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
 	}
 
+	fmt.Printf("Entrypoint App: %+v\n", entryPoints.App)
+	fmt.Printf("Entrypoint Dark: %+v\n", entryPoints.Dark)
+	fmt.Printf("Entrypoint Light: %+v\n", entryPoints.Light)
+	fmt.Printf("Entrypoint Swagger: %+v\n", entryPoints.Swagger)
+
 	rsp := &dtos.EntryPointAssets{
 		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
 		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),

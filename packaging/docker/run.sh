@@ -2,6 +2,8 @@
 
 PERMISSIONS_OK=0
 
+ls -lah /usr/share/grafana/public/emails
+
 if [ ! -r "$GF_PATHS_CONFIG" ]; then
     echo "GF_PATHS_CONFIG='$GF_PATHS_CONFIG' is not readable."
     PERMISSIONS_OK=1
