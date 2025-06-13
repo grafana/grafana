@@ -115,7 +115,7 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		kvMode, _, err := tt.kvStore.Get(context.Background(), "playlist.grafana.app/playlists")
 		require.NoError(t, err)
-		require.Equal(t, fmt.Sprintf("%s", tt.expectedKVMode), kvMode, "expected mode for playlist.grafana.app/playlists")
+		require.Equal(t, tt.expectedKVMode, kvMode, "expected mode for playlist.grafana.app/playlists")
 	}
 }
 
