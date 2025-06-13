@@ -551,6 +551,7 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexMaxBatchSize                          int
