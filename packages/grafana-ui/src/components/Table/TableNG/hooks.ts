@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect, useLayoutEffect, RefObject, useCallback } from 'react';
-import { DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
+import { DataGridHandle, SortColumn } from 'react-data-grid';
 
-import { DataFrame, Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableFooterCalc, TableNGProps, TableRow, TableSortByFieldState } from './types';
+import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
 import {
   getComparator,
   getDisplayName,
@@ -15,7 +15,6 @@ import {
   processNestedTableRows,
   getCellHeightCalculator,
   getFooterItem,
-  getVisibleFields,
 } from './utils';
 
 // Helper function to get displayed value
@@ -180,30 +179,29 @@ export interface PaginatedRowsResult {
   smallPagination: boolean;
 }
 
+// hand-measured. pagination height is 30px, plus 8px top margin
+const PAGINATION_HEIGHT = 38;
+
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, hasHeader, hasFooter, paginationHeight, rowHeight, enabled }: PaginatedRowsOptions
+  { height, width, hasHeader, hasFooter, rowHeight, enabled }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
   const numRows = rows.length;
 
-  const avgRowHeight = useMemo(() => {
+  const [avgRowHeight, maxRowHeight] = useMemo(() => {
     if (typeof rowHeight === 'number') {
-      return rowHeight;
+      return [rowHeight, rowHeight];
     }
-    return rows.reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
+    return rows.reduce(
+      ([avg, max], row, _, { length }) => {
+        const h = rowHeight(row);
+        return [avg + h / length, Math.max(max, h)];
+      },
+      [0, 0]
+    );
   }, [rows, rowHeight]);
-
-  // const maxRowHeight = useMemo(() => {
-  //   if (typeof rowHeight === 'number') {
-  //     return rowHeight;
-  //   }
-  //   if (typeof rowHeight === 'function') {
-  //     return rows.reduce((max, row) => Math.max(max, rowHeight(row)), 0);
-  //   }
-  //   return 0;
-  // }, [rows, rowHeight]);
 
   // using dimensions of the panel, calculate pagination parameters
   const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
@@ -219,13 +217,13 @@ export function usePaginatedRows(
 
     // calculate number of rowsPerPage based on height stack
     const rowAreaHeight =
-      height - (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) - (hasFooter ? avgRowHeight : 0) - (paginationHeight ?? 0);
+      height - (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) - (hasFooter ? avgRowHeight : 0) - PAGINATION_HEIGHT;
     const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
     // ensure at least one row per page is displayed
     let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
     // in the case where we have non-uniform row heights, remove a row
     // per page for some wiggle room to try to avoid scrolling.
-    if (typeof rowHeight === 'function') {
+    if (typeof rowHeight === 'function' && avgRowHeight !== maxRowHeight) {
       rowsPerPage--;
     }
     // calculate row range for pagination summary display
@@ -243,7 +241,7 @@ export function usePaginatedRows(
       pageRangeEnd,
       smallPagination,
     };
-  }, [width, height, hasHeader, hasFooter, paginationHeight, avgRowHeight, rowHeight, enabled, numRows, page]);
+  }, [width, height, hasHeader, hasFooter, avgRowHeight, maxRowHeight, rowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
   useEffect(() => {

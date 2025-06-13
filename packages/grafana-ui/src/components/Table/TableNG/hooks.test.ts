@@ -150,8 +150,7 @@ describe('TableNG hooks', () => {
           enabled: true,
           height: 60,
           width: 800,
-          paginationHeight: 20,
-          rowHeight: 16,
+          rowHeight: 10,
         })
       );
 
