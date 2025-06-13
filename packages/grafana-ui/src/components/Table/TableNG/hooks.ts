@@ -14,7 +14,7 @@ import {
   getIsNestedTable,
   processNestedTableRows,
   getCellHeightCalculator,
-  getFooterItemNG,
+  getFooterItem,
   getVisibleFields,
 } from './utils';
 
@@ -283,7 +283,7 @@ export function useFooterCalcs(
         const footerCalcReducer = footerOptions?.reducer?.[0];
         return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
-      return getFooterItemNG(rows, field, footerOptions);
+      return getFooterItem(rows, field, footerOptions);
     });
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
