@@ -119,9 +119,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
-      <Box paddingTop={2}>
-        <EnterpriseAuthFeaturesCard />
-      </Box>
+      <EnterpriseAuthFeaturesCard />
     </Page.Contents>
   );
 };

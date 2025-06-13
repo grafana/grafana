@@ -27,6 +27,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
+import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -288,6 +289,8 @@ export const TeamList = ({
             )}
           </>
         )}
+
+        <EnterpriseAuthFeaturesCard />
       </Page.Contents>
     </Page>
   );
