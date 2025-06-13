@@ -367,12 +367,12 @@ RENDERING_DUMPIO=true
 
 #### Tracing
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Tracing is supported in the image renderer v3.12.6 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
-Enable OpenTelemetry Tracing by setting the tracing URL. Default is empty (disabled).
-You can also configure the service name that will be set in the traces. Default is `grafana-image-renderer`.
+Set the tracing URL to enable OpenTelemetry Tracing. The default is empty (disabled).
+You can also configure the service name that will be set in the traces. The default is `grafana-image-renderer`.
 
 ```bash
 RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
