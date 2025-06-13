@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -12,6 +13,7 @@ import {
   InterpolateFunction,
   FieldType,
   DataFrameWithValue,
+  SelectableValue,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -39,11 +41,15 @@ export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
-export type FilterType = {
-  [key: string]: {
+export type FilterType = Record<
+  string,
+  {
     filteredSet: Set<string>;
-  };
-};
+    filtered?: Array<SelectableValue<unknown>>;
+    searchFilter?: string;
+    operator?: SelectableValue<string>;
+  }
+>;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {
@@ -51,12 +57,9 @@ export interface TableSummaryRow {
 }
 
 export interface TableColumn extends Column<TableRow, TableSummaryRow> {
-  key: string; // Unique identifier used by DataGrid
-  name: string; // Display name in header
   field: Field; // Grafana field data/config
   width?: number | string; // Column width
   minWidth?: number; // Min width constraint
-  cellClass?: string; // CSS styling
 }
 
 // Possible values for table cells based on field types
@@ -77,7 +80,8 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  'Nested frames'?: DataFrame[];
+  __nestedFrames?: DataFrame[];
+  __expanded?: boolean; // For row expansion state
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
@@ -153,9 +157,8 @@ export interface TableCellNGProps {
   rowIdx: number;
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setIsInspecting: (isInspecting: boolean) => void;
-  shouldTextOverflow: () => boolean;
   theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;
@@ -165,7 +168,7 @@ export interface TableCellNGProps {
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
   height: number;
-  onCellExpand: () => void;
+  onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 

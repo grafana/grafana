@@ -1,6 +1,4 @@
-import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { varPreLine } from 'uwrap';
@@ -23,82 +21,22 @@ import {
   TableCellDisplayMode,
   TableCellHeight,
   TableCellOptions,
-  TableSortByFieldState,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { TableCellInspectorMode } from '../TableCellInspector';
 
-import { TABLE } from './constants';
+import { COLUMN, TABLE } from './constants';
 import {
   CellColors,
   TableRow,
   TableFieldOptionsType,
   ColumnTypes,
-  FilterType,
   FrameToRowsConverter,
-  TableNGProps,
   Comparator,
   TableFooterCalc,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export function getCellHeight(
-  text: string,
-  cellWidth: number, // width of the cell without padding
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding = 0
-) {
-  const PADDING = padding * 2;
-
-  if (typeof text === 'string') {
-    const words = text.split(/\s/);
-    const lines = [];
-    let currentLine = '';
-
-    // Let's just wrap the lines and see how well the measurement works
-    for (let i = 0; i < words.length; i++) {
-      const currentWord = words[i];
-      // TODO: this method is not accurate
-      let lineWidth = ctx.measureText(currentLine + ' ' + currentWord).width;
-
-      // if line width is less than the cell width, add the word to the current line and continue
-      // else add the current line to the lines array and start a new line with the current word
-      if (lineWidth < cellWidth) {
-        currentLine += ' ' + currentWord;
-      } else {
-        lines.push({
-          width: lineWidth,
-          line: currentLine,
-        });
-
-        currentLine = currentWord;
-      }
-
-      // if we are at the last word, add the current line to the lines array
-      if (i === words.length - 1) {
-        lines.push({
-          width: lineWidth,
-          line: currentLine,
-        });
-      }
-    }
-
-    if (lines.length === 1) {
-      return defaultRowHeight;
-    }
-
-    // TODO: double padding to adjust osContext.measureText() results
-    const height = lines.length * lineHeight + PADDING * 2;
-
-    return height;
-  }
-
-  return defaultRowHeight;
-}
-
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
 
 export function getCellHeightCalculator(
@@ -111,10 +49,8 @@ export function getCellHeightCalculator(
   const { count } = varPreLine(ctx);
 
   return (text: string, cellWidth: number) => {
-    const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
-    const TOTAL_PADDING = padding * 2;
-    const numLines = count(text, effectiveCellWidth);
-    const totalHeight = numLines * lineHeight + TOTAL_PADDING;
+    const numLines = count(text, cellWidth);
+    const totalHeight = numLines * lineHeight + 2 * padding;
     return Math.max(totalHeight, defaultRowHeight);
   };
 }
@@ -135,62 +71,9 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
 }
 
-/**
- * getRowHeight determines cell height based on cell width + text length. Used
- * for when textWrap is enabled.
- */
-export function getRowHeight(
-  row: TableRow,
-  calc: CellHeightCalculator,
-  avgCharWidth: number,
-  defaultRowHeight: number,
-  fieldsData: {
-    headersLength: number;
-    textWraps: { [key: string]: boolean };
-    columnTypes: ColumnTypes;
-    columnWidths: Record<string, number>;
-    fieldDisplayType: Record<string, TableCellDisplayMode>;
-  }
-): number {
-  let maxLines = 1;
-  let maxLinesCol = '';
-
-  for (const key in row) {
-    if (
-      fieldsData.columnTypes[key] === FieldType.string &&
-      fieldsData.textWraps[key] &&
-      fieldsData.fieldDisplayType[key] !== TableCellDisplayMode.Image
-    ) {
-      const cellText = row[key] as string;
-
-      if (cellText != null) {
-        const charsPerLine = fieldsData.columnWidths[key] / avgCharWidth;
-        const approxLines = cellText.length / charsPerLine;
-
-        if (approxLines > maxLines) {
-          maxLines = approxLines;
-          maxLinesCol = key;
-        }
-      }
-    }
-  }
-
-  return maxLinesCol === '' ? defaultRowHeight : calc(row[maxLinesCol] as string, fieldsData.columnWidths[maxLinesCol]);
-}
-
-export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
-  return columnTypes[key] === FieldType.string;
-}
-
 export function shouldTextOverflow(
   key: string,
-  row: TableRow,
   columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding: number,
   textWrap: boolean,
   field: Field,
   cellType: TableCellDisplayMode
@@ -199,7 +82,7 @@ export function shouldTextOverflow(
 
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
+  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] === FieldType.string) {
     return false;
   }
 
@@ -288,7 +171,7 @@ export function getAlignmentFactor(
 }
 
 /* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
+export function getFooterItem(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
   if (options === undefined) {
     return '';
   }
@@ -322,13 +205,6 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
 
   return formattedValue;
 }
-
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'space-between',
-  }),
-});
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
@@ -427,16 +303,15 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */
-export const handleSort = (
+export const updateSortColumns = (
   columnKey: string,
   direction: SortDirection,
   isMultiSort: boolean,
-  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>,
-  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>
-) => {
+  sortColumns: SortColumn[]
+): SortColumn[] => {
   let currentSortColumn: SortColumn | undefined;
 
-  const updatedSortColumns = sortColumnsRef.current.filter((column) => {
+  const updatedSortColumns = sortColumns.filter((column) => {
     const isCurrentColumn = column.columnKey === columnKey;
     if (isCurrentColumn) {
       currentSortColumn = column;
@@ -446,18 +321,15 @@ export const handleSort = (
 
   // sorted column exists and is descending -> remove it to reset sorting
   if (currentSortColumn && currentSortColumn.direction === 'DESC') {
-    setSortColumns(updatedSortColumns);
-    sortColumnsRef.current = updatedSortColumns;
-  } else {
-    // new sort column or changed direction
-    if (isMultiSort) {
-      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
-    } else {
-      setSortColumns([{ columnKey, direction }]);
-      sortColumnsRef.current = [{ columnKey, direction }];
-    }
+    return updatedSortColumns;
   }
+
+  // new sort column or changed direction
+  if (isMultiSort) {
+    return [...updatedSortColumns, { columnKey, direction }];
+  }
+
+  return [{ columnKey, direction }];
 };
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -473,8 +345,8 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
       rowCount += 1;
-      if (rows[rowCount-1]['Nested frames']){
-        const childFrame = rows[rowCount-1]['Nested frames'];
+      if (rows[rowCount-1]['__nestedFrames']){
+        const childFrame = rows[rowCount-1]['__nestedFrames'];
         rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
         rowCount += 1;
       }
@@ -488,62 +360,41 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
   return convert(frame);
 };
 
-export interface MapFrameToGridOptions extends TableNGProps {
-  columnTypes: ColumnTypes;
-  columnWidth: number | string;
-  crossFilterOrder: React.MutableRefObject<string[]>;
-  crossFilterRows: React.MutableRefObject<{ [key: string]: TableRow[] }>;
-  defaultLineHeight: number;
-  defaultRowHeight: number;
-  expandedRows: number[];
-  filter: FilterType;
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
-  isCountRowsSet: boolean;
-  ctx: CanvasRenderingContext2D;
-  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
-  rows: TableRow[];
-  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  setIsInspecting: (isInspecting: boolean) => void;
-  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
-  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
-  styles: { cell: string; cellWrapped: string; dataGrid: string };
-  textWraps: Record<string, boolean>;
-  theme: GrafanaTheme2;
-  showTypeIcons?: boolean;
-}
-
 /* ----------------------------- Data grid comparator ---------------------------- */
 // The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
 // within strings and sorts numerically instead of lexicographically.
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
+const strCompare: Comparator = (a, b) => compare(String(a ?? ''), String(b ?? ''));
+const numCompare: Comparator = (a, b) => {
+  if (a === b) {
+    return 0;
+  }
+  if (a == null) {
+    return -1;
+  }
+  if (b == null) {
+    return 1;
+  }
+  return Number(a) - Number(b);
+};
+const frameCompare: Comparator = (a, b) => {
+  // @ts-ignore The values are DataFrameWithValue
+  return (a?.value ?? 0) - (b?.value ?? 0);
+};
+
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     // Handle sorting for frame type fields (sparklines)
     case FieldType.frame:
-      return (a, b) => {
-        // @ts-ignore The values are DataFrameWithValue
-        return (a?.value ?? 0) - (b?.value ?? 0);
-      };
+      return frameCompare;
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
-      return (a, b) => {
-        if (a === b) {
-          return 0;
-        }
-        if (a == null) {
-          return -1;
-        }
-        if (b == null) {
-          return 1;
-        }
-        return Number(a) - Number(b);
-      };
+      return numCompare;
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => compare(String(a ?? ''), String(b ?? ''));
+      return strCompare;
   }
 }
 
@@ -597,8 +448,8 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 }
 
 /** Returns true if the DataFrame contains nested frames */
-export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
-  dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+export const getIsNestedTable = (fields: Field[]): boolean =>
+  fields.some(({ type }) => type === FieldType.nestedFrames);
 
 /** Processes nested table rows */
 export const processNestedTableRows = (
@@ -638,3 +489,45 @@ export const processNestedTableRows = (
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
 };
+
+export function getVisibleFields(fields: Field[]): Field[] {
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+}
+
+// 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
+// 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+export function computeColWidths(fields: Field[], availWidth: number) {
+  let autoCount = 0;
+  let definedWidth = 0;
+
+  return fields
+    .map((field, i) => {
+      const width: number = field.config.custom?.width ?? 0;
+
+      if (width === 0) {
+        autoCount++;
+      } else {
+        definedWidth += width;
+      }
+
+      return width;
+    })
+    .map(
+      (width, i) =>
+        width ||
+        Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
+    );
+}
+
+export function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+  const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
+  const fieldDisplay = field.display;
+  if (
+    fieldDisplay !== undefined &&
+    cellOptions !== undefined &&
+    cellOptions.type === TableCellDisplayMode.ColorBackground &&
+    cellOptions.applyToRow
+  ) {
+    return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+  }
+}

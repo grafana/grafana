@@ -1,16 +1,16 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
-import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Children, ReactNode, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
-// import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
+import { TABLE } from '../constants';
 import {
   CellColors,
   CustomCellRendererProps,
@@ -29,17 +29,32 @@ import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
+// the layout effect we apply here is super expensive - we don't want to bother with it unless we need it.
+function TableCellWithWidth(props: {
+  children: (width: number) => JSX.Element;
+  divWidthRef: RefObject<HTMLDivElement>;
+}) {
+  const { divWidthRef, children } = props;
+  const [divWidth, setDivWidth] = useState(0);
+  useLayoutEffect(() => {
+    if (divWidthRef.current) {
+      setDivWidth(divWidthRef.current.getBoundingClientRect().width);
+    }
+  }, [divWidthRef, setDivWidth]);
+
+  return Children.only(children(divWidth));
+}
+
 export function TableCellNG(props: TableCellNGProps) {
   const {
     field,
     frame,
     value,
     theme,
-    timeRange,
+    timeRange = getDefaultTimeRange(),
     height,
     rowIdx,
     justifyContent,
-    shouldTextOverflow,
     setIsInspecting,
     setContextMenuProps,
     getActions,
@@ -56,36 +71,22 @@ export function TableCellNG(props: TableCellNGProps) {
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
   const { type: cellType } = cellOptions;
 
+  const divWidthRef = useRef<HTMLDivElement>(null);
+
   const showFilters = field.config.filterable && onCellFilterAdded;
 
-  const isRightAligned = getTextAlign(field) === 'flex-end';
-  const displayValue = field.display!(value);
-  let colors: CellColors = { bgColor: '', textColor: '', bgHoverColor: '' };
-  if (rowBg) {
-    colors = rowBg(rowIdx);
-  } else {
-    colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
-  }
-  const styles = useStyles2(getStyles, isRightAligned, colors);
-
-  // TODO
-  // TableNG provides either an overridden cell width or 'auto' as the cell width value.
-  // While the overridden value gives the exact cell width, 'auto' does not.
-  // Therefore, we need to determine the actual cell width from the DOM.
-  const divWidthRef = useRef<HTMLDivElement>(null);
-  const [divWidth, setDivWidth] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const isRightAligned = useMemo(() => getTextAlign(field) === 'flex-end', [field]);
+  const displayValue = useMemo(() => field.display!(value), [field.display, value]);
+  const colors: CellColors = useMemo(
+    () => (rowBg ? rowBg(rowIdx) : getCellColors(theme, cellOptions, displayValue)),
+    [theme, cellOptions, displayValue, rowBg, rowIdx]
+  );
+  const styles = useStyles2(getStyles, height, isRightAligned, colors);
 
   const actions = useMemo(
     () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
     [getActions, frame, field, rowIdx, replaceVariables]
   );
-
-  useLayoutEffect(() => {
-    if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
-      setDivWidth(divWidthRef.current.clientWidth);
-    }
-  }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Common props for all cells
   const commonProps = useMemo(
@@ -99,94 +100,69 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 
   // Get the correct cell type
-  const renderedCell = useMemo(() => {
-    let cell: ReactNode = null;
+  const renderedCell = useMemo((): ReactNode => {
     switch (cellType) {
       case TableCellDisplayMode.Sparkline:
-        cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
-        break;
+        return (
+          <TableCellWithWidth divWidthRef={divWidthRef}>
+            {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
+          </TableCellWithWidth>
+        );
       case TableCellDisplayMode.Gauge:
       case TableCellDisplayMode.BasicGauge:
       case TableCellDisplayMode.GradientGauge:
-      case TableCellDisplayMode.LcdGauge:
-        cell = (
-          <BarGaugeCell
-            {...commonProps}
-            theme={theme}
-            timeRange={timeRange}
-            height={height}
-            width={divWidth}
-            actions={actions}
-          />
+      case TableCellDisplayMode.LcdGauge: {
+        return (
+          <TableCellWithWidth divWidthRef={divWidthRef}>
+            {(width) => (
+              <BarGaugeCell
+                {...commonProps}
+                theme={theme}
+                timeRange={timeRange}
+                height={height}
+                width={width}
+                actions={actions}
+              />
+            )}
+          </TableCellWithWidth>
         );
-        break;
+      }
       case TableCellDisplayMode.Image:
-        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
-        break;
+        return <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
       case TableCellDisplayMode.JSONView:
-        cell = <JSONCell {...commonProps} actions={actions} />;
-        break;
+        return <JSONCell {...commonProps} actions={actions} />;
       case TableCellDisplayMode.DataLinks:
-        cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
-        break;
+        return <DataLinksCell field={field} rowIdx={rowIdx} />;
       case TableCellDisplayMode.Actions:
-        cell = <ActionsCell actions={actions} />;
-        break;
+        return <ActionsCell actions={actions} />;
       case TableCellDisplayMode.Custom:
         const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-        cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
-        break;
+        return <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
       case TableCellDisplayMode.Auto:
-      default:
+      default: {
         // Handle auto cell type detection
         if (field.type === FieldType.geo) {
-          cell = <GeoCell {...commonProps} height={height} />;
+          return <GeoCell {...commonProps} height={height} />;
         } else if (field.type === FieldType.frame) {
           const firstValue = field.values[0];
           if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-            cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+            return (
+              <TableCellWithWidth divWidthRef={divWidthRef}>
+                {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
+              </TableCellWithWidth>
+            );
           } else {
-            cell = <JSONCell {...commonProps} actions={actions} />;
+            return <JSONCell {...commonProps} actions={actions} />;
           }
         } else if (field.type === FieldType.other) {
-          cell = <JSONCell {...commonProps} actions={actions} />;
-        } else {
-          cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+          return <JSONCell {...commonProps} actions={actions} />;
         }
-        break;
+        return <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+      }
     }
-    return cell;
-  }, [cellType, commonProps, theme, timeRange, divWidth, height, cellOptions, field, rowIdx, actions, value, frame]);
+  }, [cellType, commonProps, theme, timeRange, height, divWidthRef, cellOptions, field, rowIdx, actions, value, frame]);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
-      tableCellDiv?.style.setProperty('white-space', 'pre-line');
-      tableCellDiv?.style.setProperty('min-height', `100%`);
-      tableCellDiv?.style.setProperty('height', `fit-content`);
-      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
-      tableCellDiv?.style.setProperty('min-width', 'min-content');
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    if (shouldTextOverflow()) {
-      // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
-      const div = divWidthRef.current;
-      const tableCellDiv = div?.parentElement;
-      tableCellDiv?.style.removeProperty('z-index');
-      tableCellDiv?.style.removeProperty('white-space');
-      tableCellDiv?.style.removeProperty('min-height');
-      tableCellDiv?.style.removeProperty('height');
-      tableCellDiv?.style.removeProperty('background');
-      tableCellDiv?.style.removeProperty('min-width');
-    }
-  };
+  const hasActions = cellInspect || showFilters;
 
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
@@ -209,14 +185,15 @@ export function TableCellNG(props: TableCellNGProps) {
   }, [displayName, onCellFilterAdded, value]);
 
   return (
-    <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
+    <div ref={divWidthRef} className={styles.cell}>
       {renderedCell}
-      {isHovered && (cellInspect || showFilters) && (
-        <div className={styles.cellActions}>
+      {hasActions && (
+        <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
             <IconButton
               name="eye"
-              tooltip={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+              aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+              className={styles.cellInspectButton}
               onClick={() => {
                 let inspectValue = value;
                 let mode = TableCellInspectorMode.text;
@@ -259,26 +236,43 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
+const getStyles = (theme: GrafanaTheme2, defaultRowHeight: number, isRightAligned: boolean, color: CellColors) => ({
   cell: css({
     height: '100%',
+    // this minHeight interacts with the `fit-content` property on
+    // the container for table cell overflow rendering.
+    minHeight: defaultRowHeight - 1,
     alignContent: 'center',
-    paddingInline: '8px',
+    paddingInline: TABLE.CELL_PADDING,
     // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
-    '&:hover': { background: color.bgHoverColor },
+    '&:hover': {
+      background: color.bgHoverColor,
+      '.table-cell-actions': {
+        display: 'flex',
+      },
+    },
   }),
   cellActions: css({
-    display: 'flex',
+    display: 'none',
     position: 'absolute',
-    top: '1px',
+    top: 0,
     left: isRightAligned ? 0 : undefined,
     right: isRightAligned ? undefined : 0,
     margin: 'auto',
     height: '100%',
-    background: theme.colors.background.secondary,
     color: theme.colors.text.primary,
-    padding: '4px 0px 4px 4px',
+  }),
+  cellInspectButton: css({
+    display: 'flex',
+    margin: 0,
+    padding: theme.spacing.x0_5,
+    [isRightAligned ? 'paddingLeft' : 'paddingRight']: theme.spacing.x1,
+    height: '100%',
+    '&:hover:before': {
+      height: '100%',
+      width: '100%',
+    },
   }),
 });
