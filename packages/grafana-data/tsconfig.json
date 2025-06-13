@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "declarationDir": "./compiled",
+    "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."]

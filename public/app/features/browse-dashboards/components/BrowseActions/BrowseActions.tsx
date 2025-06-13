@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -29,7 +29,6 @@ export function BrowseActions() {
     () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
     [selectedItems]
   );
-  const { t } = useTranslate();
 
   const isSearching = stateManager.hasSearchFilters();
 

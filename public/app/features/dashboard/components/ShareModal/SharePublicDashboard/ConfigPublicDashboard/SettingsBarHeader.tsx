@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, ReactUtils, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -14,7 +14,7 @@ export interface Props {
 
 export function SettingsBarHeader({ headerElement, isContentVisible = false, onRowToggle, title, ...rest }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const headerElementRendered =
     headerElement && ReactUtils.renderOrCallToRender(headerElement, { className: styles.summaryWrapper });
 
