@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
-import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Children, ReactNode, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
@@ -29,6 +29,22 @@ import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
+// the layout effect we apply here is super expensive - we don't want to bother with it unless we need it.
+function TableCellWithWidth(props: {
+  children: (width: number) => JSX.Element;
+  divWidthRef: RefObject<HTMLDivElement>;
+}) {
+  const { divWidthRef, children } = props;
+  const [divWidth, setDivWidth] = useState(0);
+  useLayoutEffect(() => {
+    if (divWidthRef.current) {
+      setDivWidth(divWidthRef.current.getBoundingClientRect().width);
+    }
+  }, [divWidthRef, setDivWidth]);
+
+  return Children.only(children(divWidth));
+}
+
 export function TableCellNG(props: TableCellNGProps) {
   const {
     field,
@@ -55,36 +71,24 @@ export function TableCellNG(props: TableCellNGProps) {
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
   const { type: cellType } = cellOptions;
 
+  const divWidthRef = useRef<HTMLDivElement>(null);
+
   const showFilters = field.config.filterable && onCellFilterAdded;
 
-  const isRightAligned = getTextAlign(field) === 'flex-end';
-  const displayValue = field.display!(value);
-  const colors: CellColors = useMemo(() => {
-    if (rowBg) {
-      return rowBg(rowIdx);
-    }
-    return getCellColors(theme, cellOptions, displayValue);
-  }, [theme, cellOptions, displayValue, rowBg, rowIdx]);
+  const isRightAligned = useMemo(() => getTextAlign(field) === 'flex-end', [field]);
+  const displayValue = useMemo(() => field.display!(value), [field.display, value]);
+  const colors: CellColors = useMemo(
+    () => (rowBg ? rowBg(rowIdx) : getCellColors(theme, cellOptions, displayValue)),
+    [theme, cellOptions, displayValue, rowBg, rowIdx]
+  );
   const styles = useStyles2(getStyles, height, isRightAligned, colors);
 
-  // TODO
-  // TableNG provides either an overridden cell width or 'auto' as the cell width value.
-  // While the overridden value gives the exact cell width, 'auto' does not.
-  // Therefore, we need to determine the actual cell width from the DOM.
-  const divWidthRef = useRef<HTMLDivElement>(null);
-  const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   const actions = useMemo(
     () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
     [getActions, frame, field, rowIdx, replaceVariables]
   );
-
-  useLayoutEffect(() => {
-    if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
-      setDivWidth(divWidthRef.current.clientWidth);
-    }
-  }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Common props for all cells
   const commonProps = useMemo(
@@ -98,64 +102,67 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 
   // Get the correct cell type
-  const renderedCell = useMemo(() => {
-    let cell: ReactNode = null;
+  const renderedCell = useMemo((): ReactNode => {
     switch (cellType) {
       case TableCellDisplayMode.Sparkline:
-        cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
-        break;
+        return (
+          <TableCellWithWidth divWidthRef={divWidthRef}>
+            {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
+          </TableCellWithWidth>
+        );
       case TableCellDisplayMode.Gauge:
       case TableCellDisplayMode.BasicGauge:
       case TableCellDisplayMode.GradientGauge:
-      case TableCellDisplayMode.LcdGauge:
-        cell = (
-          <BarGaugeCell
-            {...commonProps}
-            theme={theme}
-            timeRange={timeRange}
-            height={height}
-            width={divWidth}
-            actions={actions}
-          />
+      case TableCellDisplayMode.LcdGauge: {
+        return (
+          <TableCellWithWidth divWidthRef={divWidthRef}>
+            {(width) => (
+              <BarGaugeCell
+                {...commonProps}
+                theme={theme}
+                timeRange={timeRange}
+                height={height}
+                width={width}
+                actions={actions}
+              />
+            )}
+          </TableCellWithWidth>
         );
-        break;
+      }
       case TableCellDisplayMode.Image:
-        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
-        break;
+        return <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
       case TableCellDisplayMode.JSONView:
-        cell = <JSONCell {...commonProps} actions={actions} />;
-        break;
+        return <JSONCell {...commonProps} actions={actions} />;
       case TableCellDisplayMode.DataLinks:
-        cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
-        break;
+        return <DataLinksCell field={field} rowIdx={rowIdx} />;
       case TableCellDisplayMode.Actions:
-        cell = <ActionsCell actions={actions} />;
-        break;
+        return <ActionsCell actions={actions} />;
       case TableCellDisplayMode.Custom:
         const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-        cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
-        break;
+        return <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
       case TableCellDisplayMode.Auto:
-      default:
+      default: {
         // Handle auto cell type detection
         if (field.type === FieldType.geo) {
-          cell = <GeoCell {...commonProps} height={height} />;
+          return <GeoCell {...commonProps} height={height} />;
         } else if (field.type === FieldType.frame) {
           const firstValue = field.values[0];
           if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-            cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
+            return (
+              <TableCellWithWidth divWidthRef={divWidthRef}>
+                {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
+              </TableCellWithWidth>
+            );
           } else {
-            cell = <JSONCell {...commonProps} actions={actions} />;
+            return <JSONCell {...commonProps} actions={actions} />;
           }
         } else if (field.type === FieldType.other) {
-          cell = <JSONCell {...commonProps} actions={actions} />;
-        } else {
-          cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+          return <JSONCell {...commonProps} actions={actions} />;
         }
-        break;
+        return <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
+      }
     }
-    return cell;
-  }, [cellType, commonProps, theme, timeRange, divWidth, height, cellOptions, field, rowIdx, actions, value, frame]);
+  }, [cellType, commonProps, theme, timeRange, height, divWidthRef, cellOptions, field, rowIdx, actions, value, frame]);
 
   const hasActions = cellInspect || showFilters;
 
@@ -179,15 +186,21 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   }, [displayName, onCellFilterAdded, value]);
 
+  const handlers = useMemo(
+    () =>
+      hasActions
+        ? {
+            onFocus: () => setIsHovered(true),
+            onMouseEnter: () => setIsHovered(true),
+            onBlur: () => setIsHovered(false),
+            onMouseLeave: () => setIsHovered(false),
+          }
+        : ({} as const),
+    [hasActions]
+  );
+
   return (
-    <div
-      ref={divWidthRef}
-      className={styles.cell}
-      onFocus={hasActions ? () => setIsHovered(true) : undefined}
-      onMouseEnter={hasActions ? () => setIsHovered(true) : undefined}
-      onBlur={hasActions ? () => setIsHovered(false) : undefined}
-      onMouseLeave={hasActions ? () => setIsHovered(false) : undefined}
-    >
+    <div ref={divWidthRef} className={styles.cell} {...handlers}>
       {renderedCell}
       {/* TODO: I really wanted to avoid the `isHovered` state, and just mount all of these
         icons, unhiding them using CSS, but rendering the IconButton is very expensive and
