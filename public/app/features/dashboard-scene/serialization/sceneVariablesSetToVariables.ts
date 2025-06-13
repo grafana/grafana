@@ -425,8 +425,8 @@ export function sceneVariablesSetToSchemaV2Variables(
       // @ts-expect-error
       const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
         ? {
-            value: variable.state.defaultValue?.value,
-            text: variable.state.defaultValue?.text,
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
           }
         : undefined;
 
