@@ -67,25 +67,6 @@ export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: bool
   }
 }
 
-// export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
-//   const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
-//   const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
-
-//   if (kind === 'dashboard') {
-//     return 'apps';
-//   }
-
-//   if (item && isSharedWithMe(item.uid)) {
-//     return 'users-alt';
-//   }
-
-//   if (kind === 'folder') {
-//     return isOpen ? 'folder-open' : 'folder';
-//   }
-
-//   return 'question-circle';
-// }
-
 function parseKindString(kind: string): DashboardViewItemKind {
   switch (kind) {
     case 'dashboard':
@@ -97,11 +78,16 @@ function parseKindString(kind: string): DashboardViewItemKind {
   }
 }
 
+function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
+  return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
-  const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
+  const customMeta = view?.dataFrame.meta?.custom;
+  const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
