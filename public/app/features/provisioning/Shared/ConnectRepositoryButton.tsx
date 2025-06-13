@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoType } from '../Wizard/types';
 import { CONNECT_URL } from '../constants';
@@ -21,7 +21,6 @@ const localURL: ConnectUrl = `${CONNECT_URL}/local`;
 export function ConnectRepositoryButton({ items, showDropdown = false }: Props) {
   const state = checkSyncSettings(items);
   const navigate = useNavigate();
-  const { t } = useTranslate();
 
   if (state.instanceConnected) {
     return null;

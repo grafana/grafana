@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
@@ -21,7 +21,7 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
   });
 
   const { loading, installed, settings } = usePluginBridge(pluginId);
-  const { t } = useTranslate();
+
   return (
     <>
       {loading === true && (
@@ -58,7 +58,7 @@ export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }:
   });
 
   const { loading, installed, settings } = usePluginBridge(pluginId);
-  const { t } = useTranslate();
+
   return (
     <>
       {loading === true && (

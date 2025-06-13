@@ -6,7 +6,7 @@ import {
   StringFieldConfigSettings,
   SelectableValue,
 } from '@grafana/data';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
@@ -51,7 +51,6 @@ const contentTypeOptions: SelectableValue[] = [
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
-  const { t } = useTranslate();
   const LABEL_WIDTH = 13;
 
   if (!value) {

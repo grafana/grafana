@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Escolher",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "mensagem",
-      "body-dashboard-drastically-changed": "Como você está usando novos recursos de painéis compatíveis apenas com o novo formato de esquema de painel da Grafana, o painel será salvo no novo formato. Certifique-se de que você deseja executar esta ação ou prefere salvar o painel como uma nova cópia.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Cancelar"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "A funcionalidade de painel dinâmico está em testes e não possui todos os recursos presentes no comportamento atual dos painéis. Ele se baseia em um novo formato de esquema, que não aceita painéis da biblioteca. Isso significa que, ao exportar o painel para usá-lo em outra instância, não incluiremos painéis da biblioteca. Pretendemos aceitá-los à medida que avançamos no <2>ciclo de vida</2> do recurso.",
       "schema-v2-library-panels-export-title": "O esquema de painel V2 ainda não aceita a exportação de painéis da biblioteca para uso em outra instância",
-      "title-dashboard-drastically-changed": "O painel foi alterado drasticamente"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Fará com que a atualização atual seja o novo padrão",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Ativar destaque",
       "escape-newlines": "Corrigir sequências de tabulação e quebra de linha adicionadas incorretamente por escape nas linhas de log",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Ocultar data e hora",
       "hide-unique-labels": "Ocultar rótulos exclusivos",
       "newest-first": "Organizado por logs mais recentes primeiro: clique para exibir os mais antigos primeiro",

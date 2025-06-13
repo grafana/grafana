@@ -386,36 +386,4 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			resp = sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 412, resp.Status())
 		})
-
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
-		func(t *testing.T, sc scenarioContext) {
-			cmd := model.PatchLibraryElementCommand{
-				FolderID:  sc.folder.ID, // nolint:staticcheck
-				FolderUID: &sc.folder.UID,
-				Version:   1,
-				Kind:      int64(model.VariableElement),
-			}
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
-			sc.ctx.Req.Body = mockRequestBody(cmd)
-			resp := sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 200, resp.Status())
-			var result = validateAndUnMarshalResponse(t, resp)
-			sc.initialResult.Result.Type = "text"
-			sc.initialResult.Result.Kind = int64(model.PanelElement)
-			sc.initialResult.Result.Description = "A description"
-			sc.initialResult.Result.Model = map[string]any{
-				"datasource":  "${DS_GDEV-TESTDATA}",
-				"id":          float64(1),
-				"title":       "Text - Library Panel",
-				"type":        "text",
-				"description": "A description",
-			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
-			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
-			sc.initialResult.Result.Version = 2
-			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
 }
