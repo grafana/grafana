@@ -3253,11 +3253,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:0.19.2":
-  version: 0.19.2
-  resolution: "@grafana/llm@npm:0.19.2"
+"@grafana/llm@npm:0.22.0":
+  version: 0.22.0
+  resolution: "@grafana/llm@npm:0.22.0"
   dependencies:
-    "@modelcontextprotocol/sdk": "npm:^1.7.0"
+    "@modelcontextprotocol/sdk": "npm:^1.11.3"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
     uuid: "npm:^11.0.5"
@@ -3266,7 +3266,7 @@ __metadata:
     "@grafana/runtime": ^10.4.0 || ^11
     react: ^18
     rxjs: ^7.8.1
-  checksum: 10/a348702f78171e43a46c0c72b1a290acadd3ea0dc81b27cb106d31e2246e75d0da1c92e41d4659f224b9f34618b2ea4013051c77c241f4e37dd11b2ef8093578
+  checksum: 10/2333a9fb0fb0d7fe18b83e06ca0f8a3b0177fc2b33734c40215c2e85758b72160e2cb5da95445dbc4289bb047ea822e8192c3f614336dff0fa4daead6e0fafb8
   languageName: node
   linkType: hard
 
@@ -4968,9 +4968,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.7.0":
-  version: 1.12.0
-  resolution: "@modelcontextprotocol/sdk@npm:1.12.0"
+"@modelcontextprotocol/sdk@npm:^1.11.3":
+  version: 1.12.2
+  resolution: "@modelcontextprotocol/sdk@npm:1.12.2"
   dependencies:
     ajv: "npm:^6.12.6"
     content-type: "npm:^1.0.5"
@@ -4983,7 +4983,7 @@ __metadata:
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.23.8"
     zod-to-json-schema: "npm:^3.24.1"
-  checksum: 10/38760dc7529313901f9d643ed1d872bb903b586fdce34be169c67eeeb98ef87e1e1eef436a6ed5f919a35c2c709c6cbb915d335fe2c6b0a504a400e9337d65e4
+  checksum: 10/1c2e1c2b3cddda6dd3ebe25732a3216feb1638f4fac94fdc491f5f7294a68bc642786aa08615c104ab57d7fff391b6c8e6ef94a38cfd2968da3a51582b62d16c
   languageName: node
   linkType: hard
 
@@ -17995,7 +17995,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.7"
-    "@grafana/llm": "npm:0.19.2"
+    "@grafana/llm": "npm:0.22.0"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:2.0.0"
