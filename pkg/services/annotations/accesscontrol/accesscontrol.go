@@ -67,7 +67,7 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 			if err != nil {
 				return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
 			}
-			query.DashboardID = annotationDashboardID
+			query.DashboardID = annotationDashboardID // nolint:staticcheck
 		}
 
 		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query)
@@ -106,7 +106,7 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query anno
 		return 0, ErrAccessControlInternal.Errorf("annotation not found")
 	}
 
-	return items[0].DashboardID, nil
+	return items[0].DashboardID, nil // nolint: staticcheck
 }
 
 func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query annotations.ItemQuery) (map[string]int64, error) {
@@ -130,9 +130,9 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 			UIDs: []string{query.DashboardUID},
 		})
 	}
-	if query.DashboardID != 0 {
+	if query.DashboardID != 0 { // nolint: staticcheck
 		filters = append(filters, searchstore.DashboardIDFilter{
-			IDs: []int64{query.DashboardID},
+			IDs: []int64{query.DashboardID}, // nolint: staticcheck
 		})
 	}
 

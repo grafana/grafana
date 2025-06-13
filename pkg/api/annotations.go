@@ -61,7 +61,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
 		} else {
-			query.DashboardID = dqResult.ID
+			query.DashboardID = dqResult.ID // nolint:staticcheck
 		}
 	}
 
@@ -70,24 +70,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
-	// since there are several annotations per dashboard, we can cache dashboard uid
-	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
 			item.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, item.Email)
-		}
-
-		if item.DashboardID != 0 {
-			if val, ok := dashboardCache[item.DashboardID]; ok {
-				item.DashboardUID = val
-			} else {
-				query := dashboards.GetDashboardQuery{ID: item.DashboardID, OrgID: c.GetOrgID()}
-				queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-				if err == nil && queryResult != nil {
-					item.DashboardUID = &queryResult.UID
-					dashboardCache[item.DashboardID] = &queryResult.UID
-				}
-			}
 		}
 	}
 
@@ -131,6 +116,15 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		}
 	}
 
+	// get dashboard uid if not provided
+	if cmd.DashboardId != 0 && cmd.DashboardUID == "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), ID: cmd.DashboardId}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardUID = queryResult.UID
+		}
+	}
+
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
 		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
 			return dashboardGuardianResponse(err)
@@ -148,15 +142,16 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
-		OrgID:       c.GetOrgID(),
-		UserID:      userID,
-		DashboardID: cmd.DashboardId,
-		PanelID:     cmd.PanelId,
-		Epoch:       cmd.Time,
-		EpochEnd:    cmd.TimeEnd,
-		Text:        cmd.Text,
-		Data:        cmd.Data,
-		Tags:        cmd.Tags,
+		OrgID:        c.GetOrgID(),
+		UserID:       userID,
+		DashboardID:  cmd.DashboardId,
+		DashboardUID: cmd.DashboardUID,
+		PanelID:      cmd.PanelId,
+		Epoch:        cmd.Time,
+		EpochEnd:     cmd.TimeEnd,
+		Text:         cmd.Text,
+		Data:         cmd.Data,
+		Tags:         cmd.Tags,
 	}
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
@@ -418,7 +413,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 		if respErr != nil {
 			return respErr
 		}
-		dashboardId = annotation.DashboardID
+		dashboardId = annotation.DashboardID // nolint:staticcheck
 		deleteParams = &annotations.DeleteParams{
 			OrgID: c.GetOrgID(),
 			ID:    cmd.AnnotationId,
@@ -426,9 +421,10 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	} else {
 		dashboardId = cmd.DashboardId
 		deleteParams = &annotations.DeleteParams{
-			OrgID:       c.GetOrgID(),
-			DashboardID: cmd.DashboardId,
-			PanelID:     cmd.PanelId,
+			OrgID:        c.GetOrgID(),
+			DashboardID:  cmd.DashboardId,
+			DashboardUID: cmd.DashboardUID,
+			PanelID:      cmd.PanelId,
 		}
 	}
 
@@ -519,7 +515,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 
 func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, ac accesscontrol.AccessControl, annotation *annotations.ItemDTO) (bool, error) {
 	if annotation.GetType() == annotations.Dashboard {
-		return canEditDashboard(c, ac, annotation.DashboardID)
+		return canEditDashboard(c, ac, annotation.DashboardID) // nolint:staticcheck
 	} else {
 		return true, nil
 	}
@@ -630,11 +626,11 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 			}
 		}
 
-		if annotation.DashboardID == 0 {
+		if annotation.DashboardID == 0 { // nolint:staticcheck
 			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
 		} else {
 			return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
-				dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID})
+				dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID}) // nolint:staticcheck
 				if err != nil {
 					return nil, err
 				}
