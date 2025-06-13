@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -45,6 +46,13 @@ type xormRepositoryImpl struct {
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
+	// populate dashboard_uid at startup, to ensure safe downgrades & upgrades after
+	// the initial migration occurs
+	err := migrations.RunDashboardUIDMigrations(db.GetEngine().NewSession(), db.GetEngine().DriverName())
+	if err != nil {
+		l.Error("failed to populate dashboard_uid for annotations", "error", err)
+	}
+
 	return &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
@@ -358,10 +366,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 		}
 
-		acFilter, acParams, err := r.getAccessControlFilter(query.SignedInUser, accessResources)
-		if err != nil {
-			return err
-		}
+		acFilter, acParams := r.getAccessControlFilter(query.SignedInUser, accessResources)
 		if acFilter != "" {
 			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 		}
@@ -385,9 +390,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, []any, error) {
+func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, []any) {
 	if accessResources.SkipAccessControlFilter {
-		return "", nil, nil
+		return "", nil
 	}
 
 	var filters []string
@@ -408,7 +413,7 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, acc
 		}
 	}
 
-	return strings.Join(filters, " OR "), params, nil
+	return strings.Join(filters, " OR "), params
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
