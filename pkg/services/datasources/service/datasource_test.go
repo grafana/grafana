@@ -1220,11 +1220,11 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, rt)
 		tr := configuredTransport
 
-		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		opts, err := dsService.HTTPClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
 		require.Equal(t, ds.JsonData.MustMap()["grafanaData"], opts.CustomOptions["grafanaData"])
 
-		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
+		// make sure we can still marshal the JsonData after HTTPClientOptions (avoid cycles)
 		_, err = ds.JsonData.MarshalJSON()
 		require.NoError(t, err)
 
@@ -1468,7 +1468,7 @@ func TestService_getProxySettings(t *testing.T) {
 			Type:  "Graphite",
 		}
 
-		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		opts, err := dsService.HTTPClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
 		require.Nil(t, opts.ProxyOptions)
 	})
@@ -1486,7 +1486,7 @@ func TestService_getProxySettings(t *testing.T) {
 			JsonData: sjson,
 		}
 
-		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		opts, err := dsService.HTTPClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
 		require.True(t, opts.ProxyOptions.Enabled)
 		require.Equal(t, opts.ProxyOptions.Auth.Username, ds.UID)
@@ -1518,7 +1518,7 @@ func TestService_getProxySettings(t *testing.T) {
 		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
-		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		opts, err := dsService.HTTPClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
 		require.True(t, opts.ProxyOptions.Enabled)
 		require.Equal(t, opts.ProxyOptions.Auth.Username, user)

@@ -39,6 +39,9 @@ type DataSourceService interface {
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
 
+	// HTTPClientOptions returns the HTTP client options for the given datasource.
+	HTTPClientOptions(ctx context.Context, ds *DataSource) (*sdkhttpclient.Options, error)
+
 	// DecryptedValues decrypts the encrypted secureJSONData of the provided datasource and
 	// returns the decrypted values.
 	DecryptedValues(ctx context.Context, ds *DataSource) (map[string]string, error)

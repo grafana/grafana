@@ -595,7 +595,7 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 		return t.roundTripper, nil
 	}
 
-	opts, err := s.httpClientOptions(ctx, ds)
+	opts, err := s.HTTPClientOptions(ctx, ds)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +678,7 @@ func (s *Service) DecryptedPassword(ctx context.Context, ds *datasources.DataSou
 	return "", err
 }
 
-func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
+func (s *Service) HTTPClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
 	tlsOptions, err := s.dsTLSOptions(ctx, ds)
 	if err != nil {
 		return nil, err

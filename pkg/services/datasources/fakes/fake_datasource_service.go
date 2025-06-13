@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -119,6 +120,25 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 		return nil, err
 	}
 	return rt, nil
+}
+
+func (s *FakeDataSourceService) HTTPClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
+	opts := &sdkhttpclient.Options{
+		Header: make(http.Header),
+	}
+
+	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+		opts.ProxyOptions = &sdkproxy.Options{
+			Enabled:        true,
+			DatasourceName: ds.UID,
+			DatasourceType: ds.Type,
+			Auth: &sdkproxy.AuthOptions{
+				Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(""),
+			},
+		}
+	}
+
+	return opts, nil
 }
 
 func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
