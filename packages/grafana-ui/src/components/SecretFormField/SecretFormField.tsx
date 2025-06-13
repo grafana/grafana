@@ -3,7 +3,8 @@ import { omit } from 'lodash';
 import { InputHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { Trans } from '../../utils/i18n';
+import { Trans } from '@grafana/i18n';
+
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Field } from '../Forms/Field';
