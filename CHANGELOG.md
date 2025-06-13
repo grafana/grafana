@@ -2,6 +2,10 @@
 
 # 12.0.1+security-01 (2025-06-13)
 
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
 <!-- 12.0.1+security-01 END -->
 <!-- 11.6.0 START -->
 
