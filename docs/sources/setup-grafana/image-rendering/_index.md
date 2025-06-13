@@ -106,8 +106,8 @@ This feature is available in Image Renderer v3.12.6 and later.
 
 You can rate-limit image renderer requests using in-memory storage or Redis.
 
-The rate limiter can be used for multi-tenants setups. If you are using Grafana v12.1.0 or later, requests will be rate-limited by Grafana instance domains (defined in `[rendering] callback_url`, `[server] http_addr` or set to `localhost` if none of the two other options are specified).
-If you are using an earlier version of Grafana, the requests will be rate-limited by IP addresses.
+The rate limiter can be used for multi-tenants setups. If you are using Grafana v12.1.0 or later, requests are rate-limited by Grafana instance domains defined in `[rendering] callback_url` or `[server] http_addr`, or set to `localhost` if none of the two other options are specified.
+If you are using an earlier version of Grafana, the requests are rate-limited by IP addresses.
 
 ```json
 {
