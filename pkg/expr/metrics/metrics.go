@@ -10,7 +10,7 @@ type ExprMetrics struct {
 	DSRequests              *prometheus.CounterVec
 	ExpressionsQuerySummary *prometheus.SummaryVec
 	SqlCommandDuration      *prometheus.HistogramVec
-	SqlCommandErrorCount    *prometheus.CounterVec
+	SqlCommandCount         *prometheus.CounterVec
 	SqlCommandCellCount     *prometheus.HistogramVec
 }
 
@@ -42,12 +42,12 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"status"}),
 
-		SqlCommandErrorCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+		SqlCommandCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: subsystem,
-			Name:      "sql_command_errors_total",
-			Help:      "Total number of SQL command execution errors",
-		}, []string{}),
+			Name:      "sql_command_count",
+			Help:      "Total number of SQL command executions with a status label",
+		}, []string{"status"}),
 
 		SqlCommandCellCount: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -73,7 +73,7 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 
 		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
 
-		SqlCommandErrorCount: newExprMetrics(metricsSubSystem).SqlCommandErrorCount,
+		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
 
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
 	}
@@ -83,7 +83,7 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.DSRequests,
 			m.ExpressionsQuerySummary,
 			m.SqlCommandDuration,
-			m.SqlCommandErrorCount,
+			m.SqlCommandCount,
 			m.SqlCommandCellCount,
 		)
 	}
@@ -102,7 +102,7 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 
 		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
 
-		SqlCommandErrorCount: newExprMetrics(metricsSubSystem).SqlCommandErrorCount,
+		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
 
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
 	}
@@ -112,7 +112,7 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.DSRequests,
 			m.ExpressionsQuerySummary,
 			m.SqlCommandDuration,
-			m.SqlCommandErrorCount,
+			m.SqlCommandCount,
 			m.SqlCommandCellCount,
 		)
 	}

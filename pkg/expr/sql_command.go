@@ -122,7 +122,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			statusLabel = "error"
 		}
 
-		metrics.SqlCommandErrorCount.WithLabelValues().Inc()
+		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
