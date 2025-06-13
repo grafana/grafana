@@ -38,7 +38,7 @@ jobs:
             !.github/**
 
             .github/workflows/backend-unit-tests.yml
-            .github/actions/seutp-enterprise/**
+            .github/actions/setup-enterprise/**
             .citools/**
             .bingo/**
             **/go.mod
