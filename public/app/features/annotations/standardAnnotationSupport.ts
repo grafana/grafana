@@ -253,7 +253,6 @@ export function getAnnotationsFromData(
 // polluting public API.
 
 const legacyRunner = [
-  'prometheus',
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external
