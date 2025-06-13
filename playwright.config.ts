@@ -7,19 +7,21 @@ const testDirRoot = 'e2e/plugin-e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
-  webServer: {
-    command: 'make run & yarn start && npx wait-on http://localhost:3000',
-    port: 3000,
-    timeout: 10 * 60 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: 'make run & yarn start && npx wait-on http://localhost:3000',
+        port: 3000,
+        timeout: 10 * 60 * 1000,
+        reuseExistingServer: true,
+      },
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
+    baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || (process.env.CI ? '3001' : '3000')}`,
     trace: 'retain-on-failure',
     httpCredentials: {
       username: 'admin',

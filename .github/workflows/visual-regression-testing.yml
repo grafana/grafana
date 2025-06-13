@@ -18,8 +18,18 @@ jobs:
           node-version: lts/*
       - name: Install dependencies
         run: yarn install
+      - name: Build Go backend
+        run: go run build.go build
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
+      - name: Start Grafana server
+        run: |
+          ./scripts/grafana-server/start-server > scripts/grafana-server/server.log 2>&1 &
+          ./scripts/grafana-server/wait-for-grafana
+        env:
+          PORT: 3001
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
@@ -31,6 +41,9 @@ jobs:
             echo "Playwright tests failed due to a non-snapshot issue."
             exit 1
           fi
+        env:
+          HOST: localhost
+          PORT: 3001
       - uses: actions/upload-artifact@v4
         id: artifact-upload
         if: always()
