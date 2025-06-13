@@ -551,11 +551,13 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexRebuildInterval                       time.Duration
 	EnableSharding                             bool
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string

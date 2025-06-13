@@ -501,7 +501,7 @@
   },
   {
     "type": "label",
-    "name": "area/area/expressions/sql",
+    "name": "area/expressions/sql",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/908"
