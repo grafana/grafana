@@ -14,7 +14,7 @@ import {
   GrafanaTheme2,
   ReducerID,
 } from '@grafana/data';
-import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { Trans, t } from '../../../utils/i18n';
@@ -38,10 +38,9 @@ import {
   useSortedRows,
   useTextWraps,
 } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, CellColors, ColumnTypes } from './types';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ColumnTypes } from './types';
 import {
   frameToRecords,
-  getCellColors,
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
@@ -49,6 +48,8 @@ import {
   getVisibleFields,
   updateSortColumns,
   shouldTextOverflow,
+  getRowBgFn,
+  computeColWidths,
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
@@ -138,6 +139,19 @@ export function TableNG(props: TableNGProps) {
 
   const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
 
+  // vt scrollbar accounting for column auto-sizing
+  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  // TODO: swapped the rows provided from paginatedRows to sortedRows here
+  // to try to get access to the real rowHeight for pagination. this may not actually work.
+  const scrollbarWidth = useScrollbarWidth(gridHandle, height, sortedRows, expandedRows);
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const availableWidth = useMemo(
+    () => (hasNestedFrames ? width - scrollbarWidth - COLUMN.EXPANDER_WIDTH : width - scrollbarWidth),
+    [width, hasNestedFrames, scrollbarWidth]
+  );
+  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
+  const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
+
   const {
     rows: paginatedRows,
     page,
@@ -148,30 +162,17 @@ export function TableNG(props: TableNGProps) {
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
+    width: availableWidth,
     height,
-    width,
     hasHeader,
     hasFooter,
     paginationHeight,
-    defaultRowHeight,
+    rowHeight,
   });
-
-  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
 
   // Create a map of column key to text wrap
   const textWraps = useTextWraps(data.fields);
-  // vt scrollbar accounting for column auto-sizing
-  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
-  const scrollbarWidth = useScrollbarWidth(gridHandle, props, paginatedRows, expandedRows);
-  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
-  const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - scrollbarWidth - COLUMN.EXPANDER_WIDTH : width - scrollbarWidth),
-    [width, hasNestedFrames, scrollbarWidth]
-  );
-  const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-
-  // todo: don't re-init this on each memoizedData change, only schema/config changes
-  const rowHeight = useRowHeight(widths, data, hasNestedFrames, defaultRowHeight, expandedRows);
+  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
 
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
@@ -280,7 +281,6 @@ export function TableNG(props: TableNGProps) {
           return args.type === 'ROW' && Number(args.row.__depth) === 1 ? data.fields.length : 1;
         },
         renderCell: ({ row }) => {
-          // TODO add TableRow type extension to include row depth and optional data
           if (Number(row.__depth) === 0) {
             return (
               <RowExpander
@@ -541,6 +541,7 @@ const getGridStyles = (
       fontWeight: 'normal',
 
       '.rdg-cell': {
+        zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
         paddingBlock: TABLE.CELL_PADDING,
         borderInlineEnd: 'none',
@@ -549,6 +550,7 @@ const getGridStyles = (
 
     '.rdg-summary-row': {
       '.rdg-cell': {
+        zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
         paddingBlock: TABLE.CELL_PADDING,
       },
@@ -573,7 +575,7 @@ const getGridStyles = (
   }),
   cellOverflow: css({
     '&:hover': {
-      zIndex: theme.zIndex.tooltip,
+      zIndex: theme.zIndex.tooltip - 2,
       whiteSpace: 'pre-line',
       height: 'min-content',
       minWidth: 'min-content',
@@ -613,45 +615,7 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   }),
 });
 
-// 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
-// 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
-function computeColWidths(fields: Field[], availWidth: number) {
-  let autoCount = 0;
-  let definedWidth = 0;
-
-  return fields
-    .map((field, i) => {
-      const width: number = field.config.custom?.width ?? 0;
-
-      if (width === 0) {
-        autoCount++;
-      } else {
-        definedWidth += width;
-      }
-
-      return width;
-    })
-    .map(
-      (width, i) =>
-        width ||
-        Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
-    );
-}
-
-function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
-  const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
-  const fieldDisplay = field.display;
-  if (
-    fieldDisplay !== undefined &&
-    cellOptions !== undefined &&
-    cellOptions.type === TableCellDisplayMode.ColorBackground &&
-    cellOptions.applyToRow
-  ) {
-    return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
-  }
-}
-
-function getCellClasses(
+export function getCellClasses(
   field: Field,
   styles: ReturnType<typeof getGridStyles>,
   columnTypes: ColumnTypes,
@@ -683,9 +647,7 @@ function getCellClasses(
 
 /*
 TODO:
-hidden
 active line and cell styling
-subtable/expand
 whole row color (applyToRow)
   - subtable might be impacted by this
 -----
@@ -693,6 +655,16 @@ initialSortBy change?
 enable pagination disables footer?
 pagination + text wrap...
 auto-cell: can we deprecate in favor of newer RDG options?
+-----
+- Max row height
+  - also, disable overflow?
+- Text wrap column heading
+- Field description
+- Monospace (fieldOverride?)
+	- default for number?
+	- custom format
+	- currency format
+- Pagination, filter, and sort persistence via URL
 -----
 accessible sorting and filtering
 accessible table navigation

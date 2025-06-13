@@ -25,7 +25,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 
-import { TABLE } from './constants';
+import { COLUMN, TABLE } from './constants';
 import {
   CellColors,
   TableRow,
@@ -492,4 +492,42 @@ export const getDisplayName = (field: Field): string => {
 
 export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+}
+
+// 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
+// 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+export function computeColWidths(fields: Field[], availWidth: number) {
+  let autoCount = 0;
+  let definedWidth = 0;
+
+  return fields
+    .map((field, i) => {
+      const width: number = field.config.custom?.width ?? 0;
+
+      if (width === 0) {
+        autoCount++;
+      } else {
+        definedWidth += width;
+      }
+
+      return width;
+    })
+    .map(
+      (width, i) =>
+        width ||
+        Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
+    );
+}
+
+export function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+  const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
+  const fieldDisplay = field.display;
+  if (
+    fieldDisplay !== undefined &&
+    cellOptions !== undefined &&
+    cellOptions.type === TableCellDisplayMode.ColorBackground &&
+    cellOptions.applyToRow
+  ) {
+    return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+  }
 }
