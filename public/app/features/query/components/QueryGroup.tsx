@@ -13,8 +13,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
@@ -409,7 +408,6 @@ export function QueryGroupTopSection({
 }: QueryGroupTopSectionProps) {
   const styles = getStyles();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const { t } = useTranslate();
 
   return (
     <>

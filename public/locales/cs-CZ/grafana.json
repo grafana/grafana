@@ -4465,6 +4465,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Vybrat ",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5283,7 +5284,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "zpráva",
-      "body-dashboard-drastically-changed": "Protože používáte nové funkce nástěnky, které jsou podporované pouze v novém formátu schématu nástěnky Grafana, nástěnka bude uložena v novém formátu. Ujistěte se, jestli chcete provést tuto akci nebo chcete uložit nástěnku jako novou kopii.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Zrušit"
       },
@@ -5299,7 +5300,7 @@
       },
       "schema-v2-library-panels-export": "Funkce dynamické nástěnky panelu je experimentální a nemá plnou funkčnost srovnatelnou se současným chováním nástěnek. Je založena na novém formátu schématu, který nepodporuje panely knihovny. To znamená, že při exportu nástěnky pro použití v jiné instanci nebudeme zahrnovat panely knihoven. Jejich podpora je naplánována v rámci <2>životního cyklu</2> funkce.",
       "schema-v2-library-panels-export-title": "Schéma nástěnky V2 zatím nepodporuje export panelů knihoven pro použití v jiné instanci",
-      "title-dashboard-drastically-changed": "Nástěnka se podstatně změnila"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Nastaví aktuální obnovení jako nové výchozí",
@@ -7767,6 +7768,8 @@
       },
       "enable-highlighting": "Povolit zvýraznění",
       "escape-newlines": "Opravit nesprávně uniklé sekvence nového řádku a záložek v řádcích protokolu",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
       "newest-first": "Seřazeno od nejnovějších protokolů – kliknutím zobrazíte nejstarší protokoly jako první",

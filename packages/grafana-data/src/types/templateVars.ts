@@ -54,7 +54,7 @@ export interface AdHocVariableFilter {
   operator: string;
   value: string;
   values?: string[];
-  origin?: string;
+  origin?: 'dashboard';
   /** @deprecated  */
   condition?: string;
 }

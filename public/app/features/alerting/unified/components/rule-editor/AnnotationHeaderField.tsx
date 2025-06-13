@@ -1,6 +1,6 @@
 import { Controller, FieldArrayWithId, useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
@@ -21,7 +21,6 @@ const AnnotationHeaderField = ({
   index: number;
   labelId: string;
 }) => {
-  const { t } = useTranslate();
   const { control } = useFormContext<RuleFormValues>();
 
   return (

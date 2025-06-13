@@ -10,6 +10,10 @@ import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
 interface UseGeneratorHookOptions {
+  /**
+   * Whether to populate the RTKQ cache with the groups.
+   * Populating cache might harm performance when fetching a lot of groups or fetching multiple pages
+   */
   populateCache?: boolean;
   limitAlerts?: number;
 }

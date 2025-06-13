@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { SimpleInput } from './SimpleInput';
 
@@ -11,7 +11,6 @@ interface AddColumnProps {
 }
 
 export const AddColumn = ({ divStyle, onColumnInputBlur }: AddColumnProps) => {
-  const { t } = useTranslate();
   const [showInput, setShowInput] = useState<boolean>(false);
 
   const setupColumnInput = () => {
