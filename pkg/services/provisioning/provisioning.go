@@ -254,6 +254,8 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
