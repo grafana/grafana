@@ -170,7 +170,7 @@ func (a annotationType) String() string {
 }
 
 func (annotation *ItemDTO) GetType() annotationType {
-	if annotation.DashboardID != 0 || (annotation.DashboardUID != nil && *annotation.DashboardUID != "") {
+	if annotation.DashboardUID != nil && *annotation.DashboardUID != "" {
 		return Dashboard
 	}
 	return Organization
