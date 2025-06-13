@@ -69,11 +69,16 @@ export type WebhookConfig = {
 };
 
 type GrafanaManagedReceiverConfigSettings<T = any> = Record<string, T>;
+export type GrafanaManagedReceiverSecureFields = Record<string, boolean>;
+
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage?: boolean;
-  secureFields?: Record<string, boolean>;
-  secureSettings?: GrafanaManagedReceiverConfigSettings;
+  /**
+   * Secure fields keys values should be true if they are already configured in the database
+   * To reset the secure field, omit the key from the object when updating the receiver
+   */
+  secureFields?: GrafanaManagedReceiverSecureFields;
   /** If retrieved from k8s API, SecureSettings property name is different */
   // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
   settings: GrafanaManagedReceiverConfigSettings;

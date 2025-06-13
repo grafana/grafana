@@ -34,6 +34,7 @@ describe('AdHocVariableForm', () => {
     datasource: defaultDatasource,
     onDataSourceChange,
     infoText: 'Test Info',
+    datasourceSupported: true,
   };
 
   it('should render the form with the provided data source', async () => {
@@ -42,14 +43,9 @@ describe('AdHocVariableForm', () => {
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
     );
-    const infoText = renderer.getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText
-    );
 
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
-    expect(infoText).toBeInTheDocument();
-    expect(infoText).toHaveTextContent('Test Info');
   });
 
   it('should call the onDataSourceChange callback when the data source is changed', async () => {
@@ -116,6 +112,7 @@ describe('AdHocVariableForm', () => {
       ...defaultProps,
       defaultKeys: [{ text: 'test', value: 'test' }],
       onDefaultKeysChange: mockOnStaticKeysChange,
+      datasourceSupported: true,
     });
 
     await userEvent.click(
@@ -124,11 +121,40 @@ describe('AdHocVariableForm', () => {
     expect(mockOnStaticKeysChange).toHaveBeenCalledTimes(1);
     expect(mockOnStaticKeysChange).toHaveBeenCalledWith(undefined);
   });
+
+  it('should render only datasource picker and alert when not supported', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const { renderer } = await setup({
+      ...defaultProps,
+      datasourceSupported: false,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const dataSourcePicker = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
+    );
+
+    const allowCustomValueCheckbox = renderer.queryByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    const alertText = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText
+    );
+
+    expect(dataSourcePicker).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).not.toBeInTheDocument();
+    expect(alertText).toBeInTheDocument();
+  });
 });
 
 async function setup(props?: React.ComponentProps<typeof AdHocVariableForm>) {
   return {
-    renderer: await act(() => render(<AdHocVariableForm onDataSourceChange={jest.fn()} {...props} />)),
+    renderer: await act(() =>
+      render(
+        <AdHocVariableForm onDataSourceChange={jest.fn()} datasourceSupported={props!.datasourceSupported} {...props} />
+      )
+    ),
     user: userEvent.setup(),
   };
 }

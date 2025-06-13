@@ -3,7 +3,6 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -11,11 +10,24 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+)
+
+// HACK: This is a hack so that wire can uniquely identify dependencies
+func MergeProvisioningExtras(webhook webhooks.WebhookExtraBuilder) []provisioning.ExtraBuilder {
+	return []provisioning.ExtraBuilder{
+		webhook.ExtraBuilder,
+	}
+}
+
+var ProvisioningExtras = wire.NewSet(
+	webhooks.ProvideWebhooks,
+	MergeProvisioningExtras,
 )
 
 var WireSet = wire.NewSet(
@@ -33,10 +45,10 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
+	ProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
-	notifications.RegisterAPIService,
 	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
 )

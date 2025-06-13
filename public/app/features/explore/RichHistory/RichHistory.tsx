@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   SortOrder,
   RichHistorySearchFilters,

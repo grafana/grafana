@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 

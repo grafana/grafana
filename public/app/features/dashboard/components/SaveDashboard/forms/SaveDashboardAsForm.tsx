@@ -1,9 +1,9 @@
 import { ChangeEvent } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
@@ -177,10 +177,6 @@ export const SaveDashboardAsForm = ({
                   {...field}
                   onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
-                  // Old folder picker fields
-                  initialTitle={dashboard.meta.folderTitle}
-                  dashboardId={dashboard.id}
-                  enableCreateNew
                 />
               )}
               control={control}

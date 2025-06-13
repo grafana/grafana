@@ -180,6 +180,9 @@ export const rulerRuleVersionHistoryHandler = () => {
       draft.grafana_alert.version = 2;
       draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
       draft.for = '2h';
+      if (!draft.labels) {
+        draft.labels = {};
+      }
       draft.labels.foo = 'bar';
       draft.grafana_alert.notification_settings = { receiver: 'another receiver' };
       draft.grafana_alert.updated_by = {

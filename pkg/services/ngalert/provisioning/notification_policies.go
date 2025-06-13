@@ -104,7 +104,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	for _, mt := range revision.Config.AlertmanagerConfig.TimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
 	}
-	err = tree.ValidateMuteTimes(timeIntervals)
+	err = tree.ValidateTimeIntervals(timeIntervals)
 	if err != nil {
 		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}

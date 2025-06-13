@@ -3,9 +3,8 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { isUndefined } from 'lodash';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -63,10 +62,7 @@ export const Details = ({ rule }: DetailsProps) => {
 
   const datasource = useDatasource(targetDatasourceUid);
 
-  const showTargetDatasource =
-    config.featureToggles.grafanaManagedRecordingRulesDatasources &&
-    targetDatasourceUid &&
-    targetDatasourceUid !== 'grafana';
+  const showTargetDatasource = targetDatasourceUid && targetDatasourceUid !== 'grafana';
 
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
@@ -169,7 +165,7 @@ export const Details = ({ rule }: DetailsProps) => {
                 value={missingSeriesEvalsToResolve}
                 tooltipValue={t(
                   'alerting.alert.description-missing-series-evaluations',
-                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                  'The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.'
                 )}
               />
             )}

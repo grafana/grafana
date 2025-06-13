@@ -382,17 +382,16 @@ By default, you cannot edit API-provisioned alerting resources in Grafana.
 
 To enable editing these resources in the Grafana UI, add the **`X-Disable-Provenance: true`** header to the following API requests:
 
-- `POST /api/v1/provisioning/alert-rules`
-- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` _(This endpoint changes provenance for all alert rules in the alert group)_
-
-- `POST /api/v1/provisioning/contact-points`
-- `POST /api/v1/provisioning/mute-timings`
-- `PUT /api/v1/provisioning/templates/{name}`
-- `PUT /api/v1/provisioning/policies`
+- [`PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}`](#route-put-alert-rule-group): This action also sets the provenance for the rule group and all its alert rules.
+- [`POST /api/v1/provisioning/alert-rules`](#route-post-alert-rule): The provenance of the new alert rule must match the provenance value configured for its rule group.
+- [`POST /api/v1/provisioning/contact-points`](##route-post-contactpoints)
+- [`POST /api/v1/provisioning/mute-timings`](#route-post-mute-timing)
+- [`PUT /api/v1/provisioning/templates/{name}`](#route-put-template)
+- [`PUT /api/v1/provisioning/policies`](#route-put-policy-tree)
 
 To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use:
 
-- `DELETE /api/v1/provisioning/policies`
+- [`DELETE /api/v1/provisioning/policies`](#route-reset-policy-tree)
 
 ## Data source-managed resources
 
@@ -1080,6 +1079,10 @@ Status: OK
 POST /api/v1/provisioning/alert-rules
 ```
 
+This action creates a new alert rule.
+
+The provenance (`X-Disable-Provenance`) of the new rule must match the provenance configured for its rule group. Mixing provisioned and unprovisioned alert rules within the same rule group is not allowed.
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1251,16 +1254,18 @@ Status: Bad Request
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
+This action also changes the provenance setting (`X-Disable-Provenance`) for all alert rules in the alert group.
+
 #### Parameters
 
 {{% responsive-table %}}
 
-| Name                         | Source | Type                                | Go type                 | Required | Default | Description                                                                                             |
-| ---------------------------- | ------ | ----------------------------------- | ----------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- |
-| `FolderUID`                  | path   | string                              | string                  |    ✓     |         |                                                                                                         |
-| `Group`                      | path   | string                              | string                  |    ✓     |         |                                                                                                         |
-| `X-Disable-Provenance: true` | header | string                              | string                  |          |         | Allows editing of provisioned resources in the Grafana UI                                               |
-| `Body`                       | body   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group |
+| Name                         | Source | Type                                | Go type                 | Required | Default | Description                                                                                                             |
+| ---------------------------- | ------ | ----------------------------------- | ----------------------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `FolderUID`                  | path   | string                              | string                  |    ✓     |         |                                                                                                                         |
+| `Group`                      | path   | string                              | string                  |    ✓     |         |                                                                                                                         |
+| `X-Disable-Provenance: true` | header | string                              | string                  |          |         | Allows editing of provisioned resources in the Grafana UI. This also applies to all alert rules within the alert group. |
+| `Body`                       | body   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |          |         | This action is idempotent and rules included in this body will overwrite configured rules for the group                 |
 
 {{% /responsive-table %}}
 

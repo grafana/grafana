@@ -1,6 +1,5 @@
+import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
-
-import { t } from '../../../core/internationalization';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';
@@ -35,6 +34,7 @@ export const LogsTableAvailableFields = (props: {
 }): JSX.Element => {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
+
   const styles = getLogsFieldsStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {

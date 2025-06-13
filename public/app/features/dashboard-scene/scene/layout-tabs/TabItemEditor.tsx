@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Input, Field, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -67,6 +67,7 @@ export function useEditOptions(model: TabItem, isNewElement: boolean): OptionsPa
 
 function TabTitleInput({ tab, isNewElement }: { tab: TabItem; isNewElement: boolean }) {
   const { title } = tab.useState();
+
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = tab.hasUniqueTitle();
 

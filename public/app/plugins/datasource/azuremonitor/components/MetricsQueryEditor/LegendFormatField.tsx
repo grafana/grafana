@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
@@ -25,10 +26,10 @@ const LegendFormatField = ({ onQueryChange, query }: AzureQueryEditorFieldProps)
   }, [onQueryChange, query, value]);
 
   return (
-    <Field label="Legend format">
+    <Field label={t('components.legend-format-field.label-legend-format', 'Legend format')}>
       <Input
         id="azure-monitor-metrics-legend-field"
-        placeholder="Alias patterns"
+        placeholder={t('components.legend-format-field.placeholder-legend-format', 'Alias patterns')}
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}

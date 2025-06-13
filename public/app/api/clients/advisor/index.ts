@@ -15,6 +15,18 @@ export const advisorAPI = generatedAPI.enhanceEndpoints({
         });
       }
     },
+    updateCheckType: (endpointDefinition) => {
+      const originalQuery = endpointDefinition.query;
+      if (originalQuery) {
+        endpointDefinition.query = (requestOptions) => ({
+          ...originalQuery(requestOptions),
+          headers: {
+            'Content-Type': 'application/json-patch+json',
+          },
+          body: JSON.stringify(requestOptions.patch),
+        });
+      }
+    },
   },
 });
 export const {
@@ -24,5 +36,6 @@ export const {
   useDeleteCheckMutation,
   useUpdateCheckMutation,
   useListCheckTypeQuery,
+  useUpdateCheckTypeMutation,
 } = advisorAPI;
 export { type Check, type CheckType } from './endpoints.gen'; // eslint-disable-line

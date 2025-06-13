@@ -115,7 +115,7 @@ beforeAll(() => {
 describe('LogsPanel', () => {
   test('Renders a list of logs without controls ', async () => {
     setup();
-    expect(await screen.findByText('logline text')).toBeInTheDocument();
+    await screen.findByText('logline text');
     expect(screen.queryByLabelText('Scroll to bottom')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Display levels')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Scroll to top')).not.toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('LogsPanel', () => {
 
   test('Renders a list of logs with controls', async () => {
     setup({ options: { ...defaultProps.options, showControls: true } });
-    expect(await screen.findByText('logline text')).toBeInTheDocument();
+    await screen.findByText('logline text');
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
     expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();

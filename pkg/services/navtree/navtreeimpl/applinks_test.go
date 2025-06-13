@@ -207,21 +207,21 @@ func TestAddAppLinks(t *testing.T) {
 	t.Run("Should only add an 'Observability' section if a plugin exists that wants to live there", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
-		// Check if the Monitoring section is not there if no apps try to register to it
+		// Check if the Observability section is not there if no apps try to register to it
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		monitoringNode := treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 		require.Nil(t, monitoringNode)
 
 		// It should appear and once an app tries to register to it
 		treeRoot = navtree.NavTreeRoot{}
 		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app1": {SectionID: navtree.NavIDMonitoring},
+			"test-app1": {SectionID: navtree.NavIDObservability},
 		}
 		err = service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		monitoringNode = treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode = treeRoot.FindById(navtree.NavIDObservability)
 		require.NotNil(t, monitoringNode)
 		require.Len(t, monitoringNode.Children, 1)
 		require.Equal(t, "Test app1 name", monitoringNode.Children[0].Text)
@@ -277,15 +277,15 @@ func TestAddAppLinks(t *testing.T) {
 
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app2": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
-			"test-app1": {SectionID: navtree.NavIDMonitoring, SortWeight: 3},
-			"test-app3": {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
+			"test-app2": {SectionID: navtree.NavIDObservability, SortWeight: 2},
+			"test-app1": {SectionID: navtree.NavIDObservability, SortWeight: 3},
+			"test-app3": {SectionID: navtree.NavIDObservability, SortWeight: 1},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		treeRoot.Sort()
-		monitoringNode := treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 
 		require.NoError(t, err)
 		require.Equal(t, "Test app3 name", monitoringNode.Children[0].Text)
@@ -367,7 +367,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
-		require.Equal(t, "infrastructure", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
@@ -387,7 +387,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(1), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(4), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)

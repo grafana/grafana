@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -31,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -44,13 +43,6 @@ func TestDirectSQLStats(t *testing.T) {
 	ctx := context.Background()
 
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
-	require.NoError(t, err)
-	fakeGuardian := &guardian.FakeDashboardGuardian{
-		CanSaveValue: true,
-		CanEditUIDs:  []string{},
-		CanViewUIDs:  []string{},
-	}
-	guardian.MockDashboardGuardian(fakeGuardian)
 	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(
@@ -114,7 +106,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder1UID,
 		})
@@ -147,7 +139,7 @@ func TestDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		stats, err := store.GetStats(ctx, &resource.ResourceStatsRequest{
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
 			Folder:    folder2UID,
 		})

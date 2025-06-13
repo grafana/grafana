@@ -406,7 +406,12 @@ func WithoutInternalLabels() LabelOption {
 	}
 }
 
-func (alertRule *AlertRule) ImportedFromPrometheus() bool {
+func (alertRule *AlertRule) ImportedPrometheusRule() bool {
+	_, hasConvertedPrometheusRuleLabel := alertRule.GetLabels()[ConvertedPrometheusRuleLabel]
+	return hasConvertedPrometheusRuleLabel || alertRule.HasPrometheusRuleDefinition()
+}
+
+func (alertRule *AlertRule) HasPrometheusRuleDefinition() bool {
 	_, err := alertRule.PrometheusRuleDefinition()
 	return err == nil
 }
@@ -469,7 +474,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	ops = append(
 		ops,
 		cmp.Reporter(&reporter),
-		cmpopts.IgnoreFields(AlertQuery{}, "modelProps"),
+		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
@@ -859,7 +864,7 @@ type ListAlertRulesQuery struct {
 	ReceiverName     string
 	TimeIntervalName string
 
-	ImportedPrometheusRule *bool
+	HasPrometheusRuleDefinition *bool
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

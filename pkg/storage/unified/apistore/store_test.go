@@ -29,10 +29,11 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func init() {
@@ -160,17 +161,17 @@ func TestDeleteWithSuggestionAndConflict(t *testing.T) {
 }
 
 type resourceClientMock struct {
-	resource.ResourceStoreClient
-	resource.ResourceIndexClient
-	resource.ManagedObjectIndexClient
-	resource.BulkStoreClient
-	resource.BlobStoreClient
-	resource.DiagnosticsClient
+	resourcepb.ResourceStoreClient
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.BulkStoreClient
+	resourcepb.BlobStoreClient
+	resourcepb.DiagnosticsClient
 }
 
 // always return GRPC Unauthenticated code
-func (r resourceClientMock) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
-	return &resource.ListResponse{}, status.Error(codes.Unauthenticated, "missing token")
+func (r resourceClientMock) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return &resourcepb.ListResponse{}, status.Error(codes.Unauthenticated, "missing token")
 }
 
 func TestGRPCtoHTTPStatusMapping(t *testing.T) {

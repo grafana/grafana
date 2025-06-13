@@ -1,10 +1,11 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -143,14 +144,27 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
 
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
-      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
+      <Input
+        ref={ref}
+        value={name}
+        onChange={onChange}
+        required
+        onBlur={onBlur}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
+      />
     </Field>
   );
 }
 
 function VariableLabelInput({ variable }: VariableInputProps) {
   const { label } = variable.useState();
-  return <Input value={label} onChange={(e) => variable.setState({ label: e.currentTarget.value })} />;
+  return (
+    <Input
+      value={label}
+      onChange={(e) => variable.setState({ label: e.currentTarget.value })}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}
+    />
+  );
 }
 
 function VariableDescriptionTextArea({ variable }: VariableInputProps) {

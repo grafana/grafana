@@ -1,6 +1,6 @@
+import { Trans } from '@grafana/i18n';
 import { Button, Spinner } from '@grafana/ui';
 import { Repository, useCreateRepositoryTestMutation } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
 
 interface Props {
   repository: Repository;

@@ -68,6 +68,7 @@ export function MetricsLabelsSection({
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
@@ -91,6 +92,7 @@ export function MetricsLabelsSection({
     const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
     labelsToConsider.push(forLabel);
     if (query.metric) {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -173,6 +175,7 @@ export function MetricsLabelsSection({
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
 
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -244,7 +247,7 @@ async function getMetrics(
   let metrics: string[];
   if (query.labels.length > 0) {
     const expr = promQueryModeller.renderLabels(query.labels);
-    metrics = (await datasource.languageProvider.getSeries(timeRange, expr, true))['__name__'] ?? [];
+    metrics = (await datasource.languageProvider.getSeriesValues(timeRange, '__name__', expr)) ?? [];
   } else {
     metrics = (await datasource.languageProvider.getLabelValues(timeRange, '__name__')) ?? [];
   }

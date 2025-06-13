@@ -22,37 +22,57 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type ResourceClient interface {
-	ResourceStoreClient
-	ResourceIndexClient
-	ManagedObjectIndexClient
-	BulkStoreClient
-	BlobStoreClient
-	DiagnosticsClient
+	resourcepb.ResourceStoreClient
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.BulkStoreClient
+	resourcepb.BlobStoreClient
+	resourcepb.DiagnosticsClient
 }
 
 // Internal implementation
 type resourceClient struct {
-	ResourceStoreClient
-	ResourceIndexClient
-	ManagedObjectIndexClient
-	BulkStoreClient
-	BlobStoreClient
-	DiagnosticsClient
+	resourcepb.ResourceStoreClient
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.BulkStoreClient
+	resourcepb.BlobStoreClient
+	resourcepb.DiagnosticsClient
+}
+
+func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+		return NewLegacyResourceClient(conn), nil
+	}
+
+	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
+
+	return NewRemoteResourceClient(tracer, conn, RemoteResourceClientConfig{
+		Token:            clientCfg.Token,
+		TokenExchangeURL: clientCfg.TokenExchangeURL,
+		Audiences:        []string{"resourceStore"},
+		Namespace:        clientCfg.TokenNamespace,
+		AllowInsecure:    cfg.Env == setting.Dev,
+	})
 }
 
 func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:      NewResourceStoreClient(cc),
-		ResourceIndexClient:      NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          NewBulkStoreClient(cc),
-		BlobStoreClient:          NewBlobStoreClient(cc),
-		DiagnosticsClient:        NewDiagnosticsClient(cc),
+		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
+		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
 	}
 }
 
@@ -63,12 +83,12 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	grpcAuthInt := grpcutils.NewUnsafeAuthenticator(tracer)
 	for _, desc := range []*grpc.ServiceDesc{
-		&ResourceStore_ServiceDesc,
-		&ResourceIndex_ServiceDesc,
-		&ManagedObjectIndex_ServiceDesc,
-		&BlobStore_ServiceDesc,
-		&BulkStore_ServiceDesc,
-		&Diagnostics_ServiceDesc,
+		&resourcepb.ResourceStore_ServiceDesc,
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BulkStore_ServiceDesc,
+		&resourcepb.Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
 			grpchan.InterceptServer(
@@ -87,12 +107,12 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:      NewResourceStoreClient(cc),
-		ResourceIndexClient:      NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          NewBulkStoreClient(cc),
-		BlobStoreClient:          NewBlobStoreClient(cc),
-		DiagnosticsClient:        NewDiagnosticsClient(cc),
+		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
+		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
 	}
 }
 
@@ -129,12 +149,12 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient:      NewResourceStoreClient(cc),
-		ResourceIndexClient:      NewResourceIndexClient(cc),
-		BlobStoreClient:          NewBlobStoreClient(cc),
-		BulkStoreClient:          NewBulkStoreClient(cc),
-		ManagedObjectIndexClient: NewManagedObjectIndexClient(cc),
-		DiagnosticsClient:        NewDiagnosticsClient(cc),
+		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
+		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
+		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
 	}, nil
 }
 

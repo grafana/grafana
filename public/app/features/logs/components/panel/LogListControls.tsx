@@ -4,9 +4,9 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
@@ -43,11 +43,13 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     dedupStrategy,
     downloadLogs,
     filterLevels,
+    fontSize,
     forceEscape,
     hasUnescapedContent,
     prettifyJSON,
     setDedupStrategy,
     setFilterLevels,
+    setFontSize,
     setForceEscape,
     setPrettifyJSON,
     setShowTime,
@@ -98,6 +100,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     },
     [filterLevels, setFilterLevels]
   );
+
+  const onFontSizeClick = useCallback(() => {
+    const newSize = fontSize === 'default' ? 'small' : 'default';
+    reportInteraction('logs_log_list_controls_font_size_clicked', {
+      size: newSize,
+    });
+    setFontSize(newSize);
+  }, [fontSize, setFontSize]);
 
   const onShowTimestampsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_time_clicked', {
@@ -226,13 +236,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
             onClick={onSortOrderClick}
             tooltip={
               sortOrder === LogsSortOrder.Descending
-                ? t('logs.logs-controls.newest-first', 'Newest logs first')
-                : t('logs.logs-controls.oldest-first', 'Oldest logs first')
+                ? t('logs.logs-controls.newest-first', 'Sorted by newest logs first - Click to show oldest first')
+                : t('logs.logs-controls.oldest-first', 'Sorted by oldest logs first - Click to show newest first')
             }
             size="lg"
           />
           {visualisationType === 'logs' && (
             <>
+              <div className={styles.divider} />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -253,6 +264,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               </Dropdown>
+              <div className={styles.divider} />
               <IconButton
                 name="clock-nine"
                 aria-pressed={showTime}
@@ -316,6 +328,20 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                     syntaxHighlighting
                       ? t('logs.logs-controls.disable-highlighting', 'Disable highlighting')
                       : t('logs.logs-controls.enable-highlighting', 'Enable highlighting')
+                  }
+                  size="lg"
+                />
+              )}
+              {config.featureToggles.newLogsPanel && (
+                <IconButton
+                  name="text-fields"
+                  className={fontSize === 'small' ? styles.controlButtonActive : styles.controlButton}
+                  aria-pressed={Boolean(fontSize)}
+                  onClick={onFontSizeClick}
+                  tooltip={
+                    fontSize === 'default'
+                      ? t('logs.logs-controls.font-size-default', 'Use small font size')
+                      : t('logs.logs-controls.font-size-small', 'Use default font size')
                   }
                   size="lg"
                 />
@@ -391,6 +417,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
       overflow: 'hidden',
+      minWidth: theme.spacing(4),
     }),
     scrollToTopButton: css({
       margin: 0,

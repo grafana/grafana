@@ -41,7 +41,8 @@ export async function isPluginFrontendSandboxEligible({ pluginId }: SandboxEligi
   }
 
   // To fast-test and debug the sandbox in the browser (dev mode only).
-  const sandboxDisableQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  const sandboxDisableQueryParam =
+    window.location.search.includes('nosandbox') && config.buildInfo.env === 'development';
   if (sandboxDisableQueryParam) {
     return false;
   }

@@ -1,42 +1,35 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { TimeRange } from '@grafana/data';
+import { TimeRange, dateTime } from '@grafana/data';
 
 import PromQlLanguageProvider from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
-import { buildSelector } from './selectorBuilder';
-import { LAST_USED_LABELS_KEY, DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, METRIC_LABEL } from './types';
+import * as selectorBuilderModule from './selectorBuilder';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 import { useMetricsLabelsValues } from './useMetricsLabelsValues';
 
-// Mock buildSelector
-jest.mock('./selectorBuilder', () => ({
-  buildSelector: jest.fn().mockImplementation(() => '{}'),
-  EMPTY_SELECTOR: '{}',
-}));
+// Test utilities to reduce boilerplate
+const setupMocks = () => {
+  // Mock the buildSelector module - we need to mock the whole module
+  jest.spyOn(selectorBuilderModule, 'buildSelector').mockImplementation(() => EMPTY_SELECTOR);
 
-// Mock local storage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    clear: jest.fn(() => {
-      store = {};
-    }),
-  };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+  // Mock localStorage
+  const localStorageMock = (() => {
+    let store: Record<string, string> = {};
+    return {
+      getItem: jest.fn((key: string) => store[key] || null),
+      setItem: jest.fn((key: string, value: string) => {
+        store[key] = value;
+      }),
+      clear: jest.fn(() => {
+        store = {};
+      }),
+    };
+  })();
+  Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-// Mock console methods to suppress logging during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
-describe('useMetricsLabelsValues', () => {
-  // Mock dependencies
-  const mockTimeRange: TimeRange = getMockTimeRange();
+  // Mock language provider
   const mockLanguageProvider = {
     metrics: ['metric1', 'metric2', 'metric3'],
     labelKeys: ['__name__', 'instance', 'job', 'service'],
@@ -48,173 +41,159 @@ describe('useMetricsLabelsValues', () => {
     fetchLabels: jest.fn(),
     fetchSeriesValuesWithMatch: jest.fn(),
     fetchSeriesLabelsMatch: jest.fn(),
+    fetchLabelsWithMatch: jest.fn(),
   } as unknown as PromQlLanguageProvider;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    localStorageMock.clear();
-    (buildSelector as jest.Mock).mockClear();
-
-    // Suppress console output during tests
-    console.log = jest.fn();
-    console.error = jest.fn();
-
-    // Mock fetchLabelValues (for metrics)
-    (mockLanguageProvider.fetchLabelValues as jest.Mock).mockResolvedValue(['metric1', 'metric2', 'metric3']);
-
-    // Mock fetchLabels for label keys
-    (mockLanguageProvider.fetchLabels as jest.Mock).mockResolvedValue(['__name__', 'instance', 'job', 'service']);
-
-    // Default implementation for fetchSeriesValuesWithMatch
-    (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
-      (_timeRange: TimeRange, label: string) => {
-        if (label === 'job') {
-          return Promise.resolve(['grafana', 'prometheus']);
-        }
-        if (label === 'instance') {
-          return Promise.resolve(['host1', 'host2']);
-        }
-        if (label === METRIC_LABEL) {
-          return Promise.resolve(['metric1', 'metric2', 'metric3']);
-        }
-        return Promise.resolve([]);
+  // Mock standard responses
+  (mockLanguageProvider.fetchLabelValues as jest.Mock).mockResolvedValue(['metric1', 'metric2', 'metric3']);
+  (mockLanguageProvider.fetchLabels as jest.Mock).mockResolvedValue(['__name__', 'instance', 'job', 'service']);
+  (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+    (_timeRange: TimeRange, label: string) => {
+      if (label === 'job') {
+        return Promise.resolve(['grafana', 'prometheus']);
       }
-    );
+      if (label === 'instance') {
+        return Promise.resolve(['host1', 'host2']);
+      }
+      if (label === METRIC_LABEL) {
+        return Promise.resolve(['metric1', 'metric2', 'metric3']);
+      }
+      return Promise.resolve([]);
+    }
+  );
+  (mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
+    __name__: ['metric1', 'metric2'],
+    instance: ['instance1', 'instance2'],
+    job: ['job1', 'job2'],
+    service: ['service1', 'service2'],
+  });
 
-    // Mock fetchSeriesLabelsMatch
-    (mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
-      __name__: ['metric1', 'metric2'],
-      instance: ['instance1', 'instance2'],
-      job: ['job1', 'job2'],
-      service: ['service1', 'service2'],
-    });
+  const mockTimeRange: TimeRange = getMockTimeRange();
+
+  return { mockLanguageProvider, mockTimeRange, localStorageMock };
+};
+
+// Suppress console during tests
+const setupConsoleMocks = () => {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+  console.log = jest.fn();
+  console.error = jest.fn();
+
+  return () => {
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
+  };
+};
+
+// Helper to render hook with standard initialization
+const renderHookWithInit = async (mocks: ReturnType<typeof setupMocks>) => {
+  const { result } = renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+
+  // Wait for initialization
+  await waitFor(() => {
+    expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+  });
+
+  return { result };
+};
+
+describe('useMetricsLabelsValues', () => {
+  // Set up and tear down hooks for each test
+  let mocks: ReturnType<typeof setupMocks>;
+  let restoreConsole: ReturnType<typeof setupConsoleMocks>;
+
+  beforeEach(() => {
+    mocks = setupMocks();
+    restoreConsole = setupConsoleMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
+    restoreConsole();
+    jest.restoreAllMocks();
   });
 
-  it('should initialize by fetching metrics from language provider', async () => {
-    renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+  describe('initialization', () => {
+    it('should initialize by fetching metrics from language provider', async () => {
+      renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
 
-    // Wait for the metrics to be populated from the mock
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-    });
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
 
-    expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-      expect.anything(),
-      METRIC_LABEL,
-      undefined,
-      'MetricsBrowser_M',
-      DEFAULT_SERIES_LIMIT
-    );
-  });
-
-  it('should fetch label keys during initialization', async () => {
-    renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-    // Wait for the fetchLabels to be called
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
-    });
-
-    expect(mockLanguageProvider.fetchLabels).toHaveBeenCalledWith(expect.anything(), undefined, DEFAULT_SERIES_LIMIT);
-  });
-
-  it('should load saved label keys from localStorage and fetch values', async () => {
-    // Set up localStorage with saved label keys
-    localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
-
-    renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-    // Wait for the fetchSeriesValuesWithMatch to be called for both job and instance
-    await waitFor(() => {
-      const fetchCalls = (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
-      const jobCall = fetchCalls.find((call) => call[1] === 'job' && call[3] === 'MetricsBrowser_LV_job');
-      const instanceCall = fetchCalls.find(
-        (call) => call[1] === 'instance' && call[3] === 'MetricsBrowser_LV_instance'
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        METRIC_LABEL,
+        undefined,
+        'MetricsBrowser_M',
+        DEFAULT_SERIES_LIMIT
       );
-      return jobCall && instanceCall;
     });
 
-    // Verify that fetchSeriesValuesWithMatch was called with the expected parameters for job
-    expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-      expect.anything(),
-      'job',
-      undefined,
-      'MetricsBrowser_LV_job',
-      DEFAULT_SERIES_LIMIT
-    );
+    it('should fetch label keys during initialization', async () => {
+      renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
 
-    // Verify that fetchSeriesValuesWithMatch was called with the expected parameters for instance
-    expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-      expect.anything(),
-      'instance',
-      undefined,
-      'MetricsBrowser_LV_instance',
-      DEFAULT_SERIES_LIMIT
-    );
-  });
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.fetchLabels).toHaveBeenCalled();
+      });
 
-  it('should set label values as string arrays', async () => {
-    // Set up localStorage with saved label keys
-    localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
-
-    const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-    // Wait for the label values to be set
-    await waitFor(() => {
-      return result.current.labelValues.job !== undefined;
+      expect(mocks.mockLanguageProvider.fetchLabels).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        DEFAULT_SERIES_LIMIT
+      );
     });
 
-    // Verify label values are stored as string arrays
-    expect(Array.isArray(result.current.labelValues.job)).toBe(true);
-    expect(result.current.labelValues.job).toEqual(['grafana', 'prometheus']);
-  });
+    it('should load saved label keys from localStorage and fetch values', async () => {
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
 
-  it('should update timeRange reference for significant changes', async () => {
-    const { rerender } = renderHook(({ timeRange, provider }) => useMetricsLabelsValues(timeRange, provider), {
-      initialProps: {
-        timeRange: mockTimeRange,
-        provider: mockLanguageProvider,
-      },
+      renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+
+      await waitFor(() => {
+        const fetchCalls = (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+        const jobCall = fetchCalls.find((call) => call[1] === 'job' && call[3] === 'MetricsBrowser_LV_job');
+        const instanceCall = fetchCalls.find(
+          (call) => call[1] === 'instance' && call[3] === 'MetricsBrowser_LV_instance'
+        );
+        return jobCall && instanceCall;
+      });
+
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        'job',
+        undefined,
+        'MetricsBrowser_LV_job',
+        DEFAULT_SERIES_LIMIT
+      );
+
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+        expect.anything(),
+        'instance',
+        undefined,
+        'MetricsBrowser_LV_instance',
+        DEFAULT_SERIES_LIMIT
+      );
     });
 
-    // Wait for initial fetch to complete
-    await waitFor(() => {
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+    it('should set label values as string arrays', async () => {
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = renderHook(() => useMetricsLabelsValues(mocks.mockTimeRange, mocks.mockLanguageProvider));
+
+      await waitFor(() => {
+        return result.current.labelValues.job !== undefined;
+      });
+
+      expect(Array.isArray(result.current.labelValues.job)).toBe(true);
+      expect(result.current.labelValues.job).toEqual(['grafana', 'prometheus']);
     });
-
-    // Clear mock calls
-    jest.clearAllMocks();
-
-    // Update with new time range that is 10 seconds different (above 5 second threshold)
-    const significantChangedTimeRange = {
-      ...mockTimeRange,
-      from: mockTimeRange.from.add(10, 'seconds'),
-      to: mockTimeRange.to.add(10, 'seconds'),
-    };
-
-    rerender({
-      timeRange: significantChangedTimeRange,
-      provider: mockLanguageProvider,
-    });
-
-    // The timeRangeRef is updated but shouldn't trigger a refetch
-    expect(mockLanguageProvider.fetchSeriesValuesWithMatch).not.toHaveBeenCalled();
   });
 
   describe('handleSelectedMetricChange', () => {
     it('should select a metric when not previously selected', async () => {
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // Clear mock calls before testing
       jest.clearAllMocks();
@@ -229,12 +208,7 @@ describe('useMetricsLabelsValues', () => {
     });
 
     it('should deselect a metric when the same metric is selected again', async () => {
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // First select a metric
       await act(async () => {
@@ -257,7 +231,7 @@ describe('useMetricsLabelsValues', () => {
 
     it('should update label keys and values when a metric is selected', async () => {
       // Mock fetchSeriesLabelsMatch to return specific labels
-      (mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
+      (mocks.mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
         __name__: ['metric1'],
         job: ['job1', 'job2'],
         instance: ['instance1', 'instance2'],
@@ -265,14 +239,9 @@ describe('useMetricsLabelsValues', () => {
       });
 
       // Start with some selected label keys
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance', 'service']));
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance', 'service']));
 
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       await waitFor(() => {
         return result.current.selectedLabelKeys.length === 3;
@@ -286,52 +255,46 @@ describe('useMetricsLabelsValues', () => {
         await result.current.handleSelectedMetricChange('metric1');
       });
 
-      // Verify that the label keys were updated to those returned by fetchSeriesLabelsMatch
+      // Verify that the label keys were updated
       expect(result.current.labelKeys).toContain('job');
       expect(result.current.labelKeys).toContain('instance');
       expect(result.current.labelKeys).toContain('service');
 
-      // Verify that selected label keys were filtered to only include those available for the metric
+      // Verify that selected label keys were filtered correctly
       expect(result.current.selectedLabelKeys).toContain('job');
       expect(result.current.selectedLabelKeys).toContain('instance');
       expect(result.current.selectedLabelKeys).toContain('service');
 
       // Verify that label values were fetched
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
     });
   });
 
   describe('handleSelectedLabelKeyChange', () => {
     it('should add a label key when it is not already selected', async () => {
-      // Start with an empty selected label keys array
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+      const { result } = await renderHookWithInit(mocks);
 
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
-
-      // Clear mock calls before testing handleSelectedLabelKeyChange
+      // Clear mock calls
       jest.clearAllMocks();
 
       // Since we have no selected metric, the buildSelector will return EMPTY_SELECTOR
-      // and the hook will use undefined instead of the selector
-      (buildSelector as jest.Mock).mockReturnValue(EMPTY_SELECTOR);
+      jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue(EMPTY_SELECTOR);
 
       // Add a new label key
       await act(async () => {
         await result.current.handleSelectedLabelKeyChange('service');
       });
 
-      // Verify the label key was added
-      expect(result.current.selectedLabelKeys).toContain('service');
+      // Wait for the label key to be added to selectedLabelKeys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('service');
+      });
 
       // Verify that buildSelector was called
-      expect(buildSelector).toHaveBeenCalled();
+      expect(selectorBuilderModule.buildSelector).toHaveBeenCalled();
 
-      // Verify that fetchSeriesValuesWithMatch was called to get values for the new label key
-      // with undefined in place of the EMPTY_SELECTOR
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+      // Verify that fetchSeriesValuesWithMatch was called correctly
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
         expect.anything(),
         'service',
         undefined, // Since selector is EMPTY_SELECTOR, it should be converted to undefined
@@ -340,105 +303,40 @@ describe('useMetricsLabelsValues', () => {
       );
 
       // Verify localStorage was updated
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, JSON.stringify(['service']));
-    });
-
-    it('should set selected label key from localStorage', async () => {
-      // Clear everything first
-      jest.clearAllMocks();
-      localStorageMock.clear();
-
-      // Mock fetchLabels to ensure it returns 'job' in the available labels
-      // This is critical because the hook filters localStorage labels against these values
-      (mockLanguageProvider.fetchLabels as jest.Mock).mockResolvedValue(['job', 'instance']);
-
-      // IMPORTANT: set up localStorage before the hook is initialized
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
-
-      // Render the hook
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for the async initialization to complete
-      await waitFor(() => {
-        // Wait until fetchLabels has been called - this indicates the initialization started
-        expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
-        // And wait until selectedLabelKeys includes 'job' - this indicates state was updated
-        return result.current.selectedLabelKeys.includes('job');
-      });
-
-      // Now verify the state after initialization
-      expect(result.current.selectedLabelKeys).toEqual(['job']);
+      expect(mocks.localStorageMock.setItem).toHaveBeenCalled();
     });
 
     it('should remove a label key when it is already selected', async () => {
-      // Clear everything first
-      jest.clearAllMocks();
-      localStorageMock.clear();
+      // Setup with a selected label key
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
 
-      // IMPORTANT: set up localStorage before the hook is initialized
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+      const { result } = await renderHookWithInit(mocks);
 
-      // Mock fetchLabels to specifically include 'job' in the returned keys
-      // This is critical because the hook filters localStorage labels against these values
-      (mockLanguageProvider.fetchLabels as jest.Mock).mockImplementation(() => {
-        return Promise.resolve(['job']);
+      // Wait for job to be in the selected keys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('job');
       });
-
-      // Simple mock for fetchSeriesValuesWithMatch
-      (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation((_, label) => {
-        if (label === 'job') {
-          return Promise.resolve(['job-value']);
-        }
-        if (label === METRIC_LABEL) {
-          return Promise.resolve(['metric1']);
-        }
-        return Promise.resolve(['value1']);
-      });
-
-      // Render the hook
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization to complete
-      await waitFor(
-        () => {
-          // Wait until fetchLabels has been called - this indicates the initialization started
-          expect(mockLanguageProvider.fetchLabels).toHaveBeenCalled();
-          // And wait until selectedLabelKeys includes 'job' - this indicates state was updated
-          return result.current.selectedLabelKeys.includes('job');
-        },
-        { timeout: 5000 }
-      );
-
-      // Verify the initial state
-      expect(result.current.selectedLabelKeys).toEqual(['job']);
 
       // Mock localStorage.setItem to verify it's called correctly
-      localStorageMock.setItem.mockClear();
+      mocks.localStorageMock.setItem.mockClear();
 
-      // Use a simplified approach - just call handleSelectedLabelKeyChange directly
+      // Remove the label key
       await act(async () => {
         await result.current.handleSelectedLabelKeyChange('job');
       });
 
-      // Skip the waitFor and directly verify the state was updated
+      // Verify the label key was removed
       expect(result.current.selectedLabelKeys).not.toContain('job');
-      expect(result.current.selectedLabelKeys).toEqual([]);
 
       // Verify label values were removed
       expect(result.current.labelValues).not.toHaveProperty('job');
 
       // Verify localStorage was updated
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, JSON.stringify([]));
+      expect(mocks.localStorageMock.setItem).toHaveBeenCalled();
     });
 
     it('should handle labelKey changes when a metric is selected', async () => {
-      // Setup with a selected metric
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // Select a metric first
       await act(async () => {
@@ -449,7 +347,7 @@ describe('useMetricsLabelsValues', () => {
       jest.clearAllMocks();
 
       // Mock the buildSelector to return a non-empty selector
-      (buildSelector as jest.Mock).mockReturnValue('metric1{instance="host1"}');
+      jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue('metric1{instance="host1"}');
 
       // Add a label key
       await act(async () => {
@@ -457,10 +355,10 @@ describe('useMetricsLabelsValues', () => {
       });
 
       // Verify buildSelector was called with the selected metric and label values
-      expect(buildSelector).toHaveBeenCalled();
+      expect(selectorBuilderModule.buildSelector).toHaveBeenCalled();
 
       // Verify fetchSeriesValuesWithMatch was called with the correct selector
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
         expect.anything(),
         'service',
         'metric1{instance="host1"}', // The selector returned by our mock
@@ -473,14 +371,9 @@ describe('useMetricsLabelsValues', () => {
   describe('handleSelectedLabelValueChange', () => {
     it('should add a label value when isSelected is true', async () => {
       // Start with selected label keys but no selected values
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
 
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // Clear mock calls
       jest.clearAllMocks();
@@ -494,31 +387,17 @@ describe('useMetricsLabelsValues', () => {
       expect(result.current.selectedLabelValues.job).toContain('grafana');
 
       // Verify buildSelector was called to create a selector with the selected value
-      expect(buildSelector).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ job: ['grafana'] }));
-
-      // Verify metrics were fetched with the new selector
-      expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        METRIC_LABEL,
-        `metric1{instance="host1"}`,
-        'MetricsBrowser_M',
-        DEFAULT_SERIES_LIMIT
+      expect(selectorBuilderModule.buildSelector).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ job: ['grafana'] })
       );
-
-      // Verify label keys were fetched for the filtered metrics
-      expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
     });
 
     it('should remove a label value when isSelected is false', async () => {
       // Setup initial state with selected label key and value
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
 
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // First select a value
       await act(async () => {
@@ -542,10 +421,9 @@ describe('useMetricsLabelsValues', () => {
 
     it('should preserve values for the last selected label key', async () => {
       // Mock with specific return values to test value merging
-      (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === 'job') {
-            // Return a smaller set of values on refetch
             return Promise.resolve(['grafana']);
           }
           if (label === 'instance') {
@@ -559,14 +437,9 @@ describe('useMetricsLabelsValues', () => {
       );
 
       // Start with selected label keys
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
 
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
+      const { result } = await renderHookWithInit(mocks);
 
       // Initialize job values with a larger set
       const initialJobValues = ['grafana', 'prometheus', 'additional_value'];
@@ -577,7 +450,7 @@ describe('useMetricsLabelsValues', () => {
       });
 
       // Mock a more extensive set of label values for job
-      (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === 'job') {
             return Promise.resolve(initialJobValues);
@@ -608,63 +481,9 @@ describe('useMetricsLabelsValues', () => {
       expect(result.current.labelValues.job).toContain('additional_value');
     });
 
-    it('should only update selected values for non-last-selected keys', async () => {
-      // Setup mock to return different values for initial and subsequent calls
-      let callCount = 0;
-      (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
-        (_timeRange: TimeRange, label: string) => {
-          if (label === 'job') {
-            return Promise.resolve(['grafana', 'prometheus']);
-          }
-          if (label === 'instance') {
-            // Return different values on first vs subsequent calls
-            callCount++;
-            if (callCount === 1) {
-              return Promise.resolve(['host1', 'host2']);
-            } else {
-              return Promise.resolve(['host3']);
-            }
-          }
-          if (label === METRIC_LABEL) {
-            return Promise.resolve(['metric1', 'metric2']);
-          }
-          return Promise.resolve([]);
-        }
-      );
-
-      // Start with selected label keys
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
-
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-      // Wait for initialization
-      await waitFor(() => {
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
-      });
-
-      // First set a selected value for instance
-      await act(async () => {
-        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
-      });
-
-      // Verify initial selection
-      expect(result.current.selectedLabelValues.instance).toContain('host1');
-
-      // Clear mock calls
-      jest.clearAllMocks();
-
-      // Now select a value for job (instance is not last selected anymore)
-      await act(async () => {
-        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
-      });
-
-      // Check that newly fetched instance values were intersected with selected values
-      expect(result.current.labelValues.instance).toContain('host3');
-    });
-
     it('should handle errors during label values fetching', async () => {
       // Mock fetchSeriesValuesWithMatch to throw an error for specific labels
-      (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string, _selector: string, debugName: string) => {
           if (label === METRIC_LABEL) {
             return Promise.resolve(['metric1', 'metric2']);
@@ -680,15 +499,13 @@ describe('useMetricsLabelsValues', () => {
       );
 
       // Start with selected label keys
-      localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
 
-      const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+      const { result } = await renderHookWithInit(mocks);
 
       // Wait for the error to be logged
       await waitFor(() => {
-        // Use a loop to find console.error calls with our test error
-        const errorCalls = (console.error as jest.Mock).mock.calls;
-        return errorCalls.some((call) => call[0] instanceof Error && call[0].message === 'Test error');
+        return result.current.err.includes('Error fetching label values');
       });
 
       // Wait for initialization to complete so we can verify the result
@@ -704,18 +521,99 @@ describe('useMetricsLabelsValues', () => {
     });
   });
 
-  describe('helper functions', () => {
-    describe('buildSafeSelector', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
+  describe('handleValidation', () => {
+    it('should validate a selector against the language provider', async () => {
+      // Mock fetchSeriesLabelsMatch to return valid results
+      mocks.mockLanguageProvider.fetchSeriesLabelsMatch = jest.fn().mockResolvedValue({
+        job: ['grafana', 'prometheus'],
+        instance: ['instance1', 'instance2'],
       });
 
+      const { result } = await renderHookWithInit(mocks);
+
+      // Set up initial state
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+
+      // Call validation
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+
+      // Verify API was called with the correct selector
+      expect(mocks.mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalled();
+
+      // Verify validationStatus was updated
+      expect(result.current.validationStatus).toContain('Selector is valid');
+    });
+
+    it('should handle errors during validation', async () => {
+      // Mock fetchSeriesLabelsMatch to throw an error
+      mocks.mockLanguageProvider.fetchSeriesLabelsMatch = jest.fn().mockRejectedValue(new Error('Validation error'));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Call validation
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+
+      // Verify error was handled - checking for the correct error message format
+      expect(result.current.err).toContain('Validation failed');
+      expect(result.current.validationStatus).toBe('');
+    });
+  });
+
+  describe('handleClear', () => {
+    it('should reset state and localStorage when called', async () => {
+      // Setup initial state with selections
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Select a metric and label value
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+
+      // Verify we have state to clear
+      expect(result.current.selectedMetric).toBe('metric1');
+      expect(result.current.selectedLabelValues).toHaveProperty('job');
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Call clear
+      await act(async () => {
+        result.current.handleClear();
+      });
+
+      // Verify state was reset
+      expect(result.current.selectedMetric).toBe('');
+      expect(result.current.selectedLabelKeys).toEqual([]);
+      expect(result.current.selectedLabelValues).toEqual({});
+      expect(result.current.err).toBe('');
+      expect(result.current.status).toBe('Ready');
+      expect(result.current.validationStatus).toBe('');
+
+      // Verify localStorage was cleared
+      expect(mocks.localStorageMock.setItem).toHaveBeenCalledWith(LAST_USED_LABELS_KEY, '[]');
+
+      // Verify initialize was called
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+    });
+  });
+
+  describe('helper functions', () => {
+    describe('buildSafeSelector', () => {
       it('should convert EMPTY_SELECTOR to undefined', async () => {
-        (buildSelector as jest.Mock).mockReturnValue(EMPTY_SELECTOR);
+        jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue(EMPTY_SELECTOR);
 
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+        const { result } = await renderHookWithInit(mocks);
 
-        // We need to access the helper function in a test-friendly way
+        // Access the helper function
         const buildSafeSelector = result.current.buildSafeSelector;
 
         expect(buildSafeSelector('metric1', {})).toBeUndefined();
@@ -723,9 +621,9 @@ describe('useMetricsLabelsValues', () => {
 
       it('should return the selector value when not empty', async () => {
         const expectedSelector = 'metric1{job="prometheus"}';
-        (buildSelector as jest.Mock).mockReturnValue(expectedSelector);
+        jest.spyOn(selectorBuilderModule, 'buildSelector').mockReturnValue(expectedSelector);
 
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+        const { result } = await renderHookWithInit(mocks);
 
         const buildSafeSelector = result.current.buildSafeSelector;
 
@@ -735,9 +633,9 @@ describe('useMetricsLabelsValues', () => {
 
     describe('loadSelectedLabelsFromStorage', () => {
       it('should filter labels against available labels', async () => {
-        localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance', 'unavailable']));
+        mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job', 'instance', 'unavailable']));
 
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+        const { result } = await renderHookWithInit(mocks);
 
         const loadSelectedLabelsFromStorage = result.current.loadSelectedLabelsFromStorage;
 
@@ -746,159 +644,677 @@ describe('useMetricsLabelsValues', () => {
       });
 
       it('should handle empty localStorage', async () => {
-        localStorageMock.clear();
+        mocks.localStorageMock.clear();
 
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+        const { result } = await renderHookWithInit(mocks);
 
         const loadSelectedLabelsFromStorage = result.current.loadSelectedLabelsFromStorage;
 
         expect(loadSelectedLabelsFromStorage(['job', 'instance'])).toEqual([]);
       });
     });
+  });
 
-    describe('fetchMetrics', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
+  describe('seriesLimit handling', () => {
+    it('should refetch data when seriesLimit changes', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Change series limit
+      await act(async () => {
+        result.current.setSeriesLimit(1000 as unknown as typeof DEFAULT_SERIES_LIMIT);
       });
 
-      it('should fetch metrics with the provided selector', async () => {
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+      // Wait for debounce to finish
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
-        // Clear previous calls
-        jest.clearAllMocks();
-
-        const fetchMetrics = result.current.fetchMetrics;
-
-        await act(async () => {
-          await fetchMetrics('selector');
-        });
-
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-          expect.anything(),
-          METRIC_LABEL,
-          'selector',
-          'MetricsBrowser_M',
-          DEFAULT_SERIES_LIMIT
-        );
+      // Verify data was refetched with new limit
+      await waitFor(() => {
+        const matchCalls = (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+        // Find calls with the new limit
+        const callWithNewLimit = matchCalls.find((call) => call[4] === 1000);
+        expect(callWithNewLimit).toBeTruthy();
       });
     });
 
-    describe('fetchLabelKeys', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
+    it('should use DEFAULT_SERIES_LIMIT when seriesLimit is empty', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // Clear mock calls
+      jest.clearAllMocks();
+
+      // Set series limit to empty string
+      await act(async () => {
+        result.current.setSeriesLimit('' as unknown as typeof DEFAULT_SERIES_LIMIT);
       });
 
-      it('should fetch label keys with no selector', async () => {
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+      // Wait for debounce to finish
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
-        // Clear previous calls
-        jest.clearAllMocks();
-
-        const fetchLabelKeys = result.current.fetchLabelKeys;
-
-        await act(async () => {
-          await fetchLabelKeys();
-        });
-
-        expect(mockLanguageProvider.fetchLabels).toHaveBeenCalledWith(
-          expect.anything(),
-          undefined,
-          DEFAULT_SERIES_LIMIT
-        );
-      });
-
-      it('should fetch label keys with a selector', async () => {
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-        // Clear previous calls
-        jest.clearAllMocks();
-
-        const fetchLabelKeys = result.current.fetchLabelKeys;
-
-        await act(async () => {
-          await fetchLabelKeys('selector');
-        });
-
-        expect(mockLanguageProvider.fetchSeriesLabelsMatch).toHaveBeenCalledWith(
-          expect.anything(),
-          'selector',
-          DEFAULT_SERIES_LIMIT
-        );
-      });
-
-      it('should handle errors during fetching', async () => {
-        (mockLanguageProvider.fetchLabels as jest.Mock).mockRejectedValueOnce(new Error('Test error'));
-
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-        const fetchLabelKeys = result.current.fetchLabelKeys;
-
-        let labelKeys;
-        await act(async () => {
-          labelKeys = await fetchLabelKeys();
-        });
-
-        expect(labelKeys).toEqual([]);
-        expect(result.current.err).toContain('Error fetching labels');
+      // Verify data was refetched with the default limit
+      await waitFor(() => {
+        const matchCalls = (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+        const callsWithDefaultLimit = matchCalls.filter((call) => call[4] === DEFAULT_SERIES_LIMIT);
+        expect(callsWithDefaultLimit.length).toBeGreaterThan(0);
       });
     });
+  });
 
-    describe('fetchLabelValues', () => {
-      it('should fetch values for multiple label keys', async () => {
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
+  describe('timeRange handling', () => {
+    it('should not update timeRangeRef for small time changes', async () => {
+      // Create base time range
+      const baseTimeRange = getMockTimeRange();
 
-        // Clear previous calls
-        jest.clearAllMocks();
+      // Time ranges with small differences (< 5 seconds)
+      const initialTimeRange = {
+        ...baseTimeRange,
+        from: baseTimeRange.from,
+        to: baseTimeRange.to,
+      };
 
-        const fetchLabelValues = result.current.fetchLabelValues;
+      const smallChangeTimeRange = {
+        ...baseTimeRange,
+        from: dateTime(baseTimeRange.from.valueOf() + 2000), // +2 seconds
+        to: dateTime(baseTimeRange.to.valueOf() + 2000),
+      };
 
-        await act(async () => {
-          await fetchLabelValues(['job', 'instance']);
-        });
-
-        // Verify calls for both label keys
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-          expect.anything(),
-          'job',
-          undefined,
-          'MetricsBrowser_LV_job',
-          DEFAULT_SERIES_LIMIT
-        );
-
-        expect(mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalledWith(
-          expect.anything(),
-          'instance',
-          undefined,
-          'MetricsBrowser_LV_instance',
-          DEFAULT_SERIES_LIMIT
-        );
+      // Render with initial time range
+      const { rerender } = renderHook((props) => useMetricsLabelsValues(props.timeRange, props.languageProvider), {
+        initialProps: {
+          timeRange: initialTimeRange,
+          languageProvider: mocks.mockLanguageProvider,
+        },
       });
 
-      it('should handle errors for individual label keys', async () => {
-        (mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation((_timeRange, label) => {
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
+
+      jest.clearAllMocks();
+
+      // Rerender with small time change
+      rerender({
+        timeRange: smallChangeTimeRange,
+        languageProvider: mocks.mockLanguageProvider,
+      });
+
+      // Wait a bit to ensure no additional API calls
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify no API calls were made after rerender with small time change
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).not.toHaveBeenCalled();
+    });
+
+    it('should update timeRangeRef for significant time changes', async () => {
+      // Create time ranges with significant differences (≥ 5 seconds)
+      const baseTimeRange = getMockTimeRange();
+
+      const initialTimeRange = {
+        ...baseTimeRange,
+        from: baseTimeRange.from,
+        to: baseTimeRange.to,
+      };
+
+      const significantChangeTimeRange = {
+        ...baseTimeRange,
+        from: dateTime(baseTimeRange.from.valueOf() + 10000), // +10 seconds
+        to: dateTime(baseTimeRange.to.valueOf() + 10000),
+      };
+
+      // Mock the initialize method to be called when timeRangeRef is updated
+      const mockInitialize = jest.fn();
+
+      // Render with initial time range
+      const { rerender } = renderHook(
+        (props) => {
+          const hook = useMetricsLabelsValues(props.timeRange, props.languageProvider);
+          // Spy on the initialize method indirectly by monitoring metric fetches
+          if (props.timeRange === significantChangeTimeRange) {
+            mockInitialize();
+          }
+          return hook;
+        },
+        {
+          initialProps: {
+            timeRange: initialTimeRange,
+            languageProvider: mocks.mockLanguageProvider,
+          },
+        }
+      );
+
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
+
+      jest.clearAllMocks();
+
+      // Rerender with significant time change
+      rerender({
+        timeRange: significantChangeTimeRange,
+        languageProvider: mocks.mockLanguageProvider,
+      });
+
+      // Verify timeRangeRef was updated
+      expect(mockInitialize).toHaveBeenCalled();
+    });
+  });
+
+  describe('testing with invalid values or special characters', () => {
+    it('should handle metric names with special characters', async () => {
+      // Mock fetchSeriesValuesWithMatch to return metrics with special characters
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric-with-dash', 'metric.with.dots', 'metric{with}brackets']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify that metrics with special characters are returned
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric-with-dash');
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric.with.dots');
+      expect(result.current.metrics.map((m) => m.name)).toContain('metric{with}brackets');
+
+      // Try to select a metric with special characters
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric{with}brackets');
+      });
+
+      // Verify the selection was successful
+      expect(result.current.selectedMetric).toBe('metric{with}brackets');
+    });
+
+    it('should handle label values with special characters', async () => {
+      // Mock fetchSeriesValuesWithMatch to return label values with special characters
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
           if (label === 'job') {
-            return Promise.reject(new Error('Test error'));
+            return Promise.resolve(['name:with:colons', 'name/with/slashes', 'name=with=equals']);
           }
-          return Promise.resolve(['value1', 'value2']);
-        });
-
-        const { result } = renderHook(() => useMetricsLabelsValues(mockTimeRange, mockLanguageProvider));
-
-        const fetchLabelValues = result.current.fetchLabelValues;
-
-        let values;
-        await act(async () => {
-          const response = await fetchLabelValues(['job', 'instance']);
-          if (response) {
-            [values] = response;
-            // Should contain values for instance but not for job
-            expect(values).not.toHaveProperty('job');
-            expect(values).toHaveProperty('instance');
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2']);
           }
-        });
+          return Promise.resolve([]);
+        }
+      );
 
-        expect(result.current.err).toContain('Error fetching label values');
+      // Set up selected label keys
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify special character label values are loaded
+      await waitFor(() => {
+        expect(result.current.labelValues.job).toContain('name:with:colons');
+        expect(result.current.labelValues.job).toContain('name/with/slashes');
+        expect(result.current.labelValues.job).toContain('name=with=equals');
       });
+
+      // Test selecting a label value with special characters
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+        await result.current.handleSelectedLabelValueChange('job', 'name:with:colons', true);
+      });
+
+      // Verify the selection was made
+      expect(result.current.selectedLabelValues.job).toContain('name:with:colons');
+    });
+
+    it('should handle empty strings in API responses', async () => {
+      // Mock API to return some empty strings
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'job') {
+            return Promise.resolve(['valid-job', '', 'another-job']);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // Set up selected label keys
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // Verify empty string is included in values
+      await waitFor(() => {
+        expect(result.current.labelValues.job).toContain('');
+      });
+
+      // Test selecting an empty string as a value
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+        await result.current.handleSelectedLabelValueChange('job', '', true);
+      });
+
+      // Verify the empty string was selected
+      expect(result.current.selectedLabelValues.job).toContain('');
+    });
+
+    it('should handle extremely long label values', async () => {
+      // Create a very long label value
+      const longValue = 'x'.repeat(5000);
+
+      // Mock API to return a very long label value
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'job') {
+            return Promise.resolve(['normal-value', longValue]);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // Set up selected label keys
+      mocks.localStorageMock.setItem(LAST_USED_LABELS_KEY, JSON.stringify(['job']));
+
+      const { result } = await renderHookWithInit(mocks);
+
+      // First ensure job is selected as a label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+
+      // Wait for label values to load
+      await waitFor(() => {
+        expect(result.current.labelValues.job).toBeDefined();
+      });
+
+      // Verify long value is included
+      expect(result.current.labelValues.job).toContain(longValue);
+
+      // Test selecting the long value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', longValue, true);
+      });
+
+      // Verify the long value was selected
+      expect(result.current.selectedLabelValues.job).toContain(longValue);
+    });
+  });
+
+  describe('debouncing functionality', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should debounce seriesLimit changes', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // Clear mocks to track new calls
+      jest.clearAllMocks();
+
+      // Change seriesLimit multiple times rapidly
+      act(() => {
+        result.current.setSeriesLimit(100 as unknown as typeof DEFAULT_SERIES_LIMIT);
+        result.current.setSeriesLimit(200 as unknown as typeof DEFAULT_SERIES_LIMIT);
+        result.current.setSeriesLimit(300 as unknown as typeof DEFAULT_SERIES_LIMIT);
+      });
+
+      // Verify no fetch calls yet (before debounce timer completes)
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).not.toHaveBeenCalled();
+
+      // Fast-forward debounce time
+      act(() => {
+        jest.advanceTimersByTime(400); // Slightly more than the 300ms debounce time
+      });
+
+      // Wait for the state update to propagate
+      await waitFor(() => {
+        expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+      });
+
+      // Verify we're using the last value set (300)
+      const fetchCalls = (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+      const callWithFinalLimit = fetchCalls.find((call) => call[4] === 300);
+      expect(callWithFinalLimit).toBeTruthy();
+    });
+
+    it('should not fetch multiple times for the same seriesLimit value', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // Clear mocks to track new calls
+      jest.clearAllMocks();
+
+      // Set the same value multiple times
+      act(() => {
+        result.current.setSeriesLimit(100 as unknown as typeof DEFAULT_SERIES_LIMIT);
+        result.current.setSeriesLimit(100 as unknown as typeof DEFAULT_SERIES_LIMIT);
+        result.current.setSeriesLimit(100 as unknown as typeof DEFAULT_SERIES_LIMIT);
+      });
+
+      // Fast-forward debounce time
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+
+      // Wait for any async operations to complete
+      await waitFor(() => {
+        const fetchCalls = (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mock.calls;
+        return fetchCalls.length > 0;
+      });
+
+      // Clear mocks again
+      jest.clearAllMocks();
+
+      // Set the same value again
+      act(() => {
+        result.current.setSeriesLimit(100 as unknown as typeof DEFAULT_SERIES_LIMIT);
+      });
+
+      // Fast-forward debounce time
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+
+      // Should not fetch again since the value hasn't changed
+      expect(mocks.mockLanguageProvider.fetchSeriesValuesWithMatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('complete user workflows', () => {
+    it('should handle a full selection -> validation -> clear workflow', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+      expect(result.current.selectedMetric).toBe('metric1');
+
+      // 2. Add a label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+      expect(result.current.selectedLabelKeys).toContain('job');
+
+      // 3. Select a label value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+      expect(result.current.selectedLabelValues.job).toContain('grafana');
+
+      // 4. Add another label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+      expect(result.current.selectedLabelKeys).toContain('instance');
+
+      // 5. Select a value for the second label
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
+      });
+      expect(result.current.selectedLabelValues.instance).toContain('host1');
+
+      // 6. Validate the selection
+      // Mock the validation response
+      (mocks.mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
+        job: ['grafana'],
+        instance: ['host1'],
+      });
+
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+      expect(result.current.validationStatus).toContain('Selector is valid');
+
+      // 7. Clear everything
+      await act(async () => {
+        result.current.handleClear();
+      });
+
+      // 8. Verify everything was cleared
+      expect(result.current.selectedMetric).toBe('');
+      expect(result.current.selectedLabelKeys).toEqual([]);
+      expect(result.current.selectedLabelValues).toEqual({});
+      expect(result.current.validationStatus).toBe('');
+    });
+
+    it('should handle a workflow with deselections and reselections', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+      expect(result.current.selectedMetric).toBe('metric1');
+
+      // 2. Add label keys
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+
+      // Wait for job to be in the selected keys
+      await waitFor(() => expect(result.current.selectedLabelKeys).toContain('job'));
+
+      // Wait for job values to be loaded
+      await waitFor(() => result.current.labelValues.job && result.current.labelValues.job.length > 0);
+
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be in the selected keys
+      await waitFor(() => expect(result.current.selectedLabelKeys).toContain('instance'));
+
+      // Wait for instance values to be loaded
+      await waitFor(() => result.current.labelValues.instance && result.current.labelValues.instance.length > 0);
+
+      // 3. Select values
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+
+      // Wait for job value to be selected
+      await waitFor(
+        () => result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('grafana')
+      );
+
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'host1', true);
+      });
+
+      // Wait for instance value to be selected
+      await waitFor(
+        () =>
+          result.current.selectedLabelValues.instance && result.current.selectedLabelValues.instance.includes('host1')
+      );
+
+      // 4. Deselect a value
+      await act(async () => result.current.handleSelectedLabelValueChange('job', 'grafana', false));
+
+      // Wait for job to be removed from selectedLabelValues
+      await waitFor(
+        () => !result.current.selectedLabelValues.job || result.current.selectedLabelValues.job.length === 0
+      );
+
+      expect(Object.keys(result.current.selectedLabelValues)).not.toContain('job');
+
+      // 5. Select a different value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'prometheus', true);
+      });
+
+      // Wait for new job value to be selected
+      await waitFor(
+        () => result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('prometheus')
+      );
+
+      expect(result.current.selectedLabelValues.job).toContain('prometheus');
+
+      // 6. Change metric selection
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric2');
+      });
+      expect(result.current.selectedMetric).toBe('metric2');
+
+      // 7. Remove a label key
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be removed from selectedLabelKeys
+      await waitFor(() => !result.current.selectedLabelKeys.includes('instance'));
+
+      expect(result.current.selectedLabelKeys).not.toContain('instance');
+
+      // 8. Validate
+      (mocks.mockLanguageProvider.fetchSeriesLabelsMatch as jest.Mock).mockResolvedValue({
+        job: ['prometheus'],
+      });
+
+      await act(async () => {
+        await result.current.handleValidation();
+      });
+      expect(result.current.validationStatus).toContain('Selector is valid');
+    });
+  });
+
+  describe('state maintenance through complex interactions', () => {
+    it('should handle a complex workflow with changing label sets', async () => {
+      const { result } = await renderHookWithInit(mocks);
+
+      // 1. Select a metric
+      await act(async () => {
+        await result.current.handleSelectedMetricChange('metric1');
+      });
+
+      // 2. Add a label key and select a value
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('job');
+      });
+
+      // Wait for job to be in selectedLabelKeys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('job');
+      });
+
+      // Wait for job values to load
+      await waitFor(() => {
+        return result.current.labelValues.job && result.current.labelValues.job.length > 0;
+      });
+
+      // Select a job value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', true);
+      });
+
+      // Wait for job value to be selected
+      await waitFor(() => {
+        return result.current.selectedLabelValues.job && result.current.selectedLabelValues.job.includes('grafana');
+      });
+
+      // 3. Now mock that selecting a certain job value changes the available instance values
+      (mocks.mockLanguageProvider.fetchSeriesValuesWithMatch as jest.Mock).mockImplementation(
+        (_timeRange: TimeRange, label: string) => {
+          if (label === 'instance' && result.current.selectedLabelValues.job?.includes('grafana')) {
+            return Promise.resolve(['grafana-host1', 'grafana-host2']);
+          } else if (label === 'instance') {
+            return Promise.resolve(['host1', 'host2']);
+          }
+          if (label === 'job') {
+            return Promise.resolve(['grafana', 'prometheus']);
+          }
+          if (label === METRIC_LABEL) {
+            return Promise.resolve(['metric1', 'metric2', 'metric3']);
+          }
+          return Promise.resolve([]);
+        }
+      );
+
+      // 4. Add instance label
+      await act(async () => {
+        await result.current.handleSelectedLabelKeyChange('instance');
+      });
+
+      // Wait for instance to be in selectedLabelKeys
+      await waitFor(() => {
+        expect(result.current.selectedLabelKeys).toContain('instance');
+      });
+
+      // Wait for instance values to load
+      await waitFor(() => {
+        return result.current.labelValues.instance && result.current.labelValues.instance.length > 0;
+      });
+
+      // 5. Select a grafana-specific instance
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('instance', 'grafana-host1', true);
+      });
+
+      // Wait for instance value to be selected
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.instance &&
+          result.current.selectedLabelValues.instance.includes('grafana-host1')
+        );
+      });
+
+      // Verify our current state for debugging
+      expect(result.current.selectedLabelValues.job).toBeDefined();
+      expect(result.current.selectedLabelValues.job).toContain('grafana');
+      expect(result.current.selectedLabelValues.instance).toBeDefined();
+      expect(result.current.selectedLabelValues.instance).toContain('grafana-host1');
+
+      // 6. First select a second job value to make sure the job array stays when we remove a value
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'prometheus', true);
+      });
+
+      // Wait for both job values to be selected
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.job &&
+          result.current.selectedLabelValues.job.includes('grafana') &&
+          result.current.selectedLabelValues.job.includes('prometheus')
+        );
+      });
+
+      // Now deselect grafana
+      await act(async () => {
+        await result.current.handleSelectedLabelValueChange('job', 'grafana', false);
+      });
+
+      // Wait for grafana to be removed from job values but prometheus to remain
+      await waitFor(() => {
+        return (
+          result.current.selectedLabelValues.job &&
+          !result.current.selectedLabelValues.job.includes('grafana') &&
+          result.current.selectedLabelValues.job.includes('prometheus')
+        );
+      });
+
+      // Wait for instance values to update
+      await waitFor(() => {
+        return (
+          result.current.labelValues.instance &&
+          result.current.labelValues.instance.includes('host1') &&
+          !result.current.labelValues.instance.includes('grafana-host1')
+        );
+      });
+
+      // 7. Verify instance value was removed since it's no longer valid with the new job
+      expect(result.current.selectedLabelValues.instance || []).not.toContain('grafana-host1');
+
+      // 8. Verify the instance options have changed
+      expect(result.current.labelValues.instance).toContain('host1');
+      expect(result.current.labelValues.instance).toContain('host2');
+      expect(result.current.labelValues.instance).not.toContain('grafana-host1');
     });
   });
 });

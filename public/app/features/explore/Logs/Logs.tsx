@@ -32,6 +32,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -47,7 +48,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
@@ -779,6 +779,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           return;
         }
         const allLevels = logLevelsRef.current ?? Object.keys(LogLevelColor).map(getLogLevelFromKey);
+        if (!allLevels.length) {
+          // Logs panel is disabled
+          return;
+        }
         if (hiddenLogLevels.length === 0) {
           toggleLegendRef.current?.(value[0], SeriesVisibilityChangeMode.ToggleSelection);
           setHiddenLogLevels(allLevels.filter((level) => level !== value[0]));
@@ -803,7 +807,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const filterLevels: LogLevel[] | undefined = useMemo(
     () =>
-      !logLevelsRef.current
+      !logLevelsRef.current || logLevelsRef.current.length === 0
         ? undefined
         : logLevelsRef.current.filter((level) => hiddenLogLevels.length > 0 && !hiddenLogLevels.includes(level)),
     [hiddenLogLevels]
@@ -864,14 +868,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   className={styles.visualisationTypeRadio}
                   options={[
                     {
-                      label: 'Logs',
+                      label: t('explore.unthemed-logs.label.logs', 'Logs'),
                       value: 'logs',
-                      description: 'Show results in logs visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-logs-visualisation',
+                        'Show results in logs visualisation'
+                      ),
                     },
                     {
-                      label: 'Table',
+                      label: t('explore.unthemed-logs.label.table', 'Table'),
                       value: 'table',
-                      description: 'Show results in table visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-table-visualisation',
+                        'Show results in table visualisation'
+                      ),
                     },
                   ]}
                   size="sm"
@@ -970,14 +980,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     <RadioButtonGroup
                       options={[
                         {
-                          label: 'Newest first',
+                          label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
                           value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-newest-to-oldest',
+                            'Show results newest to oldest'
+                          ),
                         },
                         {
-                          label: 'Oldest first',
+                          label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
                           value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-oldest-to-newest',
+                            'Show results oldest to newest'
+                          ),
                         },
                       ]}
                       value={logsSortOrder}
@@ -1018,57 +1034,58 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {!config.featureToggles.newLogsPanel && config.featureToggles.logsPanelControls && hasData && (
-            <div className={styles.logRowsWrapper} data-testid="logRows">
-              <ControlledLogRows
-                logsTableFrames={props.logsFrames}
-                width={width}
-                updatePanelState={updatePanelState}
-                panelState={panelState?.logs}
-                datasourceType={props.datasourceType}
-                splitOpen={splitOpen}
-                visualisationType={visualisationType}
-                loading={loading}
-                loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
-                range={props.range}
-                pinnedLogs={pinnedLogs}
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
-                dedupStrategy={dedupStrategy}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                getRowContextQuery={getRowContextQuery}
-                showLabels={showLabels}
-                showTime={showTime}
-                enableLogDetails={true}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                displayedFields={displayedFields}
-                onClickShowField={showField}
-                onClickHideField={hideField}
-                app={CoreApp.Explore}
-                onLogRowHover={onLogRowHover}
-                onOpenContext={onOpenContext}
-                onPermalinkClick={onPermalinkClick}
-                permalinkedRowId={panelState?.logs?.id}
-                scrollIntoView={scrollIntoView}
-                isFilterLabelActive={props.isFilterLabelActive}
-                onClickFilterString={props.onClickFilterString}
-                onClickFilterOutString={props.onClickFilterOutString}
-                onUnpinLine={onPinToContentOutlineClick}
-                onPinLine={onPinToContentOutlineClick}
-                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                logsMeta={logsMeta}
-                logOptionsStorageKey={SETTING_KEY_ROOT}
-                onLogOptionsChange={onLogOptionsChange}
-                hasUnescapedContent={hasUnescapedContent}
-              />
-            </div>
-          )}
+          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
+            config.featureToggles.logsPanelControls &&
+            hasData && (
+              <div className={styles.logRowsWrapper} data-testid="logRows">
+                <ControlledLogRows
+                  logsTableFrames={props.logsFrames}
+                  width={width}
+                  updatePanelState={updatePanelState}
+                  panelState={panelState?.logs}
+                  datasourceType={props.datasourceType}
+                  splitOpen={splitOpen}
+                  visualisationType={visualisationType}
+                  loading={loading}
+                  loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                  range={props.range}
+                  pinnedLogs={pinnedLogs}
+                  logRows={logRows}
+                  deduplicatedRows={dedupedRows}
+                  dedupStrategy={dedupStrategy}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={showContextToggle}
+                  getRowContextQuery={getRowContextQuery}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  enableLogDetails={true}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                  app={CoreApp.Explore}
+                  onLogRowHover={onLogRowHover}
+                  onOpenContext={onOpenContext}
+                  onPermalinkClick={onPermalinkClick}
+                  permalinkedRowId={panelState?.logs?.id}
+                  isFilterLabelActive={props.isFilterLabelActive}
+                  onClickFilterString={props.onClickFilterString}
+                  onClickFilterOutString={props.onClickFilterOutString}
+                  onUnpinLine={onPinToContentOutlineClick}
+                  onPinLine={onPinToContentOutlineClick}
+                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  logsMeta={logsMeta}
+                  logOptionsStorageKey={SETTING_KEY_ROOT}
+                  onLogOptionsChange={onLogOptionsChange}
+                  hasUnescapedContent={hasUnescapedContent}
+                />
+              </div>
+            )}
           {!config.featureToggles.logsPanelControls &&
             !config.featureToggles.newLogsPanel &&
             visualisationType === 'logs' &&
@@ -1146,22 +1163,32 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 <LogList
                   app={CoreApp.Explore}
                   containerElement={logsContainerRef.current}
+                  enableLogDetails={true}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
+                  isLabelFilterActive={props.isFilterLabelActive}
+                  loading={loading}
                   loadMore={loadMoreLogs}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
                   logsMeta={logsMeta}
                   logSupportsContext={showContextToggle}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickFilterString={props.onClickFilterString}
+                  onClickFilterOutString={props.onClickFilterOutString}
                   onLogOptionsChange={onLogOptionsChange}
                   onLogLineHover={onLogRowHover}
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
                   onUnpinLine={onPinToContentOutlineClick}
+                  permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
                   showControls
@@ -1253,7 +1280,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     scrollableLogRows: css({
       overflowY: 'scroll',
       width: '100%',
-      maxHeight: '75vh',
+      maxHeight: '80vh',
     }),
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,

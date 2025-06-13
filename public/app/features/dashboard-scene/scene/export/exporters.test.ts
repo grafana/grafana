@@ -9,6 +9,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
 
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
@@ -67,6 +68,7 @@ jest.mock('app/features/library-panels/state/api', () => ({
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createAdHocVariableAdapter());
 
 describe('dashboard exporter v1', () => {
   it('handles a default datasource in a template variable', async () => {
@@ -272,6 +274,11 @@ describe('dashboard exporter v1', () => {
               current: { value: 'other2', text: 'other2' },
               options: [],
             },
+            {
+              name: 'adhoc',
+              type: 'adhoc',
+              datasource: { uid: 'gfdb', type: 'testdb' },
+            },
           ],
         },
         annotations: {
@@ -418,6 +425,10 @@ describe('dashboard exporter v1', () => {
       expect(exported.templating.list[0].options.length).toBe(0);
       expect(exported.templating.list[0].current.value).toBe(undefined);
       expect(exported.templating.list[0].current.text).toBe(undefined);
+    });
+
+    it('should replace datasource in adhoc query', () => {
+      expect(exported.templating.list[3].datasource.uid).toBe('${DS_GFDB}');
     });
 
     it('should replace datasource in annotation query', () => {

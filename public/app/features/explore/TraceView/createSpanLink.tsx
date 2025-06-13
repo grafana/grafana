@@ -12,6 +12,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   TraceToProfilesOptions,
   TraceToMetricsOptions,
@@ -22,7 +23,6 @@ import { PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -215,7 +215,7 @@ function legacyCreateSpanLinkFactory(
         scopedVars = {
           ...scopedVars,
           __tags: {
-            text: 'Tags',
+            text: t('explore.legacy-create-span-link-factory.text.tags', 'Tags'),
             value: tags,
           },
         };
@@ -246,7 +246,7 @@ function legacyCreateSpanLinkFactory(
 
           links.push({
             href: link.href,
-            title: 'Related logs',
+            title: t('explore.legacy-create-span-link-factory.title.related-logs', 'Related logs'),
             onClick: link.onClick,
             content: (
               <Icon
@@ -291,7 +291,7 @@ function legacyCreateSpanLinkFactory(
         scopedVars = {
           ...scopedVars,
           __tags: {
-            text: 'Tags',
+            text: t('explore.legacy-create-span-link-factory.text.tags', 'Tags'),
             value: getFormattedTags(span, tagsToUse),
           },
         };
@@ -374,7 +374,7 @@ function legacyCreateSpanLinkFactory(
     const feO11yLink = getLinkForFeO11y(span);
     if (feO11yLink) {
       links.push({
-        title: 'Session for this span',
+        title: t('explore.legacy-create-span-link-factory.title.session-for-this-span', 'Session for this span'),
         href: feO11yLink,
         content: (
           <Icon
@@ -645,7 +645,7 @@ function getTimeRangeFromSpan(
 export function scopedVarsFromTrace(duration: number, name: string, traceId: string): ScopedVars {
   return {
     __trace: {
-      text: 'Trace',
+      text: t('explore.scoped-vars-from-trace.text.trace', 'Trace'),
       value: {
         duration,
         name,
@@ -673,7 +673,7 @@ export function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
 
   return {
     __span: {
-      text: 'Span',
+      text: t('explore.scoped-vars-from-span.text.span', 'Span'),
       value: {
         spanId: span.spanID,
         traceId: span.traceID,
@@ -703,7 +703,7 @@ export function scopedVarsFromTags(
 
     tags = {
       __tags: {
-        text: 'Tags',
+        text: t('explore.scoped-vars-from-tags.text.tags', 'Tags'),
         value: getFormattedTags(span, profileTags),
       },
     };

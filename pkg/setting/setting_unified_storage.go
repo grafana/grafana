@@ -58,9 +58,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
+	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
+	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
+	// default to 24 hours because usage insights summarizes the data every 24 hours
+	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(100)
 	cfg.CACertPath = section.Key("ca_cert_path").String()

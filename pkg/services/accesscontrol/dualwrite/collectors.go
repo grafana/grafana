@@ -154,8 +154,11 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, zanzana.RelationTeamMember)
-			} else {
+			} else if len(p.BasicRoleName) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(p.BasicRoleName), zanzana.RelationAssignee)
+			} else {
+				reconcilerLogger.Debug("unrecognized permission", "permission", p)
+				continue
 			}
 
 			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)

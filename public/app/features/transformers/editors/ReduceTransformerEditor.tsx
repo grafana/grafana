@@ -11,8 +11,8 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -20,14 +20,20 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
-      label: 'Series to rows',
+      label: t('transformers.reduce-transformer-editor.modes.label.series-to-rows', 'Series to rows'),
       value: ReduceTransformerMode.SeriesToRows,
-      description: 'Create a table with one row for each series value',
+      description: t(
+        'transformers.reduce-transformer-editor.modes.description.create-table-series-value',
+        'Create a table with one row for each series value'
+      ),
     },
     {
-      label: 'Reduce fields',
+      label: t('transformers.reduce-transformer-editor.modes.label.reduce-fields', 'Reduce fields'),
       value: ReduceTransformerMode.ReduceFields,
-      description: 'Collapse each field into a single value',
+      description: t(
+        'transformers.reduce-transformer-editor.modes.description.collapse-field-single-value',
+        'Collapse each field into a single value'
+      ),
     },
   ];
 

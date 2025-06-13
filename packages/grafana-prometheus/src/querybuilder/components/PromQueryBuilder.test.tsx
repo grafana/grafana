@@ -99,10 +99,10 @@ describe('PromQueryBuilder', () => {
     });
     await openMetricSelect(container);
     await waitFor(() =>
-      expect(languageProvider.getSeries).toHaveBeenCalledWith(
+      expect(languageProvider.getSeriesValues).toHaveBeenCalledWith(
         expect.anything(),
-        '{label_name="label_value"}',
-        expect.anything()
+        expect.anything(),
+        '{label_name="label_value"}'
       )
     );
   });

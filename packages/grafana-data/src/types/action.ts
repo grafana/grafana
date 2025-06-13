@@ -1,11 +1,12 @@
-import { ScopedVars } from './ScopedVars';
-import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
-import { InterpolateFunction } from './panel';
+import { CSSProperties, ReactNode } from 'react';
+
 import { SelectableValue } from './select';
 
 export enum ActionType {
   Fetch = 'fetch',
 }
+
+type ActionButtonCssProperties = Pick<CSSProperties, 'backgroundColor'>;
 
 export interface Action {
   type: ActionType;
@@ -17,6 +18,8 @@ export interface Action {
   [ActionType.Fetch]: FetchOptions;
   confirmation?: string;
   oneClick?: boolean;
+  variables?: ActionVariable[];
+  style?: ActionButtonCssProperties;
 }
 
 /**
@@ -24,9 +27,21 @@ export interface Action {
  */
 export interface ActionModel<T = any> {
   title: string;
-  onClick: (event: any, origin?: any) => void;
-  confirmation?: string;
+  onClick: (event: any, origin?: any, actionVars?: ActionVariableInput) => void;
+  confirmation: (actionVars?: ActionVariableInput) => ReactNode;
   oneClick?: boolean;
+  style: ActionButtonCssProperties;
+  variables?: ActionVariable[];
+}
+
+export type ActionVariable = {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+};
+
+export enum ActionVariableType {
+  String = 'string',
 }
 
 interface FetchOptions {
@@ -68,11 +83,4 @@ export const defaultActionConfig: Action = {
   },
 };
 
-export type ActionsArgs = {
-  frame: DataFrame;
-  field: Field;
-  fieldScopedVars: ScopedVars;
-  replaceVariables: InterpolateFunction;
-  actions: Action[];
-  config: ValueLinkConfig;
-};
+export type ActionVariableInput = { [key: string]: string };

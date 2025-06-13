@@ -17,7 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
@@ -136,13 +136,15 @@ export const TimeRangeContent = (props: Props) => {
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
-  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
 
   const fyTooltip = (
     <div className={style.tooltip}>
       {rangeUtil.isFiscal(value) ? (
         <Tooltip
-          content={`${fiscalYearMessage}: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}
+          content={t('time-picker.range-content.fiscal-year', 'Fiscal year: {{from}} - {{to}}', {
+            from: fiscalYear.from.format('MMM-DD'),
+            to: fiscalYear.to.format('MMM-DD'),
+          })}
         >
           <Icon name="info-circle" />
         </Tooltip>

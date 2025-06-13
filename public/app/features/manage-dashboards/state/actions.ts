@@ -162,26 +162,26 @@ export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<vo
     const { elements, variables, annotations } = dashboard;
     // get elements from dashboard
     // each element can only be a panel
-    const inputs: Record<string, DataSourceInput> = {};
+    let inputs: Record<string, DataSourceInput> = {};
     for (const element of Object.values(elements)) {
       if (element.kind !== 'Panel') {
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
       if (element.spec.data.spec.queries.length > 0) {
         for (const query of element.spec.data.spec.queries) {
-          await processV2DatasourceInput(query.spec, inputs);
+          inputs = await processV2DatasourceInput(query.spec, inputs);
         }
       }
     }
 
     for (const variable of variables) {
       if (variable.kind === 'QueryVariable') {
-        await processV2DatasourceInput(variable.spec, inputs);
+        inputs = await processV2DatasourceInput(variable.spec, inputs);
       }
     }
 
     for (const annotation of annotations) {
-      await processV2DatasourceInput(annotation.spec, inputs);
+      inputs = await processV2DatasourceInput(annotation.spec, inputs);
     }
 
     dispatch(setInputs(Object.values(inputs)));
@@ -337,6 +337,12 @@ export async function processV2DatasourceInput(
   const datasourceRef = obj?.datasource;
   if (!datasourceRef && obj?.query) {
     const dsType = obj.query.kind;
+    // if dsType is grafana, it means we are using a built-in annotation or default grafana datasource, in those
+    // cases we don't need to map it
+    // "datasource" type is what we call "--Dashboard--" datasource <.-.>
+    if (dsType === 'grafana' || dsType === 'datasource') {
+      return inputs;
+    }
     const datasource = await getDatasourceSrv().get({ type: dsType });
     let dataSourceInput: DataSourceInput | undefined;
     if (datasource) {
@@ -363,4 +369,5 @@ export async function processV2DatasourceInput(
       inputs[dsType] = dataSourceInput;
     }
   }
+  return inputs;
 }

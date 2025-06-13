@@ -30,7 +30,7 @@ describe('Icon utils', () => {
 
       it('should return icon root based on __grafana_public_path__', () => {
         const { getIconRoot } = require('./utils');
-        expect(getIconRoot()).toEqual('somepath/public/img/icons/');
+        expect(getIconRoot()).toEqual('somepath/public/build/img/icons/');
       });
     });
 
@@ -42,7 +42,7 @@ describe('Icon utils', () => {
 
       it('should return default icon root', () => {
         const { getIconRoot } = require('./utils');
-        expect(getIconRoot()).toEqual('public/img/icons/');
+        expect(getIconRoot()).toEqual('public/build/img/icons/');
       });
     });
   });

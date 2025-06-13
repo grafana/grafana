@@ -603,6 +603,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardVersionList(ref common.Referenc
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -801,6 +802,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref common.ReferenceCal
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

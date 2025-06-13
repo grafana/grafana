@@ -229,12 +229,19 @@ export const trackDeletedRuleRestoreFail = async () => {
   reportInteraction('grafana_alerting_deleted_rule_restore_error');
 };
 
-export const trackImportToGMASuccess = async () => {
-  reportInteraction('grafana_alerting_import_to_gma_success');
+export const trackImportToGMASuccess = async (payload: {
+  importSource: 'yaml' | 'datasource';
+  isRootFolder: boolean;
+  namespace?: string;
+  ruleGroup?: string;
+  pauseRecordingRules: boolean;
+  pauseAlertingRules: boolean;
+}) => {
+  reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
-export const trackImportToGMAError = async () => {
-  reportInteraction('grafana_alerting_import_to_gma_error');
+export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+  reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {
@@ -297,6 +304,30 @@ export function trackUseCentralHistoryExpandRow() {
 
 export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
   reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
+}
+
+export function trackFolderBulkActionsDeleteSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_success');
+}
+
+export function trackFolderBulkActionsDeleteFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_fail');
+}
+
+export function trackFolderBulkActionsPauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_success');
+}
+
+export function trackFolderBulkActionsUnpauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_success');
+}
+
+export function trackFolderBulkActionsPauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_fail');
+}
+
+export function trackFolderBulkActionsUnpauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
 }
 
 export type AlertRuleTrackingProps = {

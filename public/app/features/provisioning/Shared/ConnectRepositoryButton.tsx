@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RepoType } from '../Wizard/types';
 import { CONNECT_URL } from '../constants';

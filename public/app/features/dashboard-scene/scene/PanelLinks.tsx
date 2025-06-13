@@ -1,4 +1,5 @@
 import { DataLink, LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -8,7 +9,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getPanelLinks } from './PanelMenuBehavior';
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -14,7 +15,6 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';

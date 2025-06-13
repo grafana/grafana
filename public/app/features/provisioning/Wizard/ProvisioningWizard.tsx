@@ -4,11 +4,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t } from 'app/core/internationalization';
 
 import { getDefaultValues } from '../Config/defaults';
 import { PROVISIONING_URL } from '../constants';
@@ -19,9 +19,10 @@ import { getFormErrors } from '../utils/getFormErrors';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
+import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
-import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from './types';
+import { RepoType, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
 
@@ -58,13 +59,15 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
   const [requiresMigration, setRequiresMigration] = useState(false);
-  const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError } = useStepStatus();
+
   const settingsQuery = useGetFrontendSettingsQuery();
   const navigate = useNavigate();
+
   const steps = getSteps();
   const styles = useStyles2(getStyles);
 
@@ -94,7 +97,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
-  const isStepSuccess = stepStatusInfo.status === 'success';
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
@@ -216,15 +218,15 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   };
 
   const isNextButtonDisabled = () => {
-    if (activeStep === 'synchronize') {
-      return stepStatusInfo.status !== 'success';
+    // If the step is not on Connect page, we only enable it if the job was successful
+    if (activeStep !== 'connection' && hasStepError) {
+      return true;
     }
-    return (
-      isSubmitting ||
-      isCancelling ||
-      stepStatusInfo.status === 'running' ||
-      (activeStep !== 'connection' && stepStatusInfo.status === 'error')
-    );
+    // Synchronize step requires success to proceed
+    if (activeStep === 'synchronize') {
+      return !isStepSuccess; // Disable next button if the step is not successful
+    }
+    return isSubmitting || isCancelling || isStepRunning;
   };
 
   return (
@@ -236,28 +238,27 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           <FormPrompt onDiscard={handleCancel} confirmRedirect={isDirty && activeStep !== 'finish' && !isCancelling} />
           <Stack direction="column">
             <Box marginBottom={2}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text element="h2">
                 {currentStepIndex + 1}. {currentStepConfig?.title}
               </Text>
             </Box>
 
-            {stepStatusInfo.status === 'error' && (
-              <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />
-            )}
+            {hasStepError && <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && (
                 <BootstrapStep
                   onOptionSelect={setRequiresMigration}
-                  onStepStatusUpdate={setStepStatusInfo}
                   settingsData={settingsQuery.data}
                   repoName={repoName ?? ''}
                 />
               )}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep onStepStatusUpdate={setStepStatusInfo} requiresMigration={requiresMigration} />
+                <SynchronizeStep
+                  requiresMigration={requiresMigration}
+                  isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
+                />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>
