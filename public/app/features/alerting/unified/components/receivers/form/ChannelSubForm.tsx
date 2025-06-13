@@ -90,7 +90,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           // Clear all settings when switching to a new type
           const currentSettings = getValues(settingsFieldPath);
           const clearedSettings = Object.keys(currentSettings).reduce<Record<string, any>>((acc, key) => {
-            acc[key] = ''; // Updated to set cleared settings to an empty string
+            acc[key] = ''; 
             return acc;
           }, {});
           setValue(settingsFieldPath, clearedSettings);
