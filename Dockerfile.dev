@@ -1,0 +1,158 @@
+# syntax=docker/dockerfile:1
+
+ARG BASE_IMAGE=alpine:3.21
+ARG GO_IMAGE=golang:1.24.4-alpine
+
+# Development Go build stage
+FROM ${GO_IMAGE} AS go-dev-builder
+
+ARG COMMIT_SHA=""
+ARG BUILD_BRANCH=""
+ARG GO_BUILD_TAGS="oss"
+ARG WIRE_TAGS="oss"
+
+RUN apk add --no-cache \
+    binutils-gold \
+    bash \
+    gcc g++ make git
+
+WORKDIR /tmp/grafana
+
+# Copy go mod files first for better caching
+COPY go.* ./
+COPY .bingo .bingo
+COPY .citools .citools
+
+# Include vendored dependencies
+COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apis/secret pkg/apis/secret
+COPY pkg/apiserver pkg/apiserver
+COPY pkg/apimachinery pkg/apimachinery
+COPY pkg/build pkg/build
+COPY pkg/build/wire pkg/build/wire
+COPY pkg/promlib pkg/promlib
+COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
+COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
+COPY pkg/semconv pkg/semconv
+COPY pkg/aggregator pkg/aggregator
+COPY apps/playlist apps/playlist
+COPY apps/investigations apps/investigations
+COPY apps/advisor apps/advisor
+COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
+COPY apps/iam apps/iam
+COPY apps apps
+COPY kindsv2 kindsv2
+COPY apps/alerting/notifications apps/alerting/notifications
+COPY pkg/codegen pkg/codegen
+COPY pkg/plugins/codegen pkg/plugins/codegen
+
+RUN go mod download
+
+# Install bingo
+RUN go install github.com/bwplotka/bingo@latest && bingo get -v
+
+# Copy remaining source files
+COPY embed.go Makefile build.go package.json ./
+COPY cue.mod cue.mod
+COPY kinds kinds
+COPY local local
+COPY packages/grafana-schema packages/grafana-schema
+COPY public/app/plugins public/app/plugins
+COPY public/api-merged.json public/api-merged.json
+COPY pkg pkg
+COPY scripts scripts
+COPY conf conf
+COPY .github .github
+
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV BUILD_BRANCH=${BUILD_BRANCH}
+
+# Build the Go binary
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+
+# Development runtime stage
+FROM ${BASE_IMAGE}
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+
+ARG GF_UID="472"
+ARG GF_GID="0"
+
+ENV PATH="/usr/share/grafana/bin:$PATH" \
+    GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
+    GF_PATHS_DATA="/var/lib/grafana" \
+    GF_PATHS_HOME="/usr/share/grafana" \
+    GF_PATHS_LOGS="/var/log/grafana" \
+    GF_PATHS_PLUGINS="/var/lib/grafana/plugins" \
+    GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
+
+WORKDIR $GF_PATHS_HOME
+
+# Install Node.js, npm, and nodemon for development
+RUN apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+    apk info -vv | sort
+
+# glibc support for alpine x86_64 only
+ARG GLIBC_VERSION=2.40
+RUN if [ `arch` = "x86_64" ]; then \
+  wget -qO- "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
+  usr/glibc-compat/lib/ld-linux-x86-64.so.2 \
+  usr/glibc-compat/lib/libc.so.6 \
+  usr/glibc-compat/lib/libdl.so.2 \
+  usr/glibc-compat/lib/libm.so.6 \
+  usr/glibc-compat/lib/libpthread.so.0 \
+  usr/glibc-compat/lib/librt.so.1 \
+  usr/glibc-compat/lib/libresolv.so.2 && \
+  mkdir /lib64 && \
+  ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
+  fi
+
+# Copy configuration
+COPY --from=go-dev-builder /tmp/grafana/conf ./conf
+
+# Setup grafana user and directories
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+  addgroup -S -g $GF_GID grafana; \
+  fi && \
+  GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+  mkdir -p "$GF_PATHS_HOME/.aws" && \
+  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
+  mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
+  "$GF_PATHS_PROVISIONING/dashboards" \
+  "$GF_PATHS_PROVISIONING/notifiers" \
+  "$GF_PATHS_PROVISIONING/plugins" \
+  "$GF_PATHS_PROVISIONING/access-control" \
+  "$GF_PATHS_PROVISIONING/alerting" \
+  "$GF_PATHS_LOGS" \
+  "$GF_PATHS_PLUGINS" \
+  "$GF_PATHS_DATA" && \
+  cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+  cp conf/ldap.toml /etc/grafana/ldap.toml && \
+  chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+
+# Copy the built binary
+COPY --from=go-dev-builder /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+
+COPY public/emails public/emails
+COPY public/views public/views
+
+# Create a minimal assets-manifest.json for development
+COPY fake-assets-manifest.json public/build/assets-manifest.json
+RUN echo 'console.log(`fake js file`)' > public/build/app.js
+RUN echo 'console.log(`fake js file`)' > public/build/swagger.js
+RUN echo '/* fake css file */' > public/build/grafana.app.css
+RUN echo '/* fake css file */' > public/build/grafana.dark.css
+RUN echo '/* fake css file */' > public/build/grafana.light.css
+RUN echo '/* fake css file */' > public/build/grafana.swagger.css
+
+EXPOSE 3000
+
+ARG RUN_SH=./packaging/docker/run.sh
+
+COPY ${RUN_SH} /run.sh
+
+USER "$GF_UID"
+ENTRYPOINT [ "/run.sh" ]
