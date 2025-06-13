@@ -154,7 +154,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    background: theme.colors.background.canvas,
+    background: theme.colors.background.elevated,
     display: 'flex',
     gap: theme.spacing(1),
     padding: theme.spacing(1),
