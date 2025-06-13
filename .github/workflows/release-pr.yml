@@ -16,6 +16,10 @@ on:
         required: true
         type: string
         description: The version of Grafana that is being released (without the `v` prefix)`
+      target:
+        required: false
+        type: string
+        description: 'Unused: left here for backwards compatibility'
       changelog:
         required: false
         type: boolean
