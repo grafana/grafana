@@ -95,15 +95,23 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		SignedInUser: user,
 		OrgID:        orgId,
 	}
+
+	// Determine the limit requested by the client (defaults handled by readContinueToken).
+	requestedLimit := paging.limit
+	if options.Limit > 0 {
+		requestedLimit = options.Limit
+	}
+
+	// Set the limit that will be returned to the client.
+	query.Limit = requestedLimit
+
+	// Figure out which page we need to fetch
 	if options.Continue != "" {
 		query.Page = paging.page
-		query.Limit = paging.limit
-	} else if options.Limit > 0 {
-		query.Limit = options.Limit
+	} else {
 		query.Page = 1
-		// also need to update the paging token so the continue token is correct
-		paging.limit = options.Limit
-		paging.page = 1
+		paging.limit = requestedLimit
+		paging.page = query.Page
 	}
 
 	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
@@ -117,6 +125,20 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	list := &folders.FolderList{}
+
+	// Look-ahead call: only if we got exactly the requested amount we need to check if there are more items
+	//                  we cannot do this in the same query because that would change the offset.
+	hasMoreItems := false
+	if int64(len(hits)) == requestedLimit {
+		lookAheadQuery := query
+		lookAheadQuery.Page = query.Page + 1
+		// we only need to know if at least one item exists.
+		lookAheadQuery.Limit = 1
+		if laHits, err := s.service.GetFoldersLegacy(ctx, lookAheadQuery); err == nil && len(laHits) > 0 {
+			hasMoreItems = true
+		}
+	}
+
 	for _, v := range hits {
 		r, err := convertToK8sResource(v, s.namespacer)
 		if err != nil {
@@ -124,7 +146,11 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		}
 		list.Items = append(list.Items, *r)
 	}
-	if int64(len(list.Items)) > paging.limit {
+
+	// Update the paging struct so that the continue token encodes the current page
+	paging.page = query.Page
+
+	if hasMoreItems {
 		list.Continue = paging.GetNextPageToken()
 	}
 	return list, nil
