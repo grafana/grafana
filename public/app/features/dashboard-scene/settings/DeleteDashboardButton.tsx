@@ -8,7 +8,6 @@ import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisi
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
-import { useProvisionedDashboardData } from '../saving/provisioned/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
@@ -32,7 +31,6 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   const [showModal, toggleModal] = useToggle(false);
   const [deleteItems] = useDeleteItemsMutation();
   const isProvisionedNG = useIsProvisionedNG(dashboard);
-  const provisionedDashboardData = useProvisionedDashboardData(dashboard);
 
   const [, onConfirm] = useAsyncFn(async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
@@ -57,14 +55,8 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   }, [dashboard, toggleModal]);
 
   // Git managed dashboard
-  if (isProvisionedNG && provisionedDashboardData?.defaultValues && showModal) {
-    return (
-      <DeleteProvisionedDashboardDrawer
-        dashboard={dashboard}
-        provisionedDashboardData={provisionedDashboardData}
-        onDismiss={toggleModal}
-      />
-    );
+  if (isProvisionedNG && showModal) {
+    return <DeleteProvisionedDashboardDrawer dashboard={dashboard} onDismiss={toggleModal} />;
   }
 
   // file-based provisioning

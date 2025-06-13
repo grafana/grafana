@@ -7,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -23,15 +22,15 @@ import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
-import { getWorkflowOptions } from './defaults';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
   isGitHub: boolean;
-  repository?: RepositoryView;
   loadedFromRef?: string;
+  workflowOptions: Array<{ label: string; value: string }>;
+  readOnly: boolean;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -41,8 +40,9 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repository,
   isGitHub,
+  workflowOptions,
+  readOnly,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -137,8 +137,6 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
-  const readOnly = !repository?.workflows?.length;
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">

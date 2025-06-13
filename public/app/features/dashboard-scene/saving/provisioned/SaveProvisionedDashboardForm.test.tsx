@@ -127,13 +127,11 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repository: {
-      name: 'repo-xyz',
-      type: 'github',
-      workflows: ['write', 'branch'],
-      title: 'Test Repository',
-      target: 'folder',
-    },
+    readOnly: false,
+    workflowOptions: [
+      { label: 'Branch', value: 'branch' },
+      { label: 'Write', value: 'write' },
+    ],
     ...props,
   };
 
@@ -393,13 +391,7 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,
-      repository: {
-        name: 'repo-abc',
-        type: 'github',
-        workflows: [],
-        target: 'folder',
-        title: 'Read-only Repository',
-      },
+      readOnly: true,
     });
 
     // Alert is shown

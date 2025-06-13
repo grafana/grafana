@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -9,13 +10,12 @@ import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDel
 import { CommentField } from '../components/Provisioned/CommentField';
 import { PathField } from '../components/Provisioned/PathField';
 import { WorkflowFields } from '../components/Provisioned/WorkflowFields';
-import { ProvisionedDashboardData } from '../saving/provisioned/hooks';
+import { useProvisionedDashboardData } from '../saving/provisioned/hooks';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 
 export interface Props {
   dashboard: DashboardScene;
-  provisionedDashboardData: ProvisionedDashboardData;
   onDismiss: () => void;
 }
 
@@ -23,8 +23,8 @@ export interface Props {
  * @description
  * Drawer component for deleting a git provisioned dashboard.
  */
-export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboardData, onDismiss }: Props) {
-  const { defaultValues, repository, loadedFromRef, readOnly, isGitHub, workflowOptions } = provisionedDashboardData;
+export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
+  const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions } = useProvisionedDashboardData(dashboard);
   if (!defaultValues) {
     return null;
   }
@@ -35,27 +35,28 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
   const [deleteRepoFile, request] = useDeleteRepositoryFiles();
 
-  const handleSubmitForm = async (data: ProvisionedDashboardFormData) => {
-    try {
-      // Extract required values for deletion
-      const repositoryName = data.repo || repository?.name;
-      const filePath = path;
-      if (!repositoryName || !filePath) {
-        console.error('Missing required fields for deletion:', { repositoryName, filePath });
-        return;
-      }
+  const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+    if (!repo || !path) {
+      console.error('Missing required fields for deletion:', { repo, path });
+      return;
+    }
 
-      const branchRef = workflow === 'write' ? loadedFromRef : ref; // If user is writing to the original branch, override ref with whatever we loaded from
-      const commitMessage = data.comment || `Delete dashboard: ${dashboard.state.title}`;
+    const branchRef = workflow === 'write' ? loadedFromRef : ref; // If user is writing to the original branch, override ref with whatever we loaded from
+    const commitMessage = comment || `Delete dashboard: ${dashboard.state.title}`;
 
-      // Call delete API
-      await deleteRepoFile({
-        name: repositoryName,
-        path: path,
-        ref: branchRef,
-        message: commitMessage,
-      });
+    // Call delete API
+    deleteRepoFile({
+      name: repo,
+      path: path,
+      ref: branchRef,
+      message: commitMessage,
+    });
+  };
 
+  useEffect(() => {
+    // This effect runs when the delete file request state changes
+    // it checks if the request was successful or if there was an error
+    if (request.isSuccess) {
       // Show success message
       getAppEvents().publish({
         type: AppEvents.alertSuccess.name,
@@ -63,19 +64,21 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, provisionedDashboa
       });
 
       // Reset form and close drawer
-      onDismiss();
       reset();
+      onDismiss();
       // TODO: this is a temporary solution to navigate back to the dashboard view, add a proper solution later
       // add maybe navigate back to dashboard with pull request option etc.
-      window.history.back();
-    } catch (error) {
-      console.error('Error deleting dashboard:', error);
+      // window.history.back();
+    } else if (request.isError) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
-        payload: [t('dashboard-scene.delete-provisioned-dashboard-form.error', 'Failed to push delete changes'), error],
+        payload: [
+          t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Error saving delete dashboard changes'),
+          request.error,
+        ],
       });
     }
-  };
+  }, [request, onDismiss, reset]);
 
   return (
     <Drawer
