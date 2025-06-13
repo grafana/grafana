@@ -8,12 +8,12 @@ concurrency:
 
 permissions: {}
 
-on:
-  pull_request:
-    paths:
-      - 'packages/**'
-    branches:
-      - 'main'
+# on:
+#   pull_request:
+#     paths:
+#       - 'packages/**'
+#     branches:
+#       - 'main'
 
 jobs:
   buildPR:
