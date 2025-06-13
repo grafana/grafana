@@ -53,6 +53,7 @@ type alertmanager struct {
 	Store                AlertingStore
 	stateStore           stateStore
 	DefaultConfiguration string
+	decryptFn            alertingNotify.GetDecryptedValueFn
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -149,6 +150,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Store:                store,
 		stateStore:           stateStore,
 		logger:               l.New("component", "alertmanager", opts.TenantKey, opts.TenantID), // similar to what the base does
+		decryptFn:            decryptFn,
 	}
 
 	return am, nil
@@ -335,6 +337,14 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
+	receivers := PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
+	for _, recv := range receivers {
+		err = patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
 		RoutingTree:       cfg.AlertmanagerConfig.Route.AsAMRoute(),
@@ -342,7 +352,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		MuteTimeIntervals: cfg.AlertmanagerConfig.MuteTimeIntervals,
 		TimeIntervals:     cfg.AlertmanagerConfig.TimeIntervals,
 		Templates:         ToTemplateDefinitions(cfg),
-		Receivers:         PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		Receivers:         receivers,
 		DispatcherLimits:  &nilLimits{},
 		Raw:               rawConfig,
 		Hash:              configHash,
@@ -353,6 +363,50 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 
 	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
+}
+
+func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+	for _, integration := range api.Integrations {
+		switch integration.Type {
+		case "dingding":
+			err := patchSettingsFromSecureSettings(ctx, integration, "url", decode, decrypt)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func patchSettingsFromSecureSettings(ctx context.Context, integration *alertingNotify.GrafanaIntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+	if _, ok := integration.SecureSettings[key]; !ok {
+		return nil
+	}
+	decoded, err := decode(integration.SecureSettings)
+	if err != nil {
+		return err
+	}
+	settings := map[string]any{}
+	err = json.Unmarshal(integration.Settings, &settings)
+	if err != nil {
+		return err
+	}
+	currentValue, ok := settings[key]
+	currentString := ""
+	if ok {
+		currentString, _ = currentValue.(string)
+	}
+	secretValue := decrypt(ctx, decoded, key, currentString)
+	if secretValue == currentString {
+		return nil
+	}
+	settings[key] = secretValue
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	integration.Settings = data
+	return nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
