@@ -287,7 +287,6 @@ function joinTabular(tables: AlignedData[], outer = false) {
     for (let i = 0; i < rfield.length; i++) {
       let val = rfield[i];
 
-      // if (val != null) {
       let idxs = index[val];
 
       if (idxs == null) {
@@ -295,7 +294,6 @@ function joinTabular(tables: AlignedData[], outer = false) {
       }
 
       idxs.push(i);
-      // }
     }
     // console.timeEnd('index right');
 
@@ -356,9 +354,9 @@ function joinTabular(tables: AlignedData[], outer = false) {
      * Instead of using 3-deep nested loops, we eliminate the loops over the known column structure
      * For this we compile a new function using the schemas from both tables, and filling that struct by looping
      * over the matched lookup array, then appending the unmatched left rows (and null-filling the right values),
-     * then appending the unmatched right rows, and null-filling the left values.
+     * then appending the unmatched right rows (and null-filling the left values).
      *
-     * The assembled function looks something like this:
+     * The assembled function looks something like this when joining 2-col left + 2-col right:
      *
      * function anonymous(matched, unmatchedLeft, unmatchedRight, ltable, rtable) {
      *   const joined = [Array(99991),Array(99991),Array(99991)];
