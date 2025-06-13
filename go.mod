@@ -77,7 +77,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250610043455-3e20fda3b872 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250613143730-049260700784 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -578,7 +578,7 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250611140544-c9465c5a20f6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

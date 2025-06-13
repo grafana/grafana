@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	alertingdef "github.com/grafana/alerting/definition"
+	amconfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
@@ -47,6 +51,14 @@ const (
 	// notificationSettingsHeader is the header that specifies the notification settings to be used for the rules.
 	// The value should be a JSON-encoded AlertRuleNotificationSettings object.
 	notificationSettingsHeader = "X-Grafana-Alerting-Notification-Settings"
+
+	// mergeMatchersHeader is the header that specifies the merge matchers for imported alertmanager config.
+	// The value should be comma-separated key=value pairs, e.g., "environment=production,team=backend".
+	mergeMatchersHeader = "X-Grafana-Alerting-Merge-Matchers"
+
+	// configIdentifierHeader is the header that specifies the identifier for imported alertmanager config.
+	// If not provided, defaults to "imported-prometheus-config".
+	configIdentifierHeader = "X-Grafana-Alerting-Config-Identifier"
 )
 
 var (
@@ -113,6 +125,13 @@ type ConvertPrometheusSrv struct {
 	datasourceCache  datasources.CacheService
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
+	am               Alertmanager
+}
+
+type Alertmanager interface {
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
+	DeleteAndApplyExtraConfiguration(ctx context.Context, org int64, identifier string) error
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -122,6 +141,7 @@ func NewConvertPrometheusSrv(
 	datasourceCache datasources.CacheService,
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
+	am Alertmanager,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -130,6 +150,7 @@ func NewConvertPrometheusSrv(
 		datasourceCache:  datasourceCache,
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
+		am:               am,
 	}
 }
 
@@ -514,15 +535,128 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
-	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
+
+	mergeMatchers, err := parseMergeMatchersHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse merge matchers header", "error", err)
+		return errorToResponse(err)
+	}
+
+	receivers := make([]*apimodels.PostableApiReceiver, len(amCfg.AlertmanagerConfig.Receivers))
+	for i, receiver := range amCfg.AlertmanagerConfig.Receivers {
+		receivers[i] = &apimodels.PostableApiReceiver{
+			Receiver: receiver,
+		}
+	}
+
+	ec := apimodels.ExtraConfiguration{
+		Identifier:    identifier,
+		MergeMatchers: mergeMatchers,
+		TemplateFiles: amCfg.TemplateFiles,
+		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+			Config: apimodels.Config{
+				Global:            amCfg.AlertmanagerConfig.Global,
+				Route:             apimodels.AsGrafanaRoute(amCfg.AlertmanagerConfig.Route),
+				InhibitRules:      amCfg.AlertmanagerConfig.InhibitRules,
+				Templates:         amCfg.AlertmanagerConfig.Templates,
+				MuteTimeIntervals: amCfg.AlertmanagerConfig.MuteTimeIntervals,
+				TimeIntervals:     amCfg.AlertmanagerConfig.TimeIntervals,
+			},
+			Receivers: receivers,
+		},
+	}
+
+	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec)
+	if err != nil {
+		logger.Error("Failed to save alertmanager configuration", "error", err)
+		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier)
+	return successfulResponse()
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
-	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
+
+	cfg, err := srv.am.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), false)
+	if err != nil {
+		logger.Error("Failed to get alertmanager configuration", "error", err)
+		return errorToResponse(err)
+	}
+
+	resp := apimodels.GettableAlertmanagerUserConfig{}
+
+	for _, extraConfig := range cfg.ExtraConfigs {
+		if extraConfig.Identifier != identifier {
+			continue
+		}
+
+		promConfig := alertingdef.GrafanaToUpstreamConfig(&extraConfig.AlertmanagerConfig)
+		finalConfigBytes, err := yaml.Marshal(promConfig)
+		if err != nil {
+			logger.Error("Failed to marshal final alertmanager configuration", "error", err)
+			return errorToResponse(fmt.Errorf("failed to marshal final alertmanager configuration: %w", err))
+		}
+
+		resp.AlertmanagerConfig = string(finalConfigBytes)
+		resp.TemplateFiles = extraConfig.TemplateFiles
+
+		// Add headers with identifier and merge matchers
+		response := response.YAML(http.StatusOK, resp)
+		response = response.SetHeader(configIdentifierHeader, extraConfig.Identifier)
+
+		matchersStr := formatMergeMatchers(extraConfig.MergeMatchers)
+		response = response.SetHeader(mergeMatchersHeader, matchersStr)
+
+		return response
+	}
+
+	return response.YAML(http.StatusOK, resp)
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
-	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
+
+	err = srv.am.DeleteAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	if err != nil {
+		logger.Error("Failed to save alertmanager configuration", "error", err)
+		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully deleted extra alertmanager configuration")
+	return successfulResponse()
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header
@@ -646,4 +780,57 @@ func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) ([]models.Not
 	}
 
 	return notificationSettings, nil
+}
+
+// parseMergeMatchersHeader parses the merge matchers header value.
+// Expected format: "key1=value1,key2=value2"
+func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, error) {
+	matchersStr := strings.TrimSpace(c.Req.Header.Get(mergeMatchersHeader))
+
+	if matchersStr == "" {
+		return amconfig.Matchers{}, errInvalidHeaderValue(mergeMatchersHeader, errors.New("value cannot be empty"))
+	}
+
+	matchers := amconfig.Matchers{}
+	pairs := strings.Split(matchersStr, ",")
+
+	for _, pair := range pairs {
+		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(parts) != 2 {
+			return nil, errInvalidHeaderValue(mergeMatchersHeader, errors.New("format should be 'key=value,key2=value2'"))
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		if key == "" || value == "" {
+			return nil, errInvalidHeaderValue(mergeMatchersHeader, errors.New("keys and values cannot be empty"))
+		}
+
+		matchers = append(matchers, &labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  key,
+			Value: value,
+		})
+	}
+
+	return matchers, nil
+}
+
+func formatMergeMatchers(matchers amconfig.Matchers) string {
+	var pairs []string
+	for _, matcher := range matchers {
+		if matcher.Type == labels.MatchEqual {
+			pairs = append(pairs, fmt.Sprintf("%s=%s", matcher.Name, matcher.Value))
+		}
+	}
+	return strings.Join(pairs, ",")
+}
+
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
+	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
+	if identifier == "" {
+		return "", errInvalidHeaderValue(configIdentifierHeader, errors.New("identifier cannot be empty"))
+	}
+	return identifier, nil
 }
