@@ -115,7 +115,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	defer func() {
 		span.End()
-		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
+		duration := float64(time.Since(start).Milliseconds())
 
 		statusLabel := "ok"
 		if rsp.Error != nil {

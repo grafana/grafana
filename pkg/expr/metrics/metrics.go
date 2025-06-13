@@ -37,9 +37,9 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 		SqlCommandDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Subsystem: subsystem,
-			Name:      "sql_command_duration_seconds",
-			Help:      "Duration of SQL command execution",
-			Buckets:   prometheus.DefBuckets,
+			Name:      "sql_command_duration_milliseconds",
+			Help:      "Duration of SQL command execution in milliseconds",
+			Buckets:   []float64{100, 200, 300, 500, 750, 1000, 2000, 5000, 10000},
 		}, []string{"status"}),
 
 		SqlCommandCount: prometheus.NewCounterVec(prometheus.CounterOpts{
