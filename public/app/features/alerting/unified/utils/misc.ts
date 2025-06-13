@@ -193,6 +193,17 @@ export function makePanelLink(dashboardUID: string, panelId: string): string {
   return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
+export function makeEditContactPointLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`, options);
+}
+
+export function makeEditTimeIntervalLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl('/alerting/routes/mute-timing/edit', {
+    ...options,
+    muteName: name,
+  });
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,
