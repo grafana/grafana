@@ -91,6 +91,7 @@ func TestBuildContinueToken(t *testing.T) {
 }
 
 func TestInvalidToken(t *testing.T) {
+	// nolint: gosec
 	invalidToken := "325232ff4fF->"
 	_, _, err := parseContinueTokens(invalidToken)
 	require.Error(t, err)
