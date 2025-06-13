@@ -3465,7 +3465,8 @@
       "metadata": {
         "name": "xrayApplicationSignals",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-01T14:42:02Z"
+        "creationTimestamp": "2025-04-01T14:42:02Z",
+        "deletionTimestamp": "2025-06-11T11:57:58Z"
       },
       "spec": {
         "description": "Support Application Signals queries in the X-Ray datasource",
