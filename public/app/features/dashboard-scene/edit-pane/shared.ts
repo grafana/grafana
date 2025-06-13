@@ -180,7 +180,7 @@ export const dashboardEditActions = {
         source.setState({ description: newDescription });
       },
       undo: () => {
-        source.setState({ title: oldDescription });
+        source.setState({ description: oldDescription });
       },
     });
   },
