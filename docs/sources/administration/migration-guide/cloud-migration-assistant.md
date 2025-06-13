@@ -186,6 +186,10 @@ The migration assistant can migrate the majority of Grafana Alerting resources t
 - Notification policy tree
 - Notification templates
 
+{{< admonition type="note">}}
+The `grafana-default-email` contact point that's provisioned with every new Grafana instance doesn't have a UID by default and won't be migrated unless you edit or update and save it. You do not need to change the contact point for a UID to be generated when saved.
+{{< /admonition >}}
+
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
 
 Migration of Silences is not supported by the migration assistant and needs to be configured manually. Alert History is also not available for migration.
