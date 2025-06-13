@@ -2400,3 +2400,90 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 		}
 	})
 }
+
+// TODO: this only works on mode0-3 right now. In modes 4/5, we need to start returning the connections endpoint
+// from retrieving the panel count from search / indexing the dashboard library panels
+func TestDashboardWithLibraryPanel(t *testing.T) {
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					"unifiedStorageSearch",
+					"kubernetesClientDashboardsFolders",
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+
+			// create the library element first
+			libraryElement := map[string]interface{}{
+				"kind": 1,
+				"name": "Test Library Panel",
+				"model": map[string]interface{}{
+					"type":  "timeseries",
+					"title": "Test Library Panel",
+				},
+			}
+			libraryElementURL := "/api/library-elements"
+			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
+			require.NoError(t, err)
+			require.NotNil(t, libraryElementData)
+			data := libraryElementData["result"].(map[string]interface{})
+			uid := data["uid"].(string)
+			require.NotEmpty(t, uid)
+
+			// then reference the library element in the dashboard
+			dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
+			dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
+					"id":    1,
+					"title": "Library Panel",
+					"type":  "library-panel-ref",
+					"libraryPanel": map[string]interface{}{
+						"uid":  uid,
+						"name": "Test Library Panel",
+					},
+				},
+			}
+
+			createdDash, err := adminClient.Resource.Create(context.Background(), dashboard, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, createdDash)
+
+			// should have created a library panel connection
+			connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
+			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
+			require.NoError(t, err)
+			require.NotNil(t, connectionsData)
+			connections := connectionsData["result"].([]interface{})
+			require.Len(t, connections, 1)
+		})
+	}
+}
+
+func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        user,
+		Method:      http.MethodPost,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to post: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, nil
+}

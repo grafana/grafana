@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -110,6 +111,7 @@ func RegisterAPIService(
 	sorter sort.Service,
 	quotaService quota.Service,
 	folderStore folder.FolderStore,
+	libraryPanelSvc librarypanels.Service,
 	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 ) *DashboardsAPIBuilder {
@@ -137,7 +139,7 @@ func RegisterAPIService(
 		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, sorter),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter),
 			DashboardService: dashboardService,
 		},
 		reg: reg,
