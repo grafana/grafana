@@ -51,6 +51,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storaae
 	section := cfg.Raw.Section("unified_storage")
+	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
