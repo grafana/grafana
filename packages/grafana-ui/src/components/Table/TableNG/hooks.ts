@@ -7,15 +7,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
-import {
-  ColumnTypes,
-  FilterType,
-  TableColumn,
-  TableFooterCalc,
-  TableNGProps,
-  TableRow,
-  TableSortByFieldState,
-} from './types';
+import { ColumnTypes, FilterType, TableFooterCalc, TableNGProps, TableRow, TableSortByFieldState } from './types';
 import {
   getComparator,
   getDisplayName,
@@ -23,6 +15,7 @@ import {
   processNestedTableRows,
   getCellHeightCalculator,
   getFooterItemNG,
+  getVisibleFields,
 } from './utils';
 
 // Helper function to get displayed value
@@ -295,7 +288,12 @@ export function useFooterCalcs(
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: TableNGProps, rows: TableRow[]) {
+export function useScrollbarWidth(
+  ref: RefObject<DataGridHandle>,
+  { height }: TableNGProps,
+  rows: TableRow[],
+  expandedRows: Record<string, boolean>
+) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(
@@ -305,7 +303,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle>, { height }: Ta
     },
     // TODO: account for pagination, subtable expansion, default row height changes, height changes, data length
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, rows]
+    [height, rows, expandedRows]
   );
 
   return scrollbarWidth;
@@ -325,8 +323,17 @@ export function useTextWraps(fields: Field[]): Record<string, boolean> {
   );
 }
 
-export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTable: boolean, defaultRowHeight: number) {
+export function useRowHeight(
+  columnWidths: number[],
+  data: DataFrame,
+  hasNestedFrames: boolean,
+  defaultRowHeight: number,
+  expandedRows: Record<string, boolean>
+) {
   const theme = useTheme2();
+
+  // TODO: add hidden field support here
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
 
   const wrappedColIdxs = useMemo(
     () =>
@@ -337,7 +344,7 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
         }
         return false;
       }),
-    [data]
+    [data.fields]
   );
 
   const { ctx, avgCharWidth } = useMemo(() => {
@@ -362,13 +369,13 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
   }, [theme.typography.fontSize, theme.typography.fontFamily]);
 
   const rowHeight = useMemo(() => {
-    if (hasSubTable || wrappedColIdxs.some((v) => v)) {
+    if (hasNestedFrames || wrappedColIdxs.some((v) => v)) {
       const HPADDING = 6;
       const BORDER_RIGHT = 0.666667;
       const lineHeight = 22;
       const VPADDING = 6;
 
-      const wrapWidths = columns.map((c) => Number(c.width) - 2 * HPADDING - BORDER_RIGHT);
+      const wrapWidths = columnWidths.map((c) => c - 2 * HPADDING - BORDER_RIGHT);
 
       // TODO: pass line height, row height, padding here
       const calc = getCellHeightCalculator(ctx, lineHeight, defaultRowHeight, VPADDING);
@@ -378,10 +385,9 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
         let maxLinesIdx = -1;
         let maxLinesText = '';
 
-        for (let i = 0; i < columns.length; i++) {
+        for (let i = 0; i < columnWidths.length; i++) {
           if (wrappedColIdxs[i]) {
-            const cellText = String(columns[i].field.values[rowIdx]);
-
+            const cellText = String(visibleFields[i].values[rowIdx]);
             if (cellText != null) {
               const charsPerLine = wrapWidths[i] / avgCharWidth;
               const approxLines = cellText.length / charsPerLine;
@@ -398,11 +404,21 @@ export function useRowHeight(columns: TableColumn[], data: DataFrame, hasSubTabl
         return maxLinesIdx === -1 ? defaultRowHeight : calc(maxLinesText, wrapWidths[maxLinesIdx]);
       };
 
-      return getRowHeight;
+      return (row: TableRow) => {
+        if (Number(row.__depth) === 1 && !expandedRows[row.__index]) {
+          return 0;
+        } else if (Number(row.__depth) === 1 && expandedRows[row.__index]) {
+          const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
+          // Ensure we have a minimum height for the nested table even if data is empty
+          const rowCount = row.data?.length ?? 0;
+          return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
+        }
+        return getRowHeight(row);
+      };
     }
 
     return defaultRowHeight;
-  }, [wrappedColIdxs, hasSubTable, columns, defaultRowHeight, avgCharWidth, ctx]);
+  }, [visibleFields, wrappedColIdxs, hasNestedFrames, columnWidths, defaultRowHeight, avgCharWidth, ctx, expandedRows]);
 
   return rowHeight;
 }

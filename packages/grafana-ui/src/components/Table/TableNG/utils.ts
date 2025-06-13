@@ -473,8 +473,8 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
       rowCount += 1;
-      if (rows[rowCount-1]['Nested frames']){
-        const childFrame = rows[rowCount-1]['Nested frames'];
+      if (rows[rowCount-1]['__nestedFrames']){
+        const childFrame = rows[rowCount-1]['__nestedFrames'];
         rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
         rowCount += 1;
       }
@@ -617,3 +617,7 @@ export const processNestedTableRows = (
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
 };
+
+export function getVisibleFields(fields: Field[]): Field[] {
+  return fields.filter((field) => field.type !== FieldType.nestedFrames);
+}
