@@ -187,7 +187,6 @@ class DataSourceWithBackend<
         intervalMs,
         maxDataPoints,
         queryCachingTTL,
-        scopes: request.scopes,
       };
     });
 
