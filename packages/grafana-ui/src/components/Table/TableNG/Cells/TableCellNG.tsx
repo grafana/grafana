@@ -187,10 +187,6 @@ export function TableCellNG(props: TableCellNGProps) {
   return (
     <div ref={divWidthRef} className={styles.cell}>
       {renderedCell}
-      {/* TODO: it would be great to avoid the `isHovered` state, and just mount all of these
-        icons, unhiding them using CSS, but rendering the IconButton is very expensive and
-        makes the scroll performance terrible. I think it's because of the Tooltip.
-        */}
       {hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (

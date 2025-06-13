@@ -139,8 +139,6 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
-  // TODO: swapped the rows provided from paginatedRows to sortedRows here
-  // to try to get access to the real rowHeight for pagination. this may not actually work.
   const scrollbarWidth = useScrollbarWidth(gridHandle, height, sortedRows, expandedRows);
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const availableWidth = useMemo(
@@ -644,14 +642,16 @@ export function getCellClasses(
 
 /*
 TODO:
-active line and cell styling
+ad hoc filtering
+min and max?
 whole row color (applyToRow)
   - subtable might be impacted by this
+subtable headers
 -----
-initialSortBy change?
+check what happens if we change initialSortBy
+changing the display name via fieldOverrides breaks sorting
 enable pagination disables footer?
-pagination + text wrap...
-auto-cell: can we deprecate in favor of newer RDG options?
+revisit z-index stuff in the styles
 -----
 - Max row height
   - also, disable overflow?
@@ -662,6 +662,7 @@ auto-cell: can we deprecate in favor of newer RDG options?
 	- custom format
 	- currency format
 - Pagination, filter, and sort persistence via URL
+- Field overrides for nested fields
 -----
 accessible sorting and filtering
 accessible table navigation
