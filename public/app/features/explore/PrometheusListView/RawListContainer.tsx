@@ -4,9 +4,10 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field as DataFrameField } from '@grafana/data/';
-import { reportInteraction } from '@grafana/runtime/src';
-import { Field, Switch } from '@grafana/ui/';
+import { DataFrame, Field as DataFrameField } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Field, Switch } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
 import RawListItem from './RawListItem';
@@ -117,13 +118,26 @@ const RawListContainer = (props: RawListContainerProps) => {
   return (
     <section>
       <header className={styles.header}>
-        <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
+        <Field
+          className={styles.switchWrapper}
+          label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
+          htmlFor={'isExpandedView'}
+        >
           <div className={styles.switch}>
-            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={`Expand results`} />
+            <Switch
+              onChange={onContentClick}
+              id={switchId}
+              value={isExpandedView}
+              label={t('explore.raw-list-container.label-expand-results', 'Expand results')}
+            />
           </div>
         </Field>
 
-        <div className={styles.resultCount}>Result series: {items.length}</div>
+        <div className={styles.resultCount}>
+          <Trans i18nKey="explore.raw-list-container.item-count" values={{ numItems: items.length }}>
+            Result series: {'{{numItems}}'}
+          </Trans>
+        </div>
       </header>
 
       <div role={'table'}>

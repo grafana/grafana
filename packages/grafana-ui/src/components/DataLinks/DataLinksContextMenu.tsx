@@ -5,8 +5,8 @@ import * as React from 'react';
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
-import { actionModelToContextMenuItems, linkModelToContextMenuItems } from '../../utils/dataLinks';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
@@ -15,6 +15,9 @@ export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
   style?: CSSProperties;
+  /**
+   * @deprecated Will be removed in a future version
+   */
   actions?: ActionModel[];
 }
 
@@ -23,16 +26,12 @@ export interface DataLinksContextMenuApi {
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu = ({ children, links, actions, style }: DataLinksContextMenuProps) => {
+export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
   const styles = useStyles2(getStyles);
 
   const itemsGroup: MenuItemsGroup[] = [
     { items: linkModelToContextMenuItems(links), label: Boolean(links().length) ? 'Data links' : '' },
   ];
-  const hasActions = Boolean(actions?.length);
-  if (hasActions) {
-    itemsGroup.push({ items: actionModelToContextMenuItems(actions!), label: 'Actions' });
-  }
 
   const linksCounter = itemsGroup[0].items.length;
   const renderMenuGroupItems = () => {
@@ -59,7 +58,7 @@ export const DataLinksContextMenu = ({ children, links, actions, style }: DataLi
     cursor: 'context-menu',
   });
 
-  if (linksCounter > 1 || hasActions) {
+  if (linksCounter > 1) {
     return (
       <WithContextMenu renderMenuItems={renderMenuGroupItems}>
         {({ openMenu }) => {

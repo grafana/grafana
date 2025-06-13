@@ -1,0 +1,14 @@
+name: Crowdin automatic task management
+
+on:
+  workflow_dispatch:
+  # once a week on Sunday at midnight
+  # TODO enable once we're ready to create tasks automatically
+  # schedule:
+  #   - cron: "0 0 * * 0"
+
+jobs:
+  create-tasks-in-crowdin:
+    uses: grafana/grafana-github-actions/.github/workflows/crowdin-create-tasks.yml@main
+    with:
+      crowdin_project_id: 5

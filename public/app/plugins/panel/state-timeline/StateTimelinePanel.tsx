@@ -9,7 +9,7 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -107,8 +107,8 @@ export const StateTimelinePanel = ({
                   queryZoom={onChangeTimeRange}
                   syncMode={cursorSync}
                   syncScope={eventsScope}
-                  getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                    alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                  getDataLinks={(seriesIdx, dataIdx) =>
+                    alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                   }
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
                     if (enableAnnotationCreation && timeRange2 != null) {

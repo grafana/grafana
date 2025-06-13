@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
@@ -42,7 +43,8 @@ export const usePluginDetailsTabs = (
   const navModelChildren = useMemo(() => {
     const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
-    if (isPublished) {
+    // currently the versions available of core plugins are not consistent
+    if (isPublished && !plugin?.isCore) {
       navModelChildren.push({
         text: PluginTabLabels.VERSIONS,
         id: PluginTabIds.VERSIONS,
@@ -51,13 +53,24 @@ export const usePluginDetailsTabs = (
         active: PluginTabIds.VERSIONS === currentPageId,
       });
     }
-    if (isPublished && plugin?.details?.changelog) {
+    // currently there is not changelog available for core plugins
+    if (isPublished && plugin?.details?.changelog && !plugin.isCore) {
       navModelChildren.push({
         text: PluginTabLabels.CHANGELOG,
         id: PluginTabIds.CHANGELOG,
         icon: 'rocket',
         url: `${pathname}?page=${PluginTabIds.CHANGELOG}`,
         active: PluginTabIds.CHANGELOG === currentPageId,
+      });
+    }
+
+    if (isPublished && plugin?.details?.screenshots?.length) {
+      navModelChildren.push({
+        text: PluginTabLabels.SCREENSHOTS,
+        id: PluginTabIds.SCREENSHOTS,
+        icon: 'camera',
+        url: `${pathname}?page=${PluginTabIds.SCREENSHOTS}`,
+        active: PluginTabIds.SCREENSHOTS === currentPageId,
       });
     }
 
@@ -114,16 +127,6 @@ export const usePluginDetailsTabs = (
     }
 
     if (pluginConfig.meta.type === PluginType.app) {
-      if (pluginConfig.angularConfigCtrl) {
-        navModelChildren.push({
-          text: 'Config',
-          icon: 'cog',
-          id: PluginTabIds.CONFIG,
-          url: `${pathname}?page=${PluginTabIds.CONFIG}`,
-          active: PluginTabIds.CONFIG === currentPageId,
-        });
-      }
-
       if (pluginConfig.configPages) {
         for (const configPage of pluginConfig.configPages) {
           navModelChildren.push({
@@ -138,7 +141,7 @@ export const usePluginDetailsTabs = (
 
       if (pluginConfig.meta.includes?.find((include) => include.type === PluginIncludeType.dashboard)) {
         navModelChildren.push({
-          text: 'Dashboards',
+          text: t('plugins.use-plugin-details-tabs.nav-model-children.text.dashboards', 'Dashboards'),
           icon: 'apps',
           id: PluginTabIds.DASHBOARDS,
           url: `${pathname}?page=${PluginTabIds.DASHBOARDS}`,
@@ -153,6 +156,7 @@ export const usePluginDetailsTabs = (
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',
     img: plugin?.info.logos.small,
+    url: pathname,
     children: [
       {
         text: PluginTabLabels.OVERVIEW,
@@ -182,10 +186,6 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
 
   if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
     return PluginTabIds.OVERVIEW;
-  }
-
-  if (pluginConfig.angularConfigCtrl) {
-    return PluginTabIds.CONFIG;
   }
 
   if (pluginConfig.configPages?.length) {

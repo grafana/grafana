@@ -2,7 +2,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { Action, Dispatch } from 'redux';
 
 import { DataQuery, TimeRange } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
 
 import { TemplateSrv } from '../../../../features/templating/template_srv';
 import { GraphiteDatasource } from '../datasource';
@@ -57,7 +56,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state = {
       ...state,
       ...deps,
-      queryModel: new GraphiteQuery(deps.datasource, deps.target, getTemplateSrv()),
+      queryModel: new GraphiteQuery(deps.datasource, deps.target, state.templateSrv),
       supportsTags: deps.datasource.supportsTags,
       paused: false,
       removeTagValue: '-- remove tag --',

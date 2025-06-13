@@ -92,7 +92,7 @@ export interface QueryBuilderOperationParamEditorProps {
   operationId: string;
   query: any;
   datasource: DataSourceApi;
-  timeRange?: TimeRange;
+  timeRange: TimeRange;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
 }

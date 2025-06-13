@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -53,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -69,7 +72,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
@@ -127,8 +129,12 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
 	pluginassets.ProvideService,
-	plugininstaller.ProvidePreinstall,
-	wire.Bind(new(plugininstaller.Preinstall), new(*plugininstaller.PreinstallImpl)),
+	pluginchecker.ProvidePreinstall,
+	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),
+	advisor.ProvideService,
+	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
+	pluginchecker.ProvideService,
+	wire.Bind(new(pluginchecker.PluginUpdateChecker), new(*pluginchecker.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -144,6 +150,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
+	provisionedplugins.NewNoop,
+	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
 	sources.ProvideService,
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 )

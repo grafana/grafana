@@ -21,11 +21,10 @@ import {
   joinCloneKeys,
   getCloneKey,
   isClonedKey,
+  getOriginalKey,
 } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
-
-import { DashboardGridItem } from './DashboardGridItem';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
@@ -195,15 +194,22 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
         const cloneItemKey = joinCloneKeys(rowCloneKey, getLastKeyFromClone(sourceItem.state.key!));
         const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
+        const cloneItem =
+          rowIndex > 0
+            ? sourceItem.clone({
+                isDraggable: false,
+                isResizable: false,
+              })
+            : sourceItem;
 
-        const cloneItem = sourceItem.clone({
+        cloneItem.setState({
           key: cloneItemKey,
           y: cloneItemY,
-          isDraggable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isDraggable,
-          isResizable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isResizable,
         });
 
-        ensureUniqueKeys(cloneItem, cloneItemKey);
+        if (rowIndex > 0) {
+          ensureUniqueKeys(cloneItem, cloneItemKey);
+        }
 
         children.push(cloneItem);
 
@@ -257,7 +263,9 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
 
 function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number, rowKey: string) {
   const allChildren = getLayoutChildrenFilterOutRepeatClones(layout, rowKey);
-  const index = allChildren.findIndex((child) => child.state.key!.includes(rowKey));
+  const index = allChildren.findIndex(
+    (child) => child instanceof SceneGridRow && getOriginalKey(child.state.key!) === getOriginalKey(rowKey)
+  );
 
   if (index === -1) {
     throw new Error('RowRepeaterBehavior: Parent row not found in layout children');
@@ -286,7 +294,9 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
 }
 
 function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowKey: string) {
-  return layout.state.children.filter((child) => !isClonedKeyOf(child.state.key!, rowKey));
+  return layout.state.children.filter(
+    (child) => !(child instanceof SceneGridRow) || !isClonedKeyOf(getLastKeyFromClone(child.state.key!), rowKey)
+  );
 }
 
 function ensureUniqueKeys(item: SceneGridItemLike, ancestors: string) {

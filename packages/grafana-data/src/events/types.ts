@@ -1,4 +1,3 @@
-import { IScope } from 'angular';
 import { Unsubscribable, Observable } from 'rxjs';
 
 /**
@@ -129,7 +128,7 @@ export interface LegacyEmitter {
   /**
    * @deprecated use $on
    */
-  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>, scope?: IScope): void;
+  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>): void;
 
   /**
    * @deprecated use $on

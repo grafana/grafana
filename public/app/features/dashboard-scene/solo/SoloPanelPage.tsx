@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
@@ -26,12 +26,12 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, loadError } = stateManager.useState();
-  const { uid = '' } = useParams();
+  const { uid = '', type, slug } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid]);
+  }, [stateManager, queryParams, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
@@ -64,7 +64,6 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   const [panel, error] = useSoloPanel(dashboard, panelId);
   const { controls } = dashboard.useState();
   const refreshPicker = controls?.useState()?.refreshPicker;
-
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -78,7 +77,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   if (!panel) {
     return (
       <span>
-        Loading <Spinner />
+        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
       </span>
     );
   }

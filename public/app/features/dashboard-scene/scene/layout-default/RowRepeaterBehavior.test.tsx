@@ -1,5 +1,5 @@
 import { VariableRefresh } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SceneCanvasText,
@@ -61,7 +61,7 @@ describe('RowRepeaterBehavior', () => {
 
       const gridItemRow1 = row1.state.children[0] as SceneGridItem;
       expect(gridItemRow1.state.key!).toBe(joinCloneKeys(row1.state.key!, 'grid-item-1'));
-      expect(gridItemRow1.state.body?.state.key).toBe(joinCloneKeys(gridItemRow1.state.key!, 'canvas-1'));
+      expect(gridItemRow1.state.body?.state.key).toBe('canvas-1');
 
       const row2 = grid.state.children[2] as SceneGridRow;
       expect(row2.state.key).toBe(getCloneKey('row-1', 1));
@@ -140,6 +140,9 @@ describe('RowRepeaterBehavior', () => {
     });
 
     it('Should handle second repeat cycle and update remove old repeats', async () => {
+      const sourceRow = grid.state.children[1] as SceneGridRow;
+      const sourceGridItem = sourceRow.state.children[0] as SceneGridItem;
+
       // trigger another repeat cycle by changing the variable
       const variable = scene.state.$variables!.state.variables[0] as TestVariable;
       variable.changeValueTo(['B1', 'C1']);
@@ -148,6 +151,12 @@ describe('RowRepeaterBehavior', () => {
 
       // should now only have 2 repeated rows (and the panel above + the row at the bottom)
       expect(grid.state.children.length).toBe(4);
+
+      // Should reuse source row item instances
+      const sourceRowAfterRepeat = grid.state.children[1] as SceneGridRow;
+      const sourceItemAfterRepeat = sourceRowAfterRepeat.state.children[0] as SceneGridItem;
+      expect(sourceRowAfterRepeat).toBe(sourceRow);
+      expect(sourceItemAfterRepeat).toBe(sourceGridItem);
     });
 
     it('Should ignore repeat process if variable values are the same', async () => {
@@ -157,6 +166,51 @@ describe('RowRepeaterBehavior', () => {
       await new Promise((r) => setTimeout(r, 1));
 
       expect(gridStateUpdates.length).toBe(1);
+    });
+  });
+
+  describe('Given scene with variable with 15 values', () => {
+    let scene: DashboardScene, grid: SceneGridLayout;
+    let gridStateUpdates: unknown[];
+
+    beforeEach(async () => {
+      ({ scene, grid } = buildScene({ variableQueryTime: 0 }, [
+        { label: 'A', value: 'A1' },
+        { label: 'B', value: 'B1' },
+        { label: 'C', value: 'C1' },
+        { label: 'D', value: 'D1' },
+        { label: 'E', value: 'E1' },
+        { label: 'F', value: 'F1' },
+        { label: 'G', value: 'G1' },
+        { label: 'H', value: 'H1' },
+        { label: 'I', value: 'I1' },
+        { label: 'J', value: 'J1' },
+        { label: 'K', value: 'K1' },
+        { label: 'L', value: 'L1' },
+        { label: 'M', value: 'M1' },
+        { label: 'N', value: 'N1' },
+        { label: 'O', value: 'O1' },
+      ]));
+
+      gridStateUpdates = [];
+      grid.subscribeToState((state) => gridStateUpdates.push(state));
+
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+    });
+
+    it('Should handle second repeat cycle and update remove old repeats', async () => {
+      // should have 15 repeated rows (and the panel above + the row at the bottom)
+      expect(grid.state.children.length).toBe(17);
+
+      // trigger another repeat cycle by changing the variable
+      const variable = scene.state.$variables!.state.variables[0] as TestVariable;
+      variable.changeValueTo(['B1', 'C1']);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // should now only have 2 repeated rows (and the panel above + the row at the bottom)
+      expect(grid.state.children.length).toBe(4);
     });
   });
 

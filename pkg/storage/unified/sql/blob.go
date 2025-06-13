@@ -1,16 +1,18 @@
 package sql
 
 import (
-	context "context"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -24,12 +26,12 @@ func (b *backend) SupportsSignedURLs() bool {
 	return false
 }
 
-func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
+func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"PutResourceBlob")
 	defer span.End()
 
-	if req.Method == resource.PutBlobRequest_HTTP {
-		return &resource.PutBlobResponse{
+	if req.Method == resourcepb.PutBlobRequest_HTTP {
+		return &resourcepb.PutBlobResponse{
 			Error: resource.NewBadRequestError("signed url upload not supported"),
 		}, nil
 	}
@@ -48,7 +50,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	info.SetContentType(req.ContentType)
 
 	if info.Size < 1 {
-		return &resource.PutBlobResponse{
+		return &resourcepb.PutBlobResponse{
 			Error: resource.NewBadRequestError("empty content"),
 		}, nil
 	}
@@ -57,6 +59,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		_, err := dbutil.Exec(ctx, tx, sqlResourceBlobInsert, sqlResourceBlobInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
+			Now:         time.Now(),
 			Info:        info,
 			Key:         req.Resource,
 			ContentType: req.ContentType,
@@ -66,11 +69,11 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	})
 
 	if err != nil {
-		return &resource.PutBlobResponse{
+		return &resourcepb.PutBlobResponse{
 			Error: resource.AsErrorResult(err),
 		}, nil
 	}
-	return &resource.PutBlobResponse{
+	return &resourcepb.PutBlobResponse{
 		Uid:      info.UID,
 		Size:     info.Size,
 		MimeType: info.MimeType,
@@ -79,11 +82,17 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resource.PutBlobRequ
 	}, nil
 }
 
-func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resource.GetBlobResponse, error) {
+func (b *backend) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resourcepb.GetBlobResponse, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"GetResourceBlob")
 	defer span.End()
 
-	rsp := &resource.GetBlobResponse{}
+	if info == nil {
+		return &resourcepb.GetBlobResponse{
+			Error: resource.NewBadRequestError("missing blob info"),
+		}, nil
+	}
+
+	rsp := &resourcepb.GetBlobResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceBlobQuery, sqlResourceBlobQueryRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -101,7 +110,7 @@ func (b *backend) GetResourceBlob(ctx context.Context, key *resource.ResourceKey
 			}
 			return err
 		}
-		rsp.Error = &resource.ErrorResult{
+		rsp.Error = &resourcepb.ErrorResult{
 			Code: http.StatusNotFound,
 		}
 		return err

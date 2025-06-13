@@ -31,7 +31,10 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend
 	for _, query := range tsdbQuery.Queries {
 		qm, err := getQueryModel(query, timeRange, dsInfo)
 		if err != nil {
-			tRes.Responses[query.RefID] = backend.DataResponse{Error: err}
+			tRes.Responses[query.RefID] = backend.DataResponse{
+				Error:       err,
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
 			continue
 		}
 

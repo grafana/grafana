@@ -1,0 +1,21 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "{{ or .Name "local-repository" }}"
+    },
+    "spec": {
+        "title": "{{ or .Title .Name "Local repository" }}",
+        "description": "{{ or .Description .Name "Load grafana dashboard from local repository" }}",
+        "workflows": ["write"],
+        "sync": {
+            "enabled": {{ if .SyncEnabled }} true {{ else }} false {{ end }},
+            "target": "{{ or .SyncTarget "folder" }}",
+            "intervalSeconds": {{ or .SyncIntervalSeconds 60 }}
+        },
+        "type": "local",
+        "local": {
+            "path": "{{ or .Path .h.ProvisioningPath }}"
+        }
+    }
+}

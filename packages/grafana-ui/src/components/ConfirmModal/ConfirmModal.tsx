@@ -3,8 +3,8 @@ import * as React from 'react';
 
 import { IconName } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
-import { ButtonVariant } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { ButtonVariant } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 
 import { ConfirmContent } from './ConfirmContent';

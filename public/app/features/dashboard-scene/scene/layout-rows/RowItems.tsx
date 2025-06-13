@@ -1,28 +1,22 @@
-import { ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
+import { t } from '@grafana/i18n';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElementInfo, EditableDashboardElement } from '../types/EditableDashboardElement';
 
 import { RowItem } from './RowItem';
-import { getEditOptions, renderActions } from './RowItemsEditor';
+import { getEditOptions } from './RowItemsEditor';
 
-export class RowItems implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Rows';
-  public readonly key: string;
+export class RowItems implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  public constructor(private _rows: RowItem[]) {
-    this.key = uuidv4();
+  public constructor(private _rows: RowItem[]) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeName: t('dashboard.edit-pane.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     return getEditOptions(this);
-  }
-
-  public renderActions(): ReactNode {
-    return renderActions(this);
   }
 
   public getRows(): RowItem[] {

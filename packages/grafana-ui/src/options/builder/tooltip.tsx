@@ -1,4 +1,4 @@
-import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { DataFrame, PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
 /** @internal */
@@ -94,6 +94,13 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
-      showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
+      showIf: (options: T, data: DataFrame[] | undefined, annotations: DataFrame[] | undefined) => {
+        return (
+          options.tooltip?.mode === TooltipDisplayMode.Multi ||
+          annotations?.some((df) => {
+            return df.meta?.custom?.resultType === 'exemplar';
+          })
+        );
+      },
     });
 }

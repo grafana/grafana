@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui/src';
+import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 const options: Array<SelectableValue<BackgroundImageSize>> = [

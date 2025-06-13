@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
@@ -138,7 +138,7 @@ func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*d
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Where(prunableQuery, ss.db.GetDialect().BooleanStr(true)).Asc("id").Find(&dataSources)
+		return sess.Where(prunableQuery, ss.db.GetDialect().BooleanValue(true)).Asc("id").Find(&dataSources)
 	})
 }
 

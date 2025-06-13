@@ -1,48 +1,125 @@
 package definitions
 
 import (
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
+	"gopkg.in/yaml.v3"
 )
 
+// Route for mimirtool
 // swagger:route GET /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusGetRules
 //
-// Gets all namespaces with their rule groups in Prometheus format.
+// Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusNamespace
 //       403: ForbiddenError
 //       404: NotFound
 
+// Route for cortextool
+// swagger:route GET /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexGetRules
+//
+// Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.
+//
+//     Produces:
+//     - application/yaml
+//
+//     Responses:
+//       200: PrometheusNamespace
+//       403: ForbiddenError
+//       404: NotFound
+
+// Route for mimirtool
 // swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusGetNamespace
 //
-// Gets rules in prometheus format for a given namespace.
+// Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusNamespace
 //       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusGetRuleGroup
+// Route for cortextool
+// swagger:route GET /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexGetNamespace
 //
-// Gets a rule group in Prometheus format.
+// Gets Grafana-managed alert rules that were imported from Prometheus-compatible sources for a specified namespace (folder).
 //
 //     Produces:
-//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: PrometheusNamespace
+//       403: ForbiddenError
+//       404: NotFound
+
+// Route for mimirtool
+// swagger:route GET /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusGetRuleGroup
+//
+// Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.
+//
+//     Produces:
+//     - application/yaml
 //
 //     Responses:
 //       200: PrometheusRuleGroup
 //       403: ForbiddenError
 //       404: NotFound
 
+// Route for cortextool
+// swagger:route GET /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusCortexGetRuleGroup
+//
+// Gets a single rule group in Prometheus-compatible format if it was imported from a Prometheus-compatible source.
+//
+//     Produces:
+//     - application/yaml
+//
+//     Responses:
+//       200: PrometheusRuleGroup
+//       403: ForbiddenError
+//       404: NotFound
+
+// swagger:route POST /convert/prometheus/config/v1/rules convert_prometheus RouteConvertPrometheusPostRuleGroups
+//
+// Converts the submitted rule groups into Grafana-Managed Rules.
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// swagger:route POST /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
+//
+// Converts the submitted rule groups into Grafana-Managed Rules.
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// Route for mimirtool
 // swagger:route POST /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusPostRuleGroup
 //
-// Creates or updates a rule group in Prometheus format.
+// Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.
+// If the group already exists and was not imported from a Prometheus-compatible source initially,
+// it will not be replaced and an error will be returned.
 //
 //     Consumes:
 //     - application/yaml
@@ -57,9 +134,30 @@ import (
 //     Extensions:
 //       x-raw-request: true
 
+// Route for cortextool
+// swagger:route POST /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexPostRuleGroup
+//
+// Converts a Prometheus rule group into a Grafana rule group and creates or updates it within the specified namespace.
+// If the group already exists and was not imported from a Prometheus-compatible source initially,
+// it will not be replaced and an error will be returned.
+//
+//     Consumes:
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
+
+// Route for mimirtool
 // swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusDeleteNamespace
 //
-// Deletes all rule groups in the given namespace.
+// Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.
 //
 //     Produces:
 //     - application/json
@@ -68,9 +166,22 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// Route for cortextool
+// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle} convert_prometheus RouteConvertPrometheusCortexDeleteNamespace
+//
+// Deletes all rule groups that were imported from Prometheus-compatible sources within the specified namespace.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// Route for mimirtool
 // swagger:route DELETE /convert/prometheus/config/v1/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusDeleteRuleGroup
 //
-// Deletes a rule group in Prometheus format.
+// Deletes a specific rule group if it was imported from a Prometheus-compatible source.
 //
 //     Produces:
 //     - application/json
@@ -79,16 +190,78 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
-// swagger:parameters RouteConvertPrometheusPostRuleGroup
+// Route for cortextool
+// swagger:route DELETE /convert/api/prom/rules/{NamespaceTitle}/{Group} convert_prometheus RouteConvertPrometheusCortexDeleteRuleGroup
+//
+// Deletes a specific rule group if it was imported from a Prometheus-compatible source.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// Route for `mimirtool alertmanager load`
+// swagger:route POST /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusPostAlertmanagerConfig
+//
+// Load extra Alertmanager configuration to Grafana and merge it with the existing configuration.
+// This endpoint allows importing Alertmanager configurations to Grafana. Each configuration is identified by
+// a unique identifier and can include merge matchers to select which alerts should be handled by
+// this specific configuration.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
+
+// Route for `mimirtool alertmanager get`
+// swagger:route GET /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusGetAlertmanagerConfig
+//
+// Get extra Alertmanager configuration from Grafana.
+// Returns a specific imported Alertmanager configuration by its identifier.
+//
+//     Produces:
+//     - application/yaml
+//
+//     Responses:
+//       200: GettableAlertmanagerUserConfig
+//       403: ForbiddenError
+
+// Route for `mimirtool alertmanager delete`
+// swagger:route DELETE /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusDeleteAlertmanagerConfig
+//
+// Delete extra Alertmanager configuration from Grafana by its identifier.
+// The main Grafana Alertmanager configuration remains unaffected.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
+// swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
 	NamespaceTitle string
 	// in: header
-	DatasourceUID string `json:"x-datasource-uid"`
+	DatasourceUID string `json:"x-grafana-alerting-datasource-uid"`
 	// in: header
-	RecordingRulesPaused bool `json:"x-recording-rules-paused"`
+	RecordingRulesPaused bool `json:"x-grafana-alerting-recording-rules-paused"`
 	// in: header
-	AlertRulesPaused bool `json:"x-alert-rules-paused"`
+	AlertRulesPaused bool `json:"x-grafana-alerting-alert-rules-paused"`
+	// in: header
+	TargetDatasourceUID string `json:"x-grafana-alerting-target-datasource-uid"`
+	// in: header
+	FolderUID string `json:"x-grafana-alerting-folder-uid"`
+	// in: header
+	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
 	// in:body
 	Body PrometheusRuleGroup
 }
@@ -101,23 +274,26 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name     string           `yaml:"name"`
-	Interval model.Duration   `yaml:"interval"`
-	Rules    []PrometheusRule `yaml:"rules"`
+	Name        string            `yaml:"name" json:"name"`
+	Interval    model.Duration    `yaml:"interval" json:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules" json:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 // swagger:model
 type PrometheusRule struct {
-	Alert         string            `yaml:"alert,omitempty"`
-	Expr          string            `yaml:"expr"`
-	For           *model.Duration   `yaml:"for,omitempty"`
-	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty"`
-	Annotations   map[string]string `yaml:"annotations,omitempty"`
-	Record        string            `yaml:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
 }
 
-// swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusGetRuleGroup
+// swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusCortexDeleteRuleGroup RouteConvertPrometheusGetRuleGroup RouteConvertPrometheusCortexGetRuleGroup
 type RouteConvertPrometheusDeleteRuleGroupParams struct {
 	// in: path
 	NamespaceTitle string
@@ -125,7 +301,7 @@ type RouteConvertPrometheusDeleteRuleGroupParams struct {
 	Group string
 }
 
-// swagger:parameters RouteConvertPrometheusDeleteNamespace RouteConvertPrometheusGetNamespace
+// swagger:parameters RouteConvertPrometheusDeleteNamespace RouteConvertPrometheusCortexDeleteNamespace RouteConvertPrometheusGetNamespace RouteConvertPrometheusCortexGetNamespace
 type RouteConvertPrometheusDeleteNamespaceParams struct {
 	// in: path
 	NamespaceTitle string
@@ -136,4 +312,68 @@ type ConvertPrometheusResponse struct {
 	Status    string `json:"status"`
 	ErrorType string `json:"errorType"`
 	Error     string `json:"error"`
+}
+
+// swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
+type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
+	// Unique identifier for this Alertmanager configuration.
+	// This identifier is used to distinguish between different imported configurations.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+	// Comma-separated list of label matchers in 'key=value' format.
+	// These matchers determine which alerts this configuration should handle.
+	// For example: 'environment=production,team=backend' will only apply this
+	// configuration to alerts matching both environment=production AND team=backend.
+	// in: header
+	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
+	// Alertmanager configuration including routing rules, receivers, and template files
+	// in:body
+	Body AlertmanagerUserConfig
+}
+
+// swagger:parameters RouteConvertPrometheusGetAlertmanagerConfig
+type RouteConvertPrometheusGetAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to retrieve.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:parameters RouteConvertPrometheusDeleteAlertmanagerConfig
+type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to delete.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:model
+type AlertmanagerUserConfig struct {
+	AlertmanagerConfig config.Config     `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+}
+
+func (c *AlertmanagerUserConfig) UnmarshalYAML(value *yaml.Node) error {
+	// mimirtool sends alertmanager_config as a string
+	type cortexAlertmanagerUserConfig struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp cortexAlertmanagerUserConfig
+
+	if err := value.Decode(&tmp); err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
+		return err
+	}
+	c.TemplateFiles = tmp.TemplateFiles
+
+	return nil
+}
+
+// swagger:model
+type GettableAlertmanagerUserConfig struct {
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 }

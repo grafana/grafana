@@ -44,6 +44,8 @@ export type Preferences = {
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
+  /** Selected locale (beta) */
+  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   /** light, dark, empty is default */
@@ -70,10 +72,9 @@ export type SuccessResponseBody = {
 export type CookieType = string;
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
+  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark';
@@ -82,10 +83,9 @@ export type PatchPrefsCmd = {
 };
 export type UpdatePrefsCmd = {
   cookies?: CookieType[];
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
+  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
   theme?: 'light' | 'dark' | 'system';

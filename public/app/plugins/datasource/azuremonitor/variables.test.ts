@@ -91,7 +91,7 @@ describe('VariableSupport', () => {
     });
 
     it('can fetch resourceNames with a subscriptionId', async () => {
-      const expectedResults = ['test'];
+      const expectedResults = [{ name: 'test' }];
       const variableSupport = new VariableSupport(
         createMockDatasource({
           getResourceNames: jest.fn().mockResolvedValueOnce(expectedResults),
@@ -113,7 +113,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].fields[0].values).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual([expectedResults[0].name]);
     });
 
     it('can fetch a metricNamespace with a subscriptionId', async () => {
@@ -448,7 +448,7 @@ describe('VariableSupport', () => {
     });
 
     it('can fetch resource names', async () => {
-      const expectedResults = ['test'];
+      const expectedResults = [{ name: 'test' }];
       const variableSupport = new VariableSupport(
         createMockDatasource({
           getResourceNames: jest.fn().mockResolvedValueOnce(expectedResults),
@@ -464,7 +464,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].fields[0].values).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual([expectedResults[0].name]);
     });
 
     it('returns no data if calling resourceNames but the subscription is a template variable with no value', async () => {

@@ -9,7 +9,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t } from '../../utils/i18n';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
@@ -45,9 +45,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  // TODO remove this prop next major version
   /**
-   * @deprecated this is now default behaviour. content is always scrollable.
+   * Whether the content should be wrapped in a ScrollContainer
+   * Only change this if you intend to manage scroll behaviour yourself
+   * (e.g. having a split pane with independent scrolling)
    **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
@@ -291,7 +292,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
-        backdropFilter: 'blur(1px)',
         bottom: 0,
         content: '""',
         left: 0,
@@ -334,9 +334,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(1),
     }),
     content: css({
-      padding: theme.spacing(2),
+      padding: theme.spacing(theme.components.drawer?.padding ?? 2),
       height: '100%',
       flexGrow: 1,
+      minHeight: 0,
     }),
     tabsWrapper: css({
       label: 'drawer-tabs',

@@ -34,6 +34,7 @@ import {
   filterLogLevels,
   getSeriesProperties,
   LIMIT_LABEL,
+  TOTAL_LABEL,
   logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
   queryLogsSample,
@@ -348,17 +349,17 @@ describe('dataFrameToLogsModel', () => {
     ]);
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `2 lines returned`,
+      kind: LogsMetaKind.String,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
       label: COMMON_LABELS,
       value: {
         filename: '/var/log/grafana/grafana.log',
         job: 'grafana',
       },
       kind: LogsMetaKind.LabelsMap,
-    });
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
-      kind: LogsMetaKind.String,
     });
   });
 
@@ -430,16 +431,16 @@ describe('dataFrameToLogsModel', () => {
     ]);
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `2 lines returned`,
+      kind: LogsMetaKind.String,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
       label: COMMON_LABELS,
       value: {
         job: 'grafana',
       },
       kind: LogsMetaKind.LabelsMap,
-    });
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
-      kind: LogsMetaKind.String,
     });
   });
 
@@ -474,8 +475,8 @@ describe('dataFrameToLogsModel', () => {
     ];
     const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.meta![0]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (1 displayed)`,
+      label: '',
+      value: `1 line displayed`,
       kind: LogsMetaKind.String,
     });
 
@@ -485,10 +486,56 @@ describe('dataFrameToLogsModel', () => {
   it('given one series with limit as custom meta property should return correct limit', () => {
     const series: DataFrame[] = getTestDataFrame();
     const logsModel = dataFrameToLogsModel(series, 1);
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+    expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
+    });
+  });
+
+  it('given one series with total as custom meta property should return correct total', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 9999,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: TOTAL_LABEL,
+      value: 9999,
+      kind: LogsMetaKind.Number,
+    });
+  });
+
+  it('given multiple series with total as custom meta property should return correct total', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 4,
+          },
+        },
+      }),
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 5,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: TOTAL_LABEL,
+      value: 9,
+      kind: LogsMetaKind.Number,
     });
   });
 
@@ -500,8 +547,8 @@ describe('dataFrameToLogsModel', () => {
       },
     };
     const timeRange = {
-      from: 1556270800000,
-      to: 1556270899999,
+      from: 1556270899999,
+      to: 1556357299999,
     };
     const queries = [
       {
@@ -517,14 +564,14 @@ describe('dataFrameToLogsModel', () => {
     );
     expect(logsModel.meta).toEqual([
       {
+        label: '',
+        value: '2 lines shown — 21.85% (5h 14min 40sec) of 24h',
+        kind: 1,
+      },
+      {
         label: 'Common labels',
         value: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         kind: 2,
-      },
-      {
-        label: 'Line limit',
-        value: '2 reached, received logs cover 8.65% (9sec) of your selected time range (1min 40sec)',
-        kind: 1,
       },
     ]);
   });
@@ -555,14 +602,14 @@ describe('dataFrameToLogsModel', () => {
     );
     expect(logsModel.meta).toEqual([
       {
+        label: '',
+        value: '2 reached',
+        kind: 1,
+      },
+      {
         label: 'Common labels',
         value: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         kind: 2,
-      },
-      {
-        label: 'Line limit',
-        value: '2 reached',
-        kind: 1,
       },
     ]);
   });
@@ -649,14 +696,14 @@ describe('dataFrameToLogsModel', () => {
     ]);
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `2 lines returned`,
+      kind: LogsMetaKind.String,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
       label: COMMON_LABELS,
       value: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
       kind: LogsMetaKind.LabelsMap,
-    });
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
-      kind: LogsMetaKind.String,
     });
   });
 
@@ -768,19 +815,19 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(3);
     expect(logsModel.meta![0]).toMatchObject({
-      label: COMMON_LABELS,
-      value: series[0].fields[1].labels,
-      kind: LogsMetaKind.LabelsMap,
-    });
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `1000 (2 returned)`,
+      label: '',
+      value: `2 lines returned`,
       kind: LogsMetaKind.String,
     });
-    expect(logsModel.meta![2]).toMatchObject({
+    expect(logsModel.meta![1]).toMatchObject({
       label: '',
       value: 'Error when parsing some of the logs',
       kind: LogsMetaKind.Error,
+    });
+    expect(logsModel.meta![2]).toMatchObject({
+      label: COMMON_LABELS,
+      value: series[0].fields[1].labels,
+      kind: LogsMetaKind.LabelsMap,
     });
   });
 
@@ -1110,14 +1157,14 @@ describe('dataFrameToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(series, 1, { from: 1556270591353, to: 1556289770991 });
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `2 lines shown — 98.44% (5h 14min 40sec) of 5h 19min 40sec`,
+      kind: LogsMetaKind.String,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
       label: COMMON_LABELS,
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
-    });
-    expect(logsModel.meta![1]).toMatchObject({
-      label: LIMIT_LABEL,
-      value: `2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
-      kind: LogsMetaKind.String,
     });
   });
 
@@ -1271,9 +1318,9 @@ describe('logSeriesToLogsModel', () => {
 
     const logsModel = dataFrameToLogsModel(logSeries, 0);
     expect(logsModel.meta).toMatchObject([
-      { kind: 2, label: COMMON_LABELS, value: { foo: 'bar', level: 'dbug' } },
       { kind: 0, label: LIMIT_LABEL, value: 2000 },
       { kind: 1, label: 'Total bytes processed', value: '194  kB' },
+      { kind: 2, label: COMMON_LABELS, value: { foo: 'bar', level: 'dbug' } },
     ]);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([

@@ -59,10 +59,14 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { getScaleGradientFn } from '@grafana/ui/src/components/uPlot/config/gradientFills';
-import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import {
+  UPlotConfigBuilder,
+  UPlotConfigPrepFn,
+  getScaleGradientFn,
+  buildScaleKey,
+  getStackingGroups,
+  preparePlotData2,
+} from '@grafana/ui/internal';
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
@@ -343,48 +347,59 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
-        let series = u.series[seriesIdx];
-
-        if (!show && gaps && gaps.length) {
-          const [firstIdx, lastIdx] = series.idxs!;
-          const xData = u.data[0];
+        if (!show) {
           const yData = u.data[seriesIdx];
-          const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
-          const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
 
-          if (gaps[0][0] === firstPos) {
-            filtered.push(firstIdx);
-          }
+          if (gaps && gaps.length) {
+            const firstIdx = u.posToIdx(gaps[0][0], true);
 
-          // show single points between consecutive gaps that share end/start
-          for (let i = 0; i < gaps.length; i++) {
-            let thisGap = gaps[i];
-            let nextGap = gaps[i + 1];
+            if (yData[firstIdx - 1] == null) {
+              filtered.push(firstIdx);
+            }
 
-            if (nextGap && thisGap[1] === nextGap[0]) {
-              // approx when data density is > 1pt/px, since gap start/end pixels are rounded
-              let approxIdx = u.posToIdx(thisGap[1], true);
+            // show single points between consecutive gaps that share end/start
+            for (let i = 0; i < gaps.length; i++) {
+              let thisGap = gaps[i];
+              let nextGap = gaps[i + 1];
 
-              if (yData[approxIdx] == null) {
-                // scan left/right alternating to find closest index with non-null value
-                for (let j = 1; j < 100; j++) {
-                  if (yData[approxIdx + j] != null) {
-                    approxIdx += j;
-                    break;
-                  }
-                  if (yData[approxIdx - j] != null) {
-                    approxIdx -= j;
-                    break;
+              if (nextGap && thisGap[1] === nextGap[0]) {
+                // approx when data density is > 1pt/px, since gap start/end pixels are rounded
+                let approxIdx = u.posToIdx(thisGap[1], true);
+
+                if (yData[approxIdx] == null) {
+                  // scan left/right alternating to find closest index with non-null value
+                  for (let j = 1; j < 100; j++) {
+                    if (yData[approxIdx + j] != null) {
+                      approxIdx += j;
+                      break;
+                    }
+                    if (yData[approxIdx - j] != null) {
+                      approxIdx -= j;
+                      break;
+                    }
                   }
                 }
-              }
 
-              filtered.push(approxIdx);
+                filtered.push(approxIdx);
+              }
+            }
+
+            const lastIdx = u.posToIdx(gaps[gaps.length - 1][1], true);
+
+            if (yData[lastIdx + 1] == null) {
+              filtered.push(lastIdx);
             }
           }
-
-          if (gaps[gaps.length - 1][1] === lastPos) {
-            filtered.push(lastIdx);
+          // single point surrounded by nulls
+          else {
+            // meh heuristic
+            if (yData[0] == null && yData[yData.length - 1] == null) {
+              for (let i = 0; i < yData.length; i++) {
+                if (yData[i] != null) {
+                  filtered.push(i);
+                }
+              }
+            }
           }
         }
 
@@ -572,6 +587,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     focus: {
       prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
+    points: { one: true },
   };
 
   builder.setCursor(cursor);

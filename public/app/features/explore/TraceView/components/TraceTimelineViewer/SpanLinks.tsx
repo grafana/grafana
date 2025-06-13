@@ -61,8 +61,8 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
         onClick={(e) => {
           setIsMenuOpen(true);
           setMenuPosition({
-            x: e.pageX,
-            y: e.pageY,
+            x: e.clientX,
+            y: e.clientY,
           });
         }}
         className={styles.button}

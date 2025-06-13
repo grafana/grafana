@@ -4,7 +4,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -15,7 +15,7 @@ import { DashboardDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { ResponseTransformers } from '../api/ResponseTransformers';
 import { getDashboardAPI } from '../api/dashboard_api';
-import { DashboardWithAccessInfo } from '../api/types';
+import { DashboardVersionError, DashboardWithAccessInfo } from '../api/types';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -36,6 +36,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<T>;
+
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string) {
@@ -118,13 +119,11 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<DashboardDTO> {
-    const stateManager = getDashboardScenePageStateManager();
+    const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
-      // needed for the old architecture
-      // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv().getSnapshot(slug);
     } else if (type === 'public' && uid) {
@@ -139,11 +138,14 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         }
       }
 
-      promise = getDashboardAPI()
+      promise = getDashboardAPI('v1')
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          return result;
+        })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -204,9 +206,12 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
       promise = getDashboardAPI('v2')
         .getDashboardDTO(uid, params)
+        .then((result) => {
+          return result;
+        })
         .catch((e) => {
-          console.error('Failed to load dashboard', e);
-          if (isFetchError(e)) {
+          if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
+            console.error('Failed to load dashboard', e);
             e.isHandled = true;
             if (e.status === 404) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -252,5 +257,6 @@ export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('dashboardLoaderSrv can be only overriden in test environment');
   }
+
   dashboardLoaderSrv = srv;
 };

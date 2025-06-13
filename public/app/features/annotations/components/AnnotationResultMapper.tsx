@@ -10,6 +10,7 @@ import {
   AnnotationEventFieldSource,
   getValueFormat,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Select, Tooltip, Icon } from '@grafana/ui';
 
 import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
@@ -188,9 +189,15 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
       <table className="filter-table">
         <thead>
           <tr>
-            <th>Annotation</th>
-            <th>From</th>
-            <th>First Value</th>
+            <th>
+              <Trans i18nKey="annotations.annotation-field-mapper.annotation">Annotation</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="annotations.annotation-field-mapper.from">From</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="annotations.annotation-field-mapper.first-value">First value</Trans>
+            </th>
           </tr>
         </thead>
         <tbody>

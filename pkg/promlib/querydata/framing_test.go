@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/models"
 )
 
-var update = true
+var update = false
 
 func TestRangeResponses(t *testing.T) {
 	tt := []struct {
@@ -145,10 +146,42 @@ func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataR
 	if err != nil {
 		return nil, err
 	}
+
+	// Create initial response
 	res := &http.Response{
 		StatusCode: 200,
 		Body:       io.NopCloser(bytes.NewReader(response)),
+		Request: &http.Request{
+			URL: &url.URL{
+				Path: "api/v1/query_range",
+			},
+		},
 	}
-	tCtx.httpProvider.setResponse(res, res)
-	return tCtx.queryData.Execute(context.Background(), q)
+
+	// Create a proper clone for the exemplar response with a different path
+	exemplarRes := &http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewReader(response)),
+		Request: &http.Request{
+			URL: &url.URL{
+				Path: "api/v1/query_exemplars",
+			},
+		},
+	}
+
+	tCtx.httpProvider.setResponse(res, exemplarRes)
+
+	// Add GrafanaConfig to the context to prevent nil pointer dereference
+	ctx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+		"concurrent_query_count": "10",
+	}))
+
+	// Add a PluginContext with GrafanaConfig to the request
+	q.PluginContext = backend.PluginContext{
+		GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+			"concurrent_query_count": "10",
+		}),
+	}
+
+	return tCtx.queryData.Execute(ctx, q)
 }

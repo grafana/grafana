@@ -10,7 +10,9 @@ type WebhookStatusApplyConfiguration struct {
 	ID               *int64   `json:"id,omitempty"`
 	URL              *string  `json:"url,omitempty"`
 	Secret           *string  `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
+	LastEvent        *int64   `json:"lastEvent,omitempty"`
 }
 
 // WebhookStatusApplyConfiguration constructs a declarative configuration of the WebhookStatus type for use with
@@ -43,6 +45,16 @@ func (b *WebhookStatusApplyConfiguration) WithSecret(value string) *WebhookStatu
 	return b
 }
 
+// WithEncryptedSecret adds the given value to the EncryptedSecret field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the EncryptedSecret field.
+func (b *WebhookStatusApplyConfiguration) WithEncryptedSecret(values ...byte) *WebhookStatusApplyConfiguration {
+	for i := range values {
+		b.EncryptedSecret = append(b.EncryptedSecret, values[i])
+	}
+	return b
+}
+
 // WithSubscribedEvents adds the given value to the SubscribedEvents field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the SubscribedEvents field.
@@ -50,5 +62,13 @@ func (b *WebhookStatusApplyConfiguration) WithSubscribedEvents(values ...string)
 	for i := range values {
 		b.SubscribedEvents = append(b.SubscribedEvents, values[i])
 	}
+	return b
+}
+
+// WithLastEvent sets the LastEvent field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastEvent field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithLastEvent(value int64) *WebhookStatusApplyConfiguration {
+	b.LastEvent = &value
 	return b
 }

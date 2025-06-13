@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { IconButton, Drawer, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
+import grotNewsSvg from 'img/grot-news.svg';
 
 import { NewsWrapper } from './NewsWrapper';
 
@@ -25,10 +26,10 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
             href="https://grafana.com/blog/"
             target="_blank"
             rel="noreferrer"
-            title="Go to Grafana labs blog"
+            title={t('news.link-title', 'Go to Grafana labs blog')}
             className={styles.grot}
           >
-            <img src="public/img/grot-news.svg" alt="Grot reading news" />
+            <img src={grotNewsSvg} alt="Grot reading news" />
           </a>
           <div className={styles.actions}>
             <IconButton
@@ -36,7 +37,7 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
               variant="secondary"
               onClick={onClose}
               data-testid={selectors.components.Drawer.General.close}
-              tooltip={t(`news.drawer.close`, 'Close Drawer')}
+              tooltip={t(`news.drawer.close`, 'Close drawer')}
             />
           </div>
         </div>

@@ -3,6 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -82,7 +83,10 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    subTitle: 'Manage settings for an individual service account.',
+    subTitle: t(
+      'serviceaccounts.service-account-page-unconnected.page-nav.subTitle.manage-settings-individual-service-account',
+      'Manage settings for an individual service account.'
+    ),
   };
 
   useEffect(() => {
@@ -143,7 +147,9 @@ export const ServiceAccountPageUnconnected = ({
                 onClick={showDeleteServiceAccountModal(true)}
                 disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete)}
               >
-                Delete service account
+                <Trans i18nKey="serviceaccounts.service-account-page-unconnected.delete-service-account">
+                  Delete service account
+                </Trans>
               </Button>
               {serviceAccount.isDisabled ? (
                 <Button
@@ -152,7 +158,9 @@ export const ServiceAccountPageUnconnected = ({
                   onClick={handleServiceAccountEnable}
                   disabled={!ableToWrite}
                 >
-                  Enable service account
+                  <Trans i18nKey="serviceaccounts.service-account-page-unconnected.enable-service-account">
+                    Enable service account
+                  </Trans>
                 </Button>
               ) : (
                 <Button
@@ -161,7 +169,9 @@ export const ServiceAccountPageUnconnected = ({
                   onClick={showDisableServiceAccountModal(true)}
                   disabled={!ableToWrite}
                 >
-                  Disable service account
+                  <Trans i18nKey="serviceaccounts.service-account-page-unconnected.disable-service-account">
+                    Disable service account
+                  </Trans>
                 </Button>
               )}
             </Stack>
@@ -172,7 +182,10 @@ export const ServiceAccountPageUnconnected = ({
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
+                tooltip={t(
+                  'serviceaccounts.service-account-page-unconnected.tooltip-managed-service-account-cannot-modified',
+                  'This is a managed service account and cannot be modified'
+                )}
               />
             </Stack>
           )}
@@ -180,7 +193,9 @@ export const ServiceAccountPageUnconnected = ({
             <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
           <Stack justifyContent="space-between" height="auto">
-            <h3>Tokens</h3>
+            <h3>
+              <Trans i18nKey="serviceaccounts.service-account-page-unconnected.tokens">Tokens</Trans>
+            </h3>
             {!serviceAccount.isExternal && (
               <Button
                 onClick={() => setIsTokenModalOpen(true)}
@@ -188,7 +203,9 @@ export const ServiceAccountPageUnconnected = ({
                 key="add-service-account-token"
                 icon="plus"
               >
-                Add service account token
+                <Trans i18nKey="serviceaccounts.service-account-page-unconnected.add-service-account-token">
+                  Add service account token
+                </Trans>
               </Button>
             )}
           </Stack>
@@ -207,7 +224,10 @@ export const ServiceAccountPageUnconnected = ({
 
         <ConfirmModal
           isOpen={isDeleteModalOpen}
-          title="Delete service account"
+          title={t(
+            'serviceaccounts.service-account-page-unconnected.title-delete-service-account',
+            'Delete service account'
+          )}
           body="Are you sure you want to delete this service account?"
           confirmText="Delete service account"
           onConfirm={handleServiceAccountDelete}
@@ -215,7 +235,10 @@ export const ServiceAccountPageUnconnected = ({
         />
         <ConfirmModal
           isOpen={isDisableModalOpen}
-          title="Disable service account"
+          title={t(
+            'serviceaccounts.service-account-page-unconnected.title-disable-service-account',
+            'Disable service account'
+          )}
           body="Are you sure you want to disable this service account?"
           confirmText="Disable service account"
           onConfirm={handleServiceAccountDisable}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -61,7 +62,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
         <>
           <PanelHeaderCorner panel={panel} error={errorMessage} />
           <PanelRenderer
-            title="Raw data"
+            title={t('dashboard.panel-editor-table-view.title-raw-data', 'Raw data')}
             pluginId="table"
             width={innerWidth}
             height={innerHeight}

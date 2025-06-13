@@ -3,12 +3,14 @@ import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
+import { getProvisionedMeta } from './provisioned/utils/getProvisionedMeta';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -41,19 +43,21 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues } = formState;
+  const { errors, isValid } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
   const [hasFolderChanged, setHasFolderChanged] = useState(false);
+
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
+      rawDashboardJSON: changedSaveModel,
 
       // save as config
       saveAsCopy: true,
@@ -75,7 +79,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const cancelButton = (
     <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
-      Cancel
+      <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
@@ -92,7 +96,13 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     return (
       <>
         {error && formValuesMatchContentSent && (
-          <Alert title="Failed to save dashboard" severity="error">
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-as-form.render-footer.title-failed-to-save-dashboard',
+              'Failed to save dashboard'
+            )}
+            severity="error"
+          >
             {error.message && <p>{error.message}</p>}
           </Alert>
         )}
@@ -109,7 +119,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       <Field label={<TitleFieldLabel onChange={setValue} />} invalid={!!errors.title} error={errors.title?.message}>
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
-          aria-label="Save dashboard title field"
+          aria-label={t(
+            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
+            'Save dashboard title field'
+          )}
           data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
           onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
             setValue('title', e.target.value, { shouldValidate: true });
@@ -123,27 +136,33 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       >
         <TextArea
           {...register('description', { required: false })}
-          aria-label="Save dashboard description field"
+          aria-label={t(
+            'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
+            'Save dashboard description field'
+          )}
           autoFocus
         />
       </Field>
 
-      <Field label="Folder">
+      <Field label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined) => {
+          onChange={async (uid: string | undefined, title: string | undefined) => {
             setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
+            const meta = await getProvisionedMeta(uid);
+            dashboard.setState({
+              meta: {
+                ...meta,
+                folderUid: uid,
+              },
+            });
           }}
-          // Old folder picker fields
           value={formValues.folder?.uid}
-          initialTitle={defaultValues!.folder!.title}
-          dashboardId={dashboard.state.id ?? undefined}
-          enableCreateNew
         />
       </Field>
       {!changeInfo.isNew && (
-        <Field label="Copy tags">
+        <Field label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
           <Switch {...register('copyTags')} />
         </Field>
       )}
@@ -159,7 +178,9 @@ export interface TitleLabelProps {
 export function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Title</Label>
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
+      </Label>
       {/* {config.featureToggles.dashgpt && isNew && (
                 <GenAIDashDescriptionButton
                   onGenerate={(description) => field.onChange(description)}
@@ -177,7 +198,9 @@ export interface DescriptionLabelProps {
 export function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Description</Label>
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
+      </Label>
       {/* {config.featureToggles.dashgpt && isNew && (
                 <GenAIDashDescriptionButton
                   onGenerate={(description) => field.onChange(description)}

@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,10 +16,12 @@ import (
 
 func TestSetDualWritingMode(t *testing.T) {
 	type testCase struct {
-		name         string
-		kvStore      *fakeNamespacedKV
-		desiredMode  DualWriterMode
-		expectedMode DualWriterMode
+		name            string
+		kvStore         *fakeNamespacedKV
+		desiredMode     DualWriterMode
+		expectedMode    DualWriterMode
+		skipDataSync    bool
+		serverLockError error
 	}
 	tests :=
 		[]testCase{
@@ -52,10 +55,24 @@ func TestSetDualWritingMode(t *testing.T) {
 				desiredMode:  Mode0,
 				expectedMode: Mode0,
 			},
+			{
+				name:            "should keep mode2 when trying to go from mode2 to mode3 and the server lock service returns an error",
+				kvStore:         &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
+				desiredMode:     Mode3,
+				expectedMode:    Mode2,
+				serverLockError: fmt.Errorf("lock already exists"),
+			},
+			{
+				name:         "should keep mode2 when trying to go from mode2 to mode3 and migration is disabled",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
+				desiredMode:  Mode3,
+				expectedMode: Mode2,
+				skipDataSync: true,
+			},
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
+		l := (Storage)(nil)
 		s := (Storage)(nil)
 
 		sm := &mock.Mock{}
@@ -66,14 +83,19 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		lm := &mock.Mock{}
 		lm.On("List", mock.Anything, mock.Anything).Return(exampleList, nil)
-		ls := legacyStoreMock{lm, l}
+		ls := storageMock{lm, l}
+
+		serverLockSvc := &fakeServerLock{
+			err: tt.serverLockError,
+		}
 
 		dwMode, err := SetDualWritingMode(context.Background(), tt.kvStore, &SyncerConfig{
 			LegacyStorage:     ls,
 			Storage:           us,
 			Kind:              "playlist.grafana.app/playlists",
 			Mode:              tt.desiredMode,
-			ServerLockService: &fakeServerLock{},
+			SkipDataSync:      tt.skipDataSync,
+			ServerLockService: serverLockSvc,
 			RequestInfo:       &request.RequestInfo{},
 			Reg:               p,
 
@@ -144,11 +166,14 @@ func (f *fakeNamespacedKV) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
-// Never lock in tests
 type fakeServerLock struct {
+	err error
 }
 
 func (f *fakeServerLock) LockExecuteAndRelease(ctx context.Context, actionName string, duration time.Duration, fn func(ctx context.Context)) error {
+	if f.err != nil {
+		return f.err
+	}
 	fn(ctx)
 	return nil
 }

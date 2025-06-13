@@ -88,10 +88,17 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+
+	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
+		SocialBase:           s,
 		cache:                cache,
-		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
+		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
 	}
 
@@ -236,7 +243,7 @@ func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, er
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.AzureADProviderName, settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -250,7 +257,12 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
 
-	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
+	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
+	if err != nil {
+		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.AzureADProviderName, "error", err)
+	}
+
+	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
 
 	return nil
@@ -370,6 +382,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		if info.FederatedCredentialAudience == "" {
 			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
 		}
 		return nil
 
@@ -540,11 +558,11 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
-	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	fmt.Fprintf(bf, "allowed_groups = %v\n", s.info.AllowedGroups)
+	fmt.Fprintf(bf, "forceUseGraphAPI = %v\n", s.forceUseGraphAPI)
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.getBaseSupportBundleContent(bf)
+	return s.getBaseSupportBundleContent(bf)
 }
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {

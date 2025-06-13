@@ -1,15 +1,17 @@
-import { locationUtil, UrlQueryMap } from '@grafana/data';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
-  AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
+  AnnoKeyGrantPermissions,
   DeprecatedInternalId,
   Resource,
   ResourceClient,
@@ -21,56 +23,57 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { ResponseTransformers } from './ResponseTransformers';
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import { isDashboardV2Spec } from './utils';
+
+export const K8S_V2_DASHBOARD_API_CONFIG = {
+  group: 'dashboard.grafana.app',
+  version: 'v2alpha1',
+  resource: 'dashboards',
+};
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
 {
-  private client: ResourceClient<DashboardV2Spec>;
+  private client: ResourceClient<DashboardV2Spec, Status>;
 
-  constructor(private convertToV1: boolean) {
-    this.client = new ScopedResourceClient<DashboardV2Spec>({
-      group: 'dashboard.grafana.app',
-      version: 'v2alpha1',
-      resource: 'dashboards',
-    });
+  constructor() {
+    this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
   }
 
-  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
+  async getDashboardDTO(uid: string) {
     try {
       const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
 
-      let result: DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO | undefined;
-
-      // TODO: For dev purposes only, the conversion should and will happen in the API. This is just to stub v2 api responses.
-      result = ResponseTransformers.ensureV2Response(dashboard);
+      // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
+      // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
+      if (
+        !isDashboardV2Spec(dashboard.spec) &&
+        dashboard.status?.conversion?.failed &&
+        (dashboard.status.conversion.storedVersion === 'v1alpha1' ||
+          dashboard.status.conversion.storedVersion === 'v1beta1' ||
+          dashboard.status.conversion.storedVersion === 'v0alpha1')
+      ) {
+        throw new DashboardVersionError(dashboard.status.conversion.storedVersion, dashboard.status.conversion.error);
+      }
 
       // load folder info if available
-      if (result.metadata.annotations && result.metadata.annotations[AnnoKeyFolder]) {
+      if (dashboard.metadata.annotations && dashboard.metadata.annotations[AnnoKeyFolder]) {
         try {
-          const folder = await backendSrv.getFolderByUid(result.metadata.annotations[AnnoKeyFolder]);
-          result.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
-          result.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
-          result.metadata.annotations[AnnoKeyFolderId] = folder.id;
+          const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
+          dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
+          dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
           throw new Error('Failed to load folder');
         }
-      } else if (result.metadata.annotations && !result.metadata.annotations[AnnoKeyFolder]) {
+      } else if (dashboard.metadata.annotations && !dashboard.metadata.annotations[AnnoKeyFolder]) {
         // Set AnnoKeyFolder to empty string for top-level dashboards
         // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
         // AnnoKeyFolder undefined -> top-level dashboard -> empty string
-        result.metadata.annotations[AnnoKeyFolder] = '';
+        dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
-      // Depending on the ui components readiness, we might need to convert the response to v1
-      if (this.convertToV1) {
-        // Always return V1 format
-        result = ResponseTransformers.ensureV1Response(result);
-        return result;
-      }
-      // return the v2 response
-      return result;
+      return dashboard;
     } catch (e) {
       const status = getStatusFromError(e);
       const message = getMessageFromError(e);
@@ -87,7 +90,11 @@ export class K8sDashboardV2API
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    throw new Error('Method not implemented.');
+    return this.client.delete(uid, showSuccessAlert).then((v) => ({
+      id: 0,
+      message: v.message,
+      title: t('dashboard.k8s-dashboard-v2api.title.deleted', 'deleted'),
+    }));
   }
 
   async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
@@ -118,7 +125,6 @@ export class K8sDashboardV2API
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
-      delete obj.metadata.annotations?.[AnnoKeyFolderId];
 
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
@@ -131,6 +137,10 @@ export class K8sDashboardV2API
       delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -139,7 +149,7 @@ export class K8sDashboardV2API
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title),
+        slug: kbn.slugifyForUrl(v.spec.title.trim()),
       })
     );
 
@@ -150,11 +160,21 @@ export class K8sDashboardV2API
 
     return {
       uid: v.metadata.name,
-      version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
+      version: v.metadata.generation ?? 0,
       id: dashId,
       status: 'success',
       url,
       slug: '',
     };
+  }
+
+  listDeletedDashboards(options: ListDeletedDashboardsOptions) {
+    return this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
+    // reset the resource version to create a new resource
+    dashboard.metadata.resourceVersion = '';
+    return this.client.create(dashboard);
   }
 }

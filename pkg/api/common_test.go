@@ -189,7 +189,6 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 	return contexthandler.ProvideService(
 		cfg,
-		tracing.InitializeTracerForTest(),
 		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: "0", Type: claims.TypeAnonymous, SessionToken: &usertoken.UserToken{}}},
 		featuremgmt.WithFeatures(),
 	)

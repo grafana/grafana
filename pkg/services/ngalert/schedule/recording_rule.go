@@ -113,7 +113,7 @@ func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	}
 }
 
-func (r *recordingRule) Update(lastVersion RuleVersionAndPauseStatus) bool {
+func (r *recordingRule) Update(_ *Evaluation) bool {
 	return true
 }
 
@@ -144,6 +144,10 @@ func (r *recordingRule) Run() error {
 			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
+			// Call afterEval callback if it exists
+			if eval.afterEval != nil {
+				eval.afterEval()
+			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
 			return nil
@@ -269,7 +273,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, ev.rule.Labels)
+	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {

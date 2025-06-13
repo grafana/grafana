@@ -68,7 +68,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	for _, dep := range archive.Dependencies {
 		m.log.Info(fmt.Sprintf("Fetching %s dependency %s...", pluginID, dep.ID))
 
-		err = m.Add(ctx, dep.ID, dep.Version, opts)
+		err = m.Add(ctx, dep.ID, "", opts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
 			if errors.As(err, &dupeErr) {

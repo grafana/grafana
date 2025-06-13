@@ -33,7 +33,7 @@ func TestPlaylistConversion(t *testing.T) {
 
 	out, err := json.MarshalIndent(dst, "", "  ")
 	require.NoError(t, err)
-	// fmt.Printf("%s", string(out))
+	// t.Logf("%s", string(out))
 	require.JSONEq(t, `{
 		"metadata": {
 			"name": "abc",

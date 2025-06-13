@@ -87,6 +87,10 @@ func TestLoader_Load(t *testing.T) {
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
+							Links: []plugins.InfoLink{
+								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
@@ -105,6 +109,7 @@ func TestLoader_Load(t *testing.T) {
 						Extensions: plugins.Extensions{
 							AddedLinks:        []plugins.AddedLink{},
 							AddedComponents:   []plugins.AddedComponent{},
+							AddedFunctions:    []plugins.AddedFunction{},
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -160,8 +165,8 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
 							Plugins: []plugins.Dependency{
-								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+								{Type: "datasource", ID: "graphite", Name: "Graphite"},
+								{Type: "panel", ID: "graph", Name: "Graph"},
 							},
 							Extensions: plugins.ExtensionsDependencies{
 								ExposedComponents: []string{},
@@ -200,8 +205,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -248,8 +255,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -309,8 +318,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -423,8 +434,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -504,8 +517,10 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -615,8 +630,10 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -696,8 +713,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -801,8 +820,10 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -883,8 +904,10 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						ExposedComponents: []string{},
 					}},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -956,16 +979,18 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1046,8 +1071,8 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
@@ -1060,8 +1085,10 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1141,15 +1168,15 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithOpts(t, &config.PluginManagementCfg{AngularSupportEnabled: true}, loaderDepOpts{
+			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{
 				angularInspector: angularinspector.AlwaysAngularFakeInspector,
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].Angular.Detected, "angular detection should run")
+				require.Empty(t, p, "plugin shouldn't have been loaded")
 			} else {
+				require.Len(t, p, 1, "should load 1 plugin")
 				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
@@ -1169,8 +1196,8 @@ func TestLoader_Load_Angular(t *testing.T) {
 		name string
 		cfg  *config.PluginManagementCfg
 	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: true}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: false}},
+		{name: "angular support enabled", cfg: &config.PluginManagementCfg{}},
+		{name: "angular support disabled", cfg: &config.PluginManagementCfg{}},
 	} {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
@@ -1182,7 +1209,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 					name:             "angular plugin",
 					angularInspector: angularinspector.AlwaysAngularFakeInspector,
 					// angular plugins should load only if allowed by the cfg
-					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
+					shouldLoad: false,
 				},
 				{
 					name:             "non angular plugin",
@@ -1216,22 +1243,18 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		},
 	}
 	for _, tc := range []struct {
-		name                      string
-		cfg                       *config.PluginManagementCfg
-		expHideAngularDeprecation bool
+		name string
+		cfg  *config.PluginManagementCfg
 	}{
 		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}, expHideAngularDeprecation: true},
+		}},
 		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}, expHideAngularDeprecation: false},
+		}},
 		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: nil,
-		}, expHideAngularDeprecation: false},
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
@@ -1239,8 +1262,7 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
-			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
+			require.Empty(t, p, "plugin shouldn't have been loaded")
 		})
 	}
 }
@@ -1272,8 +1294,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1314,8 +1338,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1463,8 +1489,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -1512,8 +1540,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},

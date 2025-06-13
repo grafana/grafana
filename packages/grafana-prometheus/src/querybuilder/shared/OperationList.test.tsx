@@ -7,6 +7,7 @@ import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { getMockTimeRange } from '../../test/__mocks__/datasource';
 import { PromOptions } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
 import { addOperationInQueryBuilder } from '../testUtils';
@@ -78,6 +79,7 @@ function setup(query: PromVisualQuery = defaultQuery) {
     onRunQuery: () => {},
     onChange: jest.fn(),
     queryModeller: promQueryModeller,
+    timeRange: getMockTimeRange(),
   };
 
   render(<OperationList {...props} query={query} />);

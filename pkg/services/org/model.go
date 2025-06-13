@@ -157,6 +157,7 @@ type OrgUserDTO struct {
 	IsDisabled         bool            `json:"isDisabled"`
 	AuthLabels         []string        `json:"authLabels" xorm:"-"`
 	IsExternallySynced bool            `json:"isExternallySynced"`
+	IsProvisioned      bool            `json:"isProvisioned"`
 }
 
 type RemoveOrgUserCommand struct {

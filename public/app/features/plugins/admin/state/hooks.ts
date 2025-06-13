@@ -4,7 +4,7 @@ import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
 import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin, PluginStatus } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
 import {
@@ -64,7 +64,7 @@ export const useGetErrors = (filterByPluginType?: PluginType): PluginError[] => 
 
 export const useInstall = () => {
   const dispatch = useDispatch();
-  return (id: string, version?: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
+  return (id: string, version?: string, installType?: PluginStatus) => dispatch(install({ id, version, installType }));
 };
 
 export const useUnsetInstall = () => {

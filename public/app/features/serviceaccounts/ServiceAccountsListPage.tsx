@@ -1,13 +1,25 @@
+import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  InlineField,
+  EmptyState,
+  Box,
+  Stack,
+  useStyles2,
+  TextLink,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
@@ -78,6 +90,7 @@ export const ServiceAccountsListPageUnconnected = ({
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
@@ -160,20 +173,14 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
-  const docsLink = (
-    <a
-      className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      documentation.
-    </a>
-  );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
-      {docsLink}
+      <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
+        Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+        <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
+          documentation.
+        </TextLink>
+      </Trans>
     </span>
   );
 
@@ -185,20 +192,25 @@ export const ServiceAccountsListPageUnconnected = ({
         <>
           {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
             <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
+              <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.add-service-account">
+                Add service account
+              </Trans>
             </LinkButton>
           )}
         </>
       }
     >
       <Page.Contents>
-        <div className="page-action-bar">
+        <Stack justifyContent="space-between" wrap="wrap">
           <InlineField grow>
             <FilterInput
-              placeholder="Search service account by name"
+              className={styles.filterInput}
+              placeholder={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.placeholder-search-service-account-by-name',
+                'Search service account by name'
+              )}
               value={query}
               onChange={onQueryChange}
-              width={50}
             />
           </InlineField>
           <Box marginBottom={1}>
@@ -208,7 +220,7 @@ export const ServiceAccountsListPageUnconnected = ({
               value={serviceAccountStateFilter}
             />
           </Box>
-        </div>
+        </Stack>
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
           <EmptyState
             variant="not-found"
@@ -265,13 +277,19 @@ export const ServiceAccountsListPageUnconnected = ({
                   : ''
               }?`}
               confirmText="Delete"
-              title="Delete service account"
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
+                'Delete service account'
+              )}
               onConfirm={onServiceAccountRemove}
               onDismiss={onRemoveModalClose}
             />
             <ConfirmModal
               isOpen={isDisableModalOpen}
-              title="Disable service account"
+              title={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.title-disable-service-account',
+                'Disable service account'
+              )}
               body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
               confirmText="Disable service account"
               onConfirm={onDisable}
@@ -290,6 +308,12 @@ export const ServiceAccountsListPageUnconnected = ({
     </Page>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  filterInput: css({
+    maxWidth: theme.spacing(50),
+  }),
+});
 
 const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);
 export default ServiceAccountsListPage;

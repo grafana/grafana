@@ -121,7 +121,7 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if rePRCheckBranch.MatchString(target) {
 		return PullRequestMode, nil
 	}
-	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s\n", target, PullRequestMode)
 	return PullRequestMode, nil
 }
 

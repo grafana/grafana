@@ -1,9 +1,11 @@
 """
-rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following events:
-* A merge to main
-* A tag that begins with a 'v'
+'rgm' pipelines are pipelines that use dagger (located in 'pkg/build/daggerbuild')
 """
 
+load(
+    "scripts/drone/dagger.star",
+    "with_dagger_install",
+)
 load(
     "scripts/drone/events/release.star",
     "verify_release_pipeline",
@@ -17,12 +19,9 @@ load(
     "test_frontend",
 )
 load(
-    "scripts/drone/pipelines/whats_new_checker.star",
-    "whats_new_checker_pipeline",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
     "github_app_step_volumes",
 )
 load(
@@ -36,7 +35,7 @@ load(
 )
 load(
     "scripts/drone/variables.star",
-    "golang_version",
+    "dagger_version",
 )
 load(
     "scripts/drone/vault.star",
@@ -135,19 +134,18 @@ def rgm_run(name, script):
         Drone step.
     """
     env = {
-        "GO_VERSION": golang_version,
         "ALPINE_BASE": images["alpine"],
         "UBUNTU_BASE": images["ubuntu"],
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:main",
+        "image": images["go"],
         "pull": "always",
-        "commands": [
+        "commands": with_dagger_install([
             "export GRAFANA_DIR=$$(pwd)",
             "export GITHUB_TOKEN=$(cat /github-app/token)",
-            "cd /src && ./scripts/{}".format(script),
-        ],
+            "./pkg/build/daggerbuild/scripts/{}".format(script),
+        ], dagger_version),
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
@@ -217,7 +215,7 @@ def rgm_main():
         name = "rgm-main-prerelease",
         trigger = main_trigger,
         steps = rgm_run("rgm-build", "drone_build_main.sh"),
-        depends_on = ["main-test-backend", "main-test-frontend"],
+        depends_on = ["main-test-backend"],
     )
 
 def rgm_tag():
@@ -291,7 +289,6 @@ def rgm_tag_pipeline():
 
     return [
         build,
-        whats_new_checker_pipeline(tag_trigger),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
@@ -332,7 +329,6 @@ def rgm_promotion_pipeline():
     }
 
     env = {
-        "GO_VERSION": golang_version,
         "ALPINE_BASE": images["alpine"],
         "UBUNTU_BASE": images["ubuntu"],
     }
@@ -346,18 +342,18 @@ def rgm_promotion_pipeline():
     # * UPLOAD_TO = Google Cloud Storage URL to upload the built artifacts to. (ex: gs://some-bucket/path)
     build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:main",
+        "image": images["go"],
         "pull": "always",
-        "commands": [
+        "commands": with_dagger_install([
             "export GITHUB_TOKEN=$(cat /github-app/token)",
-            "dagger run --silent /src/grafana-build artifacts " +
+            "dagger run --silent go run ./pkg/build/cmd artifacts " +
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
             "--enterprise-ref=$${ENTERPRISE_REF} " +
             "--grafana-repo=$${GRAFANA_REPO} " +
-            "--version=$${VERSION} ",
-            "--go-version={}".format(golang_version),
-        ],
+            "--build-id=$${DRONE_BUILD_NUMBER} " +
+            "--version=$${VERSION}",
+        ], dagger_version),
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
@@ -369,6 +365,11 @@ def rgm_promotion_pipeline():
     build_step["depends_on"] = [
         generate_token_step["name"],
     ]
+
+    publish_step["depends_on"] = [
+        build_step["name"],
+    ]
+
     steps = [
         generate_token_step,
         build_step,
@@ -380,7 +381,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
-            volumes = github_app_step_volumes(),
+            volumes = github_app_step_volumes() + github_app_pipeline_volumes(),
         ),
     ]
 

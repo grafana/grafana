@@ -22,10 +22,10 @@ title: 'Authentication HTTP API '
 The Authentication HTTP API is used to manage API keys.
 
 {{% admonition type="note" %}}
-Grafana recommends using service accounts instead of API keys. For more information, refer to [Grafana service account API reference]({{< relref "./serviceaccount/" >}}).
+Grafana recommends using service accounts instead of API keys. For more information, refer to [Grafana service account API reference](../serviceaccount/).
 {{% /admonition %}}
 
-> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions](../../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## List API keys
 
@@ -38,7 +38,7 @@ This endpoint is deprecated.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+See note in the [introduction](#authentication-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -85,7 +85,7 @@ This endpoint has been made obsolete in Grafana 11.3.0.
 
 {{% /admonition %}}
 
-Endpoint is obsolete and has been moved to [Grafana service account API]({{< relref "./serviceaccount/" >}}). For more information, refer to [Migrate to Grafana service account API](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
+Endpoint is obsolete and has been moved to [Grafana service account API](../serviceaccount/). For more information, refer to [Migrate to Grafana service account API](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
 
 `POST /api/auth/keys`
 
@@ -110,7 +110,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#authentication-api" >}}) for an explanation.
+See note in the [introduction](#authentication-api) for an explanation.
 
 | Action           | Scope      |
 | ---------------- | ---------- |

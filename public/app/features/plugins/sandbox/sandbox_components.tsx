@@ -2,7 +2,7 @@ import { isFunction } from 'lodash';
 import { ComponentType, FC } from 'react';
 import * as React from 'react';
 
-import { GrafanaPlugin, PluginExtensionConfig, PluginType } from '@grafana/data';
+import { GrafanaPlugin, PluginType } from '@grafana/data';
 
 import { SandboxPluginMeta, SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
@@ -56,17 +56,6 @@ export async function sandboxPluginComponents(
   // wrap app components
   if (Reflect.has(pluginObject, 'root')) {
     Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root'), meta));
-  }
-
-  // extension components
-  if (Reflect.has(pluginObject, 'extensionConfigs')) {
-    const extensions: PluginExtensionConfig[] = Reflect.get(pluginObject, 'extensionConfigs');
-    for (const extension of extensions) {
-      if (Reflect.has(extension, 'component')) {
-        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component'), meta));
-      }
-    }
-    Reflect.set(pluginObject, 'extensionConfigs', extensions);
   }
 
   // config pages

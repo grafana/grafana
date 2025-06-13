@@ -104,6 +104,16 @@ When there are multiple transformations, Grafana applies them in the order they 
 
 The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
 
+## Dashboard variables in transformations
+
+All text input fields in transformations accept [variable syntax](ref:dashboard-variable):
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-transformation-variables-v11.6.png" alt="Transformation with a mock variable in a text field" >}}
+
+When you use dashboard variables in transformations, the variables are automatically interpolated before the transformations are applied to the data.
+
+For an example, refer to [Use a dashboard variable](#use-a-dashboard-variable) in the **Filter fields by name** transformation.
+
 ## Add a transformation function to data
 
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions](#transformation-functions).
@@ -191,6 +201,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+  > **Note:** If a variable will be used in this transformation, the default alias will be interpolated with the value of the variable. Please explicitly define an alias if you would like the alias to not be affected by variable changes.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, we added two fields together and named them Sum.
@@ -1179,29 +1190,11 @@ Use this transformation to address issues when a data source returns time series
 
 #### Available options
 
-##### Multi-frame time series
-
-Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization.
-
-**Example: Converting from wide to long format**
-
-| Timestamp           | Value1 | Value2 |
-| ------------------- | ------ | ------ |
-| 2023-01-01 00:00:00 | 10     | 20     |
-| 2023-01-01 01:00:00 | 15     | 25     |
-
-**Transformed to:**
-
-| Timestamp           | Variable | Value |
-| ------------------- | -------- | ----- |
-| 2023-01-01 00:00:00 | Value1   | 10    |
-| 2023-01-01 00:00:00 | Value2   | 20    |
-| 2023-01-01 01:00:00 | Value1   | 15    |
-| 2023-01-01 01:00:00 | Value2   | 25    |
-
 ##### Wide time series
 
 Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
+
+A wide time series combines data into a single frame with one shared, ascending time field. Time fields do not repeat and multiple values extend in separate columns.
 
 **Example: Converting from long to wide format**
 
@@ -1218,6 +1211,32 @@ Select this option to transform the time series data frame from the long format 
 | ------------------- | ------ | ------ |
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
+
+##### Multi-frame time series
+
+Multi-frame time series break data into multiple frames that all contain two fields: a time field and a numeric value field. Time is always ascending. String values are represented as field labels.
+
+##### Long time series
+
+A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one.
+
+**Example: Converting to long format**
+
+| Value1 | Value2 | Timestamp           |
+| ------ | ------ | ------------------- |
+| 10     | 20     | 2023-01-03 00:00:00 |
+| 30     | 40     | 2023-01-02 00:00:00 |
+| 50     | 60     | 2023-01-01 00:00:00 |
+| 70     | 80     | 2023-01-01 00:00:00 |
+
+**Transformed to:**
+
+| Timestamp           | Value1 | Value2 |
+| ------------------- | ------ | ------ |
+| 2023-01-01 00:00:00 | 70     | 80     |
+| 2023-01-01 01:00:00 | 50     | 60     |
+| 2023-01-02 01:00:00 | 30     | 40     |
+| 2023-01-03 01:00:00 | 10     | 20     |
 
 ### Reduce
 

@@ -1,7 +1,5 @@
 import {
-  DataQuery,
   DataSourceInstanceSettings,
-  DataSourceRef,
   IntervalValues,
   RelativeTimeRange,
   ScopedVars,
@@ -12,9 +10,9 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { VizPanel, sceneGraph } from '@grafana/scenes';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -34,6 +32,7 @@ import {
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
@@ -52,20 +51,14 @@ import {
 
 import { Annotation } from './constants';
 import {
-  DataSourceType,
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import {
-  isAlertingRulerRule,
-  isGrafanaAlertingRuleByType,
-  isGrafanaRecordingRule,
-  isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-} from './rules';
+import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -119,6 +112,7 @@ export function getNotificationSettingsForDTO(
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
       mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
+      active_time_intervals: contactPoints?.grafana?.activeTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -136,12 +130,14 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
+
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
     simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
+
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -149,12 +145,15 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     noDataState,
     execErrState,
     evaluateFor,
+    keepFiringFor,
     queries,
     isPaused,
     contactPoints,
     manualRouting,
     type,
     metric,
+    targetDatasourceUid,
+    missingSeriesEvalsToResolve,
   } = values;
   if (!condition) {
     throw new Error('You cannot create an alert rule without specifying the alert condition');
@@ -184,12 +183,17 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
         metadata,
+        missing_series_evals_to_resolve: missingSeriesEvalsToResolve
+          ? Number(missingSeriesEvalsToResolve)
+          : // API uses 0 value to reset, as `missing_series_evals_to_resolve` cannot be 0
+            0,
       },
       annotations,
       labels,
 
       // Alerting rule specific
       for: evaluateFor,
+      keep_firing_for: keepFiringFor,
     };
   } else if (wantsRecordingRule) {
     return {
@@ -203,6 +207,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         record: {
           metric: metric ?? name,
           from: condition,
+          target_datasource_uid: targetDatasourceUid,
         },
       },
       annotations,
@@ -229,6 +234,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
+        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [
@@ -275,7 +281,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (isGrafanaRecordingRule(rule)) {
+    if (rulerRuleType.grafana.recordingRule(rule)) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
@@ -291,8 +297,9 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
+        targetDatasourceUid: ga.record?.target_datasource_uid || defaultFormValues.targetDatasourceUid,
       };
-    } else if (isGrafanaRulerRule(rule)) {
+    } else if (rulerRuleType.grafana.rule(rule)) {
       // grafana alerting rule
       const ga = rule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
@@ -304,6 +311,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           group: group.name,
           evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
           evaluateFor: rule.for || '0',
+          keepFiringFor: rule.keep_firing_for || '0',
           noDataState: ga.no_data_state,
           execErrState: ga.exec_err_state,
           queries: ga.data,
@@ -317,6 +325,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           manualRouting: Boolean(routingSettings),
 
           editorSettings: getEditorSettingsFromDTO(ga),
+
+          missingSeriesEvalsToResolve: ga.missing_series_evals_to_resolve,
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');
@@ -326,7 +336,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     // DATASOURCE-MANAGED RULES
-    if (isAlertingRulerRule(rule)) {
+    if (rulerRuleType.dataSource.alertingRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
       const defaultQuery = {
@@ -354,7 +364,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         namespace,
         group: group.name,
       };
-    } else if (isRecordingRulerRule(rule)) {
+    } else if (rulerRuleType.dataSource.recordingRule(rule)) {
       const recordingRuleValues = recordingRulerRuleToRuleForm(rule);
 
       return {
@@ -368,6 +378,58 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     } else {
       throw new Error('Unexpected type of rule for cloud rules source');
     }
+  }
+}
+
+export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
+  const defaultFormValues = getDefaultFormValues();
+
+  const ga = rule.grafana_alert;
+  const duration = rule.for;
+  const keepFiringFor = rule.keep_firing_for;
+  const annotations = rule.annotations;
+  const labels = rule.labels;
+
+  const commonProperties = {
+    ...defaultFormValues,
+    name: ga.title,
+    queries: ga.data,
+    condition: ga.condition,
+    annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(annotations, false)),
+    labels: listifyLabelsOrAnnotations(labels, true),
+    folder: { title: namespace, uid: ga.namespace_uid },
+    isPaused: ga.is_paused,
+  };
+
+  if (rulerRuleType.grafana.recordingRule(rule)) {
+    // grafana recording rule
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafanaRecording,
+      group: ga.rule_group,
+      metric: ga.record?.metric,
+    };
+  }
+
+  // grafana alerting rule
+  const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+    return {
+      ...commonProperties,
+      type: RuleFormType.grafana,
+      group: ga.rule_group,
+      evaluateFor: duration || '0',
+      keepFiringFor: keepFiringFor || '0',
+      noDataState: ga.no_data_state,
+      execErrState: ga.exec_err_state,
+
+      contactPoints: routingSettings,
+      manualRouting: Boolean(routingSettings),
+
+      editorSettings: getEditorSettingsFromDTO(ga),
+    };
+  } else {
+    throw new Error('Unexpected type of rule for grafana rules source');
   }
 }
 
@@ -423,7 +485,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
+  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -809,23 +871,30 @@ export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQue
   return 'expr' in model;
 }
 
-export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
-  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
-    if ('instant' in model) {
-      return model.instant;
-    } else {
-      if ('queryType' in model) {
-        return model.queryType === 'instant';
-      } else {
-        return undefined;
-      }
-    }
+export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
+  const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
+  if (!dataSourceUID) {
+    return undefined;
   }
+
+  // find the datasource type from the UID
+  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+  if (!type) {
+    return undefined;
+  }
+
+  // if the datasource is not a supported prometheus flavor or loki, return "undefined"
+  if (!isSupportedExternalRulesSourceType(type)) {
+    return undefined;
+  }
+
+  const { model } = query;
+
   // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
 
-  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  const isPrometheusFlavoredDataSourceType = isSupportedExternalPrometheusFlavoredRulesSourceType(type);
+  const isInstant = isPrometheusFlavoredDataSourceType ? isInstantForPrometheus : isInstantForLoki;
   return isInstant;
 }

@@ -369,8 +369,10 @@ Here are two ways to achieve this:
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
+    -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
+
+  The token that is used in this request is the [service account token](ref:service-accounts).
 
 - Or use the `role > from` list and `permission > state` option of your provisioning file:
 
@@ -392,6 +394,20 @@ Here are two ways to achieve this:
         - action: 'plugins.app:access'
           scope: 'plugins:id:kentik-connect-app'
           state: 'present'
+  ```
+
+  If your goal is to remove an access to an app you should remove it from the role and update it. For example:
+
+  ```bash
+  # Fetch the role, modify it to remove permissions to kentik-connect-app and increment role version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:id:kentik-connect-app"))'
+
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
 ### Manage user permissions through teams

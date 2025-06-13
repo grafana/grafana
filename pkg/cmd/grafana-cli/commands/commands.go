@@ -148,6 +148,13 @@ var adminCommands = []*cli.Command{
 				Name:   "to-unified-storage",
 				Usage:  "Migrates classic SQL data into unified storage",
 				Action: runDbCommand(datamigrations.ToUnifiedStorage),
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "non-interactive",
+						Usage: "Non interactive mode. Just run the migration.",
+						Value: false,
+					},
+				},
 			},
 		},
 	},

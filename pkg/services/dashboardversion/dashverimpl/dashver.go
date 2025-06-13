@@ -7,8 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,11 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -40,7 +44,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service) dashver.Service {
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{
@@ -49,12 +53,14 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		},
 		features: features,
 		k8sclient: client.NewK8sHandler(
-			cfg,
+			dual,
 			request.GetNamespaceMapper(cfg),
-			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
+			dashv0.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
+			unified,
+			sorter,
 		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),
@@ -82,7 +88,7 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 		query.DashboardID = id
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
 		if err != nil {
 			return nil, err
@@ -153,7 +159,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.Limit = 1000
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		versions, err := s.listHistoryThroughK8s(
 			ctx,
 			query.OrgID,
@@ -215,20 +221,42 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int
 	return result.ID, nil
 }
 
-func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
-	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
-	if err != nil {
-		return nil, err
-	} else if out == nil {
-		return nil, dashboards.ErrDashboardNotFound
+func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, version int64) (*dashver.DashboardVersionDTO, error) {
+	// this is an unideal implementation - we have to list all versions and filter here, since there currently is no way to query for the
+	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
+	// use batches to make sure we don't load too much data at once.
+	const batchSize = 50
+	labelSelector := utils.LabelKeyGetHistory + "=" + dashboardUID
+	var continueToken string
+	for {
+		out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
+			LabelSelector: labelSelector,
+			Limit:         int64(batchSize),
+			Continue:      continueToken,
+		})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, dashboards.ErrDashboardNotFound
+			}
+			return nil, err
+		}
+		if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
+		for _, item := range out.Items {
+			if item.GetGeneration() == version {
+				return s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
+			}
+		}
+
+		continueToken = out.GetContinue()
+		if continueToken == "" || len(out.Items) == 0 {
+			break
+		}
 	}
 
-	dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, out, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return dash, nil
+	return nil, dashboards.ErrDashboardNotFound
 }
 
 func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
@@ -238,18 +266,19 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		Continue:      continueToken,
 	})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+
 		return nil, err
-	} else if out == nil {
+	}
+	if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
-	dashboards := make([]*dashver.DashboardVersionDTO, len(out.Items))
-	for i, item := range out.Items {
-		dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
-		if err != nil {
-			return nil, err
-		}
-		dashboards[i] = dash
+	dashboards, err := s.UnstructuredToLegacyDashboardVersionList(ctx, out.Items, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return &dashver.DashboardVersionResponse{
@@ -259,6 +288,51 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 }
 
 func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashver.DashboardVersionDTO, error) {
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+	users, err := s.k8sclient.GetUsersFromMeta(ctx, []string{obj.GetCreatedBy(), obj.GetUpdatedBy()})
+	if err != nil {
+		return nil, err
+	}
+	return s.unstructuredToLegacyDashboardVersionWithUsers(item, users)
+}
+
+func (s *Service) UnstructuredToLegacyDashboardVersionList(ctx context.Context, items []unstructured.Unstructured, orgID int64) ([]*dashver.DashboardVersionDTO, error) {
+	// get users ahead of time to do just one db call, rather than 2 per item in the list
+	userMeta := []string{}
+	for _, item := range items {
+		obj, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, err
+		}
+		if obj.GetCreatedBy() != "" {
+			userMeta = append(userMeta, obj.GetCreatedBy())
+		}
+		if obj.GetUpdatedBy() != "" {
+			userMeta = append(userMeta, obj.GetUpdatedBy())
+		}
+	}
+
+	users, err := s.k8sclient.GetUsersFromMeta(ctx, userMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]*dashver.DashboardVersionDTO, len(items))
+	for i, item := range items {
+		version, err := s.unstructuredToLegacyDashboardVersionWithUsers(&item, users)
+		if err != nil {
+			return nil, err
+		}
+		versions[i] = version
+	}
+
+	return versions, nil
+}
+
+func (s *Service) unstructuredToLegacyDashboardVersionWithUsers(item *unstructured.Unstructured, users map[string]*user.User) (*dashver.DashboardVersionDTO, error) {
 	spec, ok := item.Object["spec"].(map[string]any)
 	if !ok {
 		return nil, errors.New("error parsing dashboard from k8s response")
@@ -270,30 +344,33 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	uid := obj.GetName()
 	spec["uid"] = uid
 
-	dashVersion := 0
-	parentVersion := 0
-	if version, ok := spec["version"].(int64); ok {
-		dashVersion = int(version)
-		parentVersion = dashVersion - 1
+	dashVersion := obj.GetGeneration()
+	parentVersion := dashVersion - 1
+	if parentVersion < 0 {
+		parentVersion = 0
+	}
+	if dashVersion > 0 {
+		spec["version"] = dashVersion
 	}
 
-	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
-	if err != nil {
-		return nil, err
+	var createdBy *user.User
+	if creator, ok := users[obj.GetCreatedBy()]; ok {
+		createdBy = creator
 	}
-
 	// if updated by is set, then this version of the dashboard was "created"
 	// by that user
-	if obj.GetUpdatedBy() != "" {
-		updatedBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
-		if err == nil && updatedBy != nil {
-			createdBy = updatedBy
-		}
+	if updater, ok := users[obj.GetUpdatedBy()]; ok {
+		createdBy = updater
 	}
 
-	id, err := obj.GetResourceVersionInt64()
-	if err != nil {
-		return nil, err
+	createdByID := int64(0)
+	if createdBy != nil {
+		createdByID = createdBy.ID
+	}
+
+	created := obj.GetCreationTimestamp().Time
+	if updated, err := obj.GetUpdatedTimestamp(); err == nil && updated != nil {
+		created = *updated
 	}
 
 	restoreVer, err := getRestoreVersion(obj.GetMessage())
@@ -301,20 +378,18 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		return nil, err
 	}
 
-	out := dashver.DashboardVersionDTO{
-		ID:            id,
+	return &dashver.DashboardVersionDTO{
+		ID:            dashVersion,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		DashboardUID:  uid,
-		Created:       obj.GetCreationTimestamp().Time,
-		CreatedBy:     createdBy.ID,
+		Created:       created,
+		CreatedBy:     createdByID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
-		Version:       dashVersion,
-		ParentVersion: parentVersion,
+		Version:       int(dashVersion),
+		ParentVersion: int(parentVersion),
 		Data:          simplejson.NewFromAny(spec),
-	}
-
-	return &out, nil
+	}, nil
 }
 
 var restoreMsg = "Restored from version "
@@ -329,10 +404,9 @@ func getRestoreVersion(msg string) (int, error) {
 		return 0, nil
 	}
 
-	ver, err := strconv.ParseInt(parts[1], 10, 64)
+	ver, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return 0, err
 	}
-
-	return int(ver), nil
+	return ver, nil
 }

@@ -20,7 +20,7 @@ export function DataLinksEditor({ value, onChange, item, context }: Props) {
       }}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
-      showOneClick={false}
+      showOneClick={true}
     />
   );
 }

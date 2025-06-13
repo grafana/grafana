@@ -14,6 +14,7 @@ import {
   FieldConfigSource,
   DataFrame,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { fieldMatchersUI, useStyles2, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -85,7 +86,7 @@ export function getFieldOverrideCategories(
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
-    const forceOpen = override.properties.length === 0 ? 1 : 0;
+    const forceOpen = override.properties.length === 0;
 
     const category = new OptionsPaneCategoryDescriptor({
       title: overrideName,
@@ -213,7 +214,10 @@ export function getFieldOverrideCategories(
             return (
               <ValuePicker
                 key="Add override property"
-                label="Add override property"
+                label={t(
+                  'dashboard.get-field-override-categories.label-add-override-property',
+                  'Add override property'
+                )}
                 variant="secondary"
                 isFullWidth={true}
                 icon="plus"
@@ -232,14 +236,14 @@ export function getFieldOverrideCategories(
 
   categories.push(
     new OptionsPaneCategoryDescriptor({
-      title: 'add button',
+      title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
       customRender: function renderAddButton() {
         return (
           <AddOverrideButtonContainer key="Add override">
             <ValuePicker
               icon="plus"
-              label="Add field override"
+              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
               variant="secondary"
               menuPlacement="auto"
               isFullWidth={true}

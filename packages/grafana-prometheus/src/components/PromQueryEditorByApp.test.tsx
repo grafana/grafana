@@ -24,7 +24,6 @@ jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
 
 function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   const dataSource = {
-    getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
     getQueryHints: jest.fn(() => []),
     getDebounceTimeInMilliseconds: jest.fn(() => 300),

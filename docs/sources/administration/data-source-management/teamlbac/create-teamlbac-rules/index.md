@@ -17,8 +17,6 @@ LBAC for data sources is available for LBAC-supported data sources created with 
 
 ## Before you begin
 
-To be able to use LBAC for data sources rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
-
 - Be sure that you have the permission setup to create a Loki tenant in Grafana Cloud.
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.

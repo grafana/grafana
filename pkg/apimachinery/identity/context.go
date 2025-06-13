@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 )
 
@@ -30,27 +31,45 @@ func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
 
-const serviceName = "service"
+const (
+	serviceName                = "service"
+	serviceNameForProvisioning = "provisioning"
+)
 
-// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
-// This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
-// static permissions so it can be used in legacy code paths.
-func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := &StaticRequester{
+func newInternalIdentity(name string, namespace string, orgID int64) Requester {
+	return &StaticRequester{
 		Type:           types.TypeAccessPolicy,
-		Name:           serviceName,
-		UserUID:        serviceName,
-		AuthID:         serviceName,
-		Login:          serviceName,
+		Name:           name,
+		UserUID:        name,
+		AuthID:         name,
+		Login:          name,
 		OrgRole:        RoleAdmin,
+		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
 			orgID: serviceIdentityPermissions,
 		},
+		AccessTokenClaims: ServiceIdentityClaims,
+	}
+}
+
+// WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
+// This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
+// static permissions so it can be used in legacy code paths.
+func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
+	r := newInternalIdentity(serviceName, "*", orgID)
+	return WithRequester(ctx, r), r
+}
+
+func WithProvisioningIdentity(ctx context.Context, namespace string) (context.Context, Requester, error) {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return WithRequester(ctx, r), r
+	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID)
+	return WithRequester(ctx, r), r, nil
 }
 
 // WithServiceIdentityContext sets an identity representing the service itself in context.
@@ -72,24 +91,58 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 	return permissions
 }
 
+func getTokenPermissions(groups ...string) []string {
+	out := make([]string, 0, len(groups))
+	for _, group := range groups {
+		out = append(out, group+":*")
+	}
+	return out
+}
+
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
+	"annotations:read",
 	"folders:read",
 	"folders:write",
 	"folders:create",
+	"folders:delete",
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"datasources:query",
 	"datasources:read",
+	"datasources:delete",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"users:read",     // accesscontrol.ActionUsersRead,
+	"org.users:read", // accesscontrol.ActionOrgUsersRead,
+	"teams:read",     // accesscontrol.ActionTeamsRead,
 )
 
+var serviceIdentityTokenPermissions = getTokenPermissions(
+	"folder.grafana.app",
+	"dashboard.grafana.app",
+	"secret.grafana.app",
+	"query.grafana.app",
+)
+
+var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
+	Rest: authn.AccessTokenClaims{
+		Permissions:          serviceIdentityTokenPermissions,
+		DelegatedPermissions: serviceIdentityTokenPermissions,
+	},
+}
+
 func IsServiceIdentity(ctx context.Context) bool {
-	ident, err := GetRequester(ctx)
+	ident, ok := types.AuthInfoFrom(ctx)
+	if !ok {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(ident.GetUID())
 	if err != nil {
 		return false
 	}
-	return ident.GetUID() == types.NewTypeID(types.TypeAccessPolicy, serviceName)
+
+	return t == types.TypeAccessPolicy && (uid == serviceName || uid == serviceNameForProvisioning)
 }

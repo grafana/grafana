@@ -7,7 +7,7 @@ export enum PanelMenuItems {
   Extensions = 'Extensions',
 }
 
-export const openPanelMenuItem = (menu: PanelMenuItems, panelTitle = 'Panel Title') => {
+export const openPanelMenuItem = (menu: PanelMenuItems, panelTitle = 'New panel') => {
   // we changed the way we open the panel menu in react panels with the new panel header
   detectPanelType(panelTitle, (isAngularPanel) => {
     if (isAngularPanel) {
@@ -20,7 +20,7 @@ export const openPanelMenuItem = (menu: PanelMenuItems, panelTitle = 'Panel Titl
   });
 };
 
-export const openPanelMenuExtension = (extensionTitle: string, panelTitle = 'Panel Title') => {
+export const openPanelMenuExtension = (extensionTitle: string, panelTitle = 'New panel') => {
   const menuItem = PanelMenuItems.Extensions;
   // we changed the way we open the panel menu in react panels with the new panel header
   detectPanelType(panelTitle, (isAngularPanel) => {

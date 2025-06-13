@@ -423,6 +423,9 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["authorization_credentials"] = "test-authz-creds"
 		},
+		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["api_token"] = "test-token"
+		},
 	}
 
 	configs := notify.AllKnownConfigsForTesting

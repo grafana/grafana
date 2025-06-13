@@ -54,7 +54,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService, folderService folder.Service,
+	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -66,10 +66,9 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
-		folderService,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -89,7 +88,6 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
-	folderService folder.Service,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -168,10 +166,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	if err != nil {
 		return nil, err
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), nil
 }
 
@@ -190,10 +186,8 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 		OrgID:        orgID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), err
 }
 
@@ -207,10 +201,8 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 		RolePrefixes: OSSRolesPrefixes,
 	})
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		for teamID, permissions := range teamPermissions {
-			teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
-		}
+	for teamID, permissions := range teamPermissions {
+		teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
 	}
 
 	return teamPermissions, err
@@ -239,9 +231,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		permissions = s.actionResolver.ExpandActionSets(permissions)
-	}
+	permissions = s.actionResolver.ExpandActionSets(permissions)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
@@ -252,11 +242,6 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
-
-	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
-	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
-		return cachedPermissions.([]accesscontrol.Permission), nil
-	}
 
 	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 	if err != nil {
@@ -273,9 +258,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if err != nil {
 		return nil, err
 	}
-
 	permissions = append(permissions, userManagedPermissions...)
-	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
@@ -400,7 +383,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(accesscontrol.GetUserPermissionCacheKey(user))
 	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
@@ -474,13 +456,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
+	_, span := tracer.Start(ctx, "accesscontrol.acimpl.DeclarePluginRoles")
 	defer span.End()
-
-	// Protect behind feature toggle
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
-		return nil
-	}
 
 	acRegs := pluginutils.ToRegistrations(ID, name, regs)
 	for _, r := range acRegs {
@@ -552,11 +529,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
-		options.ActionSets = append(options.ActionSets,
-			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
-	}
+	options.ActionSets = s.actionResolver.ResolveAction(options.Action)
+	options.ActionSets = append(options.ActionSets,
+		s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
 
 	// Get managed permissions (DB)
 	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
@@ -617,7 +592,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
+	if len(options.ActionSets) > 0 {
 		for id, perms := range res {
 			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
 		}
@@ -668,11 +643,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
-		searchOptions.ActionSets = append(searchOptions.ActionSets,
-			s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
-	}
+	searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
+	searchOptions.ActionSets = append(searchOptions.ActionSets,
+		s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
 
 	// Get permissions from the DB
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
@@ -681,7 +654,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
+	if len(searchOptions.ActionSets) != 0 {
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 

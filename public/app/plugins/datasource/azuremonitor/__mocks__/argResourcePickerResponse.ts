@@ -10,26 +10,38 @@ export const createMockARGSubscriptionResponse = (): AzureGraphResponse<RawAzure
     {
       subscriptionId: '1',
       subscriptionName: 'Primary Subscription',
+      subscriptionURI: '/subscriptions/1',
+      count: 1,
     },
     {
       subscriptionId: '2',
       subscriptionName: 'Dev Subscription',
+      subscriptionURI: '/subscriptions/2',
+      count: 1,
     },
     {
       subscriptionId: '3',
       subscriptionName: 'Dev Subscription',
+      subscriptionURI: '/subscriptions/3',
+      count: 1,
     },
     {
       subscriptionId: '4',
       subscriptionName: 'Primary Subscription',
+      subscriptionURI: '/subscriptions/4',
+      count: 1,
     },
     {
       subscriptionId: '5',
       subscriptionName: 'Primary Subscription',
+      subscriptionURI: '/subscriptions/5',
+      count: 1,
     },
     {
       subscriptionId: '6',
       subscriptionName: 'Dev Subscription',
+      subscriptionURI: '/subscriptions/6',
+      count: 1,
     },
   ],
 });
@@ -39,31 +51,37 @@ export const createMockARGResourceGroupsResponse = (): AzureGraphResponse<RawAzu
     {
       resourceGroupURI: '/subscriptions/abc-123/resourceGroups/prod',
       resourceGroupName: 'Production',
+      count: 1,
     },
 
     {
       resourceGroupURI: '/subscriptions/def-456/resourceGroups/dev',
       resourceGroupName: 'Development',
+      count: 1,
     },
 
     {
       resourceGroupURI: '/subscriptions/def-456/resourceGroups/test',
       resourceGroupName: 'Test',
+      count: 1,
     },
 
     {
       resourceGroupURI: '/subscriptions/abc-123/resourceGroups/test',
       resourceGroupName: 'Test',
+      count: 1,
     },
 
     {
       resourceGroupURI: '/subscriptions/abc-123/resourceGroups/pre-prod',
       resourceGroupName: 'Pre-production',
+      count: 1,
     },
 
     {
       resourceGroupURI: '/subscriptions/def-456/resourceGroups/qa',
       resourceGroupName: 'QA',
+      count: 1,
     },
   ],
 });

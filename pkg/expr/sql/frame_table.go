@@ -3,10 +3,13 @@
 package sql
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -69,7 +72,7 @@ type rowIter struct {
 	row int
 }
 
-func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
+func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 	// We assume each field in the Frame has the same number of rows.
 	numRows := 0
 	if len(ri.ft.Frame.Fields) > 0 {
@@ -88,7 +91,21 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 		if field.NilAt(ri.row) {
 			continue
 		}
-		row[colIndex], _ = field.ConcreteAt(ri.row)
+		val, _ := field.ConcreteAt(ri.row)
+
+		// If the field is JSON, convert json.RawMessage to types.JSONDocument
+		if raw, ok := val.(json.RawMessage); ok {
+			doc, inRange, err := types.JSON.Convert(ctx, raw)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
+			}
+			if !inRange {
+				return nil, fmt.Errorf("invalid JSON value detected at row %d, column %s: value required type coercion", ri.row, ri.ft.Frame.Fields[colIndex].Name)
+			}
+			val = doc
+		}
+
+		row[colIndex] = val
 	}
 
 	ri.row++
@@ -123,4 +140,41 @@ type partition []byte
 
 func (p partition) Key() []byte {
 	return p
+}
+
+// Helper function to convert data.FieldType to types.Type
+func convertDataType(fieldType data.FieldType) mysql.Type {
+	switch fieldType {
+	case data.FieldTypeInt8, data.FieldTypeNullableInt8:
+		return types.Int8
+	case data.FieldTypeUint8, data.FieldTypeNullableUint8:
+		return types.Uint8
+	case data.FieldTypeInt16, data.FieldTypeNullableInt16:
+		return types.Int16
+	case data.FieldTypeUint16, data.FieldTypeNullableUint16:
+		return types.Uint16
+	case data.FieldTypeInt32, data.FieldTypeNullableInt32:
+		return types.Int32
+	case data.FieldTypeUint32, data.FieldTypeNullableUint32:
+		return types.Uint32
+	case data.FieldTypeInt64, data.FieldTypeNullableInt64:
+		return types.Int64
+	case data.FieldTypeUint64, data.FieldTypeNullableUint64:
+		return types.Uint64
+	case data.FieldTypeFloat32, data.FieldTypeNullableFloat32:
+		return types.Float32
+	case data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
+		return types.Float64
+	case data.FieldTypeString, data.FieldTypeNullableString:
+		return types.Text
+	case data.FieldTypeBool, data.FieldTypeNullableBool:
+		return types.Boolean
+	case data.FieldTypeTime, data.FieldTypeNullableTime:
+		return types.Timestamp
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON:
+		return types.JSON
+	default:
+		fmt.Printf("------- Unsupported field type: %v", fieldType)
+		return types.JSON
+	}
 }

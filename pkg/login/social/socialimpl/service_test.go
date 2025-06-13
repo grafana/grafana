@@ -1,6 +1,7 @@
 package socialimpl
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -85,6 +86,8 @@ func TestSocialService_ProvideService(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+
 			env := &testEnv{
 				features: featuremgmt.WithFeatures(),
 			}
@@ -92,13 +95,45 @@ func TestSocialService_ProvideService(t *testing.T) {
 				tc.setup(t, env)
 			}
 
-			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
-			require.Equal(t, tc.expectedSocialMapLength, len(socialService.socialMap))
+			usageInsights := &usagestats.UsageStatsMock{}
+			supportBundle := supportbundlestest.NewFakeBundleService()
+
+			socialService := ProvideService(cfg, env.features, usageInsights, supportBundle, remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			require.Equal(t, tc.expectedSocialMapLength, len(socialService.GetOAuthProviders()))
 
 			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
 			if genericOAuthInfo != nil {
 				require.Equal(t, tc.expectedGenericOAuthSkipOrgRoleSync, genericOAuthInfo.SkipOrgRoleSync)
 			}
+
+			for name, enabled := range socialService.GetOAuthProviders() {
+				client, err := socialService.GetOAuthHttpClient(name)
+				if !enabled {
+					require.Error(t, err)
+					require.Nil(t, client)
+				} else {
+					require.NoError(t, err)
+					require.NotNil(t, client)
+				}
+			}
+
+			report, err := usageInsights.GetUsageReport(ctx)
+			require.NoError(t, err)
+			require.NotNil(t, report)
+			require.Len(t, report.Metrics, tc.expectedSocialMapLength)
+
+			require.Len(t, supportBundle.Collectors, tc.expectedSocialMapLength)
+
+			createdBundles := make(map[string]struct{}, 0)
+			for _, collector := range supportBundle.Collectors {
+				supportItem, err := collector.Fn(ctx)
+				require.NoError(t, err)
+				require.NotNil(t, supportItem)
+
+				createdBundles[supportItem.Filename] = struct{}{}
+			}
+
+			require.Len(t, createdBundles, tc.expectedSocialMapLength)
 		})
 	}
 }

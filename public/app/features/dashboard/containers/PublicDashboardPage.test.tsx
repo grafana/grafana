@@ -245,7 +245,7 @@ describe('PublicDashboardPage', () => {
           ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [] },
             }),
         },
       });

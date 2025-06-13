@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginDisabledBadge } from '../components/Badges';
@@ -53,7 +53,10 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
       latestVersionValue = latestVersion;
     }
 
-    addInfo('latestVersion', latestVersionValue);
+    // latest versions of core plugins are not consistent
+    if (!plugin.isCore) {
+      addInfo('latestVersion', latestVersionValue);
+    }
   }
 
   if (Boolean(plugin.orgName)) {

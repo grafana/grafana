@@ -25,10 +25,6 @@ load(
     "lint_backend_pipeline",
 )
 load(
-    "scripts/drone/pipelines/lint_frontend.star",
-    "lint_frontend_pipeline",
-)
-load(
     "scripts/drone/pipelines/shellcheck.star",
     "shellcheck_pipeline",
 )
@@ -39,10 +35,6 @@ load(
 load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
-)
-load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
 )
 load(
     "scripts/drone/pipelines/verify_drone.star",
@@ -88,18 +80,6 @@ def pr_pipelines():
         verify_storybook(
             get_pr_trigger(
                 include_paths = ["packages/grafana-ui/**"],
-            ),
-            ver_mode,
-        ),
-        test_frontend(
-            get_pr_trigger(
-                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
-            ),
-            ver_mode,
-        ),
-        lint_frontend_pipeline(
-            get_pr_trigger(
-                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
             ),
             ver_mode,
         ),

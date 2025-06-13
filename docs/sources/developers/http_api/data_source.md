@@ -19,7 +19,7 @@ title: Data source HTTP API
 
 # Data source API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Get all data sources
 
@@ -31,7 +31,7 @@ This API currently doesn't handle pagination. The default maximum number of data
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action           | Scope          |
 | ---------------- | -------------- |
@@ -90,7 +90,7 @@ This API is deprecated since Grafana v9.0.0 and will be removed in a future rele
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action           | Scope                                                                        |
 | ---------------- | ---------------------------------------------------------------------------- |
@@ -146,7 +146,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action           | Scope                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------- |
@@ -202,7 +202,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action           | Scope                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------- |
@@ -258,7 +258,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action              | Scope                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -292,7 +292,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action             | Scope |
 | ------------------ | ----- |
@@ -446,7 +446,7 @@ This API is deprecated since Grafana v9.0.0 and will be removed in a future rele
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action            | Scope                                                                        |
 | ----------------- | ---------------------------------------------------------------------------- |
@@ -529,7 +529,7 @@ Similar to [creating a data source](#create-a-data-source), `password` and `basi
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action            | Scope                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------------- |
@@ -617,7 +617,7 @@ This API is deprecated since Grafana v9.0.0 and will be removed in a future rele
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action             | Scope                                                                        |
 | ------------------ | ---------------------------------------------------------------------------- |
@@ -649,7 +649,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action             | Scope                                                                                  |
 | ------------------ | -------------------------------------------------------------------------------------- |
@@ -684,7 +684,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+See note in the [introduction](#data-source-api) for an explanation.
 
 | Action             | Scope                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------- |

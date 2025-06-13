@@ -225,5 +225,5 @@ type writerWrapper struct {
 }
 
 func (w writerWrapper) SetACL(acl string) {
-	w.ObjectAttrs.PredefinedACL = acl
+	w.PredefinedACL = acl
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -353,6 +354,13 @@ func (m *mockSocial) GetOAuthProviders() map[string]bool {
 	return m.OAuthProviders
 }
 
+type mockAdvisor struct {
+}
+
+func (m *mockAdvisor) ReportSummary(ctx context.Context) (*advisor.ReportInfo, error) {
+	return &advisor.ReportInfo{}, nil
+}
+
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	t.Helper()
 
@@ -387,6 +395,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
 		sandbox.ProvideService(cfg),
+		&mockAdvisor{},
 	)
 }
 

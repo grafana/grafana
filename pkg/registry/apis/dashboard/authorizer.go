@@ -5,29 +5,26 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) authorizer.Authorizer {
+func GetAuthorizer(ac accesscontrol.AccessControl, l log.Logger) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			// Use the standard authorizer
+			// Note that we will return Allow more than expected.
+			// This is because we do NOT want to hit the RoleAuthorizer that would be evaluated afterwards.
+
 			if !attr.IsResourceRequest() {
-				return authorizer.DecisionNoOpinion, "", nil
+				return authorizer.DecisionDeny, "unexpected non-resource request", nil
 			}
 
 			user, err := identity.GetRequester(ctx)
 			if err != nil {
-				return authorizer.DecisionDeny, "", err
-			}
-
-			// Allow search and list requests
-			if attr.GetResource() == "search" || attr.GetName() == "" {
-				return authorizer.DecisionNoOpinion, "", nil
+				return authorizer.DecisionDeny, "error getting requester", err
 			}
 
 			ns := attr.GetNamespace()
@@ -35,58 +32,47 @@ func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) a
 				return authorizer.DecisionDeny, "expected namespace", nil
 			}
 
-			info, err := claims.ParseNamespace(attr.GetNamespace())
+			info, err := types.ParseNamespace(attr.GetNamespace())
 			if err != nil {
 				return authorizer.DecisionDeny, "error reading org from namespace", err
 			}
 
-			// expensive path to lookup permissions for a single dashboard
-			// must include deleted to allow for restores
-			dto, err := dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-				UID:            attr.GetName(),
-				OrgID:          info.OrgID,
-				IncludeDeleted: true,
-			})
-			if err != nil {
-				return authorizer.DecisionDeny, "error loading dashboard", err
-			}
-
-			ok := false
-			guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
-			if err != nil {
-				return authorizer.DecisionDeny, "", err
+			// Validate organization access before we possibly step out here.
+			if user.GetOrgID() != info.OrgID {
+				return authorizer.DecisionDeny, "org mismatch", dashboards.ErrUserIsNotSignedInToOrg
 			}
 
 			switch attr.GetVerb() {
+			case "list", "search":
+				// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* dashboard
+				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead))
+				if !ok || err != nil {
+					return authorizer.DecisionDeny, "can not read any dashboards", err
+				}
+			case "create":
+				// Detailed create permissions are handled by authz, this just checks whether the user can create *any* dashboard
+				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate))
+				if !ok || err != nil {
+					return authorizer.DecisionDeny, "can not create any dashboards", err
+				}
 			case "get":
-				ok, err = guardian.CanView()
+				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
 				if !ok || err != nil {
 					return authorizer.DecisionDeny, "can not view dashboard", err
 				}
-			case "create":
-				fallthrough
-			case "post":
-				ok, err = guardian.CanSave() // vs Edit?
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not save dashboard", err
-				}
-			case "update":
-				fallthrough
-			case "patch":
-				fallthrough
-			case "put":
-				ok, err = guardian.CanEdit() // vs Save
+			case "update", "patch":
+				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
 				if !ok || err != nil {
 					return authorizer.DecisionDeny, "can not edit dashboard", err
 				}
 			case "delete":
-				ok, err = guardian.CanDelete()
+				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
 				if !ok || err != nil {
 					return authorizer.DecisionDeny, "can not delete dashboard", err
 				}
 			default:
 				l.Info("unknown verb", "verb", attr.GetVerb())
-				return authorizer.DecisionNoOpinion, "unsupported verb", nil // Unknown verb
+				return authorizer.DecisionDeny, "unsupported verb", nil // Unknown verb
 			}
 			return authorizer.DecisionAllow, "", nil
 		})

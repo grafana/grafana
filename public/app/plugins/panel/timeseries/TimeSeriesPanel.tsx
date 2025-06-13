@@ -4,7 +4,7 @@ import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
@@ -106,8 +106,8 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                getDataLinks={(seriesIdx: number, dataIdx: number) =>
-                  alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                getDataLinks={(seriesIdx, dataIdx) =>
+                  alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
@@ -159,6 +159,7 @@ export const TimeSeriesPanel = ({
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 )}
                 {((canEditThresholds && onThresholdsChange) || showThresholds) && (

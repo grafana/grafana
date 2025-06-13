@@ -1,5 +1,5 @@
 import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -15,6 +15,7 @@ import {
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
@@ -48,7 +49,6 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    angularSupportEnabled: true,
     panels: {
       'briangann-datatable-panel': {
         id: 'briangann-datatable-panel',
@@ -81,7 +81,7 @@ locationUtil.initialize({
 });
 
 const worker = createWorker();
-mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+mockResultsOfDetectChangesWorker({ hasChanges: true });
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -223,8 +223,8 @@ describe('DashboardScene', () => {
       it('A change to folderUid should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
 
-        // The worker only detects changes in the model, so the folder change should be detected anyway
-        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+        // The worker detects changes in the model, so the folder change should be detected anyway
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
           meta: {
@@ -450,6 +450,13 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
+      });
+
+      it('Should select new row', () => {
+        scene.state.editPane.activate();
+
+        const row = scene.onCreateNewRow();
+        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -685,7 +692,7 @@ describe('DashboardScene', () => {
     });
 
     it('A change to a variable state should set isDirty true', () => {
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       const variable = new TestVariable({ name: 'A' });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [variable] }),
@@ -709,13 +716,10 @@ describe('DashboardScene', () => {
       scene.activate();
       scene.onEnterEditMode();
 
-      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      mockResultsOfDetectChangesWorker({ hasChanges: true });
       variable.setState({ name: 'B' });
       expect(scene.state.isDirty).toBe(true);
-      mockResultsOfDetectChangesWorker(
-        // No changes, it is the same name than before comparing saving models
-        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
-      );
+      mockResultsOfDetectChangesWorker({ hasChanges: false });
       variable.setState({ name: 'A' });
       expect(scene.state.isDirty).toBe(false);
     });
@@ -781,72 +785,79 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('When a dashboard contain angular panels', () => {
-    it('should return true if the dashboard contains angular panels', () => {
-      // create a scene with angular panels inside
-      const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'briangann-datatable-panel',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
-      });
-
-      scene.activate();
-
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
+  describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
     });
-    it('should return true if the dashboard contains explicitControllerMigration panels', () => {
-      // create a scene with angular panels inside
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
+    it('should return true if the dashboard is managed', () => {
       const scene = buildTestScene({
-        body: new DefaultGridLayoutManager({
-          grid: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-1',
-                x: 0,
-                body: new VizPanel({
-                  title: 'Panel A',
-                  key: 'panel-1',
-                  pluginId: 'graph',
-                  $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-                }),
-              }),
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: new VizPanel({
-                  title: 'Panel B',
-                  key: 'panel-2',
-                  pluginId: 'table',
-                }),
-              }),
-            ],
-          }),
-        }),
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
       });
+      expect(scene.isManaged()).toBe(true);
+    });
 
-      scene.activate();
+    it('dashboard should be editable if managed by repo', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
 
-      expect(scene.hasDashboardAngularPlugins()).toBe(true);
+    it('dashboard should not be editable if managed by systems that do not allow edits: kubectl', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Kubectl,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: terraform', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: plugin', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should be editable if not managed', () => {
+      const scene = buildTestScene();
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
     });
   });
 });
@@ -938,21 +949,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   return scene;
 }
 
-function mockResultsOfDetectChangesWorker({
-  hasChanges,
-  hasTimeChanges,
-  hasVariableValueChanges,
-}: {
-  hasChanges: boolean;
-  hasTimeChanges: boolean;
-  hasVariableValueChanges: boolean;
-}) {
+function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
   jest.mocked(worker.postMessage).mockImplementationOnce(() => {
     worker.onmessage?.({
       data: {
-        hasChanges: hasChanges ?? true,
-        hasTimeChanges: hasTimeChanges ?? true,
-        hasVariableValueChanges: hasVariableValueChanges ?? true,
+        hasChanges,
       },
     } as unknown as MessageEvent);
   });

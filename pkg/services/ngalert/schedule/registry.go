@@ -87,15 +87,11 @@ func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type RuleVersionAndPauseStatus struct {
-	Fingerprint fingerprint
-	IsPaused    bool
-}
-
 type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
+	afterEval   func()
 }
 
 func (e *Evaluation) Fingerprint() fingerprint {
@@ -322,7 +318,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(*rule.PanelID)
 	}
 	writeString(rule.RuleGroup)
-	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
 	if rule.Record != nil {

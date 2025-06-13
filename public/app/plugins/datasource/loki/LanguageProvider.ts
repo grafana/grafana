@@ -17,7 +17,7 @@ import { DetectedFieldsResult, LabelType, LokiQuery, LokiQueryType, ParserAndLab
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
-const HIDDEN_LABELS = ['__aggregrated_metric__', '__tenant_id__', '__stream_shard__'];
+const HIDDEN_LABELS = ['__aggregated_metric__', '__tenant_id__', '__stream_shard__'];
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];

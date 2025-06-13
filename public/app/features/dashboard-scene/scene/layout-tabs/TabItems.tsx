@@ -1,28 +1,21 @@
-import { ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
+import { t } from '@grafana/i18n';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { MultiSelectedEditableDashboardElement } from '../types/MultiSelectedEditableDashboardElement';
+import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
 import { TabItem } from './TabItem';
-import { getEditOptions, renderActions } from './TabItemsEditor';
 
-export class TabItems implements MultiSelectedEditableDashboardElement {
-  public readonly isMultiSelectedEditableDashboardElement = true;
-  public readonly typeName = 'Tabs';
-  public readonly key: string;
+export class TabItems implements EditableDashboardElement {
+  public readonly isEditableDashboardElement = true;
 
-  public constructor(private _tabs: TabItem[]) {
-    this.key = uuidv4();
+  public constructor(private _tabs: TabItem[]) {}
+
+  public getEditableElementInfo(): EditableDashboardElementInfo {
+    return { typeName: t('dashboard.edit-pane.elements.tabs', 'Tabs'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
-  }
-
-  public renderActions(): ReactNode {
-    return renderActions(this);
+    return [];
   }
 
   public getTabs(): TabItem[] {

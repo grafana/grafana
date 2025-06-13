@@ -1,5 +1,7 @@
 import { MouseEvent, memo } from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { EdgeDatumLayout, NodeDatum } from './types';
@@ -15,10 +17,11 @@ interface Props {
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  processedNodesLength: number;
 }
 
 export const Edge = memo(function Edge(props: Props) {
-  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
+  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace, processedNodesLength } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
@@ -56,9 +59,13 @@ export const Edge = memo(function Edge(props: Props) {
       <EdgeArrowMarker id={markerId} fill={edgeColor} headHeight={arrowHeadHeight} />
       <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} headHeight={arrowHeadHeight} />
       <g
+        key={`${edge.id}-${edge.source.y ?? ''}-${processedNodesLength}-g`}
         onClick={(event) => onClick(event, edge)}
         style={{ cursor: 'pointer' }}
-        aria-label={`Edge from: ${source.id} to: ${target.id}`}
+        aria-label={t('nodeGraph.edge.aria-label-from-to', 'Edge from: {{from}} to: {{to}}', {
+          from: source.id,
+          to: target.id,
+        })}
       >
         <line
           strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}

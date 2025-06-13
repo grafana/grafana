@@ -8,6 +8,7 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   InlineField,
   InlineFieldRow,
@@ -17,7 +18,7 @@ import {
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -63,13 +64,19 @@ export function PartitionByValuesEditor({
   }
 
   const namingModesOptions = [
-    { label: 'As label', value: namingModes.asLabels },
-    { label: 'As frame name', value: namingModes.frameName },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-label', 'As label'),
+      value: namingModes.asLabels,
+    },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-frame-name', 'As frame name'),
+      value: namingModes.frameName,
+    },
   ];
 
   const KeepFieldsOptions = [
-    { label: 'Yes', value: true },
-    { label: 'No', value: false },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.yes', 'Yes'), value: true },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.no', 'No'), value: false },
   ];
 
   const removeField = useCallback(
@@ -91,7 +98,13 @@ export function PartitionByValuesEditor({
   );
 
   if (input.length > 1) {
-    return <FieldValidationMessage>Partition by values only works with a single frame.</FieldValidationMessage>;
+    return (
+      <FieldValidationMessage>
+        <Trans i18nKey="transformers.partition-by-values-editor.partition-values-works-single-frame">
+          Partition by values only works with a single frame.
+        </Trans>
+      </FieldValidationMessage>
+    );
   }
 
   const fieldNames = [...new Set(options.fields)];
@@ -99,7 +112,11 @@ export function PartitionByValuesEditor({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label="Field" labelWidth={10} grow={true}>
+        <InlineField
+          label={t('transformers.partition-by-values-editor.label-field', 'Field')}
+          labelWidth={10}
+          grow={true}
+        >
           <HorizontalGroup>
             {fieldNames.map((name) => (
               <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
@@ -112,7 +129,7 @@ export function PartitionByValuesEditor({
                 size="md"
                 options={selectOptions}
                 onChange={addField}
-                label="Select field"
+                label={t('transformers.partition-by-values-editor.label-select-field', 'Select field')}
                 icon="plus"
               />
             )}
@@ -121,10 +138,11 @@ export function PartitionByValuesEditor({
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          tooltip={
+          tooltip={t(
+            'transformers.partion-by-values-editor.tooltip-naming',
             'Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data'
-          }
-          label={'Naming'}
+          )}
+          label={t('transformers.partition-by-values-editor.label-naming', 'Naming')}
           labelWidth={10}
         >
           <RadioButtonGroup
@@ -141,7 +159,14 @@ export function PartitionByValuesEditor({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField tooltip={'Keeps the partition fields in the frames.'} label={'Keep fields'} labelWidth={16}>
+        <InlineField
+          tooltip={t(
+            'transformers.partition-by-values-editor.tooltip-keeps-partition-fields-frames',
+            'Keeps the partition fields in the frames'
+          )}
+          label={t('transformers.partition-by-values-editor.label-keep-fields', 'Keep fields')}
+          labelWidth={16}
+        >
           <RadioButtonGroup
             options={KeepFieldsOptions}
             value={options.keepFields}

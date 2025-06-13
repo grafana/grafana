@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { HTMLAttributes, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportExperimentView } from '@grafana/runtime/src';
+import { Trans, t } from '@grafana/i18n';
+import { reportExperimentView } from '@grafana/runtime';
 import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 type ComponentSize = 'sm' | 'md';
 
@@ -271,5 +271,5 @@ const getImgUrl = (urlOrId: string) => {
     return urlOrId;
   }
 
-  return '/public/img/enterprise/highlights/' + urlOrId;
+  return '/public/build/img/enterprise/highlights/' + urlOrId;
 };

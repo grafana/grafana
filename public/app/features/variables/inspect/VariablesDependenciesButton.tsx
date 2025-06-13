@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
@@ -22,7 +23,7 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
   return (
     <NetworkGraphModal
       show={false}
-      title="Dependencies"
+      title={t('variables.variables-dependencies-button.title-dependencies', 'Dependencies')}
       nodes={filterNodesWithDependencies(nodes, edges)}
       edges={edges}
     >
@@ -36,7 +37,7 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
             icon="channel-add"
             variant="secondary"
           >
-            Show dependencies
+            <Trans i18nKey="variables.variables-dependencies-button.show-dependencies">Show dependencies</Trans>
           </Button>
         );
       }}

@@ -39,6 +39,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
+    managedBy: item.managedBy,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),

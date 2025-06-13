@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/require"
 )
 
 type TestCase struct {
@@ -322,14 +323,43 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 			desc:               "returns 200 if the user has the right permissions",
 			requestHttpMethod:  http.MethodPost,
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        `{"resourceTypes":["PLUGIN"]}`,
 			user:               userWithPermissions,
 			expectedHttpResult: http.StatusOK,
 			expectedBody:       `{"uid":"fake_uid"}`,
 		},
 		{
+			desc:               "returns 400 if resource types are not provided",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        `{}`,
+			user:               userWithPermissions,
+			expectedHttpResult: http.StatusBadRequest,
+			expectedBody:       "",
+		},
+		{
+			desc:               "returns 400 if request body is not a valid json",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        "asdf",
+			user:               userWithPermissions,
+			expectedHttpResult: http.StatusBadRequest,
+			expectedBody:       "",
+		},
+		{
+			desc:               "returns 400 if resource types are invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        `{"resourceTypes":["INVALID"]}`,
+			user:               userWithPermissions,
+			expectedHttpResult: http.StatusBadRequest,
+			expectedBody:       "",
+		},
+		{
 			desc:               "returns 403 if the user does not have the right permissions",
 			requestHttpMethod:  http.MethodPost,
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        `{"resourceTypes":["PLUGIN"]}`,
 			user:               userWithoutPermissions,
 			expectedHttpResult: http.StatusForbidden,
 			expectedBody:       "",
@@ -338,6 +368,7 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 			desc:               "returns 500 if service returns an error",
 			requestHttpMethod:  http.MethodPost,
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			requestBody:        `{"resourceTypes":["PLUGIN"]}`,
 			user:               userWithPermissions,
 			serviceReturnError: true,
 			expectedHttpResult: http.StatusInternalServerError,
@@ -347,6 +378,7 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 			desc:               "returns 400 if uid is invalid",
 			requestHttpMethod:  http.MethodPost,
 			requestUrl:         "/api/cloudmigration/migration/***/snapshot",
+			requestBody:        `{"resourceTypes":["PLUGIN"]}`,
 			user:               userWithPermissions,
 			serviceReturnError: true,
 			expectedHttpResult: http.StatusBadRequest,
@@ -566,6 +598,31 @@ func TestCloudMigrationAPI_CancelSnapshot(t *testing.T) {
 	}
 }
 
+func TestCloudMigrationAPI_GetResourceDependencies(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "returns 200 if the user has the right permissions",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/resources/dependencies",
+			user:               userWithPermissions,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"resourceDependencies":[{"resourceType":"PLUGIN","dependencies":[]}]}`,
+		},
+		{
+			desc:               "returns 403 if the user does not have the right permissions",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/resources/dependencies",
+			user:               userWithoutPermissions,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server
@@ -574,6 +631,7 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 			fake.FakeServiceImpl{ReturnError: tt.serviceReturnError},
 			tracing.InitializeTracerForTest(),
 			acimpl.ProvideAccessControlTest(),
+			cloudmigration.DependencyMap{cloudmigration.PluginDataType: nil},
 		)
 
 		server := webtest.NewServer(t, api.routeRegister)
@@ -599,5 +657,140 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tt.expectedBody, string(b))
 		}
+	}
+}
+
+func TestGetQueryPageParams(t *testing.T) {
+	tests := []struct {
+		name     string
+		page     int
+		def      int
+		expected int
+	}{
+		{
+			name:     "returns default when page is 0",
+			page:     0,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns default when page is negative",
+			page:     -1,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns default when page exceeds max",
+			page:     10001,
+			def:      1,
+			expected: 1,
+		},
+		{
+			name:     "returns page when within valid range",
+			page:     100,
+			def:      1,
+			expected: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryPageParams(tt.page, tt.def)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGetQueryCol(t *testing.T) {
+	tests := []struct {
+		name       string
+		col        string
+		defaultCol cloudmigration.ResultSortColumn
+		expected   cloudmigration.ResultSortColumn
+	}{
+		{
+			name:       "returns id column",
+			col:        "id",
+			defaultCol: cloudmigration.SortColumnName,
+			expected:   cloudmigration.SortColumnID,
+		},
+		{
+			name:       "returns name column",
+			col:        "name",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnName,
+		},
+		{
+			name:       "returns type column",
+			col:        "resource_type",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnType,
+		},
+		{
+			name:       "returns status column",
+			col:        "status",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnStatus,
+		},
+		{
+			name:       "returns default for unknown column",
+			col:        "unknown",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnID,
+		},
+		{
+			name:       "case insensitive column matching",
+			col:        "NaMe",
+			defaultCol: cloudmigration.SortColumnID,
+			expected:   cloudmigration.SortColumnName,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryCol(tt.col, tt.defaultCol)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGetQueryOrder(t *testing.T) {
+	tests := []struct {
+		name         string
+		order        string
+		defaultOrder cloudmigration.SortOrder
+		expected     cloudmigration.SortOrder
+	}{
+		{
+			name:         "returns ASC order",
+			order:        "ASC",
+			defaultOrder: cloudmigration.SortOrderDesc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+		{
+			name:         "returns DESC order",
+			order:        "DESC",
+			defaultOrder: cloudmigration.SortOrderAsc,
+			expected:     cloudmigration.SortOrderDesc,
+		},
+		{
+			name:         "returns default for unknown order",
+			order:        "unknown",
+			defaultOrder: cloudmigration.SortOrderAsc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+		{
+			name:         "case insensitive order matching",
+			order:        "aSc",
+			defaultOrder: cloudmigration.SortOrderDesc,
+			expected:     cloudmigration.SortOrderAsc,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getQueryOrder(tt.order, tt.defaultOrder)
+			require.Equal(t, tt.expected, result)
+		})
 	}
 }

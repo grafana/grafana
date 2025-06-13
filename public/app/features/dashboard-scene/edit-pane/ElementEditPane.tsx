@@ -1,47 +1,45 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, useStyles2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
-import { MultiSelectedEditableDashboardElement } from '../scene/types/MultiSelectedEditableDashboardElement';
+
+import { DashboardEditPane } from './DashboardEditPane';
+import { EditPaneHeader } from './EditPaneHeader';
 
 export interface Props {
-  element: EditableDashboardElement | MultiSelectedEditableDashboardElement;
+  element: EditableDashboardElement;
+  editPane: DashboardEditPane;
+  isNewElement: boolean;
 }
 
-export function ElementEditPane({ element }: Props) {
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
+export function ElementEditPane({ element, editPane, isNewElement }: Props) {
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={0}>
-      {element.renderActions && (
-        <OptionsPaneCategory
-          id="selected-item"
-          title={element.typeName}
-          isOpenDefault={true}
-          className={styles.noBorderTop}
-        >
-          <div className={styles.actionsBox}>{element.renderActions()}</div>
-        </OptionsPaneCategory>
-      )}
-      {categories.map((cat) => cat.render())}
-    </Stack>
+    <div className={styles.wrapper}>
+      <EditPaneHeader element={element} editPane={editPane} />
+      <ScrollContainer showScrollIndicators={true}>
+        <div className={styles.categories}>{categories.map((cat) => cat.render())}</div>
+      </ScrollContainer>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    noBorderTop: css({
-      borderTop: 'none',
-    }),
-    actionsBox: css({
+    wrapper: css({
       display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
+      flexDirection: 'column',
+      flex: '1 1 0',
+      height: '100%',
+    }),
+    categories: css({
+      display: 'flex',
+      flexDirection: 'column',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 }

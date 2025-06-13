@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -44,7 +42,6 @@ type ServiceAccountsService struct {
 	secretScanService secretscan.Checker
 	orgService        org.Service
 	serverLock        *serverlock.ServerLockService
-	idService         auth.IDService
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -61,7 +58,6 @@ func ProvideServiceAccountsService(
 	acService accesscontrol.Service,
 	permissions accesscontrol.ServiceAccountPermissionsService,
 	serverLockService *serverlock.ServerLockService,
-	idService auth.IDService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -81,7 +77,6 @@ func ProvideServiceAccountsService(
 		backgroundLog: log.New("serviceaccounts.background"),
 		orgService:    orgService,
 		serverLock:    serverLockService,
-		idService:     idService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -271,10 +266,6 @@ func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgI
 		return nil, err
 	}
 
-	if err := sa.idService.RemoveIDToken(ctx, &authn.Identity{ID: strconv.FormatInt(serviceAccountID, 10), Type: claims.TypeServiceAccount, OrgID: orgID}); err != nil {
-		return nil, err
-	}
-
 	return sa.store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
 }
 
@@ -310,15 +301,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
-func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	if err := validAPIKeyID(keyID); err != nil {
-		return err
-	}
-	return sa.store.MigrateApiKey(ctx, orgID, keyID)
-}
 func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
@@ -395,12 +377,6 @@ func validServiceAccountUID(saUID string) error {
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")
-	}
-	return nil
-}
-func validAPIKeyID(apiKeyID int64) error {
-	if apiKeyID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID.Errorf("invalid API key ID 0 has been specified")
 	}
 	return nil
 }

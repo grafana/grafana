@@ -1,6 +1,10 @@
-import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
-import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
+import type {
+  PluginExtensionAddedLinkConfig,
+  PluginExtensionExposedComponentConfig,
+  PluginExtensionAddedComponentConfig,
+} from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { importAppPlugin } from './plugin_loader';
@@ -31,7 +35,9 @@ export async function preloadPlugins(apps: AppPluginConfig[] = []) {
 
 async function preload(config: AppPluginConfig) {
   try {
-    const meta = await getPluginSettings(config.id);
+    const meta = await getPluginSettings(config.id, {
+      showErrorAlert: contextSrv.user.orgRole !== '',
+    });
 
     await importAppPlugin(meta);
   } catch (error) {

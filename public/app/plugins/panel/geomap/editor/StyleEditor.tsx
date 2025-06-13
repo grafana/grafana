@@ -4,6 +4,7 @@ import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
 import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   ScaleDimensionConfig,
   ResourceDimensionConfig,
@@ -129,7 +130,7 @@ export const StyleEditor = (props: Props) => {
         {featuresHavePoints && (
           <>
             <InlineFieldRow>
-              <InlineField label={'Symbol'}>
+              <InlineField label={t('geomap.style-editor.label-symbol', 'Symbol')}>
                 <ResourceDimensionEditor
                   value={value?.symbol ?? defaultStyleConfig.symbol}
                   context={context}
@@ -149,7 +150,7 @@ export const StyleEditor = (props: Props) => {
                 />
               </InlineField>
             </InlineFieldRow>
-            <Field label={'Rotation angle'}>
+            <Field label={t('geomap.style-editor.label-rotation-angle', 'Rotation angle')}>
               <ScalarDimensionEditor
                 value={value?.rotation ?? defaultStyleConfig.rotation}
                 context={context}
@@ -167,7 +168,7 @@ export const StyleEditor = (props: Props) => {
           </>
         )}
         <InlineFieldRow>
-          <InlineField label="Color" labelWidth={10}>
+          <InlineField label={t('geomap.style-editor.label-color', 'Color')} labelWidth={10}>
             <InlineLabel width={4}>
               <ColorPicker
                 color={value?.color?.fixed ?? defaultStyleConfig.color.fixed}
@@ -179,7 +180,7 @@ export const StyleEditor = (props: Props) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Opacity" labelWidth={10} grow>
+          <InlineField label={t('geomap.style-editor.label-opacity', 'Opacity')} labelWidth={10} grow>
             <SliderValueEditor
               value={value?.opacity ?? defaultStyleConfig.opacity}
               context={context}
@@ -202,7 +203,7 @@ export const StyleEditor = (props: Props) => {
 
   return (
     <>
-      <Field label={'Size'}>
+      <Field label={t('geomap.style-editor.label-size', 'Size')}>
         <ScaleDimensionEditor
           value={value?.size ?? defaultStyleConfig.size}
           context={context}
@@ -219,7 +220,7 @@ export const StyleEditor = (props: Props) => {
       </Field>
       {!settings?.hideSymbol && (
         <>
-          <Field label={'Symbol'}>
+          <Field label={t('geomap.style-editor.label-symbol', 'Symbol')}>
             <ResourceDimensionEditor
               value={value?.symbol ?? defaultStyleConfig.symbol}
               context={context}
@@ -238,7 +239,7 @@ export const StyleEditor = (props: Props) => {
               }
             />
           </Field>
-          <Field label={'Symbol Vertical Align'}>
+          <Field label={t('geomap.style-editor.label-symbol-vertical-align', 'Symbol vertical align')}>
             <RadioButtonGroup
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAlignVerticalChange}
@@ -249,7 +250,7 @@ export const StyleEditor = (props: Props) => {
               ]}
             />
           </Field>
-          <Field label={'Symbol Horizontal Align'}>
+          <Field label={t('geomap.style-editor.label-symbol-horizontal-align', 'Symbol horizontal align')}>
             <RadioButtonGroup
               value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
               onChange={onAlignHorizontalChange}
@@ -262,7 +263,7 @@ export const StyleEditor = (props: Props) => {
           </Field>
         </>
       )}
-      <Field label={'Color'}>
+      <Field label={t('geomap.style-editor.label-color', 'Color')}>
         <ColorDimensionEditor
           value={value?.color ?? defaultStyleConfig.color}
           context={context}
@@ -270,7 +271,7 @@ export const StyleEditor = (props: Props) => {
           item={{} as StandardEditorsRegistryItem}
         />
       </Field>
-      <Field label={'Fill opacity'}>
+      <Field label={t('geomap.style-editor.label-fill-opacity', 'Fill opacity')}>
         <SliderValueEditor
           value={value?.opacity ?? defaultStyleConfig.opacity}
           context={context}
@@ -287,7 +288,7 @@ export const StyleEditor = (props: Props) => {
         />
       </Field>
       {settings?.displayRotation && (
-        <Field label={'Rotation angle'}>
+        <Field label={t('geomap.style-editor.label-rotation-angle', 'Rotation angle')}>
           <ScalarDimensionEditor
             value={value?.rotation ?? defaultStyleConfig.rotation}
             context={context}
@@ -303,7 +304,7 @@ export const StyleEditor = (props: Props) => {
           />
         </Field>
       )}
-      <Field label={'Text label'}>
+      <Field label={t('geomap.style-editor.label-text-label', 'Text label')}>
         <TextDimensionEditor
           value={value?.text ?? defaultTextConfig}
           context={context}
@@ -315,7 +316,7 @@ export const StyleEditor = (props: Props) => {
       {hasTextLabel && (
         <>
           <HorizontalGroup>
-            <Field label={'Font size'}>
+            <Field label={t('geomap.style-editor.label-font-size', 'Font size')}>
               <NumberValueEditor
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
                 context={context}
@@ -323,7 +324,7 @@ export const StyleEditor = (props: Props) => {
                 item={{} as FieldConfigPropertyItem}
               />
             </Field>
-            <Field label={'X offset'}>
+            <Field label={t('geomap.style-editor.label-x-offset', 'X offset')}>
               <NumberValueEditor
                 value={value?.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
                 context={context}
@@ -331,7 +332,7 @@ export const StyleEditor = (props: Props) => {
                 item={{} as FieldConfigPropertyItem}
               />
             </Field>
-            <Field label={'Y offset'}>
+            <Field label={t('geomap.style-editor.label-y-offset', 'Y offset')}>
               <NumberValueEditor
                 value={value?.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
                 context={context}
@@ -340,7 +341,7 @@ export const StyleEditor = (props: Props) => {
               />
             </Field>
           </HorizontalGroup>
-          <Field label={'Align'}>
+          <Field label={t('geomap.style-editor.label-align', 'Align')}>
             <RadioButtonGroup
               value={value?.textConfig?.textAlign ?? defaultStyleConfig.textConfig.textAlign}
               onChange={onTextAlignChange}
@@ -351,7 +352,7 @@ export const StyleEditor = (props: Props) => {
               ]}
             />
           </Field>
-          <Field label={'Baseline'}>
+          <Field label={t('geomap.style-editor.label-baseline', 'Baseline')}>
             <RadioButtonGroup
               value={value?.textConfig?.textBaseline ?? defaultStyleConfig.textConfig.textBaseline}
               onChange={onTextBaselineChange}

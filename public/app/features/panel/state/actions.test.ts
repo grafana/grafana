@@ -1,6 +1,5 @@
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
+import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
 

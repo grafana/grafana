@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { useState, forwardRef } from 'react';
+import { useState, forwardRef, FocusEvent } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Props as InputProps } from '../Input/Input';
 
@@ -48,6 +48,14 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
       [currentColor]
     );
 
+    const handleBlur = (evt: FocusEvent<HTMLInputElement>) => {
+      // Unless the user clicked inside the color picker, close it on blur
+      const isClickInPopover = document.querySelector('[data-testid="color-popover"]')?.contains(evt.relatedTarget);
+      if (!isClickInPopover) {
+        setIsOpen(false);
+      }
+    };
+
     return (
       <ClickOutsideWrapper onClick={() => setIsOpen(false)}>
         <div className={styles.wrapper}>
@@ -66,7 +74,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
             onChange={setColor}
             buttonAriaLabel="Open color picker"
             onClick={() => setIsOpen(true)}
-            onBlur={() => setIsOpen(false)}
+            onBlur={(e) => handleBlur(e)}
             ref={ref}
             isClearable
           />

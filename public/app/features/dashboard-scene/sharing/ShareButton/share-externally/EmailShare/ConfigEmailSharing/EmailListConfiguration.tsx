@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { IconButton } from '@grafana/ui/';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { Dropdown, Field, Icon, IconButton, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
@@ -78,7 +77,12 @@ const EmailList = ({
                   />
                 }
               >
-                <IconButton name="ellipsis-v" aria-label="email-menu" variant="secondary" size="lg" />
+                <IconButton
+                  name="ellipsis-v"
+                  aria-label={t('dashboard-scene.email-list.aria-label-emailmenu', 'Toggle email menu')}
+                  variant="secondary"
+                  size="lg"
+                />
               </Dropdown>
             </td>
           </tr>
@@ -93,6 +97,7 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
+
   return (
     <Field
       label={t('public-dashboard.email-sharing.recipient-list-title', 'People with access')}

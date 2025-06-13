@@ -4,11 +4,12 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector, selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes';
-import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { getFocusStyles, getInternalRadius, getMouseFocusStyles } from '../../../themes/mixins';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
+export const RADIO_GROUP_PADDING = 2;
 export type RadioButtonSize = 'sm' | 'md';
 
 export interface RadioButtonProps {
@@ -130,7 +131,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       lineHeight: `${labelHeight}px`,
       color: textColor,
       padding: theme.spacing(0, padding),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: getInternalRadius(theme, RADIO_GROUP_PADDING),
       background: theme.colors.background.primary,
       cursor: 'pointer',
       userSelect: 'none',

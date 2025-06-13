@@ -1,6 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
@@ -19,7 +20,6 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
@@ -123,7 +123,7 @@ export class GeneralSettingsEditView
     });
   };
 
-  public onWeekStartChange = (value: WeekStart) => {
+  public onWeekStartChange = (value?: WeekStart) => {
     this.getTimeRange().setState({ weekStart: value });
   };
 
@@ -224,15 +224,11 @@ export class GeneralSettingsEditView
               <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
             <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              <FolderPicker
-                value={meta.folderUid}
-                onChange={model.onFolderChange}
-                // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                initialTitle={meta.folderTitle}
-                inputId="dashboard-folder-input"
-                enableCreateNew
-                skipInitialLoad
-              />
+              {dashboard.isManagedRepository() ? (
+                <Input readOnly value={meta.folderTitle} />
+              ) : (
+                <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
+              )}
             </Field>
 
             <Field
@@ -258,7 +254,7 @@ export class GeneralSettingsEditView
             nowDelay={nowDelay || ''}
             liveNow={liveNow}
             timezone={timeZone || ''}
-            weekStart={weekStart || ''}
+            weekStart={weekStart}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}

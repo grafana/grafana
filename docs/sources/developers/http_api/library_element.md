@@ -35,7 +35,7 @@ Returns a list of all library elements the authenticated user has permission to 
 Query parameters:
 
 - `searchString`: Part of the name or description searched for.
-- `kind`: Kind of element to search for. Use `1` for library panels or `2` for library variables.
+- `kind`: Kind of element to search for. Use `1` for library panels.
 - `sortDirection`: Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - `typeFilter`: A comma separated list of types to filter the elements by.
 - `excludeUid`: Element UID to exclude from search results.
@@ -285,8 +285,8 @@ JSON Body schema:
 - `folderUid`: Optional, the UID of the folder where the library element is stored, empty string when it is at the root level.
 - `name`: Optional, the name of the library element.
 - `model`: The JSON model for the library element.
-- `kind`: Kind of element to create, Use `1` for library panels or `2` for library variables.
-- `uid`: Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- `kind`: Kind of element to create, Use `1` for library panels.
+- `uid`: Optional, the [unique identifier](#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
@@ -364,9 +364,9 @@ JSON Body schema:
 - `folderUid`: UID of the folder where the library element is stored, empty string when it is at the root level.
 - `name`: Name of the library element.
 - `model`: The JSON model for the library element.
-- `kind`: Kind of element to create. Use `1` for library panels or `2` for library variables.
+- `kind`: Kind of element to create. Use `1` for library panels.
 - `version`: Version of the library element you are updating.
-- `uid`: Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- `uid`: Optional, the [unique identifier](#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 

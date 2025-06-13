@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 import { getLabelStyles } from './Label';
@@ -212,6 +212,8 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
         gridRowStart: 2,
         lineHeight: theme.typography.bodySmall.lineHeight,
         marginTop: 0 /* The margin effectively comes from the top: -2px on the label above it */,
+        // Enable interacting with description when checkbox is disabled
+        zIndex: 1,
       })
     ),
   };

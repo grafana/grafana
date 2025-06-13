@@ -9,6 +9,11 @@ import (
 type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// The backend is using legacy storage
+	// FIXME: Not sure where this should be exposed... but we need it somewhere
+	// The UI should force the onboarding workflow when this is true
+	LegacyStorage bool `json:"legacyStorage,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }
@@ -20,12 +25,15 @@ type RepositoryView struct {
 	// Repository display
 	Title string `json:"title"`
 
-	// Edit options within the repository
-	ReadOnly bool `json:"readOnly"`
-
 	// The repository type
 	Type RepositoryType `json:"type"`
 
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
+
+	// For git, this is the target branch
+	Branch string `json:"branch,omitempty"`
+
+	// The supported workflows
+	Workflows []Workflow `json:"workflows"`
 }

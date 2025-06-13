@@ -3,6 +3,7 @@ import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
@@ -127,7 +128,7 @@ const TracesQueryEditor = ({
               variableOptionGroup={variableOptionGroup}
               range={range}
             />
-            <Field label="Operation ID">
+            <Field label={t('components.traces-query-editor.label-operation-id', 'Operation ID')}>
               <Input
                 id="azure-monitor-traces-operation-id-field"
                 value={operationId}

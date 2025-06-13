@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, EmptyState } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onClick?: () => void;
@@ -24,8 +24,16 @@ export const EmptyCorrelationsCTA = ({ onClick, canWriteCorrelations }: Props) =
     </EmptyState>
   ) : (
     <Card>
-      <Card.Heading>There are no correlations configured yet.</Card.Heading>
-      <Card.Description>Please contact your administrator to create new correlations.</Card.Description>
+      <Card.Heading>
+        <Trans i18nKey="correlations.empty-correlations-cta.there-are-no-correlations-configured-yet">
+          There are no correlations configured yet.
+        </Trans>
+      </Card.Heading>
+      <Card.Description>
+        <Trans i18nKey="correlations.empty-correlations-cta.please-contact-administrator-create-correlations">
+          Please contact your administrator to create new correlations.
+        </Trans>
+      </Card.Description>
     </Card>
   );
 };

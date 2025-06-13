@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorRow, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
@@ -68,7 +69,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
       <EditorRow>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
           <QueryOptionGroup
-            title="Options"
+            title={t('querybuilder.prom-query-builder-options.title-options', 'Options')}
             collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
           >
             <PromQueryLegendEditor
@@ -77,25 +78,36 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
               onRunQuery={onRunQuery}
             />
             <EditorField
-              label="Min step"
+              label={t('querybuilder.prom-query-builder-options.label-min-step', 'Min step')}
               tooltip={
                 <>
-                  An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                  <code>$__interval</code> and <code>$__rate_interval</code> variables.
+                  <Trans
+                    i18nKey="querybuilder.prom-query-builder-options.tooltip-min-step"
+                    values={{
+                      interval: '$__interval',
+                      rateInterval: '$__rate_interval',
+                    }}
+                  >
+                    An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                    <code>{'{{interval}}'}</code> and <code>{'{{rateInterval}}'}</code> variables.
+                  </Trans>
                 </>
               }
             >
               <AutoSizeInput
                 type="text"
-                aria-label="Set lower limit for the step parameter"
-                placeholder={'auto'}
+                aria-label={t(
+                  'querybuilder.prom-query-builder-options.aria-label-lower-limit-parameter',
+                  'Set lower limit for the step parameter'
+                )}
+                placeholder={t('querybuilder.prom-query-builder-options.placeholder-auto', 'auto')}
                 minWidth={10}
                 onCommitChange={onChangeStep}
                 defaultValue={query.interval}
                 data-test-id="prometheus-step"
               />
             </EditorField>
-            <EditorField label="Format">
+            <EditorField label={t('querybuilder.prom-query-builder-options.label-format', 'Format')}>
               <Select
                 data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
                 value={formatOption}
@@ -104,22 +116,28 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 options={FORMAT_OPTIONS}
               />
             </EditorField>
-            <EditorField label="Type" data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}>
+            <EditorField
+              label={t('querybuilder.prom-query-builder-options.label-type', 'Type')}
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}
+            >
               <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
             </EditorField>
             {shouldShowExemplarSwitch(query, app) && (
-              <EditorField label="Exemplars">
+              <EditorField label={t('querybuilder.prom-query-builder-options.label-exemplars', 'Exemplars')}>
                 <EditorSwitch
                   value={query.exemplar || false}
                   onChange={onExemplarChange}
-                  data-test-id="prometheus-exemplars"
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
                 />
               </EditorField>
             )}
             {query.intervalFactor && query.intervalFactor > 1 && (
-              <EditorField label="Resolution">
+              <EditorField label={t('querybuilder.prom-query-builder-options.label-resolution', 'Resolution')}>
                 <Select
-                  aria-label="Select resolution"
+                  aria-label={t(
+                    'querybuilder.prom-query-builder-options.aria-label-select-resolution',
+                    'Select resolution'
+                  )}
                   isSearchable={false}
                   options={INTERVAL_FACTOR_OPTIONS}
                   onChange={onIntervalFactorChange}

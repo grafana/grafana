@@ -3,6 +3,7 @@ import { memo, useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
 import { FolderInfo } from 'app/types';
 
@@ -66,7 +67,10 @@ export const LibraryPanelsSearch = ({
             <FilterInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search by name or description"
+              placeholder={t(
+                'library-panels.library-panels-search.placeholder-search-by-name-or-description',
+                'Search by name or description'
+              )}
               width={0}
               escapeRegex={false}
             />

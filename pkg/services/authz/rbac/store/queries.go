@@ -16,7 +16,6 @@ var (
 
 	sqlQueryBasicRoles = mustTemplate("basic_role_query.sql")
 	sqlUserIdentifiers = mustTemplate("user_identifier_query.sql")
-	sqlFolders         = mustTemplate("folder_query.sql")
 )
 
 func mustTemplate(filename string) *template.Template {

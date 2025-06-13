@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
@@ -65,9 +66,15 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
   };
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Test contact point'}>
+    <Modal
+      onDismiss={onDismiss}
+      isOpen={isOpen}
+      title={t('alerting.test-contact-point-modal.title-test-contact-point', 'Test contact point')}
+    >
       <div className={styles.section}>
-        <Label>Notification message</Label>
+        <Label>
+          <Trans i18nKey="alerting.test-contact-point-modal.notification-message">Notification message</Trans>
+        </Label>
         <RadioButtonGroup
           options={notificationOptions}
           value={notificationType}
@@ -79,15 +86,19 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
         <form onSubmit={formMethods.handleSubmit(onSubmit)}>
           {notificationType === NotificationType.predefined && (
             <div className={styles.section}>
-              You will send a test notification that uses a predefined alert. If you have defined a custom template or
-              message, for better results switch to <strong>custom</strong> notification message, from above.
+              <Trans i18nKey="alerting.test-contact-point-modal.predefined-notification-message">
+                You will send a test notification that uses a predefined alert. If you have defined a custom template or
+                message, for better results switch to <strong>custom</strong> notification message, from above.
+              </Trans>
             </div>
           )}
           {notificationType === NotificationType.custom && (
             <>
               <div className={styles.section}>
-                You will send a test notification that uses the annotations defined below. This is a good option if you
-                use custom templates and messages.
+                <Trans i18nKey="alerting.test-contact-point-modal.custom-notification-message">
+                  You will send a test notification that uses the annotations defined below. This is a good option if
+                  you use custom templates and messages.
+                </Trans>
               </div>
               <div className={styles.section}>
                 <AnnotationsStep />
@@ -99,7 +110,9 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
           )}
 
           <Modal.ButtonRow>
-            <Button type="submit">Send test notification</Button>
+            <Button type="submit">
+              <Trans i18nKey="alerting.test-contact-point-modal.send-test-notification">Send test notification</Trans>
+            </Button>
           </Modal.ButtonRow>
         </form>
       </FormProvider>

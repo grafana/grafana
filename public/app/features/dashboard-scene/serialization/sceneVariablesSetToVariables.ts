@@ -1,5 +1,11 @@
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
+import {
+  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  MultiValueVariable,
+  SceneVariables,
+  sceneUtils,
+  SceneVariable,
+} from '@grafana/scenes';
 import {
   VariableModel,
   VariableRefresh as OldVariableRefresh,
@@ -18,11 +24,13 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+  AdHocFilterWithLabels,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
+import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -40,6 +48,7 @@ import {
 
 export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
   const variables: VariableModel[] = [];
+
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
@@ -49,6 +58,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
     };
+
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
@@ -67,7 +77,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         options,
         query: variable.state.query,
         definition: variable.state.definition,
-        datasource: variable.state.datasource,
+        datasource: getElementDatasource(set, variable, 'variable'),
         sort: variable.state.sort,
         refresh: variable.state.refresh,
         regex: variable.state.regex,
@@ -179,10 +189,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: variable.state.baseFilters,
-        filters: variable.state.filters,
+        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+        filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
+    } else if (variable.state.type === 'system') {
+      // Not persisted
     } else {
       throw new Error('Unsupported variable type');
     }
@@ -224,7 +236,8 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
 
 export function sceneVariablesSetToSchemaV2Variables(
   set: SceneVariables,
-  keepQueryOptions?: boolean
+  keepQueryOptions?: boolean,
+  dsReferencesMapping?: DSReferencesMapping
 ): Array<
   | QueryVariableKind
   | TextVariableKind
@@ -293,7 +306,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: variable.state.datasource || {},
+          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
@@ -301,6 +314,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(queryVariable);
@@ -316,6 +330,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(customVariable);
@@ -331,6 +346,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           pluginId: variable.state.pluginId,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
 
@@ -420,16 +436,40 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: variable.state.baseFilters || [],
-          filters: variable.state.filters,
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+          filters: validateFiltersOrigin(variable.state.filters),
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(adhocVariable);
+    } else if (variable.state.type === 'system') {
+      // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
   return variables;
+}
+
+function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  return (
+    filters?.map((filter) => {
+      const { origin: initialOrigin, ...restOfFilter } = filter;
+
+      if (initialOrigin === 'dashboard' || initialOrigin === 'scope') {
+        return {
+          ...restOfFilter,
+          origin: initialOrigin,
+        };
+      }
+
+      return restOfFilter;
+    }) || []
+  );
+}
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system';
 }

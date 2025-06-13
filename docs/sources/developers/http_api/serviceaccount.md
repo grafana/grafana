@@ -18,7 +18,7 @@ title: Service account HTTP API
 
 # Service account API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 > For Grafana Cloud instances, please use a Bearer token to authenticate. The examples within this section reference Basic authentication which is for On-Prem Grafana instances.
 
 ## Search service accounts with Paging
@@ -27,7 +27,7 @@ title: Service account HTTP API
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope |
 | -------------------- | ----- |
@@ -94,7 +94,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope |
 | ---------------------- | ----- |
@@ -135,13 +135,15 @@ Content-Type: application/json
 }
 ```
 
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
+
 ## Get a service account by ID
 
 `GET /api/serviceaccounts/:id`
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope                 |
 | -------------------- | --------------------- |
@@ -182,7 +184,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -222,13 +224,15 @@ Content-Type: application/json
 }
 ```
 
+Fixed and custom roles can be set on service accounts using the [RBAC HTTP API](/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments).
+
 ## Delete service account
 
 `DELETE /api/serviceaccounts/:id`
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope                 |
 | ---------------------- | --------------------- |
@@ -262,7 +266,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -294,7 +298,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -326,7 +330,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope              |
 | -------------------- | ------------------ |
@@ -358,7 +362,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope              |
 | --------------------- | ------------------ |
@@ -390,7 +394,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action               | Scope                 |
 | -------------------- | --------------------- |
@@ -430,7 +434,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -471,7 +475,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                | Scope                 |
 | --------------------- | --------------------- |
@@ -505,7 +509,7 @@ This operation will delete the service account and create a legacy API Key for t
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+See note in the [introduction](#service-account-api) for an explanation.
 
 | Action                 | Scope                 |
 | ---------------------- | --------------------- |

@@ -142,7 +142,7 @@ const getGrafanaAlertmanagerTemplatePreview = () =>
       const body = await request.json();
 
       if (body?.template.startsWith('{{')) {
-        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.name}` }] });
+        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.template}` }] });
       }
 
       return HttpResponse.json({});

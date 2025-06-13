@@ -2,7 +2,7 @@
 import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
-import { SelectableValue } from '@grafana/data/src';
+import { SelectableValue } from '@grafana/data';
 
 import { LabelParamEditor } from './components/LabelParamEditor';
 import {
@@ -125,6 +125,7 @@ export function getOperationParamId(operationId: string, paramIndex: number) {
 }
 
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   const options: Array<SelectableValue<string>> = [
     {
       label: '$__interval',
@@ -145,6 +146,7 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
       // tooltip: 'Always above 4x scrape interval',
     });
   }
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 
   const param: QueryBuilderOperationParamDef = {
     name: 'Range',

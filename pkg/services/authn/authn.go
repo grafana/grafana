@@ -31,6 +31,7 @@ const (
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
 	ClientLDAP         = "ldap"
+	ClientProvisioning = "auth.client.apiserver.provisioning"
 )
 
 const (
@@ -283,7 +284,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
 			if err == nil {
 				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
-				if redirectTo != "" && validator(redirectTo) == nil {
+				if redirectTo != "" && validator(cfg.AppSubURL+redirectTo) == nil {
 					redirectURL = cfg.AppSubURL + redirectTo
 				}
 				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))

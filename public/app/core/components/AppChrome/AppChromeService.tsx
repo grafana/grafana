@@ -1,10 +1,10 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types';
@@ -12,14 +12,16 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
+import { HistoryEntry } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
@@ -41,7 +43,7 @@ export class AppChromeService {
 
   private megaMenuDocked = Boolean(
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
@@ -56,21 +58,6 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
-
-  public headerHeightObservable = this.state
-    .pipe(
-      map(({ actions, chromeless, kioskMode }) => {
-        if (kioskMode || chromeless) {
-          return 0;
-        } else if (actions) {
-          return TOP_BAR_LEVEL_HEIGHT * 2;
-        } else {
-          return TOP_BAR_LEVEL_HEIGHT;
-        }
-      })
-    )
-    // only emit if the state has actually changed
-    .pipe(distinctUntilChanged());
 
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
@@ -147,12 +134,19 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
+    const isSamePath = lastEntry && newEntry.url.split('?')[0] === lastEntry.url.split('?')[0];
 
-    // To avoid adding an entry with the same url twice, we always use the latest one
-    if (isSameUrl) {
+    // To avoid adding an entry with the same path twice, we always use the latest one
+    if (isSamePath) {
       entries[0] = newEntry;
     } else {
+      if (lastEntry && lastEntry.name === newEntry.name) {
+        logDuplicateUnifiedHistoryEntryEvent({
+          entryName: newEntry.name,
+          lastEntryURL: lastEntry.url,
+          newEntryURL: newEntry.url,
+        });
+      }
       entries = [newEntry, ...entries];
     }
 

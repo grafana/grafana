@@ -14,6 +14,7 @@
 
 import { css } from '@emotion/css';
 
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
@@ -36,19 +37,32 @@ type CollapserProps = {
 export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = useStyles2(getStyles);
+
   return (
     <div className={styles.TimelineCollapser} data-testid="TimelineCollapser">
-      <IconButton tooltip="Expand +1" size="xl" tooltipPlacement="top" name="angle-down" onClick={onExpandOne} />
-      <IconButton tooltip="Collapse +1" size="xl" tooltipPlacement="top" name="angle-right" onClick={onCollapseOne} />
       <IconButton
-        tooltip="Expand All"
+        tooltip={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-down"
+        onClick={onExpandOne}
+      />
+      <IconButton
+        tooltip={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-right"
+        onClick={onCollapseOne}
+      />
+      <IconButton
+        tooltip={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
         size="xl"
         tooltipPlacement="top"
         name="angle-double-down"
         onClick={onExpandAll}
       />
       <IconButton
-        tooltip="Collapse All"
+        tooltip={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
         size="xl"
         tooltipPlacement="top"
         name="angle-double-right"

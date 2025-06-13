@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,11 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
 	dbTypeMySQL    = "mysql"
 	dbTypePostgres = "postgres"
+	dbTypeSQLite   = "sqlite3"
 )
 
 const grafanaDBInstrumentQueriesKey = "instrument_queries"
@@ -88,8 +89,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	dbType := getter.String("type")
 	grafanaDBType := fallbackGetter.String("type")
 	switch {
-	// First try with the config in the "resource_api" section, which is
-	// specific to Unified Storage
+	// Deprecated: First try with the config in the "resource_api" section, which is specific to Unified Storage
 	case dbType == dbTypePostgres:
 		p.registerMetrics = true
 		p.engine, err = getEnginePostgres(getter)
@@ -100,37 +100,23 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		p.engine, err = getEngineMySQL(getter)
 		return p, err
 
-		// TODO: add support for SQLite
-
 	case dbType != "":
 		return p, fmt.Errorf("invalid db type specified: %s", dbType)
 
-	// If we have an empty Resource API db config, try with the core Grafana
-	// database config
-
-	case grafanaDBType == dbTypePostgres:
+	// If we have an empty Resource API db config, try with the core Grafana database config
+	case grafanaDBType != "":
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(fallbackGetter)
+		p.engine, err = getEngine(cfg)
 		return p, err
-
-	case grafanaDBType == dbTypeMySQL:
-		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(fallbackGetter)
-		return p, err
-
-	// TODO: add support for SQLite
-
 	case grafanaDB != nil:
-		// try to use the grafana db connection
-
+		// try to use the grafana db connection (should only happen in tests)
 		if fallbackGetter.Bool(grafanaDBInstrumentQueriesKey) {
 			return nil, errGrafanaDBInstrumentedNotSupported
 		}
 		p.engine = grafanaDB.GetEngine()
 		return p, nil
-
 	default:
-		return p, fmt.Errorf("no db connection provided")
+		return p, fmt.Errorf("no database type specified")
 	}
 }
 

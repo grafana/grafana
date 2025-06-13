@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
@@ -82,7 +83,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         invalid={isInvalid}
         error={'Value needs to be an integer or a variable'}
         value={value?.value ?? ''}
-        placeholder="Auto"
+        placeholder={t('transformers.axis-editor.placeholder-auto', 'Auto')}
         onChange={(text) => {
           onValueChange({ ...value, value: text });
         }}

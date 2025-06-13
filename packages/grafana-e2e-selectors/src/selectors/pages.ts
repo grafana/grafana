@@ -163,6 +163,11 @@ export const versionedPages = {
       },
     },
   },
+  ImportDashboard: {
+    url: {
+      [MIN_GRAFANA_VERSION]: '/dashboard/import',
+    },
+  },
   Dashboard: {
     url: {
       [MIN_GRAFANA_VERSION]: (uid: string) => `/d/${uid}`,
@@ -205,9 +210,6 @@ export const versionedPages = {
           },
           shareSnapshot: {
             '11.2.0': 'data-testid new share button share snapshot',
-          },
-          inviteUser: {
-            '11.5.0': 'data-testid new share button invite user',
           },
         },
       },
@@ -449,10 +451,22 @@ export const versionedPages = {
             },
           },
           QueryVariable: {
+            closeButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor close button',
+            },
+            editor: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor',
+            },
+            previewButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor preview button',
+            },
             queryOptionsDataSourceSelect: {
               '10.4.0': 'data-testid Select a data source',
               '10.0.0': 'data-testid Data source picker select container',
               [MIN_GRAFANA_VERSION]: 'Data source picker select container',
+            },
+            queryOptionsOpenButton: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Query Variable editor open button',
             },
             queryOptionsRefreshSelect: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Refresh select',
@@ -496,6 +510,9 @@ export const versionedPages = {
           DatasourceVariable: {
             datasourceSelect: {
               [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource type',
+            },
+            nameFilter: {
+              [MIN_GRAFANA_VERSION]: 'data-testid datasource variable datasource name filter',
             },
           },
           TextBoxVariable: {
@@ -571,6 +588,9 @@ export const versionedPages = {
     },
     dashboards: {
       '10.2.0': (title: string) => `Dashboard search item ${title}`,
+    },
+    toggleView: {
+      [MIN_GRAFANA_VERSION]: 'data-testid radio-button',
     },
   },
   SaveDashboardAsModal: {
@@ -870,6 +890,9 @@ export const versionedPages = {
       scrollView: {
         '9.0.0': 'data-testid explorer scroll view',
       },
+      addFromQueryLibrary: {
+        '11.5.0': 'data-testid explore add from query library button',
+      },
     },
     QueryHistory: {
       container: {
@@ -943,6 +966,11 @@ export const versionedPages = {
       createButton: {
         '10.2.0': 'data-testid new-folder-create-button',
       },
+    },
+  },
+  SearchDashboards: {
+    table: {
+      '10.2.0': 'Search results table',
     },
   },
   Search: {
@@ -1039,6 +1067,11 @@ export const versionedPages = {
   Plugin: {
     url: {
       [MIN_GRAFANA_VERSION]: (pluginId: string) => `/plugins/${pluginId}`,
+    },
+  },
+  MigrateToCloud: {
+    url: {
+      '11.2.0': '/admin/migrate-to-cloud',
     },
   },
 } satisfies VersionedSelectorGroup;

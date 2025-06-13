@@ -11,11 +11,11 @@ import {
   MappingType,
   SpecialValueMatch,
   ThresholdsMode,
+  colorManipulator,
 } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
+import { FacetedData, FacetSeries } from '@grafana/ui/internal';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { valuesToFills } from '../heatmap/utils';
@@ -86,8 +86,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
           let pointAlpha = scatterInfo.fillOpacity / 100;
 
-          u.ctx.fillStyle = alpha((series.fill as any)(), pointAlpha);
-          u.ctx.strokeStyle = alpha((series.stroke as any)(), 1);
+          u.ctx.fillStyle = colorManipulator.alpha((series.fill as any)(), pointAlpha);
+          u.ctx.strokeStyle = colorManipulator.alpha((series.stroke as any)(), 1);
           u.ctx.lineWidth = strokeWidth;
 
           let deg360 = 2 * Math.PI;
@@ -138,8 +138,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                   if (pointColors[i] !== curColorIdx) {
                     curColorIdx = pointColors[i];
                     let c = curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
-                    u.ctx.fillStyle = paletteHasAlpha ? c : alpha(c as string, pointAlpha);
-                    u.ctx.strokeStyle = alpha(c as string, 1);
+                    u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c as string, pointAlpha);
+                    u.ctx.strokeStyle = colorManipulator.alpha(c as string, 1);
                   }
                 }
 
@@ -421,8 +421,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: alpha(lineColor ?? '#ffff', 1),
-      fillColor: alpha(pointColor ?? '#ffff', 0.5),
+      lineColor: colorManipulator.alpha(lineColor ?? '#ffff', 1),
+      fillColor: colorManipulator.alpha(pointColor ?? '#ffff', 0.5),
       show: !field.state?.hideFrom?.viz,
     });
   });
@@ -641,7 +641,8 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
       let lasti = steps.length - 1;
 
       for (let i = lasti; i > 0; i--) {
-        conds += `v >= ${steps[i].value} ? ${i} : `;
+        let rhs = Number(steps[i].value);
+        conds += `v >= ${rhs} ? ${i} : `;
       }
 
       conds += '0';

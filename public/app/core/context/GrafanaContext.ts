@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext } from 'react';
-import { useObservable } from 'react-use';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
@@ -41,9 +40,4 @@ export function useReturnToPreviousInternal() {
     },
     [chrome]
   );
-}
-
-export function useChromeHeaderHeight() {
-  const { chrome } = useGrafana();
-  return useObservable(chrome.headerHeightObservable, 0);
 }
