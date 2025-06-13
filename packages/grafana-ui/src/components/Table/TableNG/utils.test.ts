@@ -4,7 +4,6 @@ import {
   createDataFrame,
   createTheme,
   DataFrame,
-  DisplayProcessor,
   DisplayValue,
   Field,
   FieldType,
@@ -19,12 +18,7 @@ import {
   TableCellHeight,
 } from '@grafana/schema';
 
-import { Trans } from '../../../utils/i18n';
-import { PanelContext } from '../../PanelChrome';
-
-import { mapFrameToDataGrid, myRowRenderer } from './TableNG';
-import { COLUMN, TABLE } from './constants';
-import { TableColumn } from './types';
+import { TABLE } from './constants';
 import {
   convertRGBAToHex,
   extractPixelValue,
@@ -35,373 +29,15 @@ import {
   getCellOptions,
   getComparator,
   getDefaultRowHeight,
-  getFooterItemNG,
-  getFooterStyles,
+  getFooterItem,
   getIsNestedTable,
   getTextAlign,
-  handleSort,
-  isTextCell,
+  updateSortColumns,
   migrateTableDisplayModeToCellOptions,
 } from './utils';
 
-const data = createDataFrame({
-  fields: [
-    {
-      name: 'Time',
-      type: FieldType.time,
-      values: [],
-      config: {
-        custom: {
-          width: undefined, // For width distribution testing
-          displayMode: 'auto',
-        },
-      },
-    },
-    {
-      name: 'Value',
-      type: FieldType.number,
-      values: [],
-      display: ((v: unknown) => ({
-        text: String(v),
-        numeric: v,
-        color: undefined,
-        prefix: undefined,
-        suffix: undefined,
-      })) as DisplayProcessor,
-      config: {
-        custom: {
-          width: 100,
-          displayMode: 'basic',
-        },
-      },
-    },
-    {
-      name: 'Message',
-      type: FieldType.string,
-      values: [],
-      config: {
-        custom: {
-          align: 'center',
-        },
-      },
-    },
-  ],
-  meta: {
-    custom: {
-      noHeader: false, // For header rendering tests
-    },
-  },
-});
-
-const calcsRef = { current: [] };
-const headerCellRefs = { current: {} };
-const crossFilterOrder = { current: [] };
-const crossFilterRows = { current: {} };
-const sortColumnsRef = { current: [] };
-
-const mockOptions = {
-  ctx: null as unknown as CanvasRenderingContext2D,
-  textWraps: {},
-  rows: [],
-  sortedRows: [],
-  setContextMenuProps: () => {},
-  setFilter: () => {},
-  setIsInspecting: () => {},
-  data,
-  width: 800,
-  height: 600,
-  fieldConfig: {
-    defaults: {
-      custom: {
-        width: 'auto',
-        minWidth: COLUMN.MIN_WIDTH,
-        cellOptions: {
-          wrapText: false,
-        },
-      },
-    },
-    overrides: [
-      {
-        matcher: { id: 'byName', options: 'Value' },
-        properties: [{ id: 'width', value: 100 }],
-      },
-    ],
-  },
-  columnTypes: {},
-  columnWidth: 'auto',
-  defaultLineHeight: 40,
-  defaultRowHeight: 40,
-  expandedRows: [],
-  filter: {},
-  headerCellRefs,
-  crossFilterOrder,
-  crossFilterRows,
-  isCountRowsSet: false,
-  styles: { cell: '', cellWrapped: '', dataGrid: '' },
-  theme: createTheme(),
-  setSortColumns: () => {},
-  sortColumnsRef,
-  textWrap: false,
-};
-
 describe('TableNG utils', () => {
-  describe('mapFrameToDataGrid', () => {
-    it('take data frame and return array of columns', () => {
-      const columns = mapFrameToDataGrid({
-        frame: data,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // Test column structure
-      expect(columns).toHaveLength(3);
-
-      // Test Time column
-      expect(columns[0]).toMatchObject({
-        key: 'Time',
-        name: 'Time',
-        field: expect.objectContaining({
-          name: 'Time',
-          type: FieldType.time,
-        }),
-      });
-
-      // Test Value column with custom width
-      expect(columns[1]).toMatchObject({
-        key: 'Value',
-        name: 'Value',
-        // TODO: fix this
-        // width: 100,
-        field: expect.objectContaining({
-          name: 'Value',
-          type: FieldType.number,
-        }),
-      });
-
-      // Test Message column alignment
-      expect(columns[2]).toMatchObject({
-        key: 'Message',
-        name: 'Message',
-        field: expect.objectContaining({
-          name: 'Message',
-          type: FieldType.string,
-          config: expect.objectContaining({
-            custom: expect.objectContaining({
-              align: 'center',
-            }),
-          }),
-        }),
-      });
-    });
-  });
-
-  describe('column building', () => {
-    it('should build basic column structure', () => {
-      const columns = mapFrameToDataGrid({
-        frame: data,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      expect(columns).toHaveLength(3);
-      columns.forEach((column: TableColumn) => {
-        expect(column).toHaveProperty('key');
-        expect(column).toHaveProperty('name');
-        expect(column).toHaveProperty('field');
-        expect(column).toHaveProperty('cellClass');
-        expect(column).toHaveProperty('renderCell');
-        expect(column).toHaveProperty('renderHeaderCell');
-      });
-    });
-
-    it.skip('should handle column width configurations', () => {
-      const columns = mapFrameToDataGrid({
-        frame: data,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // Default width
-      expect(columns[0].width).toBe(350);
-      // Explicit width from field config
-      expect(columns[1].width).toBe(100);
-      // Default width with min width
-      expect(columns[2].minWidth).toBe(COLUMN.MIN_WIDTH);
-    });
-
-    it('should handle cell alignment', () => {
-      const columns = mapFrameToDataGrid({
-        frame: data,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      const messageColumn = columns[2];
-      expect(messageColumn.field.config.custom.align).toBe('center');
-    });
-
-    it('should handle footer/summary rows', () => {
-      const options = {
-        ...mockOptions,
-        isCountRowsSet: true,
-      };
-
-      const columns = mapFrameToDataGrid({
-        frame: data,
-        calcsRef: { current: ['3', '', ''] },
-        options,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // First column should show count
-      const firstCell = columns[0].renderSummaryCell?.({
-        row: { __depth: 0, __index: 0 },
-        column: {
-          ...columns[0],
-          frozen: false,
-          idx: 0,
-          parent: undefined,
-          level: 0,
-          sortable: true,
-          minWidth: 100,
-          draggable: true,
-          renderCell: () => null,
-          renderHeaderCell: () => null,
-          resizable: true,
-          width: 100,
-          maxWidth: undefined,
-          headerCellClass: undefined,
-          summaryCellClass: undefined,
-        },
-        tabIndex: 0,
-      });
-
-      expect(firstCell).toBeDefined();
-
-      // Check the div structure and content
-      const divElement = firstCell as JSX.Element;
-      expect(divElement.props.style).toEqual({ display: 'flex', justifyContent: 'space-between' });
-
-      // Check that we have two spans with correct content
-      const [countSpan, valueSpan] = divElement.props.children;
-      expect(countSpan.type).toBe('span');
-      expect(countSpan.props.children.type).toBe(Trans);
-      expect(countSpan.props.children.props.i18nKey).toBe('grafana-ui.table.count');
-      expect(valueSpan.props.children).toBe('3');
-    });
-  });
-
-  describe('nested frames', () => {
-    const nestedData = createDataFrame({
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [1, 2] },
-        { name: 'Value', type: FieldType.number, values: [10, 20] },
-        {
-          name: '__nestedFrames',
-          type: FieldType.nestedFrames,
-          values: [
-            [
-              createDataFrame({
-                fields: [
-                  { name: 'Nested Time', type: FieldType.time, values: [3] },
-                  { name: 'Nested Value', type: FieldType.number, values: [30] },
-                ],
-              }),
-            ],
-          ],
-        },
-      ],
-    });
-
-    it('should add expander column for nested frames', () => {
-      const columns = mapFrameToDataGrid({
-        frame: nestedData,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // First column should be expander
-      expect(columns[0]).toMatchObject({
-        key: 'expanded',
-        name: '',
-        width: COLUMN.EXPANDER_WIDTH,
-        minWidth: COLUMN.EXPANDER_WIDTH,
-      });
-    });
-
-    it('should not render nested frame type fields', () => {
-      const columns = mapFrameToDataGrid({
-        frame: nestedData,
-        calcsRef,
-        options: mockOptions,
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // Should only have expander + Time + Value (not Nested frames column)
-      expect(columns).toHaveLength(3);
-
-      // No column should be of type nestedFrames
-      const hasNestedFrameColumn = columns.some((col: TableColumn) => col.field.type === FieldType.nestedFrames);
-      expect(hasNestedFrameColumn).toBe(false);
-    });
-
-    it('should render nested frame data when expanded', () => {
-      const expandedRows = [0];
-      const columns = mapFrameToDataGrid({
-        frame: nestedData,
-        calcsRef,
-        options: { ...mockOptions, expandedRows },
-        handlers: { onCellExpand: () => {}, onColumnResize: () => {} },
-        availableWidth: mockOptions.width,
-      });
-
-      // Get the rendered content of first row's expander cell
-      const expanderCell = columns[0].renderCell?.({
-        row: {
-          __depth: 1,
-          __index: 0,
-          data: nestedData.fields[2].values[0][0],
-        },
-        rowIdx: 0,
-        column: {
-          ...columns[0],
-          frozen: false,
-          idx: 0,
-          parent: undefined,
-          level: 0,
-          sortable: true,
-          minWidth: 100,
-          draggable: true,
-          renderCell: () => null,
-          renderHeaderCell: () => null,
-          resizable: true,
-          width: 100,
-          maxWidth: undefined,
-          headerCellClass: undefined,
-          summaryCellClass: undefined,
-        },
-        isCellEditable: false,
-        tabIndex: 0,
-        onRowChange: () => {},
-      });
-
-      expect(expanderCell).toBeDefined();
-    });
-  });
-
-  describe('getFooterItemNG', () => {
+  describe('getFooterItem', () => {
     const rows = [
       { Field1: 1, Text: 'a', __depth: 0, __index: 0 },
       { Field1: 2, Text: 'b', __depth: 0, __index: 1 },
@@ -461,7 +97,7 @@ describe('TableNG utils', () => {
     };
 
     it('should calculate sum for numeric fields', () => {
-      const result = getFooterItemNG(rows, numericField, {
+      const result = getFooterItem(rows, numericField, {
         show: true,
         reducer: ['sum'],
       });
@@ -470,7 +106,7 @@ describe('TableNG utils', () => {
     });
 
     it('should calculate mean for numeric fields', () => {
-      const result = getFooterItemNG(rows, numericField, {
+      const result = getFooterItem(rows, numericField, {
         show: true,
         reducer: ['mean'],
       });
@@ -479,7 +115,7 @@ describe('TableNG utils', () => {
     });
 
     it('should return empty string for non-numeric fields', () => {
-      const result = getFooterItemNG(rows, textField, {
+      const result = getFooterItem(rows, textField, {
         show: true,
         reducer: ['sum'],
       });
@@ -488,13 +124,13 @@ describe('TableNG utils', () => {
     });
 
     it('should return empty string when footer not shown', () => {
-      const result = getFooterItemNG(rows, numericField, undefined);
+      const result = getFooterItem(rows, numericField, undefined);
 
       expect(result).toBe('');
     });
 
     it('should return empty string when reducer is undefined', () => {
-      const result = getFooterItemNG(rows, numericField, {
+      const result = getFooterItem(rows, numericField, {
         show: true,
         reducer: undefined,
       });
@@ -502,13 +138,13 @@ describe('TableNG utils', () => {
     });
 
     it('should correctly calculate sum for numeric fields based on selected fields', () => {
-      const numericField1Result = getFooterItemNG(rows, numericField, {
+      const numericField1Result = getFooterItem(rows, numericField, {
         show: true,
         reducer: ['sum'],
         fields: ['Field1'],
       });
 
-      const numericField2Result = getFooterItemNG(rows, numericField2, {
+      const numericField2Result = getFooterItem(rows, numericField2, {
         show: true,
         reducer: ['sum'],
         fields: ['Field2'],
@@ -718,52 +354,33 @@ describe('TableNG utils', () => {
   });
 
   describe('handleSort', () => {
-    const setSortColumns = jest.fn();
-    const sortColumnsRef: { current: SortColumn[] } = { current: [] };
-
-    beforeEach(() => {
-      setSortColumns.mockClear();
-      sortColumnsRef.current = [];
-    });
-
     it('should set initial sort', () => {
-      handleSort('Value', 'ASC', false, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'ASC' }]);
+      expect(updateSortColumns('Value', 'ASC', false, [])).toEqual([{ columnKey: 'Value', direction: 'ASC' }]);
     });
 
     it('should toggle sort direction on same column', () => {
-      // Initial sort
-      sortColumnsRef.current = [{ columnKey: 'Value', direction: 'ASC' }] as const;
-
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'DESC' }]);
+      expect(updateSortColumns('Value', 'DESC', false, [{ columnKey: 'Value', direction: 'ASC' }])).toEqual([
+        { columnKey: 'Value', direction: 'DESC' },
+      ]);
     });
 
     it('should handle multi-sort with shift key', () => {
-      // Initial sort
-      sortColumnsRef.current = [{ columnKey: 'Time', direction: 'ASC' }] as const;
-
-      handleSort('Value', 'ASC', true, setSortColumns, sortColumnsRef);
-
-      expect(setSortColumns).toHaveBeenCalledWith([
+      expect(updateSortColumns('Value', 'ASC', true, [{ columnKey: 'Time', direction: 'ASC' }])).toEqual([
         { columnKey: 'Time', direction: 'ASC' },
         { columnKey: 'Value', direction: 'ASC' },
       ]);
     });
 
     it('should remove sort when toggling through all states', () => {
-      // Initial ASC sort
-      sortColumnsRef.current = [{ columnKey: 'Value', direction: 'ASC' }] as const;
+      let cols: SortColumn[] = [{ columnKey: 'Value', direction: 'ASC' }];
 
       // Toggle to DESC
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-      expect(setSortColumns).toHaveBeenCalledWith([{ columnKey: 'Value', direction: 'DESC' }]);
+      cols = updateSortColumns('Value', 'DESC', false, cols);
+      expect(cols).toEqual([{ columnKey: 'Value', direction: 'DESC' }]);
 
       // Toggle to no sort
-      handleSort('Value', 'DESC', false, setSortColumns, sortColumnsRef);
-      expect(setSortColumns).toHaveBeenCalledWith([]);
+      cols = updateSortColumns('Value', 'DESC', false, cols);
+      expect(cols).toEqual([]);
     });
   });
 
@@ -952,7 +569,7 @@ describe('TableNG utils', () => {
         length: 0,
         name: 'test',
       };
-      expect(getIsNestedTable(frame)).toBe(true);
+      expect(getIsNestedTable(frame.fields)).toBe(true);
     });
 
     it('should return false for regular frames', () => {
@@ -964,7 +581,7 @@ describe('TableNG utils', () => {
         length: 0,
         name: 'test',
       };
-      expect(getIsNestedTable(frame)).toBe(false);
+      expect(getIsNestedTable(frame.fields)).toBe(false);
     });
   });
 
@@ -1154,95 +771,7 @@ describe('TableNG utils', () => {
       expect(result).toBe(false);
     });
   });
-
-  describe.skip('getRowHeight', () => {
-    const ctx = {
-      font: '14px Inter, sans-serif',
-      letterSpacing: '0.15px',
-      measureText: (text: string) => ({
-        width: text.length * 8,
-      }),
-    } as unknown as CanvasRenderingContext2D;
-
-    const calc = uWrap(ctx);
-
-    const headerCellRefs = {
-      current: {
-        stringCol: { offsetWidth: 100 },
-        numberCol: { offsetWidth: 100 },
-      } as unknown as Record<string, HTMLDivElement>,
-    };
-
-    it('should return default height when no text cells present', () => {
-      const row = {
-        __depth: 0,
-        __index: 0,
-        numberCol: 123,
-      };
-      const columnTypes = { numberCol: FieldType.number };
-
-      const height = getRowHeight(
-        row,
-        calc,
-        8,
-        headerCellRefs,
-        20, // lineHeight
-        40, // defaultRowHeight
-        8 // padding
-      );
-
-      expect(height).toBe(40);
-    });
-
-    it('should calculate height based on longest text cell', () => {
-      const row = {
-        __depth: 0,
-        __index: 0,
-        stringCol: 'This is a very long text that should wrap',
-        numberCol: 123,
-      };
-      const columnTypes = {
-        stringCol: FieldType.string,
-        numberCol: FieldType.number,
-      };
-
-      const height = getRowHeight(row, columnTypes, headerCellRefs, ctx, 20, 40, 8);
-
-      expect(height).toBeGreaterThan(40);
-      expect(height).toBe(112);
-    });
-
-    it('should handle empty header cell refs', () => {
-      const row = {
-        __depth: 0,
-        __index: 0,
-        stringCol: 'Some text',
-      };
-      const columnTypes = { stringCol: FieldType.string };
-      const emptyRefs = { current: {} } as unknown as React.MutableRefObject<Record<string, HTMLDivElement>>;
-
-      const height = getRowHeight(row, columnTypes, emptyRefs, ctx, 20, 40, 8);
-
-      expect(height).toBe(40);
-    });
-  });
 */
-
-  describe('isTextCell', () => {
-    it('should return true for string fields', () => {
-      expect(isTextCell('column', { column: FieldType.string })).toBe(true);
-    });
-
-    it('should return false for non-string fields', () => {
-      expect(isTextCell('column', { column: FieldType.number })).toBe(false);
-      expect(isTextCell('column', { column: FieldType.time })).toBe(false);
-      expect(isTextCell('column', { column: FieldType.boolean })).toBe(false);
-    });
-
-    it('should handle unknown fields', () => {
-      expect(isTextCell('unknown', { column: FieldType.string })).toBe(false);
-    });
-  });
 
   describe('migrateTableDisplayModeToCellOptions', () => {
     it('should migrate basic to gauge mode', () => {
@@ -1502,133 +1031,6 @@ describe('TableNG utils', () => {
     });
   });
 
-  /*
-  describe.skip('getCellHeight', () => {
-    // Create a mock CanvasRenderingContext2D
-    const createMockContext = () => {
-      return {
-        measureText: jest.fn((text) => {
-          // Simple mock that returns width based on text length
-          // This is a simplification - real browser would be more complex
-          return { width: text.length * 8 }; // Assume 8px per character
-        }),
-      } as unknown as CanvasRenderingContext2D;
-    };
-
-    it('should return default row height when ctx is null', () => {
-      const defaultRowHeight = 40;
-      const height = getCellHeight('Some text', 100, null, 20, defaultRowHeight);
-      expect(height).toBe(defaultRowHeight);
-    });
-
-    it('should return default row height for text that fits in one line', () => {
-      const mockContext = createMockContext();
-      const defaultRowHeight = 40;
-      const cellWidth = 100; // 100px width
-      const text = 'Short'; // 5 chars * 8px = 40px, fits in cellWidth
-
-      const height = getCellHeight(text, cellWidth, mockContext, 20, defaultRowHeight);
-
-      // Since text fits in one line, should return default height
-      expect(height).toBe(defaultRowHeight);
-      expect(mockContext.measureText).toHaveBeenCalled();
-    });
-
-    it('should calculate height for text that wraps to multiple lines', () => {
-      const mockContext = createMockContext();
-      const defaultRowHeight = 40;
-      const lineHeight = 20;
-      const cellWidth = 100; // 100px width
-      // This text is long enough to wrap to multiple lines
-      const text = 'This is a very long text that will definitely need to wrap to multiple lines in our table cell';
-
-      const height = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight);
-
-      // Should be greater than default height since text wraps
-      expect(height).toBeGreaterThan(defaultRowHeight);
-      expect(height).toBe(180);
-      // Height should be a multiple of line height plus padding
-      expect(height % lineHeight).toBe(0);
-      expect(mockContext.measureText).toHaveBeenCalled();
-    });
-
-    it('should account for padding when calculating height', () => {
-      const mockContext = createMockContext();
-      const defaultRowHeight = 40;
-      const lineHeight = 20;
-      const cellWidth = 100;
-      const padding = 10;
-      const text = 'This is a very long text that will wrap to multiple lines';
-
-      const heightWithoutPadding = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight);
-      const heightWithPadding = getCellHeight(text, cellWidth, mockContext, lineHeight, defaultRowHeight, padding);
-
-      // Height with padding should be greater than without padding
-      expect(heightWithPadding).toBeGreaterThan(heightWithoutPadding);
-      // The difference should be related to the padding (padding is applied twice in the function)
-      expect(heightWithPadding - heightWithoutPadding).toBe(padding * 2 * 2);
-    });
-
-    it('should handle empty text', () => {
-      const mockContext = createMockContext();
-      const defaultRowHeight = 40;
-
-      const height = getCellHeight('', 100, mockContext, 20, defaultRowHeight);
-
-      // Empty text should return default height
-      expect(height).toBe(defaultRowHeight);
-    });
-  });
-*/
-
-  describe('getFooterStyles', () => {
-    it('should create an emotion css class', () => {
-      const styles = getFooterStyles('flex-start');
-
-      // Check that the footerCell style has been created
-      expect(styles.footerCell).toBeDefined();
-
-      // Get the CSS string representation
-      const cssString = styles.footerCell.toString();
-
-      // Verify it's an Emotion CSS class
-      expect(cssString).toContain('css-');
-    });
-
-    it('should use the provided justification value', () => {
-      const styles = getFooterStyles('center');
-
-      // Create a DOM element and apply the CSS class
-      document.body.innerHTML = `<div class="${styles.footerCell}">Test</div>`;
-      const element = document.querySelector('div');
-
-      // Get the computed style
-      const computedStyle = window.getComputedStyle(element!);
-
-      // Check the CSS property
-      expect(computedStyle.justifyContent).toBe('center');
-    });
-
-    it('should default to space-between when no justification is provided', () => {
-      const styles = getFooterStyles(undefined as any);
-
-      // Create a DOM element and apply the CSS class
-      document.body.innerHTML = `<div class="${styles.footerCell}">Test</div>`;
-      const element = document.querySelector('div');
-
-      // Get the computed style
-      const computedStyle = window.getComputedStyle(element!);
-
-      // Check the CSS property
-      expect(computedStyle.justifyContent).toBe('space-between');
-    });
-
-    // Clean up after all tests
-    afterAll(() => {
-      document.body.innerHTML = '';
-    });
-  });
-
   describe('extractPixelValue', () => {
     it('should extract numeric value from pixel string', () => {
       expect(extractPixelValue('100px')).toBe(100);
@@ -1714,112 +1116,6 @@ describe('TableNG utils', () => {
       const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 
       expect(result).toBe(expected);
-    });
-  });
-
-  describe('myRowRenderer', () => {
-    // Create mock props for testing
-    const createMockProps = (depth: number, hasData: boolean, index: number) => {
-      return {
-        row: {
-          __depth: depth,
-          __index: index,
-          data: hasData ? { length: 2 } : undefined,
-        },
-        viewportColumns: [],
-        rowIdx: 0,
-        isRowSelected: false,
-        onRowClick: jest.fn(),
-        onRowDoubleClick: jest.fn(),
-        rowClass: '',
-        top: 0,
-        height: 40,
-        'aria-rowindex': 1,
-        'aria-selected': false,
-        gridRowStart: 1,
-        isLastRow: false,
-        selectedCellIdx: undefined,
-        selectCell: jest.fn(),
-        lastFrozenColumnIndex: -1,
-        copiedCellIdx: undefined,
-        draggedOverCellIdx: undefined,
-        setDraggedOverRowIdx: jest.fn(),
-        onRowChange: jest.fn(),
-        rowArray: [],
-        selectedPosition: { idx: 0, rowIdx: 0, mode: 'SELECT' },
-      } as any;
-    };
-
-    const mockPanelContext = {
-      id: 1,
-      title: 'Test Panel',
-      description: 'Test Description',
-      width: 800,
-      height: 600,
-      timeRange: { from: 'now-6h', to: 'now' },
-      timeZone: 'browser',
-      onTimeRangeChange: jest.fn(),
-      onOptionsChange: jest.fn(),
-      onFieldConfigChange: jest.fn(),
-      onInstanceStateChange: jest.fn(),
-      replaceVariables: jest.fn(),
-      eventBus: {
-        publish: jest.fn(),
-        subscribe: jest.fn(),
-        unsubscribe: jest.fn(),
-      },
-    } as unknown as PanelContext;
-
-    const mockData = createDataFrame({
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [] },
-        { name: 'Value', type: FieldType.number, values: [] },
-      ],
-    });
-
-    it('returns null for non-expanded child rows', () => {
-      const props = createMockProps(1, false, 0);
-      const expandedRows: number[] = []; // No expanded rows
-
-      const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
-
-      expect(view).toBeNull();
-    });
-
-    it('renders child rows when parent is expanded', () => {
-      const props = createMockProps(1, false, 0);
-      const expandedRows: number[] = [0]; // Row 0 is expanded
-
-      const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
-
-      expect(view).not.toBeNull();
-    });
-
-    it('adds aria-expanded attribute to parent rows with nested data', () => {
-      const props = createMockProps(0, true, 0);
-      const expandedRows: number[] = [0]; // Row 0 is expanded
-
-      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-      expect(result.props['aria-expanded']).toBe(true);
-    });
-
-    it('sets aria-expanded to false when parent row is not expanded', () => {
-      const props = createMockProps(0, true, 0);
-      const expandedRows: number[] = []; // No expanded rows
-
-      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-      expect(result.props['aria-expanded']).toBe(false);
-    });
-
-    it('renders regular rows without aria-expanded attribute', () => {
-      const props = createMockProps(0, false, 0);
-      const expandedRows: number[] = [];
-
-      const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-      expect(result.props['aria-expanded']).toBeUndefined();
     });
   });
 });

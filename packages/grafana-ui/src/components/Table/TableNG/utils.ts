@@ -1,6 +1,4 @@
-import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { varPreLine } from 'uwrap';
@@ -23,7 +21,6 @@ import {
   TableCellDisplayMode,
   TableCellHeight,
   TableCellOptions,
-  TableSortByFieldState,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
@@ -40,62 +37,6 @@ import {
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export function getCellHeight(
-  text: string,
-  cellWidth: number, // width of the cell without padding
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding = 0
-) {
-  const PADDING = padding * 2;
-
-  if (typeof text === 'string') {
-    const words = text.split(/\s/);
-    const lines = [];
-    let currentLine = '';
-
-    // Let's just wrap the lines and see how well the measurement works
-    for (let i = 0; i < words.length; i++) {
-      const currentWord = words[i];
-      // TODO: this method is not accurate
-      let lineWidth = ctx.measureText(currentLine + ' ' + currentWord).width;
-
-      // if line width is less than the cell width, add the word to the current line and continue
-      // else add the current line to the lines array and start a new line with the current word
-      if (lineWidth < cellWidth) {
-        currentLine += ' ' + currentWord;
-      } else {
-        lines.push({
-          width: lineWidth,
-          line: currentLine,
-        });
-
-        currentLine = currentWord;
-      }
-
-      // if we are at the last word, add the current line to the lines array
-      if (i === words.length - 1) {
-        lines.push({
-          width: lineWidth,
-          line: currentLine,
-        });
-      }
-    }
-
-    if (lines.length === 1) {
-      return defaultRowHeight;
-    }
-
-    // TODO: double padding to adjust osContext.measureText() results
-    const height = lines.length * lineHeight + PADDING * 2;
-
-    return height;
-  }
-
-  return defaultRowHeight;
-}
-
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
 
 export function getCellHeightCalculator(
@@ -130,53 +71,6 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
 }
 
-/**
- * getRowHeight determines cell height based on cell width + text length. Used
- * for when textWrap is enabled.
- */
-export function getRowHeight(
-  row: TableRow,
-  calc: CellHeightCalculator,
-  avgCharWidth: number,
-  defaultRowHeight: number,
-  fieldsData: {
-    headersLength: number;
-    textWraps: { [key: string]: boolean };
-    columnTypes: ColumnTypes;
-    columnWidths: Record<string, number>;
-    fieldDisplayType: Record<string, TableCellDisplayMode>;
-  }
-): number {
-  let maxLines = 1;
-  let maxLinesCol = '';
-
-  for (const key in row) {
-    if (
-      fieldsData.columnTypes[key] === FieldType.string &&
-      fieldsData.textWraps[key] &&
-      fieldsData.fieldDisplayType[key] !== TableCellDisplayMode.Image
-    ) {
-      const cellText = row[key] as string;
-
-      if (cellText != null) {
-        const charsPerLine = fieldsData.columnWidths[key] / avgCharWidth;
-        const approxLines = cellText.length / charsPerLine;
-
-        if (approxLines > maxLines) {
-          maxLines = approxLines;
-          maxLinesCol = key;
-        }
-      }
-    }
-  }
-
-  return maxLinesCol === '' ? defaultRowHeight : calc(row[maxLinesCol] as string, fieldsData.columnWidths[maxLinesCol]);
-}
-
-export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
-  return columnTypes[key] === FieldType.string;
-}
-
 export function shouldTextOverflow(
   key: string,
   columnTypes: ColumnTypes,
@@ -188,7 +82,7 @@ export function shouldTextOverflow(
 
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
+  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] === FieldType.string) {
     return false;
   }
 
@@ -277,7 +171,7 @@ export function getAlignmentFactor(
 }
 
 /* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
+export function getFooterItem(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
   if (options === undefined) {
     return '';
   }
@@ -311,17 +205,6 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
 
   return formattedValue;
 }
-
-export const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCellCountRows: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-  }),
-  footerCell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'space-between',
-  }),
-});
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
@@ -420,14 +303,12 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */
-export const handleSort = (
+export const updateSortColumns = (
   columnKey: string,
   direction: SortDirection,
   isMultiSort: boolean,
-  setSortColumns: React.Dispatch<React.SetStateAction<SortColumn[]>>,
-  sortColumns: SortColumn[],
-  onSortByChange?: (sortBy: TableSortByFieldState[]) => void
-) => {
+  sortColumns: SortColumn[]
+): SortColumn[] => {
   let currentSortColumn: SortColumn | undefined;
 
   const updatedSortColumns = sortColumns.filter((column) => {
@@ -440,24 +321,15 @@ export const handleSort = (
 
   // sorted column exists and is descending -> remove it to reset sorting
   if (currentSortColumn && currentSortColumn.direction === 'DESC') {
-    setSortColumns(updatedSortColumns);
-  } else {
-    // new sort column or changed direction
-    if (isMultiSort) {
-      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-    } else {
-      setSortColumns([{ columnKey, direction }]);
-    }
+    return updatedSortColumns;
   }
 
-  // Update panel context with the new sort order
-  if (typeof onSortByChange === 'function') {
-    const sortByFields = sortColumns.map(({ columnKey, direction }) => ({
-      displayName: columnKey,
-      desc: direction === 'DESC',
-    }));
-    onSortByChange(sortByFields);
+  // new sort column or changed direction
+  if (isMultiSort) {
+    return [...updatedSortColumns, { columnKey, direction }];
   }
+
+  return [{ columnKey, direction }];
 };
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -619,5 +491,5 @@ export const getDisplayName = (field: Field): string => {
 };
 
 export function getVisibleFields(fields: Field[]): Field[] {
-  return fields.filter((field) => field.type !== FieldType.nestedFrames);
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
 }
