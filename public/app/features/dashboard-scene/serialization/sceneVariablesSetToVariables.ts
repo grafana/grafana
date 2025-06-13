@@ -454,7 +454,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: validateFiltersOrigin(variable.state.baseFilters || []),
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
           filters: [
             ...validateFiltersOrigin(variable.state.originFilters),
             ...validateFiltersOrigin(variable.state.filters),
@@ -474,7 +474,7 @@ export function sceneVariablesSetToSchemaV2Variables(
   return variables;
 }
 
-function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
   // Only keep dashboard originated filters in the schema
   return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
 }
