@@ -406,7 +406,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
     preventWheelClick: false,
     useAutoZoom: true,
-    useMouseDrag: scene.shouldPanZoom,
+    useMouseDrag: false, // `true` blocks metricValue dropdown
     useWheelScroll: scene.shouldPanZoom,
     displayHorizontalScroll: false,
     displayVerticalScroll: false,
@@ -424,38 +424,52 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   };
 
   /* ----------------------------- EVENT HANDLERS ----------------------------- */
+  // Helper for panning with mouse drag (middle mouse or Ctrl+right-click)
+  // TODO: It was implemented as a workaround to unblock left click metricsValue dropdown,
+  // but it should be replaced with a more robust solution that doesn't interfere with left click interactions.
+  function startPanning(e: MouseEvent) {
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScrollLeft = scene.infiniteViewer!.getScrollLeft();
+    const startScrollTop = scene.infiniteViewer!.getScrollTop();
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = startX - moveEvent.clientX;
+      const deltaY = startY - moveEvent.clientY;
+      const scaleAdjustedDeltaX = deltaX / scene.scale;
+      const scaleAdjustedDeltaY = deltaY / scene.scale;
+      scene.infiniteViewer!.scrollTo(startScrollLeft + scaleAdjustedDeltaX, startScrollTop + scaleAdjustedDeltaY);
+      moveEvent.preventDefault();
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
+
   // Right click
   scene.viewerDiv!.addEventListener('contextmenu', (e) => {
-    if (e.ctrlKey && e.button === 2) {
+    if (e.ctrlKey && e.button === 2 && scene.shouldPanZoom) {
       // Enable panning with Ctrl+right-click
-      e.preventDefault();
-
-      // Start tracking mouse movement for panning
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startScrollLeft = scene.infiniteViewer!.getScrollLeft();
-      const startScrollTop = scene.infiniteViewer!.getScrollTop();
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        const deltaX = startX - moveEvent.clientX;
-        const deltaY = startY - moveEvent.clientY;
-        const scaleAdjustedDeltaX = deltaX / scene.scale;
-        const scaleAdjustedDeltaY = deltaY / scene.scale;
-        scene.infiniteViewer!.scrollTo(startScrollLeft + scaleAdjustedDeltaX, startScrollTop + scaleAdjustedDeltaY);
-        moveEvent.preventDefault();
-      };
-
-      const handleMouseUp = () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      startPanning(e);
     } else {
       // Prevent default browser context menu
       e.preventDefault();
       triggerContextMenu(e.pageX, e.pageY);
+    }
+  });
+
+  // Enable panning with middle mouse button (wheel button)
+  scene.viewerDiv!.addEventListener('mousedown', (e: MouseEvent) => {
+    if (e.button === 1 && scene.shouldPanZoom) {
+      // Middle mouse button
+      startPanning(e);
     }
   });
 
