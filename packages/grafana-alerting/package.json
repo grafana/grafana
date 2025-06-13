@@ -33,6 +33,10 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./testing": {
+      "import": "./src/testing.ts",
+      "require": "./src/testing.ts"
     }
   },
   "scripts": {

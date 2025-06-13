@@ -1,6 +1,7 @@
 import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
+import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -60,6 +61,7 @@ const rootReducers = {
   ...authConfigReducers,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
+  [alertingAPIv0alpha1.reducerPath]: alertingAPIv0alpha1.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
