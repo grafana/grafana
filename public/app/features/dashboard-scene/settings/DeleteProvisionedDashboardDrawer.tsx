@@ -83,7 +83,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [
-          t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Error saving delete dashboard changes'),
+          t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'),
           request.error,
         ],
       });
@@ -99,7 +99,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
-            {1 == 1 && (
+            {readOnly && (
               <Alert
                 title={t(
                   'dashboard-scene.delete-provisioned-dashboard-form.title-this-repository-is-read-only',
