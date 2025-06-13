@@ -2814,6 +2814,40 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
+### `[time_picker]`
+
+This section controls system-wide defaults for the time picker, such as the default quick ranges.
+
+#### `quick_ranges`
+
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry must have a `from`, `to`, and `display` field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
+
+The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
+
+If no configuration is provided, the default time ranges will be used.
+
+For example:
+
+```ini
+[time_picker]
+quick_ranges = [
+  {
+    "display": "Last 5 minutes",
+    "from": "now-5m",
+    "to": "now",
+  },
+  {
+    "display": "Yesterday",
+    "from": "now-1d/d",
+  },
+  {
+    "display": "Today so far",
+    "from": "now/d",
+    "to": "now",
+  }
+]
+```
+
 ### `[expressions]`
 
 #### `enabled`

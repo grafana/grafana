@@ -170,7 +170,7 @@ export const Details = ({ rule }: DetailsProps) => {
                 value={missingSeriesEvalsToResolve}
                 tooltipValue={t(
                   'alerting.alert.description-missing-series-evaluations',
-                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                  'The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.'
                 )}
               />
             )}
