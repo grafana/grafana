@@ -43,6 +43,13 @@ describe('filterRulerRulesConfig', () => {
               namespace: 'synthetic_monitoring',
             },
           },
+          {
+            alert: 'Alert7',
+            expr: 'test == 0',
+            labels: {
+              namespace: 'integrations-test',
+            },
+          },
         ],
       },
     ],
@@ -196,7 +203,7 @@ describe('filterRulerRulesConfig', () => {
     expect(someRulesAreSkipped).toBe(false);
   });
 
-  it('should filter out synthetics rules', () => {
+  it('should filter out synthetics rules and rules from integrations', () => {
     const { filteredConfig, someRulesAreSkipped } = filterRulerRulesConfig(mockRulesConfig);
 
     expect(filteredConfig).toEqual({
