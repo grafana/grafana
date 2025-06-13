@@ -39,22 +39,17 @@ jobs:
 
             .github/workflows/backend-unit-tests.yml
             .github/actions/setup-enterprise/**
-            .citools/**
-            .bingo/**
+
             **/go.mod
             **/go.sum
             **/go.work
             **/go.work.sum
-            **/Dockerfile
-            **/.dockerignore
             **.go
             apps/**
             !apps/**.md
             pkg/**
             !pkg/**.md
-            scripts/grafana-server/**
             scripts/ci/backend-tests/**
-            **/Makefile
       - name: Print all changed files
         env:
           CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
