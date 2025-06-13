@@ -263,13 +263,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 }
 
 /**
- * This function performs a sql-style inner join on tabular data;
- * it will combine records from two tables whenever there are matching
- * values in a field common to both tables.
- *
- * NOTE: This function implicitly assumes that the first array in each AlignedData
- * contains the values to join on. It doesn't explicitly specify a column field to join on,
- * but rather uses the 0th position of the arrays (AlignedData[0]) to determine the joining keys.
+ * SQL-style join of tables, using the first column in each
  */
 function joinTabular(tables: AlignedData[], outer = false) {
   // console.time('joinTabular');
@@ -277,13 +271,16 @@ function joinTabular(tables: AlignedData[], outer = false) {
   let ltable = tables[0];
   let lfield = ltable[0];
 
+  // iterate tables, merging right table with left, with the result becoming the new left
+  // rinse and repeat for each tables in the array
   for (let ti = 1; ti < tables.length; ti++) {
     let rtable = tables[ti];
     let rfield = rtable[0];
 
-    // test if R is unique, build cheaper lookup?
-
-    // build R index
+    /**
+     * Build an inverted index of the right table's join column like { "foo": [1,2,3], "bar": [7,12], ... }
+     * where the keys are unique values and the arrays are indices where these values were found
+     */
     // console.time('index right');
     let index: Record<string | number, number[]> = {};
 
@@ -302,13 +299,24 @@ function joinTabular(tables: AlignedData[], outer = false) {
     }
     // console.timeEnd('index right');
 
+    /**
+     * Loop over the left table's join column and match each non-null value to the right index,
+     * copying the matched ridxs array into new matched list, like [33, [45,79,233]], where first
+     * value is left idx and second value is right idxs
+     *
+     * Also keep track of unmatched or null left values for outer join, since we'll need to include these
+     */
     let matchedKeys = new Set();
     let unmatchedLeft = [];
     let unmatchedRight = [];
 
     // console.time('match left');
-    let matched = [];
+    let matched: Array<[lidx: number, ridxs: number[]]> = [];
+
+    // count of total number of output rows, so we can
+    // pre-allocate the final array size during materialization
     let count = 0;
+
     for (let i = 0; i < lfield.length; i++) {
       let v = lfield[i];
 
@@ -329,6 +337,9 @@ function joinTabular(tables: AlignedData[], outer = false) {
     count += unmatchedLeft.length;
     // console.timeEnd('match left');
 
+    /**
+     * For outer joins, also loop over the right index to record unmatched values
+     */
     // console.time('unmatched right');
     if (outer) {
       for (let k in index) {
@@ -340,6 +351,48 @@ function joinTabular(tables: AlignedData[], outer = false) {
     }
     // console.timeEnd('unmatched right');
 
+    /**
+     * Now we can use matched, unmatchedLeft, unmatchedRight, ltable, and rtable to assemble the final table
+     * Instead of using 3-deep nested loops, we eliminate the loops over the known column structure
+     * For this we compile a new function using the schemas from both tables, and filling that struct by looping
+     * over the matched lookup array, then appending the unmatched left rows (and null-filling the right values),
+     * then appending the unmatched right rows, and null-filling the left values.
+     *
+     * The assembled function looks something like this:
+     *
+     * function anonymous(matched, unmatchedLeft, unmatchedRight, ltable, rtable) {
+     *   const joined = [Array(99991),Array(99991),Array(99991)];
+     *
+     *   let rowIdx = 0;
+     *
+     *   for (let i = 0; i < matched.length; i++) {
+     *     let [lidx, ridxs] = matched[i];
+     *
+     *     for (let j = 0; j < ridxs.length; j++, rowIdx++) {
+     *       let ridx = ridxs[j];
+     *       joined[0][rowIdx] = ltable[0][lidx];
+     *       joined[1][rowIdx] = ltable[1][lidx];
+     *       joined[2][rowIdx] = rtable[1][ridx];
+     *     }
+     *   }
+     *
+     *   for (let i = 0; i < unmatchedLeft.length; i++, rowIdx++) {
+     *     let lidx = unmatchedLeft[i];
+     *     joined[0][rowIdx] = ltable[0][lidx];
+     *     joined[1][rowIdx] = ltable[1][lidx];
+     *     joined[2][rowIdx] = null;
+     *   }
+     *
+     *   for (let i = 0; i < unmatchedRight.length; i++, rowIdx++) {
+     *     let ridx = unmatchedRight[i];
+     *     joined[0][rowIdx] = rtable[0][ridx];
+     *     joined[1][rowIdx] = null;
+     *     joined[2][rowIdx] = rtable[1][ridx];
+     *   }
+     *
+     *   return joined;
+     * }
+     */
     // console.time('materialize');
     let outFieldsTpl = Array.from({ length: ltable.length + rtable.length - 1 }, () => `Array(${count})`).join(',');
     let copyLeftRowTpl = ltable.map((c, i) => `joined[${i}][rowIdx] = ltable[${i}][lidx]`).join(';');
@@ -349,6 +402,9 @@ function joinTabular(tables: AlignedData[], outer = false) {
       .map((c, i) => `joined[${ltable.length + i}][rowIdx] = rtable[${i + 1}][ridx]`)
       .join(';');
 
+    // for outer joins, when we null-fill the left row values, we still populate the first (join) column
+    // with the right row's join column value, rather than omitting it as we do for matched left/right where
+    // that value is already filled by the left row
     let nullLeftRowTpl = ltable
       .map((c, i) => `joined[${i}][rowIdx] = ${i === 0 ? `rtable[${i}][ridx]` : `null`}`)
       .join(';');
