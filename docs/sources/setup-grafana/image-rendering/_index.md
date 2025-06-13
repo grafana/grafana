@@ -101,7 +101,7 @@ See [Grafana configuration](../configure-grafana/#renderer_token) for how to con
 #### Rate limiter
 
 {{% admonition type="note" %}}
-This feature is available in Image Renderer v3.13.0 and later.
+This feature is available in Image Renderer v3.12.6 and later.
 {{% /admonition %}}
 
 You can rate-limit image renderer requests using in-memory storage or Redis.
