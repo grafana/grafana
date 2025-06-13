@@ -8,6 +8,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -23,7 +25,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -44,7 +45,7 @@ var (
 )
 
 type SecretAPIBuilder struct {
-	tracer                     tracing.Tracer
+	tracer                     trace.Tracer
 	secureValueService         *service.SecureValueService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
@@ -56,7 +57,7 @@ type SecretAPIBuilder struct {
 }
 
 func NewSecretAPIBuilder(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	secureValueService *service.SecureValueService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
@@ -73,6 +74,7 @@ func NewSecretAPIBuilder(
 		PollingInterval:              100 * time.Millisecond,
 		MaxMessageProcessingAttempts: 10,
 	},
+		tracer,
 		database,
 		secretsOutboxQueue,
 		secureValueMetadataStorage,
@@ -100,7 +102,6 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
-	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
@@ -112,6 +113,11 @@ func RegisterAPIService(
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
+	tracer := otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/secret")
+
+	ctx, span := tracer.Start(context.Background(), "secret.RegisterAPIService")
+	defer span.End()
+
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -121,7 +127,7 @@ func RegisterAPIService(
 	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
 	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
 
-	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
+	if err := secretDBMigrator.RunMigrations(ctx, lockDatabase); err != nil {
 		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
@@ -195,10 +201,10 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueService, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.tracer, b.secureValueService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.tracer, b.keeperMetadataStorage, b.accessClient, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -596,6 +602,9 @@ func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
 func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	ctx, span := b.tracer.Start(ctx, "SecretAPIBuilder.Validate")
+	defer span.End()
+
 	obj := a.GetObject()
 	operation := a.GetOperation()
 
@@ -652,6 +661,9 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 }
 
 func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	ctx, span := b.tracer.Start(ctx, "SecretAPIBuilder.Mutate")
+	defer span.End()
+
 	obj := a.GetObject()
 	operation := a.GetOperation()
 

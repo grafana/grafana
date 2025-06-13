@@ -8,10 +8,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
@@ -78,8 +78,8 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -187,11 +187,12 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
+		tracer := noop.NewTracerProvider().Tracer("test")
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), features)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
-			tracing.InitializeTracerForTest(),
+			tracer,
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
@@ -214,7 +215,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		// encryption manager tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
 		svcDecryptMgr, err := ProvideEncryptionManager(
-			tracing.InitializeTracerForTest(),
+			tracer,
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
@@ -463,6 +464,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+			tracer := noop.NewTracerProvider().Tracer("test")
 
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
@@ -478,13 +480,13 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), features)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
 
 			svc, err := ProvideEncryptionManager(
-				tracing.InitializeTracerForTest(),
+				tracer,
 				store,
 				cfg,
 				usageStats,

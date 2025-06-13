@@ -6,6 +6,8 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -13,17 +15,26 @@ import (
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
 type decryptAuthorizer struct {
+	tracer    trace.Tracer
 	allowList contracts.DecryptAllowList
 }
 
-func ProvideDecryptAuthorizer(allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
+func ProvideDecryptAuthorizer(tracer trace.Tracer, allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
+		tracer:    tracer,
 		allowList: allowList,
 	}
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
 func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (string, bool) {
+	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
+		attribute.String("name", secureValueName),
+		attribute.StringSlice("decrypters", secureValueDecrypters),
+		attribute.Bool("allowed", false),
+	))
+	defer span.End()
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", false
@@ -61,6 +72,8 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 			break
 		}
 	}
+
+	span.SetAttributes(attribute.Bool("allowed", allowed))
 
 	return serviceIdentity, allowed
 }

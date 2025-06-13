@@ -10,11 +10,14 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
+	tracer                     trace.Tracer
 	database                   contracts.Database
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -36,6 +39,7 @@ type Config struct {
 
 func NewWorker(
 	config Config,
+	tracer trace.Tracer,
 	database contracts.Database,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -58,6 +62,7 @@ func NewWorker(
 
 	return &Worker{
 		config:                     config,
+		tracer:                     tracer,
 		database:                   database,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -124,6 +129,16 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
+	// Detached and long running process, so we start a new root span every time.
+	ctx, span := w.tracer.Start(ctx, "Worker.ProcessMessage", trace.WithNewRoot(), trace.WithAttributes(
+		attribute.String("message.id", message.MessageID),
+		attribute.String("message.type", string(message.Type)),
+		attribute.String("message.namespace", message.Namespace),
+		attribute.String("message.secureValue.name", message.Name),
+		attribute.Int("message.receive.count", message.ReceiveCount),
+	))
+	defer span.End()
+
 	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
 		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)

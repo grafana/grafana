@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -43,14 +45,16 @@ type SecureValueRest struct {
 	secureValueService *service.SecureValueService
 	resource           utils.ResourceInfo
 	tableConverter     rest.TableConvertor
+	tracer             trace.Tracer
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(secureValueService *service.SecureValueService, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(tracer trace.Tracer, secureValueService *service.SecureValueService, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{
 		secureValueService: secureValueService,
 		resource:           resource,
 		tableConverter:     resource.TableConverter(),
+		tracer:             tracer,
 	}
 }
 
@@ -88,6 +92,9 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueRest.List", trace.WithAttributes(attribute.String("namespace", namespace)))
+	defer span.End()
 
 	secureValueList, err := s.secureValueService.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
@@ -127,6 +134,12 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, _ *metav1.GetOpt
 		return nil, fmt.Errorf("missing namespace")
 	}
 
+	ctx, span := s.tracer.Start(ctx, "SecureValueRest.Get", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
 	sv, err := s.secureValueService.Read(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
@@ -150,6 +163,12 @@ func (s *SecureValueRest) Create(
 	if !ok {
 		return nil, fmt.Errorf("expected SecureValue for create")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueRest.Create", trace.WithAttributes(
+		attribute.String("name", sv.GetName()),
+		attribute.String("namespace", sv.GetNamespace()),
+	))
+	defer span.End()
 
 	if err := createValidation(ctx, obj); err != nil {
 		return nil, err
@@ -179,6 +198,12 @@ func (s *SecureValueRest) Update(
 	_forceAllowCreate bool,
 	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueRest.Update", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", request.NamespaceValue(ctx)),
+	))
+	defer span.End()
+
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -222,6 +247,12 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 	if !ok {
 		return nil, false, fmt.Errorf("missing namespace")
 	}
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueRest.Delete", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
 
 	updatedSv, err := s.secureValueService.Delete(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
