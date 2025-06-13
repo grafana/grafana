@@ -3225,6 +3225,50 @@
     },
     {
       "metadata": {
+        "name": "timeCompare",
+        "resourceVersion": "1749656614658",
+        "creationTimestamp": "2025-06-11T15:43:34Z",
+        "deletionTimestamp": "2025-06-11T15:44:01Z"
+      },
+      "spec": {
+        "description": "Enables time comparison option in supported panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "timeCompareOption",
+        "resourceVersion": "1749656393041",
+        "creationTimestamp": "2025-06-11T15:35:24Z",
+        "deletionTimestamp": "2025-06-11T15:43:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-11 15:39:53.041729 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables time comparison option in supported panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "timeComparison",
+        "resourceVersion": "1749656641729",
+        "creationTimestamp": "2025-06-11T15:44:01Z"
+      },
+      "spec": {
+        "description": "Enables time comparison option in supported panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-10-22T10:52:33Z"
