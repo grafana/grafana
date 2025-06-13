@@ -65,7 +65,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
-		nil, provisioning, sort.ProvideService(),
+		nil, provisioning, nil, sort.ProvideService(),
 	)
 
 	if c.Bool("non-interactive") {
