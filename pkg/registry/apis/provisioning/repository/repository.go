@@ -53,6 +53,7 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
+//go:generate mockery --name CloneFn --structname MockCloneFn --inpackage --filename clone_fn_mock.go --with-expecter
 type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
 
 type CloneOptions struct {
@@ -161,10 +162,8 @@ type RepositoryWithURLs interface {
 type Hooks interface {
 	Repository
 
-	// For repositories that support webhooks
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
-	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
+	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
+	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
 	OnDelete(ctx context.Context) error
 }
 

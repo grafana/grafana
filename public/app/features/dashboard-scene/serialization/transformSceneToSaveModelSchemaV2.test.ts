@@ -10,7 +10,6 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
-  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -45,7 +44,6 @@ import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -253,31 +251,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // itemHeight?: number,
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
-            }),
-            new SceneGridRow({
-              key: 'panel-4',
-              title: 'Test Row',
-              y: 10,
-              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-              children: [
-                new DashboardGridItem({
-                  y: 11,
-                  body: new VizPanel({
-                    key: 'panel-2',
-                    pluginId: 'graph',
-                    title: 'Test Panel 2',
-                    description: 'Test Description 2',
-                    fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
-                    pluginVersion: '7.0.0',
-                    $timeRange: new SceneTimeRange({
-                      timeZone: 'UTC',
-                      from: 'now-3h',
-                      to: 'now',
-                    }),
-                  }),
-                }),
-              ],
             }),
           ],
         }),
@@ -577,10 +550,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     });
   });
 
-  it('should test annotation with options field', () => {
+  it('should test annotation with legacyOptions field', () => {
     // Create a scene with an annotation layer that has options
     const annotationWithOptions = new DashboardAnnotationsDataLayer({
-      key: 'layerWithOptions',
+      key: 'layerWithLegacyOptions',
       query: {
         datasource: {
           type: 'prometheus',
@@ -589,7 +562,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        options: {
+        legacyOptions: {
           expr: 'rate(http_requests_total[5m])',
           queryType: 'range',
           legendFormat: '{{method}} {{endpoint}}',
@@ -618,8 +591,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Verify the annotation options are properly serialized
     expect(result.annotations.length).toBe(1);
-    expect(result.annotations[0].spec.options).toBeDefined();
-    expect(result.annotations[0].spec.options).toEqual({
+    expect(result.annotations[0].spec.legacyOptions).toBeDefined();
+    expect(result.annotations[0].spec.legacyOptions).toEqual({
       expr: 'rate(http_requests_total[5m])',
       queryType: 'range',
       legendFormat: '{{method}} {{endpoint}}',

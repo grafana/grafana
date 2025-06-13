@@ -3,9 +3,9 @@ import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -43,13 +43,14 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues } = formState;
+  const { errors, isValid } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
   const [hasFolderChanged, setHasFolderChanged] = useState(false);
+
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -157,11 +158,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
               },
             });
           }}
-          // Old folder picker fields
           value={formValues.folder?.uid}
-          initialTitle={defaultValues!.folder!.title}
-          dashboardId={dashboard.state.id ?? undefined}
-          enableCreateNew
         />
       </Field>
       {!changeInfo.isNew && (

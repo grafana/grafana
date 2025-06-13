@@ -5,16 +5,16 @@ import (
 	_ "embed"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	v0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ValidateDashboardSpec validates the dashboard spec and throws a detailed error if there are validation errors.
@@ -28,11 +28,11 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 	mode := fieldValidationMode
 	if mode != metav1.FieldValidationIgnore {
 		switch obj.(type) {
-		case *v0alpha1.Dashboard:
+		case *v0.Dashboard:
 			errorOnSchemaMismatches = false // Never error for v0
-		case *v1alpha1.Dashboard:
+		case *v1.Dashboard:
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV1)
-		case *v2alpha1.Dashboard:
+		case *v2.Dashboard:
 			errorOnSchemaMismatches = !b.features.IsEnabled(ctx, featuremgmt.FlagDashboardDisableSchemaValidationV2)
 		default:
 			return nil, fmt.Errorf("invalid dashboard type: %T", obj)
@@ -48,12 +48,12 @@ func (b *DashboardsAPIBuilder) ValidateDashboardSpec(ctx context.Context, obj ru
 	var schemaVersionError field.ErrorList
 	if errorOnSchemaMismatches || alwaysLogSchemaValidationErrors {
 		switch v := obj.(type) {
-		case *v0alpha1.Dashboard:
-			errors, schemaVersionError = v0alpha1.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
-		case *v1alpha1.Dashboard:
-			errors, schemaVersionError = v1alpha1.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
-		case *v2alpha1.Dashboard:
-			errors = v2alpha1.ValidateDashboardSpec(v)
+		case *v0.Dashboard:
+			errors, schemaVersionError = v0.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
+		case *v1.Dashboard:
+			errors, schemaVersionError = v1.ValidateDashboardSpec(v, alwaysLogSchemaValidationErrors)
+		case *v2.Dashboard:
+			errors = v2.ValidateDashboardSpec(v)
 		}
 	}
 

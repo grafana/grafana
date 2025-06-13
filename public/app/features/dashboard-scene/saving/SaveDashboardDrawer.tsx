@@ -1,6 +1,6 @@
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 
@@ -56,6 +56,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
     const { provisioned: isProvisioned, folderTitle } = meta;
+    const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
     const isProvisionedNG = useIsProvisionedNG(dashboard);
 
     const tabs = (
@@ -65,7 +66,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
           active={!showDiff}
           onChangeTab={() => model.setState({ showDiff: false })}
         />
-        {changesCount > 0 && (
+        {changesCount > 0 && !managedResourceCannotBeEdited && (
           <Tab
             label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
             active={showDiff}
@@ -106,7 +107,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
 
-      if (isProvisioned) {
+      if (isProvisioned || managedResourceCannotBeEdited) {
         return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 

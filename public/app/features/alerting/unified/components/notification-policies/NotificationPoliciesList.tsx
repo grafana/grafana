@@ -2,9 +2,9 @@ import { defaults } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';

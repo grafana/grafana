@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -62,7 +61,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDeleteLibraryPanelsInFolder(t *testing.T) {
+func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -106,14 +105,16 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(sc.service.folderService))
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID+"xxxx")
-			require.EqualError(t, err, guardian.ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", dashboards.ErrFolderNotFound).Error())
+			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -137,7 +138,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 		})
 }
 
-func TestGetLibraryPanelConnections(t *testing.T) {
+func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -291,19 +292,6 @@ func getCreatePanelCommand(folderID int64, folderUID string, name string) model.
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, folderUID, name string) model.CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, folderUID, name, model.VariableElement, []byte(`
-			{
-			  "datasource": "${DS_GDEV-TESTDATA}",
-			  "name": "query0",
-			  "type": "query",
-			  "description": "A description"
-			}
-		`))
-
-	return command
-}
-
 func getCreateCommandWithModel(folderID int64, folderUID, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
 		FolderUID: &folderUID,
@@ -358,8 +346,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, ac,
+		actest.FakeService{},
 		folderSvc,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -461,15 +449,13 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, ac,
-		folderSvc, fStore,
+		features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc, log.NewNopLogger())
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
@@ -536,21 +522,21 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
-			features, folderPermissions, ac,
-			folderSvc, fStore,
+			features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 			kvstore.NewFakeKVStore(),
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 		service := LibraryElementService{
 			Cfg:               cfg,
 			features:          featuremgmt.WithFeatures(),
 			SQLStore:          sqlStore,
 			folderService:     folderSvc,
 			dashboardsService: dashService,
+			AccessControl:     ac,
+			log:               log.NewNopLogger(),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear

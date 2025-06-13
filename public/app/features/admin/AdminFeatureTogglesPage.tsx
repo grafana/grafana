@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';

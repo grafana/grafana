@@ -1,7 +1,7 @@
 ---
 aliases:
   - administration/cli/
-description: Guide to using grafana cli
+description: Guide to using grafana server cli
 keywords:
   - grafana
   - cli
@@ -11,15 +11,15 @@ labels:
   products:
     - enterprise
     - oss
-title: Grafana CLI
+title: Grafana server CLI
 weight: 400
 ---
 
-# Grafana CLI
+# Grafana server CLI
 
-Grafana CLI is a small executable that's bundled with Grafana server.
+Grafana server CLI is a small executable that's bundled with Grafana server.
 You can run it on the same machine Grafana server is running on.
-Grafana CLI has `plugins` and `admin` commands, as well as global options.
+Grafana server CLI has `plugins` and `admin` commands, as well as global options.
 
 To list all commands and options:
 
@@ -27,9 +27,9 @@ To list all commands and options:
 grafana cli -h
 ```
 
-## Run Grafana CLI
+## Run Grafana server CLI
 
-To run Grafana CLI, add the path to the Grafana binaries in your `PATH` environment variable.
+To run Grafana server CLI, add the path to the Grafana binaries in your `PATH` environment variable.
 Alternately, if your current directory is the `bin` directory, run `./grafana cli`.
 Otherwise, you can specify full path to the binary.
 For example, on Linux `/usr/share/grafana/bin/grafana` and on Windows `C:\Program Files\GrafanaLabs\grafana\bin\grafana.exe`, and run it with `grafana cli`.
@@ -41,7 +41,7 @@ If you're on Windows, run Windows PowerShell as Administrator.
 
 ## Grafana CLI command syntax
 
-The general syntax for commands in Grafana CLI is:
+The general syntax for commands in Grafana server CLI is:
 
 ```bash
 grafana cli [global options] command [command options] [arguments...]
@@ -49,11 +49,11 @@ grafana cli [global options] command [command options] [arguments...]
 
 ## Global options
 
-Grafana CLI allows you to temporarily override certain Grafana default settings. Except for `--help` and `--version`, most global options are only used by developers.
+Grafana server CLI allows you to temporarily override certain Grafana default settings. Except for `--help` and `--version`, most global options are only used by developers.
 
 Each global option applies only to the command in which it is used. For example, `--pluginsDir value` does not permanently change where Grafana saves plugins. It only changes it for command in which you apply the option.
 
-### Display Grafana CLI help
+### Display Grafana server CLI help
 
 `--help` or `-h` displays the help, including default paths and Docker configuration information.
 
@@ -63,9 +63,9 @@ Each global option applies only to the command in which it is used. For example,
 grafana cli -h
 ```
 
-### Display Grafana CLI version
+### Display Grafana server CLI version
 
-`--version` or `-v` prints the version of Grafana CLI currently running.
+`--version` or `-v` prints the version of Grafana server CLI currently running.
 
 **Example:**
 
@@ -229,7 +229,7 @@ To correct this, use the `--homepath` global option to specify the Grafana defau
 grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
 ```
 
-If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
+If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the **Server Admin > User** tab.
 
 If you need to set the password in a script, then you can use the [Grafana User API](../developers/http_api/user/#change-password).
 
@@ -240,6 +240,19 @@ If you installed Grafana using Homebrew, you can reset the admin password using 
 ```bash
 /opt/homebrew/opt/grafana/bin/grafana cli --config /opt/homebrew/etc/grafana/grafana.ini --homepath /opt/homebrew/opt/grafana/share/grafana --configOverrides cfg:default.paths.data=/opt/homebrew/var/lib/grafana admin reset-admin-password <new password>
 ```
+
+#### Reset admin password for Grafana deployed with Grafana Operator and using an external database
+
+If you deploy Grafana with Grafana Operator and configure Grafana to use an external PostgreSQL or MySQL database, specify both the homepath and configuration file in your command:
+
+```bash
+grafana cli  --homepath /usr/share/grafana --config /etc/grafana/grafana.ini admin reset-admin-password <new password>
+```
+
+If you don't do this, the CLI:
+
+- Won't see the database connection information since it's in a directory outside of the Grafana homepath
+- Will configure the default SQLite database in `/var/lib/grafana` and reset that password instead of for your external database
 
 ### Migrate data and encrypt passwords
 

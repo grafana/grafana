@@ -1,10 +1,16 @@
 # Reporting security issues
 
-This product is in scope for our Bug Bounty Program. To submit a vulnerability report, please visit [Grafana Labs Bug Bounty Policy page](https://github.com/grafana/bugbounty) and follow the instructions provided. Our security team will review your submission and get back to you as soon as possible.
+If you think you have found a security vulnerability, we have two routes for reporting security issues.
+
+Important: Whichever route you choose, we ask you to not disclose the vulnerability before it has been fixed and announced, unless you received a response from the Grafana Labs security team that you can do so.
+
+[Full guidance on reporting a security issue can be found here](https://grafana.com/legal/report-a-security-issue/).
+
+This product is in scope for our Bug Bounty Program. To submit a vulnerability report, please visit [Grafana Labs Bug Bounty page](https://app.intigriti.com/programs/grafanalabs/grafanaossbbp/detail) and follow the instructions provided. Our security team will review your submission and get back to you as soon as possible.
 
 ---
 
-For any other security issues, please send an email to security@grafana.com
+For products and services outside the scope of our bug bounty program, or if you do not wish to receive a bounty, you can report issues directly to us via email at security@grafana.com. This address can be used for all of Grafana Labs’ open source and commercial products (including but not limited to Grafana, Grafana Cloud, Grafana Enterprise, and grafana.com).
 
 Please encrypt your message to us; please use our PGP key. The key fingerprint is:
 

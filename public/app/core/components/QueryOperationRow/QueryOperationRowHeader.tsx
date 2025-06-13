@@ -4,8 +4,8 @@ import { MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;

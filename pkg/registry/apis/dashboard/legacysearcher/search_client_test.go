@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/selection"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -31,7 +32,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	emptyTags, err := json.Marshal([]string{})
 	require.NoError(t, err)
 
-	dashboardKey := &resource.ResourceKey{
+	dashboardKey := &resourcepb.ResourceKey{
 		Name:     "uid",
 		Resource: dashboard.DASHBOARD_RESOURCE,
 	}
@@ -43,15 +44,15 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db", // should set type based off of key
 			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
-			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Tags: []string{"term"}},
+			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2", Tags: []string{}},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
 					Field: resource.SEARCH_FIELD_TITLE,
 				},
@@ -65,18 +66,18 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NotNil(t, resp)
 
 		searchFields := resource.StandardSearchFields()
-		require.Equal(t, &resource.ResourceSearchResponse{
+		require.Equal(t, &resourcepb.ResourceSearchResponse{
 			TotalHits: 2,
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Group:    dashboard.GROUP,
 							Resource: dashboard.DASHBOARD_RESOURCE,
@@ -89,7 +90,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 						},
 					},
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid2",
 							Group:    dashboard.GROUP,
 							Resource: dashboard.DASHBOARD_RESOURCE,
@@ -120,14 +121,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50), Tags: []string{}},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
 					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL, // "fields." prefix should be removed
 					Desc:  false,
@@ -138,22 +139,22 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		searchFields := resource.StandardSearchFields()
-		require.Equal(t, &resource.ResourceSearchResponse{
+		require.Equal(t, &resourcepb.ResourceSearchResponse{
 			TotalHits: 1,
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 					{
 						Name: "views_total",
-						Type: resource.ResourceTableColumnDefinition_INT64,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Group:    dashboard.GROUP,
 							Resource: dashboard.DASHBOARD_RESOURCE,
@@ -185,14 +186,14 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2), Tags: []string{}},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
 					Field: unisearch.DASHBOARD_ERRORS_LAST_30_DAYS,
 					Desc:  true,
@@ -203,22 +204,22 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		searchFields := resource.StandardSearchFields()
-		require.Equal(t, &resource.ResourceSearchResponse{
+		require.Equal(t, &resourcepb.ResourceSearchResponse{
 			TotalHits: 1,
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
 					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 					{
 						Name: "errors_last_30_days",
-						Type: resource.ResourceTableColumnDefinition_INT64,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Group:    dashboard.GROUP,
 							Resource: dashboard.DASHBOARD_RESOURCE,
@@ -246,13 +247,13 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{Term: "tag2", Count: 5},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+		req := &resourcepb.ResourceSearchRequest{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
 					Field: "tags",
 				},
 			},
-			Options: &resource.ListOptions{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
 		}
@@ -260,11 +261,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{},
-			Facet: map[string]*resource.ResourceSearchResponse_Facet{
+		require.Equal(t, &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{},
+			Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 				"tags": {
-					Terms: []*resource.ResourceSearchResponse_TermFacet{
+					Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
 						{
 							Term:  "tag1",
 							Count: 1,
@@ -292,8 +293,8 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
 			Query: "*test*",
@@ -317,10 +318,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
-				Labels: []*resource.Requirement{
+				Labels: []*resourcepb.Requirement{
 					{
 						Key:      utils.LabelKeyDeprecatedInternalID,
 						Operator: "in",
@@ -350,10 +351,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
-				Fields: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_TAGS,
 						Operator: "in",
@@ -390,10 +391,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
-				Fields: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_MANAGER_ID,
 						Operator: "in",
@@ -419,14 +420,18 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
-		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.Dashboard{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{
+			{
+				Dashboard:   dashboards.Dashboard{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+				ExternalID:  "test",
+				Provisioner: string(utils.ManagerKindClassicFP), // nolint:staticcheck
+			},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
-				Fields: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
 						Operator: "=",
@@ -456,10 +461,10 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
-				Fields: []*resource.Requirement{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_MANAGER_KIND,
 						Operator: "=",
@@ -493,11 +498,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
 					Field: resource.SEARCH_FIELD_TITLE,
 				},
@@ -515,11 +520,11 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", SortMeta: 100},
 		}, nil).Once()
 
-		req := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardKey,
 			},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{
 					Field: resource.SEARCH_FIELD_PREFIX + unisearch.DASHBOARD_VIEWS_TOTAL,
 				},

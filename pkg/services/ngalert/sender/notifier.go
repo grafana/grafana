@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	config_util "github.com/prometheus/common/config"
@@ -216,7 +217,7 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanag
 
 func do(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	if client == nil {
-		client = http.DefaultClient
+		client = httpclient.New()
 	}
 	return client.Do(req.WithContext(ctx))
 }

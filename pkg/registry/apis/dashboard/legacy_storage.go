@@ -10,6 +10,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -25,10 +27,11 @@ type DashboardStorage struct {
 	DashboardService dashboards.DashboardService
 }
 
-func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer, permissions dashboards.PermissionsRegistrationService) (grafanarest.Storage, error) {
+func (s *DashboardStorage) NewStore(dash utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer, permissions dashboards.PermissionsRegistrationService, ac types.AccessClient) (grafanarest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: s.Access,
-		Reg:     reg,
+		Backend:      s.Access,
+		Reg:          reg,
+		AccessClient: ac,
 	})
 	if err != nil {
 		return nil, err

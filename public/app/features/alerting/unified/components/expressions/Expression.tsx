@@ -12,8 +12,8 @@ import {
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -145,6 +145,7 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries, onQueriesValidationError]
   );
+
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
@@ -269,7 +270,10 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
             />
             <Spacer />
             <span className={styles.mutedText}>
-              <Trans i18nKey="" values={{ pageStart, pageEnd, numPages: series.length }}>
+              <Trans
+                i18nKey="alerting.expression-result.page-counter"
+                values={{ pageStart, pageEnd, numPages: series.length }}
+              >
                 {'{{pageStart}}'} - {'{{pageEnd}}'} of {'{{numPages}}'}
               </Trans>
             </span>
@@ -409,7 +413,6 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-// eslint-disable-next-line @grafana/no-untranslated-strings
 const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 

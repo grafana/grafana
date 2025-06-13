@@ -4,12 +4,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -104,13 +104,13 @@ export const SignupInvitedPage = () => {
                 label={t('invites.signup-invited-page.label-email', 'Email')}
               >
                 <Input
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="email@example.com"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: w3cStandardEmailValidator,
-                      message: 'Email is invalid',
+                      message: t('invites.signup-invited-page.message.email-is-invalid', 'Email is invalid'),
                     },
                   })}
                 />

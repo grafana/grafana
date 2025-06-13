@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Checkbox, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -87,7 +87,9 @@ const StatusIcon = ({
   if (errorMap && errorMap.has(id)) {
     return (
       <Tooltip
-        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
+        content={t('plugins.catalog.update-all.error', 'Error updating plugin: {{errorMessage}}', {
+          errorMessage: errorMap.get(id)?.message,
+        })}
       >
         <Icon className={styles.errorIcon} size="xl" name="exclamation-triangle" />
       </Tooltip>

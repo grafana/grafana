@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   maxConcurrentSessions?: number;
@@ -12,6 +12,7 @@ interface Props {
 export const TokenRevokedModal = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
   const modalStyles = getModalStyles(theme);
 
   const showMaxConcurrentSessions = Boolean(props.maxConcurrentSessions);
@@ -33,7 +34,10 @@ export const TokenRevokedModal = (props: Props) => {
         >
           <div className={styles.text}>
             <p>
-              <Trans i18nKey="" values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}>
+              <Trans
+                i18nKey="users.token-revoked-modal.auto-revoked"
+                values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}
+              >
                 Your session token was automatically revoked because you have reached{' '}
                 <strong>the maximum number of {'{{numSessions}}'} concurrent sessions</strong> for your account.
               </Trans>

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -13,10 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
-func TestGetLibraryElement(t *testing.T) {
+func TestIntegration_GetLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid

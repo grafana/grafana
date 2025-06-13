@@ -4,8 +4,8 @@ import { ReactNode, useState } from 'react';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
@@ -138,7 +138,6 @@ const renderDataSource = <TQuery extends DataQuery>(
   const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
-    // eslint-disable-next-line @grafana/no-untranslated-strings
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 

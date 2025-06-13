@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { stringifyErrorLike } from '../../utils/misc';

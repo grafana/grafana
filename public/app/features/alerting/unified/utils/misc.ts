@@ -19,6 +19,7 @@ import {
   DataSourceRuleGroupIdentifier,
   FilterState,
   RuleIdentifier,
+  RuleWithLocation,
   RulesSource,
   SilenceFilterState,
 } from 'app/types/unified-alerting';
@@ -53,6 +54,15 @@ export function createViewLinkV2(
   const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
 
   return rulesNav.detailsPageLink(ruleSourceName, identifier, returnTo ? { returnTo } : undefined);
+}
+
+export function createViewLinkFromRuleWithLocation(ruleWithLocation: RuleWithLocation) {
+  const ruleSourceName = ruleWithLocation.ruleSourceName;
+  const identifier = ruleId.fromRuleWithLocation(ruleWithLocation);
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`);
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
@@ -183,6 +193,17 @@ export function makePanelLink(dashboardUID: string, panelId: string): string {
   return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
+export function makeEditContactPointLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`, options);
+}
+
+export function makeEditTimeIntervalLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl('/alerting/routes/mute-timing/edit', {
+    ...options,
+    muteName: name,
+  });
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,
@@ -212,6 +233,7 @@ const alertStateSortScore = {
   [PromAlertingRuleState.Inactive]: 2,
   [GrafanaAlertState.NoData]: 3,
   [GrafanaAlertState.Normal]: 4,
+  [PromAlertingRuleState.Unknown]: 5,
 };
 
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {

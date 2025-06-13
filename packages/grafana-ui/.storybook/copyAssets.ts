@@ -18,7 +18,7 @@ const iconPaths = Object.keys(availableIconsIndex)
     const subDir = getIconSubDir(iconName as IconName, 'default');
     return {
       from: `../../../public/img/icons/${subDir}/${iconName}.svg`,
-      to: `./static/public/img/icons/${subDir}/${iconName}.svg`,
+      to: `./static/public/build/img/icons/${subDir}/${iconName}.svg`,
     };
   });
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, LoadingState, PanelData, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
@@ -109,7 +110,7 @@ export const QueryHeader = ({
       <EditorHeader>
         <ConfirmModal
           isOpen={showModeSwitchWarning}
-          title="Switch editor mode?"
+          title={t('components.query-header.title-switch-mode', 'Switch editor mode?')}
           body={
             pendingModeChange === LogsEditorMode.Builder
               ? 'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
@@ -130,16 +131,16 @@ export const QueryHeader = ({
         />
 
         <InlineSelect
-          label="Service"
+          label={t('components.query-header.label-service', 'Service')}
           value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
-          placeholder="Service..."
+          placeholder={t('components.query-header.placeholder-service', 'Service...')}
           allowCustomValue
           options={queryTypes}
           onChange={handleChange}
         />
         {query.queryType === AzureQueryType.LogAnalytics && query.azureLogAnalytics?.mode === LogsEditorMode.Raw && (
           <Button
-            aria-label="Azure logs kick start your query button"
+            aria-label={t('components.query-header.aria-label-kick-start', 'Azure logs kick start your query button')}
             variant="secondary"
             size="sm"
             onClick={() => {
@@ -150,7 +151,7 @@ export const QueryHeader = ({
               });
             }}
           >
-            Kick start your query
+            <Trans i18nKey="components.query-header.button-kick-start-your-query">Kick start your query</Trans>
           </Button>
         )}
         <FlexItem grow={1} />
@@ -173,7 +174,7 @@ export const QueryHeader = ({
               onClick={onRunQuery}
               data-testid={selectors.components.queryEditor.logsQueryEditor.runQuery.button}
             >
-              Run query
+              <Trans i18nKey="components.query-header.button-run-query">Run query</Trans>
             </Button>
           )}
       </EditorHeader>

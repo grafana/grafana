@@ -301,15 +301,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
-func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	if err := validAPIKeyID(keyID); err != nil {
-		return err
-	}
-	return sa.store.MigrateApiKey(ctx, orgID, keyID)
-}
 func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
@@ -386,12 +377,6 @@ func validServiceAccountUID(saUID string) error {
 func validServiceAccountTokenID(tokenID int64) error {
 	if tokenID == 0 {
 		return serviceaccounts.ErrServiceAccountInvalidTokenID.Errorf("invalid service account token ID 0 has been specified")
-	}
-	return nil
-}
-func validAPIKeyID(apiKeyID int64) error {
-	if apiKeyID == 0 {
-		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID.Errorf("invalid API key ID 0 has been specified")
 	}
 	return nil
 }

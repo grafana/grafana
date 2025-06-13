@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -20,7 +20,7 @@ import (
 )
 
 func TestCalculateChanges(t *testing.T) {
-	orgId := int64(rand.Int31())
+	orgId := int64(rand.Int32())
 	gen := models.RuleGen
 
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
@@ -117,8 +117,8 @@ func TestCalculateChanges(t *testing.T) {
 			r := models.CopyRule(rule)
 
 			// Ignore difference in the following fields as submitted models do not have them set
-			r.ID = int64(rand.Int31())
-			r.Version = int64(rand.Int31())
+			r.ID = int64(rand.Int32())
+			r.Version = int64(rand.Int32())
 			r.Updated = r.Updated.Add(1 * time.Minute)
 
 			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *r})
@@ -301,7 +301,7 @@ func TestCalculateChanges(t *testing.T) {
 }
 
 func TestCalculateAutomaticChanges(t *testing.T) {
-	orgID := rand.Int63()
+	orgID := rand.Int64()
 	gen := models.RuleGen
 
 	t.Run("should mark all rules in affected groups", func(t *testing.T) {
@@ -361,7 +361,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		group2 := models.GenerateGroupKey(orgID)
 		rules2 := gen.With(gen.WithGroupKey(group2), gen.WithSequentialGroupIndex()).GenerateManyRef(4)
 
-		movedIndex := rand.Intn(len(rules2))
+		movedIndex := rand.IntN(len(rules2))
 		movedRule := rules2[movedIndex]
 		copyRule := models.CopyRule(movedRule)
 		copyRule.RuleGroup = group.RuleGroup
@@ -437,7 +437,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 }
 
 func TestCalculateRuleGroupsDelete(t *testing.T) {
-	orgId := int64(rand.Int31())
+	orgId := int64(rand.Int32())
 	gen := models.RuleGen
 
 	t.Run("returns ErrAlertRuleGroupNotFound when namespace has no rules", func(t *testing.T) {

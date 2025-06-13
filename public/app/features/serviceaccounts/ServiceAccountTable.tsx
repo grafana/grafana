@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -15,7 +16,6 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
@@ -124,7 +124,7 @@ const getCellContent = (
     return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
   }
   const href = `/org/serviceaccounts/${original.uid}`;
-  const ariaLabel = `Edit service account's ${name} details`;
+  const ariaLabel = `Edit service account's ${original.name} details`;
   switch (columnName) {
     case 'avatarUrl':
       return (

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';

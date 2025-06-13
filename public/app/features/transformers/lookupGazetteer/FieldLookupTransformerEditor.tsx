@@ -10,9 +10,9 @@ import {
   FieldType,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

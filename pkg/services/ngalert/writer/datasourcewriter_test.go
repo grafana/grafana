@@ -120,6 +120,30 @@ func TestDatasourceWriter(t *testing.T) {
 		err := writer.WriteDatasource(context.Background(), "", "metric", time.Now(), frames, 1, map[string]string{})
 		require.NoError(t, err)
 	})
+
+	t.Run("when custom headers are configured, they are passed to the request", func(t *testing.T) {
+		datasources.Reset()
+
+		header1 := "X-Custom-Header"
+		header2 := "X-Another-Header"
+		headers := map[string]string{
+			header1: "test-value",
+			header2: "another-value",
+		}
+
+		cfg = DatasourceWriterConfig{
+			Timeout:              time.Second * 5,
+			DefaultDatasourceUID: "prom-2",
+			CustomHeaders:        headers,
+		}
+		writer = NewDatasourceWriter(cfg, datasources, httpclient.NewProvider(), clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		assert.Equal(t, headers[header1], datasources.prom1.LastHeaders.Get(header1))
+		assert.Equal(t, headers[header2], datasources.prom1.LastHeaders.Get(header2))
+	})
 }
 
 func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {

@@ -328,10 +328,8 @@ describe('getDefinition', () => {
 describe('getOptionDataSourceTypes', () => {
   it('should return all data source types when no data source types are specified', () => {
     const optionTypes = getOptionDataSourceTypes();
-    expect(optionTypes).toHaveLength(2);
-    // in the old code we always had an empty option
-    expect(optionTypes[0].value).toBe('');
-    expect(optionTypes[1].label).toBe('ds1');
+    expect(optionTypes).toHaveLength(1);
+    expect(optionTypes[0].label).toBe('ds1');
   });
 });
 

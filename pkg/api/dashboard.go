@@ -12,8 +12,10 @@ import (
 	"strconv"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	claims "github.com/grafana/authlib/types"
-	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -36,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -535,12 +536,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if newDashboard {
-		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	}
-
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
 	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
@@ -585,16 +580,15 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	if preference.HomeDashboardID == 0 && len(homePage) > 0 {
+	if preference.HomeDashboardUID == "" && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(http.StatusOK, &homePageRedirect)
 	}
 
-	if preference.HomeDashboardID != 0 {
-		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
-		slugQueryResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+	if preference.HomeDashboardUID != "" {
+		slugQueryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: preference.HomeDashboardUID, OrgID: c.GetOrgID()})
 		if err == nil {
-			url := dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
+			url := dashboards.GetDashboardURL(preference.HomeDashboardUID, slugQueryResult.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}

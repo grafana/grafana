@@ -11,6 +11,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"reflect"
 	"runtime"
@@ -23,8 +24,6 @@ import (
 const (
 	// Version show the xorm's version
 	Version string = "0.8.0.1015"
-
-	Spanner = "spanner"
 )
 
 func regDrvsNDialects() bool {
@@ -95,17 +94,12 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		tagHandlers:     defaultTagHandlers,
 		defaultContext:  context.Background(),
 		timestampFormat: "2006-01-02 15:04:05",
+		randomIDGen:     newSnowflake(rand.Int64N(1024)).Generate,
 	}
 
 	switch uri.DbType {
 	case core.SQLITE:
 		engine.DatabaseTZ = time.UTC
-	case Spanner:
-		engine.DatabaseTZ = time.UTC
-		// We need to specify "Z" to indicate that timestamp is in UTC.
-		// Otherwise Spanner uses default America/Los_Angeles timezone.
-		// https://cloud.google.com/spanner/docs/reference/standard-sql/data-types#time_zones
-		engine.timestampFormat = "2006-01-02 15:04:05Z"
 	default:
 		engine.DatabaseTZ = time.Local
 	}

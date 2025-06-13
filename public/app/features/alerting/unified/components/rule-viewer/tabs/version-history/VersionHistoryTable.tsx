@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Checkbox, Column, InteractiveTable, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { computeVersionDiff } from 'app/features/alerting/unified/utils/diff';
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -127,9 +127,8 @@ export function VersionHistoryTable({
 
         return (
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
-            {isFirstItem ? (
-              <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
-            ) : canRestore ? (
+            {isFirstItem && <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />}
+            {!isFirstItem && canRestore && (
               <>
                 <Button
                   variant="secondary"
@@ -153,7 +152,7 @@ export function VersionHistoryTable({
                   <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
                 </Button>
               </>
-            ) : null}
+            )}
           </Stack>
         );
       },

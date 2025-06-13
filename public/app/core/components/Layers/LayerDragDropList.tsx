@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { LayerName } from './LayerName';
 import { LayerElement } from './types';

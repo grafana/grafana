@@ -19,7 +19,7 @@ import {
   TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
@@ -205,6 +205,10 @@ export class DatasourceSrv implements DataSourceService {
       const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
+      if (!instance.userStorage) {
+        // DatasourceApi does not instantiate a userStorage property, but DataSourceWithBackend does
+        instance.userStorage = new UserStorage(instanceSettings.type);
+      }
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {
@@ -259,8 +263,14 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.filter && !filters.filter(x)) {
         return false;
       }
-      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
-        return false;
+      if (filters.type) {
+        if (Array.isArray(filters.type)) {
+          if (!filters.type.includes(x.type)) {
+            return false;
+          }
+        } else if (!(x.type === filters.type || x.meta.aliasIDs?.includes(filters.type!))) {
+          return false;
+        }
       }
       if (
         !filters.all &&

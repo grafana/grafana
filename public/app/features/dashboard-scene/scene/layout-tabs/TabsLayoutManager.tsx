@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObjectBase,
@@ -7,7 +8,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { t } from 'app/core/internationalization';
 
 import {
   NewObjectAddedToCanvasEvent,

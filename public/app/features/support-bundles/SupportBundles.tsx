@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { loadBundles, removeBundle, checkBundles } from './state/actions';

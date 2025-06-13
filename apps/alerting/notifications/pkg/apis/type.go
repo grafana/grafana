@@ -1,5 +1,20 @@
 package apis
 
-import "k8s.io/apimachinery/pkg/runtime/schema"
+import (
+	sdkResource "github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-var GroupVersion = schema.GroupVersion{Group: "notifications.alerting.grafana.app", Version: "v0alpha1"}
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+)
+
+func GetKinds() map[schema.GroupVersion][]sdkResource.Kind {
+	result := map[schema.GroupVersion][]sdkResource.Kind{
+		v0alpha1.GroupVersion: {
+			v0alpha1.ReceiverKind(),
+			v0alpha1.RoutingTreeKind(),
+			v0alpha1.TemplateGroupKind(),
+			v0alpha1.TimeIntervalKind(),
+		},
+	}
+	return result
+}

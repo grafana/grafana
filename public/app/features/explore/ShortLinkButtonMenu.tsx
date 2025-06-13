@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { IconName } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { useSelector } from 'app/types';
@@ -26,16 +26,15 @@ interface ShortLinkMenuItemData {
   absTime: boolean;
 }
 
-const defaultMode: ShortLinkMenuItemData = {
-  key: 'copy-link',
-  label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
-  icon: 'share-alt',
-  getUrl: () => undefined,
-  shorten: true,
-  absTime: false,
-};
-
 export function ShortLinkButtonMenu() {
+  const defaultMode: ShortLinkMenuItemData = {
+    key: 'copy-link',
+    label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
+    icon: 'share-alt',
+    getUrl: () => undefined,
+    shorten: true,
+    absTime: false,
+  };
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);

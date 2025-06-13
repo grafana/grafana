@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -127,18 +128,38 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "should return true if no resource is specified",
+			name: "should check general folder scope for root level resource creation",
 			permissions: []accesscontrol.Permission{
 				{
-					Action: "folders:create",
+					Action:     "dashboards:create",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
 				},
 			},
 			check: CheckRequest{
-				Action:   "folders:create",
-				Group:    "folder.grafana.app",
-				Resource: "folders",
+				Action:   "dashboards:create",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Verb:     utils.VerbCreate,
 			},
 			expected: true,
+		},
+		{
+			name: "should fail if user doesn't have general folder scope for root level resource creation",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "dashboards:create",
+				},
+			},
+			check: CheckRequest{
+				Action:   "dashboards:create",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Verb:     utils.VerbCreate,
+			},
+			expected: false,
 		},
 		{
 			name:        "should return false if user has no permissions on resource",
@@ -171,6 +192,92 @@ func TestService_checkPermission(t *testing.T) {
 				Resource:     "dashboards",
 				Name:         "some_dashboard",
 				ParentFolder: "child",
+			},
+			expected: true,
+		},
+		{
+			name: "should allow creating a nested resource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: CheckRequest{
+				Action:       "dashboards:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny creating a nested resource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: CheckRequest{
+				Action:       "dashboards:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "other_parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: false,
+		},
+		{
+			name: "should allow if it's an any check",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: CheckRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should return true for datasources if service has permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "datasources:query",
+					Scope:      "datasources:uid:some_datasource",
+					Kind:       "datasources",
+					Attribute:  "uid",
+					Identifier: "some_datasource",
+				},
+			},
+			check: CheckRequest{
+				Action:   "datasources:query",
+				Group:    "query.grafana.app",
+				Resource: "query",
+				Name:     "some_datasource",
+				Verb:     utils.VerbCreate,
 			},
 			expected: true,
 		},
@@ -1409,17 +1516,18 @@ func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
 	fStore := &fakeStore{}
+	tracer := tracing.NewNoopTracerService()
 	return &Service{
 		logger:          logger,
 		mapper:          newMapper(),
-		tracer:          tracing.NewNoopTracerService(),
+		tracer:          tracer,
 		metrics:         newMetrics(nil),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, shortCacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, tracer, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
 		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,

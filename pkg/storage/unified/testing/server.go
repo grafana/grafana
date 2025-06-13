@@ -7,9 +7,12 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -137,7 +140,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 
 			ctx := types.WithAuthInfo(context.Background(), testUser)
 
-			key := &resource.ResourceKey{
+			key := &resourcepb.ResourceKey{
 				Group:     "test.grafana.app",
 				Resource:  "testresources",
 				Namespace: nsPrefix + "-ns1",
@@ -163,7 +166,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 				}`, resourceName, resourceUID, nsPrefix+"-ns1", tc.initialFolder, i)
 
 				checksPerformed = []types.CheckRequest{}
-				created, err := server.Create(ctx, &resource.CreateRequest{
+				created, err := server.Create(ctx, &resourcepb.CreateRequest{
 					Value: []byte(resourceJSON),
 					Key:   key,
 				})
@@ -202,7 +205,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 
 				// Override permissions for initial creation to always succeed
 				mockAccess.allowed = true
-				created, err := server.Create(ctx, &resource.CreateRequest{
+				created, err := server.Create(ctx, &resourcepb.CreateRequest{
 					Value: []byte(initialResourceJSON),
 					Key:   key,
 				})
@@ -229,7 +232,7 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 				mockAccess.allowed = false // Reset to use the map
 				checksPerformed = []types.CheckRequest{}
 
-				updated, err := server.Update(ctx, &resource.UpdateRequest{
+				updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
 					Key:             key,
 					Value:           []byte(targetResourceJSON),
 					ResourceVersion: created.ResourceVersion,

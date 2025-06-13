@@ -9,6 +9,7 @@ import FlameGraphContainer from './FlameGraphContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useMeasure: () => {
     const ref = useRef();
     return [ref, { width: 1600 }];

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
@@ -57,7 +57,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         size={buttonSize}
         key="edit"
         variant="secondary"
-        icon="pen"
+        fill="text"
         href={editURL}
       >
         <Trans i18nKey="common.edit">Edit</Trans>
@@ -66,10 +66,11 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   }
 
   return (
-    <Stack gap={1} alignItems="center" wrap="nowrap">
+    <Stack gap={0} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
         buttonSize={buttonSize}
+        fill="text"
         rulerRule={rule}
         promRule={promRule}
         groupIdentifier={groupIdentifier}

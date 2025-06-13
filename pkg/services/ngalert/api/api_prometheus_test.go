@@ -349,7 +349,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that only has one query", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -390,6 +390,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -411,9 +412,91 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Fullpath), string(r.Body()))
 	})
 
+	t.Run("with a rule that is paused", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(true))
+		folder := fakeStore.Folders[orgID][0]
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, fmt.Sprintf(`
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "rule-group",
+			"file": "%s",
+			"folderUid": "namespaceUID",
+			"rules": [{
+				"state": "inactive",
+				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
+				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
+				"alerts": [{
+					"labels": {
+						"job": "prometheus"
+					},
+					"annotations": {
+						"severity": "critical"
+					},
+					"state": "Normal",
+					"activeAt": "0001-01-01T00:00:00Z",
+					"value": ""
+				}],
+				"totals": {
+					"normal": 1
+				},
+				"totalsFiltered": {
+					"normal": 1
+				},
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value"
+				},
+				"health": "ok",
+				"isPaused": true,
+				"type": "alerting",
+				"lastEvaluation": "2022-03-10T14:01:00Z",
+				"duration": 180,
+				"keepFiringFor": 10,
+				"evaluationTime": 60
+			}],
+			"totals": {
+				"inactive": 1
+			},
+			"interval": 60,
+			"lastEvaluation": "2022-03-10T14:01:00Z",
+			"evaluationTime": 60
+		}],
+		"totals": {
+			"inactive": 1
+		}
+	}
+}
+`, folder.Fullpath), string(r.Body()))
+	})
+
+	t.Run("with a rule that has notification settings", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		notificationSettings := ngmodels.NotificationSettings{
+			Receiver: "test-receiver",
+			GroupBy:  []string{"job"},
+		}
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(notificationSettings), gen.WithIsPaused(false))
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
+	})
+
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
@@ -461,6 +544,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__alert_rule_uid__": "RuleUID"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -484,7 +568,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -525,6 +609,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -1684,11 +1769,11 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 	return fakeStore, fakeAIM, api
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator, additionalMutators ...ngmodels.AlertRuleMutator) {
 	t.Helper()
 
 	gen := ngmodels.RuleGen
-	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
+	r := gen.With(append([]ngmodels.AlertRuleMutator{gen.WithOrgID(orgID), asFixture(), query}, additionalMutators...)...).GenerateRef()
 
 	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{

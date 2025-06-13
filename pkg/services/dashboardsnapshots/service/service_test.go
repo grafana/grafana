@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -112,9 +111,9 @@ func TestValidateDashboardExists(t *testing.T) {
 		folderimpl.ProvideDashboardFolderStore(sqlStore),
 		feats,
 		nil,
-		acmock.New(),
+		actest.FakeAccessControl{},
+		actest.FakeService{},
 		foldertest.NewFakeService(),
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,

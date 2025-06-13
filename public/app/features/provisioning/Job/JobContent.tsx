@@ -1,6 +1,6 @@
+import { Trans, t } from '@grafana/i18n';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
+import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
@@ -17,7 +17,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
     return null;
   }
 
-  const { state, message, progress, summary } = job.status;
+  const { state, message, progress, summary, errors } = job.status;
   const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
 
   const getStatusDisplay = () => {
@@ -35,7 +35,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
             severity="error"
             title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
           >
-            {message}
+            {message ?? errors?.join('\n')}
           </Alert>
         );
     }

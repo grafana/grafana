@@ -334,7 +334,6 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			}
 
 			if len(tags) > 0 {
-				// "at" is a keyword in Spanner and needs to be quoted.
 				tagsSubQuery := fmt.Sprintf(`
 			SELECT SUM(1) FROM annotation_tag `+r.db.Quote("at")+`
 			INNER JOIN tag on tag.id = `+r.db.Quote("at")+`.tag_id
@@ -476,8 +475,16 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
-		sql.WriteString(` AND (` + tagKey + ` ` + r.db.GetDialect().LikeStr() + ` ? OR ` + tagValue + ` ` + r.db.GetDialect().LikeStr() + ` ?)`)
-		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (`)
+		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(" OR ")
+
+		s, p = r.db.GetDialect().LikeOperator(tagValue, true, query.Tag, true)
+		sql.WriteString(s)
+		params = append(params, p)
+		sql.WriteString(")")
 
 		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
 		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)

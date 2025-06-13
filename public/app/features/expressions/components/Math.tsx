@@ -3,8 +3,8 @@ import { ChangeEvent } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ExpressionQuery } from '../types';
 
@@ -43,7 +43,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
                 <div className={styles.documentationContainer}>
                   <div>
                     <Trans
-                      i18nKey=""
+                      i18nKey="expressions.math.run-math-operations"
                       values={{
                         refExample: '${refId}',
                         ref1: '$A',

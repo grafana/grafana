@@ -1,4 +1,4 @@
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
 
 export function BranchValidationError() {
   return (

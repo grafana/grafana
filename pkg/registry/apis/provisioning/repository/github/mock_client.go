@@ -80,55 +80,6 @@ func (_c *MockClient_BranchExists_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
-// ClearAllPullRequestFileComments provides a mock function with given fields: ctx, owner, repository, number
-func (_m *MockClient) ClearAllPullRequestFileComments(ctx context.Context, owner string, repository string, number int) error {
-	ret := _m.Called(ctx, owner, repository, number)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ClearAllPullRequestFileComments")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) error); ok {
-		r0 = rf(ctx, owner, repository, number)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockClient_ClearAllPullRequestFileComments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearAllPullRequestFileComments'
-type MockClient_ClearAllPullRequestFileComments_Call struct {
-	*mock.Call
-}
-
-// ClearAllPullRequestFileComments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repository string
-//   - number int
-func (_e *MockClient_Expecter) ClearAllPullRequestFileComments(ctx interface{}, owner interface{}, repository interface{}, number interface{}) *MockClient_ClearAllPullRequestFileComments_Call {
-	return &MockClient_ClearAllPullRequestFileComments_Call{Call: _e.mock.On("ClearAllPullRequestFileComments", ctx, owner, repository, number)}
-}
-
-func (_c *MockClient_ClearAllPullRequestFileComments_Call) Run(run func(ctx context.Context, owner string, repository string, number int)) *MockClient_ClearAllPullRequestFileComments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int))
-	})
-	return _c
-}
-
-func (_c *MockClient_ClearAllPullRequestFileComments_Call) Return(_a0 error) *MockClient_ClearAllPullRequestFileComments_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockClient_ClearAllPullRequestFileComments_Call) RunAndReturn(run func(context.Context, string, string, int) error) *MockClient_ClearAllPullRequestFileComments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Commits provides a mock function with given fields: ctx, owner, repository, path, branch
 func (_m *MockClient) Commits(ctx context.Context, owner string, repository string, path string, branch string) ([]Commit, error) {
 	ret := _m.Called(ctx, owner, repository, path, branch)
@@ -401,56 +352,6 @@ func (_c *MockClient_CreatePullRequestComment_Call) Return(_a0 error) *MockClien
 }
 
 func (_c *MockClient_CreatePullRequestComment_Call) RunAndReturn(run func(context.Context, string, string, int, string) error) *MockClient_CreatePullRequestComment_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreatePullRequestFileComment provides a mock function with given fields: ctx, owner, repository, number, comment
-func (_m *MockClient) CreatePullRequestFileComment(ctx context.Context, owner string, repository string, number int, comment FileComment) error {
-	ret := _m.Called(ctx, owner, repository, number, comment)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreatePullRequestFileComment")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, FileComment) error); ok {
-		r0 = rf(ctx, owner, repository, number, comment)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockClient_CreatePullRequestFileComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePullRequestFileComment'
-type MockClient_CreatePullRequestFileComment_Call struct {
-	*mock.Call
-}
-
-// CreatePullRequestFileComment is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repository string
-//   - number int
-//   - comment FileComment
-func (_e *MockClient_Expecter) CreatePullRequestFileComment(ctx interface{}, owner interface{}, repository interface{}, number interface{}, comment interface{}) *MockClient_CreatePullRequestFileComment_Call {
-	return &MockClient_CreatePullRequestFileComment_Call{Call: _e.mock.On("CreatePullRequestFileComment", ctx, owner, repository, number, comment)}
-}
-
-func (_c *MockClient_CreatePullRequestFileComment_Call) Run(run func(ctx context.Context, owner string, repository string, number int, comment FileComment)) *MockClient_CreatePullRequestFileComment_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int), args[4].(FileComment))
-	})
-	return _c
-}
-
-func (_c *MockClient_CreatePullRequestFileComment_Call) Return(_a0 error) *MockClient_CreatePullRequestFileComment_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockClient_CreatePullRequestFileComment_Call) RunAndReturn(run func(context.Context, string, string, int, FileComment) error) *MockClient_CreatePullRequestFileComment_Call {
 	_c.Call.Return(run)
 	return _c
 }

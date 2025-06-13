@@ -2,12 +2,12 @@ package apistore
 
 import (
 	"context"
+	"math/rand/v2"
 	"testing"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,7 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	authtypes "github.com/grafana/authlib/types"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -26,7 +26,7 @@ var rtcodecs = serializer.NewCodecFactory(rtscheme)
 
 func TestPrepareObjectForStorage(t *testing.T) {
 	_ = dashv1.AddToScheme(rtscheme)
-	node, err := snowflake.NewNode(rand.Int63n(1024))
+	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 	s := &Storage{
 		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
@@ -321,7 +321,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 
 func TestPrepareLargeObjectForStorage(t *testing.T) {
 	_ = dashv1.AddToScheme(rtscheme)
-	node, err := snowflake.NewNode(rand.Int63n(1024))
+	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 
 	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authtypes.TypeUser})

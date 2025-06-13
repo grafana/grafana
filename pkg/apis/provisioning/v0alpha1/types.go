@@ -206,7 +206,7 @@ type RepositoryList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []Repository `json:"items,omitempty"`
+	Items []Repository `json:"items"`
 }
 
 // The kubernetes action required when loading a given resource
@@ -317,7 +317,7 @@ type FileList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []FileItem `json:"items,omitempty"`
+	Items []FileItem `json:"items"`
 }
 
 type FileItem struct {
@@ -335,7 +335,7 @@ type ResourceList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []ResourceListItem `json:"items,omitempty"`
+	Items []ResourceListItem `json:"items"`
 }
 
 type ResourceListItem struct {
@@ -411,7 +411,7 @@ type HistoryList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []HistoryItem `json:"items,omitempty"`
+	Items []HistoryItem `json:"items"`
 }
 
 type Author struct {

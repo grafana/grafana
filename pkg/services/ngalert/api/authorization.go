@@ -52,7 +52,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
 		)
-	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}",
+		http.MethodPatch + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAll(
@@ -145,6 +146,12 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleDelete),
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
+
+	case http.MethodPost + "/api/convert/api/v1/alerts",
+		http.MethodDelete + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+	case http.MethodGet + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// Alert Instances and Silences
 

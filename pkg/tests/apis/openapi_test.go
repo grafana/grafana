@@ -71,7 +71,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "dashboard.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}, {
 		Group:   "dashboard.grafana.app",
 		Version: "v2alpha1",

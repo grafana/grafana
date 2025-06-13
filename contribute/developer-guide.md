@@ -21,13 +21,6 @@ brew install go
 brew install node@22
 ```
 
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
-
 ### Windows
 
 If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
@@ -42,6 +35,15 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
 
 ### Configure precommit hooks
 
@@ -421,6 +423,10 @@ Set NODE_OPTIONS="--max-old-space-size=8192"
 ### Getting `AggregateError` when building frontend tests
 
 If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
+
+### Getting `error reading debug_info: decoding dwarf section line_str at offset` trying to run VSCode debugger
+
+If you are trying to run the server from VS code and get this error, run `go install github.com/go-delve/delve/cmd/dlv@master` in the terminal.
 
 ## Next steps
 

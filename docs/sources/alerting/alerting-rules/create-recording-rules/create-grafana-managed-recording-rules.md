@@ -63,20 +63,17 @@ To configure Grafana-managed recording rules, complete the following steps.
 
 This section only applies to Grafana OSS and Grafana Enterprise.
 
-First, enable the `grafanaManagedRecordingRules` [feature flag](ref:configure-feature-toggles).
-
-Then, enable the feature by setting `enabled = true` in the `[recording_rules]` section of the Grafana config .ini. Provide the URL of your Prometheus-compatible remote-write endpoint in the `url` field, along with optional credentials or headers.
+If a rule does not explicitly specify a target data source for writing (for example, if it was created before Grafana 12.1), Grafana will fall back to the `default_datasource_uid` set in the configuration:
 
 ```
 [recording_rules]
-enabled = true
-url = http://my-example-prometheus.local:9090/api/prom/push
-basic_auth_username = my-user
-basic_auth_password = my-pass
-
-[recording_rules.custom_headers]
-X-My-Header = MyValue
+default_datasource_uid = my-uid
 ```
+
+If you previously configured recording rules using the `url` and `basic_auth_*` configuration options, these are no longer supported. You must either:
+
+- Set `default_datasource_uid` in the `[recording_rules]` section of the configuration file to point to the target data source
+- Or, before upgrading to Grafana 12.1, enable the `grafanaManagedRecordingRulesDatasources` feature flag and update each recording rule individually to include a target data source
 
 ## Add new recording rule
 

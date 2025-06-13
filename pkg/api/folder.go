@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -206,10 +205,6 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 		}
 	}
 
-	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-
 	folderDTO, err := hs.newToFolderDto(c, folder)
 	if err != nil {
 		return response.Err(err)
@@ -226,7 +221,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
@@ -246,7 +241,17 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	}
 
 	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		hs.accesscontrolService.ClearUserPermissionCache(user)
+	}
+
+	return nil
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
@@ -381,15 +386,16 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		g, err := guardian.NewByFolder(c.Req.Context(), f, c.GetOrgID(), c.SignedInUser)
-		if err != nil {
-			return dtos.Folder{}, err
-		}
-
-		canEdit, _ := g.CanEdit()
-		canSave, _ := g.CanSave()
-		canAdmin, _ := g.CanAdmin()
-		canDelete, _ := g.CanDelete()
+		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		canEdit, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canEditEvaluator)
+		canSave := canEdit
+		canAdminEvaluator := accesscontrol.EvalAll(
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+		)
+		canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canAdminEvaluator)
+		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+		canDelete, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canDeleteEvaluator)
 
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
@@ -403,7 +409,8 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
 
 		if checkCanView {
-			canView, _ := g.CanView()
+			canViewEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
+			canView, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canViewEvaluator)
 			if !canView {
 				return dtos.Folder{
 					UID:   REDACTED,

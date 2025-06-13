@@ -1,7 +1,7 @@
 import { IconName } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BadgeColor } from '@grafana/ui';
 import { RevisionModel } from 'app/core/components/VersionHistory/VersionHistoryComparison';
-import { t } from 'app/core/internationalization';
 import {
   GrafanaAlertRuleDTOField,
   GrafanaRuleDefinition,

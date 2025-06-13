@@ -10,7 +10,12 @@ import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
 interface UseGeneratorHookOptions {
+  /**
+   * Whether to populate the RTKQ cache with the groups.
+   * Populating cache might harm performance when fetching a lot of groups or fetching multiple pages
+   */
   populateCache?: boolean;
+  limitAlerts?: number;
 }
 
 interface FetchGroupsOptions {
@@ -58,7 +63,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
 
   const getGroupsAndProvideCache = useCallback(
     async (fetchOptions: FetchGroupsOptions) => {
-      const response = await getGrafanaGroups(fetchOptions).unwrap();
+      const response = await getGrafanaGroups({ ...fetchOptions, limitAlerts: hookOptions.limitAlerts }).unwrap();
 
       // This is not mandatory to preload ruler rules, but it improves the UX
       // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
@@ -74,7 +79,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
           await dispatch(
             prometheusApi.util.upsertQueryData(
               'getGrafanaGroups',
-              { folderUid: group.folderUid, groupName: group.name },
+              { folderUid: group.folderUid, groupName: group.name, limitAlerts: hookOptions.limitAlerts },
               { data: { groups: [group] }, status: 'success' }
             )
           );
@@ -85,7 +90,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
 
       return response;
     },
-    [getGrafanaGroups, dispatch, hookOptions.populateCache]
+    [getGrafanaGroups, dispatch, hookOptions.populateCache, hookOptions.limitAlerts]
   );
 
   return useCallback(

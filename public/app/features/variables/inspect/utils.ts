@@ -1,4 +1,5 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -332,7 +333,9 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
     const { variable, tree } = usage;
     const result: UsagesToNetwork = {
       variable,
-      nodes: [{ id: 'dashboard', label: 'dashboard' }],
+      nodes: [
+        { id: 'dashboard', label: t('variables.transform-usages-to-network.result.label.dashboard', 'dashboard') },
+      ],
       edges: [],
       showGraph: false,
     };

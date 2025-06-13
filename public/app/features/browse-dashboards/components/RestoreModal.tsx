@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { Trans, t } from '../../../core/internationalization';
 
 export interface RestoreModalProps {
   isOpen: boolean;
@@ -30,6 +30,7 @@ export const RestoreModal = ({
       ? dashboardOrigin[0]
       : undefined;
   });
+
   const numberOfDashboards = selectedDashboards.length;
 
   const onRestore = async () => {

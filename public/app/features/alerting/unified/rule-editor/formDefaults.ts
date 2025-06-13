@@ -36,6 +36,15 @@ export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
 );
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+  const type = (() => {
+    if (canCreateGrafanaRules) {
+      return RuleFormType.grafana;
+    }
+    if (canCreateCloudRules) {
+      return RuleFormType.cloudAlerting;
+    }
+    return undefined;
+  })();
 
   return Object.freeze({
     name: '',
@@ -43,7 +52,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     labels: [{ key: '', value: '' }],
     annotations: defaultAnnotations,
     dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
-    type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
+    type, // viewers can't create prom alerts
     group: '',
 
     // grafana
@@ -62,6 +71,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(),
+    targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
 
     // cortex / loki
     namespace: '',
@@ -72,12 +82,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
 };
 
 export const getDefautManualRouting = () => {
-  // first check if feature toggle for simplified routing is enabled
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
-  if (!simplifiedRoutingToggleEnabled) {
-    return false;
-  }
-  //then, check in local storage if the user has enabled simplified routing
+  // check in local storage
   // if it's not set, we'll default to true
   const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
@@ -116,7 +121,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-        type: type || RuleFormType.grafana,
+        type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
         evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )

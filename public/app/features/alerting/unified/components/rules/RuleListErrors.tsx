@@ -4,8 +4,8 @@ import { FC, ReactElement, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
@@ -49,7 +49,7 @@ export function RuleListErrors(): ReactElement {
         </>
       );
     }
-    if (true) {
+    if (grafanaRulerError) {
       result.push(
         <>
           <Trans i18nKey="alerting.rule-list-errors.failed-to-load-grafana-rules-config">
@@ -147,7 +147,10 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
 
   return (
     <div className={styles.floatRight}>
-      <Tooltip content="Show all errors" placement="bottom">
+      <Tooltip
+        content={t('alerting.error-summary-button.content-show-all-errors', 'Show all errors')}
+        placement="bottom"
+      >
         <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
           <Trans i18nKey="alerting.rule-list-errors.button-errors" count={count}>
             {'{{count}}'} errors

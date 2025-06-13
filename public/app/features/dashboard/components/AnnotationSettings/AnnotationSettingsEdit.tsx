@@ -11,6 +11,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
@@ -28,7 +29,6 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
-import { Trans, t } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 

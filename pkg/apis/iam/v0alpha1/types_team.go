@@ -31,7 +31,7 @@ type TeamList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Team `json:"items,omitempty"`
+	Items []Team `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -52,7 +52,7 @@ type TeamBindingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []TeamBinding `json:"items,omitempty"`
+	Items []TeamBinding `json:"items"`
 }
 
 type TeamSubject struct {
@@ -73,7 +73,7 @@ type TeamMemberList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []TeamMember `json:"items,omitempty"`
+	Items []TeamMember `json:"items"`
 }
 
 type TeamMember struct {

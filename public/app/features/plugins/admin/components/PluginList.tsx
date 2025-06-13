@@ -1,8 +1,8 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 
@@ -15,6 +15,7 @@ interface Props {
 
 export const PluginList = ({ plugins, isLoading }: Props) => {
   const { pathname } = useLocation();
+
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   if (!isLoading && plugins.length === 0) {
