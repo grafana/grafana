@@ -1,7 +1,6 @@
 import { ReactNode, useMemo, useRef } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -96,9 +95,9 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
         valueBeforeEdit.current = e.currentTarget.value;
       }}
       onBlur={(e) => {
-        // If the title input is currently focused and we click undo/redo
-        // we don't want to mess with the stack
-        if (undoRedoWasClicked(e)) {
+        const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = titleUnchanged || undoRedoWasClicked(e);
+        if (shouldSkip) {
           return;
         }
 
@@ -127,9 +126,9 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
         valueBeforeEdit.current = e.currentTarget.value;
       }}
       onBlur={(e) => {
-        // If the title input is currently focused and we click undo/redo
-        // we don't want to mess with the stack
-        if (undoRedoWasClicked(e)) {
+        const descriptionUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = descriptionUnchanged || undoRedoWasClicked(e);
+        if (shouldSkip) {
           return;
         }
 
