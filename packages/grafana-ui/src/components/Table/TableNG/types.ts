@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -79,7 +80,8 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  'Nested frames'?: DataFrame[];
+  __nestedFrames?: DataFrame[];
+  __expanded?: boolean; // For row expansion state
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
@@ -166,7 +168,7 @@ export interface TableCellNGProps {
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
   height: number;
-  onCellExpand: () => void;
+  onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 

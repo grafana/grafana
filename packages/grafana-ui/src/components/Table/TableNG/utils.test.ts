@@ -306,7 +306,7 @@ describe('TableNG utils', () => {
         { name: 'Time', type: FieldType.time, values: [1, 2] },
         { name: 'Value', type: FieldType.number, values: [10, 20] },
         {
-          name: 'Nested frames',
+          name: '__nestedFrames',
           type: FieldType.nestedFrames,
           values: [
             [

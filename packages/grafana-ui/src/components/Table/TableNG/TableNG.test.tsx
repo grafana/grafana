@@ -6,7 +6,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 
 import { PanelContext } from '../../PanelChrome';
 
-import { TableNG, onRowHover, onRowLeave } from './TableNG';
+import { TableNG } from './TableNG';
 
 // Create a basic data frame for testing
 const createBasicDataFrame = (): DataFrame => {
@@ -141,7 +141,7 @@ const createNestedDataFrame = (): DataFrame => {
         config: { custom: { hidden: true } },
       },
       {
-        name: 'Nested frames',
+        name: '__nestedFrames',
         type: FieldType.nestedFrames,
         values: [[processedNestedFrame], [processedNestedFrame]],
         config: { custom: {} },

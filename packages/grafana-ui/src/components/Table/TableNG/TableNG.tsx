@@ -24,6 +24,7 @@ import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
+import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import {
@@ -43,7 +44,9 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   getFooterStyles,
+  getIsNestedTable,
   getTextAlign,
+  getVisibleFields,
   handleSort,
   shouldTextOverflow,
 } from './utils';
@@ -64,7 +67,7 @@ export function TableNG(props: TableNGProps) {
     onSortByChange,
     replaceVariables,
     showTypeIcons,
-    width,
+    width: _width,
   } = props;
 
   const theme = useTheme2();
@@ -75,6 +78,7 @@ export function TableNG(props: TableNGProps) {
   const panelContext = usePanelContext();
 
   const [isInspecting, setIsInspecting] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   const gridHandle = useRef<DataGridHandle>(null);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
@@ -145,7 +149,7 @@ export function TableNG(props: TableNGProps) {
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
     height,
-    width,
+    width: _width,
     hasHeader,
     hasFooter,
     paginationHeight,
@@ -157,106 +161,177 @@ export function TableNG(props: TableNGProps) {
   // Create a map of column key to text wrap
   const textWraps = useTextWraps(data.fields);
 
-  // const [expandedRows]?
-
-  // const [scrollPos, setScrollPos] = useState(0);
-
   // vt scrollbar accounting for column auto-sizing
-  const scrollbarWidth = useScrollbarWidth(gridHandle, props, paginatedRows);
-
-  // TODO maybe this ought to be slightly debounced.
-  const widths = useMemo(
-    () => computeColWidths(data.fields, width - scrollbarWidth),
-    [data.fields, width, scrollbarWidth]
+  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const scrollbarWidth = useScrollbarWidth(gridHandle, props, paginatedRows, expandedRows);
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const width = useMemo(
+    () => (hasNestedFrames ? _width - scrollbarWidth - COLUMN.EXPANDER_WIDTH : _width - scrollbarWidth),
+    [_width, hasNestedFrames, scrollbarWidth]
   );
+  const widths = useMemo(() => computeColWidths(visibleFields, width), [visibleFields, width]);
+
+  // todo: don't re-init this on each memoizedData change, only schema/config changes
+  const rowHeight = useRowHeight(widths, data, hasNestedFrames, defaultRowHeight, expandedRows);
 
   // TODO: skip hidden
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
-    return data.fields.map((field, i): TableColumn => {
-      const justifyColumnContent = getTextAlign(field);
-      const footerStyles = getFooterStyles(justifyColumnContent);
-      const displayName = getDisplayName(field);
-      const cellClasses = getCellClasses(field, styles, columnTypes, textWraps, displayName);
+    const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
+      f.flatMap((field, i): TableColumn[] => {
+        const justifyColumnContent = getTextAlign(field);
+        const footerStyles = getFooterStyles(justifyColumnContent);
+        const displayName = getDisplayName(field);
+        const cellClasses = getCellClasses(field, styles, columnTypes, textWraps, displayName);
 
-      return {
-        field,
-        key: field.name,
-        name: field.name,
-        width: widths[i],
-        headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
-        cellClass: cellClasses.length > 0 ? cx(cellClasses) : undefined,
-        renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-          const { row } = props;
-          const value = row[displayName];
+        // Don't render nestedFrames type field
+        if (field.type === FieldType.nestedFrames) {
+          return [];
+        }
 
-          // Cell level rendering here
+        return [
+          {
+            field,
+            key: field.name,
+            name: field.name,
+            width: w[i],
+            headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
+            cellClass: cellClasses.length > 0 ? cx(cellClasses) : undefined,
+            renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+              const { row } = props;
+              const value = row[displayName];
+
+              // Cell level rendering here
+              return (
+                <TableCellNG
+                  frame={data}
+                  key={displayName}
+                  value={value}
+                  field={field}
+                  theme={theme}
+                  height={defaultRowHeight}
+                  justifyContent={justifyColumnContent}
+                  rowIdx={row.__index}
+                  setIsInspecting={setIsInspecting}
+                  setContextMenuProps={setContextMenuProps}
+                  getActions={getActions}
+                  rowBg={getRowBgFn(field, theme) ?? undefined}
+                  onCellFilterAdded={onCellFilterAdded}
+                  replaceVariables={replaceVariables}
+                />
+              );
+            },
+            renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
+              <HeaderCell
+                column={column}
+                rows={memoizedRows}
+                field={field}
+                onSort={(columnKey, direction, isMultiSort) => {
+                  handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
+                }}
+                filter={filter}
+                setFilter={setFilter}
+                crossFilterOrder={crossFilterOrder}
+                crossFilterRows={crossFilterRows}
+                direction={sortDirection}
+                justifyContent={justifyColumnContent}
+                onColumnResize={onColumnResize}
+                showTypeIcons={showTypeIcons}
+              />
+            ),
+            renderSummaryCell: () => {
+              if (isCountRowsSet && i === 0) {
+                return (
+                  <div className={footerStyles.footerCellCountRows}>
+                    <span>
+                      <Trans i18nKey="grafana-ui.table.count">Count</Trans>
+                    </span>
+                    <span>{footerCalcs[i]}</span>
+                  </div>
+                );
+              }
+              return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
+            },
+          },
+        ];
+      });
+
+    const result: TableColumn[] = columnsFromFields(data.fields, widths);
+
+    // If we have nested frames, we need to add a column for the row expansion
+    // If nested frames, add expansion control column
+    if (hasNestedFrames) {
+      result.unshift({
+        key: 'expanded',
+        name: '',
+        field: {
+          name: '',
+          type: FieldType.other,
+          config: {},
+          values: [],
+        },
+        colSpan(args) {
+          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? data.fields.length : 1;
+        },
+        renderCell: ({ row }) => {
+          // TODO add TableRow type extension to include row depth and optional data
+          if (Number(row.__depth) === 0) {
+            return (
+              <RowExpander
+                height={defaultRowHeight}
+                isExpanded={expandedRows[row.__index] ?? false}
+                onCellExpand={() => {
+                  setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
+                }}
+              />
+            );
+          }
+
+          // If it's a child, render entire DataGrid at first column position
+          let expandedColumns: TableColumn[] = [];
+          let expandedRecords: TableRow[] = [];
+
+          // Type guard to check if data exists as it's optional
+          const nestedData = row.data;
+          if (nestedData) {
+            expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, width));
+            expandedRecords = frameToRecords(nestedData);
+          }
+
+          // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
-            <TableCellNG
-              frame={data}
-              key={displayName}
-              value={value}
-              field={field}
-              theme={theme}
-              height={defaultRowHeight}
-              justifyContent={justifyColumnContent}
-              rowIdx={row.__index}
-              setIsInspecting={setIsInspecting}
-              setContextMenuProps={setContextMenuProps}
-              getActions={getActions}
-              rowBg={getRowBgFn(field, theme) ?? undefined}
-              onCellFilterAdded={onCellFilterAdded}
-              replaceVariables={replaceVariables}
+            <DataGrid<TableRow, TableSummaryRow>
+              className={cx(styles.grid, styles.gridNested)}
+              rows={expandedRecords}
+              columns={expandedColumns}
+              rowHeight={rowHeight}
+              headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
         },
-        renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
-          <HeaderCell
-            column={column}
-            rows={memoizedRows}
-            field={field}
-            onSort={(columnKey, direction, isMultiSort) => {
-              handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumns, onSortByChange);
-            }}
-            filter={filter}
-            setFilter={setFilter}
-            crossFilterOrder={crossFilterOrder}
-            crossFilterRows={crossFilterRows}
-            direction={sortDirection}
-            justifyContent={justifyColumnContent}
-            onColumnResize={onColumnResize}
-            showTypeIcons={showTypeIcons}
-          />
-        ),
-        renderSummaryCell: () => {
-          if (isCountRowsSet && i === 0) {
-            return (
-              <div className={footerStyles.footerCellCountRows}>
-                <span>
-                  <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-                </span>
-                <span>{footerCalcs[i]}</span>
-              </div>
-            );
-          }
-          return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
-        },
-      };
-    });
+        width: COLUMN.EXPANDER_WIDTH,
+        minWidth: COLUMN.EXPANDER_WIDTH,
+      });
+    }
+
+    return result;
   }, [
     columnTypes,
     crossFilterOrder,
     crossFilterRows,
     data,
     defaultRowHeight,
+    expandedRows,
     filter,
     footerCalcs,
     getActions,
+    hasNestedFrames,
     isCountRowsSet,
     memoizedRows,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
     replaceVariables,
+    rowHeight,
     setFilter,
     setSortColumns,
     showTypeIcons,
@@ -264,13 +339,9 @@ export function TableNG(props: TableNGProps) {
     styles,
     textWraps,
     theme,
+    width,
     widths,
   ]);
-
-  const hasSubTable = false;
-
-  // todo: don't re-init this on each memoizedData change, only schema/config changes
-  const rowHeight = useRowHeight(columns, data, hasSubTable, defaultRowHeight);
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
@@ -316,7 +387,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows={hasFooter ? [{}] : undefined}
         renderers={{
           renderRow: (key, rowProps) =>
-            renderRow(key, rowProps, [], panelContext, data, enableSharedCrosshair ?? false),
+            renderRow(key, rowProps, expandedRows, panelContext, data, enableSharedCrosshair ?? false),
         }}
       />
       {enablePagination && (
@@ -376,16 +447,14 @@ export function TableNG(props: TableNGProps) {
 export function renderRow(
   key: React.Key,
   props: RenderRowProps<TableRow, TableSummaryRow>,
-  expandedRows: number[],
+  expandedRows: Record<string, boolean>,
   panelContext: PanelContext,
   data: DataFrame,
   enableSharedCrosshair: boolean
 ): React.ReactNode {
-  // Let's render row level things here!
-  // i.e. we can look at row styles and such here
   const { row } = props;
   const rowIdx = Number(row.__index);
-  const isExpanded = expandedRows.includes(rowIdx);
+  const isExpanded = !!expandedRows[rowIdx];
 
   // Don't render non expanded child rows
   if (Number(row.__depth) === 1 && !isExpanded) {
@@ -433,7 +502,7 @@ const getStyles2 = (
     // overlay/overflow on hover inherit this background and need to occlude cells below
     '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
 
-    // TODO: hate this magic pixel, lets see if there's a flexbox-based way to dynamically
+    // TODO: hate this magic number, lets see if there's a flexbox-based way to dynamically
     // size the pagination in when needed.
     blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
     scrollbarWidth: 'thin',
@@ -467,6 +536,12 @@ const getStyles2 = (
         paddingBlock: TABLE.CELL_PADDING,
       },
     },
+  }),
+  gridNested: css({
+    height: '100%',
+    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - 1}px)`,
+    overflow: 'visible',
+    marginLeft: COLUMN.EXPANDER_WIDTH - 1,
   }),
   cellWrapped: css({
     whiteSpace: 'pre-line',
@@ -508,8 +583,6 @@ const getStyles2 = (
 // 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
 // 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
 function computeColWidths(fields: Field[], availWidth: number) {
-  // TODO: skip hidden
-
   let autoCount = 0;
   let definedWidth = 0;
 
@@ -583,14 +656,15 @@ function getCellClasses(
 /*
 TODO:
 hidden
-overlay/expand on hover
 active line and cell styling
-subtable/ expand
+subtable/expand
+whole row color (applyToRow)
+  - subtable might be impacted by this
 -----
+initialSortBy change?
 enable pagination disables footer?
 pagination + text wrap...
 auto-cell: can we deprecate in favor of newer RDG options?
-overflow hover at the bottom of paginated table
 -----
 accessible sorting and filtering
 accessible table navigation
