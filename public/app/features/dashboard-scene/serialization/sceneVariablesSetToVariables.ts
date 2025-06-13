@@ -436,8 +436,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: variable.state.baseFilters || [],
-          filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters || []),
+          filters: [
+            ...validateFiltersOrigin(variable.state.originFilters),
+            ...validateFiltersOrigin(variable.state.filters),
+          ],
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
           allowCustomValue: variable.state.allowCustomValue ?? true,
         },
