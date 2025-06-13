@@ -135,7 +135,7 @@ export class SQLSearcher implements GrafanaSearcher {
     let rsp: DashboardSearchHit[];
 
     if (query.deleted) {
-      // Make a call to k8s API for deleted dashboards
+      // Deleted dashboards are fetched from a k8s API
       const api = getDashboardAPI();
       const deletedResponse = await api.listDeletedDashboards({});
 

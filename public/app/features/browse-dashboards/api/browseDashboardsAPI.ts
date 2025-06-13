@@ -57,10 +57,6 @@ interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
 
-interface HardDeleteDashboardArgs {
-  dashboardUID: string;
-}
-
 export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
@@ -419,6 +415,7 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
+    // RTK wrapper for the dashboard API
     listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
       queryFn: async () => {
         try {
@@ -432,49 +429,25 @@ export const browseDashboardsAPI = createApi({
       },
     }),
 
-    // restore a dashboard that got soft deleted
+    // restore a dashboard that got deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      queryFn: async ({ dashboard }, _api, _extraOptions) => {
-        const api = getDashboardAPI();
-        const response = await api.restoreDashboard(dashboard);
-        const name = response.spec.title;
+      queryFn: async ({ dashboard }) => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.restoreDashboard(dashboard);
+          const name = response.spec.title;
 
-        if (name) {
-          appEvents.publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
-          });
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
+            });
+          }
+
+          return { data: undefined };
+        } catch (error) {
+          return handleRequestError(error);
         }
-
-        return { data: undefined };
-      },
-    }),
-
-    // permanently delete a dashboard. used in PermanentlyDeleteModal.
-    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
-      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
-        const response = await baseQuery({
-          url: `/dashboards/uid/${dashboardUID}/trash`,
-          method: 'DELETE',
-          showSuccessAlert: false,
-        });
-
-        // @ts-expect-error
-        const name = response?.data?.title;
-
-        if (name) {
-          appEvents.publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [t('browse-dashboards.hard-delete.success', 'Dashboard {{name}} deleted', { name })],
-          });
-        }
-
-        return { data: undefined };
-      },
-      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([dashboardUID]));
-        });
       },
     }),
   }),

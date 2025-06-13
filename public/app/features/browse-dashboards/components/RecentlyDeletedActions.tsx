@@ -59,7 +59,7 @@ export function RecentlyDeletedActions() {
       if (!dashboard) {
         return Promise.resolve();
       }
-      // Clone the dashboard because the data from the store is immutable
+      // Clone the dashboard to be able to edit the immutable data from the store
       const copy = structuredClone(dashboard);
       copy.metadata = {
         ...copy.metadata,
