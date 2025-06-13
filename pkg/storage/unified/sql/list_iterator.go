@@ -1,8 +1,6 @@
 package sql
 
 import (
-	"sync"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
@@ -28,18 +26,10 @@ type listIter struct {
 	group     string
 	name      string
 	folder    string
-
-	mtx          sync.Mutex
-	iteratorDone bool
 }
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
-	if l.iteratorDone {
-		return ""
-	}
 	if l.useCurrentRV {
 		return resource.ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
 	}
@@ -74,13 +64,10 @@ func (l *listIter) Value() []byte {
 
 // Next implements resource.ListIterator.
 func (l *listIter) Next() bool {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
 	if l.rows.Next() {
 		l.offset++
 		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.group, &l.resource, &l.name, &l.folder, &l.value)
 		return true
 	}
-	l.iteratorDone = true
 	return false
 }
