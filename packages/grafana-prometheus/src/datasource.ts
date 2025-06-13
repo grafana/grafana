@@ -409,6 +409,13 @@ export class PrometheusDatasource
       utcOffsetSec: utcOffset * 60,
     };
 
+    if (config.featureToggles.promQLScope) {
+      processedTarget.scopes = (request.scopes ?? []).map((scope) => ({
+        name: scope.metadata.name,
+        ...scope.spec,
+      }));
+    }
+
     if (config.featureToggles.groupByVariable) {
       processedTarget.groupByKeys = request.groupByKeys;
     }
