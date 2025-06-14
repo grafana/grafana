@@ -157,20 +157,6 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Datasource metadata requests', () => {
-    it('should perform a GET request with the default config', () => {
-      ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' });
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
-      expect(fetchMock.mock.calls[0][0].url).toContain('bar=baz%20baz&foo=foo');
-    });
-    it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
-      const postSettings = cloneDeep(instanceSettings);
-      postSettings.jsonData.httpMethod = 'POST';
-      const promDs = new PrometheusDatasource(postSettings, templateSrvStub);
-      promDs.metadataRequest('/foo');
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].method).toBe('GET');
-    });
     it('should try to perform a POST request with the DS HTTP method set to POST and POST-friendly endpoint', () => {
       const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
@@ -184,30 +170,11 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('customQueryParams', () => {
-    describe('with GET http method', () => {
-      const promDs = new PrometheusDatasource(
-        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } },
-        templateSrvStub
-      );
-
-      it('added to metadata request', () => {
-        promDs.metadataRequest('/foo');
-        expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/foo?customQuery=123');
-      });
-    });
-
     describe('with POST http method', () => {
       const promDs = new PrometheusDatasource(
         { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } },
         templateSrvStub
       );
-
-      it('added to metadata request with non-POST endpoint', () => {
-        promDs.metadataRequest('/foo');
-        expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/foo?customQuery=123');
-      });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');

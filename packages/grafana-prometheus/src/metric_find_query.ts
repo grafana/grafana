@@ -91,6 +91,9 @@ export class PrometheusMetricFindQuery {
       const url = `/api/v1/label/${escapedLabel}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result) => {
+        if (!result?.data?.data) {
+          return [];
+        }
         return _map(result.data.data, (value) => {
           return { text: value };
         });
@@ -99,6 +102,9 @@ export class PrometheusMetricFindQuery {
       const url = `/api/v1/series`;
 
       return this.datasource.metadataRequest(url, params).then((result) => {
+        if (!result?.data?.data) {
+          return [];
+        }
         const _labels = _map(result.data.data, (metric) => {
           return metric[label] || '';
         }).filter((label) => {
@@ -125,6 +131,9 @@ export class PrometheusMetricFindQuery {
     const url = `/api/v1/label/__name__/values`;
 
     return this.datasource.metadataRequest(url, params).then((result) => {
+      if (!result?.data?.data) {
+        return [];
+      }
       return chain(result.data.data)
         .filter((metricName) => {
           const r = new RegExp(metricFilterPattern);
@@ -147,6 +156,9 @@ export class PrometheusMetricFindQuery {
       time: getPrometheusTime(range.to, true).toString(),
     };
     return this.datasource.metadataRequest(url, params).then((result) => {
+      if (!result?.data?.data) {
+        return [];
+      }
       switch (result.data.data.resultType) {
         case 'scalar': // [ <unix_time>, "<scalar_value>" ]
         case 'string': // [ <unix_time>, "<string_value>" ]
@@ -191,6 +203,9 @@ export class PrometheusMetricFindQuery {
     const url = `/api/v1/series`;
 
     return this.datasource.metadataRequest(url, params).then((result) => {
+      if (!result?.data?.data) {
+        return [];
+      }
       return _map(result.data.data, (metric: { [key: string]: string }) => {
         return {
           text: getOriginalMetricName(metric),

@@ -30,19 +30,19 @@ export const datasourceBuildInfoHandler = () =>
 
 // TODO: Add more accurate endpoint responses as tests require
 const labelValuesHandler = () =>
-  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/label/__name__/values', ({ params }) => {
+  http.post('/api/datasources/uid/:datasourceUid/resources/api/v1/label/__name__/values', ({ params }) => {
     return HttpResponse.json({ status: 'sucess', data: [] });
   });
 
 // TODO: Add more accurate endpoint responses as tests require
 const resourcesLabelsHandler = () =>
-  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/labels', () =>
+  http.post('/api/datasources/uid/:datasourceUid/resources/api/v1/labels', () =>
     HttpResponse.json({ status: 'success', data: [] })
   );
 
 // TODO: Add more accurate endpoint responses as tests require
 const resourcesMetadataHandler = () =>
-  http.get('/api/datasources/uid/:datasourceUid/resources/api/v1/metadata', () =>
+  http.post('/api/datasources/uid/:datasourceUid/resources/api/v1/metadata', () =>
     HttpResponse.json({ status: 'success', data: {} })
   );
 
