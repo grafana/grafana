@@ -55,7 +55,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsApi`                       | Enables the SSO settings API and the OAuth configuration UIs in Grafana                                                            | Yes                |
 | `logsInfiniteScrolling`                | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                            | Yes                |
 | `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                | Yes                |
-| `lokiQueryHints`                       | Enables query hints for Loki                                                                                                       | Yes                |
 | `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                  |                    |
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.      | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                   | Yes                |
