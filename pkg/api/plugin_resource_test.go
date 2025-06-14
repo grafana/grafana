@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestCallResource(t *testing.T) {
+func TestIntegrationCallResource(t *testing.T) {
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 
