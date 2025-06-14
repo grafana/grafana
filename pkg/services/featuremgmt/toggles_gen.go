@@ -926,4 +926,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagAlertingStateHistoryPrometheus
+	// Enables the Prometheus state history writer for alert rules.
+	FlagAlertingStateHistoryPrometheus = "alertingStateHistoryPrometheus"
 )
