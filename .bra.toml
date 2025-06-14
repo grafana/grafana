@@ -1,6 +1,7 @@
 [run]
 init_cmds = [
-  ["make","GO_BUILD_DEV=1", "build-go"],
+  ["make", "update-workspace"],
+  ["make", "GO_BUILD_DEV=1", "build-backend"],
   ["make", "gen-jsonnet"],
   ["./bin/grafana", "server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
 ]
@@ -14,10 +15,12 @@ watch_dirs = [
   "$WORKDIR/devenv/dev-dashboards",
 ]
 watch_exts = [".go", ".ini", ".toml", ".template.html"]
-ignore_files = [".*_gen.go"]
-build_delay = 1500
+ignore_files = [".*_gen.go", ".*_test.go", "pkg/extensions/ext.go"]
+build_delay = 10000
 cmds = [
-  ["make", "GO_BUILD_DEV=1", "build-go-fast"],
+  ["sleep", "1"],
+  ["make", "gen-go"],
+  ["make", "GO_BUILD_DEV=1", "build-backend"],
   ["make", "gen-jsonnet"],
   ["./bin/grafana", "server", "-profile", "-profile-addr=127.0.0.1", "-profile-port=6000", "-profile-block-rate=1", "-profile-mutex-rate=5", "-packaging=dev", "cfg:app_mode=development"]
 ]
