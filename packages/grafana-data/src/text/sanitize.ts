@@ -120,6 +120,33 @@ export function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
+// Returns a sanitized path, protects against path traversal attacks.
+export function sanitizePath(path: string): string {
+  try {
+    let decodedForCheck = path;
+    try {
+      while (true) {
+        const nextDecode = decodeURIComponent(decodedForCheck);
+        if (nextDecode === decodedForCheck) {
+          break; // Path is fully decoded.
+        }
+        decodedForCheck = nextDecode;
+      }
+    } catch (e) {
+      // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
+      // These are suspicious, so we treat them as traversal attempts.
+      return '';
+    }
+
+    if (decodedForCheck.includes('..')) {
+      return '';
+    }
+    return path;
+  } catch (err) {
+    return '';
+  }
+}
+
 export const textUtil = {
   escapeHtml,
   hasAnsiCodes,
@@ -129,4 +156,5 @@ export const textUtil = {
   sanitizeSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
+  sanitizePath,
 };
