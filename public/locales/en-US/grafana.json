@@ -4045,6 +4045,9 @@
         "title": "Row options"
       }
     },
+    "description": {
+      "action": "Change dashboard description"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
