@@ -515,7 +515,7 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil, "user123")
+			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil, "user123", "1.2.3")
 		})
 
 		require.Zero(t, gmsMock.reportEventCalled)
@@ -533,7 +533,7 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil, "user123")
+			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil, "user123", "1.2.3")
 		})
 
 		require.Equal(t, 1, gmsMock.reportEventCalled)
