@@ -1,14 +1,14 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
-    inputs:
-      grafana-branch:
-        type: string
-        required: true
-        description: The branches to use as the Grafana source for the build
   push:
     branches:
-      - "km/prerelease-builds-gha"
+      - release-*.*.*
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -40,12 +40,37 @@ permissions:
 # zip:grafana:windows/amd64
 # msi:grafana:windows/amd64
 jobs:
+  setup:
+    name: setup
+    runs-on: github-hosted-ubuntu-x64-small
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up version (Release Branches)
+        if: startsWith(github.ref_name, 'release-')
+        run: echo "${REF_NAME#release-}" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+      - name: Set up version (Non-release branches)
+        if: ${{ !startsWith(github.ref_name, 'release-') }}
+        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          BUILD_ID: ${{ github.run_number }}
+      - id: output
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
   build:
     runs-on: github-hosted-ubuntu-x64-large
+    needs: [setup]
     permissions:
       contents: read
       id-token: write
-    name: ${{ matrix.name }}
+    name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
     strategy:
       matrix:
         # The artifacts in these lists are grouped by their os+arch because the
@@ -72,18 +97,11 @@ jobs:
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: actions/checkout@v4
         with:
-          repository: grafana/grafana
           persist-credentials: false
-      # - run: echo "GRAFANA_VERSION=v${BRANCH#release-}" >> "${GITHUB_ENV}"
-      #   env:
-      #     BRANCH: ${{ github.ref_name }}
-      - run: echo "GRAFANA_VERSION=v12.1.0-${RUN_NUMBER}" >> "${GITHUB_ENV}"
-        env:
-          RUN_NUMBER: ${{ github.run_number }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: ./.github/actions/build-package
         id: build
         with:
@@ -91,9 +109,10 @@ jobs:
           checksum: true
           grafana-path: .
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ env.GRAFANA_VERSION }}
+          version: ${{ needs.setup.outputs.version }}
           output: artifacts-${{ matrix.name }}.txt
           verify: true
+          build-id: ${{ github.run_number }}
       - name: Log in to GCS
         id: login-to-gcs
         uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
@@ -106,11 +125,11 @@ jobs:
           environment: prod
           parent: false
           path: ${{ steps.build.outputs.dist-dir }}
-          bucket_path: ${{ env.GRAFANA_VERSION }}
+          bucket_path: ${{ needs.setup.outputs.version }}
       - name: Upload manifest
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
         with:
           bucket: ${{ steps.login-to-gcs.outputs.bucket }}
           environment: prod
           path: ${{ steps.build.outputs.file }}
-          bucket_path: ${{ env.GRAFANA_VERSION }}
+          bucket_path: ${{ needs.setup.outputs.version }}

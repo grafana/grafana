@@ -444,7 +444,11 @@
     "refractor/prismjs": "^1.27.0"
   },
   "workspaces": {
-    "packages": ["packages/*", "public/app/plugins/*/*", "e2e/test-plugins/*"]
+    "packages": [
+      "packages/*",
+      "public/app/plugins/*/*",
+      "e2e/test-plugins/*"
+    ]
   },
   "engines": {
     "node": ">= 22 <23"
@@ -456,6 +460,8 @@
     }
   },
   "msw": {
-    "workerDirectory": ["public"]
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

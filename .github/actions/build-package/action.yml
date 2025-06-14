@@ -1,4 +1,5 @@
 name: Build and Package Grafana Enterprise / Pro
+description: Creates Grafana artifacts using Dagger & `pkg/build/daggerbuild`
 inputs:
   artifacts:
     description: |
@@ -109,9 +110,9 @@ runs:
   using: "composite"
   steps:
     - shell: bash
-      run: |
+      run: | # zizmor: ignore[github-env]
         echo "GRAFANA_PATH=${{ github.workspace }}/${GRAFANA_DIR}" >> "$GITHUB_ENV"
-        echo "ENTERPRISE_PATH=${{ github.workspace }}/${{ inputs.grafana-enterprise-path }}" >> "$GITHUB_ENV"
+        echo "ENTERPRISE_PATH=${{ github.workspace }}/${ENTERPRISE_DIR}" >> "$GITHUB_ENV"
       env:
         GB_PATH: ${{ inputs.path }}
         GRAFANA_DIR: ${{ inputs.grafana-path }}

@@ -34,4 +34,4 @@ dagger run --silent go run ./pkg/build/cmd \
 cat assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
+cat assets.txt | DESTINATION=gs://grafana-downloads IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/main
