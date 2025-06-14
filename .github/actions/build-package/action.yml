@@ -111,7 +111,7 @@ runs:
     - shell: bash
       run: |
         echo "GRAFANA_PATH=${{ github.workspace }}/${GRAFANA_DIR}" >> "$GITHUB_ENV"
-        echo "ENTERPRISE_PATH=${{ github.workspace }}/${{ inputs.grafana-enterprise-path }}" >> "$GITHUB_ENV"
+        echo "ENTERPRISE_PATH=${{ github.workspace }}/${ENTERPRISE_DIR}" >> "$GITHUB_ENV"
       env:
         GB_PATH: ${{ inputs.path }}
         GRAFANA_DIR: ${{ inputs.grafana-path }}
