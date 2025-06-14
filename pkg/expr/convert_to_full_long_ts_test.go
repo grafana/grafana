@@ -371,3 +371,38 @@ func TestConvertTimeSeriesMultiToFullLongWithDisplayName(t *testing.T) {
 		}
 	})
 }
+
+func BenchmarkConvertToFullLong(b *testing.B) {
+	// Create time-series data with 5,000 rows
+	times := make([]time.Time, 5000)
+	for i := range times {
+		times[i] = time.Unix(int64(i), 0)
+	}
+	values := make([]float64, 5000)
+	for i := range values {
+		values[i] = float64(i)
+	}
+
+	// Create a second series with 5,000 rows
+	times2 := make([]time.Time, 5000)
+	for i := range times2 {
+		times2[i] = time.Unix(int64(i), 0)
+	}
+	values2 := make([]float64, 5000)
+	for i := range values2 {
+		values2[i] = float64(i)
+	}
+
+	// Create a frame with the times
+	frame := data.NewFrame("cpu", data.NewField("time", nil, times), data.NewField("cpu", nil, values))
+	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+
+	// Create a second frame with the times
+	frame2 := data.NewFrame("cpu", data.NewField("time", nil, times2), data.NewField("cpu", nil, values2))
+	frame2.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}
+
+	// Run the conversion
+	for b.Loop() {
+		ConvertToFullLong(data.Frames{frame, frame2})
+	}
+}
