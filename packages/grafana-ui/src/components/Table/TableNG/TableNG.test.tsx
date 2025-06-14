@@ -7,6 +7,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { PanelContext } from '../../PanelChrome';
 
 import { TableNG, onRowHover, onRowLeave } from './TableNG';
+import { getDisplayedValue } from './utils';
 
 // Create a basic data frame for testing
 const createBasicDataFrame = (): DataFrame => {
@@ -1541,6 +1542,84 @@ describe('TableNG', () => {
       // Verify scroll position was restored
       expect(dataGrid.scrollLeft).toBe(100);
       expect(dataGrid.scrollTop).toBe(50);
+    });
+  });
+
+  describe('getDisplayedValue', () => {
+    it('should return null when field is not found', () => {
+      const row = { name: 'test', __depth: 0, __index: 0 };
+      const data = {
+        fields: [
+          {
+            name: 'other',
+            type: FieldType.string,
+            values: [],
+            config: {},
+          },
+        ],
+        length: 1,
+      };
+      const result = getDisplayedValue(row, 'name', data.fields);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when field has no display function', () => {
+      const row = { name: 'test', __depth: 0, __index: 0 };
+      const data = {
+        fields: [
+          {
+            name: 'name',
+            type: FieldType.string,
+            values: [],
+            config: {},
+          },
+        ],
+        length: 1,
+      };
+      const result = getDisplayedValue(row, 'name', data.fields);
+      expect(result).toBeNull();
+    });
+
+    it('should return formatted value when field has display function', () => {
+      const row = { name: 'test', __depth: 0, __index: 0 };
+      const data = {
+        fields: [
+          {
+            name: 'name',
+            type: FieldType.string,
+            values: [],
+            config: {},
+            display: (value: unknown) => ({
+              text: `formatted_${value}`,
+              numeric: 0,
+            }),
+          },
+        ],
+        length: 1,
+      };
+      const result = getDisplayedValue(row, 'name', data.fields);
+      expect(result).toBe('formatted_test');
+    });
+
+    it('should handle numeric values with display function', () => {
+      const row = { count: 42, __depth: 0, __index: 0 };
+      const data = {
+        fields: [
+          {
+            name: 'count',
+            type: FieldType.number,
+            values: [],
+            config: {},
+            display: (value: unknown) => ({
+              text: `Count: ${value}`,
+              numeric: Number(value),
+            }),
+          },
+        ],
+        length: 1,
+      };
+      const result = getDisplayedValue(row, 'count', data.fields);
+      expect(result).toBe('Count: 42');
     });
   });
 });
