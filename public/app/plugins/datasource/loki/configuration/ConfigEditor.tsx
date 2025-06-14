@@ -1,15 +1,13 @@
-import { useCallback } from 'react';
-
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import {
-  ConfigSection,
-  DataSourceDescription,
-  ConnectionSettings,
-  Auth,
-  convertLegacyAuthProps,
   AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
 } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
@@ -33,19 +31,10 @@ const makeJsonUpdater =
   };
 
 const setMaxLines = makeJsonUpdater('maxLines');
-const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-
-  const updatePredefinedOperations = useCallback(
-    (value: string) => {
-      reportInteraction('grafana_loki_predefined_operations_changed', { value });
-      onOptionsChange(setPredefinedOperations(options, value));
-    },
-    [options, onOptionsChange]
-  );
 
   return (
     <>
@@ -79,8 +68,6 @@ export const ConfigEditor = (props: Props) => {
           <QuerySettings
             maxLines={options.jsonData.maxLines || ''}
             onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
-            predefinedOperations={options.jsonData.predefinedOperations || ''}
-            onPredefinedOperationsChange={updatePredefinedOperations}
           />
           <DerivedFields
             fields={options.jsonData.derivedFields}
