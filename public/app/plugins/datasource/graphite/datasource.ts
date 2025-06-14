@@ -410,7 +410,7 @@ export class GraphiteDatasource
       const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
       const graphiteQuery = {
         range: range,
-        targets: [{ target: targetAnnotation }],
+        targets: [{ target: targetAnnotation, refId: target.refId }],
         format: 'json',
         maxDataPoints: 100,
       } as unknown as DataQueryRequest<GraphiteQuery>;
@@ -979,7 +979,10 @@ export class GraphiteDatasource
       .fetch(options)
       .pipe(
         catchError((err) => {
-          return throwError(reduceError(err));
+          return throwError(() => {
+            const reduced = reduceError(err);
+            return new Error(`${reduced.data.message}`);
+          });
         })
       );
   }
