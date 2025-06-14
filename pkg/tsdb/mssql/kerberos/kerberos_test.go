@@ -10,7 +10,7 @@ import (
 func TestGetKerberosSettings(t *testing.T) {
 	t.Run("Should correctly parse settings", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{"keytabFilePath":"keytab","credentialCache":"cache","credentialCacheLookupFile":"lookup","configFilePath":"config","UDPConnectionLimit":1,"enableDNSLookupKDC":"dns"}`),
+			JSONData: []byte(`{"keytabFilePath":"keytab","credentialCache":"cache","credentialCacheLookupFile":"lookup","configFilePath":"config","UDPConnectionLimit":1,"enableDNSLookupKDC":"dns","serverSPN":"testSpn"}`),
 		}
 
 		kerberosSettings, err := GetKerberosSettings(settings)
@@ -22,6 +22,7 @@ func TestGetKerberosSettings(t *testing.T) {
 		require.Equal(t, "config", kerberosSettings.ConfigFilePath)
 		require.Equal(t, 1, kerberosSettings.UDPConnectionLimit)
 		require.Equal(t, "dns", kerberosSettings.EnableDNSLookupKDC)
+		require.Equal(t, "testSpn", kerberosSettings.ServerSPN)
 	})
 
 	t.Run("Should correctly parse legacy UDPConnectionLimit", func(t *testing.T) {
@@ -49,6 +50,7 @@ func TestGetKerberosSettings(t *testing.T) {
 		require.Equal(t, "", kerberosSettings.ConfigFilePath)
 		require.Equal(t, 1, kerberosSettings.UDPConnectionLimit)
 		require.Equal(t, "", kerberosSettings.EnableDNSLookupKDC)
+		require.Equal(t, "", kerberosSettings.ServerSPN)
 	})
 
 	t.Run("Will error if legacy UDPConnectionLimit can't be converted to number", func(t *testing.T) {
