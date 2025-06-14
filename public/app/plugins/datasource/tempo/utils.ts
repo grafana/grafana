@@ -5,10 +5,22 @@ import { generateId } from './SearchTraceQLEditor/TagsInput';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoQuery } from './types';
 
+const LIMIT_MESSAGE = /.*range specified by start and end.*exceeds.*/;
+const LIMIT_MESSAGE_METRICS = /.*metrics query time range exceeds the maximum allowed duration of.*/;
+
+export function mapErrorMessage(errorMessage: string) {
+  if (errorMessage && (LIMIT_MESSAGE.test(errorMessage) || LIMIT_MESSAGE_METRICS.test(errorMessage))) {
+    return 'The selected time range exceeds the maximum allowed duration. Please select a shorter time range.';
+  } else {
+    return errorMessage;
+  }
+}
+
 export const getErrorMessage = (message: string | undefined, prefix?: string) => {
   const err = message ? ` (${message})` : '';
   let errPrefix = prefix ? prefix : 'Error';
-  return `${errPrefix}${err}. Please check the server logs for more details.`;
+  const msg = `${errPrefix}${err}. Please check the server logs for more details.`;
+  return mapErrorMessage(msg);
 };
 
 export async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
