@@ -14642,15 +14642,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0":
-  version: 4.4.0
-  resolution: "debug@npm:4.4.0"
+"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0, debug@npm:^4.4.1":
+  version: 4.4.1
+  resolution: "debug@npm:4.4.1"
   dependencies:
     ms: "npm:^2.1.3"
   peerDependenciesMeta:
     supports-color:
       optional: true
-  checksum: 10/1847944c2e3c2c732514b93d11886575625686056cd765336212dc15de2d2b29612b6cd80e1afba767bb8e1803b778caf9973e98169ef1a24a7a7009e1820367
+  checksum: 10/8e2709b2144f03c7950f8804d01ccb3786373df01e406a0f66928e47001cf2d336cbed9ee137261d4f90d68d8679468c755e3548ed83ddacdc82b194d2468afe
   languageName: node
   linkType: hard
 
@@ -15743,16 +15743,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-browserslist@npm:^0.16.0":
-  version: 0.16.0
-  resolution: "esbuild-plugin-browserslist@npm:0.16.0"
+"esbuild-plugin-browserslist@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "esbuild-plugin-browserslist@npm:1.0.1"
   dependencies:
-    debug: "npm:^4.4.0"
-    zod: "npm:^3.24.1"
+    debug: "npm:^4.4.1"
+    zod: "npm:^3.25.3"
   peerDependencies:
     browserslist: ^4.21.8
-    esbuild: ~0.25.0
-  checksum: 10/9f3986901521627270a74500a77a3ddf3599016729de6ebe04e675230188a0e5dd3f5c6a5a1ab781a0b9cb54952df0edb066a3a5737166ef8e8d9db4a2eb44ab
+    esbuild: ~0.25.4
+  checksum: 10/86fdd203b9335f79a1f37eab17b9826baa08b3ce2072430a37b4958a4537c55089905b76b9093d596b98d6e3fd161f1368f8b5facf328c29bcdc1eff50a1d4c5
   languageName: node
   linkType: hard
 
@@ -18144,7 +18144,7 @@ __metadata:
     diff: "npm:^7.0.0"
     esbuild: "npm:0.25.0"
     esbuild-loader: "npm:4.3.0"
-    esbuild-plugin-browserslist: "npm:^0.16.0"
+    esbuild-plugin-browserslist: "npm:^1.0.0"
     eslint: "npm:9.19.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
@@ -32618,9 +32618,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.23.8, zod@npm:^3.24.1":
-  version: 3.24.1
-  resolution: "zod@npm:3.24.1"
-  checksum: 10/54e25956495dec22acb9399c168c6ba657ff279801a7fcd0530c414d867f1dcca279335e160af9b138dd70c332e17d548be4bc4d2f7eaf627dead50d914fec27
+"zod@npm:^3.23.8, zod@npm:^3.25.3":
+  version: 3.25.64
+  resolution: "zod@npm:3.25.64"
+  checksum: 10/5538573d880291c18ff93b92879effd1673943c78c7f957b190d0ebf456a2742d6acd510c955679a269570a2d076e7608dc6aa797f5ef8cfc162893abaf9c4db
   languageName: node
   linkType: hard
