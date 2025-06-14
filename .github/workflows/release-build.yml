@@ -79,7 +79,7 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
       - name: Set up version (Non-release branches)
-        if: ${{ !startsWith(github.ref_name, "release-") }}
+        if: ${{ !startsWith(github.ref_name, 'release-') }}
         run: echo "VERSION=$(cat package.json | jq -r .version | sed -s s/pre/${BUILD_ID}/g)" >> "$GITHUB_ENV"
         env:
           REF_NAME: ${{ github.ref_name }}
