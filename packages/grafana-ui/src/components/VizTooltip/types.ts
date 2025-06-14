@@ -1,3 +1,6 @@
+import React from 'react';
+
+import { Field } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 
 export enum ColorIndicator {
@@ -19,6 +22,14 @@ export enum ColorPlacement {
   trailing = 'trailing',
 }
 
+export interface VizTooltipItemCustomComponentProps {
+  field: Field;
+  allFields: Field[];
+  dataIdx: number;
+  isActive?: boolean;
+  defaultRow: React.ReactNode;
+}
+
 export interface VizTooltipItem {
   label: string;
   value: string;
@@ -27,6 +38,10 @@ export interface VizTooltipItem {
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
   lineStyle?: LineStyle;
+  customizer?: {
+    props: VizTooltipItemCustomComponentProps;
+    component: React.ComponentType<VizTooltipItemCustomComponentProps>;
+  };
 
   // internal/tmp for sorting
   numeric?: number;
