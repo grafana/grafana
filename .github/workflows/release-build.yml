@@ -1,14 +1,11 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
-    inputs:
-      grafana-branch:
-        type: string
-        required: true
-        description: The branches to use as the Grafana source for the build
   push:
     branches:
-      - "km/prerelease-builds-gha"
+      - km/prerelease-builds-gha
+      - release-*.*.*
+      - main
 
 permissions:
   contents: read
@@ -72,18 +69,23 @@ jobs:
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: actions/checkout@v4
         with:
           repository: grafana/grafana
           persist-credentials: false
-      # - run: echo "GRAFANA_VERSION=v${BRANCH#release-}" >> "${GITHUB_ENV}"
-      #   env:
-      #     BRANCH: ${{ github.ref_name }}
-      - run: echo "GRAFANA_VERSION=v12.1.0-${RUN_NUMBER}" >> "${GITHUB_ENV}"
+      - name: Set up version (Release Branches)
+        if: startsWith(github.ref_name, 'release-')
+        run: echo "VERSION=${REF_NAME#release-}" >> "$GITHUB_ENV"
         env:
-          RUN_NUMBER: ${{ github.run_number }}
+          REF_NAME: ${{ github.ref_name }}
+      - name: Set up version (Non-release branches)
+        if: !startsWith(github.ref_name, 'release-')
+        run: echo "VERSION=$(cat package.json | jq -r .version | sed -s s/pre/${BUILD_ID}/g)" >> "$GITHUB_ENV"
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          BUILD_ID: ${{ github.build_number }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: ./.github/actions/build-package
         id: build
         with:
@@ -91,9 +93,10 @@ jobs:
           checksum: true
           grafana-path: .
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ env.GRAFANA_VERSION }}
+          version: ${{ env.VERSION }}
           output: artifacts-${{ matrix.name }}.txt
           verify: true
+          build-id: ${{ github.run_number }}
       - name: Log in to GCS
         id: login-to-gcs
         uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
@@ -106,7 +109,7 @@ jobs:
           environment: prod
           parent: false
           path: ${{ steps.build.outputs.dist-dir }}
-          bucket_path: ${{ env.GRAFANA_VERSION }}
+          bucket_path: ${{ env.VERSION }}
       - name: Upload manifest
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
         with:
