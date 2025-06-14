@@ -152,7 +152,7 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
+	Action     any          `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -169,8 +169,37 @@ func (e Includes) DashboardURLPath() string {
 	return "/d/" + e.UID
 }
 
-func (e Includes) RequiresRBACAction() bool {
-	return e.Action != ""
+func (e Includes) RequiresRBACActions() bool {
+	actions := e.GetActions()
+	return len(actions) > 0
+}
+
+// GetActions returns all required actions for this include
+func (e Includes) GetActions() []string {
+	if e.Action == nil {
+		return nil
+	}
+
+	switch v := e.Action.(type) {
+	case string:
+		// previous check for actions
+		if v == "" {
+			return nil
+		}
+		return []string{v}
+	case []string:
+		return v
+	case []any:
+		actions := make([]string, 0, len(v))
+		for _, action := range v {
+			if str, ok := action.(string); ok && str != "" {
+				actions = append(actions, str)
+			}
+		}
+		return actions
+	default:
+		return nil
+	}
 }
 
 type Dependency struct {
