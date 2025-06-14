@@ -5,12 +5,13 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
+import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -118,6 +119,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
+      <EnterpriseAuthFeaturesCard />
     </Page.Contents>
   );
 };
