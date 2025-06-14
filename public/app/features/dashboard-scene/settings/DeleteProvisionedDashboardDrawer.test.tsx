@@ -318,7 +318,7 @@ describe('DeleteProvisionedDashboardDrawer', () => {
       await waitFor(() => {
         expect(mockPublish).toHaveBeenCalledWith({
           type: AppEvents.alertError.name,
-          payload: ['Error saving delete dashboard changes', error],
+          payload: ['Failed to delete dashboard', error],
         });
       });
     });

@@ -5032,7 +5032,7 @@
       }
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Error saving delete dashboard changes",
+      "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
       "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
