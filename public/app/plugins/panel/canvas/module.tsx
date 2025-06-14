@@ -40,12 +40,10 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
   builder.addBooleanSwitch({
-    path: 'infinitePan',
-    name: 'Infinite panning',
-    description:
-      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained',
+    path: 'zoomToContent',
+    name: 'Zoom to content',
+    description: 'Automatically zoom to fit content',
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
 };
 

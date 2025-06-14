@@ -109,11 +109,14 @@ export class ElementState implements LayerElement {
       return;
     }
 
+    const scene = this.getScene();
+    const { width: sceneWidth, height: sceneHeight } = scene ?? {};
+
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement: Placement = this.options.placement ?? {};
 
-    const editingEnabled = this.getScene()?.isEditingEnabled;
+    const editingEnabled = scene?.isEditingEnabled;
 
     const style: React.CSSProperties = {
       cursor: editingEnabled ? 'grab' : 'auto',
@@ -122,48 +125,48 @@ export class ElementState implements LayerElement {
       // Minimum element size is 10x10
       minWidth: '10px',
       minHeight: '10px',
-      rotate: `${placement.rotation ?? 0}deg`,
+      // rotate: `${placement.rotation ?? 0}deg`,
     };
 
-    const translate = ['0px', '0px'];
+    // const translate = ['0px', '0px'];
 
     switch (vertical) {
       case VerticalConstraint.Top:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        style.top = `${placement.top}px`;
+        // style.top = `${placement.top}px`;
         style.height = `${placement.height}px`;
-        delete placement.bottom;
+        // delete placement.bottom;
         break;
       case VerticalConstraint.Bottom:
         placement.bottom = placement.bottom ?? 0;
         placement.height = placement.height ?? 100;
-        style.bottom = `${placement.bottom}px`;
+        // style.bottom = `${placement.bottom}px`;
         style.height = `${placement.height}px`;
-        delete placement.top;
+        // delete placement.top;
         break;
       case VerticalConstraint.TopBottom:
         placement.top = placement.top ?? 0;
         placement.bottom = placement.bottom ?? 0;
-        style.top = `${placement.top}px`;
-        style.bottom = `${placement.bottom}px`;
-        delete placement.height;
+        // style.top = `${placement.top}px`;
+        // style.bottom = `${placement.bottom}px`;
+        // delete placement.height;
         style.height = '';
         break;
       case VerticalConstraint.Center:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        translate[1] = '-50%';
-        style.top = `calc(50% - ${placement.top}px)`;
+        // translate[1] = '-50%';
+        // style.top = `calc(50% - ${placement.top}px)`;
         style.height = `${placement.height}px`;
-        delete placement.bottom;
+        // delete placement.bottom;
         break;
       case VerticalConstraint.Scale:
         placement.top = placement.top ?? 0;
         placement.bottom = placement.bottom ?? 0;
-        style.top = `${placement.top}%`;
-        style.bottom = `${placement.bottom}%`;
-        delete placement.height;
+        // style.top = `${placement.top}%`;
+        // style.bottom = `${placement.bottom}%`;
+        // delete placement.height;
         style.height = '';
         break;
     }
@@ -172,45 +175,76 @@ export class ElementState implements LayerElement {
       case HorizontalConstraint.Left:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        style.left = `${placement.left}px`;
+        // style.left = `${placement.left}px`;
         style.width = `${placement.width}px`;
-        delete placement.right;
+        // delete placement.right;
         break;
       case HorizontalConstraint.Right:
         placement.right = placement.right ?? 0;
         placement.width = placement.width ?? 100;
-        style.right = `${placement.right}px`;
+        // style.right = `${placement.right}px`;
         style.width = `${placement.width}px`;
-        delete placement.left;
+        // delete placement.left;
         break;
       case HorizontalConstraint.LeftRight:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
-        style.left = `${placement.left}px`;
-        style.right = `${placement.right}px`;
-        delete placement.width;
+        // style.left = `${placement.left}px`;
+        // style.right = `${placement.right}px`;
+        // delete placement.width;
         style.width = '';
         break;
       case HorizontalConstraint.Center:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        translate[0] = '-50%';
-        style.left = `calc(50% - ${placement.left}px)`;
+        // translate[0] = '-50%';
+        // style.left = `calc(50% - ${placement.left}px)`;
         style.width = `${placement.width}px`;
-        delete placement.right;
+        // delete placement.right;
         break;
       case HorizontalConstraint.Scale:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
-        style.left = `${placement.left}%`;
-        style.right = `${placement.right}%`;
-        delete placement.width;
+        // style.left = `${placement.left}%`;
+        // style.right = `${placement.right}%`;
+        // delete placement.width;
         style.width = '';
         break;
     }
-
-    style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
+
+    let transformY = '0px';
+    if (vertical === VerticalConstraint.Bottom) {
+      transformY = `${sceneHeight! - (placement.bottom ?? 0) - (placement.height ?? 100)}px`;
+    } else if (vertical === VerticalConstraint.Top) {
+      transformY = `${placement.top ?? 0}px`;
+    } else if (vertical === VerticalConstraint.TopBottom) {
+      transformY = `${placement.top ?? 0}px`;
+      style.height = `${sceneHeight! - (placement.top ?? 0) - (placement.bottom ?? 0)}px`;
+    } else if (vertical === VerticalConstraint.Center) {
+      transformY = `${sceneHeight! / 2 - (placement.top ?? 0) - (placement.height ?? 0) / 2}px`;
+    } else if (vertical === VerticalConstraint.Scale) {
+      transformY = `${(placement.top ?? 0) * (sceneHeight! / 100)}px`;
+      style.height = `${sceneHeight! - (placement.top ?? 0) * (sceneHeight! / 100) - (placement.bottom ?? 0) * (sceneHeight! / 100)}px`;
+    }
+
+    let transformX = '0px';
+    if (horizontal === HorizontalConstraint.Right) {
+      transformX = `${sceneWidth! - (placement.right ?? 0) - (placement.width ?? 100)}px`;
+    } else if (horizontal === HorizontalConstraint.Left) {
+      transformX = `${placement.left ?? 0}px`;
+    } else if (horizontal === HorizontalConstraint.LeftRight) {
+      transformX = `${placement.left ?? 0}px`;
+      style.width = `${sceneWidth! - (placement.left ?? 0) - (placement.right ?? 0)}px`;
+    } else if (horizontal === HorizontalConstraint.Center) {
+      transformX = `${sceneWidth! / 2 - (placement.left ?? 0) - (placement.width ?? 0) / 2}px`;
+    } else if (horizontal === HorizontalConstraint.Scale) {
+      transformX = `${(placement.left ?? 0) * (sceneWidth! / 100)}px`;
+      style.width = `${sceneWidth! - (placement.left ?? 0) * (sceneWidth! / 100) - (placement.right ?? 0) * (sceneWidth! / 100)}px`;
+    }
+    style.transform = `translate(${transformX}, ${transformY}) rotate(${placement.rotation ?? 0}deg)`;
+
+    // style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.sizeStyle = style;
 
     if (this.div) {
@@ -241,77 +275,50 @@ export class ElementState implements LayerElement {
     }
   }
 
+  getTopLeftValues(element: Element) {
+    const style = window.getComputedStyle(element);
+    const matrix = new DOMMatrix(style.transform || '');
+    return {
+      left: matrix.m41,
+      top: matrix.m42,
+      width: style.width ? parseFloat(style.width) : element.clientWidth,
+      height: style.height ? parseFloat(style.height) : element.clientHeight,
+    }; // m41 = translateX, m42 = translateY
+  }
+
   setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
+    const scene = this.getScene()!;
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
+
+    const elSize = this.getTopLeftValues(this.div!);
 
     if (!elementContainer) {
       elementContainer = this.div && this.div.getBoundingClientRect();
     }
-    let parentBorderWidth = 0;
+    // let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
-      parentBorderWidth = this.parent?.isRoot()
-        ? 0
-        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
+      // parentBorderWidth = this.parent?.isRoot()
+      //   ? 0
+      //   : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
-    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
-    // TODO: Fix behavior for top+bottom, left+right, center, and scale constraints
-    let rotationTopOffset = 0;
-    let rotationLeftOffset = 0;
-    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
-      const rotationDegrees = this.options.placement.rotation;
-      const rotationRadians = (Math.PI / 180) * rotationDegrees;
-      let rotationOffset = rotationRadians;
-
-      switch (true) {
-        case rotationDegrees >= 0 && rotationDegrees < 90:
-          // no-op
-          break;
-        case rotationDegrees >= 90 && rotationDegrees < 180:
-          rotationOffset = Math.PI - rotationRadians;
-          break;
-        case rotationDegrees >= 180 && rotationDegrees < 270:
-          rotationOffset = Math.PI + rotationRadians;
-          break;
-        case rotationDegrees >= 270:
-          rotationOffset = -rotationRadians;
-          break;
-      }
-
-      const calculateDelta = (dimension1: number, dimension2: number) =>
-        (dimension1 / 2) * Math.sin(rotationOffset) + (dimension2 / 2) * (Math.cos(rotationOffset) - 1);
-
-      rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
-      rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
-    }
-
-    const relativeTop =
-      elementContainer && parentContainer
-        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + rotationTopOffset) /
-          transformScale
-        : 0;
-    const relativeBottom =
-      elementContainer && parentContainer
-        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + rotationTopOffset) /
-          transformScale
-        : 0;
-    const relativeLeft =
-      elementContainer && parentContainer
-        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + rotationLeftOffset) /
-          transformScale
-        : 0;
-    const relativeRight =
-      elementContainer && parentContainer
-        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + rotationLeftOffset) /
-          transformScale
-        : 0;
+    const relativeTop = Math.round(elSize.top);
+    const relativeBottom = Math.round(scene.height - elSize.top - elSize.height);
+    const relativeLeft = Math.round(elSize.left);
+    const relativeRight = Math.round(scene.width - elSize.left - elSize.width);
 
     const placement: Placement = {};
 
-    const width = (elementContainer?.width ?? 100) / transformScale;
-    const height = (elementContainer?.height ?? 100) / transformScale;
+    // const width = (elementContainer?.width ?? 100) / transformScale;
+    // const height = (elementContainer?.height ?? 100) / transformScale;
+    const width = elSize.width;
+    const height = elSize.height;
+
+    // INFO: calculate it anyway to be able to use it for pan&zoom
+    placement.top = relativeTop;
+    placement.left = relativeLeft;
 
     switch (vertical) {
       case VerticalConstraint.Top:
@@ -529,6 +536,7 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+    // this.migratePlacementToTopLeft(this.options.placement ?? {});
     this.applyLayoutStylesToDiv();
   };
 
@@ -590,14 +598,14 @@ export class ElementState implements LayerElement {
     } else if (dirLR === -1) {
       placement.left! -= deltaX;
       placement.width = event.width;
-      style.left = `${placement.left}px`;
+      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
       style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
       placement.top! -= deltaY;
       placement.height = event.height;
-      style.top = `${placement.top}px`;
+      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
       style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
       placement.height = event.height;
