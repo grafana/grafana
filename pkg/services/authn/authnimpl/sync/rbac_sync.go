@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"golang.org/x/exp/maps"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/authn"
+	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -28,6 +30,7 @@ func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer, per
 		log:          log.New("permissions.sync"),
 		permRegistry: permRegistry,
 		tracer:       tracer,
+		mapper:       rbac.NewMappingRegistry(),
 	}
 }
 
@@ -36,6 +39,7 @@ type RBACSync struct {
 	permRegistry permreg.PermissionRegistry
 	log          log.Logger
 	tracer       tracing.Tracer
+	mapper       rbac.MappingRegistry
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
@@ -81,7 +85,8 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	permissions := make([]accesscontrol.Permission, 0, 8)
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
-	if len(roles) > 0 || len(actions) > 0 {
+	k8s := ident.ClientParams.FetchPermissionsParams.K8s
+	if len(roles) > 0 || len(actions) > 0 || len(k8s) > 0 {
 		for _, role := range roles {
 			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
 			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
@@ -93,19 +98,14 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 			}
 		}
 		for _, action := range actions {
-			scopes, ok := s.permRegistry.GetScopePrefixes(action)
-			if !ok {
-				s.log.Warn("Unknown action scopes", "action", action)
-				continue
-			}
-			if len(scopes) == 0 {
-				permissions = append(permissions, accesscontrol.Permission{Action: action})
-				continue
-			}
-			for scope := range scopes {
-				permissions = append(permissions, accesscontrol.Permission{Action: action, Scope: scope + "*"})
-			}
+			s.addPermissionsForAction(action, &permissions)
 		}
+		// Add K8s permissions
+		k8sPermissions, err := s.translateK8sPermissions(ctx, k8s)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, k8sPermissions...)
 		return permissions, nil
 	}
 
@@ -113,6 +113,122 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	if err != nil {
 		s.log.FromContext(ctx).Error("Failed to fetch permissions from db", "error", err, "id", ident.ID)
 		return nil, errSyncPermissionsForbidden
+	}
+	return permissions, nil
+}
+
+// addPermissionsForAction is a helper method that handles the common pattern of:
+// 1. Getting scope prefixes for an action
+// 2. Adding permissions with appropriate scopes
+// 3. Logging warnings for unknown actions
+func (s *RBACSync) addPermissionsForAction(action string, permissions *[]accesscontrol.Permission) {
+	scopes, ok := s.permRegistry.GetScopePrefixes(action)
+	if !ok {
+		s.log.Warn("Unknown action scopes", "action", action)
+		return
+	}
+	if len(scopes) == 0 {
+		*permissions = append(*permissions, accesscontrol.Permission{Action: action})
+		return
+	}
+	for scope := range scopes {
+		*permissions = append(*permissions, accesscontrol.Permission{Action: action, Scope: scope + "*"})
+	}
+}
+
+// translateK8sPermissions converts K8s-style permissions into Grafana's internal permission format.
+// It parses permissions in the format "group/resource:verb" and uses the mapper to translate them.
+func (s *RBACSync) translateK8sPermissions(ctx context.Context, k8sPerms []string) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0, len(k8sPerms))
+	for _, k8sPerm := range k8sPerms {
+		switch {
+		// Case group:*
+		case strings.HasSuffix(k8sPerm, ":*") && !strings.Contains(k8sPerm, "/"):
+			// Case group:*
+			group := strings.TrimSuffix(k8sPerm, ":*")
+			mappings := s.mapper.GetAll(group)
+			if len(mappings) == 0 {
+				s.log.Warn("No mappings found for group", "group", group)
+				continue
+			}
+
+			for _, mapping := range mappings {
+				actions := mapping.AllActions()
+				for _, action := range actions {
+					s.addPermissionsForAction(action, &permissions)
+				}
+			}
+
+		// Case group:verb
+		case strings.Contains(k8sPerm, ":") && !strings.Contains(k8sPerm, "/") && !strings.HasSuffix(k8sPerm, ":*"):
+			// Case group:verb
+			parts := strings.Split(k8sPerm, ":")
+			if len(parts) != 2 {
+				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+				continue
+			}
+
+			group := parts[0]
+			verb := parts[1]
+
+			mappings := s.mapper.GetAll(group)
+			if len(mappings) == 0 {
+				s.log.Warn("No mappings found for group", "group", group)
+				continue
+			}
+
+			for _, mapping := range mappings {
+				action, ok := mapping.Action(verb)
+				if !ok {
+					s.log.Warn("Unknown K8s verb for group", "group", group, "verb", verb)
+					continue
+				}
+				s.addPermissionsForAction(action, &permissions)
+			}
+
+		// Case group/resource:<verb/*>
+		case strings.Contains(k8sPerm, "/"):
+			parts := strings.Split(k8sPerm, "/")
+			if len(parts) != 2 {
+				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+				continue
+			}
+
+			group := parts[0]
+			resourceVerb := strings.Split(parts[1], ":")
+			if len(resourceVerb) != 2 {
+				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+				continue
+			}
+
+			resource := resourceVerb[0]
+			verb := resourceVerb[1]
+
+			t, ok := s.mapper.Get(group, resource)
+			if !ok {
+				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
+				continue
+			}
+
+			if verb == "*" {
+				// Case group/resource:*
+				actions := t.AllActions()
+				for _, action := range actions {
+					s.addPermissionsForAction(action, &permissions)
+				}
+			} else {
+				// Case group/resource:verb
+				action, ok := t.Action(verb)
+				if !ok {
+					s.log.Warn("Unknown K8s verb", "group", group, "resource", resource, "verb", verb)
+					continue
+				}
+				s.addPermissionsForAction(action, &permissions)
+			}
+
+		default:
+			s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+		}
 	}
 	return permissions, nil
 }
