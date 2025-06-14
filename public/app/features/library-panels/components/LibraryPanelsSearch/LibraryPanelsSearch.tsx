@@ -113,8 +113,6 @@ function getStyles(theme: GrafanaTheme2, variant: LibraryPanelsSearchVariant) {
     }),
     container: css({
       width: '100%',
-      overflowY: 'auto',
-      padding: theme.spacing(1),
     }),
     libraryPanelsView: css({
       width: '100%',

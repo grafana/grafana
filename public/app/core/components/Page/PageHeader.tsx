@@ -83,7 +83,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      marginBottom: theme.spacing(2),
+      margin: theme.spacing(0, 1, 1, 1),
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(0, 2, 2, 2),
+      },
     }),
     subTitle: css({
       position: 'relative',
