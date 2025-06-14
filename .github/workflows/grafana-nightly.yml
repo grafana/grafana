@@ -1,0 +1,48 @@
+name: Grafana Nightly
+
+on:
+  # it's here for testing
+  pull_request:
+  schedule:
+    - cron: "0 2 * * *"
+jobs:
+  test_backend:
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify Gen-Cue
+        run: CODEGEN_VERIFY=1 make gen-cue
+      - name: Verify Gen Jsonnet
+        run: CODEGEN_VERIFY=1 make gen-jsonnet
+      - name: Wire install
+        run: make gen-go
+      - name: Test Backend
+        run: go list -f '{{.Dir}}/...' -m | xargs go test -short -covermode=atomic -timeout=5m
+      - name: Test Backend Integration
+        run: |
+          go test -count=1 -coveremode=atomic -timeout=5m -run '^TestIntegration' \
+          "$(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | \
+          grep -o '\(.*\)/' | sort -u)"
+  test_frontend:
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Yarn install
+        run: yarn install --immutable || yarn install --immutable
+      - name: Betterer
+        run: yarn betterer:ci
+      - name: Test Frontend
+        env:
+          TEST_MAX_WORKERS: 50%
+        run: yarn run ci:test-frontend
