@@ -111,7 +111,7 @@ func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequ
 
 func GetGravatarUrl(cfg *setting.Cfg, text string) string {
 	if cfg.DisableGravatar {
-		return cfg.AppSubURL + "/public/img/user_profile.png"
+		return cfg.AppSubURL + "/public/build/img/user_profile.png"
 	}
 
 	if text == "" {
