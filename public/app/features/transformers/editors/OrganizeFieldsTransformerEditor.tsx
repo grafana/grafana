@@ -45,60 +45,70 @@ interface UIOrderByItem {
   order: Order;
 }
 
+function move(arr: unknown[], from: number, to: number) {
+  arr.splice(to, 0, arr.splice(from, 1)[0]);
+}
+
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
 
-  const uiOrderByItems: UIOrderByItem[] = [];
+  const uiOrderByItems = useMemo(() => {
+    const uiOrderByItems: UIOrderByItem[] = [];
 
-  if (orderByMode === OrderByMode.Auto) {
-    const foundLabels = getDistinctLabels(input);
+    if (orderByMode === OrderByMode.Auto) {
+      const foundLabels = getDistinctLabels(input);
 
-    let byFieldNameAdded = false;
+      let byFieldNameAdded = false;
 
-    // add Asc or Desc items
-    orderBy?.forEach((item) => {
-      let order = item.desc ? Order.Desc : Order.Asc;
+      // add Asc or Desc items
+      orderBy?.forEach((item, index) => {
+        let order = item.desc ? Order.Desc : Order.Asc;
 
-      // by field name
-      if (item.type === OrderByType.Name) {
+        // by field name
+        if (item.type === OrderByType.Name) {
+          uiOrderByItems.push({
+            type: OrderByType.Name,
+            order,
+          });
+
+          byFieldNameAdded = true;
+        }
+        // by label
+        else if (foundLabels.has(item.name!)) {
+          uiOrderByItems.push({
+            type: OrderByType.Label,
+            name: item.name,
+            order,
+          });
+
+          foundLabels.delete(item.name!);
+        }
+      });
+
+      let index = orderBy?.length ?? 0;
+
+      // add Off items
+      if (!byFieldNameAdded) {
         uiOrderByItems.push({
           type: OrderByType.Name,
-          order,
+          order: Order.Off,
         });
-
-        byFieldNameAdded = true;
       }
-      // by label
-      else if (foundLabels.has(item.name!)) {
+
+      foundLabels.forEach((name) => {
         uiOrderByItems.push({
           type: OrderByType.Label,
-          name: item.name,
-          order,
+          name,
+          order: Order.Off,
         });
-
-        foundLabels.delete(item.name!);
-      }
-    });
-
-    // add Off items
-    if (!byFieldNameAdded) {
-      uiOrderByItems.push({
-        type: OrderByType.Name,
-        order: Order.Off,
       });
     }
 
-    foundLabels.forEach((name) => {
-      uiOrderByItems.push({
-        type: OrderByType.Label,
-        name,
-        order: Order.Off,
-      });
-    });
-  }
+    return uiOrderByItems;
+  }, [input, orderByMode, orderBy]);
 
   const filterType = includeByName && Object.keys(includeByName).length > 0 ? 'include' : 'exclude';
 
@@ -181,40 +191,40 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
       onChange({ ...options, orderBy });
     },
-    [options]
+    [options, uiOrderByItems, onChange]
   );
 
-  const onDragEndLabels = useCallback((result: DropResult) => {
-    if (!result || !result.destination) {
-      return;
-    }
-    const startIndex = result.source.index;
-    const endIndex = result.destination.index;
+  const onDragEndLabels = useCallback(
+    (result: DropResult) => {
+      if (result.destination == null) {
+        return;
+      }
 
-    if (startIndex === endIndex) {
-      return;
-    }
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
 
-    let delta = startIndex - endIndex;
-    const isForward = delta < 0;
-    delta = Math.abs(delta);
+      if (startIndex === endIndex) {
+        return;
+      }
 
-    const allOptions = [...allAutoSortOptions];
-    const changedSort = allOptions.splice(startIndex, 1)[0];
-    changedSort.index = endIndex;
+      move(uiOrderByItems, startIndex, endIndex);
 
-    for (let i = 0; i < delta; i++) {
-      const changeIndex = allOptions.findIndex((opt) => opt.index === (isForward ? startIndex + 1 : endIndex) + i);
-      allOptions[changeIndex].index = allOptions[changeIndex].index + (isForward ? -1 : 1);
-    }
+      const orderBy: OrderByItem[] = [];
 
-    allOptions.push(changedSort);
+      uiOrderByItems.forEach((item) => {
+        if (item.order !== Order.Off) {
+          orderBy.push({
+            type: item.type,
+            name: item.name,
+            desc: item.order === Order.Desc,
+          });
+        }
+      });
 
-    onChange({
-      ...options,
-      autoSortOptions: allOptions.sort((a, b) => a.index - b.index),
-    });
-  }, []);
+      onChange({ ...options, orderBy });
+    },
+    [options, onChange, uiOrderByItems]
+  );
 
   // Show warning that we only apply the first frame
   if (input.length > 1) {
@@ -389,24 +399,22 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
   const styles = useStyles2(getFieldNameStyles);
 
   return (
-    <Draggable draggableId={item.name ?? ''} index={index}>
+    <Draggable draggableId={item.name ?? ''} index={index} isDragDisabled={item.order === Order.Off}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
             <Stack gap={3} justifyContent="flex-start" alignItems="center" width="100%">
-              {item.order !== Order.Off && (
-                <span {...provided.dragHandleProps}>
-                  <Icon
-                    name="draggabledots"
-                    title={t(
-                      'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
-                      'Drag and drop to reorder'
-                    )}
-                    size="lg"
-                    className={styles.draggable}
-                  />
-                </span>
-              )}
+              <span {...provided.dragHandleProps}>
+                <Icon
+                  name="draggabledots"
+                  title={t(
+                    'transformers.draggable-field-name.title-drag-and-drop-to-reorder',
+                    'Drag and drop to reorder'
+                  )}
+                  size="lg"
+                  className={styles.draggable}
+                />
+              </span>
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
                 {item.type === OrderByType.Label ? `Label: ${item.name}` : `Field name`}
               </Text>
