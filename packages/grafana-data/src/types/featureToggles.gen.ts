@@ -1002,6 +1002,10 @@ export interface FeatureToggles {
   */
   extensionsReadOnlyProxy?: boolean;
   /**
+  * Registers AuthZ /apis endpoint
+  */
+  kubernetesAuthzApis?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
