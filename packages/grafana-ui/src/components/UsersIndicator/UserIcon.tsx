@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useMemo, PropsWithChildren } from 'react';
 
 import { dateTime, DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { UserView } from './types';

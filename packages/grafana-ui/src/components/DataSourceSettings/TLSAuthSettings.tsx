@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { t, Trans } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';

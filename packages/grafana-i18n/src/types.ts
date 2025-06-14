@@ -46,6 +46,10 @@ interface TransProps {
    * Values to interpolate into the translation
    */
   values?: Record<string, unknown>;
+  /**
+   * Class name for the Trans component
+   */
+  className?: string;
 }
 
 /**

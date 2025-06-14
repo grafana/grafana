@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';

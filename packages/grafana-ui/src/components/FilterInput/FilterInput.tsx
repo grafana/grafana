@@ -1,8 +1,8 @@
 import { forwardRef, useRef, HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { Trans } from '../../utils/i18n';
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';

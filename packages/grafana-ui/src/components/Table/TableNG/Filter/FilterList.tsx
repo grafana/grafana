@@ -4,9 +4,9 @@ import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { Trans } from '../../../../utils/i18n';
 import { Checkbox } from '../../../Forms/Checkbox';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';

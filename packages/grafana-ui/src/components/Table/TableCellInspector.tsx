@@ -1,7 +1,8 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { t, Trans } from '../../utils/i18n';
+import { t, Trans } from '@grafana/i18n';
+
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
