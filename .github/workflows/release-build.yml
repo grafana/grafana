@@ -83,7 +83,7 @@ jobs:
         run: echo "VERSION=$(cat package.json | jq -r .version | sed -s s/pre/${BUILD_ID}/g)" >> "$GITHUB_ENV"
         env:
           REF_NAME: ${{ github.ref_name }}
-          BUILD_ID: ${{ github.build_number }}
+          BUILD_ID: ${{ github.run_number }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
       - uses: ./.github/actions/build-package
