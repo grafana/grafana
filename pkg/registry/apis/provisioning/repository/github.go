@@ -45,6 +45,7 @@ type GithubRepository interface {
 	Owner() string
 	Repo() string
 	Client() pgh.Client
+	EnsureBranchExists(ctx context.Context, branchName string) error
 }
 
 func NewGitHub(
@@ -279,7 +280,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
+	if err := r.EnsureBranchExists(ctx, ref); err != nil {
 		return err
 	}
 
@@ -314,7 +315,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
+	if err := r.EnsureBranchExists(ctx, ref); err != nil {
 		return err
 	}
 
@@ -365,7 +366,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	}
 	ctx, _ = r.logger(ctx, ref)
 
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
+	if err := r.EnsureBranchExists(ctx, ref); err != nil {
 		return err
 	}
 
@@ -482,7 +483,7 @@ func isValidGitBranchName(branch string) bool {
 	return true
 }
 
-func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
+func (r *githubRepository) EnsureBranchExists(ctx context.Context, branchName string) error {
 	if !isValidGitBranchName(branchName) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
