@@ -3,7 +3,6 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - km/prerelease-builds-gha
       - release-*.*.*
       - main
 
@@ -116,4 +115,4 @@ jobs:
           bucket: ${{ steps.login-to-gcs.outputs.bucket }}
           environment: prod
           path: ${{ steps.build.outputs.file }}
-          bucket_path: ${{ env.GRAFANA_VERSION }}
+          bucket_path: ${{ env.VERSION }}
