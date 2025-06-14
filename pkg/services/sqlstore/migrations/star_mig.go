@@ -37,6 +37,11 @@ func addStarMigrations(mg *Migrator) {
 			Cols: []string{"user_id", "dashboard_uid", "org_id"},
 			Type: UniqueIndex,
 		}))
+	mg.AddMigration("Add index in star table on dashboard_id",
+		NewAddIndexMigration(starV1, &Index{
+			Cols: []string{"dashboard_id"},
+			Type: IndexType,
+		}))
 }
 
 // relies on the dashboard table existing & must be run after the dashboard migrations are run
