@@ -9,6 +9,7 @@ export const COLUMN = {
 /** Table layout and display constants */
 export const TABLE = {
   CELL_PADDING: 8,
+  HEADER_ROW_HEIGHT: 28,
   MAX_CELL_HEIGHT: 48,
   PAGINATION_LIMIT: 750,
   SCROLL_BAR_WIDTH: 8,
