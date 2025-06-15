@@ -27,10 +27,20 @@ const esbuildOptions = {
 
 const envConfig = getEnvConfig();
 
+// Allow for filesystem cache when building this in dev docker image
+let cache = false;
+if (process.env.WEBPACK_FS_CACHE === 'true') {
+  cache = {
+    type: 'filesystem',
+    cacheDirectory: 'node_modules/.cache/webpack',
+  };
+}
+
 module.exports = (env = {}) =>
   merge(common, {
     mode: 'production',
     devtool: 'source-map',
+    cache,
 
     entry: {
       dark: './public/sass/grafana.dark.scss',

@@ -1,0 +1,102 @@
+# syntax=docker/dockerfile:1
+
+ARG JS_IMAGE=node:22-alpine
+
+FROM ${JS_IMAGE} AS builder
+
+WORKDIR /app
+
+# Install dependencies
+RUN --mount=type=cache,sharing=locked,target=/var/cache/apk apk add make build-base python3
+
+# Copy package files first for better caching
+COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
+COPY .yarn .yarn
+COPY packages/grafana-alerting/package.json ./packages/grafana-alerting/
+COPY packages/grafana-data/package.json ./packages/grafana-data/
+COPY packages/grafana-e2e-selectors/package.json ./packages/grafana-e2e-selectors/
+COPY packages/grafana-eslint-rules/package.json ./packages/grafana-eslint-rules/
+COPY packages/grafana-flamegraph/package.json ./packages/grafana-flamegraph/
+COPY packages/grafana-i18n/package.json ./packages/grafana-i18n/
+COPY packages/grafana-o11y-ds-frontend/package.json ./packages/grafana-o11y-ds-frontend/
+COPY packages/grafana-plugin-configs/package.json ./packages/grafana-plugin-configs/
+COPY packages/grafana-prometheus/package.json ./packages/grafana-prometheus/
+COPY packages/grafana-runtime/package.json ./packages/grafana-runtime/
+COPY packages/grafana-schema/package.json ./packages/grafana-schema/
+COPY packages/grafana-sql/package.json ./packages/grafana-sql/
+COPY packages/grafana-test-utils/package.json ./packages/grafana-test-utils/
+COPY packages/grafana-ui/package.json ./packages/grafana-ui/
+
+COPY public/app/plugins/datasource/azuremonitor/package.json ./public/app/plugins/datasource/azuremonitor/
+COPY public/app/plugins/datasource/cloud-monitoring/package.json ./public/app/plugins/datasource/cloud-monitoring/
+COPY public/app/plugins/datasource/grafana-postgresql-datasource/package.json ./public/app/plugins/datasource/grafana-postgresql-datasource/
+COPY public/app/plugins/datasource/grafana-pyroscope-datasource/package.json ./public/app/plugins/datasource/grafana-pyroscope-datasource/
+COPY public/app/plugins/datasource/grafana-testdata-datasource/package.json ./public/app/plugins/datasource/grafana-testdata-datasource/
+COPY public/app/plugins/datasource/jaeger/package.json ./public/app/plugins/datasource/jaeger/
+COPY public/app/plugins/datasource/mssql/package.json ./public/app/plugins/datasource/mssql/
+COPY public/app/plugins/datasource/mysql/package.json ./public/app/plugins/datasource/mysql/
+COPY public/app/plugins/datasource/parca/package.json ./public/app/plugins/datasource/parca/
+COPY public/app/plugins/datasource/tempo/package.json ./public/app/plugins/datasource/tempo/
+COPY public/app/plugins/datasource/zipkin/package.json ./public/app/plugins/datasource/zipkin/
+
+COPY e2e/test-plugins/grafana-extensionstest-app/package.json ./e2e/test-plugins/grafana-extensionstest-app/
+COPY e2e/test-plugins/grafana-test-datasource/package.json ./e2e/test-plugins/grafana-test-datasource/
+
+RUN --mount=type=cache,target=/.yarn YARN_CACHE_FOLDER=/.yarn yarn install --immutable
+
+COPY packages packages
+COPY public public
+COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js LICENSE ./
+COPY scripts scripts
+COPY emails emails
+COPY conf/defaults.ini ./conf/
+
+# Build the frontend
+ENV NODE_ENV=development
+ENV WEBPACK_FS_CACHE=true
+RUN tree ./scripts
+RUN --mount=type=cache,target=/app/.nx --mount=type=cache,target=/app/node_modules/.cache yarn build:nominify
+
+# Runtime stage - just a simple nginx to serve static files
+FROM nginx:alpine
+
+# Delete the default nginx content
+RUN rm -rf /usr/share/nginx/html
+
+# Copy the built assets
+COPY --from=builder /app/public /usr/share/nginx/html/public
+
+# Use a simple nginx config that handles wildcard routes
+COPY <<'EOF' /etc/nginx/conf.d/default.conf
+map $request $loggable {
+  default 1;
+  "~^\x16\x03" 0;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+
+    # Enable directory listing
+    autoindex on;
+    autoindex_exact_size off;
+    autoindex_format html;
+    autoindex_localtime on;
+
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Headers "X-Grafana-Device-Id" always;
+
+    # Suppress access log for malformed HTTPS requests (those starting with a TLS handshake)
+    access_log  /var/log/nginx/access.log  main if=$loggable;
+
+    # This serves paths like /grafana/12.1.0-88106/robots.txt
+    location ~ ^/grafana[^/]*/[^/]+/(.*)$ {
+        alias /usr/share/nginx/html/$1;
+    }
+}
+EOF
+
+EXPOSE 80

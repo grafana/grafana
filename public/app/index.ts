@@ -29,6 +29,6 @@ async function bootstrapWindowData() {
 }
 
 bootstrapWindowData().catch((error) => {
-  console.error('Error bootstrapping Grafana', error);
+  console.error('(will this rebuild? how long will it take?) Error bootstrapping Grafana', error);
   window.__grafana_load_failed();
 });

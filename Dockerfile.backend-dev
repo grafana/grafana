@@ -6,71 +6,78 @@ ARG GO_IMAGE=golang:1.24.4-alpine
 # Development Go build stage
 FROM ${GO_IMAGE} AS go-dev-builder
 
-ARG COMMIT_SHA=""
-ARG BUILD_BRANCH=""
-ARG GO_BUILD_TAGS="oss"
-ARG WIRE_TAGS="oss"
-
 RUN apk add --no-cache \
     binutils-gold \
     bash \
-    gcc g++ make git
+    gcc g++ make git jq findutils
 
 WORKDIR /tmp/grafana
 
-# Copy go mod files first for better caching
-COPY go.* ./
+RUN go env GOCACHE
+RUN go env GOPATH
+
 COPY .bingo .bingo
 COPY .citools .citools
 
-# Include vendored dependencies
-COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/secret pkg/apis/secret
-COPY pkg/apiserver pkg/apiserver
-COPY pkg/apimachinery pkg/apimachinery
-COPY pkg/build pkg/build
-COPY pkg/build/wire pkg/build/wire
-COPY pkg/promlib pkg/promlib
-COPY pkg/storage/unified/resource pkg/storage/unified/resource
-COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
-COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
-COPY pkg/semconv pkg/semconv
-COPY pkg/aggregator pkg/aggregator
-COPY apps/playlist apps/playlist
-COPY apps/investigations apps/investigations
-COPY apps/advisor apps/advisor
-COPY apps/dashboard apps/dashboard
-COPY apps/folder apps/folder
-COPY apps/iam apps/iam
-COPY apps apps
-COPY kindsv2 kindsv2
-COPY apps/alerting/notifications apps/alerting/notifications
-COPY pkg/codegen pkg/codegen
-COPY pkg/plugins/codegen pkg/plugins/codegen
+# Copy go mod files first
+# ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1#' | sort -u
+COPY apps/advisor/go.* apps/advisor/
+COPY apps/alerting/notifications/go.* apps/alerting/notifications/
+COPY apps/dashboard/go.* apps/dashboard/
+COPY apps/folder/go.* apps/folder/
+COPY apps/iam/go.* apps/iam/
+COPY apps/investigations/go.* apps/investigations/
+COPY apps/playlist/go.* apps/playlist/
+COPY pkg/aggregator/go.* pkg/aggregator/
+COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/apis/secret/go.* pkg/apis/secret/
+COPY pkg/apiserver/go.* pkg/apiserver/
+COPY pkg/build/go.* pkg/build/
+COPY pkg/build/wire/go.* pkg/build/wire/
+COPY pkg/codegen/go.* pkg/codegen/
+COPY pkg/plugins/codegen/go.* pkg/plugins/codegen/
+COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/semconv/go.* pkg/semconv/
+COPY scripts/go-workspace/go.* scripts/go-workspace/
+COPY scripts/modowners/go.* scripts/modowners/
 
-RUN go mod download
-
-# Install bingo
-RUN go install github.com/bwplotka/bingo@latest && bingo get -v
-
-# Copy remaining source files
-COPY embed.go Makefile build.go package.json ./
+# Install dependencies
+COPY go.* ./
 COPY cue.mod cue.mod
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
+
+# Copy source files
+COPY Makefile embed.go build.go ./
 COPY kinds kinds
 COPY local local
-COPY packages/grafana-schema packages/grafana-schema
-COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
-COPY pkg pkg
 COPY scripts scripts
-COPY conf conf
-COPY .github .github
+COPY kindsv2 kindsv2
+COPY apps apps
+COPY conf/defaults.ini conf/defaults.ini
+COPY conf/sample.ini conf/sample.ini
+COPY conf/ldap.toml conf/ldap.toml
+COPY conf/ldap_multiple.toml conf/ldap_multiple.toml
+COPY pkg pkg
+COPY package.json package.json
 
-ENV COMMIT_SHA=${COMMIT_SHA}
-ENV BUILD_BRANCH=${BUILD_BRANCH}
+RUN ls -lah .
 
-# Build the Go binary
-RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+# Build the Go binary without symbols
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build -trimpath \
+    -ldflags="-s -w -X main.version=$(cat package.json | jq -r .version) -X main.commit=FEEDC0DE -X main.buildstamp=1609750800 -X main.buildBranch=dev" \
+    -o ./bin/grafana \
+    ./pkg/cmd/grafana
+
+WORKDIR /tmp/plugins
+COPY public/app/plugins ./
+RUN find . -type f ! -name plugin.json -delete && \
+    find . -type d -empty -delete
+RUN find . -type d -exec sh -c 'printf "\n%s:\n" "$1"; ls -lah "$1"' _ {} \;
 
 # Development runtime stage
 FROM ${BASE_IMAGE}
@@ -91,8 +98,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 # Install Node.js, npm, and nodemon for development
-RUN apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
-    apk info -vv | sort
+RUN apk add --no-cache ca-certificates tzdata musl-utils bash
 
 # glibc support for alpine x86_64 only
 ARG GLIBC_VERSION=2.40
@@ -134,19 +140,19 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
 # Copy the built binary
-COPY --from=go-dev-builder /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+COPY --from=go-dev-builder /tmp/grafana/bin/grafana ./bin/
+
+RUN ls -lah ./bin
 
 COPY public/emails public/emails
 COPY public/views public/views
+COPY public/dashboards public/dashboards
+# COPY --from=go-dev-builder /tmp/plugins public/app/plugins
+COPY public/app/plugins public/app/plugins
 
 # Create a minimal assets-manifest.json for development
 COPY fake-assets-manifest.json public/build/assets-manifest.json
-RUN echo 'console.log(`fake js file`)' > public/build/app.js
-RUN echo 'console.log(`fake js file`)' > public/build/swagger.js
-RUN echo '/* fake css file */' > public/build/grafana.app.css
-RUN echo '/* fake css file */' > public/build/grafana.dark.css
-RUN echo '/* fake css file */' > public/build/grafana.light.css
-RUN echo '/* fake css file */' > public/build/grafana.swagger.css
+RUN echo 'window.alert("Using fake assets instead of CDN")' > public/build/app.js
 
 EXPOSE 3000
 
