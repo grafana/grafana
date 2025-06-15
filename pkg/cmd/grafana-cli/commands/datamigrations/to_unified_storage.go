@@ -32,7 +32,9 @@ import (
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	namespace := "default" // TODO... from command line
+	// Take namespace from command line
+	namespace := c.String("namespace")
+
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return err

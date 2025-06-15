@@ -154,6 +154,11 @@ var adminCommands = []*cli.Command{
 						Usage: "Non interactive mode. Just run the migration.",
 						Value: false,
 					},
+					&cli.StringFlag{
+						Name:  "namespace",
+						Usage: "That's the Unified Storage Namespace.",
+						Value: "default",
+					},
 				},
 			},
 		},
