@@ -1,0 +1,90 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - '--api.insecure=true'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.web.address=:80'
+    ports:
+      - '3000:80'
+      - '3080:8080'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.block-public.rule=Host(`localhost`) && (Path(`/public`) || PathPrefix(`/public/`) || PathPrefix(`/core:plugin`))'
+      - 'traefik.http.routers.block-public.entrypoints=web'
+      - 'traefik.http.routers.block-public.priority=100'
+      - 'traefik.http.routers.block-public.service=noop@internal'
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend-dev
+    ports:
+      - '3002:3000'
+    environment:
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: 172.29.224.1:5433
+      GF_DATABASE_NAME: grafana-dev
+      GF_DATABASE_USER: grafana-dev
+      GF_DATABASE_PASSWORD: grafana-dev
+      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
+      GF_SERVER_CDN_URL: http://host.docker.internal:3001
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.backend.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/apis`) || PathPrefix(`/bootdata`) || PathPrefix(`/render`) || PathPrefix(`/login/{name}`))'
+      - 'traefik.http.routers.backend.entrypoints=web'
+    develop:
+      watch:
+        - path: ./pkg
+          action: rebuild
+          ignore:
+            - .git/
+            - node_modules/
+            - .DS_Store
+
+  frontend-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend-dev
+      additional_contexts:
+        backend: 'service:backend'
+    entrypoint: ['/usr/share/grafana/bin/grafana', 'server', 'target']
+    ports:
+      - '3003:3000'
+    environment:
+      GF_DEFAULT_APP_MODE: development
+      GF_DEFAULT_TARGET: frontend-server
+      GF_SECURITY_CONTENT_SECURITY_POLICY: false
+      GF_SERVER_CDN_URL: http://host.docker.internal:3001
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.frontend.rule=Host(`localhost`)'
+      - 'traefik.http.routers.frontend.entrypoints=web'
+    develop:
+      watch:
+        - path: ./pkg
+          action: rebuild
+          ignore:
+            - .git/
+            - node_modules/
+            - .DS_Store
+
+  frontend-cdn:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend-cdn-dev
+    ports:
+      - '3001:80'
+    develop:
+      watch:
+        - path: ./
+          action: rebuild
+          include:
+            - package.json
+            - yarn.lock
+            - packages/
+            - public/
+            - scripts/webpack/

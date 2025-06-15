@@ -227,6 +227,10 @@ build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
+.PHONY: build-go-faster
+build-go-faster:
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
 .PHONY: build-backend
 build-backend: ## Build Grafana backend.
 	@echo "build backend"

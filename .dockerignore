@@ -11,6 +11,8 @@ Dockerfile
 docs
 dump.rdb
 node_modules
+public/build
+public/app/plugins/*/*/dist
 **/node_modules
 /tmp
 *.yml

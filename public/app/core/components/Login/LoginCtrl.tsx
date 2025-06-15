@@ -111,7 +111,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
 
     getBackendSrv()
-      .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
+      .post<LoginDTO>('/api/login', formModel, { showErrorAlert: false })
       .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
