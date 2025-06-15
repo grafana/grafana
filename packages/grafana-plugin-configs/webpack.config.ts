@@ -31,6 +31,10 @@ function skipFiles(f: string): boolean {
 }
 
 const config = async (env: Record<string, unknown>): Promise<Configuration> => {
+  const pathParts = path.normalize(process.cwd()).split(path.sep).filter(Boolean);
+  const [pluginType, pluginName] = pathParts.slice(-2);
+  const outputPath = path.resolve(__dirname, '../../public/build/plugins', pluginType, pluginName);
+
   const pluginJson = getPluginJson();
   const baseConfig: Configuration = {
     cache: {
@@ -153,7 +157,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       library: {
         type: 'amd',
       },
-      path: path.resolve(process.cwd(), DIST_DIR),
+      path: outputPath,
       publicPath: `public/plugins/${pluginJson.id}/`,
       uniqueName: pluginJson.id,
     },
@@ -178,7 +182,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       // Replace certain template-variables in the README and plugin.json
       new ReplaceInFileWebpackPlugin([
         {
-          dir: path.resolve(DIST_DIR),
+          dir: outputPath,
           files: ['plugin.json', 'README.md'],
           rules: [
             {

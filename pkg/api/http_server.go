@@ -609,7 +609,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html") // TODO: We eventually want to stop serving the entire public directory
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 
@@ -768,6 +768,8 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 			c.Resp.Header().Set("Content-Type", "application/javascript")
 		}
 	}
+
+	hs.log.Info("Mapping static", "rootDir", rootDir, "dir", dir, "prefix", prefix, "exclude", exclude)
 
 	m.Use(httpstatic.Static(
 		path.Join(rootDir, dir),

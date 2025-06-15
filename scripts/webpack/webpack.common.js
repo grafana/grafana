@@ -3,6 +3,11 @@ const path = require('path');
 const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
+const { getNonDecoupledPlugins } = require('./utils/grafanaPlugins');
+
+// Create a list of core, non-decoupled plugins to copy their assets across into the build directory
+
+const nonDecoupledPlugins = getNonDecoupledPlugins();
 
 module.exports = {
   target: 'web',
@@ -15,7 +20,9 @@ module.exports = {
     asyncWebAssembly: true,
   },
   output: {
-    clean: true,
+    clean: {
+      keep: 'plugins',
+    },
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
@@ -75,6 +82,17 @@ module.exports = {
           from: 'public/img',
           to: 'img',
         },
+
+        // Copy non-decoupled plugins to the build directory seperate from the folder that
+        // decoupled plugins are built to so they can be cleaned up properly.
+        //
+        // TODO: This copies across all files, including .ts source files that aren't needed.
+        // Ensure that only the necessary files (plugin.json? logo?) are copied across, and other assets
+        // are in the webpack build.
+        ...nonDecoupledPlugins.map((plugin) => ({
+          from: `public/app/plugins/${plugin.type}/${plugin.name}`,
+          to: `bundled-plugins/${plugin.type}/${plugin.name}`,
+        })),
       ],
     }),
   ],
