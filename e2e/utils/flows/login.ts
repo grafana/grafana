@@ -7,7 +7,7 @@ const DEFAULT_PASSWORD = 'admin';
 const loginApi = (username: string, password: string) => {
   cy.request({
     method: 'POST',
-    url: fromBaseUrl('/login'),
+    url: fromBaseUrl('/api/login'),
     body: {
       user: username,
       password,
