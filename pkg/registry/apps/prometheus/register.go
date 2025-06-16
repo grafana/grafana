@@ -13,20 +13,27 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type PrometheusAppProvider struct {
 	app.Provider
-	cfg *setting.Cfg
+	cfg     *setting.Cfg
+	service *datasourceservice.Service
 }
 
 func RegisterApp(
+	p *datasourceservice.Service,
 	cfg *setting.Cfg,
 ) *PrometheusAppProvider {
 	provider := &PrometheusAppProvider{
-		cfg: cfg,
+		cfg:     cfg,
+		service: p,
 	}
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter:    prometheusv0alpha1.GetOpenAPIDefinitions,
@@ -53,22 +60,21 @@ func (p *PrometheusAppProvider) legacyStorageGetter(requested schema.GroupVersio
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
+
+			// TODO update these for datasources
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-				{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*playlistv0alpha1.Playlist)
+				m, ok := obj.(*datasources.DataSource)
 				if !ok {
-					return nil, fmt.Errorf("expected playlist")
+					return nil, fmt.Errorf("expected prometheus")
 				}
 				return []interface{}{
 					m.Name,
-					m.Spec.Title,
-					m.Spec.Interval,
-					m.CreationTimestamp.UTC().Format(time.RFC3339),
+
+					m.Created.UTC().Format(time.RFC3339),
 				}, nil
 			},
 		},

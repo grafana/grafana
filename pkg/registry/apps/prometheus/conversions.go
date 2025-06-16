@@ -38,3 +38,12 @@ func convertToK8sResource(v *datasources.DataSource, namespacer request.Namespac
 	p.UID = gapiutil.CalculateClusterWideUID(p)
 	return p
 }
+
+func convertToLegacyUpdateCommand(p *prometheus.Prometheus, orgId int64) (*datasources.UpdateDataSourceCommand, error) {
+	// TODO extract more fields from spec
+	cmd := &datasources.UpdateDataSourceCommand{
+		UID:  p.Name,
+		Name: p.Name,
+	}
+	return cmd, nil
+}

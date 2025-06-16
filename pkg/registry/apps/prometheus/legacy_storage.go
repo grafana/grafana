@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -13,10 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	prometheus "github.com/grafana/grafana/apps/prometheus/pkg/apis/prometheus/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	datasources "github.com/grafana/grafana/pkg/services/datasources"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 )
 
 var (
@@ -31,7 +30,7 @@ var (
 )
 
 type legacyStorage struct {
-	service        datasources.DataSourceService
+	service        *datasourceservice.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -82,15 +81,15 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
-		UID:   name,
-		OrgId: info.OrgID,
+	dto, err := s.service.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		Name:  name,
+		OrgID: info.OrgID,
 	})
 	if err != nil || dto == nil {
-		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
+		if err == nil {
 			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    playlist.PlaylistKind().Group(),
-				Resource: playlist.PlaylistKind().Plural(),
+				Group:    prometheus.PrometheusKind().Group(),
+				Resource: prometheus.PrometheusKind().Plural(),
 			}, name)
 		}
 		return nil, err
@@ -109,20 +108,17 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*prometheus.Prometheus)
 	if !ok {
-		return nil, fmt.Errorf("expected playlist?")
+		return nil, fmt.Errorf("expected prometheus?")
 	}
 	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.Create(ctx, &playlistsvc.CreatePlaylistCommand{
-		UID:      p.Name,
-		Name:     cmd.Name,
-		Interval: cmd.Interval,
-		Items:    cmd.Items,
-		OrgId:    cmd.OrgId,
+	out, err := s.service.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		UID:  p.Name,
+		Name: cmd.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -153,16 +149,16 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, created, err
 	}
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*prometheus.Prometheus)
 	if !ok {
-		return nil, created, fmt.Errorf("expected playlist after update")
+		return nil, created, fmt.Errorf("expected prometheus after update")
 	}
 
 	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
 	if err != nil {
 		return old, created, err
 	}
-	_, err = s.service.Update(ctx, cmd)
+	_, err = s.service.UpdateDataSource(ctx, cmd)
 	if err != nil {
 		return nil, false, err
 	}
@@ -181,18 +177,18 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*playlist.Playlist)
+	p, ok := v.(*prometheus.Prometheus)
 	if !ok {
-		return v, false, fmt.Errorf("expected a playlist response from Get")
+		return v, false, fmt.Errorf("expected a prometheus response from Get")
 	}
-	err = s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
+	err = s.service.DeleteDataSource(ctx, &datasources.DeleteDataSourceCommand{
 		UID:   name,
-		OrgId: info.OrgID,
+		OrgID: info.OrgID,
 	})
 	return p, true, err // true is instant delete
 }
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for playlists not implemented")
+	return nil, fmt.Errorf("DeleteCollection for prometheus not implemented")
 }
