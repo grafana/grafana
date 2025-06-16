@@ -38,8 +38,8 @@ def rgm_artifacts_step(
         tag_format = "{{ .version }}-{{ .arch }}",
         ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}",
         verify = "false",
-        ubuntu = images["ubuntu"],
-        alpine = images["alpine"]):
+        ubuntu = "ubuntu-base",
+        alpine = "alpine-base"):
     cmd = artifacts_cmd(artifacts = artifacts)
 
     return {
