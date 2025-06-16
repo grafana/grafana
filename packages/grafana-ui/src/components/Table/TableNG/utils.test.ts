@@ -12,6 +12,7 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import {
   BarGaugeDisplayMode,
   TableCellBackgroundDisplayMode,
@@ -19,7 +20,6 @@ import {
   TableCellHeight,
 } from '@grafana/schema';
 
-import { Trans } from '../../../utils/i18n';
 import { PanelContext } from '../../PanelChrome';
 
 import { mapFrameToDataGrid, myRowRenderer } from './TableNG';

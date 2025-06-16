@@ -290,11 +290,11 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_login
 
-Friendly name or name of the attribute within the SAML assertion to use as the user login handle.
+Friendly name or name of the attribute within the SAML assertion to use as the user login handle. Defaults to `login`.
 
 ### assertion_attribute_email
 
-Friendly name or name of the attribute within the SAML assertion to use as the user email.
+Friendly name or name of the attribute within the SAML assertion to use as the user email. Defaults to `email`.
 
 ### assertion_attribute_groups
 
@@ -310,7 +310,7 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_external_uid
 
-Friendly name or name of the attribute within the SAML assertion to use as the user external UID.
+Friendly name or name of the attribute within the SAML assertion to use as the user external UID. Defaults to `userUID`.
 
 ### allowed_organizations
 
