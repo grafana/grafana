@@ -82,7 +82,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
   );
 });
 
-function getWidthFor(value: string, minWidth: number, maxWidth: number | undefined): number {
+export function getWidthFor(value: string, minWidth: number, maxWidth: number | undefined): number {
   if (!value) {
     return minWidth;
   }
