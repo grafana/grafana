@@ -15,7 +15,7 @@ title: Recorded queries
 weight: 300
 ---
 
-# DEPRECIATED Recorded queries
+# DEPRECATED Recorded queries
 
 {{% admonition type="warning" %}}
 Recorded queries are deprecated. Please use the new [Grafana-managed recording rules](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules) instead.
