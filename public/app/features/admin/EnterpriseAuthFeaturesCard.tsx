@@ -45,7 +45,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
             <TextLink
               href={`https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-${page}`}
               external
-              color="primary"
+              color="link"
             >
               Enterprise authentication.
             </TextLink>
