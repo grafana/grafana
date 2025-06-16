@@ -45,6 +45,11 @@ func WxsVersion(ersion string) string {
 	if v, ok := result["prerelease"]; ok && v != "" {
 		v := strings.TrimPrefix(v, "beta")
 		v = strings.TrimPrefix(v, "pre")
+
+		if v == "local" {
+			v = "0"
+		}
+
 		return fmt.Sprintf("%s.%s.%s.%s", major, minor, patch, v)
 	}
 	return fmt.Sprintf("%s.%s.%s.0", major, minor, patch)

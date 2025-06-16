@@ -122,7 +122,7 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 	container := builder.
 		WithFile("/src/grafana.tar.gz", targz).
 		WithEnvVariable("XZ_DEFAULTS", "-T0").
-		WithExec([]string{"tar", "--exclude=storybook", "--strip-components=1", "-xvf", "/src/grafana.tar.gz", "-C", "/src"}).
+		WithExec([]string{"tar", "--exclude=storybook", "--strip-components=1", "-xf", "/src/grafana.tar.gz", "-C", "/src"}).
 		WithExec([]string{"rm", "/src/grafana.tar.gz"})
 
 	container = container.

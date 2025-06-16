@@ -47,7 +47,8 @@ func Build(d *dagger.Client, builder *dagger.Container, targz *dagger.File, vers
 	// 2. 'candle': Compile .wxs files into .wixobj
 	// 3. `light`: assembles the MSI
 	builder = builder.
-		WithExec([]string{"/bin/sh", "-c", "cp -r /src/resources/resources/* /src && rm -rf /src/resources"}).
+		WithExec([]string{"/bin/sh", "-c", "cp -r /src/resources/* /src"}).
+		WithExec([]string{"/bin/sh", "-c", "ls -al /src && ls -a /src/resources"}).
 		WithExec([]string{"/bin/sh", "-c", `WINEPATH=$(winepath /src/wix3) wine heat dir /src -platform x64 -sw5150 -srd -cg GrafanaX64 -gg -sfrag -dr GrafanaX64Dir -template fragment -out $(winepath -w grafana.wxs)`}).
 		WithExec([]string{"winepath"}).
 		WithExec([]string{"mkdir", "/root/.wine/drive_c/temp"})
