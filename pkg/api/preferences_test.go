@@ -37,14 +37,9 @@ func TestAPIEndpoint_GetCurrentOrgPreferences(t *testing.T) {
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
 		hs.preferenceService = prefService
-		hs.DashboardService = dashSvc
 	})
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
@@ -78,9 +73,14 @@ func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
 		hs.preferenceService = prefService
+		hs.DashboardService = dashSvc
 	})
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)

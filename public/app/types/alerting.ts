@@ -148,6 +148,7 @@ export interface NotificationChannelOption {
   propertyName: string;
   required: boolean;
   secure: boolean;
+  secureFieldKey?: string;
   selectOptions?: Array<SelectableValue<string>> | null;
   defaultValue?: SelectableValue<string>;
   showWhen: { field: string; is: string | boolean };

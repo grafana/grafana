@@ -5,17 +5,16 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type datasourceInfoProvider struct {
 	datasourceService datasources.DataSourceService
-	cfg               *setting.Cfg
 }
 
 func (d *datasourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
-	query := datasources.GetDataSourcesQuery{DataSourceLimit: d.cfg.DataSourceLimit}
-	dataSources, err := d.datasourceService.GetDataSources(context.Background(), &query)
+	query := datasources.GetAllDataSourcesQuery{}
+	dataSources, err := d.datasourceService.GetAllDataSources(context.Background(), &query)
+
 	if err != nil {
 		return []schemaversion.DataSourceInfo{}
 	}

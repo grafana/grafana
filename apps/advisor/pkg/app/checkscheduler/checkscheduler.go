@@ -22,10 +22,16 @@ import (
 const defaultEvaluationInterval = 7 * 24 * time.Hour // 7 days
 const defaultMaxHistory = 10
 
+var (
+	waitInterval   = 5 * time.Second
+	waitMaxRetries = 3
+)
+
 // Runner is a "runnable" app used to be able to expose and API endpoint
 // with the existing checks types. This does not need to be a CRUD resource, but it is
 // the only way existing at the moment to expose the check types.
 type Runner struct {
+	checkRegistry      checkregistry.CheckService
 	client             resource.Client
 	typesClient        resource.Client
 	evaluationInterval time.Duration
@@ -41,6 +47,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
+	checkRegistry := specificConfig.CheckRegistry
 	evalInterval, err := getEvaluationInterval(specificConfig.PluginConfig)
 	if err != nil {
 		return nil, err
@@ -66,6 +73,7 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	}
 
 	return &Runner{
+		checkRegistry:      checkRegistry,
 		client:             client,
 		typesClient:        typesClient,
 		evaluationInterval: evalInterval,
@@ -85,7 +93,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	} else {
 		// do an initial creation if necessary
 		if lastCreated.IsZero() {
-			err = r.createChecks(ctx)
+			err = r.createChecks(ctx, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			} else {
@@ -101,7 +109,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err = r.createChecks(ctx)
+			err = r.createChecks(ctx, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			}
@@ -150,11 +158,24 @@ func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time
 }
 
 // createChecks creates a new check for each check type in the registry.
-func (r *Runner) createChecks(ctx context.Context) error {
+func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error {
 	// List existing CheckType objects
 	list, err := r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("error listing check types: %w", err)
+	}
+	// This may be run before the check types are registered, so we need to wait for them to be registered.
+	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
+	retryCount := 0
+	for !allChecksRegistered && retryCount < waitMaxRetries {
+		logger.Error("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
+		time.Sleep(waitInterval)
+		list, err = r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("error listing check types: %w", err)
+		}
+		allChecksRegistered = len(list.GetItems()) == len(r.checkRegistry.Checks())
+		retryCount++
 	}
 
 	// Create checks for each CheckType
