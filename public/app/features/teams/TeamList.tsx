@@ -290,7 +290,7 @@ export const TeamList = ({
           </>
         )}
 
-        <EnterpriseAuthFeaturesCard />
+        <EnterpriseAuthFeaturesCard page="teams" />
       </Page.Contents>
     </Page>
   );

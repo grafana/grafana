@@ -119,7 +119,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
-      <EnterpriseAuthFeaturesCard />
+      <EnterpriseAuthFeaturesCard page="users" />
     </Page.Contents>
   );
 };

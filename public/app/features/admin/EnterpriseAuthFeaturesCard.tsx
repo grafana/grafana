@@ -7,7 +7,11 @@ import { Alert, Box, Stack, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-export function EnterpriseAuthFeaturesCard() {
+export interface Props {
+  page?: 'teams' | 'users';
+}
+
+export function EnterpriseAuthFeaturesCard({ page }: Props) {
   const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
   const helpFlags = contextSrv.user.helpFlags1;
   const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & 0x0004)); // 0x0004 is the flag for the Enterprise Auth Features Card
@@ -35,7 +39,11 @@ export function EnterpriseAuthFeaturesCard() {
           <Trans i18nKey="admin.enterprise-auth-features-card.text">
             Sync users and teams using SCIM, sync teams from LDAP, or authenticate using SAML in Grafana Cloud and
             Enterprise. Learn more about{' '}
-            <TextLink href={`'asd`} external color="primary">
+            <TextLink
+              href={`https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-${page}`}
+              external
+              color="primary"
+            >
               Enterprise authentication.
             </TextLink>
           </Trans>
