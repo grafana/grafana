@@ -17,6 +17,7 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
+import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 
 // const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
@@ -131,8 +132,7 @@ export function GrafanaRuleListItem({
     isProvisioned: Boolean(provenance),
     isPaused: rule?.isPaused,
     application: 'grafana' as const,
-    // actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
-    actions: undefined, // TODO: add actions
+    actions: <RuleActionsButtons promRule={rule} groupIdentifier={groupIdentifier} compact />,
     showLocation,
   };
 

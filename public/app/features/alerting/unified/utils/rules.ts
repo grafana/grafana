@@ -28,7 +28,6 @@ import {
   GrafanaAlertingRuleDefinition,
   GrafanaPromAlertingRuleDTO,
   GrafanaPromRecordingRuleDTO,
-  GrafanaPromRuleDTO,
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
   PromAlertingRuleState,
@@ -169,8 +168,8 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
-export function isProvisionedGrafanaPromRule(promRule: GrafanaPromRuleDTO): boolean {
-  return Boolean(promRule.provenance);
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
