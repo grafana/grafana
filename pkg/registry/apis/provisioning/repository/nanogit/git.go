@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
+	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/hash"
@@ -144,6 +145,7 @@ func isValidGitURL(gitURL string) bool {
 // Test implements provisioning.Repository.
 func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	ctx, _ = r.logger(ctx, "")
+
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
 		detail := "not authorized"
 		if err != nil {
@@ -703,5 +705,7 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 	ctx = logging.Context(ctx, logger)
 	// We want to ensure we don't add multiple git_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGitKey, true)
+	ctx = log.ToContext(ctx, logger)
+
 	return ctx, logger
 }
