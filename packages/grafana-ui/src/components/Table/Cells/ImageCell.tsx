@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { getCellLinks } from '../../../utils';
+import { getCellLinks } from '../../../utils/table';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellDisplayMode, TableCellProps } from '../types';
 import { DataLinksActionsTooltipCoords, getCellOptions, getDataLinksActionsTooltipUtils } from '../utils';

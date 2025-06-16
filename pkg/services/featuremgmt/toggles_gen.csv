@@ -100,7 +100,6 @@ lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 cloudRBACRoles,preview,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
-newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,GA,@grafana/grafana-operator-experience-squad,false,false,false
 secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -135,7 +134,7 @@ pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,fals
 azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
+ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 failWrongDSUID,GA,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
@@ -174,7 +173,6 @@ enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,t
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
-reportingUseRawTimeRange,GA,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
@@ -201,11 +199,10 @@ alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
-newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
+newShareReportDrawer,preview,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
-grafanaManagedRecordingRulesDatasources,GA,@grafana/alerting-squad,false,false,false
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
@@ -217,13 +214,11 @@ unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,
 extensionSidebar,experimental,@grafana/observability-logs,false,false,true
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
-xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
-postgresDSUsePGX,experimental,@grafana/oss-big-tent,false,false,false
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
@@ -231,4 +226,7 @@ alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 extensionsReadOnlyProxy,experimental,@grafana/plugins-platform-backend,false,false,true
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
+skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,false,false
+alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
+alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 sharingDashboardImage,experimental,@grafana/sharing-squad,false,false,true

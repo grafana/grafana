@@ -152,7 +152,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.True(t, apierrors.IsNotFound(err))
 
 	var jobObj *unstructured.Unstructured
-	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result := helper.AdminREST.Post().
 			Namespace("default").
 			Resource("repositories").
@@ -169,10 +169,10 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 		require.NoError(collect, err)
 		var ok bool
 		jobObj, ok = job.(*unstructured.Unstructured)
-		require.True(collect, ok, "expecting unstructured object, but got %T", job)
+		assert.True(collect, ok, "expecting unstructured object, but got %T", job)
 	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
 
-	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		//helper.TriggerJobProcessing(t)
 		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(jobObj.GetUID()))
@@ -190,9 +190,9 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job)
 		require.NoError(t, err, "should convert to Job object")
 
-		require.Equal(t, provisioning.JobStateError, job.Status.State)
-		require.Equal(t, job.Status.Message, "completed with errors")
-		require.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
+		assert.Equal(t, provisioning.JobStateError, job.Status.State)
+		assert.Equal(t, job.Status.Message, "completed with errors")
+		assert.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 	}, time.Second*10, time.Millisecond*10, "Expected provisioning job to conclude with the status failed")
 
 	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
@@ -285,10 +285,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
 
-	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "can list values")
-		require.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
+		assert.NoError(t, err, "can list values")
+		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
 	}, time.Second*10, time.Millisecond*10, "Expected dashboards to be deleted")
 
 	t.Run("github url cleanup", func(t *testing.T) {

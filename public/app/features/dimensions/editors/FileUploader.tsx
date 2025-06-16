@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
@@ -34,7 +34,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   const styles = useStyles2(getStyles);
   const [dropped, setDropped] = useState<boolean>(false);
   const [file, setFile] = useState<string>('');
-  const { t } = useTranslate();
+
   const Preview = () => (
     <Field label={t('dimensions.file-uploader.preview.label-preview', 'Preview')}>
       <div className={styles.iconPreview}>

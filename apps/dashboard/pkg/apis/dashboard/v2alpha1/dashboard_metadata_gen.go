@@ -24,5 +24,8 @@ type DashboardMetadata struct {
 
 // NewDashboardMetadata creates a new DashboardMetadata object.
 func NewDashboardMetadata() *DashboardMetadata {
-	return &DashboardMetadata{}
+	return &DashboardMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

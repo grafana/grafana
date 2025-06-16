@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 
 import { CoreApp, GrafanaTheme2, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Themeable2 } from '@grafana/ui';
 
@@ -32,8 +32,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
 export const LOG_LINE_BODY_FIELD_NAME = '___LOG_LINE_BODY___';
 
 export const LogDetailsBody = (props: Props) => {
-  const { t } = useTranslate();
-
   const showField = () => {
     const { onClickShowField, row } = props;
     if (onClickShowField) {

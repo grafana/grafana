@@ -7,7 +7,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, Field, FieldSet, Icon, Input, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -32,7 +32,7 @@ const selector = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally.SharePa
 
 export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const {
     handleSubmit,
     register,

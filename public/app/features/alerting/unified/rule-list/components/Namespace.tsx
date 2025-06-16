@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
 import mimirLogoSvg from 'app/plugins/datasource/prometheus/img/mimir_logo.svg';
@@ -20,7 +20,7 @@ interface NamespaceProps extends PropsWithChildren {
 // @TODO add export rules for namespace back in
 const Namespace = ({ children, name, href, application }: NamespaceProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <li className={styles.namespaceWrapper} role="treeitem" aria-selected="false">
       <div className={styles.namespaceTitle}>

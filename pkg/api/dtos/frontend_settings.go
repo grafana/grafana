@@ -94,10 +94,11 @@ type FrontendSettingsAnalyticsDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval              string `json:"minInterval"`
-	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
-	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
-	RecordingRulesEnabled    bool   `json:"recordingRulesEnabled"`
+	MinInterval                              string `json:"minInterval"`
+	AlertStateHistoryBackend                 string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary                 string `json:"alertStateHistoryPrimary,omitempty"`
+	RecordingRulesEnabled                    bool   `json:"recordingRulesEnabled"`
+	DefaultRecordingRulesTargetDatasourceUID string `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 }
 
 // Enterprise-only
@@ -273,7 +274,8 @@ type FrontendSettingsDTO struct {
 	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
 	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
-	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
+	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
+	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
 

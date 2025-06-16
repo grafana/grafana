@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Menu } from '../Menu/Menu';
 
 import { Dropdown } from './Dropdown';

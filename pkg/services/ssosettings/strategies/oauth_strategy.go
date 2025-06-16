@@ -75,6 +75,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"client_secret":                 section.Key("client_secret").Value(),
 		"managed_identity_client_id":    section.Key("managed_identity_client_id").Value(),
 		"federated_credential_audience": section.Key("federated_credential_audience").Value(),
+		"workload_identity_token_file":  section.Key("workload_identity_token_file").Value(),
 		"scopes":                        section.Key("scopes").Value(),
 		"empty_scopes":                  section.Key("empty_scopes").MustBool(false),
 		"auth_style":                    section.Key("auth_style").Value(),

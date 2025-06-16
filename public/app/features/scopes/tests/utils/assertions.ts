@@ -1,5 +1,3 @@
-import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
-
 import {
   getDashboard,
   getDashboardsContainer,
@@ -16,10 +14,8 @@ import {
   getResultApplicationsMimirSelect,
   getResultCloudDevRadio,
   getResultCloudOpsRadio,
-  getSelectedScope,
   getSelectorInput,
   getTreeHeadline,
-  getTreeScope,
   queryAllDashboard,
   queryDashboard,
   queryDashboardFolderExpand,
@@ -86,8 +82,3 @@ export const expectDashboardInDocument = (uid: string) => expectInDocument(() =>
 export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument(() => queryDashboard(uid));
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
-
-export const expectSelectedScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
-  expect(getSelectedScope(service, name)?.path).toEqual(path);
-export const expectTreeScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
-  expect(getTreeScope(service, name)?.path).toEqual(path);
