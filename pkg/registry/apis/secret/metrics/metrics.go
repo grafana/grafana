@@ -17,7 +17,7 @@ type SecretsMetrics struct {
 func newSecretsMetrics() *SecretsMetrics {
 	return &SecretsMetrics{
 		OutboxMessageProcessingDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "grafana",
+			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "outbox_message_processing_duration_seconds",
 			Help:      "Duration of outbox message processing",

@@ -37,6 +37,7 @@ var (
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
 	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
+	sqlSecureValueOutboxQueryTimestamp     = mustTemplate("secure_value_outbox_query_timestamp.sql")
 )
 
 func mustTemplate(filename string) *template.Template {

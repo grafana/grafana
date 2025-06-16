@@ -113,7 +113,7 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 
 		ctx := context.Background()
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
 
 		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:       "1",
@@ -145,7 +145,7 @@ func TestOutboxStore(t *testing.T) {
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -213,7 +213,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 	for range 10 {
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
 
 		model := newOutboxStoreModel()
 
