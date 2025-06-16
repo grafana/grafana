@@ -58,7 +58,7 @@
     "react-dom": "18.3.1",
     "react-redux": "^9.2.0",
     "type-fest": "^4.40.0",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "peerDependencies": {
     "@grafana/runtime": "^12.0.0-pre",
