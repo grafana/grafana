@@ -30,6 +30,8 @@ import (
 	_ "github.com/stretchr/testify/require"
 	_ "golang.org/x/time/rate"
 	_ "k8s.io/api"
+	_ "k8s.io/apimachinery/pkg/util/httpstream/spdy"
+	_ "k8s.io/apimachinery/pkg/util/proxy"
 	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
 	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
