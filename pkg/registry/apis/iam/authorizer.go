@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authlib "github.com/grafana/authlib/types"
+	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -66,6 +67,26 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 				}
 				return []string{fmt.Sprintf("teams:id:%d", res.ID)}, nil
 			}),
+		},
+		accesscontrol.ResourceAuthorizerOptions{
+			Resource: iamv0b.CoreRoleInfo.GetName(),
+			Attr:     "id",
+			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
+				res, err := store.GetRoleInternalID(ctx, ns, legacy.GetRoleInternalIDQuery{UID: name})
+				if err != nil {
+					return nil, err
+				}
+				return []string{fmt.Sprintf("roles:id:%d", res.ID)}, nil
+			}),
+			Mapping: map[string]string{
+				utils.VerbGet:              "roles:read",
+				utils.VerbList:             "roles:read",
+				utils.VerbCreate:           "roles:create",
+				utils.VerbUpdate:           "roles:write",
+				utils.VerbPatch:            "roles:write",
+				utils.VerbDelete:           "roles:delete",
+				utils.VerbDeleteCollection: "roles:delete",
+			},
 		},
 	)
 
