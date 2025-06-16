@@ -298,6 +298,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
   builder.setMode(2);
 
   let xField = xySeries[0].x.field;
+  let xIsTime = xField.type === FieldType.time;
 
   let fieldConfig = xField.config;
   let customConfig = fieldConfig.custom;
@@ -305,7 +306,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   builder.addScale({
     scaleKey: 'x',
-    isTime: false,
+    isTime: xIsTime,
+    auto: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
     distribution: scaleDistr?.type,
@@ -317,6 +319,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     softMax: customConfig?.axisSoftMax,
     centeredZero: customConfig?.axisCenteredZero,
     decimals: fieldConfig.decimals,
+    range: xIsTime ? (u, min, max) => [min, max] : undefined,
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -339,13 +342,14 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   builder.addAxis({
     scaleKey: 'x',
+    isTime: xIsTime,
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
     label: xAxisLabel,
-    formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
+    formatValue: xIsTime ? undefined : (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
   xySeries.forEach((s, si) => {
