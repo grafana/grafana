@@ -21,7 +21,7 @@ import (
 
 var _ AppBuilder = (*appBuilder)(nil)
 
-type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.Storage
+type LegacyStorageGetter func(schema.GroupVersionResource, builder.APIGroupOptions) grafanarest.Storage
 
 type AppBuilderConfig struct {
 	Authorizer          authorizer.Authorizer
@@ -134,7 +134,7 @@ func (b *appBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.AP
 		return nil, err
 	}
 	if b.config.LegacyStorageGetter != nil && opts.DualWriteBuilder != nil {
-		if legacyStorage := b.config.LegacyStorageGetter(resourceInfo.GroupVersionResource()); legacyStorage != nil {
+		if legacyStorage := b.config.LegacyStorageGetter(resourceInfo.GroupVersionResource(), opts); legacyStorage != nil {
 			return opts.DualWriteBuilder(resourceInfo.GroupResource(), legacyStorage, store)
 		}
 	}

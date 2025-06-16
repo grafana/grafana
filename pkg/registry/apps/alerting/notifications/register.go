@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -66,7 +67,7 @@ func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
 }
 
 func getLegacyStorage(namespacer request.NamespaceMapper, ng *ngalert.AlertNG) runner.LegacyStorageGetter {
-	return func(gvr schema.GroupVersionResource) grafanarest.Storage {
+	return func(gvr schema.GroupVersionResource, opts builder.APIGroupOptions) grafanarest.Storage {
 		if gvr == receiver.ResourceInfo.GroupVersionResource() {
 			return receiver.NewStorage(ng.Api.ReceiverService, namespacer, ng.Api.ReceiverService)
 		} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
