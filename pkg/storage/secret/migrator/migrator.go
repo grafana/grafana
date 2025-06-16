@@ -12,7 +12,7 @@ import (
 )
 
 const (
-  TableNameKeeper            = "secret_keeper"
+	TableNameKeeper            = "secret_keeper"
 	TableNameSecureValue       = "secret_secure_value"
 	TableNameSecureValueOutbox = "secret_secure_value_outbox"
 	TableNameDataKey           = "secret_data_key"

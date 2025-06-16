@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { ConfirmModal, IconButton } from '@grafana/ui';
-import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
   name: string;
