@@ -114,7 +114,7 @@ Aggregates time series values within the selected time range into a single numbe
 
 Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
 
-The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
+The following aggregations functions are included: `Min`, `Max`, `Mean`, `Median`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
 
 ### Math
 
