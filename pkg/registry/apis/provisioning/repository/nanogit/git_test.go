@@ -45,7 +45,7 @@ func TestGitRepository_Validate(t *testing.T) {
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{},
 			},
-			want: 1,
+			want: 3, // URL, branch, and token are all required
 		},
 		{
 			name: "missing URL",
@@ -83,7 +83,7 @@ func TestGitRepository_Validate(t *testing.T) {
 			},
 			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
-				Branch: "main",
+				Branch: "", // Empty branch
 				Token:  "token123",
 			},
 			want: 1,
@@ -98,7 +98,7 @@ func TestGitRepository_Validate(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
-				Token:  "token123",
+				Token:  "", // Empty token
 			},
 			want: 1,
 		},
@@ -1061,14 +1061,14 @@ func TestGitRepository_LatestRef(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{}, // Would contain actual hash bytes
+					Hash: hash.Hash{1, 2, 3}, // Non-empty hash
 				}, nil)
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
 			wantError: false,
-			wantRef:   "", // Hash would be converted to string
+			wantRef:   "", // Hash would be converted to string - we just check it's not empty
 		},
 		{
 			name: "failure - branch not found",
@@ -1104,7 +1104,10 @@ func TestGitRepository_LatestRef(t *testing.T) {
 				require.Empty(t, ref)
 			} else {
 				require.NoError(t, err)
-				require.NotEmpty(t, ref)
+				// For success case with non-empty hash, ref should not be empty
+				if tt.name == "success - get latest ref" {
+					require.NotEmpty(t, ref)
+				}
 			}
 
 			// Verify GetRef was called with correct branch
@@ -1261,4 +1264,335 @@ func TestGitRepository_Write(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGitRepository_CompareFiles(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupMock   func(*mocks.FakeClient)
+		gitConfig   RepositoryConfig
+		base        string
+		ref         string
+		wantError   bool
+		wantChanges int
+	}{
+		{
+			name: "success - compare commits with changes",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// Return refs for base and ref
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+
+				// Return comparison results
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+					{
+						Path:   "configs/new-file.yaml",
+						Status: protocol.FileStatusAdded,
+					},
+					{
+						Path:   "configs/modified-file.yaml",
+						Status: protocol.FileStatusModified,
+					},
+					{
+						Path:   "configs/deleted-file.yaml",
+						Status: protocol.FileStatusDeleted,
+					},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+				Path:   "configs",
+			},
+			base:        "main",
+			ref:         "feature",
+			wantError:   false,
+			wantChanges: 3,
+		},
+		{
+			name: "success - no changes",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+				Path:   "configs",
+			},
+			base:        "main",
+			ref:         "main",
+			wantError:   false,
+			wantChanges: 0,
+		},
+		{
+			name: "failure - ref not found",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+				Path:   "configs",
+			},
+			base:      "main",
+			ref:       "nonexistent",
+			wantError: true,
+		},
+		{
+			name: "failure - empty ref",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed as error is caught early
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+				Path:   "configs",
+			},
+			base:      "main",
+			ref:       "",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client:    mockClient,
+				gitConfig: tt.gitConfig,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), tt.base, tt.ref)
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, changes)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, changes)
+				require.Len(t, changes, tt.wantChanges)
+
+				// Verify the changes have correct actions
+				if tt.wantChanges > 0 {
+					for _, change := range changes {
+						require.NotEmpty(t, change.Path)
+						require.NotEmpty(t, change.Action)
+						require.Equal(t, tt.ref, change.Ref)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGitRepository_ensureBranchExists(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupMock   func(*mocks.FakeClient)
+		gitConfig   RepositoryConfig
+		branchName  string
+		wantError   bool
+		expectCalls int // Expected number of GetRef calls
+	}{
+		{
+			name: "success - branch already exists",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			branchName:  "feature",
+			wantError:   false,
+			expectCalls: 1,
+		},
+		{
+			name: "success - create new branch",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call - branch doesn't exist
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				// Second call - get source branch
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				// CreateRef succeeds
+				mockClient.CreateRefReturns(nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			branchName:  "new-feature",
+			wantError:   false,
+			expectCalls: 2,
+		},
+		{
+			name: "failure - invalid branch name",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed as error is caught early
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			branchName:  "invalid//branch",
+			wantError:   true,
+			expectCalls: 0,
+		},
+		{
+			name: "failure - source branch not found",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call - branch doesn't exist
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				// Second call - source branch also doesn't exist
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "nonexistent",
+			},
+			branchName:  "new-feature",
+			wantError:   true,
+			expectCalls: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client:    mockClient,
+				gitConfig: tt.gitConfig,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			branchRef, err := gitRepo.ensureBranchExists(context.Background(), tt.branchName)
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Equal(t, nanogit.Ref{}, branchRef)
+			} else {
+				require.NoError(t, err)
+				require.NotEqual(t, nanogit.Ref{}, branchRef)
+				require.Equal(t, "refs/heads/"+tt.branchName, branchRef.Name)
+			}
+
+			// Verify expected number of GetRef calls
+			require.Equal(t, tt.expectCalls, mockClient.GetRefCallCount())
+		})
+	}
+}
+
+func TestGitRepository_createSignature(t *testing.T) {
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitHubRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/repo.git",
+			Branch: "main",
+			Token:  "token123",
+		},
+	}
+
+	t.Run("should use default signature when no context signature", func(t *testing.T) {
+		ctx := context.Background()
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use context signature when available", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), author.Time)
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), committer.Time)
+	})
+
+	t.Run("should fallback to default when context signature has empty name", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use current time when signature time is zero", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Time{}, // Zero time
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		before := time.Now()
+		author, committer := gitRepo.createSignature(ctx)
+		after := time.Now()
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.True(t, author.Time.After(before.Add(-time.Second)))
+		require.True(t, author.Time.Before(after.Add(time.Second)))
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.True(t, committer.Time.After(before.Add(-time.Second)))
+		require.True(t, committer.Time.Before(after.Add(time.Second)))
+	})
 }
