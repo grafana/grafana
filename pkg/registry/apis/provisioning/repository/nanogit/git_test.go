@@ -9,6 +9,9 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/nanogit"
+	"github.com/grafana/nanogit/mocks"
+	"github.com/grafana/nanogit/protocol/hash"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -369,4 +372,156 @@ func TestHistory(t *testing.T) {
 		require.Equal(t, "history is not supported for pure git repositories", statusErr.Status().Message)
 		require.Nil(t, history)
 	})
+}
+
+func TestGitRepository_Test(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupMock   func(*mocks.FakeClient)
+		gitConfig   RepositoryConfig
+		wantSuccess bool
+		wantErrors  int
+		wantCode    int
+	}{
+		{
+			name: "success - all checks pass",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantSuccess: true,
+			wantErrors:  0,
+			wantCode:    http.StatusOK,
+		},
+		{
+			name: "failure - not authorized (error)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(false, errors.New("auth error"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "failure - not authorized (false result)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "failure - repository not found (error)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(false, errors.New("repo error"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "failure - repository not found (false result)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "failure - branch not found",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("branch not found"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "nonexistent",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+		{
+			name: "failure - GetRef returns nanogit.ErrObjectNotFound",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "missing-branch",
+			},
+			wantSuccess: false,
+			wantErrors:  1,
+			wantCode:    http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client:    mockClient,
+				gitConfig: tt.gitConfig,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			results, err := gitRepo.Test(context.Background())
+			require.NoError(t, err, "Test method should not return an error")
+
+			require.Equal(t, tt.wantSuccess, results.Success, "Success status mismatch")
+			require.Equal(t, tt.wantErrors, len(results.Errors), "Number of errors mismatch")
+			require.Equal(t, tt.wantCode, results.Code, "HTTP status code mismatch")
+
+			// Verify the mock calls
+			require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+
+			if mockClient.RepoExistsCallCount() > 0 {
+				require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
+			}
+
+			if mockClient.GetRefCallCount() > 0 {
+				require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
+				_, ref := mockClient.GetRefArgsForCall(0)
+				require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
+			}
+
+			// Verify error details for failed tests
+			if !tt.wantSuccess && len(results.Errors) > 0 {
+				err := results.Errors[0]
+				require.Equal(t, metav1.CauseTypeFieldValueInvalid, err.Type, "Error type should be FieldValueInvalid")
+				require.NotEmpty(t, err.Field, "Error field should not be empty")
+				require.NotEmpty(t, err.Detail, "Error detail should not be empty")
+			}
+		})
+	}
 }
