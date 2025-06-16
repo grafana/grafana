@@ -56,7 +56,7 @@ const FlameGraphTopTableContainer = memo(
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
-      let filteredTable: { [key: string]: TableData } = {};
+      let filteredTable: { [key: string]: TableData } = Object.create(null);
       for (let i = 0; i < data.data.length; i++) {
         const value = data.getValue(i);
         const valueRight = data.getValueRight(i);
