@@ -2,9 +2,12 @@
 
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
+
+
+# Dependabot cannot update dependencies listed in ARGs
+# By using FROM instructiuon we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 as ubuntu-base
-
 FROM golang:1.24.4-alpine AS go-builder-base
 FROM node:22-alpine as js-builder-base
 
