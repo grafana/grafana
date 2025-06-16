@@ -4055,6 +4055,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
