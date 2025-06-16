@@ -105,6 +105,16 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueListByName: {
+				{
+					Name: "list",
+					Data: listByNameSecureValue{
+						SQLTemplate:      mocks.NewTestingSQLTemplate(),
+						Namespace:        "ns",
+						UsedSecureValues: []string{"a", "b"},
+					},
+				},
+			},
 		},
 	})
 }
