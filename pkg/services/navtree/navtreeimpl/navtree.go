@@ -212,7 +212,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	} else {
 		homePage := s.cfg.HomePage
 
-		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
 		}
 	}

@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -10,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"encoding/base64"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -72,32 +73,7 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		namespacer: func(_ int64) string { return "1" },
 	}
 
-	t.Run("should set continue token if folders do not fit with-in limit", func(t *testing.T) {
-		options := &metainternalversion.ListOptions{
-			Limit: 1,
-		}
-		folders := make([]*folder.Folder, 2)
-		for i := range folders {
-			folders[i] = &folder.Folder{
-				UID:   fmt.Sprintf("folder-%d", i),
-				Title: fmt.Sprintf("Folder %d", i),
-			}
-		}
-		folderService.ExpectedFolders = folders
-
-		result, err := storage.List(ctx, options)
-		require.NoError(t, err)
-
-		list, ok := result.(*folderv1.FolderList)
-		require.True(t, ok)
-		token, err := base64.StdEncoding.DecodeString(list.Continue)
-		require.NoError(t, err)
-		require.Equal(t, "1|2", string(token))
-		require.Equal(t, folderService.LastQuery.Limit, int64(1))
-		require.Equal(t, folderService.LastQuery.Page, int64(1))
-	})
-
-	t.Run("should set no continue token if folders fit with-in limit", func(t *testing.T) {
+	t.Run("should set correct continue token", func(t *testing.T) {
 		options := &metainternalversion.ListOptions{
 			Limit: 2,
 		}
@@ -117,16 +93,16 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		require.True(t, ok)
 		token, err := base64.StdEncoding.DecodeString(list.Continue)
 		require.NoError(t, err)
-		require.Equal(t, "", string(token))
+		require.Equal(t, "2|2", string(token))
 		require.Equal(t, folderService.LastQuery.Limit, int64(2))
 		require.Equal(t, folderService.LastQuery.Page, int64(1))
 	})
 
 	t.Run("should set page to 1 when limit is set without continue token", func(t *testing.T) {
 		options := &metainternalversion.ListOptions{
-			Limit: 3,
+			Limit: 2,
 		}
-		folders := make([]*folder.Folder, 5)
+		folders := make([]*folder.Folder, 2)
 		for i := range folders {
 			folders[i] = &folder.Folder{
 				UID:   fmt.Sprintf("folder-%d", i),
@@ -141,8 +117,8 @@ func TestLegacyStorage_List_Pagination(t *testing.T) {
 		require.True(t, ok)
 		token, err := base64.StdEncoding.DecodeString(list.Continue)
 		require.NoError(t, err)
-		require.Equal(t, "3|2", string(token))
-		require.Equal(t, int64(3), folderService.LastQuery.Limit)
+		require.Equal(t, "2|2", string(token))
+		require.Equal(t, int64(2), folderService.LastQuery.Limit)
 		require.Equal(t, int64(1), folderService.LastQuery.Page)
 	})
 }

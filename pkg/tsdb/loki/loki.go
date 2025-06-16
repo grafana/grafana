@@ -91,20 +91,23 @@ type ResponseOpts struct {
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	model := &QueryJSONModel{}
 	err := json.Unmarshal(raw, model)
-	return model, err
+	if err != nil {
+		return nil, backend.DownstreamError(fmt.Errorf("failed to parse query model: %w", err))
+	}
+	return model, nil
 }
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
-			return nil, err
+			return nil, backend.DownstreamError(fmt.Errorf("error reading settings: %w", err))
 		}
 		opts.ForwardHTTPHeaders = true
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
-			return nil, err
+			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
 		}
 
 		model := &datasourceInfo{
@@ -180,9 +183,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	_, fromAlert := req.Headers[fromAlertHeaderName]
 	logger := s.logger.FromContext(ctx).With("fromAlert", fromAlert)
 	if err != nil {
-		logger.Error("Failed to get data source info", "err", err)
-		result := backend.NewQueryDataResponse()
-		return result, err
+		logger.Debug("Failed to get data source info", "err", err)
+		return nil, err
 	}
 
 	responseOpts := ResponseOpts{
@@ -221,11 +223,11 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	start := time.Now()
 	queries, err := parseQuery(req, logQLScopes)
 	if err != nil {
-		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
+		plog.Debug("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 		return result, err
 	}
 
-	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
+	plog.Debug("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
@@ -281,7 +283,8 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		queryRes.Error = err
+		errResp := backend.ErrorResponseWithErrorSource(err)
+		queryRes = &errResp
 	}
 
 	return *queryRes
@@ -291,7 +294,7 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (*backend.DataResponse, error) {
 	res, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		plog.Error("Error querying loki", "error", err)
+		plog.Debug("Error querying loki", "error", err)
 		return res, err
 	}
 
@@ -303,7 +306,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 
 		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
 		if err != nil {
-			plog.Error("Error adjusting frame", "error", err)
+			plog.Debug("Error adjusting frame", "error", err)
 			return res, err
 		}
 	}
@@ -314,12 +317,12 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(fmt.Errorf("failed to get data source info: %w", err))
 	}
 
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast data source info")
+		return nil, backend.DownstreamError(fmt.Errorf("failed to cast data source info"))
 	}
 
 	return instance, nil
