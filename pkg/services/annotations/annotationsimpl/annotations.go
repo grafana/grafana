@@ -79,6 +79,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	}
 
 	// Search without dashboard UID filter is expensive, so check without access control first
+	// nolint: staticcheck
 	if query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
 		res, err := r.reader.Get(ctx, *query, &accesscontrol.AccessResources{

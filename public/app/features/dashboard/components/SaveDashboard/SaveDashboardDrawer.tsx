@@ -103,11 +103,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   }
 
-  let title = 'Save dashboard';
+  let title = t('dashboard.save-dashboard-drawer.title', 'Save dashboard');
   if (isCopy) {
-    title = 'Save dashboard copy';
+    title = t('dashboard.save-dashboard-drawer.title-copy', 'Save dashboard copy');
   } else if (isProvisioned) {
-    title = 'Provisioned dashboard';
+    title = t('dashboard.save-dashboard-drawer.title-provisioned', 'Provisioned dashboard');
   }
 
   return (

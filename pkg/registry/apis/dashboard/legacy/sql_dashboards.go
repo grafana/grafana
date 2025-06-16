@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -63,6 +64,8 @@ type dashboardSqlAccess struct {
 	dashStore             dashboards.Store
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
+	libraryPanelSvc librarypanels.Service
+
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -73,6 +76,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -82,6 +86,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
 		dashboardSearchClient: *dashboardSearchClient,
+		libraryPanelSvc:       libraryPanelSvc,
 		log:                   log.New("dashboard.legacysql"),
 	}
 }
@@ -448,6 +453,17 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, false, err
 	} else if dash == nil {
 		return nil, false, fmt.Errorf("unable to retrieve dashboard after save")
+	}
+
+	// TODO: for modes 3+, we need to migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	err = a.libraryPanelSvc.ConnectLibraryPanelsForDashboard(ctx, requester, out)
+	if err != nil {
+		return nil, false, err
 	}
 
 	// stash the raw value in context (if requested)

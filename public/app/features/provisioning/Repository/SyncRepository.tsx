@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
+import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
 
