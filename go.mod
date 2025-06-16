@@ -466,7 +466,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing-contrib/go-grpc v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // @grafana/grafana-search-and-storage
@@ -571,7 +571,12 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require gopkg.in/telebot.v3 v3.2.1 // indirect
+require github.com/grafana/nanogit v0.0.0-20250616082354-5e94194d02ed
+
+require (
+	github.com/moby/go-archive v0.1.0 // indirect
+	gopkg.in/telebot.v3 v3.2.1 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
