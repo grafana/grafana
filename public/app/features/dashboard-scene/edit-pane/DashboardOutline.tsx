@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Stack, Text, useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -41,7 +41,7 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
   const { isSelected, onSelect } = useElementSelection(key);
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
-  const { t } = useTranslate();
+
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
 
   const children = editableElement.getOutlineChildren?.() ?? [];

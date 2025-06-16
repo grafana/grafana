@@ -35,9 +35,11 @@ composableKinds: PanelCfg: {
 					wrapLogMessage:           bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
+					syntaxHighlighting?:      bool
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
 					enableInfiniteScrolling?: bool
+					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _

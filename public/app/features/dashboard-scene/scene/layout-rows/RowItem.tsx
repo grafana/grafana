@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObject,

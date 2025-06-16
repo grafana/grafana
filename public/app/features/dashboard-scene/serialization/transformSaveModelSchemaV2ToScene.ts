@@ -207,6 +207,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
+          defaultQuickRanges: config.quickRanges,
         }),
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
