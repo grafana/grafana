@@ -3,6 +3,11 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
+# Default to building locally
+ARG GO_SRC=go-builder
+ARG JS_SRC=js-builder
+ARG BASE_IMAGE=alpine-base
+ARG JS_PLATFORM=linux/amd64
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructiuon we can delegate dependency updates to dependabot
@@ -10,13 +15,6 @@ FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 as ubuntu-base
 FROM golang:1.24.4-alpine AS go-builder-base
 FROM node:22-alpine as js-builder-base
-
-ARG JS_PLATFORM=linux/amd64
-
-# Default to building locally
-ARG GO_SRC=go-builder
-ARG JS_SRC=js-builder
-ARG BASE_IMAGE=alpine-base
 
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} js-builder-base AS js-builder
