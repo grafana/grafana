@@ -311,7 +311,7 @@
     "@react-aria/overlays": "3.27.3",
     "@react-aria/utils": "3.29.1",
     "@react-awesome-query-builder/ui": "6.6.15",
-    "@reduxjs/toolkit": "2.5.1",
+    "@reduxjs/toolkit": "2.8.2",
     "@visx/event": "3.12.0",
     "@visx/gradient": "3.12.0",
     "@visx/group": "3.12.0",
