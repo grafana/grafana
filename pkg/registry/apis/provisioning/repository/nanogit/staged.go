@@ -64,7 +64,7 @@ func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repo
 }
 
 func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	if ref != "" || ref != r.gitConfig.Branch {
+	if ref != "" && ref != r.gitConfig.Branch {
 		return nil, errors.New("ref is not supported for staged repository")
 	}
 
