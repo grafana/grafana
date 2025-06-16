@@ -114,7 +114,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Folders | Nothing else |
    | All Alert rule groups | All other resources |
    | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
    | Notification Templates | Nothing else |
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
