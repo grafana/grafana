@@ -146,7 +146,6 @@ func RegisterAPIService(
 		reg: reg,
 	}
 	migration.Initialize(&datasourceInfoProvider{
-		cfg:               cfg,
 		datasourceService: datasourceService,
 	})
 	apiregistration.RegisterAPI(builder)
