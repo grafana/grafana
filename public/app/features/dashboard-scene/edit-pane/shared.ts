@@ -184,7 +184,6 @@ export const dashboardEditActions = {
       source,
       removedObject,
       perform() {
-        removedObject.publishEvent(new ObjectRemovedFromCanvasEvent(removedObject), true);
         source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
       },
       undo() {
