@@ -32,7 +32,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
     <Box paddingTop={4}>
       <Alert
         severity="info"
-        title={t('admin.enterprise-auth-features-card.title', 'Did you know')}
+        title={t('admin.enterprise-auth-features-card.title', 'Did you know?')}
         onRemove={onDismiss}
       >
         <Stack direction="row" alignItems="center">
