@@ -94,14 +94,8 @@ export function prepSeries(
 
       // only one of these per frame
       let x = onlyNumFields.find((field) => xMatcher(field, frame, frames));
-      let color =
-        colorMatcher != null
-          ? onlyNumFields.find((field) => field !== x && colorMatcher!(field, frame, frames))
-          : undefined;
-      let size =
-        sizeMatcher != null
-          ? onlyNumFields.find((field) => field !== x && field !== color && sizeMatcher!(field, frame, frames))
-          : undefined;
+      let color = colorMatcher != null ? onlyNumFields.find((field) => colorMatcher!(field, frame, frames)) : undefined;
+      let size = sizeMatcher != null ? onlyNumFields.find((field) => sizeMatcher!(field, frame, frames)) : undefined;
 
       // x field is required
       if (x != null) {
