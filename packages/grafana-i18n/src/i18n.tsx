@@ -132,7 +132,7 @@ async function initTranslations({
     getI18nInstance().use(initReactI18next); // passes i18n down to react-i18next
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  if (language === PSEUDO_LOCALE) {
     const { default: Pseudo } = await import('i18next-pseudo');
     getI18nInstance().use(
       new Pseudo({
