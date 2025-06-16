@@ -249,49 +249,33 @@ func toProvider(keeperType secretv0alpha1.KeeperType, payload string) secretv0al
 
 // extractSecureValues extracts unique securevalues referenced by the keeper, if any.
 func extractSecureValues(kp *secretv0alpha1.Keeper) map[string]struct{} {
-	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) map[string]struct{} {
+	switch {
+	case kp.Spec.AWS != nil:
 		secureValues := make(map[string]struct{}, 0)
 
-		if aws.AccessKeyID.SecureValueName != "" {
-			secureValues[aws.AccessKeyID.SecureValueName] = struct{}{}
+		if kp.Spec.AWS.AccessKeyID.SecureValueName != "" {
+			secureValues[kp.Spec.AWS.AccessKeyID.SecureValueName] = struct{}{}
 		}
 
-		if aws.SecretAccessKey.SecureValueName != "" {
-			secureValues[aws.SecretAccessKey.SecureValueName] = struct{}{}
+		if kp.Spec.AWS.SecretAccessKey.SecureValueName != "" {
+			secureValues[kp.Spec.AWS.SecretAccessKey.SecureValueName] = struct{}{}
 		}
 
 		return secureValues
-	}
-
-	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) map[string]struct{} {
-		if azure.ClientSecret.SecureValueName != "" {
-			return map[string]struct{}{azure.ClientSecret.SecureValueName: {}}
-		}
-
-		return nil
-	}
-
-	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) map[string]struct{} {
-		if hashicorp.Token.SecureValueName != "" {
-			return map[string]struct{}{hashicorp.Token.SecureValueName: {}}
-		}
-
-		return nil
-	}
-
-	switch {
-	case kp.Spec.AWS != nil:
-		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
 
 	case kp.Spec.Azure != nil:
-		return secureValuesFromAzure(kp.Spec.Azure.AzureCredentials)
+		if kp.Spec.Azure.ClientSecret.SecureValueName != "" {
+			return map[string]struct{}{kp.Spec.Azure.ClientSecret.SecureValueName: {}}
+		}
 
 	// GCP does not reference secureValues.
 	case kp.Spec.GCP != nil:
 		return nil
 
 	case kp.Spec.HashiCorp != nil:
-		return secureValuesFromHashiCorp(kp.Spec.HashiCorp.HashiCorpCredentials)
+		if kp.Spec.HashiCorp.Token.SecureValueName != "" {
+			return map[string]struct{}{kp.Spec.HashiCorp.Token.SecureValueName: {}}
+		}
 	}
 
 	return nil
