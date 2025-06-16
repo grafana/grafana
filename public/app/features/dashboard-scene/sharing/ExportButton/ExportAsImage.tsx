@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
@@ -42,8 +41,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
-
-  const { t } = useTranslate();
 
   // Clean up object URLs when component unmounts
   useEffect(() => {

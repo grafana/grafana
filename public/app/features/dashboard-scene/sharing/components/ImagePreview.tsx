@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 
 type ErrorState = {
