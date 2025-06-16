@@ -1136,12 +1136,13 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return nil, fmt.Errorf("create github API repository: %w", err)
 		}
 
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
 		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+			logger.Debug("Instantiating Github repository with go-git and Github API")
 			return apiRepo, nil
 		}
 
-		logger := logging.DefaultLogger.With("logger", "provisioning startup")
-		logger.Debug("creating nanogit repository", "url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		logger.Info("Instantiating Github repository with nanogit")
 
 		ghCfg := r.Spec.GitHub
 		if ghCfg == nil {
