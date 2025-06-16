@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
+func TestIntegrationLibraryElementPermissionsGeneralFolder(t *testing.T) {
 	testScenario(t, "When user with tries to create a library panel in the General folder, it should return correct status",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.OrgRole = org.RoleViewer
@@ -158,7 +158,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 		})
 }
 
-func TestLibraryElementCreatePermissions(t *testing.T) {
+func TestIntegrationLibraryElementCreatePermissions(t *testing.T) {
 	var accessCases = []struct {
 		permissions map[string][]string
 		desc        string
@@ -214,7 +214,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 	}
 }
 
-func TestLibraryElementPatchPermissions(t *testing.T) {
+func TestIntegrationLibraryElementPatchPermissions(t *testing.T) {
 	var accessCases = []struct {
 		permissions map[string][]string
 		desc        string
@@ -280,7 +280,7 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 	}
 }
 
-func TestLibraryElementDeletePermissions(t *testing.T) {
+func TestIntegrationLibraryElementDeletePermissions(t *testing.T) {
 	var accessCases = []struct {
 		permissions map[string][]string
 		desc        string
@@ -340,7 +340,7 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 	}
 }
 
-func TestLibraryElementsWithMissingFolders(t *testing.T) {
+func TestIntegrationLibraryElementsWithMissingFolders(t *testing.T) {
 	testScenario(t, "When a user tries to create a library panel in a folder that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreatePanelCommand(0, "badFolderUID", "Library Panel Name")
@@ -369,7 +369,7 @@ func TestLibraryElementsWithMissingFolders(t *testing.T) {
 		})
 }
 
-func TestLibraryElementsGetPermissions(t *testing.T) {
+func TestIntegrationLibraryElementsGetPermissions(t *testing.T) {
 	var getCases = []struct {
 		permissions map[string][]string
 		desc        string
@@ -418,7 +418,7 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 	}
 }
 
-func TestLibraryElementsGetAllPermissions(t *testing.T) {
+func TestIntegrationLibraryElementsGetAllPermissions(t *testing.T) {
 	var getCases = []struct {
 		permissions         map[string][]string
 		desc                string
