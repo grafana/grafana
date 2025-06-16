@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import {
   DataTransformerID,
@@ -87,8 +87,6 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
           foundLabels.delete(item.name!);
         }
       });
-
-      let index = orderBy?.length ?? 0;
 
       // add Off items
       if (!byFieldNameAdded) {
@@ -397,9 +395,10 @@ interface DraggableUIOrderByItemProps {
 
 const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderByItemProps) => {
   const styles = useStyles2(getFieldNameStyles);
+  const draggableId = useId();
 
   return (
-    <Draggable draggableId={item.name ?? ''} index={index} isDragDisabled={item.order === Order.Off}>
+    <Draggable draggableId={draggableId} index={index} isDragDisabled={item.order === Order.Off}>
       {(provided) => (
         <Box marginBottom={0.5} display="flex" gap={0} ref={provided.innerRef} {...provided.draggableProps}>
           <InlineLabel width={60} as="div">
