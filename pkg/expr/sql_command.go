@@ -105,21 +105,24 @@ func (gr *SQLCommand) NeedsVars() []string {
 	return gr.varsToQuery
 }
 
-// Execute runs the command and returns the results or an error if the command
-// failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathExprResult mathexp.Results, resultError error) {
+// Execute runs the command and returns the results if successful.
+// If there is an error, it will set Results.Error and return (the return from the func should never error).
+func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
 	tc := int64(0)
+	rsp := mathexp.Results{}
 
 	defer func() {
 		span.End()
+		duration := float64(time.Since(start).Milliseconds())
+
 		statusLabel := "ok"
-		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		if resultError != nil {
+		if rsp.Error != nil {
 			statusLabel = "error"
-			metrics.SqlCommandErrorCount.WithLabelValues().Inc()
 		}
+
+		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
@@ -139,12 +142,12 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	// limit of 0 or less means no limit (following convention)
 	if gr.inputLimit > 0 && tc > gr.inputLimit {
-		return mathexp.Results{},
-			fmt.Errorf(
-				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
-				gr.inputLimit,
-				tc,
-			)
+		rsp.Error = fmt.Errorf(
+			"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
+			gr.inputLimit,
+			tc,
+		)
+		return rsp, nil
 	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
@@ -152,7 +155,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
 
-	rsp := mathexp.Results{}
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
