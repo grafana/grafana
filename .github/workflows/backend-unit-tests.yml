@@ -2,9 +2,6 @@ name: Backend Unit Tests
 
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
   push:
     branches:
       - main
