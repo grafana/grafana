@@ -58,12 +58,15 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// orgId, err := request.OrgIDForList(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 
-	res, err := s.service.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{}) // TODO maybe we need some org filter here?
+	res, err := s.service.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		OrgID: info.OrgID,
+		Type:  "prometheus",
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -57,11 +57,11 @@ func (p *PrometheusAppProvider) legacyStorageGetter(requested schema.GroupVersio
 		service:    p.service,
 		namespacer: request.GetNamespaceMapper(p.cfg),
 	}
+
+	// TODO how does this work for unstructured objects?
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),
 		utils.TableColumns{
-
-			// TODO update these for datasources
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Created At", Type: "date"},
@@ -73,7 +73,6 @@ func (p *PrometheusAppProvider) legacyStorageGetter(requested schema.GroupVersio
 				}
 				return []interface{}{
 					m.Name,
-
 					m.Created.UTC().Format(time.RFC3339),
 				}, nil
 			},
