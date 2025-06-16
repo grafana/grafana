@@ -293,8 +293,20 @@
             "enum": ["Admin", "Editor", "Viewer"]
           },
           "action": {
-            "type": "string",
-            "description": "The RBAC action a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to."
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single RBAC action required to see this page in the navigation menu. Supports wildcards (e.g., 'plugin.write.*')"
+              },
+              {
+                "type": "array",
+                "description": "Multiple RBAC actions (user needs ANY of these to see this page in the navigation menu)",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "The RBAC action(s) a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to. Supports multiple actions (OR logic) and wildcards."
           },
           "path": {
             "type": "string",
@@ -382,8 +394,20 @@
             "type": "string"
           },
           "reqAction": {
-            "type": "string",
-            "description": "The RBAC action a user must have to use this route. **Warning**: unless the action targets the plugin (or a nested datasource plugin), only the action is verified, not what it applies to."
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single RBAC action required to use this route. Supports wildcards (e.g., 'plugin.write.*')"
+              },
+              {
+                "type": "array",
+                "description": "Multiple RBAC actions (user needs ANY of these to access the route)",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "The RBAC action(s) a user must have to use this route. **Warning**: unless the action targets the plugin (or a nested datasource plugin), only the action is verified, not what it applies to. Supports multiple actions (OR logic) and wildcards."
           },
           "headers": {
             "type": "array",
