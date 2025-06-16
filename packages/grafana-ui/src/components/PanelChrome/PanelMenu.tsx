@@ -2,8 +2,8 @@ import { cx } from '@emotion/css';
 import { ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { TooltipPlacement } from '../Tooltip/types';

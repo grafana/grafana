@@ -4,11 +4,11 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 
 import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable2 } from '../../types/theme';
-import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 

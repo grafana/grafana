@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { useStyles2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';

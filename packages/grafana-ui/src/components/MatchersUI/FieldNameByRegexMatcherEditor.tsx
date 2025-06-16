@@ -2,8 +2,8 @@ import { memo, useCallback } from 'react';
 import * as React from 'react';
 
 import { FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Input } from '../Input/Input';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';

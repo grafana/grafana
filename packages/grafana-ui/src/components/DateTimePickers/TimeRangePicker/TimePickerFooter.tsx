@@ -5,9 +5,9 @@ import * as React from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';

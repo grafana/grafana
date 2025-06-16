@@ -3,9 +3,9 @@ import { useCallback, useState, forwardRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 
