@@ -68,9 +68,7 @@ def rgm_artifacts_step(
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-# rgm_build_backend will create compile the grafana backend for various platforms. It's preferred to use
-# 'rgm_package_step' if you creating a "usable" artifact. This should really only be used to verify that the code is
-# compilable.
+# rgm_build_backend will create compile the grafana backend for various platforms.
 def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64", "backend:grafana:linux/arm64"]):
     return rgm_artifacts_step(name = "rgm-build-backend", artifacts = artifacts, depends_on = [])
 
