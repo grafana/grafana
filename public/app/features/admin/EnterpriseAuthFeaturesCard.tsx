@@ -14,13 +14,16 @@ export interface Props {
 export function EnterpriseAuthFeaturesCard({ page }: Props) {
   const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
   const helpFlags = contextSrv.user.helpFlags1;
-  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & 0x0004)); // 0x0004 is the flag for the Enterprise Auth Features Card
+  const HELP_FLAG_ENTERPRISE_AUTH = 0x0004;
+  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & HELP_FLAG_ENTERPRISE_AUTH));
 
   const onDismiss = () => {
-    backendSrv.put('/api/user/helpflags/4', undefined, { showSuccessAlert: false }).then((res) => {
-      contextSrv.user.helpFlags1 = res.helpFlags1;
-      setDismissed(true);
-    });
+    backendSrv
+      .put(`/api/user/helpflags/${HELP_FLAG_ENTERPRISE_AUTH}`, undefined, { showSuccessAlert: false })
+      .then((res) => {
+        contextSrv.user.helpFlags1 = res.helpFlags1;
+        setDismissed(true);
+      });
   };
 
   // This card is only visible in oss
