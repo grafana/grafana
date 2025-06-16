@@ -4,20 +4,22 @@
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
 # Default to building locally
-ARG GO_SRC=go-builder
-ARG JS_SRC=js-builder
 ARG BASE_IMAGE=alpine-base
+ARG GO_IMAGE=go-builder-base
+ARG GO_SRC=go-builder
+ARG JS_IMAGE=js-builder-base
 ARG JS_PLATFORM=linux/amd64
+ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
-# By using FROM instructiuon we can delegate dependency updates to dependabot
+# By using FROM instructions we can delegate dependency updates to dependabot
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 as ubuntu-base
 FROM golang:1.24.4-alpine AS go-builder-base
 FROM node:22-alpine as js-builder-base
 
 # Javascript build stage
-FROM --platform=${JS_PLATFORM} js-builder-base AS js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -43,7 +45,7 @@ ENV NODE_ENV=production
 RUN yarn build
 
 # Golang build stage
-FROM go-builder-base AS go-builder
+FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
