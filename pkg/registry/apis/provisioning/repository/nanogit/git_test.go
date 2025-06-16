@@ -18,7 +18,7 @@ func TestGitRepository_Validate(t *testing.T) {
 	tests := []struct {
 		name      string
 		config    *provisioning.Repository
-		gitConfig GitRepositoryConfig
+		gitConfig RepositoryConfig
 		want      int // number of expected validation errors
 	}{
 		{
@@ -28,7 +28,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "token123",
@@ -50,7 +50,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				Branch: "main",
 				Token:  "token123",
 			},
@@ -63,7 +63,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				URL:    "http://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "token123",
@@ -77,7 +77,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "token123",
@@ -91,7 +91,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "token123",
@@ -105,7 +105,7 @@ func TestGitRepository_Validate(t *testing.T) {
 					Type: provisioning.GitHubRepositoryType,
 				},
 			},
-			gitConfig: GitRepositoryConfig{
+			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "token123",
@@ -195,7 +195,7 @@ func TestNewGit(t *testing.T) {
 		},
 	}
 
-	gitConfig := GitRepositoryConfig{
+	gitConfig := RepositoryConfig{
 		URL:    "https://git.example.com/owner/repo.git",
 		Branch: "main",
 		Token:  "test-token",
@@ -219,7 +219,7 @@ func TestCreateSignature(t *testing.T) {
 				Type: provisioning.GitHubRepositoryType,
 			},
 		},
-		gitConfig: GitRepositoryConfig{
+		gitConfig: RepositoryConfig{
 			URL:    "https://git.example.com/repo.git",
 			Branch: "main",
 			Token:  "token123",
@@ -308,7 +308,7 @@ func TestEnsureBranchExists(t *testing.T) {
 				Type: provisioning.GitHubRepositoryType,
 			},
 		},
-		gitConfig: GitRepositoryConfig{
+		gitConfig: RepositoryConfig{
 			URL:    "https://git.example.com/repo.git",
 			Branch: "main",
 			Token:  "token123",

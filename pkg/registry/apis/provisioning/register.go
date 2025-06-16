@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -1122,7 +1123,35 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+
+		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+		if err != nil {
+			return nil, fmt.Errorf("create github API repository: %w", err)
+		}
+
+		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+			return apiRepo, nil
+		}
+
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
+		}
+
+		gitCfg := nanogit.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghCfg.Token,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		if err != nil {
+			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+		}
+
+		return nanogit.NewGithubRepository(apiRepo, nanogitRepo), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

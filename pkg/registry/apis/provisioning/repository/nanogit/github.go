@@ -16,16 +16,16 @@ import (
 // This is an interim solution to support both backends within a single repository abstraction.
 // Once nanogit is fully integrated, functionality from GithubRepository should be migrated here, and this type should extend the nanogit.GitRepository interface.
 type githubRepository struct {
-	githubRepo  repository.GithubRepository
+	apiRepo     repository.GithubRepository
 	nanogitRepo GitRepository
 }
 
 func NewGithubRepository(
-	githubRepo repository.GithubRepository,
+	apiRepo repository.GithubRepository,
 	nanogitRepo GitRepository,
 ) repository.GithubRepository {
 	return &githubRepository{
-		githubRepo:  githubRepo,
+		apiRepo:     apiRepo,
 		nanogitRepo: nanogitRepo,
 	}
 }
@@ -35,15 +35,15 @@ func (r *githubRepository) Config() *provisioning.Repository {
 }
 
 func (r *githubRepository) Owner() string {
-	return r.githubRepo.Owner()
+	return r.apiRepo.Owner()
 }
 
 func (r *githubRepository) Repo() string {
-	return r.githubRepo.Repo()
+	return r.apiRepo.Repo()
 }
 
 func (r *githubRepository) Client() pgh.Client {
-	return r.githubRepo.Client()
+	return r.apiRepo.Client()
 }
 
 // Validate extends the nanogit repo validation with github specific validation
@@ -74,7 +74,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	return r.githubRepo.Test(ctx)
+	return r.apiRepo.Test(ctx)
 }
 
 // ReadResource implements provisioning.Repository.
@@ -104,7 +104,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
 	// Github API provides avatar URLs which nanogit does not, so we delegate to the github repo.
-	return r.githubRepo.History(ctx, path, ref)
+	return r.apiRepo.History(ctx, path, ref)
 }
 
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
@@ -117,7 +117,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 
 // ResourceURLs implements RepositoryWithURLs.
 func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.ResourceURLs, error) {
-	return r.githubRepo.ResourceURLs(ctx, file)
+	return r.apiRepo.ResourceURLs(ctx, file)
 }
 
 func (r *githubRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
