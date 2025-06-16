@@ -29,6 +29,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -408,6 +409,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
   };
 
   if (panel.libraryPanel) {
