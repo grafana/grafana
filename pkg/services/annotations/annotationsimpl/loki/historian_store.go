@@ -85,6 +85,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 
 	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
 	// since state history won't have tags for annotations
+	// nolint: staticcheck
 	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
@@ -178,7 +179,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 
 		items = append(items, &annotations.ItemDTO{
 			AlertID:      entry.RuleID,
-			DashboardID:  ac.Dashboards[entry.DashboardUID],
+			DashboardID:  ac.Dashboards[entry.DashboardUID], // nolint: staticcheck
 			DashboardUID: &entry.DashboardUID,
 			PanelID:      entry.PanelID,
 			NewState:     entry.Current,
@@ -280,8 +281,10 @@ func buildHistoryQuery(query *annotations.ItemQuery, dashboards map[string]int64
 		RuleUID:      ruleUID,
 	}
 
+	// nolint: staticcheck
 	if historyQuery.DashboardUID == "" && query.DashboardID != 0 {
 		for uid, id := range dashboards {
+			// nolint: staticcheck
 			if query.DashboardID == id {
 				historyQuery.DashboardUID = uid
 				break

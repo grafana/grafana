@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
-import { Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist';
+import { Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistForm } from './PlaylistForm';
 
