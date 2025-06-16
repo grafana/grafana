@@ -19,7 +19,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { initializeI18n } from '@grafana/i18n/internal';
+import { addResourceBundle, initializeI18n } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -49,6 +49,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { loadTranslationResources } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -142,7 +143,13 @@ export class GrafanaApp {
       // This is a placeholder so we can put a 'comment' in the message json files.
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
       // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
-      initI18nPromise.then(({ language }) => updateConfig({ language }));
+      initI18nPromise.then(async ({ language }) => {
+        const lang = language || 'en-US';
+        updateConfig({ language: lang });
+
+        const scenesTranslations = await loadTranslationResources(lang);
+        addResourceBundle(lang, 'grafana', scenesTranslations.default);
+      });
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
