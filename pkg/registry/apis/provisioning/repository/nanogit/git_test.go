@@ -1,0 +1,358 @@
+package nanogit
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"testing"
+	"time"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestGitRepository_Validate(t *testing.T) {
+	tests := []struct {
+		name   string
+		config *provisioning.Repository
+		want   int // number of expected validation errors
+	}{
+		{
+			name: "valid config",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+						Token:  "token123",
+						Path:   "configs",
+					},
+				},
+			},
+			want: 0,
+		},
+		{
+			name: "missing git config",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{},
+			},
+			want: 1,
+		},
+		{
+			name: "missing URL",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						Branch: "main",
+						Token:  "token123",
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "invalid URL scheme",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "http://git.example.com/repo.git",
+						Branch: "main",
+						Token:  "token123",
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "missing branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:   "https://git.example.com/repo.git",
+						Token: "token123",
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "missing token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name: "absolute path",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://git.example.com/repo.git",
+						Branch: "main",
+						Token:  "token123",
+						Path:   "/absolute/path",
+					},
+				},
+			},
+			want: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gitRepo := &gitRepository{
+				config: tt.config,
+			}
+
+			errors := gitRepo.Validate()
+			require.Len(t, errors, tt.want)
+		})
+	}
+}
+
+func TestIsValidGitURL(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{
+			name: "valid HTTPS URL",
+			url:  "https://git.example.com/owner/repo.git",
+			want: true,
+		},
+		{
+			name: "invalid HTTP URL",
+			url:  "http://git.example.com/owner/repo.git",
+			want: false,
+		},
+		{
+			name: "missing scheme",
+			url:  "git.example.com/owner/repo.git",
+			want: false,
+		},
+		{
+			name: "empty path",
+			url:  "https://git.example.com/",
+			want: false,
+		},
+		{
+			name: "no path",
+			url:  "https://git.example.com",
+			want: false,
+		},
+		{
+			name: "invalid URL",
+			url:  "not-a-url",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidGitURL(tt.url)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// Mock secrets service for testing
+type mockSecretsService struct{}
+
+func (m *mockSecretsService) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+	return []byte("decrypted-token"), nil
+}
+
+func (m *mockSecretsService) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
+	return []byte("encrypted-token"), nil
+}
+
+func TestNewGit(t *testing.T) {
+	ctx := context.Background()
+	mockSecrets := &mockSecretsService{}
+
+	config := &provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Git: &provisioning.GitRepositoryConfig{
+				URL:    "https://git.example.com/owner/repo.git",
+				Branch: "main",
+				Token:  "test-token",
+				Path:   "configs",
+			},
+		},
+	}
+
+	// This should succeed in creating the client but won't be able to connect
+	// We just test that the basic structure is created correctly
+	gitRepo, err := NewGitRepository(ctx, config, mockSecrets)
+	require.NoError(t, err)
+	require.NotNil(t, gitRepo)
+	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
+	require.Equal(t, "main", gitRepo.Branch())
+	require.Equal(t, config, gitRepo.Config())
+}
+
+func TestCreateSignature(t *testing.T) {
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Git: &provisioning.GitRepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: "main",
+					Token:  "token123",
+				},
+			},
+		},
+	}
+
+	t.Run("should use default signature when no context signature", func(t *testing.T) {
+		ctx := context.Background()
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use context signature when available", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), author.Time)
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.Equal(t, time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC), committer.Time)
+	})
+
+	t.Run("should fallback to default when context signature has empty name", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "",
+			Email: "john@example.com",
+			When:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		author, committer := gitRepo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.False(t, author.Time.IsZero())
+
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+		require.False(t, committer.Time.IsZero())
+	})
+
+	t.Run("should use current time when signature time is zero", func(t *testing.T) {
+		sig := repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+			When:  time.Time{}, // Zero time
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), sig)
+
+		before := time.Now()
+		author, committer := gitRepo.createSignature(ctx)
+		after := time.Now()
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.True(t, author.Time.After(before.Add(-time.Second)))
+		require.True(t, author.Time.Before(after.Add(time.Second)))
+
+		require.Equal(t, "John Doe", committer.Name)
+		require.Equal(t, "john@example.com", committer.Email)
+		require.True(t, committer.Time.After(before.Add(-time.Second)))
+		require.True(t, committer.Time.Before(after.Add(time.Second)))
+	})
+}
+
+func TestEnsureBranchExists(t *testing.T) {
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Git: &provisioning.GitRepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: "main",
+					Token:  "token123",
+				},
+			},
+		},
+	}
+
+	t.Run("should reject invalid branch name", func(t *testing.T) {
+		ctx := context.Background()
+		_, err := gitRepo.ensureBranchExists(ctx, "feature//branch")
+
+		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, int32(400), statusErr.Status().Code)
+		require.Equal(t, "invalid branch name", statusErr.Status().Message)
+	})
+
+	t.Run("should validate branch names for validation errors only", func(t *testing.T) {
+		testCases := []struct {
+			name        string
+			branchName  string
+			shouldError bool
+		}{
+			{"invalid double slash", "feature//branch", true},
+			{"invalid double dot", "feature..branch", true},
+			{"invalid ending with dot", "feature.", true},
+			{"invalid starting with slash", "/feature", true},
+			{"invalid ending with slash", "feature/", true},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				ctx := context.Background()
+				_, err := gitRepo.ensureBranchExists(ctx, tc.branchName)
+
+				if tc.shouldError {
+					require.Error(t, err)
+					var statusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &statusErr))
+					require.Equal(t, int32(400), statusErr.Status().Code)
+					require.Equal(t, "invalid branch name", statusErr.Status().Message)
+				}
+			})
+		}
+	})
+}
+
+func TestHistory(t *testing.T) {
+	t.Run("should return not implemented", func(t *testing.T) {
+		ctx := context.Background()
+		history, err := (&gitRepository{}).History(ctx, "", "")
+
+		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, int32(http.StatusNotImplemented), statusErr.Status().Code)
+		require.Equal(t, metav1.StatusReasonMethodNotAllowed, statusErr.Status().Reason)
+		require.Equal(t, "history is not supported for pure git repositories", statusErr.Status().Message)
+		require.Nil(t, history)
+	})
+}
