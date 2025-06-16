@@ -21,7 +21,8 @@ var (
 	sqlKeeperList   = mustTemplate("keeper_list.sql")
 	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
 
-	sqlKeeperListByName = mustTemplate("keeper_listByName.sql")
+	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
+	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
 	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
@@ -116,6 +117,18 @@ type listByNameKeeper struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameKeeper) Validate() error {
+	return nil // TODO
+}
+
+// This is used at keeper store to validate create & update operations
+type listByNameSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace        string
+	UsedSecureValues []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listByNameSecureValue) Validate() error {
 	return nil // TODO
 }
 
