@@ -164,13 +164,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "lokiQuerySplittingConfig",
-			Description:  "Give users the option to configure split durations for Loki queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
@@ -261,13 +254,6 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:         "lokiPredefinedOperations",
-			Description:  "Adds predefined query operations to Loki query editor",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "pluginsFrontendSandbox",
@@ -571,14 +557,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:         "lokiStructuredMetadata",
-			Description:  "Enables the loki data source to request structured metadata from the Loki server",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true",
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -1125,8 +1103,9 @@ var (
 		{
 			Name:        "lokiSendDashboardPanelNames",
 			Description: "Send dashboard and panel names to Loki when querying",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingPrometheusRulesPrimary",
@@ -1372,13 +1351,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "lokiLabelNamesQueryApi",
-			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "investigationsBackend",

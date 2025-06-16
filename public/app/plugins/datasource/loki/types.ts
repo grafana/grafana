@@ -43,7 +43,6 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
-  predefinedOperations?: string;
 }
 
 export interface LokiStreamResult {

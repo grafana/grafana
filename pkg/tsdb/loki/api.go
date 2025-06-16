@@ -27,11 +27,10 @@ import (
 )
 
 type LokiAPI struct {
-	client                    *http.Client
-	url                       string
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	requestStructuredMetadata bool
+	client *http.Client
+	url    string
+	log    log.Logger
+	tracer tracing.Tracer
 }
 
 type RawLokiResponse struct {
@@ -40,11 +39,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -104,9 +103,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 		}
 	}
 
-	if categorizeLabels {
-		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
-	}
+	req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
 
 	setXScopeOrgIDHeader(req, ctx)
 
@@ -164,7 +161,7 @@ func readLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (*backend.DataResponse, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}

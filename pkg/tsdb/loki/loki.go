@@ -129,7 +129,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	var rawLokiResponse RawLokiResponse
 	var err error
@@ -186,7 +186,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		s.applyHeaders(ctx, req)
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), isFeatureEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata), isFeatureEnabled(ctx, featuremgmt.FlagLogQLScope))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), isFeatureEnabled(ctx, featuremgmt.FlagLogQLScope))
 }
 
 func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
@@ -206,10 +206,10 @@ func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeade
 	}
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata, logQLScopes bool) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	start := time.Now()
 	queries, err := parseQuery(req, logQLScopes)
