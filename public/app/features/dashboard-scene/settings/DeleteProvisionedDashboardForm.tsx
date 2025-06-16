@@ -38,8 +38,6 @@ export function DeleteProvisionedDashboardForm({
   workflowOptions,
   onDismiss,
 }: Props) {
-  //   const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions } = useProvisionedDashboardData(dashboard);
-
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, reset } = methods;
 
@@ -71,13 +69,11 @@ export function DeleteProvisionedDashboardForm({
     // This effect runs when the delete file request state changes
     // it checks if the request was successful or if there was an error
     if (request.isSuccess) {
-      console.log('Delete response data:', request.data);
       const { ref, path } = request.data;
 
       if (workflow === 'branch' && ref && path) {
         onDismiss();
         // Redirect to the provisioning preview pages
-        // navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`);
         return;
       }
