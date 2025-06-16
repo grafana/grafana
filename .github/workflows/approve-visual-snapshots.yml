@@ -1,0 +1,183 @@
+name: Approve Visual Snapshots
+
+on:
+  issue_comment:
+    types: [created]
+
+env:
+  NODE_VERSION: 'lts/*'
+  GRAFANA_PORT: 3001
+
+jobs:
+  approve-snapshots:
+    name: Approve Visual Snapshots
+    # Only run on PR comments with the approval command
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/approve-snapshots') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+
+    steps:
+      - name: Get PR details
+        id: pr-details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('head_ref', pr.data.head.ref);
+            core.setOutput('base_ref', pr.data.base.ref);
+            return pr.data;
+
+      - name: React to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-details.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Go backend
+        run: go run build.go build
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - name: Install Playwright browsers
+        run: yarn exec playwright install --with-deps
+
+      - name: Start Grafana server
+        run: |
+          echo "Starting Grafana server for snapshot updates..."
+          ./scripts/grafana-server/start-server > scripts/grafana-server/server.log 2>&1 &
+          ./scripts/grafana-server/wait-for-grafana
+          echo "Grafana server is ready!"
+        env:
+          PORT: ${{ env.GRAFANA_PORT }}
+
+      - name: Update visual snapshots
+        id: update-snapshots
+        run: |
+          echo "Updating visual snapshots..."
+          
+          # Run tests with update snapshots flag
+          if yarn e2e:playwright:vizregression --update-snapshots > snapshot-update.log 2>&1; then
+            echo "SUCCESS=true" >> $GITHUB_OUTPUT
+            echo "Visual snapshots updated successfully!"
+          else
+            echo "SUCCESS=false" >> $GITHUB_OUTPUT
+            echo "Failed to update visual snapshots"
+            cat snapshot-update.log
+            exit 1
+          fi
+        env:
+          HOST: localhost
+          PORT: ${{ env.GRAFANA_PORT }}
+
+      - name: Upload snapshot update log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snapshot-update-log
+          path: snapshot-update.log
+          retention-days: 7
+
+      - name: Commit updated snapshots
+        if: steps.update-snapshots.outputs.SUCCESS == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Add all snapshot files
+          git add -A
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No snapshot changes to commit"
+          else
+            git commit -m "Update visual regression snapshots
+
+            Approved by: @${{ github.event.comment.user.login }}
+            PR: #${{ github.event.issue.number }}
+            Commit: ${{ steps.pr-details.outputs.head_sha }}"
+            
+            git push origin HEAD:${{ steps.pr-details.outputs.head_ref }}
+            echo "Visual snapshots have been updated and committed!"
+          fi
+
+      - name: Comment on success
+        if: steps.update-snapshots.outputs.SUCCESS == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Visual snapshots approved and updated!**
+
+            @${{ github.event.comment.user.login }} has approved the visual changes.
+            
+            The visual regression snapshots have been automatically updated and committed to this PR.
+            
+            🔄 The visual regression tests will run again automatically to verify the updates.`
+            });
+
+      - name: Comment on failure
+        if: steps.update-snapshots.outputs.SUCCESS == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Failed to update visual snapshots**
+
+            There was an error while trying to update the visual snapshots. This could be due to:
+            - Test environment issues
+            - Conflicting changes in the PR
+            - Infrastructure problems
+            
+            Please check the workflow logs for more details and try again, or update the snapshots manually.`
+            });
+
+      - name: Stop Grafana server
+        if: always()
+        run: |
+          echo "Stopping Grafana server..."
+          pkill -f grafana-server || true
+          echo "Grafana server stopped" 
