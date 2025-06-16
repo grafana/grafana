@@ -77,7 +77,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 		case "range":
 			return QueryTypeRange, nil
 		default:
-			return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
+			return QueryTypeRange, backend.DownstreamError(fmt.Errorf("invalid queryType: %s", jsonValue))
 		}
 	}
 }
@@ -97,7 +97,7 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 		case "scan":
 			return DirectionBackward, nil
 		default:
-			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
+			return DirectionBackward, backend.DownstreamError(fmt.Errorf("invalid queryDirection: %s", jsonValue))
 		}
 	}
 }

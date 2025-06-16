@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 	"github.com/stretchr/testify/require"
 )
@@ -278,5 +279,87 @@ func TestApiReturnValues(t *testing.T) {
 		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "foo")
+	})
+}
+
+func TestErrorSources(t *testing.T) {
+	errorResponse := []byte(`{"message": "test error"}`)
+
+	t.Run("should set correct error source for downstream errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+	})
+
+	t.Run("should set correct error source for plugin errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(406, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourcePlugin, res.ErrorSource)
+	})
+
+	t.Run("should set correct error source for server errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(500, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+	})
+
+	t.Run("should handle downstream HTTP errors", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		res, err := api.DataQuery(context.Background(), lokiQuery{QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+		require.NotNil(t, res.Error)
+		require.Equal(t, backend.ErrorSourceDownstream, res.ErrorSource)
+		require.Contains(t, res.Error.Error(), "test error")
+	})
+
+	t.Run("should handle client errors in RawQuery", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(400, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		res, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, 400, res.Status)
+		require.Contains(t, string(res.Body), "test error")
+	})
+
+	t.Run("should handle server errors in RawQuery", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(500, "application/json", errorResponse, func(req *http.Request) {
+			called = true
+		}, false)
+
+		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels")
+		require.Error(t, err)
+		require.True(t, called)
+		require.Contains(t, err.Error(), "test error")
 	})
 }
