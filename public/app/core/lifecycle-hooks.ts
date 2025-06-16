@@ -1,5 +1,5 @@
 import { initDevFeatures } from 'app/dev';
-import { notifyIfMockApiEnabled } from 'app/mock-api-utils';
+import { notifyIfMockApiEnabled } from 'app/dev-utils';
 
 /**
  * Lifecycle tasks that need to be run prior to app initialization,

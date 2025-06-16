@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
@@ -17,7 +17,6 @@ export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) =
   const styles = useStyles2(getStyles);
   const [pairs, setPairs] = useState(recordToPairs(value));
   const [currentNewPair, setCurrentNewPair] = useState<[string, string] | undefined>(undefined);
-  const { t } = useTranslate();
 
   const emitChange = (pairs: Array<[string, string]>) => {
     onChange(pairsToRecord(pairs));

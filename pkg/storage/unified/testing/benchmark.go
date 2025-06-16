@@ -368,7 +368,11 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	// Run the storage backend benchmark write throughput to create events
 	startTime := time.Now()
 	var result *BenchmarkResult
+	// Channel to signal when the benchmark goroutine completes
+	benchmarkDone := make(chan struct{})
+
 	go func() {
+		defer close(benchmarkDone)
 		result, err = runStorageBackendBenchmark(ctx, backend, opts)
 		require.NoError(tb, err)
 	}()
@@ -380,6 +384,8 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		latencies = append(latencies, evt.Latency.Seconds())
 	}
 	totalDuration := time.Since(startTime)
+
+	<-benchmarkDone
 	// Calculate index latency percentiles
 	sort.Float64s(latencies)
 	var p50, p90, p99 float64

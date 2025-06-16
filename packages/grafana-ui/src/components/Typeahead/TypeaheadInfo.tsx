@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { CompletionItem } from '../../types';
+import { CompletionItem } from '../../types/completion';
 
 const getStyles = (theme: GrafanaTheme2, height: number, visible: boolean) => {
   return {

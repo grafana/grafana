@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FieldValidationMessage } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { FieldValidationMessage, TextLink } from '@grafana/ui';
 
 /**
  * Use this to return a url in a tooltip in a field. Don't forget to make the field interactive to be able to click on the tooltip
@@ -12,9 +13,9 @@ export function docsTip(url?: string) {
   const docsUrl = 'https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/';
 
   return (
-    <a href={url ? url : docsUrl} target="_blank" rel="noopener noreferrer">
-      Visit docs for more details here.
-    </a>
+    <TextLink href={url ? url : docsUrl} external>
+      <Trans i18nKey="configuration.docs-tip.visit-docs-for-more-details-here">Visit docs for more details here.</Trans>
+    </TextLink>
   );
 }
 
@@ -24,6 +25,9 @@ export const validateInput = (
   errorMessage?: string
 ): boolean | JSX.Element => {
   const defaultErrorMessage = 'Value is not valid';
+  const inputTooLongErrorMessage = 'Input is too long';
+  const validationTimeoutErrorMessage = 'Validation timeout - input too complex';
+  const invalidValidationPatternErrorMessage = 'Invalid validation pattern';
   const MAX_INPUT_LENGTH = 1000; // Reasonable limit for most validation cases
 
   // Early return if no input
@@ -33,7 +37,7 @@ export const validateInput = (
 
   // Check input length
   if (input.length > MAX_INPUT_LENGTH) {
-    return <FieldValidationMessage>Input is too long</FieldValidationMessage>;
+    return <FieldValidationMessage>{inputTooLongErrorMessage}</FieldValidationMessage>;
   }
 
   try {
@@ -53,7 +57,7 @@ export const validateInput = (
 
     // Check if execution took too long
     if (Date.now() - startTime > timeout) {
-      return <FieldValidationMessage>Validation timeout - input too complex</FieldValidationMessage>;
+      return <FieldValidationMessage>{validationTimeoutErrorMessage}</FieldValidationMessage>;
     }
 
     if (!isValid) {
@@ -62,7 +66,7 @@ export const validateInput = (
 
     return true;
   } catch (error) {
-    return <FieldValidationMessage>Invalid validation pattern</FieldValidationMessage>;
+    return <FieldValidationMessage>{invalidValidationPatternErrorMessage}</FieldValidationMessage>;
   }
 };
 

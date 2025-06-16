@@ -7,7 +7,7 @@ import uPlot from 'uplot';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';

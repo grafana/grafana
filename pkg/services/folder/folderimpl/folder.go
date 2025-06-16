@@ -168,10 +168,6 @@ func (s *Service) DBMigration(db db.DB) {
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
-		} else if db.GetDialect().DriverName() == migrator.Spanner {
-			// We may eventually make this migration work with Spanner, but for now don't do anything.
-			// We intend to store dashboards and folders only in unified storage when using spanner.
-			deleteOldFolders = false
 		} else {
 			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`

@@ -121,6 +121,9 @@ type searchSupport struct {
 
 	// testing
 	clientIndexEventsChan chan *IndexEvent
+
+	// periodic rebuilding of the indexes to keep usage insights up to date
+	rebuildInterval time.Duration
 }
 
 var (
@@ -153,6 +156,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
 		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
+		rebuildInterval:       opts.RebuildInterval,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -377,34 +381,52 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
-// init is called during startup.  any failure will block startup and continued execution
-func (s *searchSupport) init(ctx context.Context) error {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
-	defer span.End()
-	start := time.Now().Unix()
-
+func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
 	stats, err := s.storage.GetResourceStats(ctx, "", s.initMinSize)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	for _, info := range stats {
+		// only periodically rebuild the dashboard index, specifically to update the usage insights data
+		if rebuild && info.Resource != dashboardv1.DASHBOARD_RESOURCE {
+			continue
+		}
+
 		group.Go(func() error {
-			s.log.Debug("initializing search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
+			if rebuild {
+				// we need to clear the cache to make sure we get the latest usage insights data
+				s.builders.clearNamespacedCache(info.NamespacedResource)
+			}
+			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
-			_, _, err = s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
 		})
 	}
 
 	err = group.Wait()
 	if err != nil {
+		return totalBatchesIndexed, err
+	}
+
+	return totalBatchesIndexed, nil
+}
+
+func (s *searchSupport) init(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	defer span.End()
+	start := time.Now().Unix()
+
+	totalBatchesIndexed, err := s.buildIndexes(ctx, false)
+	if err != nil {
 		return err
 	}
+
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
 	// Now start listening for new events
@@ -427,6 +449,12 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}()
 
 	go s.monitorIndexEvents(ctx)
+
+	// since usage insights is not in unified storage, we need to periodically rebuild the index
+	// to make sure these data points are up to date.
+	if s.rebuildInterval > 0 {
+		go s.startPeriodicRebuild(watchctx)
+	}
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
@@ -508,6 +536,54 @@ func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
 	}
 }
 
+func (s *searchSupport) startPeriodicRebuild(ctx context.Context) {
+	ticker := time.NewTicker(s.rebuildInterval)
+	defer ticker.Stop()
+
+	s.log.Info("starting periodic index rebuild", "interval", s.rebuildInterval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			s.log.Info("stopping periodic index rebuild due to context cancellation")
+			return
+		case <-ticker.C:
+			s.log.Info("starting periodic index rebuild")
+			if err := s.rebuildDashboardIndexes(ctx); err != nil {
+				s.log.Error("error during periodic index rebuild", "error", err)
+			} else {
+				s.log.Info("periodic index rebuild completed successfully")
+			}
+		}
+	}
+}
+
+func (s *searchSupport) rebuildDashboardIndexes(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"RebuildDashboardIndexes")
+	defer span.End()
+
+	start := time.Now()
+	s.log.Info("rebuilding all search indexes")
+
+	totalBatchesIndexed, err := s.buildIndexes(ctx, true)
+	if err != nil {
+		return fmt.Errorf("failed to rebuild dashboard indexes: %w", err)
+	}
+
+	end := time.Now()
+	duration := end.Sub(start)
+	s.log.Info("completed rebuilding all dashboard search indexes",
+		"duration", duration,
+		"rebuilt_indexes", totalBatchesIndexed,
+		"total_docs", s.search.TotalDocs())
+
+	if s.indexMetrics != nil {
+		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(duration.Seconds())
+	}
+
+	return nil
+}
+
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
@@ -540,13 +616,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
+	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
 		return nil, 0, err
 	}
 	fields := s.builders.GetFields(nsr)
 
-	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
+	logger.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
@@ -559,8 +637,10 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Collect all documents in a single bulk request
-			items := make([]*BulkIndexItem, 0)
+			// Process documents in batches to avoid memory issues
+			// When dealing with large collections (e.g., 100k+ documents),
+			// loading all documents into memory at once can cause OOM errors.
+			items := make([]*BulkIndexItem, 0, maxBatchSize)
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -578,7 +658,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					s.log.Error("error building search document", "key", SearchID(key), "err", err)
+					logger.Error("error building search document", "key", SearchID(key), "err", err)
 					continue
 				}
 
@@ -587,9 +667,21 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Action: ActionIndex,
 					Doc:    doc,
 				})
+
+				// When we reach the batch size, perform bulk index and reset the batch.
+				if len(items) >= maxBatchSize {
+					if err = index.BulkIndex(&BulkIndexRequest{
+						Items: items,
+					}); err != nil {
+						return err
+					}
+
+					// Reset the slice for the next batch while preserving capacity.
+					items = items[:0]
+				}
 			}
 
-			// Perform single bulk index operation
+			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
@@ -609,7 +701,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	// Record the number of objects indexed for the kind/resource
 	docCount, err := index.DocCount(ctx, "")
 	if err != nil {
-		s.log.Warn("error getting doc count", "error", err)
+		logger.Warn("error getting doc count", "error", err)
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
@@ -753,4 +845,10 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
 	s.indexQueueProcessors[key] = indexQueueProcessor
 	return indexQueueProcessor, nil
+}
+
+func (s *builderCache) clearNamespacedCache(key NamespacedResource) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ns.Remove(key)
 }

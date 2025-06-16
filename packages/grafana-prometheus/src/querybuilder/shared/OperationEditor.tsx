@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getOperationParamId } from '../shared/param-utils';
@@ -52,7 +53,13 @@ export function OperationEditor({
   const id = useId();
 
   if (!def) {
-    return <span>Operation {operation.id} not found</span>;
+    return (
+      <span>
+        <Trans i18nKey="querybuilder.operation-editor.not-found" values={{ id: operation.id }}>
+          Operation {'{{id}}'} not found
+        </Trans>
+      </span>
+    );
   }
 
   const onParamValueChanged = (paramIdx: number, value: QueryBuilderOperationParamValue) => {
@@ -113,7 +120,7 @@ export function OperationEditor({
                 fill="text"
                 icon="times"
                 variant="secondary"
-                title={`Remove ${paramDef.name}`}
+                title={t('querybuilder.operation-editor.title-remove', 'Remove {{name}}', { name: paramDef.name })}
                 onClick={() => onRemoveRestParam(paramIndex)}
               />
             )}

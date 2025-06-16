@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
@@ -26,7 +26,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
-  const { t } = useTranslate();
+
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
 

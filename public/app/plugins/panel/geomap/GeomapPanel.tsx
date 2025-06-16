@@ -13,6 +13,7 @@ import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -33,7 +34,13 @@ import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor, hasVariableDependencies } from './utils/utils';
+import {
+  updateMap,
+  getNewOpenLayersMap,
+  notifyPanelEditor,
+  hasVariableDependencies,
+  hasLayerData,
+} from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -203,6 +210,9 @@ export class GeomapPanel extends Component<Props, State> {
         this.map.setView(view);
       }
     }
+
+    // Update legends when data changes
+    this.setState({ legends: this.getLegends() });
   }
 
   initMapRef = async (div: HTMLDivElement) => {
@@ -387,7 +397,10 @@ export class GeomapPanel extends Component<Props, State> {
     const legends: ReactNode[] = [];
     for (const state of this.layers) {
       if (state.handler.legend) {
-        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        const hasData = hasLayerData(state.layer);
+        if (hasData) {
+          legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+        }
       }
     }
 
@@ -411,7 +424,7 @@ export class GeomapPanel extends Component<Props, State> {
             className={styles.map}
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
             tabIndex={0} // Interactivity is added through the ref
-            aria-label={`Navigable map`}
+            aria-label={t('geomap.geomap-panel.aria-label-map', 'Navigable map')}
             ref={this.initMapRef}
           ></div>
           <GeomapOverlay

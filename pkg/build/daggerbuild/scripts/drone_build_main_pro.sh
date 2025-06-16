@@ -15,7 +15,6 @@ dagger run --silent go run ./pkg/build/cmd \
   -a frontend:enterprise \
   --yarn-cache=${YARN_CACHE_FOLDER} \
   --checksum \
-  --verify \
   --build-id=${DRONE_BUILD_NUMBER} \
   --grafana-ref=${SOURCE_COMMIT} \
   --grafana-repo="https://github.com/grafana/grafana.git" \
@@ -29,5 +28,5 @@ dagger run --silent go run ./pkg/build/cmd \
 
 echo "Final list of artifacts:"
 # Move the tar.gz packages to their expected locations
-cat assets.txt | grep -v "public" | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./scripts/move_packages.go ./dist/main
-cat assets.txt | grep "public" | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./scripts/move_packages.go ./dist/cdn
+cat assets.txt | grep -v "public" | DESTINATION=gs://grafana-downloads-enterprise2 IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/main
+cat assets.txt | grep "public" | DESTINATION=gs://grafana-static-assets IS_MAIN=true go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/cdn

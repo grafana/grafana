@@ -399,8 +399,8 @@ func TestAPI_Annotations(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0})
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"})
 				hs.annotationsRepo = repo
 				hs.Features = featuremgmt.WithFeatures(tt.featureFlags...)
 				dashService := &dashboards.FakeDashboardService{}
@@ -413,7 +413,7 @@ func TestAPI_Annotations(t *testing.T) {
 				hs.folderService = folderService
 				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, folderService))
-				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashService, folderService))
+				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashService, folderService))
 			})
 			var body io.Reader
 			if tt.body != "" {
@@ -436,11 +436,11 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashSvc := &dashboards.FakeDashboardService{}
 	rootDash := &dashboards.Dashboard{ID: 1, OrgID: 1, UID: rootDashUID}
 	folderDash := &dashboards.Dashboard{ID: 2, OrgID: 1, UID: folderDashUID, FolderUID: folderUID}
-	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{ID: rootDash.ID, OrgID: 1}).Return(rootDash, nil)
-	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{ID: folderDash.ID, OrgID: 1}).Return(folderDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: rootDash.UID, OrgID: 1}).Return(rootDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: folderDash.UID, OrgID: 1}).Return(folderDash, nil)
 
-	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID}
-	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID}
+	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}
+	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID}
 	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()

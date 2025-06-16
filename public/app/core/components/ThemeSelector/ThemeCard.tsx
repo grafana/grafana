@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { FeatureBadge, RadioButtonDot, useStyles2 } from '@grafana/ui';
 
 import { ThemePreview } from '../Theme/ThemePreview';
@@ -15,9 +14,8 @@ interface ThemeCardProps {
 }
 
 export function ThemeCard({ themeOption, isExperimental, isSelected, onSelect }: ThemeCardProps) {
-  const { t } = useTranslate();
   const theme = themeOption.build();
-  const label = getTranslatedThemeName(themeOption, t);
+  const label = getTranslatedThemeName(themeOption);
   const styles = useStyles2(getStyles);
 
   return (
@@ -70,7 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-function getTranslatedThemeName(theme: ThemeRegistryItem, t: TFunction) {
+function getTranslatedThemeName(theme: ThemeRegistryItem) {
   switch (theme.id) {
     case 'dark':
       return t('shared.preferences.theme.dark-label', 'Dark');

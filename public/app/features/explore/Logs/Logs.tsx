@@ -32,7 +32,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -381,8 +381,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       );
     }
   });
-
-  const { t } = useTranslate();
 
   const updatePanelState = useCallback(
     (logsPanelState: Partial<ExploreLogsPanelState>) => {
@@ -870,14 +868,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   className={styles.visualisationTypeRadio}
                   options={[
                     {
-                      label: 'Logs',
+                      label: t('explore.unthemed-logs.label.logs', 'Logs'),
                       value: 'logs',
-                      description: 'Show results in logs visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-logs-visualisation',
+                        'Show results in logs visualisation'
+                      ),
                     },
                     {
-                      label: 'Table',
+                      label: t('explore.unthemed-logs.label.table', 'Table'),
                       value: 'table',
-                      description: 'Show results in table visualisation',
+                      description: t(
+                        'explore.unthemed-logs.description.show-results-in-table-visualisation',
+                        'Show results in table visualisation'
+                      ),
                     },
                   ]}
                   size="sm"
@@ -976,14 +980,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     <RadioButtonGroup
                       options={[
                         {
-                          label: 'Newest first',
+                          label: t('explore.unthemed-logs.label.newest-first', 'Newest first'),
                           value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-newest-to-oldest',
+                            'Show results newest to oldest'
+                          ),
                         },
                         {
-                          label: 'Oldest first',
+                          label: t('explore.unthemed-logs.label.oldest-first', 'Oldest first'),
                           value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
+                          description: t(
+                            'explore.unthemed-logs.description.show-results-oldest-to-newest',
+                            'Show results oldest to newest'
+                          ),
                         },
                       ]}
                       value={logsSortOrder}
@@ -1063,7 +1073,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onOpenContext={onOpenContext}
                   onPermalinkClick={onPermalinkClick}
                   permalinkedRowId={panelState?.logs?.id}
-                  scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
@@ -1179,6 +1188,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   onPermalinkClick={onPermalinkClick}
                   onPinLine={onPinToContentOutlineClick}
                   onUnpinLine={onPinToContentOutlineClick}
+                  permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
                   showControls
