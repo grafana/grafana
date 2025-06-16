@@ -249,7 +249,8 @@ type FrontendSettingsDTO struct {
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
-	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultDatasourceManageAlertsUIToggle          bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool `json:"defaultAllowRecordingRulesTargetAlertsUiToggle"`
 
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`

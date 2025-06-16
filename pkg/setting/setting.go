@@ -341,6 +341,9 @@ type Cfg struct {
 	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
 	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
+	// Default behavior for the "Allow as recording rules target" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.manageRecordingRulesTarget` prop does not contain a previously configured value.
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -1968,6 +1971,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
 	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
+	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {

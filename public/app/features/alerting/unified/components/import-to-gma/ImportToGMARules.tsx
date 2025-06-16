@@ -25,7 +25,7 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { Folder } from '../../types/rule-form';
-import { DataSourceType } from '../../utils/datasource';
+import { DataSourceType, isDataSourceRecordingRulesTarget } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -319,7 +319,9 @@ function YamlTargetDataSourceField() {
             noDefault
             inputId="yaml-target-data-source"
             alerting
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={(ds: DataSourceInstanceSettings) =>
+              ds.type === 'prometheus' && isDataSourceRecordingRulesTarget(ds)
+            }
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('yamlImportTargetDatasourceUID', ds.uid);
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
@@ -367,7 +369,9 @@ function TargetDataSourceForRecordingRulesField() {
             current={field.value}
             inputId="recording-rules-target-data-source"
             noDefault
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={(ds: DataSourceInstanceSettings) =>
+              ds.type === 'prometheus' && isDataSourceRecordingRulesTarget(ds)
+            }
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('targetDatasourceUID', ds.uid);
             }}
