@@ -105,9 +105,9 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		fieldSelector = fields.Everything()
 	}
 
-	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList))
+	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList.Items))
 
-	for _, secureValue := range secureValueList {
+	for _, secureValue := range secureValueList.Items {
 		// Filter by label
 		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
 			// Filter by status.phase

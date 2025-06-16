@@ -119,36 +119,6 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	})
 
 	tables = append(tables, migrator.Table{
-		Name: TableNameSecureValue,
-		Columns: []*migrator.Column{
-			// Kubernetes Metadata
-			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
-			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
-			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
-
-			// Kubernetes Status
-			{Name: "status_phase", Type: migrator.DB_Text, Nullable: false},
-			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
-
-			// Spec
-			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
-			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true},       // Keeper name, if not set, use default keeper.
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
-			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
-		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
-		},
-	})
-
-	tables = append(tables, migrator.Table{
 		Name: TableNameEncryptedValue,
 		Columns: []*migrator.Column{
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
