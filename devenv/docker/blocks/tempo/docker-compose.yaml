@@ -90,6 +90,7 @@
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
     volumes:
       - ./docker/blocks/tempo/prometheus.yaml:/etc/prometheus.yaml
     links:
