@@ -5,9 +5,11 @@
 
 ARG BASE_IMAGE=alpine-base
 ARG GO_IMAGE=go-builder-base
-ARG GO_SRC=go-builder
 ARG JS_IMAGE=js-builder-base
 ARG JS_PLATFORM=linux/amd64
+
+# Default to building locally
+ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
