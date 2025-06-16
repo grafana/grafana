@@ -8102,14 +8102,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [
@@ -8730,15 +8730,15 @@
             "description": "Selected language (beta)",
             "type": "string"
           },
-          "locale": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "description": "Selected locale (beta)",
+            "type": "string"
           },
           "theme": {
             "description": "light, dark, empty is default",
@@ -12345,14 +12345,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [

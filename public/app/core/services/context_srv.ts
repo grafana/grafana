@@ -38,7 +38,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  locale: string;
+  regionalFormat: string;
   language: string;
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
@@ -65,7 +65,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
-    this.locale = '';
+    this.regionalFormat = '';
     this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
