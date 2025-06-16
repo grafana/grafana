@@ -245,7 +245,12 @@ const SearchField = ({
               }
             }}
             onCreateOption={(val) => {
-              updateFilter({ ...filter, value: val, valueType: uniqueOptionType, isCustomValue: true });
+              updateFilter({
+                ...filter,
+                value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
+                valueType: uniqueOptionType,
+                isCustomValue: true,
+              });
             }}
             placeholder="Select value"
             isClearable={true}
