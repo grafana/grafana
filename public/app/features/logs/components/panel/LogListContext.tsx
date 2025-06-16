@@ -25,6 +25,7 @@ import {
 import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
@@ -184,7 +185,7 @@ export const LogListContextProvider = ({
   enableLogDetails,
   detailsMode: detailsModeProp,
   dedupStrategy,
-  displayedFields,
+  displayedFields: displayedFieldsProp,
   filterLevels,
   fontSize,
   forceEscape = false,
@@ -238,6 +239,7 @@ export const LogListContextProvider = ({
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const displayedFields = useMemo(() => displayedFieldsProp.length > 0 ? displayedFieldsProp : getDisplayedFieldsForLogs(logs), [displayedFieldsProp, logs]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
