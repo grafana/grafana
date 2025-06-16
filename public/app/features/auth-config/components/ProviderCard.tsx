@@ -1,6 +1,6 @@
 import { isIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Card, Icon, Link, TextLink } from '@grafana/ui';
+import { Badge, Card, Icon, TextLink } from '@grafana/ui';
 
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
@@ -43,20 +43,28 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
 export function ProviderSAMLCard() {
   return (
     <Card noMargin>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       <Card.Heading>SAML</Card.Heading>
       <Card.Meta>
         <TextLink
           external
           variant="bodySmall"
           color="secondary"
-          href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/"
+          href="https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-saml"
         >
           {t('auth-config.provider-card.enterprise-learn-more', 'Learn more about SAML support.')}
         </TextLink>
       </Card.Meta>
       <Card.Actions>
         <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
-        <Badge text={'Enterprise only'} color={'purple'} tooltip={'Only available in Grafana Enterprise'} />
+        <Badge
+          text={t('auth-config.provider-card.text-enterprise-only', 'Enterprise only')}
+          color={'purple'}
+          tooltip={t(
+            'auth-config.provider-card.text-enterprise-only-tooltip',
+            'Only available in Grafana Cloud and Enterprise'
+          )}
+        />
       </Card.Actions>
     </Card>
   );
@@ -65,6 +73,7 @@ export function ProviderSAMLCard() {
 export function ProviderSCIMCard() {
   return (
     <Card noMargin>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       <Card.Heading>SCIM</Card.Heading>
       <Card.Meta>
         <div>
@@ -80,7 +89,14 @@ export function ProviderSCIMCard() {
       </Card.Meta>
       <Card.Actions>
         <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
-        <Badge text={'Enterprise only'} color={'purple'} tooltip={'Only available in Grafana Enterprise'} />
+        <Badge
+          text={t('auth-config.provider-card.text-enterprise-only', 'Enterprise only')}
+          color={'purple'}
+          tooltip={t(
+            'auth-config.provider-card.text-enterprise-only-tooltip',
+            'Only available in Grafana Cloud and Enterprise'
+          )}
+        />
       </Card.Actions>
     </Card>
   );
