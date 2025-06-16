@@ -294,8 +294,6 @@ var _ resource.ListObject = &DashboardList{}
 
 // Copy methods for all subresource types
 
-
-
 // DeepCopy creates a full deep copy of DashboardStatus
 func (s *DashboardStatus) DeepCopy() *DashboardStatus {
 	cpy := &DashboardStatus{}
