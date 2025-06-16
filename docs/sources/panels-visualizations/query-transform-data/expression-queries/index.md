@@ -238,6 +238,157 @@ Resample changes the time stamps in each time series to have a consistent time i
   - **backfill** with next known value
   - **fillna** to fill empty sample windows with NaNs
 
+#### SQL
+
+The SQL expression engine is a new expression engine that allows you to transform the data returned from your data source queries using a MySQL-like syntax.
+
+##### SQL Functions
+
+A subset of MySQL functions are supported in expressions, for two reasons:
+
+1. We use [go-mysql-server](https://github.com/dolthub/go-mysql-server) to execute the SQL statements. It supports a subset of MySQL functions, as per the documentation [here](https://docs.dolthub.com/sql-reference/sql-support/expressions-functions-operators#functions-and-operators).
+2. We restrict the use of potentially dangerous functions.
+
+The following SQL functions are supported:
+
+###### Conditional Functions
+
+- `CASE`
+- `COALESCE()`
+- `IF()`
+- `IFNULL()`
+- `NULLIF()`
+
+###### Aggregation Functions
+
+- `AVG()`
+- `COUNT()`
+- `GROUP_CONCAT()`
+- `MAX()`
+- `MIN()`
+- `STD()`
+- `STDDEV()`
+- `STDDEV_POP()`
+- `SUM()`
+- `VARIANCE()`
+- `VAR_POP()`
+
+###### Mathematical Functions
+
+- `ABS()`
+- `ACOS()`
+- `ASIN()`
+- `ATAN()`
+- `ATAN2()`
+- `CEILING()`/`CEIL()`
+- `COS()`
+- `EXP()`
+- `FLOOR()`
+- `LN()`
+- `LOG()`
+- `LOG10()`
+- `MOD()`
+- `PI()`
+- `POW()`/`POWER()`
+- `RAND()`
+- `ROUND()`
+- `SIGN()`
+- `SIN()`
+- `SQRT()`
+- `TAN()`
+
+###### String Functions
+
+- `ASCII()`
+- `CHAR()`
+- `CHAR_LENGTH()`
+- `COLLATE`
+- `CONCAT()`
+- `INSTR()`
+- `LEFT()`
+- `LENGTH()`
+- `LOCATE()`
+- `LOWER()`/`LCASE()`
+- `LTRIM()`
+- `MID()`/`SUBSTRING()`
+- `ORD()`
+- `POSITION()`
+- `REGEXP_SUBSTR()`
+- `REPEAT()`
+- `REPLACE()`
+- `REVERSE()`
+- `RIGHT()`
+- `RTRIM()`
+- `SUBSTRING_INDEX()`
+- `TRIM()`
+- `UPPER()`/`UCASE()`
+
+###### Date/Time Functions
+
+- `DATE_ADD()`
+- `DATE_FORMAT()`
+- `DATE_SUB()`
+- `DATEDIFF()`
+- `DAY()`
+- `DAYNAME()`
+- `DAYOFMONTH()`
+- `DAYOFWEEK()`
+- `DAYOFYEAR()`
+- `EXTRACT()`
+- `FROM_UNIXTIME()`
+- `HOUR()`
+- `MINUTE()`
+- `MONTH()`
+- `MONTHNAME()`
+- `QUARTER()`
+- `SECOND()`
+- `STR_TO_DATE()`
+- `TIME_TO_SEC()`
+- `TIMESTAMPDIFF()`
+- `UNIX_TIMESTAMP()`
+- `WEEK()`
+- `WEEKDAY()`
+- `YEAR()`
+
+###### Type Conversion
+
+- `CAST()`
+- `CONVERT()`
+
+###### JSON Functions
+
+- `JSON_ARRAY()`
+- `JSON_CONTAINS()`
+- `JSON_EXTRACT()`
+- `JSON_INSERT()`
+- `JSON_KEYS()`
+- `JSON_LENGTH()`
+- `JSON_MERGE_PATCH()`
+- `JSON_OBJECT()`
+- `JSON_QUOTE()`
+- `JSON_REMOVE()`
+- `JSON_REPLACE()`
+- `JSON_SEARCH()`
+- `JSON_SET()`
+- `JSON_TABLE()`
+- `JSON_TYPE()`
+- `JSON_UNQUOTE()`
+- `JSON_VALID()`
+
+###### Window Functions
+
+- `DENSE_RANK()`
+- `FIRST_VALUE()`
+- `LAG()`
+- `LAST_VALUE()`
+- `LEAD()`
+- `RANK()`
+- `ROW_NUMBER()`
+
+###### Operators
+
+- `BETWEEN`
+
 ## Write an expression
 
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
