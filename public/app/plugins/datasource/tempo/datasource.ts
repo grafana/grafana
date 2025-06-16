@@ -61,7 +61,7 @@ import {
 } from './resultTransformer';
 import { doTempoMetricsStreaming, doTempoSearchStreaming } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
+import { getErrorMessage, mapErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
@@ -525,7 +525,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       );
     }
 
-    return merge(...subQueries);
+    return merge(...subQueries).pipe(
+      map((response) => {
+        if (response.errors?.[0]?.message) {
+          response.errors[0].message = mapErrorMessage(response.errors?.[0]?.message);
+        }
+        return response;
+      })
+    );
   }
 
   applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars) {
