@@ -143,5 +143,6 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	fieldMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
+	// Add the references fields here.
 	return mapper
 }

@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -29,12 +28,12 @@ const (
 )
 
 type MetaDataKey struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Name      string
-	UID       uuid.UUID
-	Action    MetaDataAction
+	Namespace       string
+	Group           string
+	Resource        string
+	Name            string
+	ResourceVersion int64
+	Action          MetaDataAction
 }
 
 type MetaDataObj struct {
@@ -53,7 +52,7 @@ func newMetadataStore(kv KV) *metadataStore {
 }
 
 func (d *metadataStore) getKey(key MetaDataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s/%s~%s", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name, key.UID.String(), key.Action)
+	return fmt.Sprintf("%s/%s/%s/%s/%s/%d~%s", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action)
 }
 
 func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
@@ -67,21 +66,21 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 
-	uidActionParts := strings.Split(parts[4], "~")
-	if len(uidActionParts) != 2 {
+	rvActionParts := strings.Split(parts[4], "~")
+	if len(rvActionParts) != 2 {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	uid, err := uuid.Parse(uidActionParts[0])
+	rv, err := strconv.ParseInt(rvActionParts[0], 10, 64)
 	if err != nil {
-		return MetaDataKey{}, fmt.Errorf("invalid uuid: %s", uid)
+		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 	return MetaDataKey{
-		Namespace: parts[2],
-		Group:     parts[0],
-		Resource:  parts[1],
-		Name:      parts[3],
-		UID:       uid,
-		Action:    MetaDataAction(uidActionParts[1]),
+		Namespace:       parts[2],
+		Group:           parts[0],
+		Resource:        parts[1],
+		Name:            parts[3],
+		ResourceVersion: rv,
+		Action:          MetaDataAction(rvActionParts[1]),
 	}, nil
 }
 
@@ -220,29 +219,18 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			return true
 		}
 
-		// rvMatches checks if the rv from the uid is lower than the target rv
-		rvMatches := func(uid uuid.UUID) bool {
-			// The key is the same, we pick the one with the higher RV
-			uidRV, err := rvFromUID(uid)
-			if err != nil {
-				return false // TODO: handle error
-			}
-
-			return uidRV <= rv
-		}
-
 		for k, err := range iter {
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			// Parse the key to get the resource key and uid
+
 			key, err := d.parseKey(k)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if selectedKey == nil && rvMatches(key.UID) { // First candidate
+			if selectedKey == nil && key.ResourceVersion <= rv { // First candidate
 				selectedKey = &key
 				selectedPath = k
 			}
@@ -252,12 +240,12 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			}
 			// If the current key is not the same as the previous key, or if the rv
 			// is greater than the target rv, we need to yield the selected object.
-			if !keyMatches(key, *selectedKey) || !rvMatches(key.UID) {
+			if !keyMatches(key, *selectedKey) || key.ResourceVersion > rv {
 				yieldPath(selectedPath, *selectedKey)
 				selectedKey = nil
 				selectedPath = ""
 			}
-			if rvMatches(key.UID) {
+			if key.ResourceVersion <= rv {
 				selectedKey = &key
 				selectedPath = k
 			}

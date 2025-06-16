@@ -3,16 +3,18 @@ package resource
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Unified storage backend
 
 type KVStorageBackend struct {
+	snowflake *snowflake.Node
 	kv        KV
 	dataStore *dataStore
 	metaStore *metadataStore
@@ -22,42 +24,22 @@ type KVStorageBackend struct {
 var _ StorageBackend = &KVStorageBackend{}
 
 func NewKVStorageBackend(kv KV) *KVStorageBackend {
+	s, err := snowflake.NewNode(rand.Int64N(1024))
+	if err != nil {
+		panic(err)
+	}
 	return &KVStorageBackend{
 		kv:        kv,
 		dataStore: newDataStore(kv),
 		metaStore: newMetadataStore(kv),
 		notifier:  newKVNotifier(kv, KVNotifierOptions{}), // TODO: make this configurable
+		snowflake: s,
 	}
-}
-
-// This returns the resource version as a nanoseconds unix timestamp
-// UUIDv7 includes the time in ms but in the first 7 bytes.
-// The last 2 bytes are the version and a unique sequence number.
-// The sequence number is really useful to avoid conflicts when writing
-// multiple events in the same millisecond.
-func rvFromUID(uid uuid.UUID) (int64, error) {
-	// Check if the UUID is a version 7 UUID
-	if uid.Version() != 7 {
-		return 0, fmt.Errorf("invalid uuid version: %d", uid.Version())
-	}
-	ms := (int64(uid[0]) << 40) |
-		(int64(uid[1]) << 32) |
-		(int64(uid[2]) << 24) |
-		(int64(uid[3]) << 16) |
-		(int64(uid[4]) << 8) |
-		int64(uid[5])
-	seq := (int64(uid[6]&0x0F) << 8) | int64(uid[7])
-	return (ms * 1000000) + seq, nil
 }
 
 // // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
-	// Generate a new UUIDv7
-	uid, err := uuid.NewV7()
-	if err != nil {
-		return 0, fmt.Errorf("failed to generate uuid: %w", err)
-	}
-	// TODO: check we are not generating a uuid in the past?
+	rv := k.snowflake.Generate().Int64()
 
 	// Write data.
 	var action MetaDataAction
@@ -71,13 +53,13 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
-	err = k.dataStore.Save(ctx, DataKey{
-		Namespace: event.Key.Namespace,
-		Group:     event.Key.Group,
-		Resource:  event.Key.Resource,
-		Name:      event.Key.Name,
-		UID:       uid,
-		Action:    action,
+	err := k.dataStore.Save(ctx, DataKey{
+		Namespace:       event.Key.Namespace,
+		Group:           event.Key.Group,
+		Resource:        event.Key.Resource,
+		Name:            event.Key.Name,
+		ResourceVersion: rv,
+		Action:          action,
 	}, event.Value)
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
@@ -86,12 +68,12 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	// Write metadata
 	err = k.metaStore.Save(ctx, MetaDataObj{
 		Key: MetaDataKey{
-			Namespace: event.Key.Namespace,
-			Group:     event.Key.Group,
-			Resource:  event.Key.Resource,
-			Name:      event.Key.Name,
-			UID:       uid,
-			Action:    action,
+			Namespace:       event.Key.Namespace,
+			Group:           event.Key.Group,
+			Resource:        event.Key.Resource,
+			Name:            event.Key.Name,
+			ResourceVersion: rv,
+			Action:          action,
 		},
 		Value: MetaData{
 			Folder: event.Object.GetFolder(),
@@ -101,23 +83,20 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 	// TODO: Emit an event
-	rv, _ := rvFromUID(uid)
-	if rv > 0 {
-	}
 	err = k.notifier.Send(ctx, Event{
-		Namespace:  event.Key.Namespace,
-		Group:      event.Key.Group,
-		Resource:   event.Key.Resource,
-		Name:       event.Key.Name,
-		UID:        uid,
-		Action:     action,
-		Folder:     event.Object.GetFolder(),
-		PreviousRV: event.PreviousRV,
+		Namespace:       event.Key.Namespace,
+		Group:           event.Key.Group,
+		Resource:        event.Key.Resource,
+		Name:            event.Key.Name,
+		ResourceVersion: rv,
+		Action:          action,
+		Folder:          event.Object.GetFolder(),
+		PreviousRV:      event.PreviousRV,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to send event: %w", err)
 	}
-	return rvFromUID(uid)
+	return rv, nil
 }
 
 func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -136,23 +115,20 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
 	}
 	data, err := k.dataStore.Get(ctx, DataKey{
-		Namespace: req.Key.Namespace,
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Name:      req.Key.Name,
-		UID:       meta.Key.UID,
-		Action:    meta.Key.Action,
+		Namespace:       req.Key.Namespace,
+		Group:           req.Key.Group,
+		Resource:        req.Key.Resource,
+		Name:            req.Key.Name,
+		ResourceVersion: meta.Key.ResourceVersion,
+		Action:          meta.Key.Action,
 	})
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
 	}
-	rv, err := rvFromUID(meta.Key.UID)
-	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
-	}
+
 	return &BackendReadResponse{
 		Key:             req.Key,
-		ResourceVersion: rv,
+		ResourceVersion: meta.Key.ResourceVersion,
 		Value:           data,
 		Folder:          meta.Value.Folder,
 	}
@@ -174,8 +150,7 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		resourceVersion = token.ResourceVersion
 	}
 	// For now we return the current time as the resource version
-	uid, _ := uuid.NewV7()
-	listRV, _ := rvFromUID(uid)
+	listRV := k.snowflake.Generate().Int64()
 	if resourceVersion > 0 {
 		listRV = resourceVersion
 	}
@@ -244,17 +219,15 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.rv, i.err = rvFromUID(i.keys[i.currentIndex].Key.UID)
-	if i.err != nil {
-		return true
-	}
+	i.rv, i.err = i.keys[i.currentIndex].Key.ResourceVersion, nil
+
 	i.value, i.err = i.dataStore.Get(i.ctx, DataKey{
-		Namespace: i.keys[i.currentIndex].Key.Namespace,
-		Group:     i.keys[i.currentIndex].Key.Group,
-		Resource:  i.keys[i.currentIndex].Key.Resource,
-		Name:      i.keys[i.currentIndex].Key.Name,
-		UID:       i.keys[i.currentIndex].Key.UID,
-		Action:    i.keys[i.currentIndex].Key.Action,
+		Namespace:       i.keys[i.currentIndex].Key.Namespace,
+		Group:           i.keys[i.currentIndex].Key.Group,
+		Resource:        i.keys[i.currentIndex].Key.Resource,
+		Name:            i.keys[i.currentIndex].Key.Name,
+		ResourceVersion: i.keys[i.currentIndex].Key.ResourceVersion,
+		Action:          i.keys[i.currentIndex].Key.Action,
 	})
 
 	// increment the offset
@@ -314,17 +287,13 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 		for event := range notifierEvents {
 			// fetch the data
 			data, err := k.dataStore.Get(ctx, DataKey{
-				Namespace: event.Namespace,
-				Group:     event.Group,
-				Resource:  event.Resource,
-				Name:      event.Name,
-				UID:       event.UID,
-				Action:    event.Action,
+				Namespace:       event.Namespace,
+				Group:           event.Group,
+				Resource:        event.Resource,
+				Name:            event.Name,
+				ResourceVersion: event.ResourceVersion,
+				Action:          event.Action,
 			})
-			if err != nil {
-				return
-			}
-			rv, err := rvFromUID(event.UID)
 			if err != nil {
 				return
 			}
@@ -348,9 +317,9 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Type:            t,
 				Folder:          event.Folder,
 				Value:           data,
-				ResourceVersion: rv,
+				ResourceVersion: event.ResourceVersion,
 				PreviousRV:      event.PreviousRV,
-				Timestamp:       rv / time.Second.Nanoseconds(), // convert to seconds
+				Timestamp:       event.ResourceVersion / time.Second.Nanoseconds(), // convert to seconds
 			}
 		}
 		close(events)
@@ -374,11 +343,7 @@ func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 			rvs[key] = 1
 		}
 		res[key][obj.Key.Name] = obj.Key.Action != MetaDataActionDeleted
-		rv, err := rvFromUID(obj.Key.UID)
-		if err != nil {
-			return nil, err
-		}
-		rvs[key] = rv
+		rvs[key] = obj.Key.ResourceVersion
 	}
 	for key, names := range res {
 		parts := strings.Split(key, "/")

@@ -46,6 +46,7 @@ type KV interface {
 	Delete(ctx context.Context, key string) error
 
 	// Time return the DB time. This is used to ensure the server and client are not too far apart in time.
+	// Are we within 5 minutes  of the server ?
 	// Time(ctx context.Context) (time.Time, error)
 }
 

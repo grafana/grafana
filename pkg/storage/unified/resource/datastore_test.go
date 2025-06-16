@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,38 +44,46 @@ func TestDataStore_GetPrefix(t *testing.T) {
 
 func TestDataStore_GetKey(t *testing.T) {
 	ds := setupTestDataStore(t)
-
-	testUUID, err := uuid.NewV7()
-	require.NoError(t, err)
-
+	rv := int64(1934555792099250176)
 	tests := []struct {
 		name     string
 		key      DataKey
 		expected string
 	}{
 		{
-			name: "normal key",
+			name: "created key",
 			key: DataKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-				UID:       testUUID,
-				Action:    MetaDataActionCreated,
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          MetaDataActionCreated,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~created",
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~created",
+		}, {
+			name: "updated key",
+			key: DataKey{
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          MetaDataActionUpdated,
+			},
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~updated",
 		},
 		{
 			name: "deleted key",
 			key: DataKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-				UID:       testUUID,
-				Action:    MetaDataActionDeleted,
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv,
+				Action:          MetaDataActionDeleted,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~deleted",
+			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~deleted",
 		},
 	}
 
@@ -91,8 +98,7 @@ func TestDataStore_GetKey(t *testing.T) {
 func TestDataStore_ParseKey(t *testing.T) {
 	ds := setupTestDataStore(t)
 
-	testUUID, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv := node.Generate()
 
 	tests := []struct {
 		name        string
@@ -102,26 +108,26 @@ func TestDataStore_ParseKey(t *testing.T) {
 	}{
 		{
 			name: "valid normal key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~created",
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + rv.String() + "~created",
 			expected: DataKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-				UID:       testUUID,
-				Action:    MetaDataActionCreated,
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv.Int64(),
+				Action:          MetaDataActionCreated,
 			},
 		},
 		{
 			name: "valid deleted key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + testUUID.String() + "~deleted",
+			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + rv.String() + "~deleted",
 			expected: DataKey{
-				Namespace: "test-namespace",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-				UID:       testUUID,
-				Action:    MetaDataActionDeleted,
+				Namespace:       "test-namespace",
+				Group:           "test-group",
+				Resource:        "test-resource",
+				Name:            "test-name",
+				ResourceVersion: rv.Int64(),
+				Action:          MetaDataActionDeleted,
 			},
 		},
 		{
@@ -159,16 +165,15 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 	ds := setupTestDataStore(t)
 	ctx := context.Background()
 
-	testUUID, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv := node.Generate()
 
 	testKey := DataKey{
-		Namespace: "test-namespace",
-		Group:     "test-group",
-		Resource:  "test-resource",
-		Name:      "test-name",
-		UID:       testUUID,
-		Action:    MetaDataActionCreated,
+		Namespace:       "test-namespace",
+		Group:           "test-group",
+		Resource:        "test-resource",
+		Name:            "test-name",
+		ResourceVersion: rv.Int64(),
+		Action:          MetaDataActionCreated,
 	}
 	testValue := []byte("test-value")
 
@@ -195,19 +200,18 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
-		testUUID, err := uuid.NewV7()
-		require.NoError(t, err)
+		rv := node.Generate()
 
 		nonExistentKey := DataKey{
-			Namespace: "non-existent",
-			Group:     "test-group",
-			Resource:  "test-resource",
-			Name:      "test-name",
-			UID:       testUUID,
-			Action:    MetaDataActionCreated,
+			Namespace:       "non-existent",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            "test-name",
+			ResourceVersion: rv.Int64(),
+			Action:          MetaDataActionCreated,
 		}
 
-		_, err = ds.Get(ctx, nonExistentKey)
+		_, err := ds.Get(ctx, nonExistentKey)
 		assert.Error(t, err)
 		assert.Equal(t, ErrNotFound, err)
 	})
@@ -217,16 +221,15 @@ func TestDataStore_Delete(t *testing.T) {
 	ds := setupTestDataStore(t)
 	ctx := context.Background()
 
-	testUUID, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv := node.Generate()
 
 	testKey := DataKey{
-		Namespace: "test-namespace",
-		Group:     "test-group",
-		Resource:  "test-resource",
-		Name:      "test-name",
-		UID:       testUUID,
-		Action:    MetaDataActionCreated,
+		Namespace:       "test-namespace",
+		Group:           "test-group",
+		Resource:        "test-resource",
+		Name:            "test-name",
+		ResourceVersion: rv.Int64(),
+		Action:          MetaDataActionCreated,
 	}
 	testValue := []byte("test-value")
 
@@ -251,12 +254,12 @@ func TestDataStore_Delete(t *testing.T) {
 
 	t.Run("delete non-existent key", func(t *testing.T) {
 		nonExistentKey := DataKey{
-			Namespace: "non-existent",
-			Group:     "test-group",
-			Resource:  "test-resource",
-			Name:      "test-name",
-			UID:       testUUID,
-			Action:    MetaDataActionCreated,
+			Namespace:       "non-existent",
+			Group:           "test-group",
+			Resource:        "test-resource",
+			Name:            "test-name",
+			ResourceVersion: rv.Int64(),
+			Action:          MetaDataActionCreated,
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
@@ -276,29 +279,27 @@ func TestDataStore_List(t *testing.T) {
 	}
 
 	// Create test data
-	testUUID1, err := uuid.NewV7()
-	require.NoError(t, err)
-	testUUID2, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv1 := node.Generate()
+	rv2 := node.Generate()
 	testValue1 := []byte("test-value-1")
 	testValue2 := []byte("test-value-2")
 
 	dataKey1 := DataKey{
-		Namespace: resourceKey.Namespace,
-		Group:     resourceKey.Group,
-		Resource:  resourceKey.Resource,
-		Name:      resourceKey.Name,
-		UID:       testUUID1,
-		Action:    MetaDataActionCreated,
+		Namespace:       resourceKey.Namespace,
+		Group:           resourceKey.Group,
+		Resource:        resourceKey.Resource,
+		Name:            resourceKey.Name,
+		ResourceVersion: rv1.Int64(),
+		Action:          MetaDataActionCreated,
 	}
 
 	dataKey2 := DataKey{
-		Namespace: resourceKey.Namespace,
-		Group:     resourceKey.Group,
-		Resource:  resourceKey.Resource,
-		Name:      resourceKey.Name,
-		UID:       testUUID2,
-		Action:    MetaDataActionCreated,
+		Namespace:       resourceKey.Namespace,
+		Group:           resourceKey.Group,
+		Resource:        resourceKey.Resource,
+		Name:            resourceKey.Name,
+		ResourceVersion: rv2.Int64(),
+		Action:          MetaDataActionCreated,
 	}
 
 	t.Run("list multiple keys", func(t *testing.T) {
@@ -320,26 +321,26 @@ func TestDataStore_List(t *testing.T) {
 		require.Len(t, results, 2)
 
 		// Create a map for easier verification
-		resultMap := make(map[string]DataObj)
+		resultMap := make(map[int64]DataObj)
 		for _, result := range results {
-			resultMap[result.Key.UID.String()] = result
+			resultMap[result.Key.ResourceVersion] = result
 		}
 
 		// Check first result
-		result1, exists := resultMap[testUUID1.String()]
+		result1, exists := resultMap[rv1.Int64()]
 		require.True(t, exists)
 		assert.Equal(t, testValue1, result1.Value)
-		assert.Equal(t, testUUID1, result1.Key.UID)
+		assert.Equal(t, rv1.Int64(), result1.Key.ResourceVersion)
 		assert.Equal(t, resourceKey.Namespace, result1.Key.Namespace)
 		assert.Equal(t, resourceKey.Group, result1.Key.Group)
 		assert.Equal(t, resourceKey.Resource, result1.Key.Resource)
 		assert.Equal(t, MetaDataActionCreated, result1.Key.Action)
 
 		// Check second result
-		result2, exists := resultMap[testUUID2.String()]
+		result2, exists := resultMap[rv2.Int64()]
 		require.True(t, exists)
 		assert.Equal(t, testValue2, result2.Value)
-		assert.Equal(t, testUUID2, result2.Key.UID)
+		assert.Equal(t, rv2.Int64(), result2.Key.ResourceVersion)
 		assert.Equal(t, resourceKey.Namespace, result2.Key.Namespace)
 		assert.Equal(t, resourceKey.Group, result2.Key.Group)
 		assert.Equal(t, resourceKey.Resource, result2.Key.Resource)
@@ -371,21 +372,20 @@ func TestDataStore_List(t *testing.T) {
 			Name:      "deleted-name",
 		}
 
-		testUUID3, err := uuid.NewV7()
-		require.NoError(t, err)
+		rv3 := node.Generate()
 		testValue3 := []byte("deleted-value")
 
 		deletedKey := DataKey{
-			Namespace: deletedResourceKey.Namespace,
-			Group:     deletedResourceKey.Group,
-			Resource:  deletedResourceKey.Resource,
-			Name:      deletedResourceKey.Name,
-			UID:       testUUID3,
-			Action:    MetaDataActionDeleted,
+			Namespace:       deletedResourceKey.Namespace,
+			Group:           deletedResourceKey.Group,
+			Resource:        deletedResourceKey.Resource,
+			Name:            deletedResourceKey.Name,
+			ResourceVersion: rv3.Int64(),
+			Action:          MetaDataActionDeleted,
 		}
 
 		// Save deleted key
-		err = ds.Save(ctx, deletedKey, testValue3)
+		err := ds.Save(ctx, deletedKey, testValue3)
 		require.NoError(t, err)
 
 		// List should include deleted keys
@@ -397,7 +397,7 @@ func TestDataStore_List(t *testing.T) {
 
 		require.Len(t, results, 1)
 		assert.Equal(t, testValue3, results[0].Value)
-		assert.Equal(t, testUUID3, results[0].Key.UID)
+		assert.Equal(t, rv3.Int64(), results[0].Key.ResourceVersion)
 		assert.Equal(t, MetaDataActionDeleted, results[0].Key.Action)
 	})
 }
@@ -414,32 +414,29 @@ func TestDataStore_Integration(t *testing.T) {
 			Name:      "integration-name",
 		}
 
-		uuid1, err := uuid.NewV7()
-		require.NoError(t, err)
-		uuid2, err := uuid.NewV7()
-		require.NoError(t, err)
-		uuid3, err := uuid.NewV7()
-		require.NoError(t, err)
+		rv1 := node.Generate()
+		rv2 := node.Generate()
+		rv3 := node.Generate()
 
 		// Create multiple versions
 		versions := []struct {
-			uuid  uuid.UUID
+			rv    int64
 			value []byte
 		}{
-			{uuid1, []byte("version-1")},
-			{uuid2, []byte("version-2")},
-			{uuid3, []byte("version-3")},
+			{rv1.Int64(), []byte("version-1")},
+			{rv2.Int64(), []byte("version-2")},
+			{rv3.Int64(), []byte("version-3")},
 		}
 
 		// Save all versions
 		for _, version := range versions {
 			dataKey := DataKey{
-				Namespace: resourceKey.Namespace,
-				Group:     resourceKey.Group,
-				Resource:  resourceKey.Resource,
-				Name:      resourceKey.Name,
-				UID:       version.uuid,
-				Action:    MetaDataActionCreated,
+				Namespace:       resourceKey.Namespace,
+				Group:           resourceKey.Group,
+				Resource:        resourceKey.Resource,
+				Name:            resourceKey.Name,
+				ResourceVersion: version.rv,
+				Action:          MetaDataActionCreated,
 			}
 
 			err := ds.Save(ctx, dataKey, version.value)
@@ -457,15 +454,15 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// Delete one version
 		deleteKey := DataKey{
-			Namespace: resourceKey.Namespace,
-			Group:     resourceKey.Group,
-			Resource:  resourceKey.Resource,
-			Name:      resourceKey.Name,
-			UID:       versions[1].uuid,
-			Action:    MetaDataActionCreated,
+			Namespace:       resourceKey.Namespace,
+			Group:           resourceKey.Group,
+			Resource:        resourceKey.Resource,
+			Name:            resourceKey.Name,
+			ResourceVersion: versions[1].rv,
+			Action:          MetaDataActionDeleted,
 		}
 
-		err = ds.Delete(ctx, deleteKey)
+		err := ds.Delete(ctx, deleteKey)
 		require.NoError(t, err)
 
 		// Verify it's gone
@@ -482,13 +479,13 @@ func TestDataStore_Integration(t *testing.T) {
 		assert.Len(t, results, 2)
 
 		// Verify remaining items
-		remainingUUIDs := make(map[string]bool)
+		remainingUUIDs := make(map[int64]bool)
 		for _, result := range results {
-			remainingUUIDs[result.Key.UID.String()] = true
+			remainingUUIDs[result.Key.ResourceVersion] = true
 		}
 
-		assert.True(t, remainingUUIDs[versions[0].uuid.String()])
-		assert.False(t, remainingUUIDs[versions[1].uuid.String()]) // deleted
-		assert.True(t, remainingUUIDs[versions[2].uuid.String()])
+		assert.True(t, remainingUUIDs[versions[0].rv])
+		assert.False(t, remainingUUIDs[versions[1].rv]) // deleted
+		assert.True(t, remainingUUIDs[versions[2].rv])
 	})
 }

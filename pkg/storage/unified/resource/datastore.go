@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -34,12 +33,12 @@ type DataObj struct {
 }
 
 type DataKey struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Name      string
-	UID       uuid.UUID // TODO: should this be UUID ?
-	Action    MetaDataAction
+	Namespace       string
+	Group           string
+	Resource        string
+	Name            string
+	ResourceVersion int64
+	Action          MetaDataAction
 }
 
 func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
@@ -60,7 +59,7 @@ func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
 }
 
 func (d *dataStore) getKey(key DataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s/%s~%s", prefixData, key.Namespace, key.Group, key.Resource, key.Name, key.UID.String(), key.Action)
+	return fmt.Sprintf("%s/%s/%s/%s/%s/%d~%s", prefixData, key.Namespace, key.Group, key.Resource, key.Name, key.ResourceVersion, key.Action)
 }
 
 func (d *dataStore) parseKey(key string) (DataKey, error) {
@@ -78,17 +77,17 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 	if len(uidActionParts) != 2 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	id, err := uuid.Parse(uidActionParts[0])
+	rv, err := strconv.ParseInt(uidActionParts[0], 10, 64)
 	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid uuid: %s", id)
+		return DataKey{}, fmt.Errorf("invalid resource version: %s", uidActionParts[0])
 	}
 	return DataKey{
-		Namespace: parts[0],
-		Group:     parts[1],
-		Resource:  parts[2],
-		Name:      parts[3],
-		UID:       id,
-		Action:    MetaDataAction(uidActionParts[1]),
+		Namespace:       parts[0],
+		Group:           parts[1],
+		Resource:        parts[2],
+		Name:            parts[3],
+		ResourceVersion: rv,
+		Action:          MetaDataAction(uidActionParts[1]),
 	}, nil
 }
 

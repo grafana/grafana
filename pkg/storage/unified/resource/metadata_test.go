@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var node, _ = snowflake.NewNode(1)
 
 func setupTestKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)
@@ -31,17 +33,17 @@ func TestNewMetadataStore(t *testing.T) {
 func TestMetadataStore_GetKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
-	uid := uuid.New()
+	rv := int64(56500267212345678)
 	key := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "test-deployment",
-		UID:       uid,
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "test-deployment",
+		ResourceVersion: rv,
+		Action:          MetaDataActionCreated,
 	}
 
-	expectedKey := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String() + "~" + string(MetaDataActionCreated)
+	expectedKey := "/unified/meta/apps/deployments/default/test-deployment/56500267212345678~created"
 	actualKey := store.getKey(key)
 
 	assert.Equal(t, expectedKey, actualKey)
@@ -50,8 +52,8 @@ func TestMetadataStore_GetKey(t *testing.T) {
 func TestMetadataStore_ParseKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
-	uid := uuid.New()
-	key := "/unified/meta/apps/deployments/default/test-deployment/" + uid.String() + "~" + string(MetaDataActionCreated)
+	rv := node.Generate()
+	key := "/unified/meta/apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated)
 
 	resourceKey, err := store.parseKey(key)
 
@@ -60,7 +62,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	assert.Equal(t, "deployments", resourceKey.Resource)
 	assert.Equal(t, "default", resourceKey.Namespace)
 	assert.Equal(t, "test-deployment", resourceKey.Name)
-	assert.Equal(t, uid, resourceKey.UID)
+	assert.Equal(t, rv.Int64(), resourceKey.ResourceVersion)
 	assert.Equal(t, MetaDataActionCreated, resourceKey.Action)
 }
 
@@ -121,12 +123,12 @@ func TestMetadataStore_Save(t *testing.T) {
 	ctx := context.Background()
 
 	key := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "test-deployment",
-		UID:       uuid.New(),
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "test-deployment",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          MetaDataActionCreated,
 	}
 
 	metadata := MetaData{
@@ -145,12 +147,12 @@ func TestMetadataStore_Get(t *testing.T) {
 	ctx := context.Background()
 
 	key := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "test-deployment",
-		UID:       uuid.New(),
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "test-deployment",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          MetaDataActionCreated,
 	}
 
 	metadata := MetaData{
@@ -176,12 +178,12 @@ func TestMetadataStore_Get_NotFound(t *testing.T) {
 	ctx := context.Background()
 
 	key := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "test-deployment",
-		UID:       uuid.New(),
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "test-deployment",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          MetaDataActionCreated,
 	}
 
 	_, err := store.Get(ctx, key)
@@ -200,29 +202,24 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	}
 
 	// Create multiple versions with different timestamps
-	uid1, err := uuid.NewV7()
-	require.NoError(t, err)
-
-	uid2, err := uuid.NewV7()
-	require.NoError(t, err)
-
-	uid3, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv1 := node.Generate().Int64()
+	rv2 := node.Generate().Int64()
+	rv3 := node.Generate().Int64()
 
 	// Save multiple versions (uid3 should be latest)
 	metadata1 := MetaData{Folder: "folder1"}
 	metadata2 := MetaData{Folder: "folder2"}
 	metadata3 := MetaData{Folder: "folder3"}
 
-	key.UID = uid1
+	key.ResourceVersion = rv1
 	key.Action = MetaDataActionCreated
-	err = store.Save(ctx, MetaDataObj{
+	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata1,
 	})
 	require.NoError(t, err)
 
-	key.UID = uid2
+	key.ResourceVersion = rv2
 	key.Action = MetaDataActionUpdated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -230,7 +227,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	key.UID = uid3
+	key.ResourceVersion = rv3
 	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -256,12 +253,12 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	ctx := context.Background()
 
 	key := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "test-deployment",
-		UID:       uuid.New(),
-		Action:    MetaDataActionDeleted,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "test-deployment",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          MetaDataActionDeleted,
 	}
 
 	metadata := MetaData{
@@ -358,33 +355,31 @@ func TestMetadataStore_ListAll(t *testing.T) {
 	ctx := context.Background()
 
 	// Save multiple metadata objects
-	uid1, err := uuid.NewV7()
-	require.NoError(t, err)
-	uid2, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv1 := node.Generate().Int64()
+	rv2 := node.Generate().Int64()
 
 	key1 := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "deployment1",
-		UID:       uid1,
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "deployment1",
+		ResourceVersion: rv1,
+		Action:          MetaDataActionCreated,
 	}
 
 	key2 := MetaDataKey{
-		Group:     "apps",
-		Resource:  "deployments",
-		Namespace: "default",
-		Name:      "deployment2",
-		UID:       uid2,
-		Action:    MetaDataActionCreated,
+		Group:           "apps",
+		Resource:        "deployments",
+		Namespace:       "default",
+		Name:            "deployment2",
+		ResourceVersion: rv2,
+		Action:          MetaDataActionCreated,
 	}
 
 	metadata1 := MetaData{Folder: "folder1"}
 	metadata2 := MetaData{Folder: "folder2"}
 
-	err = store.Save(ctx, MetaDataObj{
+	err := store.Save(ctx, MetaDataObj{
 		Key:   key1,
 		Value: metadata1,
 	})
@@ -431,23 +426,21 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	}
 
 	// Save multiple metadata objects
-	uid1, err := uuid.NewV7()
-	require.NoError(t, err)
-	uid2, err := uuid.NewV7()
-	require.NoError(t, err)
+	rv1 := node.Generate().Int64()
+	rv2 := node.Generate().Int64()
 
 	metadata1 := MetaData{Folder: "folder1"}
 	metadata2 := MetaData{Folder: "folder2"}
 
-	key.UID = uid1
+	key.ResourceVersion = rv1
 	key.Action = MetaDataActionCreated
-	err = store.Save(ctx, MetaDataObj{
+	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata1,
 	})
 	require.NoError(t, err)
 
-	key.UID = uid2
+	key.ResourceVersion = rv2
 	key.Action = MetaDataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -469,7 +462,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 
 	assert.Len(t, results, 1)
 	assert.Equal(t, key, results[0].Key)
-	assert.Equal(t, uid2, results[0].Key.UID)
+	assert.Equal(t, rv2, results[0].Key.ResourceVersion)
 	assert.Equal(t, metadata2, results[0].Value)
 }
 

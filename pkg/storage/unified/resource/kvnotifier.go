@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -23,21 +21,21 @@ type kvNotifier struct {
 	opts KVNotifierOptions
 
 	// UID deduplication tracking
-	mu         sync.RWMutex
-	seenUIDs   map[string]bool
-	uidHistory []string
-	uidIndex   int
+	mu        sync.RWMutex
+	seenRVs   map[int64]bool
+	rvHistory []int64
+	rvIndex   int
 }
 
 type Event struct {
-	Namespace  string         `json:"namespace"`
-	Group      string         `json:"group"`
-	Resource   string         `json:"resource"`
-	Name       string         `json:"name"`
-	UID        uuid.UUID      `json:"uid"`
-	Action     MetaDataAction `json:"action"`
-	Folder     string         `json:"folder"`
-	PreviousRV int64          `json:"previous_rv"`
+	Namespace       string         `json:"namespace"`
+	Group           string         `json:"group"`
+	Resource        string         `json:"resource"`
+	Name            string         `json:"name"`
+	Action          MetaDataAction `json:"action"`
+	Folder          string         `json:"folder"`
+	ResourceVersion int64          `json:"resource_version"`
+	PreviousRV      int64          `json:"previous_rv"`
 }
 
 type KVNotifierOptions struct {
@@ -61,11 +59,11 @@ func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
 		opts.BufferSize = defaultBufferSize
 	}
 	return &kvNotifier{
-		kv:         kv,
-		opts:       opts,
-		seenUIDs:   make(map[string]bool),
-		uidHistory: make([]string, defaultEventCacheSize),
-		uidIndex:   0,
+		kv:        kv,
+		opts:      opts,
+		seenRVs:   make(map[int64]bool),
+		rvHistory: make([]int64, defaultEventCacheSize),
+		rvIndex:   0,
 	}
 }
 
@@ -86,37 +84,37 @@ func parseEvent(value []byte) (Event, error) {
 	return ev, nil
 }
 
-func (n *kvNotifier) getKey(uid uuid.UUID) string {
-	return fmt.Sprintf("%s/%s", prefixEvents, uid)
+func (n *kvNotifier) getKey(rv int64) string {
+	return fmt.Sprintf("%s/%d", prefixEvents, rv)
 }
 
-// markUIDSeen adds a UID to the tracking system, removing the oldest if we exceed maxSeenUIDs
-func (n *kvNotifier) markUIDSeen(uid uuid.UUID) {
+// markUIDSeen adds a UID to the tracking system, removing the oldest if we exceed maxseenRVs
+func (n *kvNotifier) markUIDSeen(rv int64) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
 	// If we already have this UID, no need to add it again
-	if n.seenUIDs[uid.String()] {
+	if n.seenRVs[rv] {
 		return
 	}
 
 	// If we're at capacity, remove the oldest UID
-	if len(n.seenUIDs) >= n.opts.EventCacheSize {
-		oldUID := n.uidHistory[n.uidIndex]
-		delete(n.seenUIDs, oldUID)
+	if len(n.seenRVs) >= n.opts.EventCacheSize {
+		oldUID := n.rvHistory[n.rvIndex]
+		delete(n.seenRVs, oldUID)
 	}
 
 	// Add the new UID
-	n.seenUIDs[uid.String()] = true
-	n.uidHistory[n.uidIndex] = uid.String()
-	n.uidIndex = (n.uidIndex + 1) % n.opts.EventCacheSize
+	n.seenRVs[rv] = true
+	n.rvHistory[n.rvIndex] = rv
+	n.rvIndex = (n.rvIndex + 1) % n.opts.EventCacheSize
 }
 
 // hasSeenUID checks if we've already seen this UID
-func (n *kvNotifier) hasSeenUID(uid uuid.UUID) bool {
+func (n *kvNotifier) hasSeenUID(rv int64) bool {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
-	return n.seenUIDs[uid.String()]
+	return n.seenRVs[rv]
 }
 
 func (n *kvNotifier) Send(ctx context.Context, event Event) error {
@@ -124,7 +122,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 	if err != nil {
 		return err
 	}
-	err = n.kv.Save(ctx, n.getKey(event.UID), v)
+	err = n.kv.Save(ctx, n.getKey(event.ResourceVersion), v)
 	if err != nil {
 		return err
 	}
@@ -133,7 +131,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 	events := make(chan Event, n.opts.BufferSize)
-	lastUID, _ := uuid.NewV7()
+	lastRV := time.Now().Add(-n.opts.LookbackPeriod).UnixMilli()
 	go func() {
 		defer close(events)
 		for {
@@ -141,7 +139,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 			case <-ctx.Done():
 				return
 			case <-time.After(n.opts.PollInterval):
-				startKey := n.getKey(lastUID) // TODO : implement lookback to ensure we don't miss any events
+				startKey := n.getKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
 				for k, err := range n.kv.List(ctx, ListOptions{StartKey: startKey, EndKey: PrefixRangeEnd(prefixEvents)}) {
 					if err != nil {
 						// TODO: Handle error
@@ -159,15 +157,15 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 					}
 
 					// Check if we've already seen this UID
-					if n.hasSeenUID(ev.UID) {
+					if n.hasSeenUID(ev.ResourceVersion) {
 						continue // Skip this event as we've already processed it
 					}
 
 					// Mark this UID as seen before sending the event
-					n.markUIDSeen(ev.UID)
+					n.markUIDSeen(ev.ResourceVersion)
 
-					if ev.UID.String() > lastUID.String() {
-						lastUID = ev.UID
+					if ev.ResourceVersion > lastRV {
+						lastRV = ev.ResourceVersion
 					}
 					// Send the event
 					select {
@@ -180,21 +178,4 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 		}
 	}()
 	return events, nil
-}
-
-// WIP
-func uidFromTimstamp(ts time.Time) uuid.UUID {
-	t := ts.UnixMilli()
-	s := 0
-	var uid uuid.UUID
-	uid[0] = byte(t >> 40)
-	uid[1] = byte(t >> 32)
-	uid[2] = byte(t >> 24)
-	uid[3] = byte(t >> 16)
-	uid[4] = byte(t >> 8)
-	uid[5] = byte(t)
-
-	uid[6] = 0x70 | (0x0F & byte(s>>8))
-	uid[7] = byte(s)
-	return uid
 }
