@@ -11,6 +11,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { createOrderFieldsComparer, OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Input,
   IconButton,
@@ -22,7 +23,6 @@ import {
   Text,
   Box,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';

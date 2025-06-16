@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Branding } from '../../../../core/components/Branding/Branding';
 import { getLoginStyles } from '../../../../core/components/Login/LoginLayout';
@@ -13,6 +13,7 @@ const selectors = e2eSelectors.pages.PublicDashboard.NotAvailable;
 export const PublicDashboardNotAvailable = ({ paused }: { paused?: boolean }) => {
   const styles = useStyles2(getStyles);
   const loginStyles = useStyles2(getLoginStyles);
+
   const loginBoxBackground = Branding.LoginBoxBackground();
 
   return (

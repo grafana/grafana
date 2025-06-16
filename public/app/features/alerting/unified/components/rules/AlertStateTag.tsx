@@ -1,11 +1,10 @@
 import { memo } from 'react';
 
 import { AlertState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GrafanaAlertState, GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { Trans } from '../../../../../core/internationalization';
 import { alertStateToReadable, alertStateToState } from '../../utils/rules';
 import { StateTag } from '../StateTag';
 interface Props {

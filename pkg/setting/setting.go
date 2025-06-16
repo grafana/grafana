@@ -200,11 +200,13 @@ type Cfg struct {
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
 	ForwardHostEnvVars               []string
-	PreinstallPlugins                []InstallPlugin
-	PreinstallPluginsAsync           bool
+	PreinstallPluginsAsync           []InstallPlugin
+	PreinstallPluginsSync            []InstallPlugin
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
+
+	PluginUpdateStrategy string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -310,6 +312,7 @@ type Cfg struct {
 	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
+	QuickRanges QuickRanges
 
 	// User
 	UserInviteMaxLifetime        time.Duration
@@ -426,6 +429,12 @@ type Cfg struct {
 	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
 	SQLExpressionCellLimit int64
 
+	// SQLExpressionOutputCellLimit is the maximum number of cells (rows × columns) that can be outputted by a SQL expression.
+	SQLExpressionOutputCellLimit int64
+
+	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
+	SQLExpressionTimeout time.Duration
+
 	ImageUploadProvider string
 
 	// LiveMaxConnections is a maximum number of WebSocket connections to
@@ -466,6 +475,9 @@ type Cfg struct {
 
 	// Query history
 	QueryHistoryEnabled bool
+
+	// Open feature settings
+	OpenFeature OpenFeatureSettings
 
 	Storage StorageSettings
 
@@ -542,11 +554,13 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                             map[string]UnifiedStorageConfig
+	MaxPageSizeBytes                           int
 	IndexPath                                  string
 	IndexWorkers                               int
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexRebuildInterval                       time.Duration
 	EnableSharding                             bool
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
@@ -558,6 +572,9 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+
+	// Secrets Management
+	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
@@ -630,6 +647,7 @@ func RedactedValue(key, value string) string {
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
 		"API_DB_PASS",
+		"^TOKEN$",
 		"ID_FORWARDING_TOKEN$",
 		"AUTHENTICATION_TOKEN$",
 		"AUTH_TOKEN$",
@@ -794,6 +812,8 @@ func (cfg *Cfg) readExpressionsSettings() {
 	expressions := cfg.Raw.Section("expressions")
 	cfg.ExpressionsEnabled = expressions.Key("enabled").MustBool(true)
 	cfg.SQLExpressionCellLimit = expressions.Key("sql_expression_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
+	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
 }
 
 type AnnotationCleanupSettings struct {
@@ -1302,6 +1322,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
 	cfg.readK8sDashboardCleanupSettings()
@@ -1367,11 +1392,17 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
+	cfg.readSecretsManagerSettings()
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// Time picker settings
+	if err := cfg.readTimePicker(); err != nil {
+		return err
+	}
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()

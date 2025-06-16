@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import ConditionalWrap from '../ConditionalWrap';
@@ -19,6 +19,7 @@ const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC';
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, formState, getValues, watch } = useFormContext<MuteTimingFields>();
+
   const isDisabled = watch(`time_intervals.${intervalIndex}.disable`);
 
   const {

@@ -3,10 +3,10 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -187,7 +187,7 @@ export function CreateAlertButton() {
 }
 
 function ExportNewRuleButton() {
-  const returnTo = location.pathname + location.search;
+  const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,
   });

@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
+import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 
@@ -11,6 +11,7 @@ export const CloudCommonChannelSettings = ({
   readOnly = false,
 }: CommonSettingsComponentProps) => {
   const { register } = useFormContext();
+
   return (
     <div className={className}>
       <Field disabled={readOnly}>

@@ -129,7 +129,7 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
     //check that folder is in the list
     await waitFor(() => expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title)));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations?.[Annotation.summary]);
 
     expect(ui.manualRestoreBanner.get()).toBeInTheDocument(); // check that manual restore banner is shown
 

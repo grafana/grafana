@@ -130,6 +130,7 @@ export const alertingApi = createApi({
     'ContactPointsStatus',
     'Receiver',
     'DeletedRules',
+    'GrafanaPrometheusGroups',
   ],
   endpoints: () => ({}),
 });

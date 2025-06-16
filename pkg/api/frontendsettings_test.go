@@ -38,7 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -93,7 +93,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		SQLStore:              db.InitTestDB(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
-		grafanaUpdateChecker:  &updatechecker.GrafanaService{},
+		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
 		AccessControl:         accesscontrolmock.New(),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,

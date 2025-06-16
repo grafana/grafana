@@ -1,9 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   PromRuleDTO,

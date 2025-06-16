@@ -2,9 +2,9 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 
 import {
   PostableRulerRuleGroupDTO,
@@ -220,6 +220,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
   const exportingNewRule = !uid;
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
+
   const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (

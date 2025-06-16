@@ -13,9 +13,8 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { ColorValueEditor } from './color';
 

@@ -563,6 +563,7 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionResourceAttributesContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -814,7 +815,11 @@ export {
 export {
   type Action,
   type ActionModel,
+  type ActionVariable,
+  type ActionVariableInput,
+  ActionType,
   HttpRequestMethod,
+  ActionVariableType,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
@@ -873,3 +878,5 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
+
+export { type UserStorage } from './types/userStorage';

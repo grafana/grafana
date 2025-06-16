@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
@@ -9,6 +10,8 @@ import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, Metric, MET
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PromQlLanguageProvider) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
+  const lastSeriesLimitRef = useRef(DEFAULT_SERIES_LIMIT);
+  const isInitializedRef = useRef(false);
 
   const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
   const [err, setErr] = useState('');
@@ -22,6 +25,9 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState('');
   const [labelValues, setLabelValues] = useState<Record<string, string[]>>({});
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
+
+  // Memoize the effective series limit to use the default when seriesLimit is empty
+  const effectiveLimit = useMemo(() => seriesLimit || DEFAULT_SERIES_LIMIT, [seriesLimit]);
 
   // We don't want to trigger fetching for small amount of time changes.
   // When MetricsBrowser re-renders for any reason we might receive a new timerange.
@@ -88,7 +94,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
           METRIC_LABEL,
           safeSelector,
           'MetricsBrowser_M',
-          seriesLimit
+          effectiveLimit
         );
         return fetchedMetrics.map((m) => ({
           name: m,
@@ -99,7 +105,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
         return [];
       }
     },
-    [getMetricDetails, handleError, languageProvider, seriesLimit]
+    [getMetricDetails, handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches label keys based on an optional selector
@@ -109,17 +115,17 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       try {
         if (safeSelector) {
           return Object.keys(
-            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, seriesLimit)
+            await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, safeSelector, effectiveLimit)
           );
         } else {
-          return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, seriesLimit)) || [];
+          return (await languageProvider.fetchLabels(timeRangeRef.current, undefined, effectiveLimit)) || [];
         }
       } catch (e) {
         handleError(e, 'Error fetching labels');
         return [];
       }
     },
-    [handleError, languageProvider, seriesLimit]
+    [handleError, languageProvider, effectiveLimit]
   );
 
   // Fetches values for multiple label keys and also prepares selected values
@@ -134,7 +140,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
             lk,
             safeSelector,
             `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
           transformedLabelValues[lk] = values;
           if (selectedLabelValues[lk]) {
@@ -146,7 +152,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
       }
       return [transformedLabelValues, newSelectedLabelValues];
     },
-    [handleError, languageProvider, selectedLabelValues, seriesLimit]
+    [handleError, languageProvider, selectedLabelValues, effectiveLimit]
   );
 
   // Initial set up of the Metrics Browser
@@ -179,8 +185,22 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   // Initialize the hook
   useEffect(() => {
     initialize(selectedMetric, selectedLabelValues);
+    isInitializedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // We use debounce here to prevent fetching data on every keystroke
+  // We also track the seriesLimit change to prevent fetching twice right after the initialization
+  useDebounce(
+    () => {
+      if (isInitializedRef.current && lastSeriesLimitRef.current !== seriesLimit) {
+        initialize(selectedMetric, selectedLabelValues);
+        lastSeriesLimitRef.current = seriesLimit;
+      }
+    },
+    300,
+    [seriesLimit]
+  );
 
   // Handles metric selection changes.
   // If a metric selected it fetches the labels of that metric
@@ -279,7 +299,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
             lk,
             safeSelector,
             `MetricsBrowser_LV_${lk}`,
-            seriesLimit
+            effectiveLimit
           );
 
           // We don't want to discard values from last selected list.
@@ -332,7 +352,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
     setErr('');
 
     try {
-      const results = await languageProvider.fetchLabelsWithMatch(timeRangeRef.current, selector);
+      const results = await languageProvider.fetchSeriesLabelsMatch(timeRangeRef.current, selector, effectiveLimit);
       setValidationStatus(`Selector is valid (${Object.keys(results).length} labels found)`);
     } catch (e) {
       handleError(e, 'Validation failed');

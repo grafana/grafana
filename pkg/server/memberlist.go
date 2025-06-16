@@ -32,6 +32,8 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 
 	ms.MemberlistKVConfig = KVStore
 
+	ms.httpServerRouter.Path("/memberlist").Methods("GET", "POST").Handler(memberlistKVsvc)
+
 	return memberlistKVsvc, nil
 }
 

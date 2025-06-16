@@ -3,10 +3,9 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
-
-import { t } from '../../../core/internationalization';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';

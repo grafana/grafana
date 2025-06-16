@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -17,11 +17,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+        id: 'repeat-by-variable-select',
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
         ),
-        render: () => <RepeatByOption gridItem={gridItem} />,
+        render: (descriptor) => <RepeatByOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     )
     .addItem(
@@ -85,12 +86,12 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function RepeatByOption({ gridItem }: OptionComponentProps) {
+function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { variableName, width } = gridItem.useState();
 
   return (
     <RepeatRowSelect2
-      id="repeat-by-variable-select"
+      id={id}
       sceneContext={gridItem}
       repeat={variableName}
       onChange={(value?: string) => {

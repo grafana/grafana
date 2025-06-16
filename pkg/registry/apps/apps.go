@@ -5,9 +5,12 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -15,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/client-go/rest"
 )
 
 var (
@@ -35,6 +37,7 @@ func ProvideRegistryServiceSink(
 	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
+	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -61,6 +64,9 @@ func ProvideRegistryServiceSink(
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
+	}
+	if alertingNotificationsAppProvider != nil {
+		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 

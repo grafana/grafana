@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
-import useDebounce from 'react-use/lib/useDebounce';
-import usePrevious from 'react-use/lib/usePrevious';
+import { useDebounce, usePrevious } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';

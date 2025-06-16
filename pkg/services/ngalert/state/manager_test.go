@@ -476,7 +476,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t1, eval.Alerting),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 				},
@@ -525,7 +525,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Alerting),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: t2,
 					LastSentAt:         &t2,
 				},
@@ -557,7 +557,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            tn(4),
+					FiredAt:            util.Pointer(tn(4)),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
 				},
@@ -583,7 +583,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t2,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -613,7 +613,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -646,7 +646,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: tn(4),
 					ResolvedAt:         &t3,
 					LastSentAt:         &t3,
@@ -713,7 +713,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.NoData),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            t3,
+					FiredAt:            &t3,
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
@@ -885,7 +885,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
@@ -895,16 +895,6 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t3,
-				},
-				{
-					Labels:             labels["system + rule + no-data"],
-					ResultFingerprint:  noDataLabels.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(t2, eval.NoData),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -967,7 +957,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Error),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
-					FiredAt:            tn(5),
+					FiredAt:            util.Pointer(tn(5)),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
 				},
@@ -1029,15 +1019,18 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels:             labels["system + rule"],
+					Labels:             data.Labels{"label": "test", "system": "owned"},
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.Alerting,
 					LatestResult:       newEvaluation(t3, eval.Alerting),
-					StartsAt:           t3,
+					StartsAt:           t1,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            t3,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
-					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
+					LastSentAt:         &t1,
+					Annotations: map[string]string{
+						"annotation": "test",
+					},
 				},
 			},
 		},
@@ -1067,7 +1060,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
@@ -1103,7 +1096,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
@@ -1136,7 +1129,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Normal),
 					StartsAt:           t3,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: t3,
 					LastSentAt:         util.Pointer(t2),
 				},
@@ -1171,7 +1164,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Normal),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
 					ResolvedAt:         util.Pointer(tn(5)),
@@ -1210,7 +1203,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(6), eval.Normal),
 					StartsAt:           tn(6),
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
-					FiredAt:            tn(4),
+					FiredAt:            util.Pointer(tn(4)),
 					LastEvaluationTime: tn(6),
 					LastSentAt:         util.Pointer(tn(5)),
 				},
@@ -1245,7 +1238,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Alerting),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
-					FiredAt:            tn(5),
+					FiredAt:            util.Pointer(tn(5)),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(t3),
 				},
@@ -1417,9 +1410,10 @@ func TestProcessEvalResults(t *testing.T) {
 		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
 		rule := models.RuleGen.GenerateRef()
-		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
+		now := clk.Now()
+		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
-		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels), nil)
+		states := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)

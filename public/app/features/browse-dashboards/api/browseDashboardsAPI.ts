@@ -1,9 +1,11 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -11,6 +13,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { dispatch } from 'app/store/store';
 import {
   DescendantCount,
   DescendantCountDTO,
@@ -21,10 +24,10 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
+import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
 interface DeleteItemsArgs {
@@ -229,6 +232,17 @@ export const browseDashboardsAPI = createApi({
         // Move all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned folder'],
+              });
+              continue;
+            }
+          }
+
           await baseQuery({
             url: `/folders/${folderUID}/move`,
             method: 'POST',
@@ -242,6 +256,16 @@ export const browseDashboardsAPI = createApi({
           const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
+
+          if (config.featureToggles.provisioning) {
+            if (isProvisionedDashboard(fullDash)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned dashboard'],
+              });
+              continue;
+            }
+          }
           await getDashboardAPI().saveDashboard({
             dashboard,
             folderUid: destinationUID,
@@ -276,6 +300,18 @@ export const browseDashboardsAPI = createApi({
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+              continue;
+            }
+          }
           await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
@@ -289,6 +325,20 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
+          if (config.featureToggles.provisioning) {
+            const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+            if (isProvisionedDashboard(dto)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+
+              continue;
+            }
+          }
+
           await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
           // handling success alerts for these feature toggles

@@ -17,7 +17,7 @@ exports[`new receiver should be able to test and save a receiver 1`] = `
           {
             "disableResolveMessage": false,
             "name": "test",
-            "secureSettings": {},
+            "secureFields": {},
             "settings": {
               "addresses": "tester@grafana.com",
               "singleEmail": false,

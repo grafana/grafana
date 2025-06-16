@@ -5,11 +5,12 @@ import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
-import { getFieldTypeIcon } from '../../../../types';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
+import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -46,16 +47,17 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
 
   const filterable = field.config?.custom?.filterable ?? false;
+  const displayName = getDisplayName(field);
 
   let isColumnFilterable = filterable;
   if (field.config.custom?.filterable !== filterable) {
     isColumnFilterable = field.config.custom?.filterable || false;
   }
   // we have to remove/reset the filter if the column is not filterable
-  if (!isColumnFilterable && filter[field.name]) {
+  if (!isColumnFilterable && filter[displayName]) {
     setFilter((filter: FilterType) => {
       const newFilter = { ...filter };
-      delete newFilter[field.name];
+      delete newFilter[displayName];
       return newFilter;
     });
   }
@@ -97,6 +99,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   }, [column]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={headerRef}
       className={styles.headerCell}

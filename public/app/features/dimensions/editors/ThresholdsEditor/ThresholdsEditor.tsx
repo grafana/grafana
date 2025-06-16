@@ -12,8 +12,8 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -190,10 +190,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 enableNamedColors={true}
               />
             </div>
-            {isPercent && (
-              // eslint-disable-next-line @grafana/no-untranslated-strings
-              <div className={styles.percentIcon}>%</div>
-            )}
+            {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
         suffix={

@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
-
-import { Trans } from '../../../../core/internationalization';
 
 export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   const styles = useStyles2(getStyles);

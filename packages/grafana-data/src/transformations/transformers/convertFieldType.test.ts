@@ -359,7 +359,7 @@ describe('field convert types transformer', () => {
     ]);
   });
 
-  it('will support custom join separators', () => {
+  it('will support custom join separators for field type other', () => {
     const options = {
       conversions: [{ targetField: 'vals', destinationType: FieldType.string, joinWith: '|' }],
     };
@@ -387,6 +387,38 @@ describe('field convert types transformer', () => {
       {
         type: FieldType.string,
         values: ['a|b|2', '3|x|y'],
+      },
+    ]);
+  });
+
+  it('will support custom join separators for field type string', () => {
+    const options = {
+      conversions: [{ targetField: 'string_arrays', destinationType: FieldType.string, joinWith: '&' }],
+    };
+
+    const stringArrayValues = toDataFrame({
+      fields: [
+        {
+          name: 'string_arrays',
+          type: FieldType.string,
+          values: [
+            ['a', 'b', 'c'],
+            ['d', 'e', 'f'],
+          ],
+        },
+      ],
+    });
+
+    const stringified = convertFieldTypes(options, [stringArrayValues]);
+    expect(
+      stringified[0].fields.map(({ type, values }) => ({
+        type,
+        values,
+      }))
+    ).toEqual([
+      {
+        type: FieldType.string,
+        values: ['a&b&c', 'd&e&f'],
       },
     ]);
   });

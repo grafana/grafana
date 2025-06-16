@@ -1,12 +1,16 @@
-import { Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 
-import { createLogRow } from '../__mocks__/logRow';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { createLogLine, createLogRow } from '../__mocks__/logRow';
 
+import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
+import { getTruncationLength, init } from './virtualization';
 
 describe('preProcessLogs', () => {
   let logFmtLog: LogRowModel, nginxLog: LogRowModel, jsonLog: LogRowModel;
   let processedLogs: LogListModel[];
+  const fontSizes: LogListFontSize[] = ['default', 'small'];
 
   beforeEach(() => {
     const getFieldLinks = jest.fn().mockImplementationOnce((field: Field) => ({
@@ -78,6 +82,21 @@ describe('preProcessLogs', () => {
     });
   });
 
+  describe('LogListModel', () => {
+    test('Extends a LogRowModel', () => {
+      const logRowModel = createLogRow({
+        uid: '2',
+        datasourceUid: 'test',
+        timeEpochMs: 2,
+        labels: { method: 'POST', status: '200' },
+        entry: `35.191.12.195 - accounts.google.com:test@grafana.com [18/Mar/2025:08:58:38 +0000] 200 "POST /grafana/api/ds/query?ds_type=prometheus&requestId=SQR461 HTTP/1.1" 59460 "https://test.example.com/?orgId=1" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" "95.91.240.90, 34.107.247.24"`,
+        logLevel: LogLevel.critical,
+      });
+      const logListModel = new LogListModel(logRowModel, { escape: false, timeZone: 'browser ' });
+      expect(logListModel).toMatchObject(logRowModel);
+    });
+  });
+
   test('Orders logs', () => {
     expect(processedLogs[0].uid).toBe('1');
     expect(processedLogs[1].uid).toBe('2');
@@ -137,5 +156,71 @@ describe('preProcessLogs', () => {
     expect(processedLogs[2].highlightedBody).toContain('log-token-json-key');
     expect(processedLogs[2].highlightedBody).toContain('log-token-string');
     expect(processedLogs[2].highlightedBody).not.toContain('log-token-method');
+  });
+
+  test('Returns displayed field values', () => {
+    expect(processedLogs[0].getDisplayedFieldValue('logger')).toBe('interceptor');
+    expect(processedLogs[1].getDisplayedFieldValue('method')).toBe('POST');
+    expect(processedLogs[2].getDisplayedFieldValue('kind')).toBe('Event');
+    expect(processedLogs[0].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[0].body);
+    expect(processedLogs[1].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[1].body);
+    expect(processedLogs[2].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[2].body);
+  });
+
+  describe.each(fontSizes)('Collapsible log lines', (fontSize: LogListFontSize) => {
+    let longLog: LogListModel, entry: string, container: HTMLDivElement;
+    beforeEach(() => {
+      init(createTheme(), fontSize);
+      container = document.createElement('div');
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(200);
+      entry = new Array(2 * getTruncationLength(null)).fill('e').join('');
+      longLog = createLogLine({ entry, labels: { field: 'value' } });
+    });
+
+    test('Long lines that are not truncated are not modified', () => {
+      expect(longLog.body).toBe(entry);
+      expect(longLog.highlightedBody).toBe(entry);
+    });
+
+    test('Sets the collapsed state based on the container size', () => {
+      // Make container half of the size
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(100);
+
+      expect(longLog.collapsed).toBeUndefined();
+
+      longLog.updateCollapsedState([], container);
+
+      expect(longLog.collapsed).toBe(true);
+      expect(longLog.body).not.toBe(entry);
+      expect(entry).toContain(longLog.body);
+    });
+
+    test('Considers the displayed fields to set the collapsed state', () => {
+      // Make container half of the size
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(100);
+
+      expect(longLog.collapsed).toBeUndefined();
+
+      // Log line body is not included in the displayed fields, so it fits in the container
+      longLog.updateCollapsedState(['field'], container);
+
+      expect(longLog.collapsed).toBeUndefined();
+    });
+
+    test('Updates the body based on the collapsed state', () => {
+      expect(longLog.collapsed).toBeUndefined();
+      expect(longLog.body).toBe(entry);
+
+      longLog.setCollapsedState(true);
+
+      expect(longLog.collapsed).toBe(true);
+      expect(longLog.body).not.toBe(entry);
+      expect(entry).toContain(longLog.body);
+
+      longLog.setCollapsedState(false);
+
+      expect(longLog.collapsed).toBe(false);
+      expect(longLog.body).toBe(entry);
+    });
   });
 });

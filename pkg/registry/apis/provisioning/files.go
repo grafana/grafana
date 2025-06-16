@@ -90,7 +90,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
 	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
 			Ref:        query.Get("ref"),

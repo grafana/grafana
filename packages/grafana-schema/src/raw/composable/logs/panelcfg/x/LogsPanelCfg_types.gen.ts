@@ -18,7 +18,9 @@ export interface Options {
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  fontSize?: ('default' | 'small');
   isFilterLabelActive?: unknown;
+  logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
   /**
@@ -39,6 +41,7 @@ export interface Options {
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
 }
 

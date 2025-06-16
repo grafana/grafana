@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { OnFolderUpdate, SuggestedNavigationsFolder, SuggestedNavigationsFoldersMap } from './types';

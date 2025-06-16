@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 

@@ -8,8 +8,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
@@ -145,7 +145,6 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
                 {Boolean(info.addOptions.length && idx === options.join!.length - 1) && (
                   <ValuePicker
                     icon="plus"
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
                     label={''}
                     options={info.addOptions}
                     onChange={addJoin}

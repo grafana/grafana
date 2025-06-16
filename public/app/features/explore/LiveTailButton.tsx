@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 type LiveTailButtonProps = {
   splitted: boolean;
@@ -17,6 +17,7 @@ type LiveTailButtonProps = {
 
 export function LiveTailButton(props: LiveTailButtonProps) {
   const transitionRef = useRef(null);
+
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const buttonVariant = isLive && !isPaused ? 'active' : 'canvas';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;

@@ -4,10 +4,10 @@ import { Geometry } from 'ol/geom';
 import { ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
-import { t } from '../../../../utils/i18n';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { IconButton } from '../../../IconButton/IconButton';
 // import { GeoCell } from '../../Cells/GeoCell';
 import { TableCellInspectorMode } from '../../TableCellInspector';
@@ -18,7 +18,7 @@ import {
   FILTER_OUT_OPERATOR,
   TableCellNGProps,
 } from '../types';
-import { getCellColors, getTextAlign } from '../utils';
+import { getCellColors, getDisplayName, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
@@ -45,9 +45,11 @@ export function TableCellNG(props: TableCellNGProps) {
     getActions,
     rowBg,
     onCellFilterAdded,
+    replaceVariables,
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
+  const displayName = getDisplayName(field);
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
@@ -75,8 +77,8 @@ export function TableCellNG(props: TableCellNGProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const actions = useMemo(
-    () => (getActions ? getActions(frame, field, rowIdx) : []),
-    [getActions, frame, field, rowIdx]
+    () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
+    [getActions, frame, field, rowIdx, replaceVariables]
   );
 
   useLayoutEffect(() => {
@@ -107,13 +109,22 @@ export function TableCellNG(props: TableCellNGProps) {
       case TableCellDisplayMode.BasicGauge:
       case TableCellDisplayMode.GradientGauge:
       case TableCellDisplayMode.LcdGauge:
-        cell = <BarGaugeCell {...commonProps} theme={theme} timeRange={timeRange} height={height} width={divWidth} />;
+        cell = (
+          <BarGaugeCell
+            {...commonProps}
+            theme={theme}
+            timeRange={timeRange}
+            height={height}
+            width={divWidth}
+            actions={actions}
+          />
+        );
         break;
       case TableCellDisplayMode.Image:
-        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} />;
+        cell = <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
         break;
       case TableCellDisplayMode.JSONView:
-        cell = <JSONCell {...commonProps} />;
+        cell = <JSONCell {...commonProps} actions={actions} />;
         break;
       case TableCellDisplayMode.DataLinks:
         cell = <DataLinksCell field={field} rowIdx={rowIdx} />;
@@ -135,12 +146,12 @@ export function TableCellNG(props: TableCellNGProps) {
           if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
             cell = <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={divWidth} />;
           } else {
-            cell = <JSONCell {...commonProps} />;
+            cell = <JSONCell {...commonProps} actions={actions} />;
           }
         } else if (field.type === FieldType.other) {
-          cell = <JSONCell {...commonProps} />;
+          cell = <JSONCell {...commonProps} actions={actions} />;
         } else {
-          cell = <AutoCell {...commonProps} cellOptions={cellOptions} />;
+          cell = <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
         }
         break;
     }
@@ -179,15 +190,23 @@ export function TableCellNG(props: TableCellNGProps) {
 
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: displayName,
+        operator: FILTER_FOR_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [displayName, onCellFilterAdded, value]);
 
   const onFilterOut = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: displayName,
+        operator: FILTER_OUT_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [displayName, onCellFilterAdded, value]);
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>

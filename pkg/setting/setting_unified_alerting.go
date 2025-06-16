@@ -47,6 +47,7 @@ const (
 `
 	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
+	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
@@ -68,6 +69,11 @@ const (
 	lokiDefaultMaxQuerySize        = 65536 // 64kb
 )
 
+var (
+	errHARedisBothClusterAndSentinel     = fmt.Errorf("'ha_redis_cluster_mode_enabled' and 'ha_redis_sentinel_mode_enabled' are mutually exclusive")
+	errHARedisSentinelMasterNameRequired = fmt.Errorf("'ha_redis_sentinel_master_name' is required when 'ha_redis_sentinel_mode_enabled' is true")
+)
+
 type UnifiedAlertingSettings struct {
 	AdminConfigPollInterval         time.Duration
 	AlertmanagerConfigPollInterval  time.Duration
@@ -82,6 +88,10 @@ type UnifiedAlertingSettings struct {
 	HAPushPullInterval              time.Duration
 	HALabel                         string
 	HARedisClusterModeEnabled       bool
+	HARedisSentinelModeEnabled      bool
+	HARedisSentinelMasterName       string
+	HARedisSentinelUsername         string
+	HARedisSentinelPassword         string
 	HARedisAddr                     string
 	HARedisPeerName                 string
 	HARedisPrefix                   string
@@ -137,9 +147,6 @@ type UnifiedAlertingSettings struct {
 
 type RecordingRuleSettings struct {
 	Enabled              bool
-	URL                  string
-	BasicAuthUsername    string
-	BasicAuthPassword    string
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
@@ -152,6 +159,7 @@ type RemoteAlertmanagerSettings struct {
 	TenantID     string
 	Password     string
 	SyncInterval time.Duration
+	Timeout      time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -277,6 +285,16 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	uaCfg.HALabel = ua.Key("ha_label").MustString("")
 	uaCfg.HARedisClusterModeEnabled = ua.Key("ha_redis_cluster_mode_enabled").MustBool(false)
+	uaCfg.HARedisSentinelModeEnabled = ua.Key("ha_redis_sentinel_mode_enabled").MustBool(false)
+	if uaCfg.HARedisClusterModeEnabled && uaCfg.HARedisSentinelModeEnabled {
+		return errHARedisBothClusterAndSentinel
+	}
+	uaCfg.HARedisSentinelMasterName = ua.Key("ha_redis_sentinel_master_name").MustString("")
+	if uaCfg.HARedisSentinelModeEnabled && uaCfg.HARedisSentinelMasterName == "" {
+		return errHARedisSentinelMasterNameRequired
+	}
+	uaCfg.HARedisSentinelUsername = ua.Key("ha_redis_sentinel_username").MustString("")
+	uaCfg.HARedisSentinelPassword = ua.Key("ha_redis_sentinel_password").MustString("")
 	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
 	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
 	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
@@ -396,6 +414,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
+	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
+	if err != nil {
+		return err
+	}
 
 	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
 
@@ -449,10 +471,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:              rr.Key("enabled").MustBool(false),
-		URL:                  rr.Key("url").MustString(""),
-		BasicAuthUsername:    rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword:    rr.Key("basic_auth_password").MustString(""),
+		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 	}

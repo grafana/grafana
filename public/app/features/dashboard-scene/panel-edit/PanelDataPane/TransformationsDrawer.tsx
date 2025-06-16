@@ -1,8 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
   FilterCategory,

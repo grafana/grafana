@@ -3,9 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ConfirmButton, Input, Label, LegacyInputStatus, useStyles2 } from '@grafana/ui';
-
-import { t } from '../../../core/internationalization';
 
 interface Props {
   label: string;

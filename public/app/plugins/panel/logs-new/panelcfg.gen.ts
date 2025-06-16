@@ -11,6 +11,7 @@
 import * as common from '@grafana/schema';
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;

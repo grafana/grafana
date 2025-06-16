@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   isOpen: boolean;

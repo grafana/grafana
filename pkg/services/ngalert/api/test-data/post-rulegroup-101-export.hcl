@@ -85,6 +85,7 @@ resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
       group_interval  = "5s"
       repeat_interval = "5m"
       mute_timings    = ["test-mute"]
+      active_timings  = ["test-mute"]
     }
   }
   rule {
@@ -125,6 +126,7 @@ resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
       group_interval  = "5s"
       repeat_interval = "5m"
       mute_timings    = ["test-mute"]
+      active_timings  = ["test-mute"]
     }
   }
   rule {

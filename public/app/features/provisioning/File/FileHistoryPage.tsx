@@ -1,9 +1,12 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
 import { Card, EmptyState, Spinner, Stack, Text, TextLink, UserIcon } from '@grafana/ui';
-import { useGetRepositoryHistoryWithPathQuery, useGetRepositoryStatusQuery } from 'app/api/clients/provisioning';
+import {
+  useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryStatusQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { PROVISIONING_URL } from '../constants';

@@ -4,10 +4,10 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';

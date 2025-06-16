@@ -109,7 +109,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Folders | Nothing else |
    | All Alert rule groups | All other resources |
    | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
    | Notification Templates | Nothing else |
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
@@ -185,6 +185,10 @@ The migration assistant can migrate the majority of Grafana Alerting resources t
 - Mute timings
 - Notification policy tree
 - Notification templates
+
+{{< admonition type="note">}}
+The `grafana-default-email` contact point that's provisioned with every new Grafana instance doesn't have a UID by default and won't be migrated unless you edit or update and save it. You do not need to change the contact point for a UID to be generated when saved.
+{{< /admonition >}}
 
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
 

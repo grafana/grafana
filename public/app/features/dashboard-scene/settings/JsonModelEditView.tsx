@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
@@ -19,7 +20,7 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { DashboardScene, isV2Dashboard } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -65,7 +66,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const jsonModel: DashboardDataDTO | DashboardV2Spec = JSON.parse(this.state.jsonText);
     const dashboard = this.getDashboard();
 
-    const isV2 = isV2Dashboard(jsonModel);
+    const isV2 = isDashboardV2Spec(jsonModel);
     let newDashboardScene: DashboardScene;
 
     if (isV2) {
