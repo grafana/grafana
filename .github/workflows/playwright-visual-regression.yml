@@ -1,0 +1,172 @@
+name: Playwright Visual Regression Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: 'lts/*'
+  GRAFANA_PORT: 3001
+  GRAFANA_HOST: localhost
+
+jobs:
+  visual-regression:
+    name: Visual Regression Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Go backend
+        run: go run build.go build
+
+      - name: Build test plugins
+        run: yarn e2e:plugin:build
+
+      - name: Install Playwright browsers
+        run: yarn exec playwright install --with-deps
+
+      - name: Start Grafana server
+        run: |
+          echo "Starting Grafana server on port ${{ env.GRAFANA_PORT }}..."
+          ./scripts/grafana-server/start-server > scripts/grafana-server/server.log 2>&1 &
+          echo "Waiting for Grafana to be ready..."
+          ./scripts/grafana-server/wait-for-grafana
+          echo "Grafana server is ready!"
+        env:
+          PORT: ${{ env.GRAFANA_PORT }}
+
+      - name: Run Playwright visual regression tests
+        id: playwright-tests
+        run: |
+          echo "Running Playwright visual regression tests..."
+          yarn e2e:playwright:vizregression > test-output.log 2>&1
+          
+          # Check for different types of failures
+          if grep -q "Error: A snapshot doesn't exist at" test-output.log; then
+            echo "RESULT=new-snapshots" >> $GITHUB_OUTPUT
+            echo "New snapshots detected that need review"
+            exit 1
+          elif grep -q "Screenshot comparison failed" test-output.log; then
+            echo "RESULT=snapshot-differences" >> $GITHUB_OUTPUT
+            echo "Visual differences detected in existing snapshots"
+            exit 1
+          elif grep -q "failed" test-output.log; then
+            echo "RESULT=test-failures" >> $GITHUB_OUTPUT
+            echo "Test failures (non-visual) detected"
+            exit 1
+          else
+            echo "RESULT=success" >> $GITHUB_OUTPUT
+            echo "All visual regression tests passed!"
+          fi
+        env:
+          HOST: ${{ env.GRAFANA_HOST }}
+          PORT: ${{ env.GRAFANA_PORT }}
+        continue-on-error: true
+
+      - name: Upload test output log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-output-log
+          path: test-output.log
+          retention-days: 30
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        id: upload-report
+        if: always()
+        with:
+          name: playwright-visual-regression-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results (if any)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-test-results
+          path: test-results/
+          retention-days: 30
+
+      - name: Comment on PR - Success
+        uses: thollander/actions-comment-pull-request@v3
+        if: github.event_name == 'pull_request' && steps.playwright-tests.outputs.RESULT == 'success'
+        with:
+          message: |
+            ✅ **Playwright Visual Regression Tests - PASSED**
+            
+            All visual regression tests have passed successfully! No visual changes detected.
+            
+            📊 [View detailed test report](${{ steps.upload-report.outputs.artifact-url }})
+
+      - name: Comment on PR - Visual Differences
+        uses: thollander/actions-comment-pull-request@v3
+        if: github.event_name == 'pull_request' && (steps.playwright-tests.outputs.RESULT == 'snapshot-differences' || steps.playwright-tests.outputs.RESULT == 'new-snapshots')
+        with:
+          message: |
+            ⚠️ **Playwright Visual Regression Tests - CHANGES DETECTED**
+            
+            ${{ steps.playwright-tests.outputs.RESULT == 'new-snapshots' && 'New visual snapshots have been generated that require review.' || 'Visual differences were detected in existing snapshots.' }}
+            
+            ## 📊 Review the changes:
+            - [**View Playwright Report**](${{ steps.upload-report.outputs.artifact-url }}) - See visual differences
+            - [View Test Output Log](${{ steps.upload-artifact.outputs.artifact-url }}) - See detailed logs
+            
+            ## 🔄 Actions you can take:
+            - **To approve these visual changes:** Comment `/approve-snapshots` on this PR
+            - **To reject:** The visual differences need to be addressed in the code
+            
+            ## 📝 What's next?
+            Review the visual changes in the report above. If the changes are expected and correct, approve them. If not, please update your code to fix the visual issues.
+
+      - name: Comment on PR - Test Failures
+        uses: thollander/actions-comment-pull-request@v3
+        if: github.event_name == 'pull_request' && steps.playwright-tests.outputs.RESULT == 'test-failures'
+        with:
+          message: |
+            ❌ **Playwright Visual Regression Tests - FAILED**
+            
+            The tests failed due to non-visual issues (e.g., timeouts, element not found, etc.).
+            
+            📊 [View detailed test report](${{ steps.upload-report.outputs.artifact-url }})
+            📋 [View test output log](${{ steps.upload-artifact.outputs.artifact-url }})
+            
+            Please review the logs and fix the underlying test issues.
+
+      - name: Stop Grafana server
+        if: always()
+        run: |
+          echo "Stopping Grafana server..."
+          pkill -f grafana-server || true
+          echo "Grafana server stopped"
+
+      - name: Set job status
+        if: always()
+        run: |
+          if [[ "${{ steps.playwright-tests.outputs.RESULT }}" == "success" ]]; then
+            echo "Job completed successfully"
+            exit 0
+          else
+            echo "Job failed with result: ${{ steps.playwright-tests.outputs.RESULT }}"
+            exit 1
+          fi 
