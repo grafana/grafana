@@ -199,7 +199,7 @@ export function useRulerRuleAbility(
 }
 
 export function useRulerRuleAbilities(
-  rule: RulerRuleDTO,
+  rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2,
   actions: AlertRuleAction[]
 ): Ability[] {
@@ -365,7 +365,6 @@ function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO) {
 }
 
 export const skipToken = Symbol('abiltiy-skip-token');
-
 type SkipToken = typeof skipToken;
 
 /**
@@ -383,10 +382,10 @@ export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleDTO | SkipToken, 
  * Hook for checking multiple abilities on a GrafanaPromRuleDTO
  */
 export function useGrafanaPromRuleAbilities(
-  rule: GrafanaPromRuleDTO | undefined,
+  rule: GrafanaPromRuleDTO | SkipToken,
   actions: AlertRuleAction[]
 ): Ability[] {
-  const abilities = useAllGrafanaPromRuleAbilities(rule);
+  const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);
 
   return useMemo(() => {
     return actions.map((action) => abilities[action]);

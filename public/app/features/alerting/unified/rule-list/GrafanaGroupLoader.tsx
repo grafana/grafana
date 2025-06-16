@@ -5,7 +5,7 @@ import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { prometheusApi } from '../api/prometheusApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 
-import { GrafanaRuleListItem } from './GrafanaRuleLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 
 // const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
@@ -40,20 +40,8 @@ export function GrafanaGroupLoader({
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );
-  // const { data: rulerResponse, isLoading: isRulerGroupLoading } = useGetGrafanaRulerGroupQuery({
-  //   folderUid: groupIdentifier.namespace.uid,
-  //   groupName: groupIdentifier.groupName,
-  // });
 
-  // const { matches, promOnlyRules } = useMemo(() => {
-  //   const promRules = promResponse?.data.groups.at(0)?.rules ?? [];
-  //   const rulerRules = rulerResponse?.rules ?? [];
-
-  //   return matchRules(promRules, rulerRules);
-  // }, [promResponse, rulerResponse]);
-
-  const isLoading = isPromResponseLoading;
-  if (isLoading) {
+  if (isPromResponseLoading) {
     return (
       <>
         {Array.from({ length: expectedRulesCount }).map((_, index) => (
@@ -83,7 +71,6 @@ export function GrafanaGroupLoader({
           <GrafanaRuleListItem
             key={promRule.uid}
             rule={promRule}
-            // rulerRule={rulerRule}
             groupIdentifier={groupIdentifier}
             namespaceName={namespaceName}
             // we don't show the location again for rules, it's redundant because they are shown in a folder > group hierarchy
@@ -91,18 +78,6 @@ export function GrafanaGroupLoader({
           />
         );
       })}
-      {/* {promOnlyRules.map((rule) => (
-        <RuleOperationListItem
-          key={rule.uid}
-          name={rule.name}
-          namespace={namespaceName}
-          group={groupIdentifier.groupName}
-          rulesSource={GrafanaRulesSource}
-          application="grafana"
-          operation={RuleOperation.Deleting}
-          showLocation={false}
-        />
-      ))} */}
     </>
   );
 }

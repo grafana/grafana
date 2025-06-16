@@ -10,7 +10,12 @@ import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugin
 import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
+import {
+  AlertRuleAction,
+  skipToken,
+  useGrafanaPromRuleAbilities,
+  useRulerRuleAbilities,
+} from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
@@ -47,48 +52,48 @@ const AlertRuleMenu = ({
   fill,
 }: Props) => {
   // check all abilities and permissions
-  const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Pause);
-  const [grafanaPauseSupported, grafanaPauseAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.Pause
-  );
+  const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
+    useRulerRuleAbilities(rulerRule, groupIdentifier, [
+      AlertRuleAction.Pause,
+      AlertRuleAction.Delete,
+      AlertRuleAction.Duplicate,
+      AlertRuleAction.Silence,
+      AlertRuleAction.ModifyExport,
+    ]);
+
+  const [
+    grafanaPauseAbility,
+    grafanaDeleteAbility,
+    grafanaDuplicateAbility,
+    grafanaSilenceAbility,
+    grafanaExportAbility,
+  ] = useGrafanaPromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
+    AlertRuleAction.Pause,
+    AlertRuleAction.Delete,
+    AlertRuleAction.Duplicate,
+    AlertRuleAction.Silence,
+    AlertRuleAction.ModifyExport,
+  ]);
+
+  const [pauseSupported, pauseAllowed] = rulerPauseAbility;
+  const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
   const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
 
-  const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Delete);
-  const [grafanaDeleteSupported, grafanaDeleteAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.Delete
-  );
+  const [deleteSupported, deleteAllowed] = rulerDeleteAbility;
+  const [grafanaDeleteSupported, grafanaDeleteAllowed] = grafanaDeleteAbility;
   const canDelete = (deleteSupported && deleteAllowed) || (grafanaDeleteSupported && grafanaDeleteAllowed);
 
-  const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
-    rulerRule,
-    groupIdentifier,
-    AlertRuleAction.Duplicate
-  );
-  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.Duplicate
-  );
+  const [duplicateSupported, duplicateAllowed] = rulerDuplicateAbility;
+  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = grafanaDuplicateAbility;
   const canDuplicate =
     (duplicateSupported && duplicateAllowed) || (grafanaDuplicateSupported && grafanaDuplicateAllowed);
 
-  const [silenceSupported, silenceAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Silence);
-  const [grafanaSilenceSupported, grafanaSilenceAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.Silence
-  );
+  const [silenceSupported, silenceAllowed] = rulerSilenceAbility;
+  const [grafanaSilenceSupported, grafanaSilenceAllowed] = grafanaSilenceAbility;
   const canSilence = (silenceSupported && silenceAllowed) || (grafanaSilenceSupported && grafanaSilenceAllowed);
 
-  const [exportSupported, exportAllowed] = useRulerRuleAbility(
-    rulerRule,
-    groupIdentifier,
-    AlertRuleAction.ModifyExport
-  );
-  const [grafanaExportSupported, grafanaExportAllowed] = useGrafanaPromRuleAbility(
-    prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
-    AlertRuleAction.ModifyExport
-  );
+  const [exportSupported, exportAllowed] = rulerExportAbility;
+  const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
   const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
