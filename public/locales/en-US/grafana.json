@@ -1528,6 +1528,10 @@
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "Rules managed by integrations or plugins should not be imported to Grafana-managed rules.",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
@@ -4605,6 +4609,9 @@
       "tab-warning": {
         "title-not-unique": "This title is not unique"
       }
+    },
+    "title": {
+      "action": "Change dashboard title"
     },
     "toolbar": {
       "add": "Add",
@@ -7688,6 +7695,14 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
@@ -7741,6 +7756,7 @@
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
       "font-size-default": "Use small font size",
       "font-size-small": "Use default font size",
+      "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7749,6 +7765,7 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",

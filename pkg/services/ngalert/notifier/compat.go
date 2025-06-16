@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	alertingTemplates "github.com/grafana/alerting/templates"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -130,19 +129,6 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 		apiReceivers = append(apiReceivers, PostableApiReceiverToApiReceiver(receiver))
 	}
 	return apiReceivers
-}
-
-// ToTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
-func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplates.TemplateDefinition {
-	out := make([]alertingTemplates.TemplateDefinition, 0, len(cfg.TemplateFiles))
-	for name, tmpl := range cfg.TemplateFiles {
-		out = append(out, alertingTemplates.TemplateDefinition{
-			Name:     name,
-			Template: tmpl,
-			Kind:     alertingTemplates.GrafanaKind,
-		})
-	}
-	return out
 }
 
 // Silence-specific compat functions to convert between grafana/alerting and model types.
