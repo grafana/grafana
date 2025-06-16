@@ -16,6 +16,7 @@ const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
 	HelpFlagEnterpriseAuth1
+	HelpFlagCloudAlerting1
 )
 
 type UpdateEmailActionType string

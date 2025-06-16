@@ -104,6 +104,9 @@
     "base-user-sessions": {
       "title-force-logout-from-all-devices": "Force logout from all devices"
     },
+    "cloud-alerting-features-card": {
+      "text": "Grafana Cloud IRM combines on-call scheduling, alert routing, and incident response management.<1>Learn more about Grafana Cloud IRM.</1>"
+    },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
       "heading": "Edit Organization",
