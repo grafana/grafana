@@ -163,6 +163,7 @@ export interface TableCellNGProps {
   rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;
   replaceVariables?: InterpolateFunction;
+  width: number;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */

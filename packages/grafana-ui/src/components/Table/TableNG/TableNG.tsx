@@ -198,6 +198,7 @@ export function TableNG(props: TableNGProps) {
                 field={field}
                 theme={theme}
                 height={defaultRowHeight}
+                width={widths[i]}
                 justifyContent={justifyColumnContent}
                 rowIdx={row.__index}
                 setIsInspecting={setIsInspecting}

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
-import { Children, ReactNode, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useRef } from 'react';
 
 import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -29,22 +29,6 @@ import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { SparklineCell } from './SparklineCell';
 
-// the layout effect we apply here is super expensive - we don't want to bother with it unless we need it.
-function TableCellWithWidth(props: {
-  children: (width: number) => JSX.Element;
-  divWidthRef: RefObject<HTMLDivElement>;
-}) {
-  const { divWidthRef, children } = props;
-  const [divWidth, setDivWidth] = useState(0);
-  useLayoutEffect(() => {
-    if (divWidthRef.current) {
-      setDivWidth(divWidthRef.current.getBoundingClientRect().width);
-    }
-  }, [divWidthRef, setDivWidth]);
-
-  return Children.only(children(divWidth));
-}
-
 export function TableCellNG(props: TableCellNGProps) {
   const {
     field,
@@ -61,6 +45,7 @@ export function TableCellNG(props: TableCellNGProps) {
     rowBg,
     onCellFilterAdded,
     replaceVariables,
+    width,
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
@@ -103,28 +88,20 @@ export function TableCellNG(props: TableCellNGProps) {
   const renderedCell = useMemo((): ReactNode => {
     switch (cellType) {
       case TableCellDisplayMode.Sparkline:
-        return (
-          <TableCellWithWidth divWidthRef={divWidthRef}>
-            {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
-          </TableCellWithWidth>
-        );
+        return <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />;
       case TableCellDisplayMode.Gauge:
       case TableCellDisplayMode.BasicGauge:
       case TableCellDisplayMode.GradientGauge:
       case TableCellDisplayMode.LcdGauge: {
         return (
-          <TableCellWithWidth divWidthRef={divWidthRef}>
-            {(width) => (
-              <BarGaugeCell
-                {...commonProps}
-                theme={theme}
-                timeRange={timeRange}
-                height={height}
-                width={width}
-                actions={actions}
-              />
-            )}
-          </TableCellWithWidth>
+          <BarGaugeCell
+            {...commonProps}
+            theme={theme}
+            timeRange={timeRange}
+            height={height}
+            width={width}
+            actions={actions}
+          />
         );
       }
       case TableCellDisplayMode.Image:
@@ -146,11 +123,7 @@ export function TableCellNG(props: TableCellNGProps) {
         } else if (field.type === FieldType.frame) {
           const firstValue = field.values[0];
           if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-            return (
-              <TableCellWithWidth divWidthRef={divWidthRef}>
-                {(width) => <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />}
-              </TableCellWithWidth>
-            );
+            return <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />;
           } else {
             return <JSONCell {...commonProps} actions={actions} />;
           }
@@ -160,7 +133,7 @@ export function TableCellNG(props: TableCellNGProps) {
         return <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
       }
     }
-  }, [cellType, commonProps, theme, timeRange, height, divWidthRef, cellOptions, field, rowIdx, actions, value, frame]);
+  }, [cellType, commonProps, theme, timeRange, width, height, cellOptions, field, rowIdx, actions, value, frame]);
 
   const hasActions = cellInspect || showFilters;
 
