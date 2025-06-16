@@ -1,7 +1,8 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { InlineField } from '../../components/Forms/InlineField';
-import { t } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
 

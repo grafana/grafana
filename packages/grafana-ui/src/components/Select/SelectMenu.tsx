@@ -6,9 +6,9 @@ import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';

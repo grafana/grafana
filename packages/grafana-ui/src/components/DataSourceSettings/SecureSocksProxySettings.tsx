@@ -1,7 +1,7 @@
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
 import { InlineSwitch } from '../../components/Switch/Switch';
-import { t, Trans } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 
 export interface Props<T extends DataSourceJsonData>

@@ -14,9 +14,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';

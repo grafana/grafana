@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
 import { OnTagClick, Tag } from './Tag';

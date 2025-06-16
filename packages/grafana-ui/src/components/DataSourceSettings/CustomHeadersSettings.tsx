@@ -3,9 +3,9 @@ import { uniqueId } from 'lodash';
 import { PureComponent } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';

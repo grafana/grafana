@@ -10,8 +10,8 @@ import {
   TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';

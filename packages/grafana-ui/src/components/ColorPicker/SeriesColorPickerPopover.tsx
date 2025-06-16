@@ -1,5 +1,6 @@
+import { t } from '@grafana/i18n';
+
 import { withTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
 import { PopoverContentProps } from '../Tooltip/types';

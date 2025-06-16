@@ -1,8 +1,8 @@
 import { PureComponent } from 'react';
 
 import { getValueFormats, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Cascader, CascaderOption } from '../Cascader/Cascader';
 
 export interface UnitPickerProps {

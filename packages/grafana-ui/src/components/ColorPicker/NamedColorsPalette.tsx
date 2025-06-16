@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { t } from '../../utils/i18n';
 
 import { ColorSwatch } from './ColorSwatch';
 import NamedColorsGroup from './NamedColorsGroup';

@@ -3,9 +3,9 @@ import { useState, useCallback, useId, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
