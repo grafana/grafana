@@ -6,6 +6,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -67,7 +68,9 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		if decryptErr == nil {
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
 		} else {
+			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
+
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
 		}
 	}()

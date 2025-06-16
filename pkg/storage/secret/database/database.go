@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -51,7 +52,7 @@ func (db *Database) DriverName() string {
 	return db.dbType
 }
 
-func (db *Database) Transaction(ctx context.Context, callback func(context.Context) error) error {
+func (db *Database) Transaction(ctx context.Context, callback func(context.Context) error) (err error) {
 	// If another transaction is already open, we just use that one instead of nesting.
 	sqlxTx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx)
 	if sqlxTx != nil && ok {
@@ -62,7 +63,14 @@ func (db *Database) Transaction(ctx context.Context, callback func(context.Conte
 	spanCtx, span := db.tracer.Start(ctx, "database.Transaction")
 	defer span.End()
 
-	sqlxTx, err := db.sqlx.BeginTxx(spanCtx, nil)
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "Transaction failed")
+			span.RecordError(err)
+		}
+	}()
+
+	sqlxTx, err = db.sqlx.BeginTxx(spanCtx, nil)
 	if err != nil {
 		return err
 	}

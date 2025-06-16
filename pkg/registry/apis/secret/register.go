@@ -9,6 +9,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -601,9 +602,16 @@ func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
-func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	ctx, span := b.tracer.Start(ctx, "SecretAPIBuilder.Validate")
+func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	_, span := b.tracer.Start(ctx, "SecretAPIBuilder.Validate")
 	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+	}()
 
 	obj := a.GetObject()
 	operation := a.GetOperation()
@@ -660,9 +668,16 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	return apierrors.NewBadRequest(fmt.Sprintf("unknown spec %T", obj))
 }
 
-func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	ctx, span := b.tracer.Start(ctx, "SecretAPIBuilder.Mutate")
 	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+	}()
 
 	obj := a.GetObject()
 	operation := a.GetOperation()

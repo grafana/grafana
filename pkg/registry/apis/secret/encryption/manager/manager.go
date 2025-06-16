@@ -13,6 +13,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
@@ -164,6 +165,11 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 			"success":   strconv.FormatBool(err == nil),
 			"operation": OpEncrypt,
 		}).Inc()
+
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
 	}()
 
 	label := encryption.KeyLabel(s.currentProviderID)
@@ -331,6 +337,9 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 		}).Inc()
 
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+
 			s.log.FromContext(ctx).Error("Failed to decrypt secret", "error", err)
 		}
 	}()
