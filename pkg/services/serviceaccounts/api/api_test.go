@@ -134,6 +134,19 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	}
 }
 
+func TestServiceAccountsAPI_DeleteServiceAccount_NotFound(t *testing.T) {
+	server := setupTests(t, func(a *ServiceAccountsAPI) {
+		a.service = &satests.FakeServiceAccountService{ExpectedErr: serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id 1 not found")}
+	})
+	req := server.NewRequest(http.MethodDelete, "/api/serviceaccounts/1", nil)
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}})}})
+	res, err := server.Send(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	require.NoError(t, res.Body.Close())
+}
+
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	type TestCase struct {
 		desc         string
