@@ -1,35 +1,47 @@
 package dualwrite
 
 import (
+	"context"
 	"encoding/json"
 	"os"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // This format was used in early G12 provisioning config.  It should be removed
-func readFileDB(fpath string) (map[string]StorageStatus, error) {
+func migrateFileDBTo(fpath string, db statusStorage) {
 	v, err := os.ReadFile(fpath)
 	if err != nil {
-		return nil, err
+		return // nothing needed
 	}
+	logger := logging.DefaultLogger.With("logger", "dualwrite-migrator")
 
-	db := make(map[string]StorageStatus)
-	err = json.Unmarshal(v, &db)
+	old := make(map[string]StorageStatus)
+	err = json.Unmarshal(v, &old)
 	if err != nil {
-		return nil, err
+		logger.Warn("error loading dual write settings", "err", err)
+		return
 	}
 
-	for k, v := range db {
+	for _, v := range old {
 		// Must write to unified if we are reading unified
 		if v.ReadUnified && !v.WriteUnified {
 			v.WriteUnified = true
-			db[k] = v
 		}
 
 		// Make sure we are writing something!
 		if !v.WriteLegacy && !v.WriteUnified {
 			v.WriteLegacy = true
-			db[k] = v
+		}
+
+		err = db.Set(context.Background(), v)
+		if err != nil {
+			logger.Warn("error migrating dual write value", "err", err)
 		}
 	}
-	return db, nil
+
+	err = os.Remove(fpath)
+	if err != nil {
+		logger.Warn("error removing old dual write settings", "err", err)
+	}
 }

@@ -10,22 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
-// Simple file implementation -- useful while testing and not yet sure about the SQL structure!
-// When a path exists, read/write it from disk; otherwise it is held in memory
 type keyvalueDB struct {
 	db     kvstore.KVStore
 	logger logging.Logger
-	color  string
 }
 
 const globalKVOrgID = 0
 const globalKVNamespace = "unified.dualwrite" // Does not conflict with "storage.dualwriting" used for requested state
 
-// File implementation while testing -- values are saved in the data directory
 func newKeyValueDB(kv kvstore.KVStore) *keyvalueDB {
 	return &keyvalueDB{
 		db:     kv,
-		logger: logging.DefaultLogger.With("logger", "keyvalueDB"),
+		logger: logging.DefaultLogger.With("logger", "dualwrite.db"),
 	}
 }
 

@@ -3,14 +3,12 @@ package dualwrite
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,21 +29,7 @@ func ProvideService(
 
 	if cfg != nil {
 		path := filepath.Join(cfg.DataPath, "dualwrite.json")
-		old, err := readFileDB(path)
-		if err == nil && len(old) > 0 {
-			logger := logging.DefaultLogger.With("logger", "dualwrite-migrator")
-			ctx := context.Background()
-			for _, v := range old {
-				err = db.Set(ctx, v)
-				if err != nil {
-					logger.Warn("error loading dual write settings", "err", err)
-				}
-			}
-			err = os.Remove(path)
-			if err != nil {
-				logger.Warn("error removing old dual write settings", "err", err)
-			}
-		}
+		migrateFileDBTo(path, db)
 	}
 
 	return &service{
