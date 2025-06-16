@@ -62,7 +62,7 @@ func UpdatePreferencesFor(ctx context.Context,
 	}
 
 	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
-		saveCmd.Locale = dtoCmd.Locale
+		saveCmd.RegionalFormat = dtoCmd.RegionalFormat
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -102,8 +102,8 @@ func GetPreferencesFor(ctx context.Context,
 		}
 
 		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
-			if preference.JSONData.Locale != "" {
-				dto.Locale = &preference.JSONData.Locale
+			if preference.JSONData.RegionalFormat != "" {
+				dto.RegionalFormat = &preference.JSONData.RegionalFormat
 			}
 		}
 

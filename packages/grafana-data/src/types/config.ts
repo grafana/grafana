@@ -129,7 +129,7 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  locale: string;
+  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -251,7 +251,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
-  locale: string;
+  regionalFormat: string;
 }
 
 export interface SqlConnectionLimits {
