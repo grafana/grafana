@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -831,8 +832,30 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),
 			}
+			// Trash is only accessible to admins or the user who deleted the object
+			if req.Source == resourcepb.ListRequest_TRASH {
+				user, ok := claims.AuthInfoFrom(ctx)
+				if !ok || user == nil {
+					return apierrors.NewUnauthorized("no user found in context")
+				}
 
-			if !checker(iter.Name(), iter.Folder()) {
+				if !slices.Contains(user.GetGroups(), "admin") {
+					continue
+				}
+				//
+				partial := &metav1.PartialObjectMetadata{}
+				err := json.Unmarshal(iter.Value(), partial)
+				if err != nil {
+					return err
+				}
+				obj, err := utils.MetaAccessor(partial)
+				if err != nil {
+					return err
+				}
+				if obj.GetUpdatedBy() != user.GetUID() {
+					continue
+				}
+			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
