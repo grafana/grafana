@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Divider, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
@@ -35,7 +35,6 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
       getAlertRule({ uid: ruleUid });
     }
   }, [getAlertRule, ruleUid]);
-  const { t } = useTranslate();
 
   return (
     <div className={className}>

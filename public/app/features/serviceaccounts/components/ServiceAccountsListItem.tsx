@@ -3,7 +3,7 @@ import { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
@@ -37,7 +37,7 @@ const ServiceAccountListItemComponent = memo(
   }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
-    const { t } = useTranslate();
+
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
     const displayRolePicker =
       contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&

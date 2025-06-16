@@ -165,31 +165,37 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   );
 };
 
+export const undoButtonID = 'undo-button';
 function UndoButton({ dashboard }: ToolbarActionProps) {
   const editPane = dashboard.state.editPane;
   const { undoStack } = editPane.useState();
   const undoAction = undoStack[undoStack.length - 1];
+  const tooltip = `Undo${undoAction?.description ? ` '${undoAction.description}'` : ''}`;
 
   return (
     <ToolbarButton
+      id={undoButtonID}
       icon="corner-up-left"
       disabled={undoStack.length === 0}
       onClick={() => editPane.undoAction()}
-      tooltip={undoAction?.description}
+      tooltip={tooltip}
     />
   );
 }
 
+export const redoButtonId = 'redo-button';
 function RedoButton({ dashboard }: ToolbarActionProps) {
   const editPane = dashboard.state.editPane;
   const { redoStack } = editPane.useState();
   const redoAction = redoStack[redoStack.length - 1];
+  const tooltip = `Redo${redoAction?.description ? ` '${redoAction.description}'` : ''}`;
 
   return (
     <ToolbarButton
+      id={redoButtonId}
       icon="corner-up-right"
       disabled={redoStack.length === 0}
-      tooltip={redoAction?.description}
+      tooltip={tooltip}
       onClick={() => editPane.redoAction()}
     />
   );

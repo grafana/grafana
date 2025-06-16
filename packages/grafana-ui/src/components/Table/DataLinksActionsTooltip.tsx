@@ -6,7 +6,7 @@ import * as React from 'react';
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';

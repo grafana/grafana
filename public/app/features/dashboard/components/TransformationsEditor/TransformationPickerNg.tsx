@@ -11,7 +11,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
@@ -65,7 +65,6 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
   const searchInputRef = useCallback((input: HTMLInputElement) => {
     input?.click();
   }, []);
-  const { t } = useTranslate();
 
   return (
     <Drawer

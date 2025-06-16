@@ -1,10 +1,9 @@
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
-// Then run tests in:
-//  pkg/services/featuremgmt/toggles_gen_test.go
-// twice to generate and validate the feature flag files
+// To change feature flags edit this file and run:
+//     make gen-feature-toggles
 //
-// Alternatively, use `make gen-feature-toggles`
+// Alternatively run tests in:
+//     pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
 
 package featuremgmt
 
@@ -767,13 +766,6 @@ var (
 			Expression:     "false",
 		},
 		{
-			Name:         "newFolderPicker",
-			Description:  "Enables the nested folder picker without having nested folders enabled",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: true,
-		},
-		{
 			Name:              "jitterAlertRulesWithinGroups",
 			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.",
 			FrontendOnly:      false,
@@ -1046,10 +1038,11 @@ var (
 		{
 			Name:            "ssoSettingsLDAP",
 			Description:     "Use the new SSO Settings API to configure LDAP",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           identityAccessTeam,
 			AllowSelfServe:  true,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "failWrongDSUID",
@@ -1526,7 +1519,7 @@ var (
 		{
 			Name:              "newShareReportDrawer",
 			Description:       "Enables the report creation drawer in a dashboard",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
@@ -1644,15 +1637,6 @@ var (
 			Expression:        "true", // enabled by default
 		},
 		{
-			Name:              "xrayApplicationSignals",
-			Description:       "Support Application Signals queries in the X-Ray datasource",
-			Stage:             FeatureStageExperimental,
-			Owner:             awsDatasourcesSquad,
-			FrontendOnly:      true,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:         "multiTenantTempCredentials",
 			Description:  "use multi-tenant path for awsTempCredentials",
 			Stage:        FeatureStageExperimental,
@@ -1749,6 +1733,24 @@ var (
 			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
 			Stage:             FeatureStagePrivatePreview,
 			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichment",
+			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerAPI",
+			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",

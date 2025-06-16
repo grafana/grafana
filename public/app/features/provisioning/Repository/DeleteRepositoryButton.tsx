@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfirmModal, IconButton } from '@grafana/ui';
-import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
   name: string;
@@ -27,8 +27,6 @@ export function DeleteRepositoryButton({ name, redirectTo }: Props) {
   const onConfirm = useCallback(() => {
     deleteRepository({ name });
   }, [deleteRepository, name]);
-
-  const { t } = useTranslate();
 
   return (
     <>

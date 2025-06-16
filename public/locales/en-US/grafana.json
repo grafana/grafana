@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
-      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.",
+      "description-missing-series-evaluations": "The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Last updated by",
       "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
+      "notification-configuration": {
+        "active-timings": "Active time intervals",
+        "contact-point": "Contact point",
+        "group-by": "Grouped by",
+        "group-title": "Notification configuration",
+        "mute-timings": "Mute timings",
+        "timing-options": "Timings"
+      },
       "pending-period": "Pending period",
       "rule": "Rule",
       "rule-identifier": "Rule identifier",
@@ -449,6 +457,15 @@
       "export": "Export",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "Read more about stale alert instances",
+        "text1": "An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.",
+        "text2": "A stale alert instance is resolved and then evicted.",
+        "text3": "This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty.",
+        "title": "Stale alert instances"
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "Rules managed by integrations or plugins should not be imported to Grafana-managed rules.",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
@@ -1518,6 +1540,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
@@ -1795,7 +1821,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when to only send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
@@ -2364,11 +2390,15 @@
       "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
+      "ds-error": {
+        "title": "Cannot load rules for this datasource"
+      },
       "ds-error-boundary": {
         "description": "Check the data source configuration. Does the data source support Prometheus API?",
         "title": "Unable to load rules from this data source"
       },
       "empty-data-source": "No rules found",
+      "error-button": "Error",
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -2380,6 +2410,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
+      "loading-more-groups": "Loading more groups...",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -2957,51 +2988,6 @@
       "no-query-editor": "Annotations are not supported. This datasource needs to export a QueryEditor",
       "test-annotation-query": "Test annotation query",
       "title-query-result": "Query result"
-    }
-  },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Search keys"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Include expired keys"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Delete API key",
-      "content-this-api-key-has-expired": "This API key has expired.",
-      "expires": "Expires",
-      "last-used-at": "Last used at",
-      "migrate-to-service-account": "Migrate to service account",
-      "name": "Name",
-      "role": "Role"
-    },
-    "empty-state": {
-      "message": "No API keys found"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "No API keys were found. If you reload the browser, this page will not be available anymore.",
-      "body-switch-service-accounts": "API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will continue to work as they were. We encourage you to migrate your API keys to service accounts now. <docsLink />",
-      "docs-link": {
-        "about-migration": "Find out more about the migration here."
-      },
-      "migrate-all-service-accounts": "Migrate all service accounts",
-      "migration-box-desc": {
-        "migrating": "Migrating all API keys will hide the API keys tab."
-      },
-      "modal-title": "Migrate API keys to service accounts",
-      "title-no-api-keys-found": "No API keys found",
-      "title-switch-service-accounts": "Switch from API keys to service accounts"
-    },
-    "migration-summary": {
-      "close": "Close",
-      "failed": "<0>Failed: </0>{{failed}}",
-      "failed-details": "<0>Failed details: </0>{{details}}",
-      "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
-      "migrated": "<0>Migrated: </0>{{migrated}}",
-      "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
-      "migration-successful": "Migration Successful!",
-      "title-migration-summary": "Migration summary",
-      "total": "<0>Total: </0>{{total}}"
     }
   },
   "app-chrome": {
@@ -4059,6 +4045,9 @@
         "title": "Row options"
       }
     },
+    "description": {
+      "action": "Change dashboard description"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -4463,6 +4452,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Choose",
       "variable-options": {
         "label": {
           "disable-repeating": "Disable repeating",
@@ -4548,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
@@ -4622,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "This title is not unique"
       }
+    },
+    "title": {
+      "action": "Change dashboard title"
     },
     "toolbar": {
       "add": "Add",
@@ -5157,6 +5153,11 @@
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -5274,12 +5275,15 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Changes",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Save dashboard",
+        "title-copy": "Save dashboard copy",
+        "title-provisioned": "Provisioned dashboard"
       }
     },
     "save-dashboard-form": {
       "aria-label-message": "message",
-      "body-dashboard-drastically-changed": "Because you're using new dashboards features only supported on new Grafana dashboard schema format, the dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to save the dashboard as a new copy.",
+      "body-dashboard-drastically-changed": "The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a copy instead. If you’re seeing this message in a production environment, contact Support to have the feature disabled.",
       "cancel-button": {
         "cancel": "Cancel"
       },
@@ -5295,7 +5299,7 @@
       },
       "schema-v2-library-panels-export": "The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards behaviour. It is based on a new schema format, that does not support library panels. This means that when exporting the dashboard to use it in another instance, we will not include library panels. We intend to support them as we progress in the feature <2>life cycle</2>.",
       "schema-v2-library-panels-export-title": "Dashboard Schema V2 does not support exporting library panels to be used in another instance yet",
-      "title-dashboard-drastically-changed": "Dashboard drastically changed"
+      "title-dashboard-drastically-changed": "Dashboard irreversibly changed"
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
@@ -7700,6 +7704,14 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
@@ -7751,6 +7763,9 @@
       },
       "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
+      "font-size-default": "Use small font size",
+      "font-size-small": "Use default font size",
+      "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7759,6 +7774,7 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
@@ -8156,10 +8172,6 @@
     "alerts-recently-deleted": {
       "subtitle": "See recently deleted alert rules",
       "title": "Recently deleted"
-    },
-    "api-keys": {
-      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-      "title": "API keys"
     },
     "application": {
       "title": "Application"

@@ -1,6 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -18,11 +17,12 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
     .addItem(
       new OptionsPaneItemDescriptor({
         title: t('dashboard.default-layout.item-options.repeat.variable.title', 'Repeat by variable'),
+        id: 'repeat-by-variable-select',
         description: t(
           'dashboard.default-layout.item-options.repeat.variable.description',
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.'
         ),
-        render: () => <RepeatByOption gridItem={gridItem} />,
+        render: (descriptor) => <RepeatByOption id={descriptor.props.id} gridItem={gridItem} />,
       })
     )
     .addItem(
@@ -55,7 +55,7 @@ interface OptionComponentProps {
 
 function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
   const { repeatDirection } = gridItem.useState();
-  const { t } = useTranslate();
+
   const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
     { label: t('dashboard.default-layout.item-options.repeat.direction.horizontal', 'Horizontal'), value: 'h' },
     { label: t('dashboard.default-layout.item-options.repeat.direction.vertical', 'Vertical'), value: 'v' },
@@ -86,12 +86,12 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
   );
 }
 
-function RepeatByOption({ gridItem }: OptionComponentProps) {
+function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { variableName, width } = gridItem.useState();
 
   return (
     <RepeatRowSelect2
-      id="repeat-by-variable-select"
+      id={id}
       sceneContext={gridItem}
       repeat={variableName}
       onChange={(value?: string) => {

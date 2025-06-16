@@ -11,10 +11,10 @@ import {
   SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
