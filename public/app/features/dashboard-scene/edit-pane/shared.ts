@@ -75,6 +75,7 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
+  movedObject?: SceneObject;
   source: SceneObject;
   description?: string;
   perform: () => void;
@@ -109,6 +110,13 @@ export interface ChangeDescriptionActionHelperProps {
   oldDescription: string;
   newDescription: string;
   source: DashboardScene;
+}
+
+export interface MoveElementActionHelperProps {
+  movedObject: SceneObject;
+  source: SceneObject;
+  perform: () => void;
+  undo: () => void;
 }
 
 export const dashboardEditActions = {
@@ -182,6 +190,25 @@ export const dashboardEditActions = {
       undo: () => {
         source.setState({ description: oldDescription });
       },
+    });
+  },
+
+  moveElement(props: MoveElementActionHelperProps) {
+    const { movedObject, source, perform, undo } = props;
+
+    const element = getEditableElementFor(movedObject);
+    if (!element) {
+      throw new Error('Moved object is not an editable element');
+    }
+
+    const typeName = element.getEditableElementInfo().typeName;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
+      movedObject,
+      source,
+      perform,
+      undo,
     });
   },
 };
