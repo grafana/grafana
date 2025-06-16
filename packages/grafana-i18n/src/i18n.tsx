@@ -28,13 +28,15 @@ export async function loadPluginResources(id: string, language: string, loaders?
     return;
   }
 
+  const resolvedLanguage = language === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : language;
+
   return Promise.all(
     loaders.map(async (loader) => {
       try {
-        const resources = await loader(language);
-        addResourceBundle(language, id, resources);
+        const resources = await loader(resolvedLanguage);
+        addResourceBundle(resolvedLanguage, id, resources);
       } catch (error) {
-        console.error(`Error loading resources for plugin ${id} and language: ${language}`, error);
+        console.error(`Error loading resources for plugin ${id} and language: ${resolvedLanguage}`, error);
       }
     })
   );
