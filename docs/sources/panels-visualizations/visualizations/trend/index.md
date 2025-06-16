@@ -25,53 +25,65 @@ refs:
 
 # Trend
 
-Trend visualizations should be used for datasets that have a sequential, numeric X that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
+Trend visualizations should be used for datasets that have a sequential, numeric x-field that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
+
+For example, you could represent engine power and torque versus speed where speed is plotted on the x-axis and power and torque are plotted on the y-axes:
+
+{{< figure src="/media/docs/grafana/screenshot-trend-visualization-v12.0.png" max-width="750px" alt="Trend engine power and torque curves" >}}
 
 Trend visualizations support all visual styles and options available in the [time series visualization](ref:time-series-visualization) with these exceptions:
 
 - No annotations or time regions
 - No shared cursor/crosshair
-- No multi-timezone x axis
-- No ability to change the dashboard time range via drag-selection
+- No multi-timezone x-axis
+- No ability to change the dashboard time range using drag-selection
 
-## X Field selection
+## Configuration options
 
-Use this option to select a field that contains increasing numeric values.
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-speed-xvalue.png" max-width="750px" caption="Trend x value selection" >}}
-
-For example, you could represent engine power and torque versus speed where speed is plotted on the x axis and power and torque are plotted on the y axes.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
-
-## Panel options
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Standard options
+### X axis options
 
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+In the **X field** option, select a field that contains increasing numeric values.
 
-## Legend options
+### Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Tooltip options
+### Graph styles options
 
-{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
 
-## Data links and actions
+{{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Axis options
+
+{{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
-
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

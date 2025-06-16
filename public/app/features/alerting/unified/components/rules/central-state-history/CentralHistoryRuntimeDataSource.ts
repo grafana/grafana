@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
@@ -72,7 +73,11 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({ status: 'success', message: 'Data source is working', title: 'Success' });
+    return Promise.resolve({
+      status: 'success',
+      message: t('alerting.history-apidatasource.message.data-source-is-working', 'Data source is working'),
+      title: t('alerting.history-apidatasource.title.success', 'Success'),
+    });
   }
 }
 

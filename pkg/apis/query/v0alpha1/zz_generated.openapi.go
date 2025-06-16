@@ -144,6 +144,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -343,6 +344,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -397,6 +399,40 @@ func schema_apis_query_v0alpha1_template_QueryTemplate(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Description: "Longer description for why it is interesting",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"isVisible": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Toggle for visible/hidden queries",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"tags": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "The tags that can be used to filter the template",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"isLocked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the query is locked and cannot be edited Note: This is purely for UI display purposes and not for security",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

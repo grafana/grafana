@@ -29,6 +29,9 @@ export function filterAlerts(
         (hasAlertState(alert, GrafanaAlertState.Alerting) || hasAlertState(alert, PromAlertingRuleState.Firing))) ||
         (stateFilter.pending &&
           (hasAlertState(alert, GrafanaAlertState.Pending) || hasAlertState(alert, PromAlertingRuleState.Pending))) ||
+        (stateFilter.recovering &&
+          (hasAlertState(alert, GrafanaAlertState.Recovering) ||
+            hasAlertState(alert, PromAlertingRuleState.Recovering))) ||
         (stateFilter.noData && hasAlertState(alert, GrafanaAlertState.NoData)) ||
         (stateFilter.normal && hasAlertState(alert, GrafanaAlertState.Normal)) ||
         (stateFilter.error && hasAlertState(alert, GrafanaAlertState.Error)) ||

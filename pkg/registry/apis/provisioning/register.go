@@ -24,15 +24,17 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -41,17 +43,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -70,21 +72,20 @@ var (
 )
 
 type APIBuilder struct {
-	urlProvider      func(namespace string) string
-	webhookSecretKey string
-	isPublic         bool
+	features featuremgmt.FeatureToggles
 
-	features          featuremgmt.FeatureToggles
-	getter            rest.Getter
-	localFileResolver *repository.LocalFolderResolver
-	render            rendering.Service
-	parsers           *resources.ParserFactory
-	ghFactory         *github.Factory
-	clonedir          string // where repo clones are managed
-	jobs              interface {
+	getter              rest.Getter
+	localFileResolver   *repository.LocalFolderResolver
+	parsers             resources.ParserFactory
+	repositoryResources resources.RepositoryResourcesFactory
+	clients             resources.ClientFactory
+	ghFactory           *github.Factory
+	clonedir            string // where repo clones are managed
+	jobs                interface {
 		jobs.Queue
 		jobs.Store
 	}
+	jobHistory       jobs.History
 	tester           *RepositoryTester
 	resourceLister   resources.ResourceLister
 	repositoryLister listers.RepositoryLister
@@ -92,6 +93,11 @@ type APIBuilder struct {
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
 	secrets          secrets.Service
+	client           client.ProvisioningV0alpha1Interface
+	access           authlib.AccessChecker
+	statusPatcher    *controller.RepositoryStatusPatcher
+	// Extras provides additional functionality to the API.
+	extras []Extra
 }
 
 // NewAPIBuilder creates an API builder.
@@ -99,10 +105,7 @@ type APIBuilder struct {
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
-	urlProvider func(namespace string) string,
-	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
-	render rendering.Service,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
@@ -110,28 +113,35 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
+	access authlib.AccessChecker,
+	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
-	// HACK: Assume is only public if it is HTTPS
-	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	return &APIBuilder{
-		urlProvider:       urlProvider,
-		localFileResolver: local,
-		webhookSecretKey:  webhookSecretKey,
-		isPublic:          isPublic,
-		features:          features,
-		ghFactory:         ghFactory,
-		parsers: &resources.ParserFactory{
-			ClientFactory: resources.NewClientFactory(configProvider),
-		},
-		render:         render,
-		clonedir:       clonedir,
-		resourceLister: resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
-		legacyMigrator: legacyMigrator,
-		storageStatus:  storageStatus,
-		unified:        unified,
-		secrets:        secrets,
+	b := &APIBuilder{
+		localFileResolver:   local,
+		features:            features,
+		ghFactory:           ghFactory,
+		clients:             clients,
+		parsers:             parsers,
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
+		clonedir:            clonedir,
+		resourceLister:      resourceLister,
+		legacyMigrator:      legacyMigrator,
+		storageStatus:       storageStatus,
+		unified:             unified,
+		secrets:             secrets,
+		access:              access,
+		jobHistory:          jobs.NewJobHistoryCache(),
 	}
+
+	for _, builder := range extraBuilders {
+		b.extras = append(b.extras, builder(b))
+	}
+
+	return b
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -142,35 +152,32 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
+	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		return nil, nil
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
-	urlProvider := func(namespace string) string {
-		return cfg.AppURL
-	}
-
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client,
+	builder := NewAPIBuilder(folderResolver, features,
+		client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc),
+		secrets.NewSingleTenant(secretsSvc), access,
+		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -203,49 +210,27 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "failed to find requester", err
 			}
 
+			// Check if any extra authorizer has a decision.
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			switch a.GetResource() {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
 				switch a.GetSubresource() {
-				case "":
+				case "", "test", "jobs":
 					// Doing something with the repository itself.
 					if id.GetOrgRole().Includes(identity.RoleAdmin) {
 						return authorizer.DecisionAllow, "", nil
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "test", "export", "migrate":
-					// Testing doesn't make sense for non-admins.
-					// Exporting and migrating are potentially dangerous.
-					if id.GetOrgRole().Includes(identity.RoleAdmin) {
-						return authorizer.DecisionAllow, "", nil
-					}
-					return authorizer.DecisionDeny, "admin role is required", nil
-
-				case "webhook":
-					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
-					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
-					// For context on the anonymous user, check the authn/clients/provisioning.go file.
-					return authorizer.DecisionAllow, "", nil
-
 				case "files":
-					// Reading files is allowed for everyone, so as to allow code reviews and similar.
-					// Writing files is only allowed fo Editor and higher.
-					isViewer := id.GetOrgRole().Includes(identity.RoleViewer)
-					isEditor := id.GetOrgRole().Includes(identity.RoleEditor)
-					isReadOperation := a.GetVerb() == apiutils.VerbGet
-
-					if isEditor || (isViewer && isReadOperation) {
-						return authorizer.DecisionAllow, "", nil
-					} else if isReadOperation {
-						return authorizer.DecisionDeny, "viewer role is required for reads", nil
-					} else {
-						return authorizer.DecisionDeny, "editor role is required for edits", nil
-					}
-
-				case "render":
-					// This is used to read a blob from unified storage, for GitHub PR comments.
-					// GH uses a proxy for all images, so we need to accept it, always.
+					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
 
 				case "resources", "sync", "history":
@@ -278,8 +263,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				}
 				return authorizer.DecisionDeny, "viewer role is required", nil
 
-			case provisioning.JobResourceInfo.GetName(),
-				provisioning.HistoricJobResourceInfo.GetName():
+			case provisioning.JobResourceInfo.GetName():
 				// Jobs are shown on the configuration page.
 				if id.GetOrgRole().Includes(identity.RoleAdmin) {
 					return authorizer.DecisionAllow, "", nil
@@ -298,6 +282,18 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return provisioning.SchemeGroupVersion
+}
+
+func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
+	return b.client
+}
+
+func (b *APIBuilder) GetJobQueue() jobs.Queue {
+	return b.jobs
+}
+
+func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+	return b.statusPatcher
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -330,38 +326,25 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	historicJobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.HistoricJobResourceInfo, opts.OptsGetter)
-	if err != nil {
-		return fmt.Errorf("failed to create historic job storage: %w", err)
-	}
-
-	b.jobs, err = jobs.NewStore(realJobStore, historicJobStore, time.Second*30)
+	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
 
 	storage := map[string]rest.Storage{}
-	// Although we never interact with these resources via the API, we want them to be readable from the API.
+
+	// Although we never interact with jobs via the API, we want them to be readable (watchable!) from the API.
 	storage[provisioning.JobResourceInfo.StoragePath()] = readonly.Wrap(realJobStore)
-	storage[provisioning.HistoricJobResourceInfo.StoragePath()] = readonly.Wrap(historicJobStore)
 
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter:          b,
-		jobs:            b.jobs,
-		webhooksEnabled: b.isPublic,
-	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
-		getter:  b,
-		parsers: b.parsers,
-	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -369,22 +352,19 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("sync")] = &syncConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = &jobsConnector{
 		repoGetter: b,
 		jobs:       b.jobs,
+		historic:   b.jobHistory,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
+
+	// Add any extra storage
+	for _, extra := range b.extras {
+		if err := extra.UpdateStorage(storage); err != nil {
+			return fmt.Errorf("update storage for extra %T: %w", extra, err)
+		}
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("migrate")] = &migrateConnector{
-		repoGetter: b,
-		jobs:       b.jobs,
-		dual:       b.storageStatus,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
-		blob: b.unified,
-	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -422,7 +402,8 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		// Trim trailing slash or .git
 		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimRight(strings.TrimRight(r.Spec.GitHub.URL, "/"), ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
+			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
 
@@ -430,8 +411,30 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptSecrets(ctx, r); err != nil {
+	if err := b.encryptGithubToken(ctx, r); err != nil {
 		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
+	// Mutate the repository with any extra mutators
+	for _, extra := range b.extras {
+		if err := extra.Mutate(ctx, r); err != nil {
+			return fmt.Errorf("failed to mutate repository: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
 	}
 
 	return nil
@@ -477,34 +480,24 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
+	// Early exit to avoid more expensive checks if we have already found errors
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	// Exit early if we have already found errors
 	targetError := b.verifyAgaintsExistingRepositories(cfg)
 	if targetError != nil {
-		list = append(list, targetError)
+		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
 	}
 
-	// For *create* we do a synchronous test... this can be expensive!
-	// it is the same as a full healthcheck, so should not be run on every update
-	if len(list) == 0 && a.GetOperation() == admission.Create {
-		testResults, err := repository.TestRepository(ctx, repo)
-		if err != nil {
-			list = append(list, field.Invalid(field.NewPath("spec"),
-				"Repository test failed", "Unable to verify repository: "+err.Error()))
-		}
-
-		if !testResults.Success {
-			for _, err := range testResults.Errors {
-				list = append(list, field.Invalid(field.NewPath("spec"),
-					"Repository test failed", err))
-			}
-		}
-	}
-
-	if len(list) > 0 {
-		return apierrors.NewInvalid(
-			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
-			a.GetName(), list)
-	}
 	return nil
+}
+
+func invalidRepositoryError(name string, list field.ErrorList) error {
+	return apierrors.NewInvalid(
+		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
+		name, list)
 }
 
 // TODO: move this to a more appropriate place. Probably controller/validation.go
@@ -549,56 +542,89 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
+
+			b.client = c.ProvisioningV0alpha1()
 
 			// We do not have a local client until *GetPostStartHooks*, so we can delay init for some
 			b.tester = &RepositoryTester{
-				client: c.ProvisioningV0alpha1(),
+				client: b.GetClient(),
 			}
+
 			b.repositoryLister = repoInformer.Lister()
 
 			exportWorker := export.NewExportWorker(
-				b.parsers.ClientFactory,
-				b.storageStatus,
-				b.secrets,
-				b.clonedir,
-				b.parsers,
+				b.clients,
+				b.repositoryResources,
+				export.ExportAll,
+				repository.WrapWithCloneAndPushIfPossible,
 			)
+
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
-				c.ProvisioningV0alpha1(),
-				b.parsers,
-				b.resourceLister,
+				b.clients,
+				b.repositoryResources,
 				b.storageStatus,
+				b.statusPatcher.Patch,
+				syncer,
 			)
-			migrationWorker := migrate.NewMigrationWorker(
-				b.legacyMigrator,
+			signerFactory := signature.NewSignerFactory(b.clients)
+			legacyResources := migrate.NewLegacyResourcesMigrator(
+				b.repositoryResources,
 				b.parsers,
-				b.storageStatus,
-				b.unified,
-				b.secrets,
+				b.legacyMigrator,
+				signerFactory,
+				b.clients,
+				export.ExportAll,
+			)
+			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+			legacyMigrator := migrate.NewLegacyMigrator(
+				legacyResources,
+				storageSwapper,
+				syncWorker,
+				repository.WrapWithCloneAndPushIfPossible,
+			)
+
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				cleaner,
 				exportWorker,
 				syncWorker,
-				b.clonedir,
 			)
 
-			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
-			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker, err := pullrequest.NewPullRequestWorker(b.parsers, previewer)
-			if err != nil {
-				return fmt.Errorf("create pull request worker: %w", err)
+			migrationWorker := migrate.NewMigrationWorker(
+				legacyMigrator,
+				unifiedStorageMigrator,
+				b.storageStatus,
+			)
+
+			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+
+			// Add any extra workers
+			for _, extra := range b.extras {
+				workers = append(workers, extra.GetJobWorkers()...)
 			}
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b,
-				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			driver, err := jobs.NewJobDriver(
+				time.Minute*20, // Max time for each job
+				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Second*30, // Periodically look for new jobs
+				b.jobs, b, b.jobHistory,
+				workers...,
+			)
+			if err != nil {
+				return err
+			}
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
-				c.ProvisioningV0alpha1(),
+				b.GetClient(),
 				repoInformer,
 				b, // repoGetter
 				b.resourceLister,
 				b.parsers,
+				b.clients,
 				&repository.Tester{},
 				b.jobs,
 				b.secrets,
@@ -612,6 +638,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			return nil
 		},
 	}
+
 	return postStartHooks, nil
 }
 
@@ -628,6 +655,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
+	refsBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
 
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
@@ -645,11 +673,6 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 				},
 			},
 		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
 	ref := &spec3.Parameter{
@@ -730,6 +753,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					Required:    false,
 				},
 			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
+					Required:    false,
+				},
+			},
 		}
 		sub.Delete.Parameters = comment
 		sub.Post.Parameters = comment
@@ -804,85 +836,77 @@ spec:
 		sub.Put.RequestBody = sub.Post.RequestBody
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/sync"]
+	sub = oas.Paths.Paths[repoprefix+"/jobs"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"SyncJobOptions"].Schema
-		sub.Post.Description = "Sync from repository into Grafana"
+		sub.Post.Description = "Register a job for this repository"
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.SyncJobOptions{
-								Incremental: false,
+							Schema: &spec.Schema{
+								SchemaProps: spec.SchemaProps{
+									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobSpec"),
+								},
+							},
+							Examples: map[string]*spec3.Example{
+								"incremental": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Pull (incremental)",
+										Description: "look for changes since the last sync",
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: true,
+											},
+										},
+									},
+								},
+								"pull": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Pull from repository",
+										Description: "pull all files",
+										Value: provisioning.JobSpec{
+											Pull: &provisioning.SyncJobOptions{
+												Incremental: false,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 		}
+
+		sub.Get.Description = "List recent jobs"
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "JobList")
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/export"]
+	sub = oas.Paths.Paths[repoprefix+"/jobs/{path}"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"ExportJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.ExportJobOptions{
-								Folder: "grafan-folder-ref",
-								Branch: "target-branch",
-								Path:   "path/in/tree",
-							},
-						},
-					},
-				},
-			},
+		sub.Post = nil
+		sub.Get.Description = "Get job by UID"
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
+
+		// Replace {path} with {uid} (it is a UID query, but all k8s sub-resources are called path)
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "uid"
+				v.Description = "Original Job UID"
+				break
+			}
 		}
+
+		delete(oas.Paths.Paths, repoprefix+"/jobs/{path}")
+		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	sub = oas.Paths.Paths[repoprefix+"/migrate"]
-	if sub != nil {
-		optionsSchema := defs[defsBase+"MigrateJobOptions"].Schema
-		sub.Post.Description = "Export from grafana into the remote repository"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &optionsSchema,
-							Example: &provisioning.MigrateJobOptions{
-								History: true,
-							},
-						},
-					},
-				},
-			},
-		}
-	}
-
-	delete(oas.Paths.Paths, repoprefix+"/render")
-	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
-	if sub != nil {
-		sub.Get.Description = "get a rendered preview image"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"image/png": {},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
+	// Run all extra post-processors.
+	for _, extra := range b.extras {
+		if err := extra.PostProcessOpenAPI(oas); err != nil {
+			return nil, fmt.Errorf("post-process OpenAPI for extra %T: %w", extra, err)
 		}
 	}
 
@@ -950,29 +974,6 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-	}
-
-	if repo.Status.Webhook != nil &&
-		repo.Status.Webhook.Secret != "" {
-		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
-		if err != nil {
-			return err
-		}
-		repo.Status.Webhook.Secret = ""
-	}
-	return nil
 }
 
 // FIXME: This logic does not belong in provisioning! (but required for now)
@@ -1102,25 +1103,52 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repo
 }
 
 func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	// Try first with any extra
+	for _, extra := range b.extras {
+		r, err := extra.AsRepository(ctx, r)
+		if err != nil {
+			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
+		}
+
+		if r != nil {
+			return r, nil
+		}
+	}
+
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		var webhookURL string
-		if b.isPublic {
-			webhookURL = fmt.Sprintf(
-				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-				b.urlProvider(r.GetNamespace()),
-				gvr.Group,
-				gvr.Version,
-				r.GetNamespace(),
-				gvr.Resource,
-				r.GetName(),
-			)
+		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
+	}
+}
+
+func getJSONResponse(ref string) *spec3.Responses {
+	return &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: spec.MustCreateRef(ref),
+										},
+									},
+								},
+							},
+						},
+						Description: "OK",
+					},
+				},
+			},
+		},
 	}
 }

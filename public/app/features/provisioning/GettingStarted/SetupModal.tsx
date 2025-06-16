@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Modal, Button, useStyles2, Stack, Text } from '@grafana/ui';
 
 import { SetupStep } from './SetupStep';
@@ -47,16 +48,16 @@ export const SetupModal = ({ title, description, steps, isOpen, onDismiss }: Pro
       <Modal.ButtonRow>
         <Stack direction="row" justifyContent="flex-end" gap={2}>
           <Button variant="secondary" onClick={handlePrevious} disabled={isFirstStep}>
-            Previous
+            <Trans i18nKey="provisioning.setup-modal.previous">Previous</Trans>
           </Button>
 
           {isLastStep ? (
             <Button variant="primary" onClick={onDismiss} icon="check-circle">
-              Done
+              <Trans i18nKey="provisioning.setup-modal.done">Done</Trans>
             </Button>
           ) : (
             <Button variant="primary" onClick={handleNext}>
-              Next
+              <Trans i18nKey="provisioning.setup-modal.next">Next</Trans>
             </Button>
           )}
         </Stack>

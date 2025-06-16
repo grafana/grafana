@@ -69,8 +69,6 @@ To manage folder permissions, complete the following steps.
 
 ### Before you begin
 
-- Enable the `alertingApiServer` feature toggle.
-
 Extend or limit the access provided by a role to contact points by assigning permissions to individual contact point.
 
 This allows different users, teams, or service accounts to have customized access to read or modify specific contact points.

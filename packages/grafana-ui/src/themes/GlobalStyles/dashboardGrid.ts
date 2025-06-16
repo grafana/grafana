@@ -91,22 +91,18 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     },
 
     '.dashboard-canvas-add-button': {
+      display: 'flex',
       opacity: 0.5,
       transition: theme.transitions.create('opacity'),
       filter: `grayscale(100%)`,
-
-      '&:hover': {
+      '&:hover,:focus-within': {
         opacity: 1,
         filter: 'unset',
       },
     },
 
     '.dashboard-visible-hidden-element': {
-      opacity: 0.6,
-
-      '&:hover': {
-        opacity: 1,
-      },
+      position: 'relative',
     },
 
     // Universal style for marking drop targets when dragging between layouts
@@ -116,7 +112,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       '&:is(:hover),&:not(:hover)': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '0px',
-        borderRadius: '2px',
+        borderRadius: theme.shape.radius.default,
       },
     },
 

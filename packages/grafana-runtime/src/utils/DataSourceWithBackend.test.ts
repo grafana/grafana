@@ -37,6 +37,14 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
   applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[] | undefined): MyQuery {
     return { ...query, applyTemplateVariablesCalled: true, filters };
   }
+
+  async getValue(key: string) {
+    return await this.userStorage.getItem(key);
+  }
+
+  async setValue(key: string, value: string) {
+    await this.userStorage.setItem(key, value);
+  }
 }
 
 const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
@@ -534,6 +542,15 @@ describe('DataSourceWithBackend', () => {
       ds.query(request);
 
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
+    });
+  });
+
+  describe('user storage', () => {
+    test('sets and gets a value', async () => {
+      const { ds } = createMockDatasource();
+
+      await ds.setValue('multiplier', '1');
+      expect(await ds.getValue('multiplier')).toBe('1');
     });
   });
 });

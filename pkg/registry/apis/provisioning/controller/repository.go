@@ -58,7 +58,7 @@ type RepositoryController struct {
 	resourceLister resources.ResourceLister
 	repoLister     listers.RepositoryLister
 	repoSynced     cache.InformerSynced
-	parsers        *resources.ParserFactory
+	parsers        resources.ParserFactory
 	logger         logging.Logger
 	secrets        secrets.Service
 	dualwrite      dualwrite.Service
@@ -83,7 +83,8 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
 	resourceLister resources.ResourceLister,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
+	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
 	secrets secrets.Service,
@@ -104,7 +105,7 @@ func NewRepositoryController(
 		parsers:    parsers,
 		finalizer: &finalizer{
 			lister:        resourceLister,
-			clientFactory: parsers.ClientFactory,
+			clientFactory: clients,
 		},
 		tester:    tester,
 		jobs:      jobs,
@@ -270,18 +271,22 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 	if err != nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"error running test repository",
-				err.Error(),
-			},
+			Errors: []provisioning.ErrorDetails{{
+				Detail: fmt.Sprintf("error running test repository: %s", err.Error()),
+			}},
 		}
 	}
 
 	healthStatus := provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
 	}
+	for _, err := range res.Errors {
+		if err.Detail != "" {
+			healthStatus.Message = append(healthStatus.Message, err.Detail)
+		}
+	}
+
 	logger.Info("health check completed", "status", healthStatus)
 
 	return healthStatus
@@ -305,7 +310,7 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
 
-func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) (*provisioning.WebhookStatus, error) {
+func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 	hooks, _ := repo.(repository.Hooks)
 	if hooks == nil || obj.Generation == obj.Status.ObservedGeneration {
@@ -314,20 +319,20 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 
 	if obj.Status.ObservedGeneration < 1 {
 		logger.Info("handle repository create")
-		webhookStatus, err := hooks.OnCreate(ctx)
+		patchOperations, err := hooks.OnCreate(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error running OnCreate: %w", err)
 		}
-		return webhookStatus, nil
+		return patchOperations, nil
 	}
 
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	webhookStatus, err := hooks.OnUpdate(ctx)
+	patchOperations, err := hooks.OnUpdate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error running OnUpdate: %w", err)
 	}
 
-	return webhookStatus, nil
+	return patchOperations, nil
 }
 
 func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
@@ -361,15 +366,10 @@ func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
-	job, err := rc.jobs.Insert(ctx, &provisioning.Job{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: obj.Namespace,
-		},
-		Spec: provisioning.JobSpec{
-			Repository: obj.GetName(),
-			Action:     provisioning.JobActionPull,
-			Pull:       syncOptions,
-		},
+	job, err := rc.jobs.Insert(ctx, obj.Namespace, provisioning.JobSpec{
+		Repository: obj.GetName(),
+		Action:     provisioning.JobActionPull,
+		Pull:       syncOptions,
 	})
 	if apierrors.IsAlreadyExists(err) {
 		logging.FromContext(ctx).Info("sync job already exists, nothing triggered")
@@ -498,16 +498,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Run hooks
-	webhookStatus, err := rc.runHooks(ctx, repo, obj)
+	hookOps, err := rc.runHooks(ctx, repo, obj)
 	switch {
 	case err != nil:
 		return err
-	case webhookStatus != nil:
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/webhook",
-			"value": webhookStatus,
-		})
+	case len(hookOps) > 0:
+		patchOperations = append(patchOperations, hookOps...)
 	}
 
 	// determine the sync strategy and sync status to apply

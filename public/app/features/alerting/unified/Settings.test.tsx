@@ -1,5 +1,4 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -26,8 +25,9 @@ const ui = {
   statusReceiving: byText(/receiving grafana-managed alerts/i),
   statusNotReceiving: byText(/not receiving/i),
 
-  configurationDrawer: byRole('dialog', { name: 'Drawer title Internal Grafana Alertmanager' }),
+  configurationDrawer: byRole('dialog', { name: 'Drawer title Grafana built-in Alertmanager' }),
   editConfigurationButton: byRole('button', { name: /edit configuration/i }),
+  viewConfigurationButton: byRole('button', { name: /view configuration/i }),
   saveConfigurationButton: byRole('button', { name: /save/i }),
 
   enableButton: byRole('button', { name: 'Enable' }),
@@ -54,7 +54,7 @@ describe('Alerting settings', () => {
 
     expect(ui.statusReceiving.get(ui.builtInAlertmanagerCard.get())).toBeInTheDocument();
 
-    // check external altermanagers
+    // check external alertmanagers
     DataSourcesResponse.forEach((ds) => {
       // get the card for datasource
       const card = ui.alertmanagerCard(ds.name).get();
@@ -74,45 +74,36 @@ describe('Alerting settings', () => {
   });
 
   it('should be able to view configuration', async () => {
-    render(<SettingsPage />);
+    const { user } = render(<SettingsPage />);
 
     // wait for loading to be done
     await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
 
     // open configuration drawer
     const internalAMCard = ui.builtInAlertmanagerCard.get();
-    const editInternal = ui.editConfigurationButton.get(internalAMCard);
-    await userEvent.click(editInternal);
+    await user.click(ui.viewConfigurationButton.get(internalAMCard));
+    expect(await ui.configurationDrawer.find()).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(ui.configurationDrawer.get()).toBeInTheDocument();
-    });
-
-    await userEvent.click(ui.saveConfigurationButton.get());
-    expect(ui.saveConfigurationButton.get()).toBeDisabled();
-
-    await waitFor(() => {
-      expect(ui.saveConfigurationButton.get()).toBeEnabled();
-    });
+    expect(ui.saveConfigurationButton.query()).not.toBeInTheDocument();
   });
 
   it('should be able to view versions', async () => {
-    render(<SettingsPage />);
+    const { user } = render(<SettingsPage />);
 
     // wait for loading to be done
-    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+    expect(await ui.builtInAlertmanagerSection.find()).toBeInTheDocument();
 
     // open configuration drawer
     const internalAMCard = ui.builtInAlertmanagerCard.get();
-    const editInternal = ui.editConfigurationButton.get(internalAMCard);
-    await userEvent.click(editInternal);
+    await user.click(ui.viewConfigurationButton.get(internalAMCard));
+    expect(await ui.configurationDrawer.find()).toBeInTheDocument();
 
     await waitFor(() => {
       expect(ui.configurationDrawer.get()).toBeInTheDocument();
     });
 
     // click versions tab
-    await userEvent.click(ui.versionsTab.get());
+    await user.click(ui.versionsTab.get());
 
     await waitFor(() => {
       expect(screen.getByText(/last applied/i)).toBeInTheDocument();

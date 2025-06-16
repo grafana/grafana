@@ -1,5 +1,5 @@
+import { Trans } from '@grafana/i18n';
 import { Box, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { LdapUser } from 'app/types';
 
 import { LdapUserGroups } from './LdapUserGroups';

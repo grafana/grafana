@@ -257,6 +257,7 @@ export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+export { throwIfAngular } from './utils/throwIfAngular';
 
 // Tranformations
 export { standardTransformers } from './transformations/transformers';
@@ -551,10 +552,7 @@ export {
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
   type ComponentTypeWithExtensionMeta,
-  type PluginExtensionConfig,
   type PluginExtensionFunction,
-  type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
@@ -565,6 +563,7 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionResourceAttributesContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -601,6 +600,7 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
+  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,
@@ -815,7 +815,11 @@ export {
 export {
   type Action,
   type ActionModel,
+  type ActionVariable,
+  type ActionVariableInput,
+  ActionType,
   HttpRequestMethod,
+  ActionVariableType,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
@@ -874,3 +878,5 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
+
+export { type UserStorage } from './types/userStorage';

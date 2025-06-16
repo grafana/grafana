@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';

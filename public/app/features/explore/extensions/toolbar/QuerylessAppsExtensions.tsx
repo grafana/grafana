@@ -1,9 +1,8 @@
 import { first } from 'lodash';
 
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { Trans } from '../../../../core/internationalization';
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
 import { ExtensionDropdownProps } from './types';

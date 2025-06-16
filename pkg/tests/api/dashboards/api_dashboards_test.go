@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,25 +17,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 func TestMain(m *testing.M) {
@@ -68,14 +57,7 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("when quota limit doesn't exceed, importing a dashboard should succeed", func(t *testing.T) {
 		// Import dashboard
@@ -127,26 +109,6 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 	})
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
-}
-
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -189,14 +151,7 @@ providers:
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// give provisioner some time since we don't have a way to know when provisioning is complete
 	// TODO https://github.com/grafana/grafana/issues/85617
@@ -210,34 +165,23 @@ providers:
 		title := "Grafana Dev Overview & Home"
 		dashboardList := &model.HitList{}
 
-		retry := 0
-		retries := 5
-		// retry until the provisioned dashboard is ready
-		err := retryer.Retry(func() (retryer.RetrySignal, error) {
-			retry++
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			u := fmt.Sprintf("http://admin:admin@%s/api/search?query=%s", grafanaListedAddr, url.QueryEscape(title))
 			// nolint:gosec
 			resp, err := http.Get(u)
 			require.NoError(t, err)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
+
 			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
 			err = json.Unmarshal(b, dashboardList)
 			require.NoError(t, err)
-			if dashboardList.Len() == 0 {
-				if retry >= retries {
-					return retryer.FuncError, fmt.Errorf("max retries exceeded")
-				}
-				t.Log("Dashboard is not ready", "retry", retry)
-				return retryer.FuncFailure, nil
-			}
-			return retryer.FuncComplete, nil
-		}, retries, time.Millisecond*time.Duration(10), time.Second)
-		require.NoError(t, err)
+
+			assert.Greater(collect, dashboardList.Len(), 0, "Dashboard should be ready")
+		}, 10*time.Second, 25*time.Millisecond)
 
 		var dashboardUID string
 		var dashboardID int64
@@ -352,6 +296,14 @@ func TestIntegrationCreateK8s(t *testing.T) {
 	testCreate(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
 }
 
+func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testPreserveSchemaVersion(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
 func testCreate(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -359,14 +311,7 @@ func testCreate(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("create dashboard should succeed", func(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
@@ -510,4 +455,99 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	require.NoError(t, err)
 
 	return f
+}
+
+func intPtr(n int) *int {
+	return &n
+}
+
+func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
+	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
+	for _, schemaVersion := range schemaVersions {
+		var title string
+		if schemaVersion == nil {
+			title = "save dashboard with no schemaVersion"
+		} else {
+			title = fmt.Sprintf("save dashboard with schemaVersion %d", *schemaVersion)
+		}
+
+		t.Run(title, func(t *testing.T) {
+			// Create dashboard JSON with specified schema version
+			var dashboardJSON string
+			if schemaVersion != nil {
+				dashboardJSON = fmt.Sprintf(`{"title":"Schema Version Test", "schemaVersion": %d}`, *schemaVersion)
+			} else {
+				dashboardJSON = `{"title":"Schema Version Test"}`
+			}
+
+			dashboardData, err := simplejson.NewJson([]byte(dashboardJSON))
+			require.NoError(t, err)
+
+			// Save the dashboard via API
+			buf := &bytes.Buffer{}
+			err = json.NewEncoder(buf).Encode(dashboards.SaveDashboardCommand{
+				Dashboard: dashboardData,
+			})
+			require.NoError(t, err)
+
+			url := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Post(url, "application/json", buf)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			// Get dashboard UID from response
+			b, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			var saveResp struct {
+				UID string `json:"uid"`
+			}
+			err = json.Unmarshal(b, &saveResp)
+			require.NoError(t, err)
+			require.NotEmpty(t, saveResp.UID)
+
+			getDashURL := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, saveResp.UID)
+			// nolint:gosec
+			getResp, err := http.Get(getDashURL)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, getResp.StatusCode)
+			t.Cleanup(func() {
+				err := getResp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			// Parse response and check if schema version is preserved
+			dashBody, err := io.ReadAll(getResp.Body)
+			require.NoError(t, err)
+
+			var dashResp struct {
+				Dashboard *simplejson.Json `json:"dashboard"`
+			}
+			err = json.Unmarshal(dashBody, &dashResp)
+			require.NoError(t, err)
+
+			actualSchemaVersion := dashResp.Dashboard.Get("schemaVersion")
+			if schemaVersion != nil {
+				// Check if schemaVersion is preserved (not migrated to latest)
+				actualVersion := actualSchemaVersion.MustInt()
+				require.Equal(t, *schemaVersion, actualVersion,
+					"Dashboard schemaVersion should not be automatically changed when saved through /api/dashboards/db")
+			} else {
+				actualVersion, err := actualSchemaVersion.Int()
+				s, _ := dashResp.Dashboard.EncodePretty()
+				require.Error(t, err, fmt.Sprintf("Dashboard schemaVersion should not be automatically populated when saved through /api/dashboards/db, was %d. %s", actualVersion, string(s)))
+			}
+		})
+	}
 }

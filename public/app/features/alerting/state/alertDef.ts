@@ -1,5 +1,6 @@
 import { isArray, reduce } from 'lodash';
 
+import { t } from '@grafana/i18n';
 import { IconName } from '@grafana/ui';
 import { QueryPart, QueryPartDef } from 'app/features/alerting/state/query_part';
 
@@ -114,35 +115,42 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
     case 'normal':
     case 'ok': {
       return {
-        text: 'OK',
+        text: t('alerting.get-state-display-model.text.ok', 'OK'),
         iconClass: 'heart',
         stateClass: 'alert-state-ok',
       };
     }
     case 'alerting': {
       return {
-        text: 'ALERTING',
+        text: t('alerting.get-state-display-model.text.alerting', 'ALERTING'),
         iconClass: 'heart-break',
         stateClass: 'alert-state-critical',
       };
     }
     case 'nodata': {
       return {
-        text: 'NO DATA',
+        text: t('alerting.get-state-display-model.text.no-data', 'NO DATA'),
         iconClass: 'question-circle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'paused': {
       return {
-        text: 'PAUSED',
+        text: t('alerting.get-state-display-model.text.paused', 'PAUSED'),
         iconClass: 'pause',
         stateClass: 'alert-state-paused',
       };
     }
     case 'pending': {
       return {
-        text: 'PENDING',
+        text: t('alerting.get-state-display-model.text.pending', 'PENDING'),
+        iconClass: 'hourglass',
+        stateClass: 'alert-state-warning',
+      };
+    }
+    case 'recovering': {
+      return {
+        text: t('alerting.get-state-display-model.text.recovering', 'RECOVERING'),
         iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
@@ -150,7 +158,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'firing': {
       return {
-        text: 'FIRING',
+        text: t('alerting.get-state-display-model.text.firing', 'FIRING'),
         iconClass: 'fire',
         stateClass: '',
       };
@@ -158,7 +166,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'inactive': {
       return {
-        text: 'INACTIVE',
+        text: t('alerting.get-state-display-model.text.inactive', 'INACTIVE'),
         iconClass: 'check',
         stateClass: '',
       };
@@ -166,7 +174,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'error': {
       return {
-        text: 'ERROR',
+        text: t('alerting.get-state-display-model.text.error', 'ERROR'),
         iconClass: 'heart-break',
         stateClass: 'alert-state-critical',
       };
@@ -175,7 +183,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
     case 'unknown':
     default: {
       return {
-        text: 'UNKNOWN',
+        text: t('alerting.get-state-display-model.text.unknown', 'UNKNOWN'),
         iconClass: 'question-circle',
         stateClass: '.alert-state-paused',
       };

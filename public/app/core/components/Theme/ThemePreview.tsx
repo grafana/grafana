@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Box, Divider, Icon, Stack, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../internationalization';
 import { Branding } from '../Branding/Branding';
 
 interface ThemePreviewProps {

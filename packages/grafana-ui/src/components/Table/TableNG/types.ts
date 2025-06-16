@@ -11,6 +11,7 @@ import {
   ActionModel,
   InterpolateFunction,
   FieldType,
+  DataFrameWithValue,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -66,6 +67,7 @@ export type TableCellValue =
   | Date // FieldType.time
   | DataFrame // For nested data
   | DataFrame[] // For nested frames
+  | DataFrameWithValue // For sparklines
   | undefined; // For undefined values
 
 export interface TableRow {
@@ -79,6 +81,15 @@ export interface TableRow {
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
+}
+
+export interface CustomCellRendererProps {
+  field: Field;
+  rowIndex: number;
+  frame: DataFrame;
+  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
+  // types could be propagated here.
+  value: unknown;
 }
 
 export interface CustomHeaderRendererProps {
@@ -134,7 +145,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellNGProps {
-  cellInspect: boolean;
   field: Field;
   frame: DataFrame;
   getActions?: GetActionsFunction;
@@ -148,6 +158,8 @@ export interface TableCellNGProps {
   timeRange: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
+  onCellFilterAdded?: TableFilterActionCallback;
+  replaceVariables?: InterpolateFunction;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
@@ -167,7 +179,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps {
+export interface BarGaugeCellProps extends ActionCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -177,7 +189,7 @@ export interface BarGaugeCellProps {
   timeRange: TimeRange;
 }
 
-export interface ImageCellProps {
+export interface ImageCellProps extends ActionCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
@@ -186,7 +198,7 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
+export interface JSONCellProps extends ActionCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
@@ -196,6 +208,12 @@ export interface JSONCellProps {
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
+}
+
+export interface GeoCellProps {
+  value: TableCellValue;
+  justifyContent: Property.JustifyContent;
+  height: number;
 }
 
 export interface ActionCellProps {
@@ -208,7 +226,7 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps {
+export interface AutoCellProps extends ActionCellProps {
   value: TableCellValue;
   field: Field;
   justifyContent: Property.JustifyContent;

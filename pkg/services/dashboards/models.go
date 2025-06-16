@@ -239,6 +239,14 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
 }
 
+type DashboardProvisioningSearchResults struct {
+	Dashboard       Dashboard `xorm:"extends"`
+	Provisioner     string    `xorm:"name"`
+	ExternalID      string    `xorm:"external_id"`
+	CheckSum        string    `xorm:"check_sum"`
+	ProvisionUpdate int64     `xorm:"provisioning_updated"`
+}
+
 //
 // QUERIES
 //

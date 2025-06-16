@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';

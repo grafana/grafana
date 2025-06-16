@@ -96,18 +96,18 @@ email_attribute_path = user.emails[1] # user's email is professional@email.com
 If you want to embed Grafana in an iframe while maintaining user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana Cloud, or scenarios where verifying viewer identity is not required,
 embed [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 In this scenario, you will need to configure Grafana to accept a JWT
 provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
@@ -117,12 +117,14 @@ can use URL login instead.
 `url_login` allows grafana to search for a JWT in the URL query parameter
 `auth_token` and use it as the authentication token.
 
-**Note**: You need to have enabled JWT before setting this setting see section Enabled JWT
+{{< admonition type="note" >}}
+You need to enable JWT before setting this setting. Refer to [Enabled JWT](#enable-jwt).
+{{< /admonition >}}
 
-{{% admonition type="warning" %}}
-this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
+{{< admonition type="warning" >}}
+This can lead to JWTs being exposed in logs and possible session hijacking if the server is not
 using HTTP over TLS.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```ini
 # [auth.jwt]
@@ -159,7 +161,9 @@ jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 cache_ttl = 60m
 ```
 
-> **Note**: If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the cache_ttl is not set, no caching is performed. `no-store` and `no-cache` cache control headers are ignored.
+{{< admonition type="note" >}}
+If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, no caching is performed. `no-store` and `no-cache` cache control headers are ignored.
+{{< /admonition >}}
 
 ### Verify token using a JSON Web Key Set loaded from JSON file
 

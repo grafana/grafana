@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   canSave: boolean;
@@ -32,7 +32,7 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
           onClick={onSubmit}
           data-testid={selectors.pages.DataSource.saveAndTest}
         >
-          Save &amp; test
+          <Trans i18nKey="datasources.button-row.save-and-test">Save &amp; test</Trans>
         </Button>
       )}
       {!canSave && (

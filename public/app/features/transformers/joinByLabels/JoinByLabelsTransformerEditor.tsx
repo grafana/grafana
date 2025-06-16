@@ -8,8 +8,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
@@ -110,7 +110,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         <InlineField
           error="required"
           invalid={!Boolean(options.value?.length)}
-          label={'Value'}
+          label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}
           tooltip={t(
             'transformers.join-by-labels-transformer-editor.tooltip-select-label-indicating-values',
@@ -129,7 +129,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         options.join!.map((v, idx) => (
           <InlineFieldRow key={v + idx}>
             <InlineField
-              label={'Join'}
+              label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
               labelWidth={labelWidth}
               error="Unable to join by the value label"
               invalid={v === options.value}
@@ -159,7 +159,10 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
         <>
           {Boolean(info.addOptions.length) && (
             <InlineFieldRow>
-              <InlineField label={'Join'} labelWidth={labelWidth}>
+              <InlineField
+                label={t('transformers.join-by-labels-transformer-editor.label-join', 'Join')}
+                labelWidth={labelWidth}
+              >
                 <Select
                   options={info.addOptions}
                   placeholder={info.addText}

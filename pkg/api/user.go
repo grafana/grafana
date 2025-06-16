@@ -33,12 +33,12 @@ import (
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
 	if !c.IsIdentityType(claims.TypeUser) {
 		return response.JSON(http.StatusOK, user.UserProfileDTO{
-			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
-			OrgID:          c.SignedInUser.GetOrgID(),
-			UID:            c.SignedInUser.GetID(),
-			Name:           c.SignedInUser.GetName(),
-			Email:          c.SignedInUser.GetEmail(),
-			Login:          c.SignedInUser.GetLogin(),
+			IsGrafanaAdmin: c.GetIsGrafanaAdmin(),
+			OrgID:          c.GetOrgID(),
+			UID:            c.GetID(),
+			Name:           c.GetName(),
+			Email:          c.GetEmail(),
+			Login:          c.GetLogin(),
 		})
 	}
 
@@ -122,6 +122,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 		Login:          usr.Login,
 		Theme:          usr.Theme,
 		IsGrafanaAdmin: usr.IsAdmin,
+		IsDisabled:     usr.IsDisabled,
 		OrgID:          usr.OrgID,
 		UpdatedAt:      usr.Updated,
 		CreatedAt:      usr.Created,
@@ -155,10 +156,10 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	}
 
 	if hs.Cfg.AuthProxy.Enabled {
-		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
+		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.GetEmail() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
+		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.GetLogin() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -276,16 +277,16 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response.Response {
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
-	if c.SignedInUser.GetEmailVerified() {
+	if c.GetEmailVerified() {
 		// email is already verified so we don't need to trigger the flow.
 		return response.Respond(http.StatusNotModified, nil)
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Got invalid user id", err)
 	}
@@ -374,7 +375,7 @@ func (hs *HTTPServer) GetSignedInUserTeamList(c *contextmodel.ReqContext) respon
 		return errResponse
 	}
 
-	return hs.getUserTeamList(c, c.SignedInUser.GetOrgID(), userID)
+	return hs.getUserTeamList(c, c.GetOrgID(), userID)
 }
 
 // swagger:route GET /users/{user_id}/teams users getUserTeams
@@ -394,7 +395,7 @@ func (hs *HTTPServer) GetUserTeams(c *contextmodel.ReqContext) response.Response
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	return hs.getUserTeamList(c, c.SignedInUser.GetOrgID(), id)
+	return hs.getUserTeamList(c, c.GetOrgID(), id)
 }
 
 func (hs *HTTPServer) getUserTeamList(c *contextmodel.ReqContext, orgID int64, userID int64) response.Response {
@@ -503,13 +504,13 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		hs.log.Debug("Requested endpoint only available to users")
 		c.JsonApiErr(http.StatusNotModified, "Endpoint only available for users", nil)
 		return
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to parse user id", err)
 		return
@@ -629,12 +630,12 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		hs.log.Debug("Requested endpoint only available to users")
 		return 0, response.Error(http.StatusNotModified, "Endpoint only available for users", nil)
 	}
 
-	userID, err := c.SignedInUser.GetInternalID()
+	userID, err := c.GetInternalID()
 	if err != nil {
 		return 0, response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 	}

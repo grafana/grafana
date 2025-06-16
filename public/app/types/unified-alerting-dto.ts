@@ -3,7 +3,7 @@
 import { DataQuery, RelativeTimeRange } from '@grafana/data';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
-import { AlertGroupTotals } from './unified-alerting';
+import { AlertGroupTotals, AlertInstanceTotals } from './unified-alerting';
 
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
@@ -12,12 +12,15 @@ export enum PromAlertingRuleState {
   Firing = 'firing',
   Inactive = 'inactive',
   Pending = 'pending',
+  Recovering = 'recovering',
+  Unknown = 'unknown',
 }
 
 export enum GrafanaAlertState {
   Normal = 'Normal',
   Alerting = 'Alerting',
   Pending = 'Pending',
+  Recovering = 'Recovering',
   NoData = 'NoData',
   Error = 'Error',
 }
@@ -122,7 +125,13 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
-  uid?: string;
+}
+
+interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
+  uid: string;
+  folderUid: string;
+  isPaused: boolean;
+  queriedDatasourceUIDs?: string[];
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
@@ -138,6 +147,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   duration?: number; // for
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+  notificationSettings?: GrafanaNotificationSettings;
 }
 
 export interface PromRecordingRuleDTO extends PromRuleDTOBase {
@@ -160,15 +170,13 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   lastEvaluation?: string;
 }
 
-export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
-  uid: string;
-  folderUid: string;
+export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {
+  totals: AlertInstanceTotals;
+  totalsFiltered: AlertInstanceTotals;
 }
 
-export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
-  uid: string;
-  folderUid: string;
-}
+export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRuleDTOBase, PromRecordingRuleDTO {}
+
 export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 
 export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
@@ -183,11 +191,14 @@ export interface PromResponse<T> {
   warnings?: string[];
 }
 
-export type PromRulesResponse = PromResponse<{
-  groups: PromRuleGroupDTO[];
-  groupNextToken?: string;
-  totals?: AlertGroupTotals;
-}>;
+export interface PromRulesResponse extends PromResponse<{ groups: PromRuleGroupDTO[]; groupNextToken?: string }> {}
+
+export interface GrafanaPromRulesResponse
+  extends PromResponse<{
+    groups: GrafanaPromRuleGroupDTO[];
+    groupNextToken?: string;
+    totals?: AlertGroupTotals;
+  }> {}
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {
@@ -237,6 +248,7 @@ export interface GrafanaNotificationSettings {
   group_interval?: string;
   repeat_interval?: string;
   mute_time_intervals?: string[];
+  active_time_intervals?: string[];
 }
 
 export interface GrafanaEditorSettings {
@@ -266,6 +278,7 @@ export interface PostableGrafanaRuleDefinition {
     target_datasource_uid?: string;
   };
   intervalSeconds?: number;
+  missing_series_evals_to_resolve?: number;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
@@ -290,8 +303,9 @@ export type GrafanaRecordingRuleDefinition = GrafanaRuleDefinition & {
 export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
   for?: string;
-  annotations: Annotations;
-  labels: Labels;
+  keep_firing_for?: string;
+  annotations?: Annotations;
+  labels?: Labels;
 }
 
 export type TopLevelGrafanaRuleDTOField = keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;

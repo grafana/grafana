@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -44,7 +45,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point" data-testid="contact-point-picker">
+        <Field
+          label={t('alerting.contact-point-selector.contact-point-picker-label-contact-point', 'Contact point')}
+          data-testid="contact-point-picker"
+        >
           <Controller
             render={({ field: { onChange }, fieldState: { error } }) => (
               <>
@@ -73,7 +77,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
             rules={{
               required: {
                 value: true,
-                message: 'Contact point is required.',
+                message: t(
+                  'alerting.contact-point-selector.message.contact-point-is-required',
+                  'Contact point is required.'
+                ),
               },
             }}
             control={control}
@@ -87,8 +94,17 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <TextLink external href={createRelativeUrl(hrefToContactPoints)} aria-label="View or create contact points">
-      View or create contact points
+    <TextLink
+      external
+      href={createRelativeUrl(hrefToContactPoints)}
+      aria-label={t(
+        'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
+        'View or create contact points'
+      )}
+    >
+      <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
+        View or create contact points
+      </Trans>
     </TextLink>
   );
 }

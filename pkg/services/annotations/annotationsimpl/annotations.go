@@ -41,7 +41,7 @@ func ProvideService(
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, ruleStore, log.New("annotations.loki"), tracer)
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)
@@ -79,6 +79,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	}
 
 	// Search without dashboard UID filter is expensive, so check without access control first
+	// nolint: staticcheck
 	if query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
 		res, err := r.reader.Get(ctx, *query, &accesscontrol.AccessResources{

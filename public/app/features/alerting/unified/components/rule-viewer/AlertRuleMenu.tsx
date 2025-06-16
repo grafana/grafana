@@ -1,7 +1,9 @@
+import { PropsOf } from '@emotion/react';
+
 import { AppEvents } from '@grafana/data';
-import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
@@ -16,7 +18,7 @@ import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  promRule: Rule;
+  promRule?: Rule;
   rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;
@@ -25,6 +27,7 @@ interface Props {
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
+  fill?: PropsOf<typeof Button>['fill'];
 }
 
 /**
@@ -41,6 +44,7 @@ const AlertRuleMenu = ({
   handleDuplicateRule,
   onPauseChange,
   buttonSize,
+  fill,
 }: Props) => {
   // check all abilities and permissions
   const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Pause);
@@ -144,8 +148,8 @@ const AlertRuleMenu = ({
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-      <MoreButton size={buttonSize} />
+    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
+      <MoreButton size={buttonSize} fill={fill} />
     </Dropdown>
   );
 };
@@ -155,7 +159,7 @@ interface ExportMenuItemProps {
 }
 
 const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
-  const returnTo = location.pathname + location.search;
+  const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
     {

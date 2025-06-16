@@ -3,6 +3,7 @@ import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { CorrelationData, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
@@ -21,7 +22,6 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';

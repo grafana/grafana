@@ -8,6 +8,7 @@ import (
 )
 
 type FakeService struct {
+	ExpectedFoldersRef       []*folder.FolderReference
 	ExpectedFolders          []*folder.Folder
 	ExpectedFolder           *folder.Folder
 	ExpectedHitList          model.HitList
@@ -22,11 +23,11 @@ func NewFakeService() *FakeService {
 
 var _ folder.Service = (*FakeService)(nil)
 
-func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	return s.ExpectedFoldersRef, s.ExpectedError
 }
-func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
+func (s *FakeService) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
+	return s.ExpectedFoldersRef, s.ExpectedError
 }
 
 func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {

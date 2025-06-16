@@ -1,6 +1,6 @@
 import { locationService } from '@grafana/runtime';
 import { Badge, BadgeColor, IconName } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -63,7 +63,7 @@ export function StatusBadge({ repo }: StatusBadgeProps) {
       style={{ cursor: 'pointer' }}
       tooltip={tooltip}
       onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=overview`);
+        locationService.push(`${PROVISIONING_URL}/${repo.metadata?.name}/?tab=overview`);
       }}
     />
   );

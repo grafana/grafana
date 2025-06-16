@@ -1,9 +1,9 @@
 import { useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, OrgRole } from 'app/types';
 
 const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {
@@ -17,6 +17,7 @@ interface GroupMappingProps {
 
 export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMappingProps) => {
   const { getValues, register, setValue } = useFormContext<LdapPayload>();
+
   return (
     <Box borderColor="strong" borderStyle="solid" padding={2} marginBottom={2}>
       <Field

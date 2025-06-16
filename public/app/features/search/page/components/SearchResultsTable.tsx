@@ -7,10 +7,10 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';

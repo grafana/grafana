@@ -34,7 +34,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.Response {
-	query := tempuser.GetTempUsersQuery{OrgID: c.SignedInUser.GetOrgID(), Status: tempuser.TmpUserInvitePending}
+	query := tempuser.GetTempUsersQuery{OrgID: c.GetOrgID(), Status: tempuser.TmpUserInvitePending}
 
 	queryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query)
 	if err != nil {
@@ -67,7 +67,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	if !inviteDto.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
-	if !c.SignedInUser.GetOrgRole().Includes(inviteDto.Role) && !c.SignedInUser.GetIsGrafanaAdmin() {
+	if !c.SignedInUser.GetOrgRole().Includes(inviteDto.Role) && !c.GetIsGrafanaAdmin() {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
@@ -96,13 +96,13 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	}
 
 	cmd := tempuser.CreateTempUserCommand{}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.OrgID = c.GetOrgID()
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
 	cmd.Status = tempuser.TmpUserInvitePending
 
 	var userID int64
-	if id, err := identity.UserIdentifier(c.SignedInUser.GetID()); err == nil {
+	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
 		userID = id
 	}
 
@@ -126,10 +126,10 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 			Template: "new_user_invite",
 			Data: map[string]any{
 				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
-				"OrgName":   c.SignedInUser.GetOrgName(),
-				"Email":     c.SignedInUser.GetEmail(),
+				"OrgName":   c.GetOrgName(),
+				"Email":     c.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy": c.SignedInUser.GetName(),
+				"InvitedBy": c.GetName(),
 			},
 		}
 
@@ -154,7 +154,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 
 func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
-	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.SignedInUser.GetOrgID(), UserID: user.ID, Role: inviteDto.Role}
+	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.GetOrgID(), UserID: user.ID, Role: inviteDto.Role}
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
@@ -168,8 +168,8 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 			Template: "invited_to_org",
 			Data: map[string]any{
 				"Name":      user.NameOrFallback(),
-				"OrgName":   c.SignedInUser.GetOrgName(),
-				"InvitedBy": c.SignedInUser.GetName(),
+				"OrgName":   c.GetOrgName(),
+				"InvitedBy": c.GetName(),
 			},
 		}
 
@@ -179,7 +179,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
-		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.SignedInUser.GetOrgName()),
+		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.GetOrgName()),
 		"userId":  user.ID,
 	})
 }
@@ -204,7 +204,7 @@ func (hs *HTTPServer) RevokeInvite(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
 	}
 
-	canRevoke := c.SignedInUser.GetOrgID() == queryResult.OrgID || c.SignedInUser.GetIsGrafanaAdmin()
+	canRevoke := c.GetOrgID() == queryResult.OrgID || c.GetIsGrafanaAdmin()
 	if !canRevoke {
 		return response.Error(http.StatusForbidden, "Permission denied: not permitted to revoke invite", nil)
 	}

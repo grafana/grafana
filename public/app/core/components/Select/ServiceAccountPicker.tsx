@@ -3,6 +3,7 @@ import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
@@ -65,9 +66,9 @@ export class ServiceAccountPicker extends Component<Props, State> {
           defaultOptions={true}
           loadOptions={this.search}
           onChange={onSelected}
-          placeholder="Start typing to search for service accounts"
+          placeholder={t('service-account-picker.select-placeholder', 'Start typing to search for service accounts')}
           noOptionsMessage="No service accounts found"
-          aria-label="Service Account picker"
+          aria-label={t('service-account-picker.select-aria-label', 'Service account picker')}
         />
       </div>
     );

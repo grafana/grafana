@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
 import {
@@ -11,7 +12,7 @@ import {
   ResourceWrapper,
   useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning';
+} from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -35,7 +36,11 @@ export default function FileStatusPage() {
     >
       <Page.Contents isLoading={file.isLoading}>
         <>
-          {isFetchError(file.error) && <Alert title="Error loading file">{file.error.message}</Alert>}
+          {isFetchError(file.error) && (
+            <Alert title={t('provisioning.file-status-page.title-error-loading-file', 'Error loading file')}>
+              {file.error.message}
+            </Alert>
+          )}
           {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
         </>
       </Page.Contents>
@@ -81,9 +86,18 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   }, [wrap, tab, setJsonView]);
 
   const tabInfo = [
-    { value: TabSelection.File, label: 'File (from repository)' },
-    { value: TabSelection.Existing, label: 'Existing (from grafana)' },
-    { value: TabSelection.DryRun, label: 'Dry Run (result after apply)' },
+    {
+      value: TabSelection.File,
+      label: t('provisioning.resource-view.tab-info.label.file-from-repository', 'File (from repository)'),
+    },
+    {
+      value: TabSelection.Existing,
+      label: t('provisioning.resource-view.tab-info.label.existing-from-grafana', 'Existing (from Grafana)'),
+    },
+    {
+      value: TabSelection.DryRun,
+      label: t('provisioning.resource-view.tab-info.label.dry-run-result-after-apply', 'Dry run (result after apply)'),
+    },
   ];
 
   return (
@@ -91,24 +105,24 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
       <Stack>
         {isDashboard && (
           <LinkButton target={'_blank'} href={`${PROVISIONING_URL}/${repo}/dashboard/preview/${wrap.path}`}>
-            Dashboard Preview
+            <Trans i18nKey="provisioning.resource-view.dashboard-preview">Dashboard Preview</Trans>
           </LinkButton>
         )}
         {isDashboard && existingName && (
           <LinkButton target={'_blank'} href={`d/${wrap.resource.existing?.metadata.name}`} variant="secondary">
-            Existing dashboard
+            <Trans i18nKey="provisioning.resource-view.existing-dashboard">Existing dashboard</Trans>
           </LinkButton>
         )}
         <LinkButton href={`${PROVISIONING_URL}/${repo}`} variant="secondary">
-          Repository
+          <Trans i18nKey="provisioning.resource-view.repository">Repository</Trans>
         </LinkButton>
         {repoRef && (
           <LinkButton href={`${PROVISIONING_URL}/${repo}/file/${wrap.path}`} variant="secondary">
-            Base
+            <Trans i18nKey="provisioning.resource-view.base">Base</Trans>
           </LinkButton>
         )}
         <LinkButton href={`${PROVISIONING_URL}/${repo}/history/${wrap.path}`} variant="secondary">
-          History
+          <Trans i18nKey="provisioning.resource-view.history">History</Trans>
         </LinkButton>
       </Stack>
 
@@ -152,11 +166,16 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
                   name: repo,
                   path: wrap.path!,
                   body: JSON.parse(jsonView),
-                  message: 'updated from repo test UI',
+                  message: t(
+                    'provisioning.resource-view.message.updated-from-repo-test-ui',
+                    'updated from repo test UI'
+                  ),
                 });
               }}
             >
-              {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
+              {replaceFileStatus.isLoading
+                ? t('provisioning.file-status-page.saving', 'Saving')
+                : t('provisioning.file-status-page.save', 'Save')}
             </Button>
             <DeleteButton
               size="md"
@@ -165,13 +184,16 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
                 deleteFile({
                   name: repo,
                   path: wrap.path!,
-                  message: 'removed from repo test UI',
+                  message: t(
+                    'provisioning.resource-view.message.removed-from-repo-test-ui',
+                    'removed from repo test UI'
+                  ),
                 });
               }}
             />
           </Stack>
           {replaceFileStatus.isError && (
-            <Alert title="Error saving file">
+            <Alert title={t('provisioning.resource-view.title-error-saving-file', 'Error saving file')}>
               <pre>{JSON.stringify(replaceFileStatus.error)}</pre>
             </Alert>
           )}

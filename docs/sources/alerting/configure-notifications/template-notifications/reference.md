@@ -56,17 +56,19 @@ This documentation lists the data available for use in notification templates.
 
 In notification templates, dot (`.`) is initialized with the following data:
 
-| Name                | Type              | Description                                                                                           |
-| ------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| `Receiver`          | string            | The name of the contact point sending the notification                                                |
-| `Status`            | string            | The status is `firing` if at least one alert is firing, otherwise `resolved`.                         |
-| `Alerts`            | [][Alert](#alert) | List of all firing and resolved alerts in this notification.                                          |
-| `Alerts.Firing`     | [][Alert](#alert) | List of all firing alerts in this notification.                                                       |
-| `Alerts.Resolved`   | [][Alert](#alert) | List of all resolved alerts in this notification.                                                     |
-| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification based on the `Group by` option.               |
-| `CommonLabels`      | [KV](#kv)         | The labels common to all alerts in this notification.                                                 |
-| `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification.                                            |
-| `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager. |
+| Name                | Type              | Description                                                                                             |
+| ------------------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `Receiver`          | string            | The name of the contact point sending the notification                                                  |
+| `Status`            | string            | The status is `firing` if at least one alert is firing, otherwise `resolved`.                           |
+| `Alerts`            | [][Alert](#alert) | List of all firing and resolved alerts in this notification.                                            |
+| `Alerts.Firing`     | [][Alert](#alert) | List of all firing alerts in this notification.                                                         |
+| `Alerts.Resolved`   | [][Alert](#alert) | List of all resolved alerts in this notification.                                                       |
+| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification based on the `Group by` option.                 |
+| `CommonLabels`      | [KV](#kv)         | The labels common to all alerts in this notification.                                                   |
+| `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification.                                              |
+| `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager.   |
+| `GroupKey`          | string            | The key used to identify this alert group.                                                              |
+| `TruncatedAlerts`   | integer           | The number of alerts, if any, that were truncated in the notification. Supported by Webhook and OnCall. |
 
 It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive. `Alerts` is an array that includes all the alerts in the notification.
 
@@ -108,13 +110,14 @@ You can execute this template by passing the dot (`.`):
 
 Grafana-managed alerts include these additional properties:
 
-| Name           | Type      | Description                                                                                        |
-| -------------- | --------- | -------------------------------------------------------------------------------------------------- |
-| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.                       |
-| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation.                                        |
-| `SilenceURL`   | string    | A link to silence the alert.                                                                       |
-| `Values`       | [KV](#kv) | The values of expressions used to evaluate the alert condition. Only relevant values are included. |
-| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert.               |
+| Name           | Type      | Description                                                                                                                                          |
+| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation, with time range from `1h` before alert start to end (or now if firing). |
+| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation, with time range from `1h` before alert start to end (or now if firing).                  |
+| `SilenceURL`   | string    | A link to silence the alert.                                                                                                                         |
+| `Values`       | [KV](#kv) | The values of expressions used to evaluate the alert condition. Only relevant values are included.                                                   |
+| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert.                                                                 |
+| `OrgID`        | integer   | The ID of the organization that owns the alert.                                                                                                      |
 
 This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
 
@@ -262,6 +265,182 @@ You can then use `tz` to change the timezone from UTC to local time, such as `Eu
 ```template-output
 2024-10-30 21:01:45.227 +0100 CET
 21:01:45 CET
+```
+
+## Namespaced Functions
+
+{{< admonition type="note" >}}
+
+Namespaced Functions are not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
+
+{{< /admonition >}}
+
+In addition to the top-level functions, the following namespaced functions are also available:
+
+### Collection Functions
+
+| Name          | Arguments                  | Returns | Description                                                                                                                                                                      |
+| ------------- | -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coll.Dict`   | key string, value any, ... | map     | Creates a map with string keys from key/value pairs. All keys are converted to strings. If an odd number of arguments is provided, the last key will have an empty string value. |
+| `coll.Slice`  | ...any                     | []any   | Creates a slice (array/list) from the provided arguments. Useful for creating lists that can be iterated over with `range`.                                                      |
+| `coll.Append` | value any, list []any      | []any   | Creates a new list by appending a value to the end of an existing list. Does not modify the original list.                                                                       |
+
+Example using collection functions:
+
+```go
+{{ define "collection.example" }}
+{{- /* Create a dictionary of alert metadata */ -}}
+{{- $metadata := coll.Dict
+    "severity" "critical"
+    "team" "infrastructure"
+    "environment" "production"
+-}}
+
+{{- /* Create a slice of affected services */ -}}
+{{- $services := coll.Slice "database" "cache" "api" -}}
+
+{{- /* Append a new service to the list */ -}}
+{{- $services = coll.Append "web" $services -}}
+
+{{- /* Use the collections in a template */ -}}
+Affected Services: {{ range $services }}{{ . }},{{ end }}
+
+Alert Metadata:
+{{- range $k, $v := $metadata }}
+  {{ $k }}: {{ $v }}
+{{- end }}
+{{ end }}
+```
+
+Output:
+
+```
+Affected Services: database,cache,api,web,
+
+Alert Metadata:
+  environment: production
+  severity: critical
+  team: infrastructure
+```
+
+### Data Functions
+
+| Name                | Arguments              | Returns | Description                                                                                                                      |
+| ------------------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `data.JSON`         | jsonString string      | any     | Parses a JSON string into an object that can be manipulated in the template. Works with both JSON objects and arrays.            |
+| `data.ToJSON`       | obj any                | string  | Serializes any object (maps, arrays, etc.) into a JSON string. Useful for creating webhook payloads.                             |
+| `data.ToJSONPretty` | indent string, obj any | string  | Creates an indented JSON string representation of an object. The first argument specifies the indentation string (e.g., spaces). |
+
+Example using data functions:
+
+```go
+{{ define "data.example" }}
+{{- /* First, let's create some alert data as a JSON string */ -}}
+{{ $jsonString := `{
+  "service": {
+    "name": "payment-api",
+    "environment": "production",
+    "thresholds": {
+      "error_rate": 5,
+      "latency_ms": 100
+    }
+  }
+}` }}
+
+{{- /* Parse the JSON string into an object we can work with */ -}}
+{{ $config := $jsonString | data.JSON }}
+
+{{- /* Create a new alert payload */ -}}
+{{ $payload := coll.Dict
+    "service" $config.service.name
+    "environment" $config.service.environment
+    "status" .Status
+    "errorThreshold" $config.service.thresholds.error_rate
+}}
+
+{{- /* Output the payload in different JSON formats */ -}}
+Compact JSON: {{ $payload | data.ToJSON }}
+
+Pretty JSON with 2-space indent:
+{{ $payload | data.ToJSONPretty "  " }}
+{{ end }}
+```
+
+Output:
+
+```
+Compact JSON: {"environment":"production","errorThreshold":5,"service":"payment-api","status":"resolved"}
+
+Pretty JSON with 2-space indent:
+{
+  "environment": "production",
+  "errorThreshold": 5,
+  "service": "payment-api",
+  "status": "resolved"
+}
+```
+
+### Template Functions
+
+| Name          | Arguments                    | Returns | Description                                                                                                                                  |
+| ------------- | ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmpl.Exec`   | name string, [context any]   | string  | Executes a named template and returns the result as a string. Similar to the `template` action but allows for post-processing of the result. |
+| `tmpl.Inline` | template string, context any | string  | Renders a string as a template.                                                                                                              |
+
+```go
+{{ define "template.example" -}}
+{{ coll.Dict
+    "info" (tmpl.Exec `info` . | data.JSON)
+    "severity" (tmpl.Inline `{{ print "critical" | toUpper }}` . )
+    | data.ToJSONPretty " "}}
+{{- end }}
+
+{{- /* Define a sub-template */ -}}
+{{ define "info" -}}
+{{coll.Dict
+    "team" "infrastructure"
+    "environment" "production" | data.ToJSON }}
+{{- end }}
+```
+
+Output:
+
+```json
+{
+  "info": {
+    "environment": "production",
+    "team": "infrastructure"
+  },
+  "severity": "CRITICAL"
+}
+```
+
+### Time Functions
+
+| Name       | Arguments | Returns | Description                                                                                                  |
+| ---------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `time.Now` |           | Time    | Returns the current local time as a time.Time object. Can be formatted using Go's time formatting functions. |
+
+Example using time functions:
+
+```go
+{{ define "time.example" }}
+{{- /* Get current time in different formats */ -}}
+Current Time (UTC): {{ (time.Now).UTC.Format "2006-01-02 15:04:05 MST" }}
+Current Time (Local): {{ (time.Now).Format "Monday, January 2, 2006 at 15:04:05" }}
+
+{{- /* Compare alert time with current time */ -}}
+{{ $timeAgo := (time.Now).Sub .StartsAt }}
+Alert fired: {{ $timeAgo }} ago
+{{ end }}
+```
+
+Output:
+
+```
+Current Time (UTC): 2025-03-08 18:14:27 UTC
+Current Time (Local): Saturday, March 8, 2025 at 14:14:27
+Alert fired: 25h49m32.78574723s ago
 ```
 
 ## Differences with annotation and label templates

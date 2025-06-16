@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
 import { useCallback } from 'react';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
@@ -103,6 +103,7 @@ export const ComboboxList = <T extends string | number>({
               {startingNewGroup && (
                 <div
                   role="presentation"
+                  data-testid="combobox-option-group"
                   id={groupHeaderId}
                   className={cx(
                     styles.optionGroupHeader,

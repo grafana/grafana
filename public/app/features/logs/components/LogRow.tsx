@@ -1,20 +1,12 @@
 import { debounce } from 'lodash';
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  CoreApp,
-  DataFrame,
-  dateTimeFormat,
-  Field,
-  LinkModel,
-  LogRowContextOptions,
-  LogRowModel,
-  LogsSortOrder,
-} from '@grafana/data';
+import { CoreApp, DataFrame, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
 
@@ -41,7 +33,7 @@ export interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onContextClick?: () => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   showContextToggle?: (row: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -113,10 +105,7 @@ export const LogRow = ({
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
-    () =>
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row,
+    () => (row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row),
     [forceEscape, row]
   );
   const errorMessage = checkLogsError(row);
@@ -230,12 +219,16 @@ export const LogRow = ({
           }
         >
           {hasError && (
-            <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+            <Tooltip
+              content={t('logs.log-row-message.tooltip-error', 'Error: {{errorMessage}}', { errorMessage })}
+              placement="right"
+              theme="error"
+            >
               <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
             </Tooltip>
           )}
           {isSampled && (
-            <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+            <Tooltip content={sampleMessage} placement="right" theme="info">
               <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
             </Tooltip>
           )}
@@ -296,6 +289,7 @@ export const LogRow = ({
             mouseIsOver={mouseIsOver}
             onBlur={onMouseLeave}
             expanded={showDetails}
+            forceEscape={forceEscape}
             logRowMenuIconsBefore={logRowMenuIconsBefore}
             logRowMenuIconsAfter={logRowMenuIconsAfter}
           />

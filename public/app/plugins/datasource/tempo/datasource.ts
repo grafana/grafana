@@ -61,7 +61,7 @@ import {
 } from './resultTransformer';
 import { doTempoMetricsStreaming, doTempoSearchStreaming } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
+import { getErrorMessage, mapErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
@@ -525,7 +525,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       );
     }
 
-    return merge(...subQueries);
+    return merge(...subQueries).pipe(
+      map((response) => {
+        if (response.errors?.[0]?.message) {
+          response.errors[0].message = mapErrorMessage(response.errors?.[0]?.message);
+        }
+        return response;
+      })
+    );
   }
 
   applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars) {
@@ -1177,7 +1184,12 @@ export function getFieldConfig(
         datasourceUid,
         false
       ),
-      makeTempoLinkServiceMap('View traces', tempoDatasourceUid, !!namespaceFields?.targetNamespace),
+      makeTempoLinkServiceMap(
+        'View traces',
+        namespaceFields !== undefined ? `\${${namespaceFields.targetNamespace}}` : '',
+        `\${${targetField}}`,
+        tempoDatasourceUid
+      ),
     ],
   };
 }
@@ -1234,8 +1246,9 @@ export function makeTempoLink(
 
 function makeTempoLinkServiceMap(
   title: string,
-  datasourceUid: string,
-  includeNamespace: boolean
+  serviceNamespaceVar: string | undefined,
+  serviceNameVar: string,
+  datasourceUid: string
 ): DataLink<TempoQuery> {
   return {
     url: '',
@@ -1244,11 +1257,8 @@ function makeTempoLinkServiceMap(
       datasourceUid,
       datasourceName: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
       query: ({ replaceVariables, scopedVars }) => {
-        const serviceName = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`, scopedVars);
-        const serviceNamespace = replaceVariables?.(
-          `\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`,
-          scopedVars
-        );
+        const serviceName = replaceVariables?.(serviceNameVar, scopedVars);
+        const serviceNamespace = serviceNamespaceVar ? replaceVariables?.(serviceNamespaceVar, scopedVars) : undefined;
         const isInstrumented =
           replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`, scopedVars) !==
           'false';
@@ -1262,7 +1272,7 @@ function makeTempoLinkServiceMap(
           query.queryType = 'traceql';
           query.query = `{${filters}}`;
         } else {
-          if (includeNamespace && serviceNamespace) {
+          if (serviceNamespace) {
             query.filters.push({
               id: 'service-namespace',
               scope: TraceqlSearchScope.Resource,
@@ -1549,7 +1559,12 @@ export function buildExpr(
       query = serviceMapQueryMatch[1];
     }
     // map serviceGraph metric tags to serviceGraphView metric tags
-    query = query.replace('client', 'service').replace('server', 'service');
+    query = query
+      // client_deployment_environment="prod" -> deployment_environment="prod"
+      .replaceAll('client_', '')
+      .replaceAll('server_', '')
+      .replace('client', 'service') // client="fooservice" -> service="fooservice"
+      .replace('server', 'service');
     return query.includes('span_name')
       ? metric.params.concat(query)
       : metric.params

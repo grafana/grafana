@@ -103,6 +103,12 @@ Here is an example of the light theme.
 
 ![Light theme example](/static/img/docs/preferences/light-theme-7-4.png)
 
+#### Experimental
+
+There are several experimental themes that you can also choose from.
+To see the color scheme of a theme before selecting it for your organization, click the user icon in the top-right corner of the page and select **Change theme**.
+This opens the **Change theme** drawer, where you can view all themes.
+
 ### Change server UI theme
 
 As a Grafana server administrator, you can change the default Grafana UI theme for all users who are on the server by setting the [default_theme](../../setup-grafana/configure-grafana/#default_theme) option in the Grafana configuration file.

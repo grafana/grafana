@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -17,7 +18,6 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
@@ -48,19 +48,22 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
             <Tab
               active={activeTab === 'custom'}
               icon="filter"
-              label={'Custom filter'}
+              label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
               onChangeTab={() => setActiveTab('custom')}
             />
             <Tab
               active={activeTab === 'saved'}
               icon="bookmark"
-              label={'Saved searches'}
+              label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
               onChangeTab={() => setActiveTab('saved')}
             />
           </TabsBar>
         }
       >
-        <IconButton name="filter" aria-label="Show filters" />
+        <IconButton
+          name="filter"
+          aria-label={t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Show filters')}
+        />
       </PopupCard>
     );
   }, [activeTab, styles.content, styles.fixTabsMargin]);
@@ -107,10 +110,11 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'Normal', value: 'normal' },
-            { label: 'Pending', value: 'pending' },
-            { label: 'Firing', value: 'firing' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.normal', 'Normal'), value: 'normal' },
+            { label: t('alerting.filter-options.label.pending', 'Pending'), value: 'pending' },
+            { label: t('alerting.filter-options.label.recovering', 'Recovering'), value: 'recovering' },
+            { label: t('alerting.filter-options.label.firing', 'Firing'), value: 'firing' },
           ]}
         />
         <Label>
@@ -119,9 +123,9 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'Alert rule', value: 'alerting' },
-            { label: 'Recording rule', value: 'recording' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.alert-rule', 'Alert rule'), value: 'alerting' },
+            { label: t('alerting.filter-options.label.recording-rule', 'Recording rule'), value: 'recording' },
           ]}
         />
         <Label>
@@ -130,10 +134,10 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'OK', value: 'ok' },
-            { label: 'No data', value: 'no_data' },
-            { label: 'Error', value: 'error' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.ok', 'OK'), value: 'ok' },
+            { label: t('alerting.filter-options.label.no-data', 'No data'), value: 'no_data' },
+            { label: t('alerting.filter-options.label.error', 'Error'), value: 'error' },
           ]}
         />
       </Grid>
@@ -170,7 +174,9 @@ const SavedSearches = () => {
             cell: ({ row }) => (
               <Stack alignItems="center">
                 {row.original.name}
-                {row.original.default ? <Badge text="Default" color="blue" /> : null}
+                {row.original.default ? (
+                  <Badge text={t('alerting.saved-searches.text-default', 'Default')} color="blue" />
+                ) : null}
               </Stack>
             ),
           },

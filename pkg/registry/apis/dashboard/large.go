@@ -7,22 +7,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLargeObjectSupport {
+func NewDashboardLargeObjectSupport(scheme *runtime.Scheme, threshold int) *apistore.BasicLargeObjectSupport {
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboardV0.DashboardResourceInfo.GroupResource(),
 
-		// byte size, while testing lets do almost everything (10bytes)
-		ThresholdSize: 10,
+		// Byte size above which an object is considered large.
+		ThresholdBytes: threshold,
 
 		// 10mb -- we should check what the largest ones are... might be bigger
-		MaxByteSize: 10 * 1024 * 1024,
+		MaxBytes: 10 * 1024 * 1024,
 
 		ReduceSpec: func(obj runtime.Object) error {
 			meta, err := utils.MetaAccessor(obj)

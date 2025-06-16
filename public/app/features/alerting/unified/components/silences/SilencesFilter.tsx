@@ -3,9 +3,9 @@ import { debounce, uniqueId } from 'lodash';
 import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans } from 'app/core/internationalization';
 
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
@@ -52,10 +52,16 @@ export const SilencesFilter = () => {
               <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
-                    Filter silences by using a comma separated list of matchers, e.g.:
+                  <>
+                    <div>
+                      <Trans i18nKey="alerting.silences-filter.search-by-matchers-tooltip">
+                        Filter silences by using a comma separated list of matchers, e.g.
+                      </Trans>
+                    </div>
+
+                    {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                     <pre>severity=critical, env=production</pre>
-                  </div>
+                  </>
                 }
               >
                 <Icon name="info-circle" size="sm" />
@@ -72,7 +78,7 @@ export const SilencesFilter = () => {
           prefix={<Icon name="search" />}
           onChange={handleQueryStringChange}
           defaultValue={queryString ?? ''}
-          placeholder="Search"
+          placeholder={t('alerting.silences-filter.search-query-input-placeholder-search', 'Search')}
           data-testid="search-query-input"
         />
       </Field>

@@ -314,6 +314,16 @@
   },
   "AlertRuleNotificationSettings": {
    "properties": {
+    "active_time_intervals": {
+     "description": "Override the times when notifications should not be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent\nat the time that matches any interval.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "default": [
       "alertname",
@@ -341,7 +351,7 @@
      "type": "string"
     },
     "mute_time_intervals": {
-     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
      "example": [
       "maintenance"
      ],
@@ -368,6 +378,12 @@
   },
   "AlertRuleNotificationSettingsExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "items": {
       "type": "string"
@@ -475,6 +491,9 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
     "keepFiringFor": {
      "format": "double",
      "type": "number"
@@ -491,6 +510,15 @@
     },
     "name": {
      "type": "string"
+    },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "queriedDatasourceUIDs": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "query": {
      "type": "string"
@@ -521,9 +549,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type",
@@ -546,6 +572,20 @@
     "numExternalAlertmanagers": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "AlertmanagerUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/Config"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -1374,6 +1414,20 @@
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
   },
+  "GettableAlertmanagerUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "GettableAlertmanagers": {
    "properties": {
     "data": {
@@ -1451,6 +1505,12 @@
     "grafana_managed_receiver_configs": {
      "items": {
       "$ref": "#/definitions/GettableGrafanaReceiver"
+     },
+     "type": "array"
+    },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
      },
      "type": "array"
     },
@@ -1815,6 +1875,9 @@
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
     },
+    "jira_api_url": {
+     "$ref": "#/definitions/URL"
+    },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
     },
@@ -1862,6 +1925,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "smtp_tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "telegram_api_url": {
      "$ref": "#/definitions/URL"
@@ -1992,7 +2058,11 @@
    "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
    "properties": {
     "equal": {
-     "$ref": "#/definitions/LabelNames"
+     "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "source_match": {
      "additionalProperties": {
@@ -2053,6 +2123,57 @@
    },
    "type": "object"
   },
+  "JiraConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "description": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "Json": {
    "type": "object"
   },
@@ -2064,17 +2185,6 @@
    },
    "title": "Label is a key/value pair of strings.",
    "type": "object"
-  },
-  "LabelName": {
-   "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-   "type": "string"
-  },
-  "LabelNames": {
-   "items": {
-    "$ref": "#/definitions/LabelName"
-   },
-   "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-   "type": "array"
   },
   "LabelSet": {
    "additionalProperties": {
@@ -2252,6 +2362,12 @@
   },
   "NotificationPolicyExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -2659,6 +2775,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -2961,31 +3083,31 @@
   },
   "PrometheusRule": {
    "properties": {
-    "Alert": {
+    "alert": {
      "type": "string"
     },
-    "Annotations": {
+    "annotations": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Expr": {
+    "expr": {
      "type": "string"
     },
-    "For": {
+    "for": {
      "type": "string"
     },
-    "KeepFiringFor": {
+    "keep_firing_for": {
      "type": "string"
     },
-    "Labels": {
+    "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Record": {
+    "record": {
      "type": "string"
     }
    },
@@ -2993,26 +3115,26 @@
   },
   "PrometheusRuleGroup": {
    "properties": {
-    "Interval": {
+    "interval": {
      "$ref": "#/definitions/Duration"
     },
-    "Labels": {
+    "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Limit": {
+    "limit": {
      "format": "int64",
      "type": "integer"
     },
-    "Name": {
+    "name": {
      "type": "string"
     },
-    "QueryOffset": {
+    "query_offset": {
      "type": "string"
     },
-    "Rules": {
+    "rules": {
      "items": {
       "$ref": "#/definitions/PrometheusRule"
      },
@@ -3401,6 +3523,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -3625,6 +3753,12 @@
   "RouteExport": {
    "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -3690,6 +3824,9 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
     "labels": {
      "$ref": "#/definitions/Labels"
     },
@@ -3703,6 +3840,9 @@
     "name": {
      "type": "string"
     },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "query": {
      "type": "string"
     },
@@ -3714,9 +3854,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type"
@@ -4455,6 +4593,55 @@
    "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
+  "TimeIntervalItem": {
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
+     "type": "string"
+    },
+    "months": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalTimeRange"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "TimeIntervalTimeRange": {
+   "properties": {
+    "end_time": {
+     "type": "string"
+    },
+    "start_time": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -4506,6 +4693,22 @@
     }
    },
    "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "type": "object"
+  },
+  "UpdateNamespaceRulesRequest": {
+   "properties": {
+    "is_paused": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
+  "UpdateNamespaceRulesResponse": {
+   "properties": {
+    "message": {
+     "type": "string"
+    }
+   },
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4656,6 +4859,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "timeout": {
+     "$ref": "#/definitions/Duration"
+    },
     "url": {
      "$ref": "#/definitions/SecretURL"
     },
@@ -4747,6 +4953,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -5033,6 +5240,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"

@@ -24,11 +24,22 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#time-units-and-relative-ranges
+
+  configure-missing-series-evaluations-to-resolve:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
   alert-instance-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
+  recovery-threshold:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
   modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
@@ -39,6 +50,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#pending-period
+  keep-firing-for:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
   alert-rule-evaluation:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
@@ -138,9 +154,15 @@ Verify that the data sources you plan to query in the alert rule are [compatible
 
 ### Permissions
 
-Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules.
+Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules. Only admins can restore deleted Grafana-managed alert rules.
 
-{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+### Provisioning
+
+Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
+
+To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Default vs Advanced options
 
@@ -192,9 +214,9 @@ You can toggle between **Default** and **Advanced** options. If the [Default vs.
 
    b. Click **Preview** to verify that the expression is successful.
 
-1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+1. To add a [recovery threshold](ref:recovery-threshold), enable the **Custom recovery threshold** toggle and enter a value that defines when the alert should recover—transition to `Normal` state from the `Alerting` or `Pending` state.
 
-   You can only add one recovery threshold in a query and it must be the alert condition.
+   You can only add one recovery threshold, and it must be part of the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](ref:alert-condition).
    {{< /collapse >}}
@@ -230,6 +252,10 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
    After a condition is met, the alert goes into the **Pending** state.
    If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
 
+1. Optionally, set the [Keep firing for](ref:keep-firing-for) period.
+
+   You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" stop an alert from firing immediately after the breach threshold is cleared.
+
 1. Turn on pause alert notifications, if required.
 
    You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
@@ -246,6 +272,8 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
    {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
    For more details, refer to [alert instance states](ref:alert-instance-state) and [modify the no data or error state](ref:modify-the-no-data-or-error-state).
+
+1. In **Configure no data and error handling**, you can also configure [Missing series evaluations to resolve](ref:configure-missing-series-evaluations-to-resolve): how many consecutive evaluation intervals must pass without data before an alert instance is considered stale.
 
 ## Configure notifications
 
@@ -278,4 +306,34 @@ Complete the following steps to set up notifications.
 
    1. Click **See details** to view alert routing details and an email preview.
 
-{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+## Configure notification message
+
+Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
+
+Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
+
+Grafana provides several optional annotations.
+
+1. Optional: Add a summary.
+
+   Short summary of what happened and why.
+
+1. Optional: Add a description.
+
+   Description of what the alert rule does.
+
+1. Optional: Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+1. Optional: Add a custom annotation.
+
+   Add any additional information that could help address the alert.
+
+1. Optional: **Link dashboard and panel**.
+
+   [Link the alert rule to a panel](ref:shared-link-alert-rules-to-panels) to facilitate alert investigation.
+
+1. Click **Save rule**.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})

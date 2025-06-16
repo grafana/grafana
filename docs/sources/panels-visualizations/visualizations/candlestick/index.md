@@ -33,7 +33,7 @@ Candlestick visualizations build upon the foundation of the [time series visuali
 
 You can use a candlestick if you want to visualize, at a glance, how a price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1065px" alt="A candlestick visualization" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candlestick-v11.6.png" max-width="750px" alt="A candlestick visualization" >}}
 
 Each candlestick is represented as a rectangle, referred to as the _candlestick body_. The candlestick body displays the opening and closing prices during a time period. Green candlesticks represent when the price appreciated while the red candlesticks represent when the price depreciated. The lines sticking out the candlestick body are referred to as _wicks_ or _shadows_, which represent the highest and lowest prices during the time period.
 
@@ -74,43 +74,47 @@ The candlestick visualization works best with price movement data for an asset. 
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick.png" max-width="1065px" alt="A candlestick visualization showing the price movements of specific asset." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candles-volume-v11.6.png" max-width="750px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Mode
+### Candlestick options
 
-The mode options allow you to toggle which dimensions are used for the visualization.
+The following options let you control which data is displayed in the visualization and how it appears:
 
-- **Candles** limits the panel dimensions to the open, high, low, and close dimensions used by candlestick visualizations.
-- **Volume** limits the panel dimension to the volume dimension.
-- **Both** is the default behavior for the candlestick visualization. It includes both candlestick and volume visualizations.
+| Option                                                 | Description                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mode                                                   | Controls which dimensions are used for the visualization. Choose from:<ul><li>**Candles** - Uses the open, high, low, and close dimensions.</li><li>**Volume** - Uses only the volume dimension.</li><li>**Both** - The default behavior, which displays both candles and volume values.</li></ul>    |
+| Candle style                                           | Controls the appearance of the candles. Choose from:<ul><li>**Candles** - The default display style, which creates candle-style markers between the open and close dimensions.</li><li>**OHLC Bars** - Displays values for the four core dimensions, open, high, low, and close.</li></ul>            |
+| [Color strategy](#color-strategy)                      | Controls how colors are applied to dimensions. Choose from:<ul><li>**Since Open** - This mode uses the **Up color** if the intra-period price movement is positive.</li><li>**Since Prior Close** - The color of the candle is based on the inter-period price movement or change in value.</li></ul> |
+| Up color/Down color                                    | These options control which colors are used when the price movement is up or down. Note that the **Color strategy** selection determines if intra-period or inter-period price movement is used to select the candle or OHLC bar color.                                                               |
+| [Open, High, Low, Close, Volume](#open-high-low-close) | The candlestick visualization attempts to map fields from your data to these dimensions, as appropriate dimension.                                                                                                                                                                                    |
+| [Additional fields](#additional-fields)                | The **Include** and **Ignore** options allow the candlestick visualization to display other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.             |
 
-## Candle style
+#### Color strategy
 
-- **Candles** is the default display style and creates candle-style visualizations between the open and close dimensions.
-- **OHLC Bars** displays the four core dimensions open, high, low, and close values.
+The **Color strategy** option controls how colors are applied to dimensions. Choose from:
 
-## Color strategy
+- **Since Open** - The default behavior. This mode uses the **Up color** if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the **Up color** is used.
+- **Since Prior Close** - An alternative display method where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the **Up color** is used. If the value on open is lower than the previous value on close, the **Down color** is used.
 
-- **Since Open** is the default behavior. This mode will utilize the _Up_ color (below) if the intra-period price movement is positive. In other words, if the value on close is greater or equal to the value on open, the _Up_ color is used.
-- **Since Prior Close** is an alternative display method based where the color of the candle is based on the inter-period price movement or change in value. In other words, if the value on open is greater than the previous value on close, the _Up_ color is used. If the value on open is lower than the previous value on close, the _Down_ color is used. _This option also triggers the hollow candlestick visualization mode_. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). To learn more, see the [explanation of the differences](https://thetradingbible.com/how-to-read-hollow-candlesticks).
+  This option also triggers the _hollow candlestick_ visualization mode. Hollow candlesticks indicate that the intra-period movement is positive (value is higher on close than on open), while filled candlesticks indicate the intra-period change is negative (value is lower on close than on open). To learn more, refer to the [explanation of the differences](https://thetradingbible.com/how-to-read-hollow-candlesticks).
 
-## Up & Down Colors
+#### Open, High, Low, Close, Volume {#open-high-low-close}
 
-The **Up color** and **Down color** options select which colors are used when the price movement is up or down. Please note that the _Color strategy_ above will determine if intra-period or inter-period price movement is used to select the candle or OHLC bar color.
+The candlestick visualization attempts to map fields from your data to the appropriate dimension:
 
-## Open, High, Low, Close
-
-The candlestick visualization will attempt to map fields from your data to the appropriate dimension:
-
-- **Open** corresponds to the starting value of the given period.
-- **High** corresponds to the highest value of the given period.
-- **Low** corresponds to the lowest value of the given period.
-- **Close** corresponds to the final (end) value of the given period.
-- **Volume** corresponds to the sample count in the given period. (for example, number of trades)
+- **Open** - Starting value of the given period.
+- **High** - Highest value of the given period.
+- **Low** - Lowest value of the given period.
+- **Close** - Final (end) value of the given period.
+- **Volume** - Sample count in the given period (for example, number of trades).
 
 {{% admonition type="note" %}}
 The candlestick visualization legend doesn't display these values.
@@ -118,36 +122,79 @@ The candlestick visualization legend doesn't display these values.
 
 If your data can't be mapped to these dimensions for some reason (for example, because the column names aren't the same), you can map them manually using the **Open**, **High**, **Low**, and **Close** fields under the **Candlestick** options in the panel editor:
 
-![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-olhc-options-v11.6.png" max-width="400px" alt="Open, High, Low, and Close fields in the panel editor" >}}
 
-### Additional fields
+#### Additional fields
 
-The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
+The candlestick visualization is based on the time series visualization, and it can visualize additional data dimensions beyond open, high, low, close, and volume.
+The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
-## Standard options
+### Tooltip options
 
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-## Legend options
+| Option                                  | Description                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
+| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
+| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
+| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+
+#### Tooltip mode
+
+When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
+
+- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden -** Do not display the tooltip when you interact with the visualization.
+
+Use an override to hide individual series from the tooltip.
+
+#### Values sort order
+
+When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
+
+- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **Ascending** - Values in the tooltip are listed from smallest to largest.
+- **Descending** - Values in the tooltip are listed from largest to smallest.
+
+#### Hover proximity
+
+Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
+
+![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
+
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Tooltip options
+### Graph styles options
 
-{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+The options under the **Graph styles** section let you control the general appearance of [additional fields](#additional-fields) in the visualization, excluding [color](#standard-options).
 
-## Data links and actions
+{{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Axis options
+
+{{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
-
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

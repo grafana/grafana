@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Text, TextLink } from '@grafana/ui';
-import { useGetRepositoryQuery } from 'app/api/clients/provisioning';
+import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConfigForm } from '../Config/ConfigForm';
@@ -15,13 +16,25 @@ export default function EditRepositoryPage() {
   return (
     <Page
       navId="provisioning"
-      pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
+      pageNav={{
+        text: t('provisioning.edit-repository-page.text.configure-repository', 'Configure repository'),
+        subTitle: t(
+          'provisioning.edit-repository-page.subTitle.configure-repository-storing-resources',
+          'Configure a repository for storing your resources.'
+        ),
+      }}
     >
       <Page.Contents isLoading={query.isLoading}>
         {notFound ? (
           <EmptyState message={`Repository config not found`} variant="not-found">
-            <Text element={'p'}>Make sure the repository config exists in the configuration file.</Text>
-            <TextLink href={PROVISIONING_URL}>Back to repositories</TextLink>
+            <Text element={'p'}>
+              <Trans i18nKey="provisioning.edit-repository-page.repository-config-exists-configuration">
+                Make sure the repository config exists in the configuration file.
+              </Trans>
+            </Text>
+            <TextLink href={PROVISIONING_URL}>
+              <Trans i18nKey="provisioning.edit-repository-page.back-to-repositories">Back to repositories</Trans>
+            </TextLink>
           </EmptyState>
         ) : (
           <ConfigForm data={query.data} />

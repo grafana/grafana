@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { RowExpanderNGProps } from '../types';
 
@@ -15,9 +16,13 @@ export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGP
     }
   }
   return (
-    <div className={styles.expanderCell} onClick={onCellExpand} onKeyDown={handleKeyDown}>
+    <div role="button" tabIndex={0} className={styles.expanderCell} onClick={onCellExpand} onKeyDown={handleKeyDown}>
       <Icon
-        aria-label={isExpanded ? 'Collapse row' : 'Expand row'}
+        aria-label={
+          isExpanded
+            ? t('grafana-ui.row-expander-ng.aria-label-collapse', 'Collapse row')
+            : t('grafana-ui.row-expander.aria-label-expand', 'Expand row')
+        }
         name={isExpanded ? 'angle-down' : 'angle-right'}
         size="lg"
       />

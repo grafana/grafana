@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { FolderDTO, FolderListItemDTO } from '../../../../types';
 import { NestedFolderDTO } from '../../../search/service/types';
@@ -13,7 +13,6 @@ export interface Props {
 }
 
 export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
-  const type = isDashboard(resource) ? 'dashboard' : 'folder';
   return (
     <Modal
       isOpen={true}
@@ -25,12 +24,9 @@ export function ProvisionedResourceDeleteModal({ onDismiss, resource }: Props) {
     >
       <>
         <p>
-          <Trans
-            i18nKey="dashboard-scene.provisioned-resource-delete-modal.managed-by-version-control"
-            values={{ type }}
-          >
-            This {type} is managed by version control and cannot be deleted. To remove it, delete it from the repository
-            and synchronise to apply the changes.
+          <Trans i18nKey="dashboard-scene.provisioned-resource-delete-modal.managed-by-version-control">
+            This resource is managed by version control and cannot be deleted. To remove it, delete it from the
+            repository and synchronise to apply the changes.
           </Trans>
         </p>
         {isDashboard(resource) && (

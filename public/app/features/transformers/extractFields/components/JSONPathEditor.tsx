@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JSONPath } from '../types';
 
@@ -14,6 +14,7 @@ interface Props {
 
 export function JSONPathEditor({ options, onChange }: Props) {
   const [paths, setPaths] = useState<JSONPath[]>(options);
+
   const tooltips = getTooltips();
   const style = getStyle();
 
@@ -92,17 +93,63 @@ export function JSONPathEditor({ options, onChange }: Props) {
 
 const getTooltips = () => {
   const mapValidPaths = [
-    { path: 'object', description: '=> extract fields from object' },
-    { path: 'object.value1', description: '=> extract value1' },
-    { path: 'object.value2', description: '=> extract value2' },
-    { path: 'object.value2[0]', description: '=> extract value2 first element' },
-    { path: 'object.value2[1]', description: '=> extract value2 second element' },
+    {
+      path: 'object',
+      description: t(
+        'transformers.get-tooltips.map-valid-paths.description.extract-fields-from-object',
+        '=> extract fields from object'
+      ),
+    },
+    {
+      path: 'object.value1',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
+          values={{ value: 'value1' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code>
+        </Trans>
+      ),
+    },
+    {
+      path: 'object.value2',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code>
+        </Trans>
+      ),
+    },
+    {
+      path: 'object.value2[0]',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-first-element"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code> first element
+        </Trans>
+      ),
+    },
+    {
+      path: 'object.value2[1]',
+      description: (
+        <Trans
+          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-second-element"
+          values={{ value: 'value2' }}
+        >
+          =&gt; extract <code>{'{{ value }}'}</code> second element
+        </Trans>
+      ),
+    },
   ];
 
   return {
     field: (
       <div>
-        A valid path of an json object.
+        <Trans i18nKey="transformers.get-tooltips.description">A valid path of an json object.</Trans>
         <div>
           <strong>
             <Trans i18nKey="transformers.get-tooltips.json-value">JSON Value:</Trans>
@@ -113,7 +160,9 @@ const getTooltips = () => {
             {['{', '  "object": {', '    "value1": "hello world"', '    "value2": [1, 2, 3, 4]', '  }', '}'].join('\n')}
           </code>
         </pre>
-        <strong>Valid Paths:</strong>
+        <strong>
+          <Trans i18nKey="transformers.get-tooltips.valid-paths">Valid Paths:</Trans>
+        </strong>
         {mapValidPaths.map((value, key) => {
           return (
             <p key={key}>

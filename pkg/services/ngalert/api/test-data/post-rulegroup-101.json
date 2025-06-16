@@ -116,7 +116,64 @@
           "group_wait":"1s",
           "group_interval":"5s",
           "repeat_interval":"5m",
-          "mute_time_intervals":["test-mute"]
+          "mute_time_intervals":["test-mute"],
+          "active_time_intervals":["test-mute"]
+        }
+      }
+    },
+    {
+      "grafana_alert": {
+        "title": "alert with uid",
+        "uid": "alert-with-uid",
+        "condition": "B",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "000000004",
+            "model": {
+              "alias": "just-testing",
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "orgId": 0,
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            }
+          },
+          {
+            "refId": "B",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+              "expression": "$A",
+              "intervalMs": 2000,
+              "maxDataPoints": 200,
+              "orgId": 0,
+              "reducer": "mean",
+              "refId": "B",
+              "type": "reduce"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting",
+        "notification_settings":{
+          "receiver":"Test-Receiver",
+          "group_by":["alertname","grafana_folder","test"],
+          "group_wait":"1s",
+          "group_interval":"5s",
+          "repeat_interval":"5m",
+          "mute_time_intervals":["test-mute"],
+          "active_time_intervals":["test-mute"]
         }
       }
     },

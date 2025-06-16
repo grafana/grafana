@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -430,32 +431,6 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
 	}
 	assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 }, time.Second, 10*time.Millisecond)
-}
-
-func Test_DeletedDashboardsNotMigrated(t *testing.T) {
-	t.Parallel()
-
-	s := setUpServiceTest(t, false).(*Service)
-
-	// modify what the mock returns for just this test case
-	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
-	dashMock.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return(
-		[]*dashboards.Dashboard{
-			{UID: "1", OrgID: 1, Data: simplejson.New()},
-			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
-		},
-		nil,
-	)
-
-	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
-	assert.NoError(t, err)
-	dashCount := 0
-	for _, it := range data.Items {
-		if it.Type == cloudmigration.DashboardDataType {
-			dashCount++
-		}
-	}
-	assert.Equal(t, 1, dashCount)
 }
 
 // Implementation inspired by ChatGPT, OpenAI's language model.
@@ -932,33 +907,32 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
-		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 	)
 
 	sqlStore := sqlstore.NewTestStore(t,
 		sqlstore.WithCfg(cfg),
 		sqlstore.WithFeatureFlags(
 			featuremgmt.FlagOnPremToCloudMigrations,
-			featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 		),
 	)
 
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
+
+	accessControl := acimpl.ProvideAccessControl(featureToggles)
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, accessControl, bus)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
-		secretsService, nil, alertMetrics, mockFolder, fakeAccessControl, dashboardService, nil, bus, fakeAccessControlService,
+		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
 		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)

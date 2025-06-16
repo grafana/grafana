@@ -1001,6 +1001,11 @@ func TestService_awsServiceNamespace(t *testing.T) {
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
 			want:      "aps",
 		}, {
+			desc:      "amazon prometheus",
+			givenDs:   datasources.DS_AMAZON_PROMETHEUS,
+			givenJson: `{ "sigV4Auth": true }`,
+			want:      "aps",
+		}, {
 			desc:      "alertmanager",
 			givenDs:   datasources.DS_ALERTMANAGER,
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
@@ -1009,6 +1014,12 @@ func TestService_awsServiceNamespace(t *testing.T) {
 			desc:      "panic",
 			givenDs:   "panic",
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aps",
+			panic:     true,
+		}, {
+			desc:      "azure prometheus",
+			givenDs:   datasources.DS_AZURE_PROMETHEUS,
+			givenJson: `{ "sigV4Auth": true }`,
 			want:      "aps",
 			panic:     true,
 		},

@@ -187,7 +187,11 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 
 			teams := make([]team.Team, 0)
 			for i := 0; i < len(tt.teamsPermissions); i++ {
-				team, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%v", i), "", tt.orgID)
+				teamCmd := team.CreateTeamCommand{
+					Name:  fmt.Sprintf("team-%v", i),
+					OrgID: tt.orgID,
+				}
+				team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 				require.NoError(t, err)
 				teams = append(teams, team)
 			}
@@ -388,7 +392,11 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	})
 	require.NoError(t, err)
 
-	createdTeam, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
+	teamCmd := team.CreateTeamCommand{
+		Name:  "team",
+		OrgID: orgID,
+	}
+	createdTeam, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -438,7 +446,11 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			continue
 		}
 
-		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
+		teamCmd := team.CreateTeamCommand{
+			Name:  fmt.Sprintf("team%v", i+1),
+			OrgID: orgID,
+		}
+		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), &teamCmd)
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {

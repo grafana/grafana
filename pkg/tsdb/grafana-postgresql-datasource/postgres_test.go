@@ -99,7 +99,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			user:        "user",
 			database:    "database",
 			tlsSettings: tlsSettings{},
-			expErr:      "invalid port in host specifier",
+			expErr:      "error parsing postgres url",
 		},
 		{
 			desc:        "Password with single quote and backslash",
@@ -188,7 +188,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(isTestDbPostgres() || runPostgresTests) {
+	if !isTestDbPostgres() && !runPostgresTests {
 		t.Skip()
 	}
 

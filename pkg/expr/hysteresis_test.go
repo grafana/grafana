@@ -108,7 +108,7 @@ func TestHysteresisExecute(t *testing.T) {
 
 			result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 				"A": mathexp.Results{Values: tc.input},
-			}, tracer)
+			}, tracer, nil)
 			if tc.expectedError != nil {
 				require.ErrorIs(t, err, tc.expectedError)
 				return

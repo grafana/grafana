@@ -4,8 +4,8 @@ import { ReactNode, useState } from 'react';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
@@ -16,7 +16,6 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
   onChange: (query: TQuery) => void;
-  onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
   hideRefId?: boolean;

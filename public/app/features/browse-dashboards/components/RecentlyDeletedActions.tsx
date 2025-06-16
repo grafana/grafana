@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import appEvents from '../../../core/app_events';
-import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
 import { useHardDeleteDashboardMutation, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
@@ -128,7 +128,7 @@ export function RecentlyDeletedActions() {
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
+        <Trans i18nKey="recently-deleted.buttons.delete">Permanently delete</Trans>
       </Button>
     </Stack>
   );

@@ -3,15 +3,16 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositorySpec } from 'app/api/clients/provisioning';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -42,7 +43,7 @@ export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: FormData;
   isGitHub: boolean;
-  repositoryConfig?: RepositorySpec;
+  repository?: RepositoryView;
   loadedFromRef?: string;
 }
 
@@ -53,12 +54,12 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  repositoryConfig,
+  repository,
   isGitHub,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { meta, isDirty } = dashboard.useState();
+  const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -70,7 +71,6 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
   } = useForm<FormData>({ defaultValues });
-
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
 
   // Update the form if default values change
@@ -81,7 +81,12 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      if (workflow === 'branch' && ref !== '' && path !== '') {
+
+      const { ref, path } = request.data;
+
+      if (workflow === 'branch' && ref && path) {
+        dashboard.closeModal();
+        panelEditor?.onDiscard();
         // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
@@ -123,7 +128,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, isNew, navigate, path, ref, request, workflow]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
@@ -131,33 +136,32 @@ export function SaveProvisionedDashboardForm({
       return;
     }
 
-    // The dashboard spec
-    const saveModel = dashboard.getSaveAsModel({
-      isNew,
-      title,
-      description,
-    });
-
     // If user is writing to the original branch, override ref with whatever we loaded from
     if (workflow === 'write') {
       ref = loadedFromRef;
     }
+
+    const body = dashboard.getSaveResource({
+      isNew,
+      title,
+      description,
+    });
 
     createOrUpdateFile({
       ref,
       name: repo,
       path,
       message: comment,
-      body: { ...saveModel, uid: meta.uid },
+      body,
     });
   };
 
-  const workflowOptions = getWorkflowOptions(repositoryConfig, loadedFromRef);
-
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
+  const readOnly = !repository?.workflows?.length;
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
-        {!repositoryConfig?.workflows.length && (
+        {readOnly && (
           <Alert
             title={t(
               'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
@@ -173,6 +177,7 @@ export function SaveProvisionedDashboardForm({
         {isNew && (
           <>
             <Field
+              noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
               invalid={!!errors.title}
               error={errors.title?.message}
@@ -189,6 +194,7 @@ export function SaveProvisionedDashboardForm({
               />
             </Field>
             <Field
+              noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
               invalid={!!errors.description}
               error={errors.description?.message}
@@ -196,14 +202,16 @@ export function SaveProvisionedDashboardForm({
               <TextArea id="dashboard-description" {...register('description')} />
             </Field>
 
-            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}>
+            <Field
+              noMargin
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+            >
               <Controller
                 control={control}
                 name={'folder'}
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      inputId="dashboard-folder"
                       onChange={async (uid?: string, title?: string) => {
                         onChange({ uid, title });
                         // Update folderUid URL param
@@ -226,22 +234,24 @@ export function SaveProvisionedDashboardForm({
           </>
         )}
 
-        {!isNew && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+        {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
         <Field
+          noMargin
           label={t('dashboard-scene.save-provisioned-dashboard-form.label-path', 'Path')}
           description={t(
             'dashboard-scene.save-provisioned-dashboard-form.description-inside-repository',
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" {...register('path')} />
+          <Input id="dashboard-path" {...register('path')} readOnly={!isNew} />
         </Field>
 
-        <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
+        <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
           <TextArea
             id="dashboard-comment"
             {...register('comment')}
+            disabled={readOnly}
             placeholder={t(
               'dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
               'Add a note to describe your changes (optional)'
@@ -250,9 +260,9 @@ export function SaveProvisionedDashboardForm({
           />
         </Field>
 
-        {isGitHub && (
+        {isGitHub && !readOnly && (
           <>
-            <Field label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
+            <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
               <Controller
                 control={control}
                 name="workflow"
@@ -263,6 +273,7 @@ export function SaveProvisionedDashboardForm({
             </Field>
             {workflow === 'branch' && (
               <Field
+                noMargin
                 label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
                 description={t(
                   'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
@@ -278,7 +289,7 @@ export function SaveProvisionedDashboardForm({
         )}
 
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
+          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
             {request.isLoading
               ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
               : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
@@ -291,34 +302,6 @@ export function SaveProvisionedDashboardForm({
     </form>
   );
 }
-
-const BranchValidationError = () => (
-  <>
-    <Trans i18nKey="dashboard-scene.branch-validation-error.invalid-branch-name">Invalid branch name.</Trans>
-    <ul style={{ padding: '0 20px' }}>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-start-with">
-          It cannot start with '/' or end with '/', '.', or whitespace.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">
-          It cannot contain '//' or '..'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
-          It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.
-        </Trans>
-      </li>
-      <li>
-        <Trans i18nKey="dashboard-scene.branch-validation-error.least-valid-character">
-          It must have at least one valid character.
-        </Trans>
-      </li>
-    </ul>
-  </>
-);
 
 /**
  * Dashboard title validation to ensure it's not the same as the folder name

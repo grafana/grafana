@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
@@ -18,7 +19,7 @@ import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -136,7 +137,7 @@ const BrowseDashboardsPage = memo(() => {
       renderTitle={renderTitle}
       actions={
         <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
+          {config.featureToggles.restoreDashboards && hasAdminRights && (
             <LinkButton
               variant="secondary"
               href={getConfig().appSubUrl + '/dashboard/recently-deleted'}

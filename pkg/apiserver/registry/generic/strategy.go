@@ -95,11 +95,13 @@ func (g *genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Obje
 }
 
 func (g *genericStrategy) AllowCreateOnUpdate() bool {
-	return true
+	// Necessary due to dualwriter storage strategy
+	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
 
 func (g *genericStrategy) AllowUnconditionalUpdate() bool {
-	return true
+	// Necessary due to dualwriter storage strategy
+	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
 
 func (g *genericStrategy) Canonicalize(obj runtime.Object) {}

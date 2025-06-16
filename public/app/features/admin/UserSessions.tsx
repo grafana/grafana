@@ -1,9 +1,9 @@
 import { createRef, PureComponent } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 import { AccessControlAction, UserSession } from 'app/types';
 
@@ -82,7 +82,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
                 {sessions &&
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
-                      <td>{session.isActive ? 'Now' : session.seenAt}</td>
+                      <td>{session.isActive ? t('admin.user-sessions.now', 'Now') : session.seenAt}</td>
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>

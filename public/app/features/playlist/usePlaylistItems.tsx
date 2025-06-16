@@ -3,11 +3,11 @@ import { useAsync } from 'react-use';
 
 import { DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
-import { loadDashboards } from './api';
-import { PlaylistItem } from './types';
+import { PlaylistItemUI } from './types';
+import { loadDashboards } from './utils';
 
-export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
-  const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
+export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
+  const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
 
   // Attach dashboards if any were missing
   useAsync(async () => {
@@ -43,7 +43,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
         return;
       }
 
-      const newItem: PlaylistItem = {
+      const newItem: PlaylistItemUI = {
         type: 'dashboard_by_tag',
         value: tag,
       };

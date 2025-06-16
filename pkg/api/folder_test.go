@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,8 +35,6 @@ import (
 
 func TestFoldersCreateAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{}
-	setUpRBACGuardian(t)
-
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 
 	type testCase struct {
@@ -154,7 +151,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 
 func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{}
-	setUpRBACGuardian(t)
 
 	type testCase struct {
 		description            string
@@ -258,7 +254,6 @@ func testDescription(description string, expectedErr error) string {
 }
 
 func TestHTTPServer_FolderMetadata(t *testing.T) {
-	setUpRBACGuardian(t)
 	folderService := &foldertest.FakeService{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -353,7 +348,6 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{},
 	}
-	setUpRBACGuardian(t)
 
 	type testCase struct {
 		description  string
@@ -435,7 +429,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		expectedParentOrgIDs []int64
 		expectedParentTitles []string
 		permissions          []accesscontrol.Permission
-		g                    *guardian.FakeDashboardGuardian
 	}
 	tcs := []testCase{
 		{
@@ -447,9 +440,8 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{"parent title", "subfolder title"},
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 		{
 			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
@@ -462,7 +454,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: false},
 		},
 		{
 			description:          "get folder by UID should not return parent folders if nested folder are disabled",
@@ -473,9 +464,8 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{},
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 	}
 
@@ -487,13 +477,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run(tc.description, func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-
-			guardian.MockDashboardGuardian(tc.g)
-
 			req := srv.NewGetRequest(tc.URL)
 			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
 			resp, err := srv.Send(req)
@@ -541,7 +524,7 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 		Title:     legacyFolder.Title,
 		URL:       legacyFolder.URL,
 		HasACL:    false,
-		CanSave:   false,
+		CanSave:   true,
 		CanEdit:   true,
 		CanAdmin:  false,
 		CanDelete: false,
@@ -614,11 +597,9 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.description, func(t *testing.T) {
-				setUpRBACGuardian(t)
-
 				cfg := setting.NewCfg()
 				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: tc.unifiedStorageMode,
 					},
 				}
@@ -654,6 +635,7 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 						{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 					}),
 				}})
 
@@ -680,7 +662,6 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 	folderService := &foldertest.FakeService{}
-	setUpRBACGuardian(t)
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 
 	type testCase struct {
@@ -767,13 +748,4 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setUpRBACGuardian(t *testing.T) {
-	origNewGuardian := guardian.New
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
 }

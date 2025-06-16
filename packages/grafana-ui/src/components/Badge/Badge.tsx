@@ -7,16 +7,16 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types';
+import { IconName } from '../../types/icon';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
-import { PopoverContent } from '../Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip/types';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
-  text: React.ReactNode;
+  text?: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;

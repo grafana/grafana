@@ -2,13 +2,14 @@ import { cx } from '@emotion/css';
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Portal } from '../Portal/Portal';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ComboboxBaseProps, AutoSizeConditionals } from './Combobox';
 import { ComboboxList } from './ComboboxList';
@@ -23,9 +24,11 @@ import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
 
-interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
+interface MultiComboboxBaseProps<T extends string | number>
+  extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (option: Array<ComboboxOption<T>>) => void;
+  isClearable?: boolean;
   enableAllOption?: boolean;
 }
 
@@ -265,7 +268,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           ))}
           {selectedItems.length > visibleItems.length && (
             <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text>...</Text>
               <Tooltip
                 interactive

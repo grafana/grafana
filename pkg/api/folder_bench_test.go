@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
@@ -38,7 +39,6 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -477,8 +477,8 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		features, folderPermissions, ac, actest.FakeService{},
+		folderServiceWithFlagOn, nil, client.MockTestRestConfig{}, nil, quotaSrv, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 	)
@@ -503,7 +503,6 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	}
 
 	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)

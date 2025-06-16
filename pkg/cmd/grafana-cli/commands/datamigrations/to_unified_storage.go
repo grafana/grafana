@@ -11,10 +11,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-
 	authlib "github.com/grafana/authlib/types"
+
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -27,11 +27,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	namespace := "default" // TODO... from command line
+	// Take namespace from command line
+	namespace := c.String("namespace")
+
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return err
@@ -64,8 +67,28 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
-		nil, provisioning, false, sort.ProvideService(),
+		nil, provisioning, nil, sort.ProvideService(),
 	)
+
+	if c.Bool("non-interactive") {
+		client, err := newUnifiedClient(cfg, sqlStore)
+		if err != nil {
+			return err
+		}
+
+		opts.Store = client
+		opts.BlobStore = client
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Unified storage export: %s\n", time.Since(start))
+		if rsp != nil {
+			jj, _ := json.MarshalIndent(rsp, "", "  ")
+			fmt.Printf("%s\n", string(jj))
+		}
+		return nil
+	}
 
 	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
 	if err != nil {
@@ -129,7 +152,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 
 		// Check the stats (eventually compare)
-		req := &resource.ResourceStatsRequest{
+		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
 		}
 		for _, r := range opts.Resources {
@@ -199,7 +222,7 @@ func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient
 	}, nil, nil)
 }
 
-func newParquetClient(file *os.File) (resource.BulkStoreClient, error) {
+func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	writer, err := parquet.NewParquetWriter(file)
 	if err != nil {
 		return nil, err

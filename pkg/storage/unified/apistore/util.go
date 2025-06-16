@@ -15,15 +15,14 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
+func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resourcepb.ListRequest, storage.SelectionPredicate, error) {
 	predicate := opts.Predicate
-	req := &resource.ListRequest{
+	req := &resourcepb.ListRequest{
 		Limit: opts.Predicate.Limit,
-		Options: &resource.ListOptions{
+		Options: &resourcepb.ListOptions{
 			Key: k,
 		},
 		NextPageToken: predicate.Continue,
@@ -39,11 +38,11 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 
 	switch opts.ResourceVersionMatch {
 	case "":
-		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Unset
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Unset
 	case metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatchV2 = resource.ResourceVersionMatchV2_NotOlderThan
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
 	case metav1.ResourceVersionMatchExact:
-		req.VersionMatchV2 = resource.ResourceVersionMatchV2_Exact
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact
 	default:
 		return nil, predicate, apierrors.NewBadRequest(
 			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
@@ -83,13 +82,14 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					return nil, predicate, apierrors.NewBadRequest("expecting single value for: " + v)
 				}
 
-				if v == utils.LabelKeyGetTrash {
-					req.Source = resource.ListRequest_TRASH
+				switch v {
+				case utils.LabelKeyGetTrash:
+					req.Source = resourcepb.ListRequest_TRASH
 					if vals[0] != "true" {
 						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
 					}
-				} else if v == utils.LabelKeyGetHistory {
-					req.Source = resource.ListRequest_HISTORY
+				case utils.LabelKeyGetHistory:
+					req.Source = resourcepb.ListRequest_HISTORY
 					req.Options.Key.Name = vals[0]
 				}
 
@@ -98,7 +98,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 				return req, storage.Everything, nil
 			}
 
-			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
+			req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
 				Key:      v,
 				Operator: string(r.Operator()),
 				Values:   r.Values().List(),
@@ -109,7 +109,7 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 	if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 		requirements := opts.Predicate.Field.Requirements()
 		for _, r := range requirements {
-			requirement := &resource.Requirement{Key: r.Field, Operator: string(r.Operator)}
+			requirement := &resourcepb.Requirement{Key: r.Field, Operator: string(r.Operator)}
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)
 			}

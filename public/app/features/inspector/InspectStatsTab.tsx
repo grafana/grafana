@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 
 import { InspectStatsTable } from './InspectStatsTable';
 import { InspectStatsTraceIdsTable } from './InspectStatsTraceIdsTable';

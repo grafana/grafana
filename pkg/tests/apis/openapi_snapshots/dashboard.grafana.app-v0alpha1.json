@@ -1311,8 +1311,7 @@
           }
         }
       }
-    },
-    "/apis/dashboard.grafana.app/v0alpha1/search": null
+    }
   },
   "components": {
     "schemas": {
@@ -1414,29 +1413,40 @@
               "from": {
                 "description": "From is the start time of the query.",
                 "type": "string",
-                "default": "now-6h",
-                "examples": [
-                  "now-1h"
-                ]
+                "default": "now-6h"
               },
               "to": {
                 "description": "To is the end time of the query.",
                 "type": "string",
-                "default": "now",
-                "examples": [
-                  "now"
-                ]
+                "default": "now"
               }
             },
             "additionalProperties": false
           }
         },
-        "additionalProperties": true,
-        "$schema": "https://json-schema.org/draft-04/schema"
+        "additionalProperties": true
       },
       "com.github.grafana.grafana-plugin-sdk-go.experimental.apis.data.v0alpha1.DataSourceRef": {
+        "description": "The datasource",
         "type": "object",
-        "additionalProperties": true
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "The apiserver version",
+            "type": "string"
+          },
+          "type": {
+            "description": "The datasource plugin type",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Datasource UID (NOTE: name in k8s)",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.AnnotationActions": {
         "type": "object",
@@ -1770,6 +1780,9 @@
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanelList": {
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",

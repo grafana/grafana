@@ -5,11 +5,12 @@ import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
-import { getFieldTypeIcon } from '../../../../types';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
 import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
+import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -20,7 +21,6 @@ interface HeaderCellProps {
   justifyContent: Property.JustifyContent;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  filterable: boolean;
   onColumnResize?: TableColumnResizeActionCallback;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   crossFilterOrder: React.MutableRefObject<string[]>;
@@ -37,7 +37,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   justifyContent,
   filter,
   setFilter,
-  filterable,
   onColumnResize,
   headerCellRefs,
   crossFilterOrder,
@@ -47,22 +46,25 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   const styles = useStyles2(getStyles, justifyContent);
   const headerRef = useRef<HTMLDivElement>(null);
 
+  const filterable = field.config?.custom?.filterable ?? false;
+  const displayName = getDisplayName(field);
+
   let isColumnFilterable = filterable;
   if (field.config.custom?.filterable !== filterable) {
     isColumnFilterable = field.config.custom?.filterable || false;
   }
   // we have to remove/reset the filter if the column is not filterable
-  if (!isColumnFilterable && filter[field.name]) {
+  if (!isColumnFilterable && filter[displayName]) {
     setFilter((filter: FilterType) => {
       const newFilter = { ...filter };
-      delete newFilter[field.name];
+      delete newFilter[displayName];
       return newFilter;
     });
   }
 
   const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
     const isMultiSort = event.shiftKey;
-    onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
+    onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
   };
 
   // collecting header cell refs to handle manual column resize
@@ -82,7 +84,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       if (lastElement) {
         const handleMouseUp = () => {
           let newWidth = headerCellParent.clientWidth;
-          onColumnResize?.(column.key as string, newWidth);
+          onColumnResize?.(column.key, newWidth);
         };
 
         lastElement.addEventListener('click', handleMouseUp);
@@ -97,6 +99,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   }, [column]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={headerRef}
       className={styles.headerCell}

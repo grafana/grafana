@@ -47,7 +47,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	// gauge for groups per org
 	groupsPerOrg := make(map[int64]map[string]struct{})
 	// gauge for rules imported from Prometheus per org
-	orgsRulesPrometheusImported := make(map[int64]int64)
+	orgsRulesPrometheusImported := make(map[int64]map[string]int64)
 
 	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
 
@@ -88,8 +88,15 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			}
 		}
 
-		if rule.ImportedFromPrometheus() {
-			orgsRulesPrometheusImported[rule.OrgID]++
+		if rule.ImportedPrometheusRule() {
+			if orgsRulesPrometheusImported[rule.OrgID] == nil {
+				orgsRulesPrometheusImported[rule.OrgID] = make(map[string]int64)
+			}
+			state := metrics.AlertRuleActiveLabelValue
+			if rule.IsPaused {
+				state = metrics.AlertRulePausedLabelValue
+			}
+			orgsRulesPrometheusImported[rule.OrgID][state]++
 		}
 
 		// Count groups per org
@@ -118,8 +125,10 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	for orgID, groups := range groupsPerOrg {
 		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
 	}
-	for orgID, count := range orgsRulesPrometheusImported {
-		sch.metrics.PrometheusImportedRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(count))
+	for orgID, counts := range orgsRulesPrometheusImported {
+		for state, count := range counts {
+			sch.metrics.PrometheusImportedRules.WithLabelValues(fmt.Sprint(orgID), state).Set(float64(count))
+		}
 	}
 	for orgID, settings := range simplifiedEditorSettingsPerOrg {
 		for setting, count := range settings {
@@ -134,5 +143,5 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 
 // makeRuleGroupLabelValue returns a string that can be used as a label (rule_group) value for alert rule group metrics.
 func makeRuleGroupLabelValue(key models.AlertRuleGroupKeyWithFolderFullpath) string {
-	return fmt.Sprintf("%s;%s", key.FolderFullpath, key.AlertRuleGroupKey.RuleGroup)
+	return fmt.Sprintf("%s;%s", key.FolderFullpath, key.RuleGroup)
 }

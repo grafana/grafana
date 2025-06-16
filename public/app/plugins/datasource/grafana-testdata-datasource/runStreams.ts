@@ -104,12 +104,10 @@ export function runSignalStream(
     };
 
     // Fill the buffer on init
-    if (true) {
-      let time = Date.now() - maxDataPoints * speed;
-      for (let i = 0; i < maxDataPoints; i++) {
-        addNextRow(time);
-        time += speed;
-      }
+    let time = Date.now() - maxDataPoints * speed;
+    for (let i = 0; i < maxDataPoints; i++) {
+      addNextRow(time);
+      time += speed;
     }
 
     const pushNextEvent = () => {

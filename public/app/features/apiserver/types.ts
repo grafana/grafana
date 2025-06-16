@@ -48,12 +48,16 @@ export enum ManagerKind {
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
+export const AnnoKeyManagerAllowsEdits = 'grafana.app/managerAllowsEdits';
 export const AnnoKeySourcePath = 'grafana.app/sourcePath';
 export const AnnoKeySourceChecksum = 'grafana.app/sourceChecksum';
 export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 
 // for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
+
+// Grant permissions to the created resource
+export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
@@ -66,8 +70,6 @@ export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
-/** @deprecated NOT A REAL annotation -- this is just a shim */
-export const AnnoKeyFolderId = 'grafana.app/folderId';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
@@ -83,6 +85,7 @@ type GrafanaAnnotations = {
 
   [AnnoKeyManagerKind]?: ManagerKind;
   [AnnoKeyManagerIdentity]?: string;
+  [AnnoKeyManagerAllowsEdits]?: string;
   [AnnoKeySourcePath]?: string;
   [AnnoKeySourceChecksum]?: string;
   [AnnoKeySourceTimestamp]?: string;
@@ -95,12 +98,10 @@ type GrafanaClientAnnotations = {
   [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
-  [AnnoKeyFolderId]?: number;
-  [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: string;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
-
+  [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
@@ -232,14 +233,19 @@ export interface ResourceEvent<T = object, S = object, K = string> {
   object: Resource<T, S, K>;
 }
 
+export type ResourceClientWriteParams = {
+  dryRun?: 'All';
+  fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
+};
+
 export interface ResourceClient<T = object, S = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
   get(name: string): Promise<Resource<T, S, K>>;
-  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
-  subresource<S>(name: string, path: string): Promise<S>;
-  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
-  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
+  create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
+  update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
+  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
+  subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;
+  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
 }
 
 export interface K8sAPIGroup {
@@ -250,4 +256,19 @@ export interface K8sAPIGroup {
 export interface K8sAPIGroupList {
   kind: 'APIGroupList';
   groups: K8sAPIGroup[];
+}
+
+/**
+ * Generic types to match the generated k8s API types in the RTK query clients
+ */
+export interface GeneratedObjectMeta extends Partial<ObjectMeta> {}
+export interface GeneratedResource<T = object, S = object, K = string> extends Partial<TypeMeta<K>> {
+  metadata?: GeneratedObjectMeta;
+  spec?: T;
+  status?: S;
+}
+
+export interface GeneratedResourceList<Spec, Status, K = string> {
+  metadata?: Partial<ListMeta>;
+  items?: Array<GeneratedResource<Spec, Status, K>>;
 }

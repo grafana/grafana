@@ -17,7 +17,6 @@ describe('PromQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {
     const { props } = setup({ expr: 'rate(metric_test{job="testjob"}[$__rate_interval])' });
 
-    expect(screen.getByText('metric_test')).toBeInTheDocument();
     await addOperationInQueryBuilder('Range functions', 'Rate');
     // extra fields here are for storing metrics explorer settings. Future work: store these in local storage.
     expect(props.onChange).toHaveBeenCalledWith({

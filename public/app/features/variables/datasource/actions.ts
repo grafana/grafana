@@ -51,7 +51,7 @@ export const initDataSourceVariableEditor =
     const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
     const dataSourceTypes = chain(dataSources)
       .uniqBy('meta.id')
-      .map((ds: any) => {
+      .map((ds) => {
         return { text: ds.meta.name, value: ds.meta.id };
       })
       .value();

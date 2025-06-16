@@ -197,7 +197,7 @@ export async function renderDashboard(
     </KBarProvider>
   );
 
-  await waitFor(() => expect(sceneGraph.getScopesBridge(scene)).toBeDefined());
+  await waitFor(() => expect(sceneGraph.getScopes(scene)).toBeDefined());
 
   return {
     scene,
