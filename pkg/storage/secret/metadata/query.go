@@ -33,6 +33,15 @@ var (
 	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
+	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
+	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
+	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
+	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
+	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
+
 	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")

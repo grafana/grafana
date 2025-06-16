@@ -43,6 +43,12 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		opts.Blob.URL = "file:///" + dir
 	}
 
+	// This is mostly for testing, being able to influence when we paginate
+	// based on the page size during tests.
+	unifiedStorageCfg := cfg.SectionWithEnvOverrides("unified_storage")
+	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
+	opts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
