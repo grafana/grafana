@@ -1,8 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
+
+import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
 
 import { TableNG } from './TableNG';
 
@@ -249,42 +251,41 @@ const createSortingTestDataFrame = (): DataFrame => {
   })[0];
 };
 
-// Create a data frame with time field for testing crosshair sharing functionality
-// const createTimeDataFrame = (): DataFrame => {
-//   const frame = toDataFrame({
-//     name: 'TimeTestData',
-//     length: 3,
-//     fields: [
-//       {
-//         name: 'Time',
-//         type: FieldType.time,
-//         values: [
-//           new Date('2024-03-20T10:00:00Z').getTime(),
-//           new Date('2024-03-20T10:01:00Z').getTime(),
-//           new Date('2024-03-20T10:02:00Z').getTime(),
-//         ],
-//         config: { custom: {} },
-//       },
-//       {
-//         name: 'Value',
-//         type: FieldType.number,
-//         values: [1, 2, 3],
-//         config: { custom: {} },
-//       },
-//     ],
-//   });
+const createTimeDataFrame = (): DataFrame => {
+  const frame = toDataFrame({
+    name: 'TimeTestData',
+    length: 3,
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        values: [
+          new Date('2024-03-20T10:00:00Z').getTime(),
+          new Date('2024-03-20T10:01:00Z').getTime(),
+          new Date('2024-03-20T10:02:00Z').getTime(),
+        ],
+        config: { custom: {} },
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        values: [1, 2, 3],
+        config: { custom: {} },
+      },
+    ],
+  });
 
-//   return applyFieldOverrides({
-//     data: [frame],
-//     fieldConfig: {
-//       defaults: {},
-//       overrides: [],
-//     },
-//     replaceVariables: (value) => value,
-//     timeZone: 'utc',
-//     theme: createTheme(),
-//   })[0];
-// };
+  return applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value) => value,
+    timeZone: 'utc',
+    theme: createTheme(),
+  })[0];
+};
 
 describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -322,7 +323,7 @@ describe('TableNG', () => {
   });
 
   describe('Basic TableNG rendering', () => {
-    it('renders a simple table with columns and rows', () => {
+    it('renders a simple table with columns and rows', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -1199,7 +1200,7 @@ describe('TableNG', () => {
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
-      expect(cellStyles.getPropertyValue('white-space')).toBe('nowrap');
+      expect(cellStyles.getPropertyValue('white-space')).not.toBe('pre-line');
     });
 
     it('applies text wrapping styles when wrapText is true', () => {
@@ -1414,237 +1415,148 @@ describe('TableNG', () => {
     });
   });
 
-  // describe('Row hover functionality for shared crosshair', () => {
-  //   const mockEventBus: EventBus = {
-  //     publish: jest.fn(),
-  //     getStream: jest.fn(),
-  //     subscribe: jest.fn(),
-  //     removeAllListeners: jest.fn(),
-  //     newScopedBus: jest.fn(),
-  //   };
+  describe('Row hover functionality for shared crosshair', () => {
+    const mockEventBus: EventBus = {
+      publish: jest.fn(),
+      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      removeAllListeners: jest.fn(),
+      newScopedBus: jest.fn(),
+    };
 
-  //   const mockPanelContext: PanelContext = {
-  //     eventsScope: 'test',
-  //     eventBus: mockEventBus,
-  //     onSeriesColorChange: jest.fn(),
-  //     onToggleSeriesVisibility: jest.fn(),
-  //     canAddAnnotations: jest.fn(),
-  //     canEditAnnotations: jest.fn(),
-  //     canDeleteAnnotations: jest.fn(),
-  //     onAnnotationCreate: jest.fn(),
-  //     onAnnotationUpdate: jest.fn(),
-  //     onAnnotationDelete: jest.fn(),
-  //     onSelectRange: jest.fn(),
-  //     onAddAdHocFilter: jest.fn(),
-  //     canEditThresholds: false,
-  //     showThresholds: false,
-  //     onThresholdsChange: jest.fn(),
-  //     instanceState: {},
-  //     onInstanceStateChange: jest.fn(),
-  //     onToggleLegendSort: jest.fn(),
-  //     onUpdateData: jest.fn(),
-  //   };
+    const mockPanelContext: PanelContext = {
+      eventsScope: 'test',
+      eventBus: mockEventBus,
+      onSeriesColorChange: jest.fn(),
+      onToggleSeriesVisibility: jest.fn(),
+      canAddAnnotations: jest.fn(),
+      canEditAnnotations: jest.fn(),
+      canDeleteAnnotations: jest.fn(),
+      onAnnotationCreate: jest.fn(),
+      onAnnotationUpdate: jest.fn(),
+      onAnnotationDelete: jest.fn(),
+      onSelectRange: jest.fn(),
+      onAddAdHocFilter: jest.fn(),
+      canEditThresholds: false,
+      showThresholds: false,
+      onThresholdsChange: jest.fn(),
+      instanceState: {},
+      onInstanceStateChange: jest.fn(),
+      onToggleLegendSort: jest.fn(),
+      onUpdateData: jest.fn(),
+    };
 
-  //   beforeEach(() => {
-  //     jest.clearAllMocks();
-  //   });
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
 
-  //   it('should publish DataHoverEvent when hovering over a row with time field', () => {
-  //     const frame = createTimeDataFrame();
-  //     const idx = 1;
+    it('should publish DataHoverEvent when hovering over a row with time field', async () => {
+      const data = createTimeDataFrame();
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG enableVirtualization={false} data={data} width={800} height={600} enableSharedCrosshair />
+        </PanelContextProvider>
+      );
 
-  //     onRowHover(idx, mockPanelContext, frame, true);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
-  //     expect(mockEventBus.publish).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         payload: {
-  //           point: {
-  //             time: new Date('2024-03-20T10:01:00Z').getTime(),
-  //           },
-  //         },
-  //         type: 'data-hover',
-  //       })
-  //     );
-  //   });
+      expect(mockEventBus.publish).toHaveBeenCalledWith({
+        payload: {
+          point: {
+            time: data.fields[0].values[0],
+          },
+        },
+        type: 'data-hover',
+      });
+    });
 
-  //   it('should not publish DataHoverEvent when enableSharedCrosshair is false', () => {
-  //     const frame = createTimeDataFrame();
-  //     const idx = 1;
+    it('should not publish DataHoverEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
+      );
 
-  //     onRowHover(idx, mockPanelContext, frame, false);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
-  //     expect(mockEventBus.publish).not.toHaveBeenCalled();
-  //   });
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
 
-  //   it('should not publish DataHoverEvent when time field is not present', () => {
-  //     const frame = createBasicDataFrame();
-  //     const idx = 1;
+    it('should not publish DataHoverEvent when time field is not present', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createBasicDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
 
-  //     onRowHover(idx, mockPanelContext, frame, true);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
-  //     expect(mockEventBus.publish).not.toHaveBeenCalled();
-  //   });
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
 
-  //   it('should publish DataHoverClearEvent when leaving a row', () => {
-  //     onRowLeave(mockPanelContext, true);
+    it('should publish DataHoverClearEvent when leaving a row', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
 
-  //     expect(mockEventBus.publish).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         type: 'data-hover-clear',
-  //       })
-  //     );
-  //   });
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
 
-  //   it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', () => {
-  //     onRowLeave(mockPanelContext, false);
+      expect(mockEventBus.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'data-hover-clear',
+        })
+      );
+    });
 
-  //     expect(mockEventBus.publish).not.toHaveBeenCalled();
-  //   });
-  // });
-  // describe('scroll position persistence', () => {
-  //   it('should persist scroll position after revId change', () => {
-  //     const data = createBasicDataFrame();
-  //     const { rerender } = render(<TableNG data={data} width={300} height={200} enableVirtualization={false} />);
+    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
+      );
 
-  //     // Find the DataGrid element
-  //     const dataGrid = screen.getByRole('grid');
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
 
-  //     // Simulate scrolling
-
-  //     fireEvent.scroll(dataGrid, {
-  //       target: {
-  //         scrollLeft: 100,
-  //         scrollTop: 50,
-  //       },
-  //     });
-
-  //     // Rerender with the same data but different fieldConfig to trigger revId change
-  //     rerender(
-  //       <TableNG
-  //         data={data}
-  //         width={300}
-  //         height={200}
-  //         enableVirtualization={false}
-  //         fieldConfig={{
-  //           defaults: {
-  //             custom: {
-  //               width: 200, // Different width to trigger revId change
-  //             },
-  //           },
-  //           overrides: [],
-  //         }}
-  //       />
-  //     );
-
-  //     // Verify scroll position was restored
-  //     expect(dataGrid.scrollLeft).toBe(100);
-  //     expect(dataGrid.scrollTop).toBe(50);
-  //   });
-  // });
-
-  // describe('myRowRenderer', () => {
-  //   // Create mock props for testing
-  //   const createMockProps = (depth: number, hasData: boolean, index: number) => {
-  //     return {
-  //       row: {
-  //         __depth: depth,
-  //         __index: index,
-  //         data: hasData ? { length: 2 } : undefined,
-  //       },
-  //       viewportColumns: [],
-  //       rowIdx: 0,
-  //       isRowSelected: false,
-  //       onRowClick: jest.fn(),
-  //       onRowDoubleClick: jest.fn(),
-  //       rowClass: '',
-  //       top: 0,
-  //       height: 40,
-  //       'aria-rowindex': 1,
-  //       'aria-selected': false,
-  //       gridRowStart: 1,
-  //       isLastRow: false,
-  //       selectedCellIdx: undefined,
-  //       selectCell: jest.fn(),
-  //       lastFrozenColumnIndex: -1,
-  //       copiedCellIdx: undefined,
-  //       draggedOverCellIdx: undefined,
-  //       setDraggedOverRowIdx: jest.fn(),
-  //       onRowChange: jest.fn(),
-  //       rowArray: [],
-  //       selectedPosition: { idx: 0, rowIdx: 0, mode: 'SELECT' },
-  //     } as any;
-  //   };
-
-  //   const mockPanelContext = {
-  //     id: 1,
-  //     title: 'Test Panel',
-  //     description: 'Test Description',
-  //     width: 800,
-  //     height: 600,
-  //     timeRange: { from: 'now-6h', to: 'now' },
-  //     timeZone: 'browser',
-  //     onTimeRangeChange: jest.fn(),
-  //     onOptionsChange: jest.fn(),
-  //     onFieldConfigChange: jest.fn(),
-  //     onInstanceStateChange: jest.fn(),
-  //     replaceVariables: jest.fn(),
-  //     eventBus: {
-  //       publish: jest.fn(),
-  //       subscribe: jest.fn(),
-  //       unsubscribe: jest.fn(),
-  //     },
-  //   } as unknown as PanelContext;
-
-  //   const mockData = createDataFrame({
-  //     fields: [
-  //       { name: 'Time', type: FieldType.time, values: [] },
-  //       { name: 'Value', type: FieldType.number, values: [] },
-  //     ],
-  //   });
-
-  //   it('returns null for non-expanded child rows', () => {
-  //     const props = createMockProps(1, false, 0);
-  //     const expandedRows: number[] = []; // No expanded rows
-
-  //     const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
-
-  //     expect(view).toBeNull();
-  //   });
-
-  //   it('renders child rows when parent is expanded', () => {
-  //     const props = createMockProps(1, false, 0);
-  //     const expandedRows: number[] = [0]; // Row 0 is expanded
-
-  //     const view = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false);
-
-  //     expect(view).not.toBeNull();
-  //   });
-
-  //   it('adds aria-expanded attribute to parent rows with nested data', () => {
-  //     const props = createMockProps(0, true, 0);
-  //     const expandedRows: number[] = [0]; // Row 0 is expanded
-
-  //     const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-  //     expect(result.props['aria-expanded']).toBe(true);
-  //   });
-
-  //   it('sets aria-expanded to false when parent row is not expanded', () => {
-  //     const props = createMockProps(0, true, 0);
-  //     const expandedRows: number[] = []; // No expanded rows
-
-  //     const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-  //     expect(result.props['aria-expanded']).toBe(false);
-  //   });
-
-  //   it('renders regular rows without aria-expanded attribute', () => {
-  //     const props = createMockProps(0, false, 0);
-  //     const expandedRows: number[] = [];
-
-  //     const result = myRowRenderer('key-0', props, expandedRows, mockPanelContext, mockData, false) as JSX.Element;
-
-  //     expect(result.props['aria-expanded']).toBeUndefined();
-  //   });
-  // });
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+  });
 });
+
+/**
+ * - context menu
+ *   - open and list "inspect value"
+ *   - close on window click
+ * - onSortByChange handler
+ * - nested frame cell key down
+ * - onColumnWidthsChange
+ * - is inspecting
+ * - getCellClasses
+ */

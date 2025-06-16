@@ -57,6 +57,7 @@ export function TableNG(props: TableNGProps) {
     data,
     enablePagination,
     enableSharedCrosshair,
+    enableVirtualization,
     footerOptions,
     getActions,
     height,
@@ -302,6 +303,7 @@ export function TableNG(props: TableNGProps) {
           // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
             <DataGrid<TableRow, TableSummaryRow>
+              enableVirtualization={enableVirtualization}
               className={cx(styles.grid, styles.gridNested)}
               rows={expandedRecords}
               columns={expandedColumns}
@@ -324,6 +326,7 @@ export function TableNG(props: TableNGProps) {
     data,
     defaultRowHeight,
     expandedRows,
+    enableVirtualization,
     filter,
     footerCalcs,
     getActions,
@@ -358,6 +361,7 @@ export function TableNG(props: TableNGProps) {
         ref={gridHandle}
         columns={columns}
         rows={paginatedRows}
+        enableVirtualization={enableVirtualization}
         defaultColumnOptions={{
           minWidth: 50,
           resizable: true,
@@ -433,9 +437,7 @@ export function TableNG(props: TableNGProps) {
           renderMenuItems={() => (
             <MenuItem
               label={t('grafana-ui.table.inspect-menu-label', 'Inspect value')}
-              onClick={() => {
-                setIsInspecting(true);
-              }}
+              onClick={() => setIsInspecting(true)}
               className={styles.menuItem}
             />
           )}
@@ -457,7 +459,7 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-export function renderRow(
+function renderRow(
   key: React.Key,
   props: RenderRowProps<TableRow, TableSummaryRow>,
   expandedRows: Record<string, boolean>,
@@ -481,18 +483,16 @@ export function renderRow(
 
   const timeField = data?.fields.find((f) => f.type === FieldType.time);
   const handlers: Partial<typeof props> = {};
-  if (enableSharedCrosshair) {
-    if (timeField) {
-      handlers.onMouseEnter = () => {
-        panelContext.eventBus.publish(
-          new DataHoverEvent({
-            point: {
-              time: timeField.values[rowIdx],
-            },
-          })
-        );
-      };
-    }
+  if (enableSharedCrosshair && timeField) {
+    handlers.onMouseEnter = () => {
+      panelContext.eventBus.publish(
+        new DataHoverEvent({
+          point: {
+            time: timeField?.values[rowIdx],
+          },
+        })
+      );
+    };
     handlers.onMouseLeave = () => {
       panelContext.eventBus.publish(new DataHoverClearEvent());
     };
@@ -610,7 +610,7 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   }),
 });
 
-export function getCellClasses(
+function getCellClasses(
   field: Field,
   styles: ReturnType<typeof getGridStyles>,
   columnTypes: ColumnTypes,
@@ -630,7 +630,7 @@ export function getCellClasses(
     case TableCellDisplayMode.ColorBackground:
     case TableCellDisplayMode.ColorBackgroundSolid:
     case TableCellDisplayMode.ColorText:
-      if (field.config.custom?.cellOptions.wrapText) {
+      if (field.config.custom?.cellOptions?.wrapText) {
         cellClasses.push(styles.cellWrapped);
       }
       break;

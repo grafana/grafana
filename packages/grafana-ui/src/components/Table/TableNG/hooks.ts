@@ -190,17 +190,12 @@ export function usePaginatedRows(
   const [page, setPage] = useState(0);
   const numRows = rows.length;
 
-  const [avgRowHeight, maxRowHeight] = useMemo(() => {
+  // calculate average row height if row height is variable.
+  const avgRowHeight = useMemo(() => {
     if (typeof rowHeight === 'number') {
-      return [rowHeight, rowHeight];
+      return rowHeight;
     }
-    return rows.reduce(
-      ([avg, max], row, _, { length }) => {
-        const h = rowHeight(row);
-        return [avg + h / length, Math.max(max, h)];
-      },
-      [0, 0]
-    );
+    return rows.reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
   }, [rows, rowHeight]);
 
   // using dimensions of the panel, calculate pagination parameters
@@ -221,11 +216,7 @@ export function usePaginatedRows(
     const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
     // ensure at least one row per page is displayed
     let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
-    // in the case where we have non-uniform row heights, remove a row
-    // per page for some wiggle room to try to avoid scrolling.
-    if (typeof rowHeight === 'function' && avgRowHeight !== maxRowHeight) {
-      rowsPerPage--;
-    }
+
     // calculate row range for pagination summary display
     const pageRangeStart = page * rowsPerPage + 1;
     let pageRangeEnd = pageRangeStart + rowsPerPage - 1;
@@ -241,7 +232,7 @@ export function usePaginatedRows(
       pageRangeEnd,
       smallPagination,
     };
-  }, [width, height, hasHeader, hasFooter, avgRowHeight, maxRowHeight, rowHeight, enabled, numRows, page]);
+  }, [width, height, hasHeader, hasFooter, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
   useEffect(() => {
@@ -462,3 +453,11 @@ export function useRowHeight(
 
   return rowHeight;
 }
+
+/**
+ * - getDisplayedValue: does not throw if field.display is undefined
+ * - useSortedRows: hasNestedFrames proces nested table rows
+ * - usePaginatedRows: test when disabled
+ * - useRowHeight: if columns array is empty, maxLinesIdx === -1
+ * - useRowHeight: test returned value
+ */

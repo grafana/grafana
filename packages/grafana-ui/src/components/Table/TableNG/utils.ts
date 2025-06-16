@@ -531,3 +531,13 @@ export function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: numb
     return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
   }
 }
+
+/**
+ * - getCellHeightCalculator
+ * - getAlignmentFactor:  alignmentFactor.text = displayValue.text;
+ * - getFooterItem: If fields array is specified, only show footer for fields included in that array
+ * - getCellLinks: on click
+ * - frameCompare, and getComparator return frameCompare
+ * - migrateTableDisplayModeToCellOptions: LCD gauge mode
+ * - getRowBgFn
+ */
