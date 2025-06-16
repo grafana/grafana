@@ -681,14 +681,6 @@ describe('Query imports', () => {
   });
 
   describe('getParserAndLabelKeys()', () => {
-    const queryHintsFeatureToggle = config.featureToggles.lokiQueryHints;
-    beforeAll(() => {
-      config.featureToggles.lokiQueryHints = true;
-    });
-    afterAll(() => {
-      config.featureToggles.lokiQueryHints = queryHintsFeatureToggle;
-    });
-
     let datasource: LokiDatasource, languageProvider: LanguageProvider;
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
@@ -809,12 +801,6 @@ describe('Query imports', () => {
         },
         mockTimeRange
       );
-    });
-    it('does not call dataSample with feature toggle disabled', async () => {
-      config.featureToggles.lokiQueryHints = false;
-      jest.spyOn(datasource, 'getDataSamples');
-      languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
-      expect(datasource.getDataSamples).not.toHaveBeenCalled();
     });
   });
 });
