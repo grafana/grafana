@@ -154,6 +154,20 @@ describe('contact points', () => {
 
         expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
+
+      test('defaults to contact points tab if user has only read permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
+
+      test('defaults to contact points tab if user has only create permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
     });
 
     describe('templates tab', () => {
