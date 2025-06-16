@@ -76,6 +76,34 @@ func TestGitRepository_Validate(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "missing host",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https:///repo.git", // URL with missing host
+				Branch: "main",
+				Token:  "token123",
+			},
+			want: 1,
+		},
+		{
+			name: "unparseable url",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "://not a valid url",
+				Branch: "main",
+				Token:  "token123",
+			},
+			want: 1,
+		},
+		{
 			name: "missing branch",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -85,6 +113,20 @@ func TestGitRepository_Validate(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/repo.git",
 				Branch: "", // Empty branch
+				Token:  "token123",
+			},
+			want: 1,
+		},
+		{
+			name: "invalid branch name",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "invalid/branch*name", // Invalid branch name
 				Token:  "token123",
 			},
 			want: 1,
@@ -100,6 +142,21 @@ func TestGitRepository_Validate(t *testing.T) {
 				URL:    "https://git.example.com/repo.git",
 				Branch: "main",
 				Token:  "", // Empty token
+			},
+			want: 1,
+		},
+		{
+			name: "unsafe path",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "token123",
+				Path:   "../unsafe/path",
 			},
 			want: 1,
 		},
