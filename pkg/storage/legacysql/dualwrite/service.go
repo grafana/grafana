@@ -3,30 +3,53 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, reg prometheus.Registerer, cfg *setting.Cfg) Service {
+func ProvideService(
+	features featuremgmt.FeatureToggles,
+	reg prometheus.Registerer,
+	kv kvstore.KVStore,
+	cfg *setting.Cfg) Service {
 	enabled := features.IsEnabledGlobally(featuremgmt.FlagManagedDualWriter) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning) // required for git provisioning
 	if !enabled && cfg != nil {
 		return &staticService{cfg} // fallback to using the dual write flags from cfg
 	}
 
-	path := "" // storage path
+	db := newKeyValueDB(kv)
+
 	if cfg != nil {
-		path = filepath.Join(cfg.DataPath, "dualwrite.json")
+		path := filepath.Join(cfg.DataPath, "dualwrite.json")
+		old, err := readFileDB(path)
+		if err == nil && len(old) > 0 {
+			logger := logging.DefaultLogger.With("logger", "dualwrite-migrator")
+			ctx := context.Background()
+			for _, v := range old {
+				err = db.Set(ctx, v)
+				if err != nil {
+					logger.Warn("error loading dual write settings", "err", err)
+				}
+			}
+			err = os.Remove(path)
+			if err != nil {
+				logger.Warn("error removing old dual write settings", "err", err)
+			}
+		}
 	}
 
 	return &service{
-		db:      newFileDB(path),
+		db:      db,
 		reg:     reg,
 		enabled: enabled,
 	}
