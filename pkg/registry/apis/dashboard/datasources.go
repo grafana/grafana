@@ -12,8 +12,9 @@ type datasourceInfoProvider struct {
 }
 
 func (d *datasourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
-	query := datasources.GetDataSourcesQuery{}
-	dataSources, err := d.datasourceService.GetDataSources(context.Background(), &query)
+	query := datasources.GetAllDataSourcesQuery{}
+	dataSources, err := d.datasourceService.GetAllDataSources(context.Background(), &query)
+
 	if err != nil {
 		return []schemaversion.DataSourceInfo{}
 	}
