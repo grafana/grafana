@@ -42,7 +42,7 @@ export type State = UserPreferencesDTO & {
   isSubmitting: boolean;
 };
 function getLanguageOptions(): ComboboxOption[] {
-  const languageOptions = LANGUAGES.filter((v) => !v.hidden) // filter out pseudo-locale
+  let languageOptions = LANGUAGES.filter((v) => !v.hidden) // filter out pseudo-locale
     .map((v) => ({
       value: v.code,
       label: v.name,
@@ -58,6 +58,16 @@ function getLanguageOptions(): ComboboxOption[] {
 
       return a.label.localeCompare(b.label);
     });
+
+  if (process.env.NODE_ENV === 'development') {
+    languageOptions = languageOptions.concat([
+      {
+        value: PSEUDO_LOCALE,
+        label: 'Pseudo-locale',
+      },
+    ]);
+  }
+
   const options = [
     {
       value: '',

@@ -18,7 +18,6 @@ import {
   POLISH_POLAND,
   SWEDISH_SWEDEN,
   TURKISH_TURKEY,
-  PSEUDO_LOCALE,
 } from './constants';
 
 interface TranslationDefinition {
@@ -55,5 +54,4 @@ export const LANGUAGES: TranslationDefinition[] = [
   { code: POLISH_POLAND, name: 'Polski' },
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
-  { code: PSEUDO_LOCALE, name: 'Pseudo-locale', hidden: process.env.NODE_ENV !== 'development' },
 ];

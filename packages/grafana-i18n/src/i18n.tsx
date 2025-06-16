@@ -99,6 +99,7 @@ async function initTranslations({
   language = DEFAULT_LANGUAGE,
   module,
 }: InitializeI18nOptions): Promise<{ language: string | undefined }> {
+  const validLanguages = [...LANGUAGES.map((language) => language.code), PSEUDO_LOCALE];
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
     partialBundledLanguages: true,
@@ -108,7 +109,7 @@ async function initTranslations({
     returnEmptyString: false,
 
     // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
-    supportedLngs: LANGUAGES.map((language) => language.code),
+    supportedLngs: validLanguages,
     fallbackLng: DEFAULT_LANGUAGE,
 
     ns,
