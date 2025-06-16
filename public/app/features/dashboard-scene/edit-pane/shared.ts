@@ -6,6 +6,7 @@ import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPan
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
+import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
@@ -104,6 +105,12 @@ export interface ChangeTitleActionHelperProps {
   source: DashboardScene;
 }
 
+export interface ChangeDescriptionActionHelperProps {
+  oldDescription: string;
+  newDescription: string;
+  source: DashboardScene;
+}
+
 export const dashboardEditActions = {
   /**
    * Registers and peforms an edit action
@@ -155,7 +162,7 @@ export const dashboardEditActions = {
   changeTitle({ source, oldTitle, newTitle }: ChangeTitleActionHelperProps) {
     dashboardEditActions.edit({
       description: t('dashboard.title.action', 'Change dashboard title'),
-      source: source,
+      source,
       perform: () => {
         source.setState({ title: newTitle });
       },
@@ -164,4 +171,21 @@ export const dashboardEditActions = {
       },
     });
   },
+
+  changeDescription({ source, oldDescription, newDescription }: ChangeDescriptionActionHelperProps) {
+    dashboardEditActions.edit({
+      description: t('dashboard.description.action', 'Change dashboard description'),
+      source,
+      perform: () => {
+        source.setState({ description: newDescription });
+      },
+      undo: () => {
+        source.setState({ description: oldDescription });
+      },
+    });
+  },
 };
+
+export function undoRedoWasClicked(e: React.FocusEvent) {
+  return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
+}
