@@ -213,8 +213,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
   onLocaleChanged = (regionalFormat: string) => {
     this.setState({ regionalFormat });
 
-    reportInteraction('grafana_preferences_locale_changed', {
-      toLocale: regionalFormat, // should toLocale also be changed?
+    reportInteraction('grafana_preferences_regional_format_changed', {
+      toRegionalFormat: regionalFormat,
       preferenceType: this.props.preferenceType,
     });
   };
