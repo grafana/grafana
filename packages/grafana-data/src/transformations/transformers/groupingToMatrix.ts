@@ -60,7 +60,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
       numFields += frame.fields.length;
     }
 
-    return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
+    return `Grouping to matrix requires at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
@@ -125,6 +125,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           if (supportDataplaneFallback && typeof columnName === 'number') {
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
+
+          // the names of these columns need to be the selected column values, and not be overridden with the display name
+          delete valueField.config.displayName;
 
           fields.push({
             name: columnName?.toString() ?? null,
