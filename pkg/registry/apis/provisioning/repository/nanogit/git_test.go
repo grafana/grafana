@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestGitRepository_Validate(t *testing.T) {
@@ -24,7 +25,7 @@ func TestGitRepository_Validate(t *testing.T) {
 		name      string
 		config    *provisioning.Repository
 		gitConfig RepositoryConfig
-		want      int // number of expected validation errors
+		want      field.ErrorList // number of expected validation errors
 	}{
 		{
 			name: "valid config",
@@ -39,33 +40,28 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "token123",
 				Path:   "configs",
 			},
-			want: 0,
-		},
-		{
-			name: "missing git config",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{},
-			},
-			want: 3, // URL, branch, and token are all required
+			want: nil,
 		},
 		{
 			name: "missing URL",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Required(field.NewPath("spec", "test_type", "url"), "a git url is required"),
+			},
 		},
 		{
 			name: "invalid URL scheme",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -73,13 +69,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "main",
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "url"), "http://git.example.com/repo.git", "invalid git URL format"),
+			},
 		},
 		{
 			name: "missing host",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -87,13 +85,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "main",
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "url"), "https:///repo.git", "invalid git URL format"),
+			},
 		},
 		{
 			name: "unparseable url",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -101,13 +101,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "main",
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "url"), "://not a valid url", "invalid git URL format"),
+			},
 		},
 		{
 			name: "missing branch",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -115,13 +117,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "", // Empty branch
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Required(field.NewPath("spec", "test_type", "branch"), "a git branch is required"),
+			},
 		},
 		{
 			name: "invalid branch name",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -129,13 +133,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "invalid/branch*name", // Invalid branch name
 				Token:  "token123",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "branch"), "invalid/branch*name", "invalid branch name"),
+			},
 		},
 		{
 			name: "missing token",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -143,13 +149,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Branch: "main",
 				Token:  "", // Empty token
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Required(field.NewPath("spec", "test_type", "token"), "a git access token is required"),
+			},
 		},
 		{
 			name: "unsafe path",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -158,13 +166,15 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "token123",
 				Path:   "../unsafe/path",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "path"), "../unsafe/path", "path contains traversal attempt (./ or ../)"),
+			},
 		},
 		{
 			name: "absolute path",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
+					Type: "test_type",
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -173,7 +183,9 @@ func TestGitRepository_Validate(t *testing.T) {
 				Token:  "token123",
 				Path:   "/absolute/path",
 			},
-			want: 1,
+			want: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "test_type", "path"), "/absolute/path", "path must be relative"),
+			},
 		},
 	}
 
@@ -185,7 +197,7 @@ func TestGitRepository_Validate(t *testing.T) {
 			}
 
 			errors := gitRepo.Validate()
-			require.Len(t, errors, tt.want)
+			require.Equal(t, tt.want, errors)
 		})
 	}
 }
@@ -219,6 +231,16 @@ func TestIsValidGitURL(t *testing.T) {
 		{
 			name: "no path",
 			url:  "https://git.example.com",
+			want: false,
+		},
+		{
+			name: "missing host",
+			url:  "https:///repo.git",
+			want: false,
+		},
+		{
+			name: "unparseable url",
+			url:  "://bad-url",
 			want: false,
 		},
 		{
@@ -438,9 +460,8 @@ func TestGitRepository_Test(t *testing.T) {
 		name        string
 		setupMock   func(*mocks.FakeClient)
 		gitConfig   RepositoryConfig
-		wantSuccess bool
-		wantErrors  int
-		wantCode    int
+		wantResults *provisioning.TestResults
+		wantError   error
 	}{
 		{
 			name: "success - all checks pass",
@@ -455,9 +476,12 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			wantSuccess: true,
-			wantErrors:  0,
-			wantCode:    http.StatusOK,
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - not authorized (error)",
@@ -467,9 +491,18 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Detail: "failed check if authorized: auth error",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - not authorized (false result)",
@@ -479,9 +512,18 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "token").String(),
+						Detail: "not authorized",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - repository not found (error)",
@@ -492,9 +534,18 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "url").String(),
+						Detail: "failed check if repository exists: repo error",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - repository not found (false result)",
@@ -505,12 +556,21 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "main",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "url").String(),
+						Detail: "repository not found",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
-			name: "failure - branch not found",
+			name: "failure - branch not found (error)",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.IsAuthorizedReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
@@ -519,23 +579,41 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "nonexistent",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "failed to check if branch exists: branch not found",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
-			name: "failure - GetRef returns nanogit.ErrObjectNotFound",
+			name: "failure - branch not found",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.IsAuthorizedReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 			},
 			gitConfig: RepositoryConfig{
-				Branch: "missing-branch",
+				Branch: "nonexistent",
 			},
-			wantSuccess: false,
-			wantErrors:  1,
-			wantCode:    http.StatusBadRequest,
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "branch not found",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 	}
 
@@ -549,7 +627,7 @@ func TestGitRepository_Test(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: "test_type",
 					},
 				},
 			}
@@ -557,9 +635,8 @@ func TestGitRepository_Test(t *testing.T) {
 			results, err := gitRepo.Test(context.Background())
 			require.NoError(t, err, "Test method should not return an error")
 
-			require.Equal(t, tt.wantSuccess, results.Success, "Success status mismatch")
-			require.Equal(t, tt.wantErrors, len(results.Errors), "Number of errors mismatch")
-			require.Equal(t, tt.wantCode, results.Code, "HTTP status code mismatch")
+			require.Equal(t, tt.wantResults, results, "Test results mismatch")
+			require.Equal(t, tt.wantError, err, "Test error mismatch")
 
 			// Verify the mock calls
 			require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
@@ -572,14 +649,6 @@ func TestGitRepository_Test(t *testing.T) {
 				require.Equal(t, 1, mockClient.GetRefCallCount(), "GetRef should be called at most once")
 				_, ref := mockClient.GetRefArgsForCall(0)
 				require.Equal(t, "refs/heads/"+tt.gitConfig.Branch, ref, "GetRef should be called with correct branch reference")
-			}
-
-			// Verify error details for failed tests
-			if !tt.wantSuccess && len(results.Errors) > 0 {
-				err := results.Errors[0]
-				require.Equal(t, metav1.CauseTypeFieldValueInvalid, err.Type, "Error type should be FieldValueInvalid")
-				require.NotEmpty(t, err.Field, "Error field should not be empty")
-				require.NotEmpty(t, err.Detail, "Error detail should not be empty")
 			}
 		})
 	}
@@ -684,7 +753,7 @@ func TestGitRepository_Read(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
+						Type: "test_type",
 					},
 				},
 			}

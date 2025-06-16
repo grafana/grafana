@@ -146,6 +146,8 @@ func isValidGitURL(gitURL string) bool {
 func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	ctx, _ = r.logger(ctx, "")
 
+	t := string(r.config.Spec.Type)
+
 	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
 		detail := "not authorized"
 		if err != nil {
@@ -157,7 +159,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "git", "token").String(),
+				Field:  field.NewPath("spec", t, "token").String(),
 				Detail: detail,
 			}}}, nil
 	}
@@ -173,7 +175,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "git", "url").String(),
+				Field:  field.NewPath("spec", t, "url").String(),
 				Detail: detail,
 			}}}, nil
 	}
@@ -181,13 +183,27 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	// Test basic connectivity by getting the branch reference
 	_, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
+		detail := "branch not found"
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
+			return &provisioning.TestResults{
+				Code:    http.StatusBadRequest,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("spec", t, "branch").String(),
+					Detail: detail,
+				}}}, nil
+		}
+
+		detail = fmt.Sprintf("failed to check if branch exists: %v", err)
+
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "git", "branch").String(),
-				Detail: err.Error(),
+				Field:  field.NewPath("spec", t, "branch").String(),
+				Detail: detail,
 			}}}, nil
 	}
 
