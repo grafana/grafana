@@ -282,6 +282,8 @@ func (a *alertRule) Run() error {
 					a.evalApplied(ctx.scheduledAt)
 				}()
 
+				nextRetryDelay := initialRetryDelay
+
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
 
@@ -337,12 +339,13 @@ func (a *alertRule) Run() error {
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
+					logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err, "retryDelay", nextRetryDelay)
 					select {
 					case <-tracingCtx.Done():
 						logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 						return
-					case <-time.After(retryDelay):
+					case <-time.After(nextRetryDelay):
+						nextRetryDelay = doubleDuration(nextRetryDelay, maxRetryDelay)
 						continue
 					}
 				}
@@ -540,4 +543,14 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 			},
 		},
 	}
+}
+
+func doubleDuration(value time.Duration, max time.Duration) time.Duration {
+	value = value * 2
+
+	if value <= max {
+		return value
+	}
+
+	return max
 }
