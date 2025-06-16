@@ -27,7 +27,7 @@ import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdH
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
-import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
+import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
@@ -87,6 +87,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Group by',
     description: 'Add keys to group by on the fly',
     editor: GroupByVariableEditor,
+    getOptions: getGroupByVariableOptions,
   },
   textbox: {
     name: 'Textbox',

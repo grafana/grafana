@@ -1,31 +1,32 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
-import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
+import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 
-import { StepStatusInfo, WizardFormData } from './types';
+import { useStepStatus } from './StepStatusContext';
+import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
   requiresMigration: boolean;
   isLegacyStorage?: boolean;
 }
 
-export function SynchronizeStep({ onStepStatusUpdate, requiresMigration, isLegacyStorage }: SynchronizeStepProps) {
+export function SynchronizeStep({ requiresMigration, isLegacyStorage }: SynchronizeStepProps) {
+  const { setStepStatusInfo } = useStepStatus();
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const repoType = watch('repository.type');
   const supportsHistory = repoType === 'github' && isLegacyStorage;
   const [job, setJob] = useState<Job>();
-  const { t } = useTranslate();
+
   const startSynchronization = async () => {
     const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
     if (!repoName) {
-      onStepStatusUpdate({
+      setStepStatusInfo({
         status: 'error',
         error: t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'),
       });
@@ -33,7 +34,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration, isLegac
     }
 
     try {
-      onStepStatusUpdate({ status: 'running' });
+      setStepStatusInfo({ status: 'running' });
       const jobSpec = requiresMigration
         ? {
             migrate: {
@@ -52,14 +53,14 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration, isLegac
       }).unwrap();
 
       if (!response?.metadata?.name) {
-        return onStepStatusUpdate({
+        return setStepStatusInfo({
           status: 'error',
           error: t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'),
         });
       }
       setJob(response);
     } catch (error) {
-      onStepStatusUpdate({
+      setStepStatusInfo({
         status: 'error',
         error: t('provisioning.synchronize-step.error-starting-job', 'Error starting job'),
       });
@@ -67,7 +68,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration, isLegac
   };
 
   if (job) {
-    return <JobStatus watch={job} onStatusChange={onStepStatusUpdate} />;
+    return <JobStatus watch={job} />;
   }
 
   return (

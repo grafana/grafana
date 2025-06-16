@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { measureText } from '../../utils';
+import { measureText } from '../../utils/measureText';
 
 export function useMultiInputAutoSize(inputValue: string) {
   const inputRef = useRef<HTMLInputElement>(null);

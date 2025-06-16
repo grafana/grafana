@@ -3,8 +3,9 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
-import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { Trans } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 

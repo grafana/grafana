@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { SimpleInput } from './SimpleInput';
 
 interface AddColumnProps {
@@ -27,7 +29,7 @@ export const AddColumn = ({ divStyle, onColumnInputBlur }: AddColumnProps) => {
   return (
     <div className={divStyle}>
       {showInput ? (
-        <SimpleInput placeholder="Column Name" onBlur={onBlur} />
+        <SimpleInput placeholder={t('datagrid.add-column.placeholder-column-name', 'Column name')} onBlur={onBlur} />
       ) : (
         <button onClick={setupColumnInput}>+</button>
       )}

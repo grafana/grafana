@@ -1,13 +1,11 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../../utils/interactions';
 import { ToolbarActionProps } from '../types';
 
 export const StarButton = ({ dashboard }: ToolbarActionProps) => {
-  const { t } = useTranslate();
-
   return (
     <ToolbarButton
       tooltip={

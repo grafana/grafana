@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, MappingType, SpecialValueMatch, SelectableValue, ValueMappingResult } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, HorizontalGroup, ColorPicker, IconButton, Input, Button } from '@grafana/ui';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
@@ -58,8 +58,6 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       });
     }
   }, [mapping, inputRef, update]);
-
-  const { t } = useTranslate();
 
   const onChangeColor = (color: string) => {
     update((mapping) => {
@@ -123,7 +121,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const specialMatchOptions: Array<SelectableValue<SpecialValueMatch>> = [
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'Null',
       value: SpecialValueMatch.Null,
       description: t(
@@ -132,7 +130,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'NaN',
       value: SpecialValueMatch.NaN,
       description: t(
@@ -141,7 +139,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'Null + NaN',
       value: SpecialValueMatch.NullAndNaN,
       description: t(
@@ -150,7 +148,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'True',
       value: SpecialValueMatch.True,
       description: t(
@@ -159,7 +157,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
       ),
     },
     {
-      // eslint-disable-next-line @grafana/no-untranslated-strings
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       label: 'False',
       value: SpecialValueMatch.False,
       description: t(

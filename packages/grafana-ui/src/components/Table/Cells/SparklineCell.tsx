@@ -21,8 +21,8 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes';
-import { measureText } from '../../../utils';
+import { useTheme2 } from '../../../themes/ThemeContext';
+import { measureText } from '../../../utils/measureText';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
 import { TableCellProps } from '../types';

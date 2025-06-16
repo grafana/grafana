@@ -399,7 +399,25 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Type of manager, which is responsible for managing the resource",
 			},
+			// TODO: below fields only need to be returned from search, but do not need to be searchable
+			{
+				Name: SEARCH_FIELD_MANAGER_ID,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_TIME,
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_PATH,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
 		})
+
 		if err != nil {
 			panic("failed to initialize standard search fields")
 		}

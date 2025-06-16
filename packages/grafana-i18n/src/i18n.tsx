@@ -11,6 +11,17 @@ import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './t
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
+function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } = {}) {
+  if (id) {
+    tFunc = getI18nInstance().getFixedT(null, id);
+    transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
+    return;
+  }
+
+  tFunc = getI18nInstance().t;
+  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
+}
+
 // exported for testing
 export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
@@ -30,17 +41,19 @@ export async function loadPluginResources(id: string, language: string, loaders?
 }
 
 // exported for testing
-export async function initDefaultI18nInstance() {
+export function initDefaultI18nInstance() {
   // If the resources are not an object, we need to initialize the plugin translations
   if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
     return;
   }
 
-  await getI18nInstance().use(initReactI18next).init({
+  const initPromise = getI18nInstance().use(initReactI18next).init({
     resources: {},
     returnEmptyString: false,
     lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
   });
+  initTFuncAndTransComponent();
+  return initPromise;
 }
 
 // exported for testing
@@ -60,8 +73,7 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
   initDefaultReactI18nInstance();
 
   const language = getResolvedLanguage();
-  tFunc = getI18nInstance().getFixedT(null, id);
-  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
+  initTFuncAndTransComponent({ id });
 
   await loadPluginResources(id, language, loaders);
 
@@ -133,8 +145,7 @@ async function initTranslations({
 
   await getI18nInstance().init(options);
 
-  tFunc = getI18nInstance().t;
-  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
+  initTFuncAndTransComponent({ ns });
 
   return {
     language: getResolvedLanguage(),
@@ -171,6 +182,7 @@ export function addResourceBundle(language: string, namespace: string, resources
 }
 
 export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  initDefaultI18nInstance();
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
@@ -188,11 +200,8 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
   return tFunc(id, defaultMessage, values);
 };
 
-export function useTranslate() {
-  return { t };
-}
-
 export function Trans(props: TransProps) {
+  initDefaultI18nInstance();
   const Component = transComponent ?? I18NextTrans;
   return <Component shouldUnescape {...props} />;
 }
