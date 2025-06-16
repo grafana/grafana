@@ -12,6 +12,8 @@ import {
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 
+import { variableRegex } from '../variables/utils';
+
 export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
   // get full names
   let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
@@ -77,7 +79,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
