@@ -167,6 +167,14 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         query: variable.state.value,
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       variables.push({
         ...commonProperties,
         datasource: variable.state.datasource,
@@ -181,6 +189,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
+        defaultValue: defaultVariableOption,
         allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
@@ -413,6 +422,14 @@ export function sceneVariablesSetToSchemaV2Variables(
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
         spec: {
@@ -425,6 +442,7 @@ export function sceneVariablesSetToSchemaV2Variables(
               value: String(option.value),
             })) || [],
           current: currentVariableOption,
+          defaultValue: defaultVariableOption,
           multi: variable.state.isMulti || false,
         },
       };
