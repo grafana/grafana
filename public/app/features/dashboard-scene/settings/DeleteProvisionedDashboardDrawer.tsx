@@ -13,7 +13,8 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions } = useProvisionedDashboardData(dashboard);
+  const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions, isNew } =
+    useProvisionedDashboardData(dashboard);
 
   if (!defaultValues) {
     return null;
@@ -26,6 +27,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       loadedFromRef={loadedFromRef}
       readOnly={readOnly}
       isGitHub={isGitHub}
+      isNew={isNew}
       workflowOptions={workflowOptions}
       onDismiss={onDismiss}
     />

@@ -11,13 +11,14 @@ import { ProvisionedDashboardFormData } from '../../saving/shared';
 
 interface DashboardEditFormSharedFieldsProps {
   workflowOptions: Array<{ label: string; value: string }>;
+  isNew?: boolean;
   readOnly?: boolean;
   workflow?: WorkflowOption;
   isGitHub?: boolean;
 }
 
 export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly, workflow, workflowOptions, isGitHub }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew }) => {
     const {
       control,
       register,
@@ -38,7 +39,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" type="text" {...register(pathFieldName)} readOnly={readOnly} />
+          <Input id="dashboard-path" type="text" {...register(pathFieldName)} readOnly={!isNew} />
         </Field>
 
         {/* Comment */}

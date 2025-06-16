@@ -154,7 +154,7 @@ describe('DashboardEditFormSharedFields', () => {
 
       render(
         <FormWrapper>
-          <DashboardEditFormSharedFields workflowOptions={mockWorkflowOptions} />
+          <DashboardEditFormSharedFields workflowOptions={mockWorkflowOptions} isNew={true} />
         </FormWrapper>
       );
 
@@ -225,7 +225,7 @@ describe('DashboardEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <DashboardEditFormSharedFields workflowOptions={mockWorkflowOptions} />
+            <DashboardEditFormSharedFields workflowOptions={mockWorkflowOptions} isNew={true} />
           </FormProvider>
         );
       };

@@ -112,6 +112,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
 
   const { values, isNew, isGitHub, repository } = defaultValuesResult;
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
+
   const readOnly = !repository?.workflows?.length;
 
   return {

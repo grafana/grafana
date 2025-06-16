@@ -6,8 +6,8 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Stack } from '@grafana/ui';
+import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
-import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDeleteRepositoryFiles';
 
 import { DashboardEditFormSharedFields } from '../components/Provisioned/DashboardEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -18,6 +18,7 @@ export interface Props {
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
   isGitHub: boolean;
+  isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   onDismiss: () => void;
@@ -33,6 +34,7 @@ export function DeleteProvisionedDashboardForm({
   loadedFromRef,
   readOnly,
   isGitHub,
+  isNew,
   workflowOptions,
   onDismiss,
 }: Props) {
@@ -42,7 +44,7 @@ export function DeleteProvisionedDashboardForm({
   const { handleSubmit, watch, reset } = methods;
 
   const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
-  const [deleteRepoFile, request] = useDeleteRepositoryFiles();
+  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
     if (!repo || !path) {
@@ -69,14 +71,14 @@ export function DeleteProvisionedDashboardForm({
     // This effect runs when the delete file request state changes
     // it checks if the request was successful or if there was an error
     if (request.isSuccess) {
+      console.log('Delete response data:', request.data);
       const { ref, path } = request.data;
-      dashboard.setState({ isDirty: false });
 
       if (workflow === 'branch' && ref && path) {
-        dashboard.closeModal();
         onDismiss();
         // Redirect to the provisioning preview pages
-        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+        // navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`);
         return;
       }
 
@@ -125,6 +127,7 @@ export function DeleteProvisionedDashboardForm({
             )}
 
             <DashboardEditFormSharedFields
+              isNew={isNew}
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { useDeleteRepositoryFiles } from 'app/features/provisioning/hooks/useDeleteRepositoryFiles';
+import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useProvisionedDashboardData, ProvisionedDashboardData } from '../saving/provisioned/hooks';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -11,7 +11,16 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
 
 // Mock the hooks and dependencies
-jest.mock('app/features/provisioning/hooks/useDeleteRepositoryFiles');
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  useDeleteRepositoryFilesWithPathMutation: jest.fn(),
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
+}));
 jest.mock('../saving/provisioned/hooks');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -33,7 +42,9 @@ jest.mock('../components/Provisioned/DashboardEditFormSharedFields', () => ({
 
 const mockDeleteRepoFile = jest.fn();
 const mockPublish = jest.fn();
-const mockUseDeleteRepositoryFiles = useDeleteRepositoryFiles as jest.MockedFunction<typeof useDeleteRepositoryFiles>;
+const mockUseDeleteRepositoryFiles = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
+  typeof useDeleteRepositoryFilesWithPathMutation
+>;
 const mockUseProvisionedDashboardData = useProvisionedDashboardData as jest.MockedFunction<
   typeof useProvisionedDashboardData
 >;
@@ -44,12 +55,14 @@ type MockRequestState = {
   isSuccess: boolean;
   isError: boolean;
   error?: Error;
+  reset: () => void;
 };
 
 const createMockRequestState = (overrides: Partial<MockRequestState> = {}): MockRequestState => ({
   isLoading: false,
   isSuccess: false,
   isError: false,
+  reset: jest.fn(),
   ...overrides,
 });
 
@@ -113,7 +126,7 @@ function setup(options: SetupOptions = {}) {
   mockUseProvisionedDashboardData.mockReturnValue(defaultProvisionedData);
   mockUseDeleteRepositoryFiles.mockReturnValue([
     mockDeleteRepoFile,
-    createMockRequestState(requestState) as ReturnType<typeof useDeleteRepositoryFiles>[1],
+    createMockRequestState(requestState) as ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[1],
   ]);
 
   return {

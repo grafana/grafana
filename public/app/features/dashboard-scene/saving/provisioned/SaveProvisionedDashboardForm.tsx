@@ -219,6 +219,7 @@ export function SaveProvisionedDashboardForm({
             workflow={workflow}
             workflowOptions={workflowOptions}
             isGitHub={isGitHub}
+            isNew={isNew}
           />
 
           <Stack gap={2}>
