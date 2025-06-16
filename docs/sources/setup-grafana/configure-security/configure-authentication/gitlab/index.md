@@ -183,7 +183,7 @@ In this example, the user with email `admin@company.com` has been granted the `A
 All other users are granted the `Viewer` role.
 
 ```ini
-role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
+role_attribute_path = email=="admin@company.com" && 'Admin' || 'Viewer'
 ```
 
 #### Map roles using groups
@@ -201,7 +201,7 @@ In this example, the user with email `admin@company.com` has been granted the `A
 All other users are granted the `Viewer` role.
 
 ```bash
-role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
+role_attribute_path = email=="admin@company.com" && 'GrafanaAdmin' || 'Viewer'
 ```
 
 #### Map one role to all users
