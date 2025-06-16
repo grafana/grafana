@@ -192,7 +192,7 @@ const (
 	FlagProvisioning = "provisioning"
 
 	// FlagNanoGit
-	// Enable nano git for next generation provisioning and git sync
+	// Use experimental git library for provisioning
 	FlagNanoGit = "nanoGit"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess

@@ -352,6 +352,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "nanoGit",
+			Description:     "Use experimental git library for provisioning",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,

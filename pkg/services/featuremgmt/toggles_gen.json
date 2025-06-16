@@ -2231,6 +2231,19 @@
     },
     {
       "metadata": {
+        "name": "nanoGit",
+        "resourceVersion": "1750087021356",
+        "creationTimestamp": "2025-06-16T15:17:01Z"
+      },
+      "spec": {
+        "description": "Use experimental git library for provisioning",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nestedFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2022-10-26T14:15:14Z"

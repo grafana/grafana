@@ -218,6 +218,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Use experimental git library for provisioning
+  */
+  nanoGit?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
