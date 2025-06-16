@@ -19,18 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
+	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
-	config  *provisioning.Repository
-	client  nanogit.Client
-	secrets secrets.Service
-
-	url    string
-	branch string
+	config    *provisioning.Repository
+	gitConfig provisioning.GitRepositoryConfig
+	client    nanogit.Client
+	secrets   secrets.Service
 }
 
 // GitRepository is an interface that combines all repository capabilities
@@ -47,82 +46,75 @@ type GitRepository interface {
 
 func NewGitRepository(
 	ctx context.Context,
-	config *provisioning.Repository,
 	secrets secrets.Service,
+	config *provisioning.Repository,
+	gitConfig provisioning.GitRepositoryConfig,
 ) (GitRepository, error) {
-	gitURL := config.Spec.Git.URL
-	branch := config.Spec.Git.Branch
-
-	token := config.Spec.Git.Token
-	if token == "" {
-		decrypted, err := secrets.Decrypt(ctx, config.Spec.Git.EncryptedToken)
+	if gitConfig.Token == "" {
+		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
 		if err != nil {
 			return nil, fmt.Errorf("decrypt token: %w", err)
 		}
-		token = string(decrypted)
+		gitConfig.Token = string(decrypted)
 	}
 
-	logger := logging.FromContext(ctx)
 	// Create nanogit client with authentication
 	client, err := nanogit.NewHTTPClient(
-		gitURL,
-		nanogit.WithBasicAuth("git", token),
-		nanogit.WithLogger(logger),
+		gitConfig.URL,
+		options.WithBasicAuth("git", gitConfig.Token),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
 
 	return &gitRepository{
-		config:  config,
-		client:  client,
-		secrets: secrets,
-		url:     gitURL,
-		branch:  branch,
+		config:    config,
+		gitConfig: gitConfig,
+		client:    client,
+		secrets:   secrets,
 	}, nil
+}
+
+func (r *gitRepository) URL() string {
+	return r.gitConfig.URL
+}
+
+func (r *gitRepository) Branch() string {
+	return r.gitConfig.Branch
 }
 
 func (r *gitRepository) Config() *provisioning.Repository {
 	return r.config
 }
 
-func (r *gitRepository) URL() string {
-	return r.url
-}
-
-func (r *gitRepository) Branch() string {
-	return r.branch
-}
-
 // Validate implements provisioning.Repository.
 func (r *gitRepository) Validate() (list field.ErrorList) {
-	git := r.config.Spec.Git
-	if git == nil {
-		list = append(list, field.Required(field.NewPath("spec", "git"), "a git config is required"))
-		return list
-	}
-	if git.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", "git", "url"), "a git url is required"))
+	cfg := r.gitConfig
+
+	t := string(r.config.Spec.Type)
+	if cfg.URL == "" {
+		list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
 	} else {
-		if !isValidGitURL(git.URL) {
-			list = append(list, field.Invalid(field.NewPath("spec", "git", "url"), git.URL, "invalid git URL format"))
+		if !isValidGitURL(cfg.URL) {
+			list = append(list, field.Invalid(field.NewPath("spec", t, "url"), cfg.URL, "invalid git URL format"))
 		}
 	}
-	if git.Branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", "git", "branch"), "a git branch is required"))
-	} else if !repository.IsValidGitBranchName(git.Branch) {
-		list = append(list, field.Invalid(field.NewPath("spec", "git", "branch"), git.Branch, "invalid branch name"))
-	}
-	if git.Token == "" && len(git.EncryptedToken) == 0 {
-		list = append(list, field.Required(field.NewPath("spec", "git", "token"), "a git access token is required"))
+	if cfg.Branch == "" {
+		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
+	} else if !repository.IsValidGitBranchName(cfg.Branch) {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	if err := safepath.IsSafe(git.Path); err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", "git", "path"), git.Path, err.Error()))
+	if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
+		list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
 	}
 
-	if safepath.IsAbs(git.Path) {
-		list = append(list, field.Invalid(field.NewPath("spec", "git", "path"), git.Path, "path must be relative"))
+	if err := safepath.IsSafe(cfg.Path); err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, err.Error()))
+	}
+
+	if safepath.IsAbs(cfg.Path) {
+		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, "path must be relative"))
 	}
 
 	return list
@@ -189,7 +181,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	}
 
 	// Test basic connectivity by getting the branch reference
-	_, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.branch))
+	_, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
 		return &provisioning.TestResults{
 			Code:    http.StatusBadRequest,
@@ -210,7 +202,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 // Read implements provisioning.Repository.
 func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
 	ctx, _ = r.logger(ctx, ref)
-	finalPath := safepath.Join(r.config.Spec.Git.Path, filePath)
+	finalPath := safepath.Join(r.gitConfig.Path, filePath)
 
 	// Resolve ref to commit hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
@@ -282,7 +274,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	for _, entry := range tree.Entries {
 		isBlob := entry.Type == protocol.ObjectTypeBlob
 		// Apply path prefix filtering
-		relativePath, err := safepath.RelativeTo(entry.Path, r.config.Spec.Git.Path)
+		relativePath, err := safepath.RelativeTo(entry.Path, r.gitConfig.Path)
 		if err != nil {
 			// File is outside configured path, skip it
 			continue
@@ -307,7 +299,7 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 
 func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
 	if ref == "" {
-		ref = r.branch
+		ref = r.gitConfig.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
 	branchRef, err := r.ensureBranchExists(ctx, ref)
@@ -328,7 +320,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 }
 
 func (r *gitRepository) create(ctx context.Context, path string, data []byte, writer nanogit.StagedWriter) error {
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
+	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Create .keep file if it is a directory
 	if safepath.IsDir(finalPath) {
 		if data != nil {
@@ -352,7 +344,7 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 
 func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
 	if ref == "" {
-		ref = r.branch
+		ref = r.gitConfig.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
 
@@ -384,7 +376,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
+	finalPath := safepath.Join(r.gitConfig.Path, path)
 	if _, err := writer.UpdateBlob(ctx, finalPath, data); err != nil {
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
 			return repository.ErrFileNotFound
@@ -398,7 +390,7 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 
 func (r *gitRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	if ref == "" {
-		ref = r.branch
+		ref = r.gitConfig.Branch
 	}
 
 	ctx, _ = r.logger(ctx, ref)
@@ -415,7 +407,7 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 
 func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	if ref == "" {
-		ref = r.branch
+		ref = r.gitConfig.Branch
 	}
 	ctx, _ = r.logger(ctx, ref)
 
@@ -437,7 +429,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 }
 
 func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.StagedWriter) error {
-	finalPath := safepath.Join(r.config.Spec.Git.Path, path)
+	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
 	if safepath.IsDir(path) {
 		if _, err := writer.DeleteTree(ctx, finalPath); err != nil {
@@ -469,7 +461,7 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	ctx, _ = r.logger(ctx, "")
-	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.branch))
+	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
 	if err != nil {
 		return "", fmt.Errorf("get branch ref: %w", err)
 	}
@@ -514,7 +506,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	for _, f := range files {
 		switch f.Status {
 		case protocol.FileStatusAdded:
-			currentPath, err := safepath.RelativeTo(f.Path, r.config.Spec.Git.Path)
+			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			if err != nil {
 				// do nothing as it's outside of configured path
 				continue
@@ -526,7 +518,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionCreated,
 			})
 		case protocol.FileStatusModified:
-			currentPath, err := safepath.RelativeTo(f.Path, r.config.Spec.Git.Path)
+			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			if err != nil {
 				// do nothing as it's outside of configured path
 				continue
@@ -538,7 +530,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
-			currentPath, err := safepath.RelativeTo(f.Path, r.config.Spec.Git.Path)
+			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			if err != nil {
 				// do nothing as it's outside of configured path
 				continue
@@ -553,7 +545,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			})
 		case protocol.FileStatusTypeChanged:
 			// Handle type changes as modifications
-			currentPath, err := safepath.RelativeTo(f.Path, r.config.Spec.Git.Path)
+			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			if err != nil {
 				// do nothing as it's outside of configured path
 				continue
@@ -580,7 +572,7 @@ func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions)
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
 	// Use default branch if ref is empty
 	if ref == "" {
-		ref = fmt.Sprintf("refs/heads/%s", r.branch)
+		ref = fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch)
 	}
 
 	// Try to parse ref as a hash first
@@ -628,7 +620,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 	}
 
 	// Branch doesn't exist, create it based on the configured branch
-	srcBranch := r.config.Spec.Git.Branch
+	srcBranch := r.gitConfig.Branch
 	srcRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", srcBranch))
 	if err != nil {
 		return nanogit.Ref{}, fmt.Errorf("get source branch ref: %w", err)
@@ -709,9 +701,9 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 	}
 
 	if ref == "" {
-		ref = r.branch
+		ref = r.gitConfig.Branch
 	}
-	logger = logger.With(slog.Group("git_repository", "url", r.url, "ref", ref))
+	logger = logger.With(slog.Group("git_repository", "url", r.gitConfig.URL, "ref", ref))
 	ctx = logging.Context(ctx, logger)
 	// We want to ensure we don't add multiple git_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGitKey, true)
