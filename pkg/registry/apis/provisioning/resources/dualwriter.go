@@ -87,6 +87,11 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("read file: %w", err)
 	}
 
+	// HACK: manual set to the provided branch so that the parser can possible read the file
+	if opts.Ref != "" {
+		file.Ref = opts.Ref
+	}
+
 	// TODO: document in API specification
 	// We can only delete parsable things
 	parsed, err := r.parser.Parse(ctx, file)
