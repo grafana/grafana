@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"errors"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
@@ -17,5 +16,6 @@ func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, 
 }
 
 func (s *CommonDataSourceClientSupplier) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
-	return clientapi.InstanceConfigurationSettings{}, errors.New("get instance configuration settings is not implemented")
+	// FIXME: for now it's an empty structure, we'll find a way to fill it correctly.
+	return clientapi.InstanceConfigurationSettings{}, nil
 }

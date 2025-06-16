@@ -3,7 +3,6 @@ package query
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -172,5 +171,5 @@ func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 }
 
 func (m mockClient) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
-	return clientapi.InstanceConfigurationSettings{}, errors.New("get instance configuration settings is not implemented")
+	return clientapi.InstanceConfigurationSettings{}, nil
 }
