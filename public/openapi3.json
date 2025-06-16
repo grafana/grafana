@@ -3075,6 +3075,7 @@
             "type": "integer"
           },
           "dashboardId": {
+            "description": "Deprecated: Use DashboardUID and OrgID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -3155,6 +3156,9 @@
           "dashboardId": {
             "format": "int64",
             "type": "integer"
+          },
+          "dashboardUID": {
+            "type": "string"
           },
           "id": {
             "format": "int64",

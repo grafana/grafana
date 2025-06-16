@@ -3253,11 +3253,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:0.19.2":
-  version: 0.19.2
-  resolution: "@grafana/llm@npm:0.19.2"
+"@grafana/llm@npm:0.22.0":
+  version: 0.22.0
+  resolution: "@grafana/llm@npm:0.22.0"
   dependencies:
-    "@modelcontextprotocol/sdk": "npm:^1.7.0"
+    "@modelcontextprotocol/sdk": "npm:^1.11.3"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
     uuid: "npm:^11.0.5"
@@ -3266,7 +3266,7 @@ __metadata:
     "@grafana/runtime": ^10.4.0 || ^11
     react: ^18
     rxjs: ^7.8.1
-  checksum: 10/a348702f78171e43a46c0c72b1a290acadd3ea0dc81b27cb106d31e2246e75d0da1c92e41d4659f224b9f34618b2ea4013051c77c241f4e37dd11b2ef8093578
+  checksum: 10/2333a9fb0fb0d7fe18b83e06ca0f8a3b0177fc2b33734c40215c2e85758b72160e2cb5da95445dbc4289bb047ea822e8192c3f614336dff0fa4daead6e0fafb8
   languageName: node
   linkType: hard
 
@@ -3489,11 +3489,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.19.0":
-  version: 6.19.0
-  resolution: "@grafana/scenes-react@npm:6.19.0"
+"@grafana/scenes-react@npm:^6.20.1":
+  version: 6.20.1
+  resolution: "@grafana/scenes-react@npm:6.20.1"
   dependencies:
-    "@grafana/scenes": "npm:6.19.0"
+    "@grafana/scenes": "npm:6.20.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3505,13 +3505,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/3743e14282f0d8b07913bd1de9470031db1dc6930b2d1f0b864dc2a96934e11e5044eb37d7a27fca2c9f4678bf5dbb9551a6d3b0c7056acfe4024606375f8151
+  checksum: 10/55b828054328c202046f3ac808a15fe353075098ef7ce361c7308b0e244dc59929115983795bcaf89bdd549022331e3fd08fae5db12e57aabceb6254712f5745
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.19.0, @grafana/scenes@npm:^6.19.0":
-  version: 6.19.0
-  resolution: "@grafana/scenes@npm:6.19.0"
+"@grafana/scenes@npm:6.20.1, @grafana/scenes@npm:^6.20.1":
+  version: 6.20.1
+  resolution: "@grafana/scenes@npm:6.20.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3529,7 +3529,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/ed51646f7dbda3598198d65106ed12f45c1dce5cd6bc7217606f99f291d6166a25a19bd530beb0a2e502b2db2f4433e66dad44495d522ddb4dfe743e41bc2ec1
+  checksum: 10/fd8fa7a17bfd59e495e8102148b678832c974ce9d9e7ea825ccc027d7ec544cd5393f97295306e94cee04511be9258c030fabf3bb6be04f221571227ce1706db
   languageName: node
   linkType: hard
 
@@ -4968,9 +4968,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@modelcontextprotocol/sdk@npm:^1.7.0":
-  version: 1.12.0
-  resolution: "@modelcontextprotocol/sdk@npm:1.12.0"
+"@modelcontextprotocol/sdk@npm:^1.11.3":
+  version: 1.12.2
+  resolution: "@modelcontextprotocol/sdk@npm:1.12.2"
   dependencies:
     ajv: "npm:^6.12.6"
     content-type: "npm:^1.0.5"
@@ -4983,7 +4983,7 @@ __metadata:
     raw-body: "npm:^3.0.0"
     zod: "npm:^3.23.8"
     zod-to-json-schema: "npm:^3.24.1"
-  checksum: 10/38760dc7529313901f9d643ed1d872bb903b586fdce34be169c67eeeb98ef87e1e1eef436a6ed5f919a35c2c709c6cbb915d335fe2c6b0a504a400e9337d65e4
+  checksum: 10/1c2e1c2b3cddda6dd3ebe25732a3216feb1638f4fac94fdc491f5f7294a68bc642786aa08615c104ab57d7fff391b6c8e6ef94a38cfd2968da3a51582b62d16c
   languageName: node
   linkType: hard
 
@@ -9233,7 +9233,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.21, @types/express-serve-static-core@npm:^4.17.33":
+"@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.33":
+  version: 4.17.33
+  resolution: "@types/express-serve-static-core@npm:4.17.33"
+  dependencies:
+    "@types/node": "npm:*"
+    "@types/qs": "npm:*"
+    "@types/range-parser": "npm:*"
+  checksum: 10/47ee1b46be710ae6451a2e658e2eab75f4affe874b0d156a31e792db0ddb35184ac7b35be926eb23424cc45f6e0d3dbacc86ac5d63a3c988d8235aedb1143841
+  languageName: node
+  linkType: hard
+
+"@types/express-serve-static-core@npm:^4.17.21":
   version: 4.19.6
   resolution: "@types/express-serve-static-core@npm:4.19.6"
   dependencies:
@@ -12212,16 +12223,16 @@ __metadata:
   linkType: hard
 
 "browserslist@npm:^4.0.0, browserslist@npm:^4.21.10, browserslist@npm:^4.21.4, browserslist@npm:^4.23.3, browserslist@npm:^4.24.0, browserslist@npm:^4.24.3":
-  version: 4.24.4
-  resolution: "browserslist@npm:4.24.4"
+  version: 4.25.0
+  resolution: "browserslist@npm:4.25.0"
   dependencies:
-    caniuse-lite: "npm:^1.0.30001688"
-    electron-to-chromium: "npm:^1.5.73"
+    caniuse-lite: "npm:^1.0.30001718"
+    electron-to-chromium: "npm:^1.5.160"
     node-releases: "npm:^2.0.19"
-    update-browserslist-db: "npm:^1.1.1"
+    update-browserslist-db: "npm:^1.1.3"
   bin:
     browserslist: cli.js
-  checksum: 10/11fda105e803d891311a21a1f962d83599319165faf471c2d70e045dff82a12128f5b50b1fcba665a2352ad66147aaa248a9d2355a80aadc3f53375eb3de2e48
+  checksum: 10/4a5442b1a0d09c4c64454f184b8fed17d8c3e202034bf39de28f74497d7bd28dddee121b2bab4e34825fe0ed4c166d84e32a39f576c76fce73c1f8f05e4b6ee6
   languageName: node
   linkType: hard
 
@@ -12491,10 +12502,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001646, caniuse-lite@npm:^1.0.30001688":
-  version: 1.0.30001688
-  resolution: "caniuse-lite@npm:1.0.30001688"
-  checksum: 10/2125e900af866ee211c66beca01220c98e72c8a91d25c87b8ab456d3916f56fb1be5feef72556bca746da7aa852fc0118a04669f5ec2e6511eb77c960479e1c0
+"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001646, caniuse-lite@npm:^1.0.30001718":
+  version: 1.0.30001723
+  resolution: "caniuse-lite@npm:1.0.30001723"
+  checksum: 10/edab89e84a2b257cf640f0bac1f25f92c699ade86143b2affc73403468f894023416a9f4a99e5345c933956990b005a2facfb87ac4517c8ccb588819bb62453b
   languageName: node
   linkType: hard
 
@@ -15287,10 +15298,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-to-chromium@npm:^1.5.73":
-  version: 1.5.73
-  resolution: "electron-to-chromium@npm:1.5.73"
-  checksum: 10/07d0885656c49ea4deb98340db23c68b43615c0325566e0ae6df751328460d4cdfb86ca0fcaaa745cf7b44c6141440fe2eb2f5d9518d1c110ba3872c73ed817d
+"electron-to-chromium@npm:^1.5.160":
+  version: 1.5.167
+  resolution: "electron-to-chromium@npm:1.5.167"
+  checksum: 10/078093a38e7295e575f381943f62914f49b53dd73506af2ce3e59332835c42b487ad02ff1207dfdcb33a5886d74a98e352c04431c0537366d9999a79c7d15c94
   languageName: node
   linkType: hard
 
@@ -17995,15 +18006,15 @@ __metadata:
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.7"
-    "@grafana/llm": "npm:0.19.2"
+    "@grafana/llm": "npm:0.22.0"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:2.0.0"
     "@grafana/plugin-ui": "npm:0.10.6"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.19.0"
-    "@grafana/scenes-react": "npm:^6.19.0"
+    "@grafana/scenes": "npm:^6.20.1"
+    "@grafana/scenes-react": "npm:^6.20.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -24833,7 +24844,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picocolors@npm:^1.0.0, picocolors@npm:^1.0.1, picocolors@npm:^1.1.0, picocolors@npm:^1.1.1":
+"picocolors@npm:^1.0.0, picocolors@npm:^1.0.1, picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
   checksum: 10/e1cf46bf84886c79055fdfa9dcb3e4711ad259949e3565154b004b260cd356c5d54b31a1437ce9782624bf766272fe6b0154f5f0c744fb7af5d454d2b60db045
@@ -31227,17 +31238,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"update-browserslist-db@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "update-browserslist-db@npm:1.1.1"
+"update-browserslist-db@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "update-browserslist-db@npm:1.1.3"
   dependencies:
     escalade: "npm:^3.2.0"
-    picocolors: "npm:^1.1.0"
+    picocolors: "npm:^1.1.1"
   peerDependencies:
     browserslist: ">= 4.21.0"
   bin:
     update-browserslist-db: cli.js
-  checksum: 10/7678dd8609750588d01aa7460e8eddf2ff9d16c2a52fb1811190e0d056390f1fdffd94db3cf8fb209cf634ab4fa9407886338711c71cc6ccade5eeb22b093734
+  checksum: 10/87af2776054ffb9194cf95e0201547d041f72ee44ce54b144da110e65ea7ca01379367407ba21de5c9edd52c74d95395366790de67f3eb4cc4afa0fe4424e76f
   languageName: node
   linkType: hard
 
