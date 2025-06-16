@@ -1021,4 +1021,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables the Prometheus state history writer for alert rules.
+  * @default false
+  */
+  alertingStateHistoryPrometheus?: boolean;
 }
