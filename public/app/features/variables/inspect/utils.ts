@@ -1,5 +1,5 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';

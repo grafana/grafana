@@ -1,6 +1,6 @@
 import { AsyncState } from 'react-use/lib/useAsync';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafana/ui';
@@ -37,7 +37,6 @@ export function ResourceExport({
   onShareExternallyChange,
   onViewYAML,
 }: Props) {
-  const { t } = useTranslate();
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
   const isV2Dashboard =

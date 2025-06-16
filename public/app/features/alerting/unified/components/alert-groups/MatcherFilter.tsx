@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { LogMessages, logInfo } from '../../Analytics';
@@ -27,7 +27,6 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
     600,
     [filterQuery]
   );
-  const { t } = useTranslate();
 
   const searchIcon = <Icon name={'search'} />;
   let inputValid = Boolean(defaultQueryString && defaultQueryString.length >= 3);

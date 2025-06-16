@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CellProps, Column, FilterInput, InteractiveTable, Link, LinkButton, Spinner, Stack } from '@grafana/ui';
-import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning';
+import { Repository, ResourceListItem, useGetRepositoryResourcesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
 
@@ -16,7 +16,6 @@ type ResourceCell<T extends keyof ResourceListItem = keyof ResourceListItem> = C
 >;
 
 export function RepositoryResources({ repo }: RepoProps) {
-  const { t } = useTranslate();
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryResourcesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');

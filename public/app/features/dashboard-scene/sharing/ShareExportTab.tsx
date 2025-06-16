@@ -4,8 +4,7 @@ import { cloneDeep } from 'lodash';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';

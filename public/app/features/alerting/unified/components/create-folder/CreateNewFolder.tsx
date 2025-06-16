@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -49,7 +49,7 @@ function FolderCreationModal({
   const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
   const [createFolder] = useNewFolderMutation();
-  const { t } = useTranslate();
+
   const onSubmit = async () => {
     const { data, error } = await createFolder({ title });
 
