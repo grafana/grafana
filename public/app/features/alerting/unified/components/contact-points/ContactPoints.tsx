@@ -26,6 +26,7 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { CloudAlertingFeaturesCard } from '../CloudAlertingFeaturesCard';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
@@ -237,9 +238,10 @@ export const ContactPointsPageContents = () => {
           )}
         </TabsBar>
         <TabContent>
-          <Stack direction="column">
+          <Stack direction="column" gap={2}>
             {showingContactPoints && <ContactPointsTab />}
             {showNotificationTemplates && <NotificationTemplatesTab />}
+            <CloudAlertingFeaturesCard />
           </Stack>
         </TabContent>
       </Stack>
