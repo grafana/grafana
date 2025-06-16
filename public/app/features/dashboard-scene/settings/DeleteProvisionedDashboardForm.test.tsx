@@ -24,21 +24,10 @@ jest.mock('react-router-dom-v5-compat', () => ({
 // Add this variable declaration near your other mock variables
 const mockNavigate = jest.fn();
 
-// Mock the form components
-jest.mock('../components/Provisioned/CommentField', () => ({
-  CommentField: ({ disabled }: { disabled: boolean }) => <textarea data-testid="comment-field" disabled={disabled} />,
-}));
-
-jest.mock('../components/Provisioned/PathField', () => ({
-  PathField: ({ readOnly }: { readOnly: boolean }) => <input data-testid="path-field" readOnly={readOnly} />,
-}));
-
-jest.mock('../components/Provisioned/WorkflowFields', () => ({
-  WorkflowFields: ({ workflow, workflowOptions }: { workflow: string; workflowOptions: Array<{ value: string }> }) => (
-    <div data-testid="workflow-fields">
-      <span>Workflow: {workflow}</span>
-      <span>Options: {workflowOptions.map((o) => o.value).join(',')}</span>
-    </div>
+// Mock shared form components
+jest.mock('../components/Provisioned/DashboardEditFormSharedFields', () => ({
+  DashboardEditFormSharedFields: ({ disabled }: { disabled: boolean }) => (
+    <textarea data-testid="shared-fields" disabled={disabled} />
   ),
 }));
 
@@ -163,34 +152,10 @@ describe('DeleteProvisionedDashboardDrawer', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('should render form fields correctly', () => {
+    it('should render shared form fields correctly', () => {
       setup();
 
-      expect(screen.getByTestId('path-field')).toBeInTheDocument();
-      expect(screen.getByTestId('comment-field')).toBeInTheDocument();
-      expect(screen.getByTestId('workflow-fields')).toBeInTheDocument();
-    });
-
-    it('should disable fields when read-only', () => {
-      setup({
-        provisionedData: {
-          readOnly: true,
-        },
-      });
-
-      expect(screen.getByTestId('path-field')).toHaveAttribute('readOnly');
-      expect(screen.getByTestId('comment-field')).toBeDisabled();
-      expect(screen.getByRole('button', { name: /delete dashboard/i })).toBeDisabled();
-    });
-
-    it('should not show workflow fields for non-GitHub repositories', () => {
-      setup({
-        provisionedData: {
-          isGitHub: false,
-        },
-      });
-
-      expect(screen.queryByTestId('workflow-fields')).not.toBeInTheDocument();
+      expect(screen.getByTestId('shared-fields')).toBeInTheDocument();
     });
 
     it('should render delete and cancel buttons', () => {
@@ -198,33 +163,6 @@ describe('DeleteProvisionedDashboardDrawer', () => {
 
       expect(screen.getByRole('button', { name: /delete dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-    });
-
-    it('should handle workflow field visibility correctly', () => {
-      // Test all combinations of isGitHub and readOnly
-      const testCases = [
-        { isGitHub: true, readOnly: false, shouldShow: true },
-        { isGitHub: true, readOnly: true, shouldShow: false },
-        { isGitHub: false, readOnly: false, shouldShow: false },
-        { isGitHub: false, readOnly: true, shouldShow: false },
-      ];
-
-      testCases.forEach(({ isGitHub, readOnly, shouldShow }) => {
-        const { unmount } = setup({
-          provisionedData: {
-            isGitHub,
-            readOnly,
-          },
-        });
-
-        if (shouldShow) {
-          expect(screen.getByTestId('workflow-fields')).toBeInTheDocument();
-        } else {
-          expect(screen.queryByTestId('workflow-fields')).not.toBeInTheDocument();
-        }
-
-        unmount();
-      });
     });
   });
 

@@ -1,0 +1,97 @@
+import { memo } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
+
+import { t } from '@grafana/i18n';
+import { Field, TextArea, Input, RadioButtonGroup } from '@grafana/ui';
+import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
+import { WorkflowOption } from 'app/features/provisioning/types';
+import { validateBranchName } from 'app/features/provisioning/utils/git';
+
+import { ProvisionedDashboardFormData } from '../../saving/shared';
+
+interface DashboardEditFormSharedFieldsProps {
+  workflowOptions: Array<{ label: string; value: string }>;
+  readOnly?: boolean;
+  workflow?: WorkflowOption;
+  isGitHub?: boolean;
+}
+
+export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
+  ({ readOnly, workflow, workflowOptions, isGitHub }) => {
+    const {
+      control,
+      register,
+      formState: { errors },
+    } = useFormContext();
+    const pathFieldName: keyof ProvisionedDashboardFormData = 'path';
+    const commentFieldName: keyof ProvisionedDashboardFormData = 'comment';
+    const refFieldName: keyof ProvisionedDashboardFormData = 'ref';
+
+    return (
+      <>
+        {/* Path */}
+        <Field
+          noMargin
+          label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-path', 'Path')}
+          description={t(
+            'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
+            'File path inside the repository (.json or .yaml)'
+          )}
+        >
+          <Input id="dashboard-path" type="text" {...register(pathFieldName)} readOnly={readOnly} />
+        </Field>
+
+        {/* Comment */}
+        <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-comment', 'Comment')}>
+          <TextArea
+            id="dashboard-comment"
+            {...register(commentFieldName)}
+            disabled={readOnly}
+            placeholder={t(
+              'dashboard-scene.save-or-delete-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
+              'Add a note to describe your changes (optional)'
+            )}
+            rows={5}
+          />
+        </Field>
+
+        {/* Workflow */}
+        {isGitHub && !readOnly && (
+          <>
+            <Field
+              noMargin
+              label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-workflow', 'Workflow')}
+            >
+              <Controller
+                control={control}
+                name="workflow"
+                render={({ field: { ref: _, ...field } }) => (
+                  <RadioButtonGroup
+                    id="dashboard-workflow"
+                    {...field}
+                    options={workflowOptions}
+                    onChange={(value) => field.onChange(value)}
+                  />
+                )}
+              />
+            </Field>
+            {workflow === 'branch' && (
+              <Field
+                noMargin
+                label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-branch', 'Branch')}
+                description={t(
+                  'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-branch-name-in-git-hub',
+                  'Branch name in GitHub'
+                )}
+                invalid={!!errors.ref}
+                error={errors.ref && <BranchValidationError />}
+              >
+                <Input id="dashboard-branch" {...register(refFieldName, { validate: validateBranchName })} />
+              </Field>
+            )}
+          </>
+        )}
+      </>
+    );
+  }
+);

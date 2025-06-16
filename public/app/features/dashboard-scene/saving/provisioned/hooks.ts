@@ -78,10 +78,8 @@ export interface ProvisionedDashboardData {
 }
 
 /**
- * @description
  * Custom hook to fetch and prepare data for a provisioned dashboard update/delete form.
  * It retrieves default values, repository information, and workflow options based on the current dashboard state.
- * @returns ProvisionedDashboardData
  */
 
 export function useProvisionedDashboardData(dashboard: DashboardScene): ProvisionedDashboardData {

@@ -14,9 +14,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { CommentField } from '../../components/Provisioned/CommentField';
-import { PathField } from '../../components/Provisioned/PathField';
-import { WorkflowFields } from '../../components/Provisioned/WorkflowFields';
+import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
@@ -216,11 +214,12 @@ export function SaveProvisionedDashboardForm({
 
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-          <PathField readOnly={!isNew} />
-
-          <CommentField disabled={readOnly} />
-
-          {isGitHub && !readOnly && <WorkflowFields workflow={workflow} workflowOptions={workflowOptions} />}
+          <DashboardEditFormSharedFields
+            readOnly={readOnly}
+            workflow={workflow}
+            workflowOptions={workflowOptions}
+            isGitHub={isGitHub}
+          />
 
           <Stack gap={2}>
             <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
