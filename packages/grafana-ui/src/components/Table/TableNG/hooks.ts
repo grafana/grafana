@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useLayoutEffect, RefObject, useCallback } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, RefObject } from 'react';
 import { DataGridHandle, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
@@ -7,14 +7,15 @@ import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
+import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
 import {
-  getComparator,
   getDisplayName,
   getIsNestedTable,
   processNestedTableRows,
   getCellHeightCalculator,
   getFooterItem,
+  getColumnTypes,
+  applySort,
 } from './utils';
 
 // Helper function to get displayed value
@@ -26,13 +27,6 @@ const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
   const displayedValue = formattedValueToString(field.display(row[key]));
   return displayedValue;
 };
-
-export function useColumnTypes(fields: Field[]): ColumnTypes {
-  return useMemo(
-    () => fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
-    [fields]
-  );
-}
 
 export interface FilteredRowResult {
   rows: TableRow[];
@@ -117,39 +111,12 @@ export function useSortedRows(
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
 
   const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
-  const columnTypes = useColumnTypes(fields);
+  const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
-  const compareRows = useCallback(
-    (a: TableRow, b: TableRow): number => {
-      let result = 0;
-      for (let i = 0; i < sortColumns.length; i++) {
-        const { columnKey, direction } = sortColumns[i];
-        const compare = getComparator(columnTypes[columnKey]);
-        const sortDir = direction === 'ASC' ? 1 : -1;
-
-        result = sortDir * compare(a[columnKey], b[columnKey]);
-        if (result !== 0) {
-          break;
-        }
-      }
-      return result;
-    },
-    [columnTypes, sortColumns]
+  const sortedRows = useMemo(
+    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
+    [rows, fields, sortColumns, hasNestedFrames, columnTypes]
   );
-
-  const sortedRows = useMemo(() => {
-    if (sortColumns.length === 0) {
-      return rows;
-    }
-
-    // Handle nested tables
-    if (hasNestedFrames) {
-      return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
-    }
-
-    // Regular sort for tables without nesting
-    return rows.slice().sort(compareRows);
-  }, [rows, sortColumns, hasNestedFrames, compareRows]);
 
   return {
     rows: sortedRows,

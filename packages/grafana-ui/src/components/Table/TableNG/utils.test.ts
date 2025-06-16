@@ -34,6 +34,7 @@ import {
   getTextAlign,
   updateSortColumns,
   migrateTableDisplayModeToCellOptions,
+  getColumnTypes,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -557,6 +558,43 @@ describe('TableNG utils', () => {
         })
       );
     });
+  });
+
+  describe('getColumnTypes', () => {
+    it('builds the expected record with column types', () => {
+      const fields: Field[] = [
+        {
+          name: 'name',
+          type: FieldType.string,
+          display: (v) => ({ text: v as string, numeric: NaN }),
+          config: {},
+          values: [],
+        },
+        {
+          name: 'age',
+          type: FieldType.number,
+          display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
+          config: {},
+          values: [],
+        },
+        {
+          name: 'active',
+          type: FieldType.boolean,
+          display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
+          config: {},
+          values: [],
+        },
+      ];
+      const result = getColumnTypes(fields);
+
+      expect(result).toEqual({
+        name: FieldType.string,
+        age: FieldType.number,
+        active: FieldType.boolean,
+      });
+    });
+
+    it.todo('should recursively build column types when nested fields are present');
   });
 
   describe('getIsNestedTable', () => {

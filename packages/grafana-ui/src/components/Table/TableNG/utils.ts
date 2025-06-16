@@ -462,13 +462,13 @@ export const processNestedTableRows = (
   const parentRows: TableRow[] = [];
   const childRows: Map<number, TableRow> = new Map();
 
-  rows.forEach((row) => {
+  for (const row of rows) {
     if (Number(row.__depth) === 0) {
       parentRows.push(row);
     } else {
       childRows.set(Number(row.__index), row);
     }
-  });
+  }
 
   // Process parent rows (filter or sort)
   const processedParents = processParents(parentRows);
@@ -492,6 +492,56 @@ export const getDisplayName = (field: Field): string => {
 
 export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+}
+
+export function getColumnTypes(fields: Field[]): ColumnTypes {
+  return fields.reduce<ColumnTypes>((acc, field) => {
+    switch (field.type) {
+      case FieldType.nestedFrames:
+        const nestedFields: Field[] = field.values[0]?.[0]?.fields ?? [];
+        if (!nestedFields) {
+          return acc;
+        }
+        return { ...acc, ...getColumnTypes(nestedFields) };
+      default:
+        return { ...acc, [getDisplayName(field)]: field.type };
+    }
+  }, {});
+}
+
+export function applySort(
+  rows: TableRow[],
+  fields: Field[],
+  sortColumns: SortColumn[],
+  columnTypes: ColumnTypes = getColumnTypes(fields),
+  hasNestedFrames: boolean = getIsNestedTable(fields)
+): TableRow[] {
+  if (sortColumns.length === 0) {
+    return rows;
+  }
+
+  const compareRows = (a: TableRow, b: TableRow): number => {
+    let result = 0;
+    for (let i = 0; i < sortColumns.length; i++) {
+      const { columnKey, direction } = sortColumns[i];
+      const compare = getComparator(columnTypes[columnKey]);
+      const sortDir = direction === 'ASC' ? 1 : -1;
+
+      result = sortDir * compare(a[columnKey], b[columnKey]);
+      if (result !== 0) {
+        break;
+      }
+    }
+    return result;
+  };
+
+  // Handle nested tables
+  if (hasNestedFrames) {
+    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
+  }
+
+  // Regular sort for tables without nesting
+  return [...rows].sort(compareRows);
 }
 
 // 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly

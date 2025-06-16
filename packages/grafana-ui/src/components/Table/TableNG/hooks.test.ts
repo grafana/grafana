@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { Field, FieldType } from '@grafana/data';
 
-import { useColumnTypes, useFilteredRows, usePaginatedRows, useSortedRows } from './hooks';
+import { useFilteredRows, usePaginatedRows, useSortedRows } from './hooks';
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -39,19 +39,6 @@ describe('TableNG hooks', () => {
 
     return { fields, rows };
   }
-
-  describe('useColumnTypes', () => {
-    it('builds the expected record with column types', () => {
-      const { fields } = setupData();
-      const { result } = renderHook(() => useColumnTypes(fields));
-
-      expect(result.current).toEqual({
-        name: FieldType.string,
-        age: FieldType.number,
-        active: FieldType.boolean,
-      });
-    });
-  });
 
   describe('useFilteredRows', () => {
     it('should correctly initialize with provided fields and rows', () => {

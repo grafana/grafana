@@ -276,3 +276,12 @@ const getStyles = (theme: GrafanaTheme2, defaultRowHeight: number, isRightAligne
     },
   }),
 });
+
+/**
+ * Uncovered lines:
+ * - TableCellDisplayMode.Sparkline, FieldType.frame sparkline
+ * - GeoCell
+ * - JSONCell
+ * - onCellFilterAdded, onFilterFor, onFilterOut
+ * - inspect onClick
+ */

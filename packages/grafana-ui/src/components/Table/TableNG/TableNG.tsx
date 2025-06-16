@@ -28,7 +28,6 @@ import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import {
-  useColumnTypes,
   useFilteredRows,
   useFooterCalcs,
   usePaginatedRows,
@@ -48,7 +47,9 @@ import {
   updateSortColumns,
   shouldTextOverflow,
   getRowBgFn,
+  getColumnTypes,
   computeColWidths,
+  applySort,
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
@@ -77,11 +78,6 @@ export function TableNG(props: TableNGProps) {
     noHeader,
   });
   const panelContext = usePanelContext();
-
-  const [isInspecting, setIsInspecting] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-
-  const gridHandle = useRef<DataGridHandle>(null);
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -118,7 +114,7 @@ export function TableNG(props: TableNGProps) {
   }, [isContextMenuOpen]);
 
   const memoizedRows = useMemo(() => frameToRecords(data), [data]);
-  const columnTypes = useColumnTypes(data.fields);
+  const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
 
   const {
     rows: filteredRows,
@@ -137,6 +133,9 @@ export function TableNG(props: TableNGProps) {
   });
 
   const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const gridHandle = useRef<DataGridHandle>(null);
 
   // vt scrollbar accounting for column auto-sizing
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
@@ -298,9 +297,10 @@ export function TableNG(props: TableNGProps) {
           if (nestedData) {
             expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, availableWidth));
             expandedRecords = frameToRecords(nestedData);
+            expandedRecords =
+              sortColumns.length > 0 ? applySort(expandedRecords, nestedData.fields, sortColumns) : expandedRecords;
           }
 
-          // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
             <DataGrid<TableRow, TableSummaryRow>
               enableVirtualization={enableVirtualization}
@@ -308,6 +308,7 @@ export function TableNG(props: TableNGProps) {
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={rowHeight}
+              sortColumns={sortColumns}
               headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
@@ -642,16 +643,17 @@ function getCellClasses(
 
 /*
 TODO:
-ad hoc filtering
-min and max?
 whole row color (applyToRow)
   - subtable might be impacted by this
-subtable headers
 -----
+gauge is horribly busted in TableNG
+**** need to check sparkline
 check what happens if we change initialSortBy
 changing the display name via fieldOverrides breaks sorting
 enable pagination disables footer?
 revisit z-index stuff in the styles
+double click on header divider to resize width isn't triggering a resize in the field overrides
+min and max (used for sparklines and gauge) need much better contextual info in the sidebar
 -----
 - Max row height
   - also, disable overflow?
