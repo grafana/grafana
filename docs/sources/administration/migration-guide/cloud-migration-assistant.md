@@ -49,6 +49,11 @@ To use the Grafana migration assistant, you need:
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
 - Internet access from your existing Grafana OSS/Enterprise instance.
+- If your network requires external services to be on an allowlist to allow access, add the following IPs and URLs to your allowlist:
+  - [Hosted Grafana](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+  - [Hosted Alerts](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-alerts)
+  - [AWS IP address ranges](https://docs.aws.amazon.com/en_us/vpc/latest/userguide/aws-ip-ranges.html) for the S3 service
+  - `*.grafana.net`
 
 ## Access the migration assistant
 
