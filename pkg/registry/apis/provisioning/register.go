@@ -1133,6 +1133,9 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return apiRepo, nil
 		}
 
+		logger := logging.DefaultLogger.With("logger", "provisioning startup")
+		logger.Debug("creating nanogit repository", "url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+
 		ghCfg := r.Spec.GitHub
 		if ghCfg == nil {
 			return nil, fmt.Errorf("github configuration is required for nano git")
