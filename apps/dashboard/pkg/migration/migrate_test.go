@@ -22,6 +22,25 @@ func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
 
+	migration.Initialize(&mockDataSourceInfoProvider{
+		dataSourceInfo: []schemaversion.DataSourceInfo{
+			{
+				Default: true,
+				UID:     "default-ds-uid",
+				ID:      1,
+				Type:    "prometheus",
+				Name:    "Default Test Datasource",
+			},
+			{
+				UID:        "non-default-test-ds-uid",
+				ID:         2,
+				Type:       "loki",
+				Name:       "Non Default Test Datasource",
+				APIVersion: "1",
+			},
+		},
+	})
+
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(map[string]interface{}{
 			"schemaVersion": schemaversion.MIN_VERSION - 1,
@@ -99,4 +118,14 @@ func load(t *testing.T, path string) (dash map[string]interface{}, inputVersion 
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
 	inputVersion, name = parseInputName(t, path)
 	return dash, inputVersion, name
+}
+
+var _ schemaversion.DataSourceInfoProvider = &mockDataSourceInfoProvider{}
+
+type mockDataSourceInfoProvider struct {
+	dataSourceInfo []schemaversion.DataSourceInfo
+}
+
+func (m *mockDataSourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
+	return m.dataSourceInfo
 }
