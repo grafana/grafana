@@ -569,16 +569,18 @@ export function computeColWidths(fields: Field[], availWidth: number) {
     );
 }
 
-export function getRowBgFn(field: Field, theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
-  const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
-  const fieldDisplay = field.display;
-  if (
-    fieldDisplay !== undefined &&
-    cellOptions !== undefined &&
-    cellOptions.type === TableCellDisplayMode.ColorBackground &&
-    cellOptions.applyToRow
-  ) {
-    return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+export function getRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+  for (const field of fields) {
+    const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
+    const fieldDisplay = field.display;
+    if (
+      fieldDisplay !== undefined &&
+      cellOptions !== undefined &&
+      cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      cellOptions.applyToRow === true
+    ) {
+      return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+    }
   }
 }
 

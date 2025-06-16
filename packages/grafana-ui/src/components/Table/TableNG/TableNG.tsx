@@ -168,6 +168,7 @@ export function TableNG(props: TableNGProps) {
   // Create a map of column key to text wrap
   const textWraps = useTextWraps(data.fields);
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
+  const rowBg = useMemo(() => getRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
@@ -202,7 +203,7 @@ export function TableNG(props: TableNGProps) {
                 setIsInspecting={setIsInspecting}
                 setContextMenuProps={setContextMenuProps}
                 getActions={getActions}
-                rowBg={getRowBgFn(field, theme) ?? undefined}
+                rowBg={rowBg}
                 onCellFilterAdded={onCellFilterAdded}
                 replaceVariables={replaceVariables}
               />
@@ -297,6 +298,7 @@ export function TableNG(props: TableNGProps) {
           if (nestedData) {
             expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, availableWidth));
             expandedRecords = frameToRecords(nestedData);
+            // TODO: support filtering, and find a way to improve performance
             expandedRecords =
               sortColumns.length > 0 ? applySort(expandedRecords, nestedData.fields, sortColumns) : expandedRecords;
           }
@@ -326,8 +328,8 @@ export function TableNG(props: TableNGProps) {
     crossFilterRows,
     data,
     defaultRowHeight,
-    expandedRows,
     enableVirtualization,
+    expandedRows,
     filter,
     footerCalcs,
     getActions,
@@ -338,6 +340,7 @@ export function TableNG(props: TableNGProps) {
     onColumnResize,
     onSortByChange,
     replaceVariables,
+    rowBg,
     rowHeight,
     setFilter,
     setSortColumns,
@@ -643,9 +646,6 @@ function getCellClasses(
 
 /*
 TODO:
-whole row color (applyToRow)
-  - subtable might be impacted by this
------
 gauge is horribly busted in TableNG
 **** need to check sparkline
 check what happens if we change initialSortBy
@@ -659,12 +659,12 @@ min and max (used for sparklines and gauge) need much better contextual info in 
   - also, disable overflow?
 - Text wrap column heading
 - Field description
+- Field overrides for nested fields
 - Monospace (fieldOverride?)
 	- default for number?
 	- custom format
 	- currency format
 - Pagination, filter, and sort persistence via URL
-- Field overrides for nested fields
 -----
 accessible sorting and filtering
 accessible table navigation
