@@ -4427,6 +4427,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Elegir",
       "variable-options": {
         "label": {
           "disable-repeating": "",
@@ -5243,7 +5244,7 @@
     },
     "save-dashboard-form": {
       "aria-label-message": "mensaje",
-      "body-dashboard-drastically-changed": "Como estás utilizando nuevas funciones de dashboards que solo son compatibles con el nuevo formato de esquema de dashboards de Grafana, el dashboard se guardará en el nuevo formato. Asegúrate de que quieres realizar esta acción o prefieres guardar el dashboard como una nueva copia.",
+      "body-dashboard-drastically-changed": "",
       "cancel-button": {
         "cancel": "Cancelar"
       },
@@ -5259,7 +5260,7 @@
       },
       "schema-v2-library-panels-export": "La funcionalidad del dashboard dinámico es experimental y no tiene una paridad de características completa con el comportamiento actual de los dashboards. Se basa en un nuevo formato de esquema, que no admite paneles de librería. Esto significa que al exportar el dashboard para usarlo en otra instancia, no se incluirán paneles de librería. Tenemos la intención de admitirlos a medida que avanzamos en el <2>ciclo de vida</2> de la función.",
       "schema-v2-library-panels-export-title": "El esquema de dashboard V2 aún no admite la exportación de paneles de librería para su uso en otra instancia",
-      "title-dashboard-drastically-changed": "El dashboard ha cambiado drásticamente"
+      "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Hará que la actualización actual sea la nueva predeterminada",
@@ -7715,6 +7716,8 @@
       },
       "enable-highlighting": "Activar resaltado",
       "escape-newlines": "Corregir las secuencias de tabulación y de nueva línea que escaparon incorrectamente en las líneas de log",
+      "font-size-default": "",
+      "font-size-small": "",
       "hide-timestamps": "Ocultar marcas de tiempo",
       "hide-unique-labels": "Ocultar etiquetas únicas",
       "newest-first": "Ordenado por los logs más nuevos primero: haga clic para mostrar los más antiguos primero",

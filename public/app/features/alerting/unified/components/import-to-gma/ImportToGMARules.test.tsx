@@ -1,4 +1,4 @@
-import { render } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -47,7 +47,7 @@ const ui = {
 
 alertingFactory.dataSource.mimir().build({ meta: { alerting: true } });
 
-describe.skip('ImportToGMARules', () => {
+describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
   testWithFeatureToggles(['alertingImportYAMLUI', 'alertingMigrationUI']);
 
@@ -62,8 +62,9 @@ describe.skip('ImportToGMARules', () => {
     it('should render datasource options', async () => {
       const { user } = render(<ImportToGMARules />);
 
-      // Wait for the data source picker to be ready
+      // Wait for the data source picker to be ready and enabled
       const dsPicker = await ui.dsImport.dsPicker.find();
+      await waitFor(() => expect(dsPicker).toBeEnabled());
 
       await user.click(dsPicker);
       await user.click(await ui.dsImport.mimirDsOption.find());
@@ -91,8 +92,12 @@ describe.skip('ImportToGMARules', () => {
     it('should show confirmation dialog when importing from data source', async () => {
       const { user } = render(<ImportToGMARules />);
 
+      // Wait for the data source picker to be enabled
+      const dsPicker = ui.dsImport.dsPicker.get();
+      await waitFor(() => expect(dsPicker).toBeEnabled());
+
       // Select a data source
-      await user.click(ui.dsImport.dsPicker.get());
+      await user.click(dsPicker);
       await user.click(await ui.dsImport.mimirDsOption.find());
 
       // Click the import button

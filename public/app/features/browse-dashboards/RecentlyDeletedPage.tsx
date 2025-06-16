@@ -3,7 +3,7 @@ import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
@@ -39,7 +39,6 @@ const RecentlyDeletedPage = memo(() => {
       })
     );
   }, [dispatch, stateManager]);
-  const { t } = useTranslate();
 
   return (
     <Page navId="dashboards/recently-deleted">
