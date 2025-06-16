@@ -43,7 +43,8 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       return;
     }
 
-    const branchRef = workflow === 'write' ? loadedFromRef : ref; // If user is writing to the original branch, override ref with whatever we loaded from
+    // If writing to the original branch, use the loaded reference; otherwise, use the selected ref.
+    const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Delete dashboard: ${dashboard.state.title}`;
 
     // Call delete API

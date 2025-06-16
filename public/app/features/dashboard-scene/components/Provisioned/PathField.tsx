@@ -4,6 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { Field, Input } from '@grafana/ui';
 
+import { ProvisionedDashboardFormData } from '../../saving/shared';
+
 interface PathFieldProps {
   readOnly?: boolean;
 }
@@ -16,17 +18,18 @@ interface PathFieldProps {
 
 export const PathField = memo<PathFieldProps>(({ readOnly = false }) => {
   const { register } = useFormContext();
+  const fieldName: keyof ProvisionedDashboardFormData = 'path';
 
   return (
     <Field
       noMargin
-      label={t('dashboard-scene.save-provisioned-dashboard-form.label-path', 'Path')}
+      label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-path', 'Path')}
       description={t(
-        'dashboard-scene.save-provisioned-dashboard-form.description-inside-repository',
+        'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
         'File path inside the repository (.json or .yaml)'
       )}
     >
-      <Input id="dashboard-path" type="text" {...register('path')} readOnly={readOnly} />
+      <Input id="dashboard-path" type="text" {...register(fieldName)} readOnly={readOnly} />
     </Field>
   );
 });

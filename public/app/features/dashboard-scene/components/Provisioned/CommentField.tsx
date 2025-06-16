@@ -4,6 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { Field, TextArea } from '@grafana/ui';
 
+import { ProvisionedDashboardFormData } from '../../saving/shared';
+
 interface CommentFieldProps {
   disabled?: boolean;
 }
@@ -15,15 +17,16 @@ interface CommentFieldProps {
 
 export const CommentField = memo<CommentFieldProps>(({ disabled = false }) => {
   const { register } = useFormContext();
+  const fieldName: keyof ProvisionedDashboardFormData = 'comment';
 
   return (
-    <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-comment', 'Comment')}>
+    <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-comment', 'Comment')}>
       <TextArea
         id="dashboard-comment"
-        {...register('comment')}
+        {...register(fieldName)}
         disabled={disabled}
         placeholder={t(
-          'dashboard-scene.save-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
+          'dashboard-scene.save-or-delete-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
           'Add a note to describe your changes (optional)'
         )}
         rows={5}

@@ -7,6 +7,8 @@ import { BranchValidationError } from 'app/features/provisioning/Shared/BranchVa
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
+import { ProvisionedDashboardFormData } from '../../saving/shared';
+
 interface WorkflowFieldsProps {
   workflow?: WorkflowOption;
   workflowOptions: Array<{ label: string; value: string }>;
@@ -25,10 +27,11 @@ export const WorkflowFields = memo<WorkflowFieldsProps>(({ workflow, workflowOpt
     register,
     formState: { errors },
   } = useFormContext();
+  const fieldName: keyof ProvisionedDashboardFormData = 'ref';
 
   return (
     <>
-      <Field noMargin label={t('dashboard-scene.save-provisioned-dashboard-form.label-workflow', 'Workflow')}>
+      <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-workflow', 'Workflow')}>
         <Controller
           control={control}
           name="workflow"
@@ -45,15 +48,15 @@ export const WorkflowFields = memo<WorkflowFieldsProps>(({ workflow, workflowOpt
       {workflow === 'branch' && (
         <Field
           noMargin
-          label={t('dashboard-scene.save-provisioned-dashboard-form.label-branch', 'Branch')}
+          label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-branch', 'Branch')}
           description={t(
-            'dashboard-scene.save-provisioned-dashboard-form.description-branch-name-in-git-hub',
+            'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-branch-name-in-git-hub',
             'Branch name in GitHub'
           )}
           invalid={!!errors.ref}
           error={errors.ref && <BranchValidationError />}
         >
-          <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
+          <Input id="dashboard-branch" {...register(fieldName, { validate: validateBranchName })} />
         </Field>
       )}
     </>

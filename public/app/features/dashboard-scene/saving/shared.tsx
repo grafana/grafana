@@ -24,12 +24,12 @@ export interface DashboardChangeInfo {
   hasMigratedToV2?: boolean;
 }
 export interface ProvisionedDashboardFormData {
-  ref?: string;
-  path: string;
-  comment?: string;
-  repo: string;
+  ref?: string; // Branch or tag in the repository
+  path: string; // Path to the dashboard file in the repository
+  comment?: string; // Commit message for the change
+  repo: string; // Repository name
   workflow?: WorkflowOption;
-  title: string;
+  title: string; // Title of the dashboard
   description: string;
   folder: {
     uid?: string;
