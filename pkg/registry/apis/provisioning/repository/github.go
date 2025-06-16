@@ -54,7 +54,7 @@ func NewGitHub(
 	secrets secrets.Service,
 	cloneFn CloneFn,
 ) (GithubRepository, error) {
-	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
+	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
@@ -104,7 +104,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.URL == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "url"), "a github url is required"))
 	} else {
-		_, _, err := parseOwnerRepo(gh.URL)
+		_, _, err := ParseOwnerRepoGithub(gh.URL)
 		if err != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "github", "url"), gh.URL, err.Error()))
 		} else if !strings.HasPrefix(gh.URL, "https://github.com/") {
@@ -132,7 +132,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	return list
 }
 
-func parseOwnerRepo(giturl string) (owner string, repo string, err error) {
+func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
 	parsed, e := url.Parse(strings.TrimSuffix(giturl, ".git"))
 	if e != nil {
 		err = e
@@ -160,7 +160,7 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 	}
 
 	url := r.config.Spec.GitHub.URL
-	owner, repo, err := parseOwnerRepo(url)
+	owner, repo, err := ParseOwnerRepoGithub(url)
 	if err != nil {
 		return fromFieldError(field.Invalid(
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil

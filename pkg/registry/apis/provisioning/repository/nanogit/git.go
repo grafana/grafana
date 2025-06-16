@@ -24,10 +24,18 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
+type GitRepositoryConfig struct {
+	URL            string
+	Branch         string
+	Token          string
+	EncryptedToken []byte
+	Path           string
+}
+
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
 	config    *provisioning.Repository
-	gitConfig provisioning.GitRepositoryConfig
+	gitConfig GitRepositoryConfig
 	client    nanogit.Client
 	secrets   secrets.Service
 }
@@ -48,7 +56,7 @@ func NewGitRepository(
 	ctx context.Context,
 	secrets secrets.Service,
 	config *provisioning.Repository,
-	gitConfig provisioning.GitRepositoryConfig,
+	gitConfig GitRepositoryConfig,
 ) (GitRepository, error) {
 	if gitConfig.Token == "" {
 		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
