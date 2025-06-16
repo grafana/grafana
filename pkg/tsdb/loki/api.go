@@ -93,7 +93,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 
 	req, err := http.NewRequestWithContext(ctx, "GET", lokiUrl.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, backend.DownstreamError(fmt.Errorf("failed to create request: %w", err))
 	}
 
 	if query.SupportingQueryType != SupportingQueryNone {
