@@ -40,24 +40,12 @@ type gitRepository struct {
 	secrets   secrets.Service
 }
 
-// GitRepository is an interface that combines all repository capabilities
-// needed for Git repositories.
-type GitRepository interface {
-	repository.Repository
-	repository.Versioned
-	repository.Writer
-	repository.Reader
-	repository.ClonableRepository
-	URL() string
-	Branch() string
-}
-
 func NewGitRepository(
 	ctx context.Context,
 	secrets secrets.Service,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
-) (GitRepository, error) {
+) (repository.GitRepository, error) {
 	if gitConfig.Token == "" {
 		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
 		if err != nil {

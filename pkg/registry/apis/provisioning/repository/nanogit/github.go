@@ -17,12 +17,12 @@ import (
 // Once nanogit is fully integrated, functionality from GithubRepository should be migrated here, and this type should extend the nanogit.GitRepository interface.
 type githubRepository struct {
 	apiRepo     repository.GithubRepository
-	nanogitRepo GitRepository
+	nanogitRepo repository.GitRepository
 }
 
 func NewGithubRepository(
 	apiRepo repository.GithubRepository,
-	nanogitRepo GitRepository,
+	nanogitRepo repository.GitRepository,
 ) repository.GithubRepository {
 	return &githubRepository{
 		apiRepo:     apiRepo,
