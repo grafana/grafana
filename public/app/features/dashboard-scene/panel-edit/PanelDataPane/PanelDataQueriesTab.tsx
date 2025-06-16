@@ -1,4 +1,15 @@
-import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { css } from '@emotion/css';
+import { useCallback } from 'react';
+
+import {
+  CoreApp,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  FeatureState,
+  getDataSourceRef,
+  GrafanaTheme2,
+  SelectableValue,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -13,11 +24,13 @@ import {
   SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, Stack, Tab } from '@grafana/ui';
+import { Button, Dropdown, FeatureBadge, Menu, Stack, Tab, useStyles2 } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
@@ -286,9 +299,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
-  public onAddExpressionClick = () => {
+  public onAddExpressionOfType = (type: ExpressionQueryType) => {
     const queries = this.getQueries();
-    this.onQueriesChange(addQuery(queries, expressionDatasource.newQuery()));
+    // Create base expression query with the specified type
+    const baseQuery = expressionDatasource.newQuery();
+    const queryWithType = { ...baseQuery, type };
+    // Apply defaults specific to the expression type
+    const queryWithDefaults = getDefaults(queryWithType);
+
+    this.onQueriesChange(addQuery(queries, queryWithDefaults));
   };
 
   public renderExtraActions() {
@@ -309,13 +328,47 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
+  const styles = useStyles2(getStyles);
+
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
+  const renderMenuItem = useCallback(
+    ({ description, label, value }: SelectableValue<ExpressionQueryType>) => {
+      return label === 'SQL' ? (
+        <Menu.Item
+          className={styles.menuItem}
+          component={() => (
+            <div className={styles.sqlItem}>
+              <div className={styles.sqlItemLabel}>
+                {label}
+                <FeatureBadge featureState={FeatureState.privatePreview} />
+              </div>
+              <div className={styles.description}>{description}</div>
+            </div>
+          )}
+          key={value}
+          label=""
+          onClick={() => model.onAddExpressionOfType(value!)}
+        />
+      ) : (
+        <Menu.Item
+          className={styles.menuItem}
+          description={description}
+          key={value}
+          label={label!}
+          onClick={() => model.onAddExpressionOfType(value!)}
+        />
+      );
+    },
+    [styles, model]
+  );
+
   if (!datasource || !dsSettings || !data) {
     return null;
   }
+
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
@@ -346,6 +399,8 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       }
     }
   };
+
+  const expressionDropdownMenu = <Menu>{expressionTypes.map(renderMenuItem)}</Menu>;
 
   return (
     <div data-testid={selectors.components.QueryTab.content}>
@@ -394,16 +449,11 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <Button
-            icon="plus"
-            onClick={model.onAddExpressionClick}
-            variant="secondary"
-            data-testid={selectors.components.QueryTab.addExpression}
-          >
-            <span>
+          <Dropdown placement="bottom-start" overlay={expressionDropdownMenu}>
+            <Button icon="plus" variant="secondary">
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
-            </span>
-          </Button>
+            </Button>
+          </Dropdown>
         )}
         {model.renderExtraActions()}
       </Stack>
@@ -440,3 +490,24 @@ function QueriesTab(props: QueriesTabProps) {
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  menuItem: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  sqlItem: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  }),
+  sqlItemLabel: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  description: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.secondary,
+    textAlign: 'start',
+  }),
+});
