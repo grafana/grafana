@@ -14,7 +14,7 @@ import { OperationListExplained } from '../../shared/OperationListExplained';
 import { OperationsEditorRow } from '../../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../../shared/QueryBuilderHints';
 import { RawQuery } from '../../shared/RawQuery';
-import { promQueryModeller } from '../../shared/modeller-instance';
+import { promQueryModeller } from '../../shared/modeller_instance';
 import { QueryBuilderOperation } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 import { MetricsLabelsSection } from '../MetricsLabelsSection';

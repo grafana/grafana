@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/migrations/variableMigration.ts
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
-import { promQueryModeller } from '../querybuilder/shared/modeller-instance';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;

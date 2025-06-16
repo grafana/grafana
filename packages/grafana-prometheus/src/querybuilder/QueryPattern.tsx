@@ -8,7 +8,7 @@ import { Button, Card, useStyles2 } from '@grafana/ui';
 import promqlGrammar from '../promql';
 
 import { RawQuery } from './shared/RawQuery';
-import { promQueryModeller } from './shared/modeller-instance';
+import { promQueryModeller } from './shared/modeller_instance';
 import { PromQueryPattern } from './types';
 
 type Props = {

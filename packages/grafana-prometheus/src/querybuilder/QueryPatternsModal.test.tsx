@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { QueryPatternsModal } from './QueryPatternsModal';
-import { promQueryModeller } from './shared/modeller-instance';
+import { promQueryModeller } from './shared/modeller_instance';
 import { PromQueryPatternType } from './types';
 
 // don't care about interaction tracking in our unit tests

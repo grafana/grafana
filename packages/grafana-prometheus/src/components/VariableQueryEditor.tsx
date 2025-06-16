@@ -14,7 +14,7 @@ import {
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
 import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
-import { promQueryModeller } from '../querybuilder/shared/modeller-instance';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
 import { PromVisualQuery } from '../querybuilder/types';
 import {

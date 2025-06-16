@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { LabelParamEditor } from '../components/LabelParamEditor';
-import { getOperationParamId } from '../shared/param-utils';
+import { getOperationParamId } from './param_utils';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from './types';
 

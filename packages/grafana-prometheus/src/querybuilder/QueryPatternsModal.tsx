@@ -12,7 +12,7 @@ import { PromQuery } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 import { buildVisualQueryFromString } from './parsing';
-import { promQueryModeller } from './shared/modeller-instance';
+import { promQueryModeller } from './shared/modeller_instance';
 import { PromQueryPattern, PromQueryPatternType } from './types';
 
 type Props = {

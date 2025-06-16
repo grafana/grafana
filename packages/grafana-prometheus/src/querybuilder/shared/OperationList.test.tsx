@@ -13,7 +13,7 @@ import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
 
 import { OperationList } from './OperationList';
-import { promQueryModeller } from './modeller-instance';
+import { promQueryModeller } from './modeller_instance';
 
 const defaultQuery: PromVisualQuery = {
   metric: 'random_metric',

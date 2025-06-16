@@ -8,7 +8,7 @@ import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getOperationParamId } from '../shared/param-utils';
+import { getOperationParamId } from './param_utils';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditorRegistry';

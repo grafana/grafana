@@ -53,7 +53,7 @@ import {
 } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
-import { promQueryModeller } from './querybuilder/shared/modeller-instance';
+import { promQueryModeller } from './querybuilder/shared/modeller_instance';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { transformV2 } from './result_transformer';

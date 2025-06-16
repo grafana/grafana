@@ -1,6 +1,6 @@
 import { ComponentType } from 'react';
 
-import { promQueryModeller } from '../shared/modeller-instance';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromQueryModellerInterface } from '../types';
 

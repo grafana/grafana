@@ -7,7 +7,7 @@ import { PanelData } from '@grafana/data';
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
 import { buildVisualQueryFromString } from '../parsing';
-import { promQueryModeller } from '../shared/modeller-instance';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { PromVisualQuery } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';

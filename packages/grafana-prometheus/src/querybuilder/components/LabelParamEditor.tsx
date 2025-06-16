@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { getOperationParamId } from '../shared/param-utils';
+import { getOperationParamId } from '../shared/param_utils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery, PromQueryModellerInterface } from '../types';
 
