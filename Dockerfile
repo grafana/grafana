@@ -3,7 +3,6 @@
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
-# Default to building locally
 ARG BASE_IMAGE=alpine-base
 ARG GO_IMAGE=go-builder-base
 ARG GO_SRC=go-builder
@@ -16,10 +15,10 @@ ARG JS_SRC=js-builder
 FROM alpine:3.21.3 AS alpine-base
 FROM ubuntu:22.04 as ubuntu-base
 FROM golang:1.24.4-alpine AS go-builder-base
-FROM node:22-alpine as js-builder-base
+FROM --platform=${JS_PLATFORM} node:22-alpine as js-builder-base
 
 # Javascript build stage
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+FROM ${JS_IMAGE} AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
