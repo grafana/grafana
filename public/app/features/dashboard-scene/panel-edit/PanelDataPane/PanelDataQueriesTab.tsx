@@ -450,7 +450,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
           <Dropdown placement="bottom-start" overlay={expressionDropdownMenu}>
-            <Button icon="plus" variant="secondary">
+            <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>
           </Dropdown>
