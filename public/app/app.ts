@@ -145,7 +145,9 @@ export class GrafanaApp {
       // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
       initI18nPromise.then(async ({ language }) => {
         updateConfig({ language });
-        initScenesTranslations();
+
+        // Initialise scenes translations. Must finish before any scenes UI is rendered.
+        return initScenesTranslations();
       });
 
       setBackendSrv(backendSrv);
