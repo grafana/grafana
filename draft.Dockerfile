@@ -4,11 +4,7 @@
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
 
 ARG ALPINE_IMAGE=alpine:3.21
-ARG DISTROLESS_IMAGE=gcr.io/distroless/static-debian12
-ARG UBUNTU_IMAGE=ubuntu:22.04
-ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.1-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -24,7 +20,7 @@ ARG GF_PATHS_PLUGINS="/var/lib/grafana/plugins"
 ARG GF_PATHS_PROVISIONING="/etc/grafana/provisioning"
 
 # Javascript build stage
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -50,7 +46,7 @@ ENV NODE_ENV=production
 RUN yarn build
 
 # Golang build stage
-FROM ${GO_IMAGE} AS go-builder
+FROM golang:1.24.1-alpine AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -83,13 +79,13 @@ COPY .citools/swagger .citools/swagger
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
 COPY pkg/apis/secret pkg/apis/secret
-COPY pkg/apis/folder pkg/apis/folder
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
@@ -97,6 +93,8 @@ COPY apps/playlist apps/playlist
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
+COPY apps/iam apps/iam
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications
@@ -127,7 +125,7 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 # From-tarball build stage
-FROM ${ALPINE_IMAGE} AS tgz-builder
+FROM alpine:3.21 AS tgz-builder
 
 WORKDIR /tmp/grafana
 
@@ -142,7 +140,7 @@ RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 FROM ${GO_SRC} AS go-src
 FROM ${JS_SRC} AS js-src
 
-FROM ${ALPINE_IMAGE} as grafana-dirs
+FROM alpine:3.21 AS grafana-dirs
 
 ARG GF_UID
 ARG GF_GID
@@ -193,11 +191,8 @@ COPY --from=js-src /tmp/grafana/LICENSE ./
 ARG RUN_SH=./packaging/docker/run.sh
 COPY ${RUN_SH} /run.sh
 
-# Prepare libs required by Grafana on distroless image
-FROM alpine:latest AS distroless-libs
-
-# Install bash, glibc, and musl
-RUN apk add --no-cache ca-certificates shadow coreutils curl musl-utils
+# Prepare libs required by Grafana on alpine and distroless
+FROM alpine:3.21 AS gclib-base
 
 # glibc support for alpine x86_64 only
 # docker run --rm --env STDOUT=1 sgerrand/glibc-builder 2.40 /usr/glibc-compat > glibc-bin-2.40.tar.gz
@@ -223,144 +218,8 @@ RUN if [ ! `arch` = "x86_64" ]; then \
     mkdir -p /usr/glibc-compat; \
     fi
 
-# Build distroless image
-FROM scratch as cratch
-
-LABEL maintainer="Grafana Labs <hello@grafana.com>"
-LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
-
-ARG GF_UID
-ARG GF_GID
-ARG GF_PATHS_HOME
-ARG GF_PATHS_CONFIG
-ARG GF_PATHS_DATA
-ARG GF_PATHS_LOGS
-ARG GF_PATHS_PLUGINS
-ARG GF_PATHS_PROVISIONING
-
-ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
-    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
-    GF_PATHS_DATA="${GF_PATHS_DATA}" \
-    GF_PATHS_HOME="${GF_PATHS_HOME}" \
-    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
-    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
-    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
-
-# Copy sh and common utils
-COPY --from=distroless-libs /bin/chmod /bin/chmod
-COPY --from=distroless-libs /bin/grep /bin/grep
-COPY --from=distroless-libs /bin/chown /bin/chown
-COPY --from=distroless-libs /bin/mkdir /bin/mkdir
-COPY --from=distroless-libs /bin /bin
-COPY --from=distroless-libs /bin/sh /bin/sh
-COPY --from=distroless-libs /bin/cp /bin/cp
-COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
-COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
-COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
-COPY --from=distroless-libs /usr/sbin/addgroup /sbin/addgroup
-
-COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
-
-COPY --from=distroless-libs /usr/lib/* /usr/lib/
-COPY --from=distroless-libs /lib/* /lib/
-
-# Copy gclib-commpat
-COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
-COPY --from=distroless-libs /lib64 /lib64
-
-# Copy Grafana files
-COPY --from=grafana-base / /
-
-# gclib-compat is only available on x86_64 arch
-RUN if [ ! `arch` = "x86_64" ]; then \
-    rm -rf /lib64 && \
-    rm -rf /usr/glibc-compat; \
-    fi
-
-WORKDIR ${GF_PATHS_HOME}
-
-RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
-  cp conf/ldap.toml /etc/grafana/ldap.toml && \
-  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
-
-EXPOSE 3000
-
-ENTRYPOINT [ "/run.sh" ]
-
-# Build distroless image
-FROM ${DISTROLESS_IMAGE} AS distroless
-
-LABEL maintainer="Grafana Labs <hello@grafana.com>"
-LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
-
-ARG GF_UID
-ARG GF_GID
-ARG GF_PATHS_HOME
-ARG GF_PATHS_CONFIG
-ARG GF_PATHS_DATA
-ARG GF_PATHS_LOGS
-ARG GF_PATHS_PLUGINS
-ARG GF_PATHS_PROVISIONING
-
-ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
-    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
-    GF_PATHS_DATA="${GF_PATHS_DATA}" \
-    GF_PATHS_HOME="${GF_PATHS_HOME}" \
-    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
-    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
-    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
-
-# Copy sh and common utils
-COPY --from=distroless-libs /bin/chmod /bin/chmod
-COPY --from=distroless-libs /bin/grep /bin/grep
-COPY --from=distroless-libs /bin/chown /bin/chown
-COPY --from=distroless-libs /bin/mkdir /bin/mkdir
-COPY --from=distroless-libs /bin /bin
-COPY --from=distroless-libs /bin/sh /bin/sh
-COPY --from=distroless-libs /bin/cp /bin/cp
-COPY --from=distroless-libs /usr/bin/cut /usr/bin/cut
-COPY --from=distroless-libs /usr/bin/getent /usr/bin/getent
-COPY --from=distroless-libs /usr/sbin/adduser /sbin/adduser
-COPY --from=distroless-libs /usr/sbin/addgroup /sbin/addgroup
-
-COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
-
-COPY --from=distroless-libs /usr/lib/* /usr/lib/
-COPY --from=distroless-libs /lib/* /lib/
-
-# Copy gclib-commpat
-COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
-COPY --from=distroless-libs /lib64 /lib64
-
-# Copy Grafana files
-COPY --from=grafana-base / /
-
-# gclib-compat is only available on x86_64 arch
-RUN if [ ! `arch` = "x86_64" ]; then \
-    rm -rf /lib64 && \
-    rm -rf /usr/glibc-compat; \
-    fi
-
-WORKDIR ${GF_PATHS_HOME}
-
-RUN if [ ! $(getent group "$GF_GID") ]; then \
-  addgroup -S -g $GF_GID grafana; \
-  fi && \
-  GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
-  adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana
-
-RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
-  cp conf/ldap.toml /etc/grafana/ldap.toml && \
-  chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
-  chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
-
-EXPOSE 3000
-
-USER "$GF_UID"
-ENTRYPOINT [ "/run.sh" ]
-
 # Build ubuntu-based image
-FROM ${UBUNTU_IMAGE} AS ubuntu
+FROM ubuntu:22.04 AS ubuntu
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
 LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
@@ -409,3 +268,146 @@ EXPOSE 3000
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+
+# Build ubuntu-based image
+FROM alpine:3.21 AS alpine
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
+
+ARG GF_UID
+ARG GF_GID
+ARG GF_PATHS_HOME
+ARG GF_PATHS_CONFIG
+ARG GF_PATHS_DATA
+ARG GF_PATHS_LOGS
+ARG GF_PATHS_PLUGINS
+ARG GF_PATHS_PROVISIONING
+
+ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
+    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
+    GF_PATHS_DATA="${GF_PATHS_DATA}" \
+    GF_PATHS_HOME="${GF_PATHS_HOME}" \
+    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
+    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
+    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
+
+# Copy Grafana files
+COPY --from=grafana-base / /
+
+# Copy gclib-commpat
+COPY --from=gclib-base /usr/glibc-compat /usr/glibc-compat
+COPY --from=gclib-base /lib64 /lib64
+
+# gclib-compat is only available on x86_64 arch
+RUN if [ ! `arch` = "x86_64" ]; then \
+    rm -rf /lib64 && \
+    rm -rf /usr/glibc-compat; \
+    fi
+
+WORKDIR ${GF_PATHS_HOME}
+
+# Install required packages
+RUN apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+    apk info -vv | sort;
+
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+    addgroup -S -g $GF_GID grafana && \
+    GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana;
+
+RUN cp conf/sample.ini "$GF_PATHS_CONFIG" && \
+    cp conf/ldap.toml /etc/grafana/ldap.toml && \
+    chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+
+EXPOSE 3000
+
+USER "$GF_UID"
+ENTRYPOINT [ "/run.sh" ]
+
+
+# Build scratch image
+FROM scratch AS scratch
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
+
+ARG GF_UID
+ARG GF_GID
+ARG GF_PATHS_HOME
+ARG GF_PATHS_CONFIG
+ARG GF_PATHS_DATA
+ARG GF_PATHS_LOGS
+ARG GF_PATHS_PLUGINS
+ARG GF_PATHS_PROVISIONING
+
+COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
+
+#COPY --from=distroless-libs /usr/lib/* /usr/lib/
+#COPY --from=distroless-libs /lib/* /lib/
+
+# Copy gclib-commpat
+COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
+COPY --from=distroless-libs /lib64 /lib64
+
+# Copy Grafana files
+COPY --from=grafana-base / /
+
+# gclib-compat is only available on x86_64 arch
+RUN if [ ! `arch` = "x86_64" ]; then \
+    rm -rf /lib64 && \
+    rm -rf /usr/glibc-compat; \
+    fi
+
+WORKDIR ${GF_PATHS_HOME}/bin
+
+EXPOSE 3000
+
+ENTRYPOINT [ "grafana", "server", "--homepath=${GF_PATHS_HOME}", "--config=${GF_PATHS_CONFIG}", "--packaging=docker", "cfg:default.log.mode=console", "cfg:default.paths.data=${GF_PATHS_DATA}", "cfg:default.paths.logs=${GF_PATHS_LOGS}", "cfg:default.paths.plugins=${GF_PATHS_PLUGINS}", "cfg:default.paths.provisioning=${GF_PATHS_PROVISIONING}" ]
+
+# Build distroless image
+FROM gcr.io/distroless/static-debian12 AS distroless
+
+LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
+
+ARG GF_UID
+ARG GF_GID
+ARG GF_PATHS_HOME
+ARG GF_PATHS_CONFIG
+ARG GF_PATHS_DATA
+ARG GF_PATHS_LOGS
+ARG GF_PATHS_PLUGINS
+ARG GF_PATHS_PROVISIONING
+
+#ENV PATH="${GF_PATHS_HOME}/bin:$PATH" \
+#    GF_PATHS_CONFIG="${GF_PATHS_CONFIG}" \
+#    GF_PATHS_DATA="${GF_PATHS_DATA}" \
+#    GF_PATHS_HOME="${GF_PATHS_HOME}" \
+#    GF_PATHS_LOGS="${GF_PATHS_LOGS}" \
+#    GF_PATHS_PLUGINS="${GF_PATHS_PLUGINS}" \
+#    GF_PATHS_PROVISIONING="${GF_PATHS_PROVISIONING}"
+#
+
+COPY --from=distroless-libs /etc/ssl/certs /etc/ssl/certs
+
+
+# Copy gclib-commpat
+#COPY --from=distroless-libs /usr/glibc-compat /usr/glibc-compat
+#COPY --from=distroless-libs /lib64 /lib64
+
+# Copy Grafana files
+COPY --from=grafana-base / /
+
+# gclib-compat is only available on x86_64 arch
+#RUN #if [ ! `arch` = "x86_64" ]; then \
+#    rm -rf /lib64 && \
+#    rm -rf /usr/glibc-compat; \
+#    fi
+
+WORKDIR ${GF_PATHS_HOME}/bin
+
+EXPOSE 3000
+
+ENTRYPOINT [ "grafana", "server", "--homepath=${GF_PATHS_HOME}", "--config=${GF_PATHS_CONFIG}", "--packaging=docker", "cfg:default.log.mode=console", "cfg:default.paths.data=${GF_PATHS_DATA}", "cfg:default.paths.logs=${GF_PATHS_LOGS}", "cfg:default.paths.plugins=${GF_PATHS_PLUGINS}", "cfg:default.paths.provisioning=${GF_PATHS_PROVISIONING}" ]
