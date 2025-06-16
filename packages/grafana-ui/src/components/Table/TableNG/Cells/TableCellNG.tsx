@@ -4,10 +4,10 @@ import { Geometry } from 'ol/geom';
 import { Children, ReactNode, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
-import { t } from '../../../../utils/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { TABLE } from '../constants';

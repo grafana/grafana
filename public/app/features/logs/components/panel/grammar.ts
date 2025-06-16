@@ -1,5 +1,7 @@
 import { Grammar } from 'prismjs';
 
+import { escapeRegex } from '@grafana/data';
+
 import { LogListModel } from './processing';
 
 // The Logs grammar is used for highlight in the logs panel
@@ -21,5 +23,21 @@ export const generateLogGrammar = (log: LogListModel) => {
   return {
     ...logGrammar,
     ...logsGrammar,
+  };
+};
+
+export const generateTextMatchGrammar = (
+  highlightWords: string[] | undefined = [],
+  search: string | undefined
+): Grammar => {
+  const textMatches = [...highlightWords];
+  if (search) {
+    textMatches.push(escapeRegex(search));
+  }
+  if (!textMatches.length) {
+    return {};
+  }
+  return {
+    'log-search-match': new RegExp(textMatches.join('|'), 'g'),
   };
 };

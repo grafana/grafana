@@ -10,6 +10,7 @@ type UpdatePrefsCmd struct {
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
+	// Deprecated: Use HomeDashboardUID instead
 	HomeDashboardID  int64   `json:"homeDashboardId"`
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// Enum: utc,browser
@@ -28,6 +29,7 @@ type PatchPrefsCmd struct {
 	Theme *string `json:"theme,omitempty"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
+	// Deprecated: Use HomeDashboardUID instead
 	HomeDashboardID *int64 `json:"homeDashboardId,omitempty"`
 	// Enum: utc,browser
 	Timezone         *string                      `json:"timezone,omitempty"`

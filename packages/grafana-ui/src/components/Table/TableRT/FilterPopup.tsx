@@ -3,9 +3,9 @@ import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Label } from '../../Forms/Label';
