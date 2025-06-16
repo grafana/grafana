@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Divider, Field, FieldSet, Icon, Input, Stack, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';
@@ -20,7 +20,7 @@ type EmailSharingForm = { email: string };
 
 export const ConfigEmailSharing = () => {
   const { dashboard } = useShareDrawerContext();
-  const { t } = useTranslate();
+
   const { data: publicDashboard, isError } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );

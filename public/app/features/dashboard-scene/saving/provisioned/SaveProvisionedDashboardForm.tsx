@@ -3,12 +3,11 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
-import { RepositoryView } from 'app/api/clients/provisioning';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -78,7 +77,6 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
-  const { t } = useTranslate();
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -130,7 +128,7 @@ export function SaveProvisionedDashboardForm({
         ],
       });
     }
-  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow, t]);
+  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: FormData) => {
@@ -214,7 +212,6 @@ export function SaveProvisionedDashboardForm({
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      inputId="dashboard-folder"
                       onChange={async (uid?: string, title?: string) => {
                         onChange({ uid, title });
                         // Update folderUid URL param
