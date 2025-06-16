@@ -55,8 +55,8 @@ def rgm_artifacts_step(
             cmd +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base=ubuntu-base" +
-            "--alpine-base=alpine-base" +
+            "--ubuntu-base=ubuntu-base " +
+            "--alpine-base=alpine-base " +
             "--tag-format='{}' ".format(tag_format) +
             "--ubuntu-tag-format='{}' ".format(ubuntu_tag_format) +
             "--verify='{}' ".format(verify) +
@@ -91,8 +91,8 @@ def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", ta
             "-a docker:grafana:linux/arm/v7:ubuntu " +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base=ubuntu-base" +
-            "--alpine-base=alpine-base" +
+            "--ubuntu-base=ubuntu-base " +
+            "--alpine-base=alpine-base " +
             "--tag-format='{}' ".format(tag_format) +
             "--grafana-dir=$$PWD " +
             "--ubuntu-tag-format='{}' > {}".format(ubuntu_tag_format, file),
