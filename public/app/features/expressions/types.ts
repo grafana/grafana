@@ -70,7 +70,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
-    return config.featureToggles?.sqlExpressions;
+    return config?.featureToggles?.sqlExpressions;
   }
   return true;
 });
