@@ -511,6 +511,16 @@ export class PrometheusDatasource
         value: 'namespace',
         nonApplicable: true,
       },
+      {
+        text: 'container',
+        value: 'container',
+        nonApplicable: true,
+      },
+      {
+        text: 'asserts_env',
+        value: 'asserts_env',
+        nonApplicable: true,
+      },
     ]);
   }
 
