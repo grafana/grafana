@@ -393,3 +393,7 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
 ] as const satisfies string[];
+
+export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
+  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceRecordingRulesTarget(ds);
+}
