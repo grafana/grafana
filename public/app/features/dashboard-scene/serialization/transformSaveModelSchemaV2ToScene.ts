@@ -125,8 +125,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }
 
     // get data source from annotation query
-    // TODO: remove
-    // @ts-ignore
     const datasource = getRuntimePanelDataSource(dataQuery);
 
     const layerState = {

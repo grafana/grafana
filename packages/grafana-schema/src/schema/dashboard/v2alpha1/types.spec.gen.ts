@@ -11,7 +11,7 @@ export const defaultAnnotationQueryKind = (): AnnotationQueryKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	query?: DataQueryKind;
+	query: DataQueryKind;
 	enable: boolean;
 	hide: boolean;
 	iconColor: string;
@@ -23,6 +23,7 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
+	query: defaultDataQueryKind(),
 	enable: false,
 	hide: false,
 	iconColor: "",

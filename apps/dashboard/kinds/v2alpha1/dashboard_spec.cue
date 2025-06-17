@@ -387,7 +387,7 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	query?:      DataQueryKind
+	query:      DataQueryKind
 	enable:      bool
 	hide:        bool
 	iconColor:   string

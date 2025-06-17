@@ -598,7 +598,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationQuerySpec(ref common.
 				Properties: map[string]spec.Schema{
 					"query": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardDataQueryKind"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardDataQueryKind"),
 						},
 					},
 					"enable": {
@@ -656,7 +657,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationQuerySpec(ref common.
 						},
 					},
 				},
-				Required: []string{"enable", "hide", "iconColor", "name"},
+				Required: []string{"query", "enable", "hide", "iconColor", "name"},
 			},
 		},
 		Dependencies: []string{
