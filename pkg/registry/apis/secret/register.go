@@ -8,7 +8,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -100,6 +99,7 @@ func NewSecretAPIBuilder(
 }
 
 func RegisterAPIService(
+	tracer trace.Tracer,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
@@ -114,8 +114,6 @@ func RegisterAPIService(
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
-	tracer := otel.Tracer("github.com/grafana/grafana/pkg/registry/apis/secret")
-
 	ctx, span := tracer.Start(context.Background(), "secret.RegisterAPIService")
 	defer span.End()
 
