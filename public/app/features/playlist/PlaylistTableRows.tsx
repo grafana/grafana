@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
@@ -18,7 +18,6 @@ interface Props {
 
 export const PlaylistTableRows = ({ items, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   if (!items?.length) {
     return (

@@ -6,12 +6,10 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
-  const { t } = useTranslate();
-
   return (
     <>
       <InlineFieldRow>

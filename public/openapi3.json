@@ -3075,6 +3075,7 @@
             "type": "integer"
           },
           "dashboardId": {
+            "description": "Deprecated: Use DashboardUID and OrgID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -3155,6 +3156,9 @@
           "dashboardId": {
             "format": "int64",
             "type": "integer"
+          },
+          "dashboardUID": {
+            "type": "string"
           },
           "id": {
             "format": "int64",
@@ -4258,10 +4262,9 @@
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
             "enum": [
-              1,
-              2
+              1
             ],
             "format": "int64",
             "type": "integer"
@@ -8053,10 +8056,9 @@
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
             "enum": [
-              1,
-              2
+              1
             ],
             "format": "int64",
             "type": "integer"
@@ -8100,14 +8102,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [
@@ -8728,15 +8730,15 @@
             "description": "Selected language (beta)",
             "type": "string"
           },
-          "locale": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "description": "Selected locale (beta)",
+            "type": "string"
           },
           "theme": {
             "description": "light, dark, empty is default",
@@ -12343,14 +12345,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [
@@ -19667,8 +19669,7 @@
             "name": "kind",
             "schema": {
               "enum": [
-                1,
-                2
+                1
               ],
               "format": "int64",
               "type": "integer"
@@ -24639,7 +24640,7 @@
         ]
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {

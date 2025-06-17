@@ -116,7 +116,9 @@ jobs:
           service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
           bucket: grafana-test-results
       - if: github.repository == 'grafana/grafana' && (success() || failure())
-        run: echo "BUCKET_PATH=go-unit-tests/$(echo ${REF_NAME} | sed 's/\//-/g')" >> "$GITHUB_ENV"
+        run: |
+          BUCKET_PATH="go-unit-tests/$(echo "${REF_NAME}" | sed 's/\//-/g')"
+          echo "BUCKET_PATH=$BUCKET_PATH" >> "$GITHUB_ENV"
         env:
           REF_NAME: ${{ github.ref_name }}
       - name: Upload test results

@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
 import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
@@ -54,7 +53,7 @@ export const TimeIntervalsTable = () => {
     AlertmanagerAction.ExportTimeIntervals
   );
   const columns = useColumns(alertManagerSourceName, hideActions);
-  const { t } = useTranslate();
+
   if (isLoading) {
     return (
       <LoadingPlaceholder

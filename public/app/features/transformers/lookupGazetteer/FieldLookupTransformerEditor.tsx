@@ -10,7 +10,7 @@ import {
   FieldType,
   TransformerCategory,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
@@ -36,8 +36,6 @@ const fieldLookupSettings = {
 } as StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings>;
 
 export const FieldLookupTransformerEditor = ({ input, options, onChange }: TransformerUIProps<FieldLookupOptions>) => {
-  const { t } = useTranslate();
-
   const onPickLookupField = useCallback(
     (value: string | undefined) => {
       onChange({

@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
 import { VariableCheckboxField } from 'app/features/dashboard-scene/settings/variables/components/VariableCheckboxField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
@@ -27,8 +27,6 @@ export function SelectionOptionsForm({
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
-  const { t } = useTranslate();
-
   return (
     <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
 
@@ -20,7 +20,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const { data } = useGetAffectedItemsQuery(selectedItems);
   const deleteIsInvalid = Boolean(data && (data.alertRule || data.libraryPanel));
   const [isDeleting, setIsDeleting] = useState(false);
-  const { t } = useTranslate();
+
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {
       item_counts: {
