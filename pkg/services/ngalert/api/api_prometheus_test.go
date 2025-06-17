@@ -328,7 +328,6 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
-	//	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
 
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -1426,7 +1425,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("test with filters on state", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		// create two rules in the same Rule Group to keep assertions simple
+		// create rules in the same Rule Group to keep assertions simple
 		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
 			NamespaceUID: "Folder-1",
 			RuleGroup:    "Rule-Group-1",
