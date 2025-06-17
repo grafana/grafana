@@ -158,9 +158,7 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 				newTargets = append(newTargets, newQuery)
 			} else {
 				// Additional queries get new refIds and are added at the end
-				if refId, ok := newQuery["refId"].(string); ok {
-					newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), refId, len(additionalTargets))
-				}
+				newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
 				additionalTargets = append(additionalTargets, newQuery)
 			}
 		}
@@ -210,6 +208,15 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 					newAnnotation["statistic"] = stat
 					annotationsList[i] = newAnnotation
 				}
+			} else {
+				// Always remove statistics field, even if empty or no statistics
+				newAnnotation := make(map[string]interface{})
+				for k, v := range a {
+					if k != "statistics" {
+						newAnnotation[k] = v
+					}
+				}
+				annotationsList[i] = newAnnotation
 			}
 			continue
 		}
@@ -218,9 +225,11 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 		// First, collect all valid statistics
 		var validStatistics []string
 		for _, stat := range statistics {
-			if statString, ok := stat.(string); ok {
-				validStatistics = append(validStatistics, statString)
+			statString, ok := stat.(string)
+			if !ok {
+				continue
 			}
+			validStatistics = append(validStatistics, statString)
 		}
 
 		// If no valid statistics found, remove statistics field and keep original annotation
@@ -296,7 +305,7 @@ func isLegacyCloudWatchAnnotationQuery(annotation map[string]interface{}) bool {
 }
 
 // generateNextRefId generates a new refId for additional queries created during migration.
-func generateNextRefId(allTargets []interface{}, baseRefId string, additionalIndex int) string {
+func generateNextRefId(allTargets []interface{}, additionalIndex int) string {
 	// Collect all existing refIds
 	used := make(map[string]bool)
 	for _, target := range allTargets {
@@ -311,7 +320,6 @@ func generateNextRefId(allTargets []interface{}, baseRefId string, additionalInd
 	for c := 'A'; c <= 'Z'; c++ {
 		candidate := string(c)
 		if !used[candidate] {
-			used[candidate] = true
 			return candidate
 		}
 	}
