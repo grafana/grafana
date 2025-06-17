@@ -21,6 +21,7 @@ jest.mock('@grafana/data', () => ({
     get: jest.fn(),
     set: jest.fn(),
     delete: jest.fn(),
+    getBool: jest.fn(),
   },
 }));
 
@@ -81,6 +82,7 @@ describe('ExtensionToolbarItem', () => {
     (store.get as jest.Mock).mockClear();
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
+    (store.getBool as jest.Mock).mockClear();
     jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
     setAppEvents(new EventBusSrv());
   });

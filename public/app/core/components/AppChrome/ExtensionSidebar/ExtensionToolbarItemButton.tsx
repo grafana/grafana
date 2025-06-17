@@ -1,7 +1,7 @@
 import { css, cx, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -17,18 +17,19 @@ function ExtensionToolbarItemButtonComponent(
 ) {
   const styles = useStyles2(getStyles);
   const [hasBeenOpened, setHasBeenOpened] = useState(() => {
-    const stored = localStorage.getItem('extension-sidebar-has-been-opened');
-    return stored === 'true';
+    return store.getBool('extension-sidebar-has-been-opened', false);
   });
 
+  // if the sidebar is opened, store away that the sidebar has been opened to prevent consecutive animations
   useEffect(() => {
     if (isOpen) {
       setHasBeenOpened(true);
-      localStorage.setItem('extension-sidebar-has-been-opened', 'true');
+      store.set('extension-sidebar-has-been-opened', 'true');
     }
   }, [isOpen]);
 
   if (isOpen) {
+    // render button to close the sidebar
     return (
       <ToolbarButton
         ref={ref}
@@ -43,6 +44,7 @@ function ExtensionToolbarItemButtonComponent(
     );
   }
 
+  // if a title is provided, use it in the tooltip
   let tooltip = t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
   if (title) {
     tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
@@ -71,6 +73,8 @@ function ExtensionToolbarItemButtonComponent(
   );
 }
 
+// Wrapped the component with React.forwardRef to enable ref forwarding, which is required
+// for proper integration with the Dropdown component from @grafana/ui
 export const ExtensionToolbarItemButton = React.forwardRef<HTMLButtonElement, ToolbarItemButtonProps>(
   ExtensionToolbarItemButtonComponent
 );
@@ -82,6 +86,8 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-block',
     }),
     button: css({
+      // this is needed because with certain breakpoints the button will get `width: auto`
+      // and the icon will stretch
       aspectRatio: '1 / 1 !important',
       width: '28px',
       height: '28px',
@@ -116,7 +122,7 @@ const Sparkle = ({ delay, position }: SparkleProps) => {
     <span className={cx(styles.sparkle, styles[position])} style={{ animationDelay: `${delay}s` }}>
       <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g>
-          <path d="M10 2 L11.5 8.5 L18 10 L11.5 11.5 L10 18 L8.5 11.5 L2 10 L8.5 8.5 Z" fill="currentColor"/>
+          <path d="M10 2 L11.5 8.5 L18 10 L11.5 11.5 L10 18 L8.5 11.5 L2 10 L8.5 8.5 Z" fill="currentColor" />
         </g>
       </svg>
     </span>
