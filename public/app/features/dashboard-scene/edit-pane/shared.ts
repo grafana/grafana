@@ -177,19 +177,19 @@ export const dashboardEditActions = {
   }),
 
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
-    description: t('dashboard.description.action', 'Change variable name'),
+    description: t('dashboard.variable.name.action', 'Change variable name'),
     prop: 'name',
   }),
   changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
-    description: t('dashboard.description.action', 'Change variable label'),
+    description: t('dashboard.variable.label.action', 'Change variable label'),
     prop: 'label',
   }),
   changeVariableDescription: makeEditAction<SceneVariable, 'description'>({
-    description: t('dashboard.description.action', 'Change variable description'),
+    description: t('dashboard.variable.description.action', 'Change variable description'),
     prop: 'description',
   }),
   changeVariableHideValue: makeEditAction<SceneVariable, 'hide'>({
-    description: t('dashboard.description.action', 'Change variable hide option'),
+    description: t('dashboard.variable.hide.action', 'Change variable hide option'),
     prop: 'hide',
   }),
 };
