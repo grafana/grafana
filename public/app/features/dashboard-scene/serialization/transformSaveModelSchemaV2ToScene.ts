@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
 
+import { AnnotationQuery } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -74,7 +75,6 @@ import {
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
 import { LEGACY_STRING_VALUE_KEY } from './transformToV2TypesUtils';
-import { AnnotationQuery } from '@grafana/data';
 
 const DEFAULT_DATASOURCE = 'default';
 
