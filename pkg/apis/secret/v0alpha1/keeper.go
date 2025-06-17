@@ -65,6 +65,22 @@ type KeeperSpec struct {
 	HashiCorp *HashiCorpKeeperConfig `json:"hashivault,omitempty"`
 }
 
+func (s *KeeperSpec) GetType() KeeperType {
+	if s.AWS != nil {
+		return AWSKeeperType
+	}
+	if s.Azure != nil {
+		return AzureKeeperType
+	}
+	if s.GCP != nil {
+		return GCPKeeperType
+	}
+	if s.HashiCorp != nil {
+		return HashiCorpKeeperType
+	}
+	return ""
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type KeeperList struct {
 	metav1.TypeMeta `json:",inline"`

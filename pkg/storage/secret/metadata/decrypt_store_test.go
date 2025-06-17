@@ -345,17 +345,17 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features, nil)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)
 
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
+	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	return decryptSvc.(*decryptStorage), secureValueMetadataStorage, keeperService, keeperMetadataStorage

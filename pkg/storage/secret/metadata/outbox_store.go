@@ -19,7 +19,7 @@ import (
 type outboxStore struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
-	metrics *metrics.SecretsMetrics
+	metrics *metrics.StorageMetrics
 }
 
 func ProvideOutboxQueue(db contracts.Database, reg prometheus.Registerer) contracts.OutboxQueue {

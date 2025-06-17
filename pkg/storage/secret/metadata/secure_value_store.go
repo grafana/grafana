@@ -8,13 +8,19 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
-func ProvideSecureValueMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(
+	db contracts.Database,
+	features featuremgmt.FeatureToggles,
+	reg prometheus.Registerer,
+) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -23,6 +29,7 @@ func ProvideSecureValueMetadataStorage(db contracts.Database, features featuremg
 	return &secureValueMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		metrics: metrics.NewStorageMetrics(reg),
 	}, nil
 }
 
@@ -30,6 +37,7 @@ func ProvideSecureValueMetadataStorage(db contracts.Database, features featuremg
 type secureValueMetadataStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	metrics *metrics.StorageMetrics
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
