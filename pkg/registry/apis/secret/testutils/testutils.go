@@ -83,7 +83,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	// Initialize access client + access control

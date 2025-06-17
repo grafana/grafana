@@ -348,7 +348,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, allowList)
