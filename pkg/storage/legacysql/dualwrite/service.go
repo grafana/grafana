@@ -3,7 +3,6 @@ package dualwrite
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,7 +39,7 @@ func ProvideService(
 
 	// TODO: remove this after G12.1
 	if cfg != nil {
-		migrateFileDBTo(filepath.Join(cfg.DataPath, "dualwrite.json"), db)
+		migrateFileDBTo(cfg, db)
 	}
 
 	return &service{

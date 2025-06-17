@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // This format was used in early G12 provisioning config.  It should be removed after 12.1
 // This migration will be called once, and will remove the file based option even if the input was invalid
-func migrateFileDBTo(fpath string, db *keyvalueDB) {
+func migrateFileDBTo(cfg *setting.Cfg, db *keyvalueDB) {
+	fpath := filepath.Join(cfg.DataPath, "dualwrite.json")
 	v, err := os.ReadFile(fpath)
 	if err != nil {
 		return // the file does not exist, so nothign required
