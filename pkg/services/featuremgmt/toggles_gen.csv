@@ -188,7 +188,7 @@ improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,
 teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
-grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
+grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
