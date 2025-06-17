@@ -3253,20 +3253,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:0.22.0":
-  version: 0.22.0
-  resolution: "@grafana/llm@npm:0.22.0"
+"@grafana/llm@npm:0.22.1":
+  version: 0.22.1
+  resolution: "@grafana/llm@npm:0.22.1"
   dependencies:
     "@modelcontextprotocol/sdk": "npm:^1.11.3"
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
     uuid: "npm:^11.0.5"
   peerDependencies:
-    "@grafana/data": ^10.4.0 ||^11
-    "@grafana/runtime": ^10.4.0 || ^11
+    "@grafana/data": ^10.4.0 ||^11 || ^12
+    "@grafana/runtime": ^10.4.0 || ^11 || ^12
     react: ^18
     rxjs: ^7.8.1
-  checksum: 10/2333a9fb0fb0d7fe18b83e06ca0f8a3b0177fc2b33734c40215c2e85758b72160e2cb5da95445dbc4289bb047ea822e8192c3f614336dff0fa4daead6e0fafb8
+  checksum: 10/4c0c20becba18fb37c10da7e772713912be012f45099041cb9cd1f687c1e0ad016b0e8eae08879fc5a2ef0eae65c6ed67ed1ec19c0b6ed90f32464a406a3829b
   languageName: node
   linkType: hard
 
@@ -17986,7 +17986,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.7"
-    "@grafana/llm": "npm:0.22.0"
+    "@grafana/llm": "npm:0.22.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:2.0.0"
