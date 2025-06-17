@@ -17,7 +17,7 @@ weight: 1100
 To enable Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
 
 {{% admonition type="note" %}}
-If Users use the same email address in Google that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+If Users use the same email address in Google that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
 {{% /admonition %}}
 
 ## Create Google OAuth keys
@@ -78,11 +78,11 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Configure Google authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
 
 ### Enable Google OAuth in Grafana
 
-Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}). For example:
+Specify the Client ID and Secret in the [Grafana configuration file](../../../configure-grafana/#configuration-file-location). For example:
 
 ```bash
 [auth.google]
@@ -178,7 +178,7 @@ With team sync, you can easily add users to teams by utilizing their Google grou
 1. Configure team sync in your Grafana team's `External group sync` tab.
    The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
-To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure Team Sync](../../configure-team-sync/).
 
 #### Configure allowed groups
 
@@ -200,7 +200,7 @@ Unless `skip_org_role_sync` option is enabled, the user's role will be set to th
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.

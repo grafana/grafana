@@ -258,6 +258,14 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				err = proxy.validateRequest()
 				require.NoError(t, err)
 			})
+
+			t.Run("path with slashes and user is editor", func(t *testing.T) {
+				ctx, _ := setUp()
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "//api//admin")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.Error(t, err)
+			})
 		})
 
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {

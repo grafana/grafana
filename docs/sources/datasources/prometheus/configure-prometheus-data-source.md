@@ -125,7 +125,7 @@ Following are additional configuration options.
 
 ### Query editor
 
-- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor]({{< relref "./query-editor" >}}).
+- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor](../query-editor/).
 
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
 

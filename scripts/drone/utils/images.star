@@ -16,7 +16,7 @@ images = {
     "node_deb": "node:{}-bookworm".format(nodejs_version[:2]),
     "cloudsdk": "google/cloud-sdk:431.0.0",
     "publish": "grafana/grafana-ci-deploy:1.3.3",
-    "alpine": "alpine:3.20.3",
+    "alpine": "alpine:3.21.3",
     "ubuntu": "ubuntu:22.04",
     "curl": "byrnedo/alpine-curl:0.1.8",
     "plugins_slack": "plugins/slack",

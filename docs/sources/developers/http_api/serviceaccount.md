@@ -18,7 +18,7 @@ title: Service account HTTP API
 
 # Service account API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 > For Grafana Cloud instances, please use a Bearer token to authenticate. The examples within this section reference Basic authentication which is for On-Prem Grafana instances.
 
 ## Search service accounts with Paging

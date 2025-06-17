@@ -8,16 +8,50 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-var _ authn.Service = new(FakeService)
-var _ authn.IdentitySynchronizer = new(FakeService)
+var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
+
+type FakeSSOClientConfig struct {
+	ExpectedName                             string
+	ExpectedIsAutoLoginEnabled               bool
+	ExpectedIsSingleLogoutEnabled            bool
+	ExpectedIsSkipOrgRoleSyncEnabled         bool
+	ExpectedIsAllowAssignGrafanaAdminEnabled bool
+}
+
+func (f *FakeSSOClientConfig) GetDisplayName() string {
+	return f.ExpectedName
+}
+
+func (f *FakeSSOClientConfig) IsAutoLoginEnabled() bool {
+	return f.ExpectedIsAutoLoginEnabled
+}
+
+func (f *FakeSSOClientConfig) IsSingleLogoutEnabled() bool {
+	return f.ExpectedIsSingleLogoutEnabled
+}
+
+func (f *FakeSSOClientConfig) IsSkipOrgRoleSyncEnabled() bool {
+	return f.ExpectedIsSkipOrgRoleSyncEnabled
+}
+
+func (f *FakeSSOClientConfig) IsAllowAssignGrafanaAdminEnabled() bool {
+	return f.ExpectedIsAllowAssignGrafanaAdminEnabled
+}
+
+var (
+	_ authn.Service              = new(FakeService)
+	_ authn.IdentitySynchronizer = new(FakeService)
+)
 
 type FakeService struct {
-	ExpectedErr        error
-	ExpectedRedirect   *authn.Redirect
-	ExpectedIdentity   *authn.Identity
-	ExpectedErrs       []error
-	ExpectedIdentities []*authn.Identity
-	CurrentIndex       int
+	ExpectedClientConfig authn.SSOClientConfig
+	ExpectedErr          error
+	ExpectedRedirect     *authn.Redirect
+	ExpectedIdentity     *authn.Identity
+	ExpectedErrs         []error
+	ExpectedIdentities   []*authn.Identity
+	CurrentIndex         int
+	EnabledClients       []string
 }
 
 func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -41,7 +75,24 @@ func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (f *FakeService) IsClientEnabled(name string) bool {
-	return true
+	// Consider all clients as enabled if EnabledClients is not explicitly set
+	if f.EnabledClients == nil {
+		return true
+	}
+	// Check if client is in the list of enabled clients
+	for _, s := range f.EnabledClients {
+		if s == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *FakeService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+	if f.ExpectedClientConfig == nil {
+		return nil, false
+	}
+	return f.ExpectedClientConfig, true
 }
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
@@ -126,6 +177,10 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 }
 
 func (f FakeClient) IsEnabled() bool { return true }
+
+func (f *FakeClient) GetConfig() authn.SSOClientConfig {
+	return nil
+}
 
 func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 	return f.ExpectedTest

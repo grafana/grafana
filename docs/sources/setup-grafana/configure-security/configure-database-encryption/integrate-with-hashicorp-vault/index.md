@@ -13,14 +13,14 @@ weight: 500
 
 # Integrate Grafana with Hashicorp Vault
 
-If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../../configure-grafana" >}}) and [Provisioning]({{< relref "../../../../administration/provisioning" >}}).
+If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration](../../../configure-grafana/) and [Provisioning](../../../../administration/provisioning/).
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-If you have Grafana [set up for high availability]({{< relref "../../../set-up-for-high-availability" >}}), then we advise not to use dynamic secrets for provisioning files.
+If you have Grafana [set up for high availability](../../../set-up-for-high-availability/), then we advise not to use dynamic secrets for provisioning files.
 Each Grafana instance is responsible for renewing its own leases. Your data source leases might expire when one of your Grafana servers shuts down.
 {{% /admonition %}}
 
@@ -63,7 +63,7 @@ token = s.sAZLyI0r7sFLMPq6MWtoOhAN # replace with your key
 ## Using the Vault expander
 
 After you configure Vault, you must set the configuration or provisioning files you wish to
-use Vault. Vault configuration is an extension of configuration's [variable expansion]({{< relref "../../../configure-grafana#variable-expansion" >}}) and follows the
+use Vault. Vault configuration is an extension of configuration's [variable expansion](../../../configure-grafana/#variable-expansion) and follows the
 `$__vault{<argument>}` syntax.
 
 The argument to Vault consists of three parts separated by a colon:
@@ -101,12 +101,12 @@ $__vault{database:database/creds/grafana:username}
 
 ### Examples
 
-The following examples show you how to set your [configuration]({{< relref "../../../configure-grafana" >}}) or [provisioning]({{< relref "../../../../administration/provisioning" >}}) files to use Vault to retrieve configuration values.
+The following examples show you how to set your [configuration](../../../configure-grafana/) or [provisioning](../../../../administration/provisioning/) files to use Vault to retrieve configuration values.
 
 #### Configuration
 
 The following is a partial example for using Vault to set up a Grafana configuration file's email and database credentials.
-Refer to [Configuration]({{< relref "../../../configure-grafana" >}}) for more information.
+Refer to [Configuration](../../../configure-grafana/) for more information.
 
 ```ini
 [smtp]
@@ -127,7 +127,7 @@ password = $__vault{database:database/creds/grafana:password}
 
 The following is a full examples of a provisioning YAML file setting up a MySQL data source using Vault's
 database secrets engine.
-Refer to [Provisioning]({{< relref "../../../../administration/provisioning" >}}) for more information.
+Refer to [Provisioning](../../../../administration/provisioning/) for more information.
 
 **provisioning/custom.yaml**
 

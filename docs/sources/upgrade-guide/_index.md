@@ -22,7 +22,7 @@ We recommend that you upgrade Grafana often to stay current with the latest fixe
 
 Because Grafana upgrades are backward compatible, the upgrade process is straightforward, and dashboards and graphs will not change.
 
-To learn what's available in a Grafana release, refer to [What's New ]({{< relref "../whatsnew" >}}).
+To learn what's available in a Grafana release, refer to [What's New ](../whatsnew/).
 
 Refer to any of the following upgrade guides:
 

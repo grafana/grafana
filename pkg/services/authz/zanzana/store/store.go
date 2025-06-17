@@ -2,15 +2,15 @@ package store
 
 import (
 	"fmt"
+	"strings"
 	"time"
-
-	"xorm.io/xorm"
 
 	"github.com/openfga/openfga/assets"
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/openfga/openfga/pkg/storage/mysql"
 	"github.com/openfga/openfga/pkg/storage/postgres"
 	"github.com/openfga/openfga/pkg/storage/sqlcommon"
+	"github.com/openfga/openfga/pkg/storage/sqlite"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
-	zassets "github.com/grafana/grafana/pkg/services/authz/zanzana/store/assets"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/sqlite"
 )
 
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
@@ -32,22 +30,12 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
-		connStr := grafanaDBCfg.ConnectionString
-		// Initilize connection using xorm engine so we can reuse it for both migrations and data store
-		engine, err := xorm.NewEngine(grafanaDBCfg.Type, connStr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-
-		m := migrator.NewMigrator(engine, cfg)
-		if err := migration.RunWithMigrator(m, cfg, zassets.EmbedMigrations, zassets.SQLiteMigrationDir); err != nil {
+		connStr := sqliteConnectionString(grafanaDBCfg.ConnectionString)
+		if err := migration.Run(cfg, migrator.SQLite, connStr, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		return sqlite.NewWithDB(engine.DB().DB, &sqlite.Config{
-			Config:       zanzanaDBCfg,
-			QueryRetries: grafanaDBCfg.QueryRetries,
-		})
+		return sqlite.New(connStr, zanzanaDBCfg)
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
@@ -75,20 +63,16 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
 
-	m := migrator.NewMigrator(db.GetEngine(), cfg)
-
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
-		if err := migration.RunWithMigrator(m, cfg, zassets.EmbedMigrations, zassets.SQLiteMigrationDir); err != nil {
+		grafanaDBCfg.ConnectionString = sqliteConnectionString(grafanaDBCfg.ConnectionString)
+		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		// FIXME(kalleep): We should work on getting sqlite implemtation merged upstream and replace this one
-		return sqlite.NewWithDB(db.GetEngine().DB().DB, &sqlite.Config{
-			Config:       zanzanaDBCfg,
-			QueryRetries: grafanaDBCfg.QueryRetries,
-		})
+		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
+		m := migrator.NewMigrator(db.GetEngine(), cfg)
 		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
@@ -96,6 +80,7 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 		// For mysql we need to pass parseTime parameter in connection string
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
+		m := migrator.NewMigrator(db.GetEngine(), cfg)
 		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
@@ -125,4 +110,9 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 	}
 
 	return grafanaDBCfg, zanzanaDBCfg, nil
+}
+
+func sqliteConnectionString(v string) string {
+	// hardcode zanzana.db for now
+	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
 }

@@ -1,5 +1,5 @@
 module github.com/grafana/grafana/scripts/modowners
 
-go 1.19
+go 1.24.3
 
-require golang.org/x/mod v0.10.0
+require golang.org/x/mod v0.17.0

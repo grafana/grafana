@@ -692,6 +692,24 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
 		}
 	})
+
+	t.Run("correctly passes multiple application insights resources in a logs query", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"},
+			Query:            "Perf",
+			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			AppInsightsQuery: true,
+			DashboardTime:    false,
+		})
+		require.NoError(t, err)
+		expectedBody := `{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"],"query":"Perf"}`
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
 }
 
 func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {

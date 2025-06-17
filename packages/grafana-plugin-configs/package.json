@@ -2,7 +2,7 @@
   "name": "@grafana/plugin-configs",
   "description": "Shared dependencies and files for core plugins",
   "private": true,
-  "version": "11.3.2",
+  "version": "11.3.7",
   "dependencies": {
     "tslib": "2.7.0"
   },

@@ -22,7 +22,7 @@ weight: 500
 # Configure SAML authentication using the configuration file
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
@@ -30,8 +30,8 @@ SAML authentication integration allows your Grafana users to log in by using an 
 You can configure SAML authentication in Grafana through one of the following methods:
 
 - the Grafana configuration file
-- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
-- the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
+- the API (refer to [SSO Settings API](../../../../developers/http_api/sso-settings/))
+- the user interface (refer to [Configure SAML authentication using the Grafana user interface](../saml-ui/))
 - the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
 {{% admonition type="note" %}}
@@ -66,7 +66,7 @@ In terms of initiation, Grafana supports:
 - SP-initiated requests
 - IdP-initiated requests
 
-By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
+By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)](#idp-initiated-single-sign-on-sso).
 
 {{% admonition type="note" %}}
 It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
@@ -78,21 +78,21 @@ As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user gro
 Related links:
 
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
-- [Set up SAML with Azure AD]({{< relref "#set-up-saml-with-azure-ad" >}})
-- [Configure a Graph API application in Azure AD]({{< relref "#configure-a-graph-api-application-in-azure-ad" >}})
+- [Set up SAML with Azure AD](#set-up-saml-with-azure-ad)
+- [Configure a Graph API application in Azure AD](#configure-a-graph-api-application-in-azure-ad)
   {{% /admonition %}}
 
 ### Edit SAML options in the Grafana config file
 
-1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`]({{< relref "../../../configure-grafana/enterprise-configuration#enabled" >}}) to `true`.
-1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](../../../configure-grafana/enterprise-configuration/#enabled) to `true`.
+1. Configure the [certificate and private key](#certificate-and-private-key).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
-1. Set the [`idp_metadata_url`]({{< relref "../../../configure-grafana/enterprise-configuration#idp_metadata_url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
+1. Set the [`idp_metadata_url`](../../../configure-grafana/enterprise-configuration/#idp_metadata_url) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
 1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
-   - [`assertion_attribute_login`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_login" >}})
-   - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
-   - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
-   - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
+   - [`assertion_attribute_login`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_login)
+   - [`assertion_attribute_email`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_email)
+   - [`assertion_attribute_name`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_name)
+   - [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_groups)
 1. (Optional) Set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
 1. Save the configuration file and then restart the Grafana server.
 
@@ -119,7 +119,7 @@ assertion_attribute_groups = Group
 
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
-Refer to [Configuration]({{< relref "../../../configure-grafana" >}}) for more information about configuring Grafana.
+Refer to [Configuration](../../../configure-grafana/) for more information about configuring Grafana.
 
 ## Additional configuration for HTTP-Post binding
 
@@ -172,13 +172,13 @@ Grafana supports user authentication through Azure AD, which is useful when you 
 **Before you begin:**
 
 - Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana.
-  - [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+  - [Roles and permissions](../../../../administration/roles-and-permissions/).
 - Learn the limitations of Azure AD SAML integration.
   - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - Configure SAML integration with Azure AD, create an app integration inside the Azure AD organization first.
   - [Add app integration in Azure AD](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/add-application-portal-configure)
 - If you have users that belong to more than 150 groups, you need to configure a registered application to provide an Azure Graph API to retrieve the groups.
-  - [Setup Azure AD Graph API applications]({{< relref "#set-up-saml-with-azure-ad" >}})
+  - [Setup Azure AD Graph API applications](#set-up-saml-with-azure-ad)
 
 ### Generate self-signed certificates
 
@@ -264,7 +264,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 **Before you begin:**
 
 - To configure SAML integration with Okta, create an app integration inside the Okta organization first. [Add app integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
-- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
 **To set up SAML with Okta:**
 
@@ -297,7 +297,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 ## Configure SAML authentication in Grafana
 
-The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
 
 | Setting                                                    | Required | Description                                                                                                                                                                                                  | Default                                               |
 | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
@@ -449,7 +449,7 @@ auto_login = true
 Team sync support for SAML is available in Grafana version 7.0 and later.
 {{% /admonition %}}
 
-To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
 {{% admonition type="note" %}}
 Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
@@ -487,7 +487,7 @@ The following `External Group ID`s would be valid for input in the desired team'
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+[Learn more about Team Sync](../../configure-team-sync/)
 
 ### Configure role sync
 
@@ -495,18 +495,18 @@ The following `External Group ID`s would be valid for input in the desired team'
 Available in Grafana version 7.0 and later.
 {{% /admonition %}}
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
-1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
-1. Set the [`role_values_none`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_none" >}}) option to the values mapped to the `None` role.
-1. Set the [`role_values_viewer`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_viewer" >}}) option to the values mapped to the `Viewer` role.
-1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
-1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
-1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
+1. In the configuration file, set [`assertion_attribute_role`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_role) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_none`](../../../configure-grafana/enterprise-configuration/#role_values_none) option to the values mapped to the `None` role.
+1. Set the [`role_values_viewer`](../../../configure-grafana/enterprise-configuration/#role_values_viewer) option to the values mapped to the `Viewer` role.
+1. Set the [`role_values_editor`](../../../configure-grafana/enterprise-configuration/#role_values_editor) option to the values mapped to the `Editor` role.
+1. Set the [`role_values_admin`](../../../configure-grafana/enterprise-configuration/#role_values_admin) option to the values mapped to the organization `Admin` role.
+1. Set the [`role_values_grafana_admin`](../../../configure-grafana/enterprise-configuration/#role_values_grafana_admin) option to the values mapped to the `Grafana Admin` role.
 
 If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` config option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
-For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+For more information about roles and permissions in Grafana, refer to [Roles and permissions](../../../../administration/roles-and-permissions/).
 
 Example configuration:
 
@@ -543,8 +543,8 @@ Available in Grafana version 7.0 and later.
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
-1. In configuration file, set [`assertion_attribute_org`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
-1. Set [`org_mapping`]({{< relref "../../../configure-grafana/enterprise-configuration#org_mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
+1. In configuration file, set [`assertion_attribute_org`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_org) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
+1. Set [`org_mapping`](../../../configure-grafana/enterprise-configuration/#org_mapping) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
 
 For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
 
@@ -578,7 +578,7 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 Available in Grafana version 7.0 and later.
 {{% /admonition %}}
 
-With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration#allowed_organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+With the [`allowed_organizations`](../../../configure-grafana/enterprise-configuration/#allowed_organizations) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
 To put values containing spaces in the list, use the following JSON syntax:
 
@@ -648,7 +648,7 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Troubleshoot SAML authentication in Grafana
 
-To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../../../configure-grafana#filters" >}}) for more information.
+To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration](../../../configure-grafana/#filters) for more information.
 
 ```bash
 [log]
@@ -704,7 +704,7 @@ The keys you provide should look like:
 
 When the user logs in using SAML and gets presented with "origin not allowed", the user might be issuing the login from an IdP (identity provider) service or the user is behind a reverse proxy. This potentially happens as Grafana's CSRF checks deem the requests to be invalid. For more information [CSRF](https://owasp.org/www-community/attacks/csrf).
 
-To solve this issue, you can configure either the [`csrf_trusted_origins`]({{< relref "../../../configure-grafana#csrf_trusted_origins" >}}) or [`csrf_additional_headers`]({{< relref "../../../configure-grafana#csrf_additional_headers" >}}) option in the SAML configuration.
+To solve this issue, you can configure either the [`csrf_trusted_origins`](../../../configure-grafana/#csrf_trusted_origins) or [`csrf_additional_headers`](../../../configure-grafana/#csrf_additional_headers) option in the SAML configuration.
 
 Example of a configuration file:
 

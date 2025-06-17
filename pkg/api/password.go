@@ -39,8 +39,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+		if hs.isProviderEnabled(hs.Cfg, authInfo.AuthModule) {
 			c.Logger.Info("Requested password reset for external user", nil)
 			return response.Error(http.StatusOK, "Email sent", nil)
 		}

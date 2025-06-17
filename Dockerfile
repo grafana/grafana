@@ -1,15 +1,17 @@
 # syntax=docker/dockerfile:1
 
-ARG GF_VERSION=11.3.1
-ARG BASE_IMAGE=alpine:3.19.1
+ARG GF_VERSION=11.3.7
+ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.5
+ARG GO_IMAGE=golang:1.24.3
 
+# Default to building locally
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
+# Javascript build stage
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -22,10 +24,12 @@ COPY plugins-bundled plugins-bundled
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
+COPY e2e e2e
+
 
 RUN apk add --no-cache make build-base python3
 
-RUN yarn install
+RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
@@ -34,13 +38,14 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM --platform=${JS_PLATFORM} ${GO_IMAGE} as go-builder
+# Golang build stage
+FROM --platform=${JS_PLATFORM} ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
-ARG BINGO="true"
+ARG BINGO="false"
 
 RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache \
@@ -69,6 +74,7 @@ COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
 
+
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
       go install github.com/bwplotka/bingo@latest && \
@@ -92,10 +98,10 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make gen-go WIRE_TAGS=${WIRE_TAGS}
 
-FROM ${GO_SRC} as go-build-amd64
+FROM ${GO_SRC} AS go-build-amd64
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
-FROM ${GO_SRC} as go-build-arm64
+FROM ${GO_SRC} AS go-build-arm64
 
 RUN apt-get update && \
     apt-get -y install gcc-aarch64-linux-gnu;
@@ -105,7 +111,8 @@ ENV CC=aarch64-linux-gnu-gcc
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
-FROM ${BASE_IMAGE} as tgz-builder
+# From-tarball build stage
+FROM ${BASE_IMAGE} AS tgz-builder
 
 WORKDIR /tmp/grafana
 
@@ -117,9 +124,10 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
 # helpers for COPY --from
+
 ARG TARGETARCH
-FROM go-build-${TARGETARCH} as go-src
-FROM ${JS_SRC} as js-src
+FROM go-build-${TARGETARCH} AS go-src
+FROM ${JS_SRC} AS js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
@@ -154,19 +162,20 @@ RUN if grep -i -q alpine /etc/issue; then \
     fi
 
 # glibc support for alpine x86_64 only
+# docker run --rm --env STDOUT=1 sgerrand/glibc-builder 2.40 /usr/glibc-compat > glibc-bin-2.40.tar.gz
+ARG GLIBC_VERSION=2.40
+
 RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
-      wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-      wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk \
-        -O /tmp/glibc-2.35-r0.apk && \
-      wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk \
-        -O /tmp/glibc-bin-2.35-r0.apk && \
-      apk add --force-overwrite --no-cache /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
-      rm -f /lib64/ld-linux-x86-64.so.2 && \
-      ln -s /usr/glibc-compat/lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 && \
-      rm -f /tmp/glibc-2.35-r0.apk && \
-      rm -f /tmp/glibc-bin-2.35-r0.apk && \
-      rm -f /lib/ld-linux-x86-64.so.2 && \
-      rm -f /etc/ld.so.cache; \
+      wget -qO- "https://dl.grafana.com/glibc/glibc-bin-$GLIBC_VERSION.tar.gz" | tar zxf - -C / \
+        usr/glibc-compat/lib/ld-linux-x86-64.so.2 \
+        usr/glibc-compat/lib/libc.so.6 \
+        usr/glibc-compat/lib/libdl.so.2 \
+        usr/glibc-compat/lib/libm.so.6 \
+        usr/glibc-compat/lib/libpthread.so.0 \
+        usr/glibc-compat/lib/librt.so.1 \
+        usr/glibc-compat/lib/libresolv.so.2 && \
+      mkdir /lib64 && \
+      ln -s /usr/glibc-compat/lib/ld-linux-x86-64.so.2 /lib64; \
     fi
 
 COPY --from=go-src /tmp/grafana/conf ./conf
@@ -212,7 +221,8 @@ COPY ${RUN_SH} /run.sh
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
 
-FROM grafana/grafana:${GF_VERSION}-ubuntu as groundcover
+
+FROM grafana/grafana:${GF_VERSION}-ubuntu AS groundcover
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public

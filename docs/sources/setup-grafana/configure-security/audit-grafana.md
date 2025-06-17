@@ -26,7 +26,7 @@ To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 ## Audit logs
@@ -145,7 +145,7 @@ to the action when the user requests a report's preview to be sent through email
 
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
-\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "./configure-authentication/saml#single-logout" >}}).
+\*\* Includes manual log out, token expired/revoked, and [SAML Single Logout](../configure-authentication/saml/#single-logout).
 
 #### Service accounts
 
@@ -348,7 +348,7 @@ The auditing feature is disabled by default.
 {{% /admonition %}}
 
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
-You can choose which exporter to use in the [configuration file]({{< relref "../configure-grafana" >}}).
+You can choose which exporter to use in the [configuration file](../../configure-grafana/).
 
 Options are `file`, `loki`, and `logger`. Use spaces to separate multiple modes, such as `file loki`.
 
@@ -426,4 +426,4 @@ url = user:password@localhost:3000
 
 ### Console exporter
 
-Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration]({{< relref "../configure-grafana#log" >}}) section of the documentation. Accessing the audit logs in this way is not recommended for production use.
+Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration](../../configure-grafana/#log) section of the documentation. Accessing the audit logs in this way is not recommended for production use.

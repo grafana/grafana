@@ -87,4 +87,4 @@ Alternatively, watch the Grafana for Beginners video below:
 
 ## Next steps
 
-- [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})
+- [Start the Grafana server](../../start-restart-grafana/)

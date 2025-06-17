@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -889,4 +890,51 @@ func TestTimeRangeYAML(t *testing.T) {
 	serialized, err := yaml.Marshal(rtr)
 	require.NoError(t, err)
 	require.Equal(t, yamlRaw, string(serialized))
+}
+
+func TestValidateAlertRule(t *testing.T) {
+	t.Run("ExecErrState & NoDataState", func(t *testing.T) {
+		testCases := []struct {
+			name         string
+			execErrState string
+			noDataState  string
+			error        bool
+		}{
+			{
+				name:         "invalid error state",
+				execErrState: "invalid",
+				error:        true,
+			},
+			{
+				name:        "invalid no data state",
+				noDataState: "invalid",
+				error:       true,
+			},
+			{
+				name:  "valid states",
+				error: false,
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				rule := RuleGen.With(
+					RuleMuts.WithIntervalSeconds(10),
+				).Generate()
+				if tc.execErrState != "" {
+					rule.ExecErrState = ExecutionErrorState(tc.execErrState)
+				}
+				if tc.noDataState != "" {
+					rule.NoDataState = NoDataState(tc.noDataState)
+				}
+
+				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+				if tc.error {
+					require.Error(t, err)
+					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
 }

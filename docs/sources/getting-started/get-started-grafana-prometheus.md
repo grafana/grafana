@@ -114,11 +114,11 @@ To configure your Prometheus instance to work with Grafana locally instead of Gr
 
 #### Check Prometheus metrics in Grafana Explore view
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus.
+In your Grafana instance, go to the [Explore](../../explore/) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus.
 
 #### Start building dashboards
 
-Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
+Now that you have a curated list of queries, create [dashboards](../../dashboards/) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
 
 The following image shows a dashboard with three panels showing some system metrics.
 
@@ -126,5 +126,5 @@ The following image shows a dashboard with three panels showing some system metr
 
 To learn more:
 
-- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus" >}})
+- Grafana documentation: [Prometheus data source](../../datasources/prometheus/)
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)

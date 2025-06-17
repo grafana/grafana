@@ -44,6 +44,8 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       route: props.route.routeName as DashboardRoutes,
       uid: params.uid ?? '',
       keepDashboardFromExploreInLocalStorage: true,
+      type: params.type,
+      slug: params.slug,
     });
   }, [params.uid, props.route.routeName]);
 

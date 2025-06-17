@@ -15,13 +15,17 @@ import (
 func Run(cfg *setting.Cfg, typ, connStr string, fs embed.FS, path string) error {
 	engine, err := xorm.NewEngine(typ, connStr)
 	if err != nil {
-		return fmt.Errorf("failed to parse database config: %w", err)
+		return fmt.Errorf("failed to create db engine: %w", err)
 	}
 
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
 
-	return RunWithMigrator(m, cfg, fs, path)
+	if err := RunWithMigrator(m, cfg, fs, path); err != nil {
+		return err
+	}
+
+	return engine.Close()
 }
 
 func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, fs embed.FS, path string) error {

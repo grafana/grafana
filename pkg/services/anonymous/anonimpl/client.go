@@ -22,8 +22,10 @@ var (
 	errDeviceLimit = errutil.Unauthorized("anonymous.device-limit-reached", errutil.WithPublicMessage("Anonymous device limit reached. Contact Administrator"))
 )
 
-var _ authn.ContextAwareClient = new(Anonymous)
-var _ authn.IdentityResolverClient = new(Anonymous)
+var (
+	_ authn.ContextAwareClient     = new(Anonymous)
+	_ authn.IdentityResolverClient = new(Anonymous)
+)
 
 type Anonymous struct {
 	cfg               *setting.Cfg

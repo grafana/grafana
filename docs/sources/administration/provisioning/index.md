@@ -20,7 +20,7 @@ This makes GitOps more natural since data sources and dashboards can be defined 
 
 ## Configuration file
 
-Refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information on what you can configure in `grafana.ini`.
+Refer to [Configuration](../../setup-grafana/configure-grafana/) for more information on what you can configure in `grafana.ini`.
 
 ### Configuration file locations
 
@@ -73,7 +73,7 @@ Therefore, we heavily rely on the expertise of the community.
 
 ## Data sources
 
-You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`](../../setup-grafana/configure-grafana/#provisioning) directory.
 Each configuration file can contain a list of `datasources` to add or update during startup.
 If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
@@ -96,7 +96,7 @@ This prevents old configurations from overwriting newer ones if you have differe
 
 ### Example data source configuration file
 
-This example provisions a [Graphite data source]({{< relref "../../datasources/graphite" >}}):
+This example provisions a [Graphite data source](../../datasources/graphite/):
 
 ```yaml
 # Configuration file version
@@ -176,14 +176,14 @@ datasources:
     editable: false
 ```
 
-For provisioning examples of specific data sources, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
+For provisioning examples of specific data sources, refer to that [data source's documentation](../../datasources/).
 
 #### JSON data
 
 Not all data sources have the same configuration settings. Only the most common fields are included in examples.
 To provision the rest of a data source's settings, include them as a JSON blob in the `jsonData` field.
 
-Common settings in the [built-in core data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}) include:
+Common settings in the [built-in core data sources](../../datasources/#built-in-core-data-sources) include:
 
 {{< admonition type="note" >}}
 Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
@@ -244,11 +244,11 @@ Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which inc
 | implementation                | string  | AlertManager                                                     | The implementation of the AlertManager data source, such as `prometheus`, `cortex` or `mimir`                                                                                                                                                                                                 |
 | handleGrafanaManagedAlerts    | boolean | AlertManager                                                     | When enabled, Grafana-managed alerts are sent to this Alertmanager                                                                                                                                                                                                                            |
 
-For examples of specific data sources' JSON data, refer to that [data source's documentation]({{< relref "../../datasources" >}}).
+For examples of specific data sources' JSON data, refer to that [data source's documentation](../../datasources/).
 
 #### Secure JSON Data
 
-Secure JSON data is a map of settings that are encrypted with a [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana configuration.
+Secure JSON data is a map of settings that are encrypted with a [secret key](../../setup-grafana/configure-grafana/#secret_key) from the Grafana configuration.
 The encryption hides content from the users of the application.
 This should be used for storing the TLS Cert and password that Grafana appends to the request on the server side.
 All of these settings are optional.
@@ -289,7 +289,7 @@ datasources:
 
 ## Plugins
 
-You can manage plugin applications in Grafana by adding one or more YAML configuration files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+You can manage plugin applications in Grafana by adding one or more YAML configuration files in the [`provisioning/plugins`](../../setup-grafana/configure-grafana/#provisioning) directory.
 Each configuration file can contain a list of `apps` that update during start up.
 Grafana updates each app to match the configuration file.
 
@@ -324,7 +324,7 @@ apps:
 
 ## Dashboards
 
-You can manage dashboards in Grafana by adding one or more YAML configuration files in the [`provisioning/dashboards`]({{< relref "../../setup-grafana/configure-grafana#dashboards" >}}) directory.
+You can manage dashboards in Grafana by adding one or more YAML configuration files in the [`provisioning/dashboards`](../../setup-grafana/configure-grafana/#dashboards) directory.
 Each configuration file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider configuration file looks somewhat like this:
@@ -384,7 +384,7 @@ The JSON definition in the input field when using `Copy JSON to Clipboard` or `S
 
 ### Reusable dashboard URLs
 
-If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards/build-dashboards/view-dashboard-json-model" >}}), Grafana forces insert/update on that UID.
+If the dashboard in the JSON file contains an [UID](../../dashboards/build-dashboards/view-dashboard-json-model/), Grafana forces insert/update on that UID.
 This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
 When Grafana starts, it updates and inserts all dashboards available in the configured folders.
 If you modify the file, then the dashboard is also updated.
@@ -440,7 +440,7 @@ You can't create nested folders structures, where you have folders within folder
 
 ## Alerting
 
-For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
+For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources](../../alerting/set-up/provision-alerting-resources/).
 
 ### Supported settings
 
@@ -644,5 +644,5 @@ The following sections detail the supported settings and secure settings for eac
 
 Grafana Enterprise supports:
 
-- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning/" >}})
-- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning/" >}})
+- [Provisioning role-based access control with Grafana](../roles-and-permissions/access-control/rbac-grafana-provisioning/)
+- [Provisioning role-based access control with Terraform](../roles-and-permissions/access-control/rbac-terraform-provisioning/)

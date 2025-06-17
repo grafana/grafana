@@ -497,7 +497,12 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	}
 
 	if query.AppInsightsQuery {
-		body["applications"] = []string{query.Resources[0]}
+		// If the query type is traces then we only need the first resource as the rest are specified in the query
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+			body["applications"] = []string{query.Resources[0]}
+		} else {
+			body["applications"] = query.Resources
+		}
 	}
 
 	jsonValue, err := json.Marshal(body)
