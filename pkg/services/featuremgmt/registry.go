@@ -1763,6 +1763,16 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
+		{
+			Name:              "disableAppChromeExtensions",
+			Description:       "Set this to true to disable all app chrome extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be enabled by default
+		},
 	}
 )
 

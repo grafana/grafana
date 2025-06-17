@@ -961,6 +961,22 @@
     },
     {
       "metadata": {
+        "name": "disableAppChromeExtensions",
+        "resourceVersion": "1750158825326",
+        "creationTimestamp": "2025-06-17T11:13:45Z"
+      },
+      "spec": {
+        "description": "Set this to true to disable all app chrome extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-06-18T19:37:44Z"

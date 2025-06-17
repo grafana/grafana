@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { usePluginComponents } from '@grafana/runtime';
+import { config, usePluginComponents } from '@grafana/runtime';
 
 const excludedRoutes: Record<string, boolean> = {
   '/login': true,
@@ -16,7 +16,7 @@ const excludedRoutes: Record<string, boolean> = {
 export function AppChromeExtensionPoint(): JSX.Element | null {
   const location = useLocation();
 
-  if (excludedRoutes[location.pathname]) {
+  if (excludedRoutes[location.pathname] || config.featureToggles.disableAppChromeExtensions === true) {
     return null;
   }
 

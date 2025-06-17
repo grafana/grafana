@@ -930,4 +930,8 @@ const (
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
+
+	// FlagDisableAppChromeExtensions
+	// Set this to true to disable all app chrome extensions registered by plugins.
+	FlagDisableAppChromeExtensions = "disableAppChromeExtensions"
 )

@@ -1027,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
+  /**
+  * Set this to true to disable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  disableAppChromeExtensions?: boolean;
 }
