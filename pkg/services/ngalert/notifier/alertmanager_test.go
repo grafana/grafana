@@ -2,15 +2,12 @@ package notifier
 
 import (
 	"context"
-	"net/url"
 	"testing"
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
-	promcfg "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -58,8 +55,9 @@ func setupAMTest(t *testing.T) *alertmanager {
 
 	orgID := 1
 	stateStore := NewFileStore(int64(orgID), kvStore)
+	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures())
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto)
 	require.NoError(t, err)
 	return am
 }
@@ -130,33 +128,17 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 						TemplateFiles: map[string]string{
 							"mimir-template": "{{ define \"mimir.title\" }}Mimir Alert{{ end }}",
 						},
-						AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-							Config: definitions.Config{
-								Route: &definitions.Route{
-									Receiver: "mimir-webhook",
-									GroupBy:  []model.LabelName{"alertname", "cluster"},
-								},
-							},
-							Receivers: []*definitions.PostableApiReceiver{
-								{
-									Receiver: config.Receiver{
-										Name: "mimir-webhook",
-										WebhookConfigs: []*config.WebhookConfig{
-											{
-												URL: &config.SecretURL{
-													URL: &url.URL{
-														Scheme: "https",
-														Host:   "webhook.example.com",
-														Path:   "/alerts",
-													},
-												},
-												HTTPConfig: &promcfg.DefaultHTTPClientConfig,
-											},
-										},
-									},
-								},
-							},
-						},
+						AlertmanagerConfig: `route:
+  receiver: mimir-webhook
+  group_by:
+    - alertname
+    - cluster
+receivers:
+  - name: mimir-webhook
+    webhook_configs:
+      - url: https://webhook.example.com/alerts
+        send_resolved: true
+        http_config: {}`,
 					},
 				},
 			},
@@ -170,13 +152,10 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 					{
 						Identifier:    "", // invalid: empty identifier
 						MergeMatchers: config.Matchers{},
-						AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-							Config: definitions.Config{
-								Route: &definitions.Route{
-									Receiver: "test-receiver",
-								},
-							},
-						},
+						AlertmanagerConfig: `route:
+  receiver: test-receiver
+receivers:
+  - name: test-receiver`,
 					},
 				},
 			},
@@ -190,15 +169,13 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			am := setupAMTest(t)
 			ctx := context.Background()
 
-			changed, err := am.applyConfig(ctx, tc.config, false)
+			err := am.SaveAndApplyConfig(ctx, tc.config)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedError)
-				require.False(t, changed)
 			} else {
 				require.NoError(t, err)
-				require.True(t, changed)
 
 				templateDefs := tc.config.GetMergedTemplateDefinitions()
 				expectedTemplateCount := len(tc.config.TemplateFiles)
