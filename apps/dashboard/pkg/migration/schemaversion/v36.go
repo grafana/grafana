@@ -18,31 +18,43 @@ func V36(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 
 // migrateAnnotations updates datasource references in dashboard annotations
 func migrateAnnotations(dashboard map[string]interface{}, datasources []DataSourceInfo) {
-	if annotations, ok := dashboard["annotations"].(map[string]interface{}); ok {
-		if list, ok := annotations["list"].([]interface{}); ok {
-			for _, query := range list {
-				if queryMap, ok := query.(map[string]interface{}); ok {
-					if ds, exists := queryMap["datasource"]; exists {
-						queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
-					}
-				}
-			}
+	annotations, ok := dashboard["annotations"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	list, ok := annotations["list"].([]interface{})
+	if !ok {
+		return
+	}
+	for _, query := range list {
+		queryMap, ok := query.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if ds, exists := queryMap["datasource"]; exists {
+			queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 		}
 	}
 }
 
 // migrateTemplateVariables updates datasource references in dashboard variables
 func migrateTemplateVariables(dashboard map[string]interface{}, datasources []DataSourceInfo) {
-	if templating, ok := dashboard["templating"].(map[string]interface{}); ok {
-		if list, ok := templating["list"].([]interface{}); ok {
-			for _, variable := range list {
-				if varMap, ok := variable.(map[string]interface{}); ok {
-					if varType, ok := varMap["type"].(string); ok && varType == "query" {
-						if ds, exists := varMap["datasource"]; exists {
-							varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
-						}
-					}
-				}
+	templating, ok := dashboard["templating"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	list, ok := templating["list"].([]interface{})
+	if !ok {
+		return
+	}
+	for _, variable := range list {
+		varMap, ok := variable.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if varType, ok := varMap["type"].(string); ok && varType == "query" {
+			if ds, exists := varMap["datasource"]; exists {
+				varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 			}
 		}
 	}

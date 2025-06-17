@@ -57,24 +57,26 @@ func V34(dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(34)
 
 	// Migrate panel queries if panels exist
-	panels, ok := dashboard["panels"].([]interface{})
-	if ok {
-		for _, panel := range panels {
-			p, ok := panel.(map[string]interface{})
+	panels, _ := dashboard["panels"].([]interface{})
+	for _, panel := range panels {
+		p, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		migrateCloudWatchQueriesInPanel(p)
+
+		// Handle nested panels in collapsed rows
+		nestedPanels, hasNested := p["panels"].([]interface{})
+		if !hasNested {
+			continue
+		}
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
 			if !ok {
 				continue
 			}
-
-			migrateCloudWatchQueriesInPanel(p)
-
-			// Handle nested panels in collapsed rows
-			if nestedPanels, hasNested := p["panels"].([]interface{}); hasNested {
-				for _, nestedPanel := range nestedPanels {
-					if np, ok := nestedPanel.(map[string]interface{}); ok {
-						migrateCloudWatchQueriesInPanel(np)
-					}
-				}
-			}
+			migrateCloudWatchQueriesInPanel(np)
 		}
 	}
 
@@ -114,36 +116,50 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 				if stat, ok := statistics[0].(string); ok {
 					t["statistic"] = stat
 				}
-				delete(t, "statistics")
 			}
+			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
 
 		// Split query with multiple statistics into separate queries
-		for i, stat := range statistics {
-			if statString, ok := stat.(string); ok {
-				// Create a copy of the original query
-				newQuery := make(map[string]interface{})
-				for k, v := range t {
-					if k != "statistics" {
-						newQuery[k] = v
-					}
-				}
+		// First, collect all valid statistics
+		var validStatistics []string
+		for _, stat := range statistics {
+			statString, ok := stat.(string)
+			if !ok {
+				continue
+			}
+			validStatistics = append(validStatistics, statString)
+		}
 
-				// Set the single statistic
-				newQuery["statistic"] = statString
+		// If no valid statistics found, remove statistics field and keep original query
+		if len(validStatistics) == 0 {
+			delete(t, "statistics")
+			newTargets = append(newTargets, t)
+			continue
+		}
 
-				if i == 0 {
-					// First query replaces the original
-					newTargets = append(newTargets, newQuery)
-				} else {
-					// Additional queries get new refIds and are added at the end
-					if refId, ok := newQuery["refId"].(string); ok {
-						newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), refId, len(additionalTargets))
-					}
-					additionalTargets = append(additionalTargets, newQuery)
+		// Create separate queries for each valid statistic
+		for i, statString := range validStatistics {
+			// Create a copy of the original query
+			newQuery := make(map[string]interface{})
+			for k, v := range t {
+				if k != "statistics" {
+					newQuery[k] = v
 				}
+			}
+
+			// Set the single statistic
+			newQuery["statistic"] = statString
+
+			if i == 0 {
+				// First query replaces the original
+				newTargets = append(newTargets, newQuery)
+			} else {
+				// Additional queries get new refIds and are added at the end
+				newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
+				additionalTargets = append(additionalTargets, newQuery)
 			}
 		}
 	}
@@ -192,39 +208,69 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 					newAnnotation["statistic"] = stat
 					annotationsList[i] = newAnnotation
 				}
-			}
-			continue
-		}
-
-		// Split annotation with multiple statistics into separate annotations
-		// Create new annotations for each statistic, replace original with first one
-		originalName, hasName := a["name"].(string)
-
-		for j, stat := range statistics {
-			if statString, ok := stat.(string); ok {
-				// Create new annotation for this statistic
+			} else {
+				// Always remove statistics field, even if empty or no statistics
 				newAnnotation := make(map[string]interface{})
 				for k, v := range a {
 					if k != "statistics" {
 						newAnnotation[k] = v
 					}
 				}
+				annotationsList[i] = newAnnotation
+			}
+			continue
+		}
 
-				// Set the single statistic
-				newAnnotation["statistic"] = statString
+		// Split annotation with multiple statistics into separate annotations
+		// First, collect all valid statistics
+		var validStatistics []string
+		for _, stat := range statistics {
+			statString, ok := stat.(string)
+			if !ok {
+				continue
+			}
+			validStatistics = append(validStatistics, statString)
+		}
 
-				// Set the name with statistic suffix if multiple statistics
-				if len(statistics) > 1 && hasName {
-					newAnnotation["name"] = originalName + " - " + statString
+		// If no valid statistics found, remove statistics field and keep original annotation
+		if len(validStatistics) == 0 {
+			// Create new annotation without statistics field
+			newAnnotation := make(map[string]interface{})
+			for k, v := range a {
+				if k != "statistics" {
+					newAnnotation[k] = v
 				}
+			}
+			annotationsList[i] = newAnnotation
+			continue
+		}
 
-				if j == 0 {
-					// Replace the original annotation with the first new one
-					annotationsList[i] = newAnnotation
-				} else {
-					// Add additional annotations to be appended later
-					additionalAnnotations = append(additionalAnnotations, newAnnotation)
+		// Create new annotations for each valid statistic, replace original with first one
+		originalName, hasName := a["name"].(string)
+
+		for j, statString := range validStatistics {
+			// Create new annotation for this statistic
+			newAnnotation := make(map[string]interface{})
+			for k, v := range a {
+				if k != "statistics" {
+					newAnnotation[k] = v
 				}
+			}
+
+			// Set the single statistic
+			newAnnotation["statistic"] = statString
+
+			// Set the name with statistic suffix if multiple valid statistics
+			if len(validStatistics) > 1 && hasName {
+				newAnnotation["name"] = originalName + " - " + statString
+			}
+
+			if j == 0 {
+				// Replace the original annotation with the first new one
+				annotationsList[i] = newAnnotation
+			} else {
+				// Add additional annotations to be appended later
+				additionalAnnotations = append(additionalAnnotations, newAnnotation)
 			}
 		}
 	}
@@ -259,7 +305,7 @@ func isLegacyCloudWatchAnnotationQuery(annotation map[string]interface{}) bool {
 }
 
 // generateNextRefId generates a new refId for additional queries created during migration.
-func generateNextRefId(allTargets []interface{}, baseRefId string, additionalIndex int) string {
+func generateNextRefId(allTargets []interface{}, additionalIndex int) string {
 	// Collect all existing refIds
 	used := make(map[string]bool)
 	for _, target := range allTargets {
@@ -274,7 +320,6 @@ func generateNextRefId(allTargets []interface{}, baseRefId string, additionalInd
 	for c := 'A'; c <= 'Z'; c++ {
 		candidate := string(c)
 		if !used[candidate] {
-			used[candidate] = true
 			return candidate
 		}
 	}

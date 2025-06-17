@@ -867,10 +867,6 @@ const (
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 
-	// FlagXrayApplicationSignals
-	// Support Application Signals queries in the X-Ray datasource
-	FlagXrayApplicationSignals = "xrayApplicationSignals"
-
 	// FlagMultiTenantTempCredentials
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
@@ -930,4 +926,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagPreferLibraryPanelTitle
+	// Prefer library panel title over viz panel title.
+	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 )
