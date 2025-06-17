@@ -368,7 +368,7 @@
     "nanoid": "^5.0.9",
     "node-forge": "^1.3.1",
     "ol": "7.4.0",
-    "ol-ext": "4.0.32",
+    "ol-ext": "4.0.33",
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
     "rc-slider": "11.1.8",
