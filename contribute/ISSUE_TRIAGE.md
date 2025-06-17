@@ -2,62 +2,45 @@
 
 The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all the essential information needed for anyone to understand and be able to start working on it.
 
-> **Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you won't be able to perform most of the tasks in this topic.
+> [!NOTE]
+> This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you won't be able to perform most of the tasks in this topic.
 
 The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently, one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project.
 
 ## Simplified flowchart diagram of the issue triage process
 
-<!-- https://textik.com/#610afa78553def29 -->
+```mermaid
+flowchart TD
+    A([New issue /<br>more info added])
+    B{All info needed to categorize the issue?}
+    C1([Label: needs more info])
+    C2([Label: type/#42; <br> Label: area/#42; <br> Label: datasource/#42;])
+    D{Is duplicate?}
+    E1([Add comment: <br> /duplicate of #&lt;issue number&gt;])
+    E2{Can repro?}
+    F1([Label: triage/needs-confirmation])
+    F2{Needs priority?}
+    G1([Assign to project])
+    G2([Label: priority/*])
+    H([Done])
 
+    %% Flow
+    A --> B
+    B -- No --> C1
+    B -- Yes --> C2
+    C2 --> D
+    D -- Yes --> E1
+    D -- No --> E2
+    E2 -- No --> F1
+    E2 -- Yes --> F2
+    F1 --> G1
+    F2 -- No --> H
+    F2 -- Yes --> G2
+    G2 --> H
+    E1 --> H
+    G1 --> H
 ```
-                         +-------------------+
-                        |                   |
-                        |  new issue/       |                                                                             +
-                        |  more info added  |
-                        |                   |
-                        +---------|---------+
-                                  |
-                    +-------------|-----------+
-                    |                         |
-        NO   +-------  all info needed to     ------+  YES
-             |      |  categorize the issue?  |     |
-             |      |                         |     |
-             |      +-------------------------+     |
-      +------|-----------+             +------------|----------+
-      |                  |             |                       |
-      | label:           |             |  label: type/*        |
-      | needs more info  |             |  label: area/*        |
-      |                  |             |  label: datasource/*  |
-      +------------------+             |            |          |
-                                       +------------|----------+
-                                                    |
-                                           +--------|-------+
-                                           |                |
-                             NO  +---------- is duplicate?  --------------------+ YES
-                                 |         |                |                   |
-                                 |         +----------------+                   |
-                                 |                             +----------------|---------------+
-                          +------|-----+                       |                                |
-                          |            |                       |  add comment:                  |
-          NO  +------------ can repro? ------------+  YES      |                                |
-              |           |            |           |           |  /duplicate of #<issue number> |
-              |           +------------+           |           |                                |
-              |                                    |           +--------------------------------+
-+-------------|-------------+                      |
-|                           |             +--------|---------+
-| label:                    |             |                  |
-| triage/needs-confirmation |  NO +-------- needs priority?  ------+ YES
-|                           |     |       |                  |     |
-+-------------|-------------+     |       +------------------+     |
-              |                   |                                |
-+-------------|------+    +-------|--------+            +----------|---------+
-|                    |    |                |            |                    |
-| Assign to project  ------     Done       -------------- label: priority/*  |
-|                    |    |                |            |                    |
-+--------------------+    +----------------+            +--------------------+
 
-```
 
 ## Key functions of issue triage
 
@@ -107,7 +90,7 @@ Bug reports should explain what happened, what was expected, and how to reproduc
 
 ##### Enhancement requests
 
-> **Note:** Prior to August, 2023, community-submitted feature requests were submitted as [Github discussions](https://github.com/grafana/grafana/discussions). These are now submitted using the [feature request issue template](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
+> **Note:** Prior to August, 2023, community-submitted feature requests were submitted as [GitHub discussions](https://github.com/grafana/grafana/discussions). These are now submitted using the [feature request issue template](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
 
 When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate these objectives, the feature requests template includes the following:
 
