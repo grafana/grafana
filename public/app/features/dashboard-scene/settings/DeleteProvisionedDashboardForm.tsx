@@ -69,6 +69,7 @@ export function DeleteProvisionedDashboardForm({
     // This effect runs when the delete file request state changes
     // it checks if the request was successful or if there was an error
     if (request.isSuccess) {
+      dashboard.setState({ isDirty: false });
       const { ref, path } = request.data;
 
       if (workflow === 'branch' && ref && path) {

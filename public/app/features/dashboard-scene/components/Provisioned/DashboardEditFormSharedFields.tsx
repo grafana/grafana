@@ -67,12 +67,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                 control={control}
                 name="workflow"
                 render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup
-                    id="dashboard-workflow"
-                    {...field}
-                    options={workflowOptions}
-                    onChange={(value) => field.onChange(value)}
-                  />
+                  <RadioButtonGroup id="dashboard-workflow" {...field} options={workflowOptions} />
                 )}
               />
             </Field>

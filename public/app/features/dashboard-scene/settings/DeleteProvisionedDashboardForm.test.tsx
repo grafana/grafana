@@ -151,7 +151,7 @@ describe('DeleteProvisionedDashboardDrawer', () => {
     it('should render the drawer with correct title and subtitle', () => {
       setup();
 
-      expect(screen.getByText('Delete Provisioned Dashboard')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Delete Provisioned Dashboard' })).toBeInTheDocument();
       expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
     });
 
