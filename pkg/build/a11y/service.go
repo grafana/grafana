@@ -62,6 +62,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 	src := GrafanaFrontend(d, opts.YarnCache, opts.NodeVersion, opts.GrafanaDir)
 
 	container := d.Container().From("alpine:3").
+		WithExec([]string{"apk", "add", "--no-cache", "bash", "tar", "netcat-openbsd"}).
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
