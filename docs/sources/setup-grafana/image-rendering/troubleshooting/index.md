@@ -66,23 +66,25 @@ ldd chrome-headless-shell/linux-132.0.6781.0/chrome-headless-shell-linux64/chrom
 You should _at least_ be using Ubuntu 20.04. Grafana reccomends using Ubuntu 22.04.
 
 {{< tabs >}}
-{{< tab-content name="Ubuntu 20.04 dependencies"}}
+{{< tab-content name="Ubuntu 20.04 dependencies" >}}
+
 On Ubuntu 20.04 the following dependencies are required for the image rendering to function:
 
 ```bash
 libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
 ```
 
-    {{< /tab-content >}}
-    {{< tab-content name="Ubuntu 22.04 dependencies" >}}
-    On Ubuntu 20.04 the following dependencies are required for the image rendering to function:
+{{< /tab-content >}}
+{{< tab-content name="Ubuntu 22.04 dependencies" >}}
+
+On Ubuntu 22.04 the following dependencies are required for the image rendering to function:
 
 ```bash
 libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
 ```
 
-    {{< /tab-content >}}
-    {{< /tabs >}}
+{{< /tab-content >}}
+{{< /tabs >}}
 
 **Debian:**
 
