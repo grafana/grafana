@@ -69,6 +69,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	yarnCache := d.CacheVolume("yarn")
+
+	//nolint:gosec
 	nvmrcContents, err := os.ReadFile(filepath.Join(grafanaDir, ".nvmrc"))
 	if err != nil {
 		return fmt.Errorf("failed to read .nvmrc file: %w", err)
