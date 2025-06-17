@@ -3188,14 +3188,18 @@
     {
       "metadata": {
         "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "resourceVersion": "1749732225616",
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-12 12:43:45.616224 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
