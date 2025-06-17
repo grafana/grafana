@@ -39,7 +39,7 @@ The following table summarizes the resources you can share and/or isolate using 
 | Notification channels    | Isolate only     |
 | Annotations              | Isolate only     |
 | Reports                  | Isolate only     |
-| API keys                 | Isolate only     |
+| Service accounts         | Isolate only     |
 | Authentication providers | Share only       |
 | Configuration settings   | Share only       |
 | Licenses                 | Share            |
