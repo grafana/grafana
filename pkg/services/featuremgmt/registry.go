@@ -1756,6 +1756,13 @@ var (
 			HideFromDocs:      true,
 			Expression:        "false",
 		},
+		{
+			Name:        "preferLibraryPanelTitle",
+			Description: "Prefer library panel title over viz panel title.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
 	}
 )
 
