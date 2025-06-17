@@ -231,18 +231,30 @@ describe('Order Transformer', () => {
             name: 'time',
             type: FieldType.time,
             values: [3000, 4000, 5000, 6000],
+            state: {
+              displayName: 'time',
+              multipleFrames: false,
+            },
           },
           {
             config: {},
             name: 'pressure',
             type: FieldType.number,
             values: [10.3, 10.4, 10.5, 10.6],
+            state: {
+              displayName: 'pressure',
+              multipleFrames: false,
+            },
           },
           {
             config: {},
             name: 'humidity',
             type: FieldType.number,
             values: [10000.3, 10000.4, 10000.5, 10000.6],
+            state: {
+              displayName: 'humidity',
+              multipleFrames: false,
+            },
           },
         ]);
       });
