@@ -376,6 +376,7 @@ const DraggableFieldName = ({
             defaultValue={renamedFieldName || ''}
             placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
               fieldName,
+              interpolation: { escapeValue: false },
             })}
             onBlur={(event) => onRenameField(fieldName, event.currentTarget.value)}
           />
