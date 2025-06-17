@@ -521,7 +521,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         serviceMapQuery(options, datasourceUid, tempoDsUid, histogramType).pipe(
           concatMap((result) =>
             rateQuery(options, result, datasourceUid).pipe(
-              // this will need the histogram type too
               concatMap((result) => errorAndDurationQuery(options, result, datasourceUid, tempoDsUid, histogramType))
             )
           )
