@@ -1123,6 +1123,26 @@
    },
    "type": "object"
   },
+  "ExtraConfiguration": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "identifier": {
+     "type": "string"
+    },
+    "merge_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -1853,6 +1873,12 @@
    "properties": {
     "alertmanager_config": {
      "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
     },
     "template_file_provenances": {
      "additionalProperties": {
@@ -3056,6 +3082,12 @@
    "properties": {
     "alertmanager_config": {
      "$ref": "#/definitions/PostableApiAlertingConfig"
+    },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
     },
     "template_files": {
      "additionalProperties": {

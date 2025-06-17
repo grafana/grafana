@@ -160,7 +160,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto)
 	}
 
 	for _, opt := range opts {
