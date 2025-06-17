@@ -12,4 +12,4 @@ jobs:
       crowdin_project_id: 5
       pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
       github_board_id: 78 # Frontend Platform project
-      en_paths: public/locales/en-US/grafana.json, public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json, public/app/plugins/datasource/mssql/locales/en-US/mssql.json
+      en_paths: public/locales/en-US/grafana.json, public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json, public/app/plugins/datasource/mssql/locales/en-US/mssql.json, packages/grafana-prometheus/src/locales/en-US/grafana-prometheus.json, packages/grafana-sql/src/locales/en-US/grafana-sql.json
