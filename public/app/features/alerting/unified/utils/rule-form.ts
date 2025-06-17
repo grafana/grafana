@@ -279,7 +279,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
 
-  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule);
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
     if (isGrafanaRecordingRule) {
@@ -383,7 +383,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 }
 
 export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
-  const defaultFormValues = getDefaultFormValues();
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
 
   const ga = rule.grafana_alert;
   const duration = rule.for;
