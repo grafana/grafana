@@ -669,7 +669,7 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 }
 
 func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	ctx, span := b.tracer.Start(ctx, "SecretAPIBuilder.Mutate")
+	_, span := b.tracer.Start(ctx, "SecretAPIBuilder.Mutate")
 	defer span.End()
 
 	defer func() {
