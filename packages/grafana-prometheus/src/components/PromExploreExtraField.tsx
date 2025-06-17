@@ -55,7 +55,10 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
 
   return (
     <div
-      aria-label={t('components.prom-explore-extra-field.aria-label-prometheus-extra-field', 'Prometheus extra field')}
+      aria-label={t(
+        'grafana-prometheus.components.prom-explore-extra-field.aria-label-prometheus-extra-field',
+        'Prometheus extra field'
+      )}
       className="gf-form-inline"
       data-testid={promExploreExtraFieldTestIds.extraFieldEditor}
     >
@@ -69,10 +72,13 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
             flexWrap: 'nowrap',
           })
         )}
-        aria-label={t('components.prom-explore-extra-field.aria-label-query-type-field', 'Query type field')}
+        aria-label={t(
+          'grafana-prometheus.components.prom-explore-extra-field.aria-label-query-type-field',
+          'Query type field'
+        )}
       >
         <InlineFormLabel width="auto">
-          <Trans i18nKey="components.prom-explore-extra-field.query-type">Query type</Trans>
+          <Trans i18nKey="grafana-prometheus.components.prom-explore-extra-field.query-type">Query type</Trans>
         </InlineFormLabel>
 
         <RadioButtonGroup
@@ -90,12 +96,12 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
             flexWrap: 'nowrap',
           })
         )}
-        aria-label={t('components.prom-explore-extra-field.aria-label-step-field', 'Step field')}
+        aria-label={t('grafana-prometheus.components.prom-explore-extra-field.aria-label-step-field', 'Step field')}
       >
         <InlineFormLabel
           width={6}
           tooltip={t(
-            'components.prom-explore-extra-field.tooltip-units-builtin-variables-example-interval-rateinterval',
+            'grafana-prometheus.components.prom-explore-extra-field.tooltip-units-builtin-variables-example-interval-rateinterval',
             'Time units and built-in variables can be used here, for example: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Default if no unit is specified: {{default}})',
             {
               example1: '$__interval',
@@ -109,7 +115,7 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
             }
           )}
         >
-          <Trans i18nKey="components.prom-explore-extra-field.min-step">Min step</Trans>
+          <Trans i18nKey="grafana-prometheus.components.prom-explore-extra-field.min-step">Min step</Trans>
         </InlineFormLabel>
         <input
           type={'text'}
@@ -133,15 +139,15 @@ export function getQueryTypeOptions(includeBoth: boolean) {
   const rangeOptions = [
     {
       value: 'range',
-      label: t('components.get-query-type-options.range-options.label.range', 'Range'),
+      label: t('grafana-prometheus.components.get-query-type-options.range-options.label.range', 'Range'),
       description: t(
-        'components.get-query-type-options.range-options.description.query-range',
+        'grafana-prometheus.components.get-query-type-options.range-options.description.query-range',
         'Run query over a range of time'
       ),
     },
     {
       value: 'instant',
-      label: t('components.get-query-type-options.range-options.label.instant', 'Instant'),
+      label: t('grafana-prometheus.components.get-query-type-options.range-options.label.instant', 'Instant'),
       description: 'Run query against a single point in time. For this query, the "To" time is used',
     },
   ];
@@ -149,9 +155,9 @@ export function getQueryTypeOptions(includeBoth: boolean) {
   if (includeBoth) {
     rangeOptions.push({
       value: 'both',
-      label: t('components.get-query-type-options.label.both', 'Both'),
+      label: t('grafana-prometheus.components.get-query-type-options.label.both', 'Both'),
       description: t(
-        'components.get-query-type-options.description.instant-query-range',
+        'grafana-prometheus.components.get-query-type-options.description.instant-query-range',
         'Run an Instant query and a Range query'
       ),
     });

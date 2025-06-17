@@ -82,7 +82,7 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
           justifyContent: 'center',
         }}
       >
-        <Trans i18nKey="components.raw-editor.render-placeholder.editing-in-expanded-code-editor">
+        <Trans i18nKey="grafana-sql.components.raw-editor.render-placeholder.editing-in-expanded-code-editor">
           Editing in expanded code editor
         </Trans>
       </div>
@@ -94,7 +94,9 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
       {isExpanded ? renderPlaceholder() : renderEditor()}
       {isExpanded && (
         <Modal
-          title={t('components.raw-editor.title-query-num', 'Query {{queryNum}}', { queryNum: query.refId })}
+          title={t('grafana-sql.components.raw-editor.title-query-num', 'Query {{queryNum}}', {
+            queryNum: query.refId,
+          })}
           closeOnBackdropClick={false}
           closeOnEscape={false}
           className={styles.modal}

@@ -22,8 +22,8 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
   return (
     <>
       {options.access === 'direct' && (
-        <Alert title={t('configuration.config-editor.title-error', 'Error')} severity="error">
-          <Trans i18nKey="configuration.config-editor.browser-access-mode-error">
+        <Alert title={t('grafana-prometheus.configuration.config-editor.title-error', 'Error')} severity="error">
+          <Trans i18nKey="grafana-prometheus.configuration.config-editor.browser-access-mode-error">
             Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
           </Trans>
         </Alert>
@@ -41,9 +41,9 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
       <hr />
       <ConfigSection
         className={styles.advancedSettings}
-        title={t('configuration.config-editor.title-advanced-settings', 'Advanced settings')}
+        title={t('grafana-prometheus.configuration.config-editor.title-advanced-settings', 'Advanced settings')}
         description={t(
-          'configuration.config-editor.description-advanced-settings',
+          'grafana-prometheus.configuration.config-editor.description-advanced-settings',
           'Additional settings are optional settings that can be configured for more control over your data source.'
         )}
       >
