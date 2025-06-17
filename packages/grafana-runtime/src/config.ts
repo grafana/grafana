@@ -193,6 +193,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     connMaxLifetime: 14400,
   };
   defaultDatasourceManageAlertsUiToggle = true;
+  defaultAllowRecordingRulesTargetAlertsUiToggle = true;
 
   tokenExpirationDayLimit: undefined;
   enableFrontendSandboxForPlugins: string[] = [];

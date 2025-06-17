@@ -1123,6 +1123,26 @@
    },
    "type": "object"
   },
+  "ExtraConfiguration": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "identifier": {
+     "type": "string"
+    },
+    "merge_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -1853,6 +1873,12 @@
    "properties": {
     "alertmanager_config": {
      "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
     },
     "template_file_provenances": {
      "additionalProperties": {
@@ -3057,6 +3083,12 @@
     "alertmanager_config": {
      "$ref": "#/definitions/PostableApiAlertingConfig"
     },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
+    },
     "template_files": {
      "additionalProperties": {
       "type": "string"
@@ -3687,7 +3719,6 @@
    "type": "object"
   },
   "Route": {
-   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -3729,12 +3760,6 @@
      },
      "type": "array"
     },
-    "object_matchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
     "receiver": {
      "type": "string"
     },
@@ -3748,6 +3773,7 @@
      "type": "array"
     }
    },
+   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
