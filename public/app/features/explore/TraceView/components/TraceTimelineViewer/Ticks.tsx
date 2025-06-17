@@ -43,6 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'TicksTickLabel',
     left: '0.25rem',
     position: 'absolute',
+    whiteSpace: 'nowrap',
   }),
   TicksTickLabelEndAnchor: css({
     label: 'TicksTickLabelEndAnchor',
