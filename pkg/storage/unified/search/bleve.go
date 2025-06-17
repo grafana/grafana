@@ -300,7 +300,6 @@ func isValidPath(path, safeDir string) bool {
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	for _, v := range b.cache.Items() {
-		var idx *bleveIndex
 		idx, ok := v.Object.(*bleveIndex)
 		if !ok {
 			b.log.Warn("cache item is not a bleve index", "key", v.Object)
