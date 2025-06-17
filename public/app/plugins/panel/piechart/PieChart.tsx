@@ -325,7 +325,7 @@ function getTooltipData(
         }
 
         const customConfig = pa.data.field.custom;
-        return !customConfig?.hideFrom?.tooltip && !customConfig?.hideFrom?.viz;
+        return !customConfig?.hideFrom?.tooltip;
       })
       .map((pieArc) => {
         return {
