@@ -109,12 +109,12 @@ func runAction(ctx context.Context, c *cli.Command) error {
 		}
 	}
 
-	args := []string{"--config", cfgPath}
+	args := []string{"run", "pa11y-ci", "--config", cfgPath}
 	if c.Bool("json") {
 		args = append(args, "--json")
 	}
 	//nolint:gosec
-	cmd := exec.CommandContext(ctx, "pa11y-ci", args...)
+	cmd := exec.CommandContext(ctx, "yarn", args...)
 	cmd.Dir = repoRoot
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env,
