@@ -60,7 +60,7 @@ func (db *Database) Transaction(ctx context.Context, callback func(context.Conte
 		return callback(ctx)
 	}
 
-	spanCtx, span := db.tracer.Start(ctx, "database.Transaction")
+	spanCtx, span := db.tracer.Start(ctx, "Database.Transaction")
 	defer span.End()
 
 	defer func() {
@@ -90,7 +90,7 @@ func (db *Database) Transaction(ctx context.Context, callback func(context.Conte
 }
 
 func (db *Database) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	spanCtx, span := db.tracer.Start(ctx, "database.ExecContext")
+	spanCtx, span := db.tracer.Start(ctx, "Database.ExecContext")
 	defer span.End()
 
 	// If another transaction is already open, we just use that one instead of nesting.
@@ -102,7 +102,7 @@ func (db *Database) ExecContext(ctx context.Context, query string, args ...any) 
 }
 
 func (db *Database) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
-	spanCtx, span := db.tracer.Start(ctx, "database.QueryContext")
+	spanCtx, span := db.tracer.Start(ctx, "Database.QueryContext")
 	defer span.End()
 
 	// If another transaction is already open, we just use that one instead of nesting.
