@@ -13729,9 +13729,9 @@ __metadata:
   linkType: hard
 
 "croner@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "croner@npm:9.0.0"
-  checksum: 10/b3cea758eedfe92e35c4ebae46c9db615565348ad898b5938fd94ea77abc5ff68d86539db248a1666b007b0726da642c9046879e8fd598220afcc87c8135e656
+  version: 9.1.0
+  resolution: "croner@npm:9.1.0"
+  checksum: 10/9fb4d2d9b07d6a8065028b10519dea9bfdb56bdbc02df4c3b95bd8cb59497656c49b240790beba5c4529aadf65a8b1c3f26afdf71289e1f217a3b8e26515f8fa
   languageName: node
   linkType: hard
 
