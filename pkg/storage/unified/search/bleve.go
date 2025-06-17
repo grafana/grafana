@@ -102,17 +102,16 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 // This will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
-	var idx *bleveIndex
 	val, ok := b.cache.Get(key.String())
-	if ok {
-		idx, ok = val.(*bleveIndex)
-		if !ok {
-			b.log.Warn("cache item is not a bleve index", "key", key.String())
-			return nil, fmt.Errorf("cache item is not a bleve index: %s", key.String())
-		}
-		return idx, nil
+	if !ok {
+		return nil, nil
 	}
-	return nil, nil
+
+	idx, ok := val.(*bleveIndex)
+	if !ok {
+		return nil, fmt.Errorf("cache item is not a bleve index: %s", key.String())
+	}
+	return idx, nil
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
