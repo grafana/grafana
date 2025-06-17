@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   MultiValueVariable,
@@ -10,6 +10,7 @@ import {
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
+import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
@@ -35,14 +36,24 @@ export function RowItemRepeater({
 
   // Subscribe to variable state changes and perform repeats when the variable changes
   useEffect(() => {
-    performRowRepeats(variable, row);
+    performRowRepeats(variable, row, false);
 
-    const sub = variable.subscribeToState((state) => performRowRepeats(variable, row));
+    const variableChangeSub = variable.subscribeToState((state) => performRowRepeats(variable, row, false));
+    const editEventSub = row.subscribeToEvent(DashboardStateChangedEvent, (e) =>
+      performRowRepeats(variable, row, true)
+    );
 
-    return () => sub.unsubscribe();
+    return () => {
+      editEventSub.unsubscribe();
+      variableChangeSub.unsubscribe();
+    };
   }, [variable, row]);
 
-  if (sceneGraph.hasVariableDependencyInLoadingState(variable) || variable.state.loading) {
+  if (
+    repeatedRows === undefined ||
+    sceneGraph.hasVariableDependencyInLoadingState(variable) ||
+    variable.state.loading
+  ) {
     dashboardLog.logger('RowItemRepeater', false, 'Variable is loading, showing spinner');
     return <Spinner />;
   }
@@ -55,26 +66,30 @@ export function RowItemRepeater({
   );
 }
 
-export function performRowRepeats(variable: MultiValueVariable, row: RowItem) {
+export function performRowRepeats(variable: MultiValueVariable, row: RowItem, contentChanged: boolean) {
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
-    dashboardLog.logger('RowItemRepeater', false, 'skipped dependency in loading state');
+    dashboardLog.logger('RowItemRepeater', false, 'Skipped dependency in loading state');
     return;
   }
 
   if (variable.state.loading) {
-    dashboardLog.logger('RowItemRepeater', false, 'skipped, variable is loading');
+    dashboardLog.logger('RowItemRepeater', false, 'Skipped, variable is loading');
     return;
   }
 
   const { values, texts } = getMultiVariableValues(variable);
   const prevValues = getPrevRepeatValues(row, variable.state.name);
 
-  if (isEqual(prevValues, values)) {
-    dashboardLog.logger('RowItemRepeater', false, 'skipped, values the same');
+  if (!contentChanged && isEqual(prevValues, values)) {
+    dashboardLog.logger('RowItemRepeater', false, 'Skipped, values the same');
     return;
   }
 
-  dashboardLog.logger('RowItemRepeater', false, 'performing repeats', values);
+  if (contentChanged) {
+    dashboardLog.logger('RowItemRepeater', false, 'Performing repeats, contentChanged');
+  } else {
+    dashboardLog.logger('RowItemRepeater', false, 'Performing repeats, variable values changed', values);
+  }
 
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
@@ -82,26 +97,13 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem) {
 
   // Loop through variable values and create repeats
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
-    if (rowIndex === 0) {
-      row.setState({
-        $variables: new SceneVariableSet({
-          variables: [
-            new LocalValueVariable({
-              name: variable.state.name,
-              value: variableValues[rowIndex],
-              text: String(variableTexts[rowIndex]),
-              isMulti: variable.state.isMulti,
-              includeAll: variable.state.includeAll,
-            }),
-          ],
-        }),
-      });
-      continue;
-    }
-
-    const rowClone = row.clone({ repeatByVariable: undefined, repeatedRows: undefined });
+    const isSourceRow = rowIndex === 0;
     const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
-    const rowContentClone = row.state.layout.cloneLayout?.(rowCloneKey, false);
+    const rowClone = isSourceRow
+      ? row
+      : row.clone({ repeatByVariable: undefined, repeatedRows: undefined, layout: undefined });
+
+    const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
 
     rowClone.setState({
       key: rowCloneKey,
@@ -116,10 +118,12 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem) {
           }),
         ],
       }),
-      layout: rowContentClone,
+      layout,
     });
 
-    clonedRows.push(rowClone);
+    if (!isSourceRow) {
+      clonedRows.push(rowClone);
+    }
   }
 
   row.setState({ repeatedRows: clonedRows });
