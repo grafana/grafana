@@ -97,14 +97,16 @@ export function useSortedRows(
 ): SortedRowsResult {
   const initialSortColumns = useMemo<SortColumn[]>(
     () =>
-      initialSortBy?.map(({ displayName, desc }) => {
-        const matchingField = fields.find(({ state }) => state?.displayName === displayName);
-        const columnKey = matchingField?.name || displayName;
-
-        return {
-          columnKey,
-          direction: desc ? ('DESC' as const) : ('ASC' as const),
-        };
+      initialSortBy?.flatMap(({ displayName, desc }) => {
+        if (!fields.some((f) => getDisplayName(f) === displayName)) {
+          return [];
+        }
+        return [
+          {
+            columnKey: displayName,
+            direction: desc ? ('DESC' as const) : ('ASC' as const),
+          },
+        ];
       }) ?? [],
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );

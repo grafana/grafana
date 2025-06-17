@@ -187,7 +187,7 @@ export function getFooterItem(rows: TableRow[], field: Field, options: TableFoot
 
   // If fields array is specified, only show footer for fields included in that array
   if (options.fields && options.fields.length > 0) {
-    if (!options.fields.includes(field.name)) {
+    if (!options.fields.includes(getDisplayName(field))) {
       return '';
     }
   }

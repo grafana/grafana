@@ -180,8 +180,8 @@ export function TableNG(props: TableNGProps) {
 
         return {
           field,
-          key: field.name,
-          name: field.name,
+          key: getDisplayName(field),
+          name: getDisplayName(field),
           width: w[i],
           headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
           cellClass: cellClasses.length > 0 ? cx(cellClasses) : undefined,
@@ -647,10 +647,8 @@ function getCellClasses(
 
 /*
 TODO:
-gauge is horribly busted in TableNG
 **** need to check sparkline
 check what happens if we change initialSortBy
-changing the display name via fieldOverrides breaks sorting
 enable pagination disables footer?
 revisit z-index stuff in the styles
 double click on header divider to resize width isn't triggering a resize in the field overrides
