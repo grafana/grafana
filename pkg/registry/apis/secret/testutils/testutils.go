@@ -102,7 +102,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -117,7 +117,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encValueStore)

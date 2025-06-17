@@ -20,7 +20,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	ctx := context.Background()
 
-	store, err := ProvideEncryptedValueStorage(database, features)
+	store, err := ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	t.Run("creating an encrypted value returns it", func(t *testing.T) {
