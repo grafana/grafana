@@ -199,7 +199,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 
    {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values" >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/demqzyodxrd34e/view" >}}
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/aep7osljvuku8e/view" >}}
 
 ## Other use cases
 
