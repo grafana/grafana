@@ -80,24 +80,7 @@ This collapsible section provides information on issues that may not require imm
 
 ### More info section
 
-This collapsible section provides details about the checks performed:
-
-**Data source checks**
-
-- Shows the number of data sources analyzed
-- UID validation: Checks if the UID of each data source is valid
-- Health check: Verifies if data sources are responding properly
-- Missing plugin check: Verifies that each data source has its associated plugin installed
-
-**Plugin Checks**
-
-- Shows the number of plugins analyzed (for example, "X plugin(s) analyzed")
-- Deprecation check: Identifies any installed plugins that are deprecated
-- Update check: Detects if any installed plugins have newer versions available
-
-**SSO Checks**
-
-- Checks if the list configurations in SSO settings are in a valid list format (space-separated, comma-separated, or JSON array).
+This collapsible section provides details about the checks performed on data sources, plugins and your SSO settings.
 
 ![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
 
