@@ -926,4 +926,8 @@ const (
 	// FlagEnablePluginImporter
 	// Set this to true to use the new PluginImporter functionality
 	FlagEnablePluginImporter = "enablePluginImporter"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
 )

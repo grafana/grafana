@@ -1026,4 +1026,8 @@ export interface FeatureToggles {
   * @default false
   */
   enablePluginImporter?: boolean;
+  /**
+  * Applies OTel formatting templates to displayed logs
+  */
+  otelLogsFormatting?: boolean;
 }
