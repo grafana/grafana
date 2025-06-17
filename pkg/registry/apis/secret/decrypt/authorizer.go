@@ -27,13 +27,19 @@ func ProvideDecryptAuthorizer(tracer trace.Tracer, allowList contracts.DecryptAl
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (string, bool) {
+func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
 	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
 		attribute.String("name", secureValueName),
 		attribute.StringSlice("decrypters", secureValueDecrypters),
-		attribute.Bool("allowed", false),
 	))
 	defer span.End()
+
+	defer func() {
+		if id != "" {
+			span.SetAttributes(attribute.String("serviceIdentity", id))
+		}
+		span.SetAttributes(attribute.Bool("allowed", isAllowed))
+	}()
 
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -72,8 +78,6 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 			break
 		}
 	}
-
-	span.SetAttributes(attribute.Bool("allowed", allowed))
 
 	return serviceIdentity, allowed
 }
