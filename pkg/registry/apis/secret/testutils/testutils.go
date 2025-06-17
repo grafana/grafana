@@ -76,7 +76,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	outboxQueue := metadata.ProvideOutboxQueue(database)
+	outboxQueue := metadata.ProvideOutboxQueue(database, tracer)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
