@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-// This format was used in early G12 provisioning config.  It should be removed
-func migrateFileDBTo(fpath string, db statusStorage) {
+// This format was used in early G12 provisioning config.  It should be removed after 12.1
+// This migration will be called once, and will remove the file based option even if the input was invalid
+func migrateFileDBTo(fpath string, db *keyvalueDB) {
 	v, err := os.ReadFile(fpath)
 	if err != nil {
-		return // nothing needed
+		return // the file does not exist, so nothign required
 	}
 	logger := logging.DefaultLogger.With("logger", "dualwrite-migrator")
 
@@ -20,21 +21,10 @@ func migrateFileDBTo(fpath string, db statusStorage) {
 	err = json.Unmarshal(v, &old)
 	if err != nil {
 		logger.Warn("error loading dual write settings", "err", err)
-		return
 	}
 
 	for _, v := range old {
-		// Must write to unified if we are reading unified
-		if v.ReadUnified && !v.WriteUnified {
-			v.WriteUnified = true
-		}
-
-		// Make sure we are writing something!
-		if !v.WriteLegacy && !v.WriteUnified {
-			v.WriteLegacy = true
-		}
-
-		err = db.Set(context.Background(), v)
+		err = db.set(context.Background(), v)
 		if err != nil {
 			logger.Warn("error migrating dual write value", "err", err)
 		}

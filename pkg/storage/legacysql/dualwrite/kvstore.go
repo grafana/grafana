@@ -15,17 +15,13 @@ type keyvalueDB struct {
 	logger logging.Logger
 }
 
+// The setting is for all orgs
 const globalKVOrgID = 0
-const globalKVNamespace = "unified.dualwrite" // Does not conflict with "storage.dualwriting" used for requested state
 
-func newKeyValueDB(kv kvstore.KVStore) *keyvalueDB {
-	return &keyvalueDB{
-		db:     kv,
-		logger: logging.DefaultLogger.With("logger", "dualwrite.db"),
-	}
-}
+// NOTE: this will replace any usage of "storage.dualwriting" and that will be removed
+const globalKVNamespace = "unified.dualwrite"
 
-func (m *keyvalueDB) Get(ctx context.Context, gr schema.GroupResource) (status StorageStatus, ok bool, err error) {
+func (m *keyvalueDB) get(ctx context.Context, gr schema.GroupResource) (status StorageStatus, ok bool, err error) {
 	val, ok, err := m.db.Get(ctx, globalKVOrgID, globalKVNamespace, gr.String())
 	if err != nil {
 		return status, false, err
@@ -40,39 +36,19 @@ func (m *keyvalueDB) Get(ctx context.Context, gr schema.GroupResource) (status S
 		}
 	}
 
-	// Must write to unified if we are reading unified
-	if status.ReadUnified && !status.WriteUnified {
-		status.WriteUnified = true
-		save = true
-	}
-
-	// Make sure we are writing something!
-	if !status.WriteLegacy && !status.WriteUnified {
-		status.WriteLegacy = true
-		save = true
-	}
-
-	if save {
-		err = m.Set(ctx, status) // will be the default values
+	if status.validate() || save {
+		err = m.set(ctx, status) // will be the default values
 	}
 	return status, ok, err
 }
 
-func (m *keyvalueDB) Set(ctx context.Context, status StorageStatus) error {
+func (m *keyvalueDB) set(ctx context.Context, status StorageStatus) error {
 	gr := schema.GroupResource{
 		Group:    status.Group,
 		Resource: status.Resource,
 	}
 
-	// Must write to unified if we are reading unified
-	if status.ReadUnified && !status.WriteUnified {
-		status.WriteUnified = true
-	}
-
-	// Make sure we are writing something!
-	if !status.WriteLegacy && !status.WriteUnified {
-		status.WriteLegacy = true
-	}
+	_ = status.validate()
 
 	data, err := json.Marshal(status)
 	if err != nil {

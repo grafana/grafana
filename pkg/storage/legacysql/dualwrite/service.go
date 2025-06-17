@@ -9,10 +9,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func ProvideStaticServiceForTests(cfg *setting.Cfg) Service {
+	if cfg == nil {
+		cfg = &setting.Cfg{}
+	}
+	return &staticService{cfg}
+}
 
 func ProvideService(
 	features featuremgmt.FeatureToggles,
@@ -25,11 +33,14 @@ func ProvideService(
 		return &staticService{cfg} // fallback to using the dual write flags from cfg
 	}
 
-	db := newKeyValueDB(kv)
+	db := &keyvalueDB{
+		db:     kv,
+		logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
+	}
 
+	// TODO: remove this after G12.1
 	if cfg != nil {
-		path := filepath.Join(cfg.DataPath, "dualwrite.json")
-		migrateFileDBTo(path, db)
+		migrateFileDBTo(filepath.Join(cfg.DataPath, "dualwrite.json"), db)
 	}
 
 	return &service{
@@ -40,15 +51,9 @@ func ProvideService(
 }
 
 type service struct {
-	db      statusStorage
+	db      *keyvalueDB
 	reg     prometheus.Registerer
 	enabled bool
-}
-
-// The storage interface has zero business logic and simply writes values to a database
-type statusStorage interface {
-	Get(ctx context.Context, gr schema.GroupResource) (StorageStatus, bool, error)
-	Set(ctx context.Context, status StorageStatus) error
 }
 
 // Hardcoded list of resources that should be controlled by the database (eventually everything?)
@@ -66,13 +71,13 @@ func (m *service) ShouldManage(gr schema.GroupResource) bool {
 }
 
 func (m *service) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
-	v, ok, err := m.db.Get(ctx, gr)
+	v, ok, err := m.db.get(ctx, gr)
 	return ok && v.ReadUnified, err
 }
 
 // Status implements Service.
 func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error) {
-	v, found, err := m.db.Get(ctx, gr)
+	v, found, err := m.db.get(ctx, gr)
 	if err != nil {
 		return v, err
 	}
@@ -88,7 +93,7 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 			Runtime:      true, // need to explicitly ask for not runtime
 			UpdateKey:    1,
 		}
-		err := m.db.Set(ctx, v)
+		err := m.db.set(ctx, v)
 		return v, err
 	}
 	return v, nil
@@ -97,7 +102,7 @@ func (m *service) Status(ctx context.Context, gr schema.GroupResource) (StorageS
 // StartMigration implements Service.
 func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
 	now := time.Now().UnixMilli()
-	v, ok, err := m.db.Get(ctx, gr)
+	v, ok, err := m.db.get(ctx, gr)
 	if err != nil {
 		return v, err
 	}
@@ -127,13 +132,13 @@ func (m *service) StartMigration(ctx context.Context, gr schema.GroupResource, k
 			UpdateKey:    1,
 		}
 	}
-	err = m.db.Set(ctx, v)
+	err = m.db.set(ctx, v)
 	return v, err
 }
 
 // FinishMigration implements Service.
 func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStatus, error) {
-	v, ok, err := m.db.Get(ctx, schema.GroupResource{Group: status.Group, Resource: status.Resource})
+	v, ok, err := m.db.get(ctx, schema.GroupResource{Group: status.Group, Resource: status.Resource})
 	if err != nil {
 		return v, err
 	}
@@ -158,5 +163,5 @@ func (m *service) Update(ctx context.Context, status StorageStatus) (StorageStat
 		return v, fmt.Errorf("must write either legacy or unified")
 	}
 	status.UpdateKey++
-	return status, m.db.Set(ctx, status)
+	return status, m.db.set(ctx, status)
 }
