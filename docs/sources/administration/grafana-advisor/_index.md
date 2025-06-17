@@ -34,7 +34,7 @@ You can suggest new checks and provide feedback through this [form](https://docs
 To set up Grafana Advisor you need:
 
 - Administration rights in your Grafana organization.
-- If you're running Grafana on-premise, enable the required feature toggles in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. This is not required if you're using Grafana Cloud, as the feature toggles are enabled by default.
+- If you're running Grafana on-premise, enable the required feature toggle in your Grafana instance. Refer to [Enable required feature toggles](#enable-feature-toggles) for instructions. This is not required if you're using Grafana Cloud, as the feature toggles are enabled by default.
 
 ### Enable feature toggles
 
