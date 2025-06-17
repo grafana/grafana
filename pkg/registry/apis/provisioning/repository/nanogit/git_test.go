@@ -2882,6 +2882,9 @@ func TestGitRepository_Read_EdgeCases(t *testing.T) {
 					Name: "refs/heads/main",
 					Hash: hash.Hash{1, 2, 3},
 				}, nil)
+				mockClient.GetCommitReturns(&nanogit.Commit{
+					Tree: hash.Hash([]byte("tree-hash")),
+				}, nil)
 				mockClient.GetTreeByPathReturns(nil, errors.New("tree error"))
 			},
 			filePath:  "directory/",
