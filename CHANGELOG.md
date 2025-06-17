@@ -2,8 +2,18 @@
 
 # 12.0.2 (2025-06-17)
 
+### Features and enhancements
+
+- **Dependencies:** Bump Go to v1.24.4 [#106565](https://github.com/grafana/grafana/pull/106565), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106116](https://github.com/grafana/grafana/pull/106116), [@macabu](https://github.com/macabu)
+- **Storage:** Take `migration_locking` setting into account [#105951](https://github.com/grafana/grafana/pull/105951), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+
 ### Bug fixes
 
+- **Alerting:** Fix $value type when single data source is queried [#106101](https://github.com/grafana/grafana/pull/106101), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix group-level labels and query_offset in the import API [#106392](https://github.com/grafana/grafana/pull/106392), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Azure:** Fix Application Insights metadata requests [#105838](https://github.com/grafana/grafana/pull/105838), [@aangelisc](https://github.com/aangelisc)
+- **Org:** Fix org deletion [#106461](https://github.com/grafana/grafana/pull/106461), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
 - **Security:** Fixes CVE-2025-3415
 
 <!-- 12.0.2 END -->
