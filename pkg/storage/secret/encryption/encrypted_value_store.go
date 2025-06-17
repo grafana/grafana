@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -17,7 +19,7 @@ var (
 	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 )
 
-func ProvideEncryptedValueStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(db contracts.Database, tracer trace.Tracer, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
@@ -26,15 +28,28 @@ func ProvideEncryptedValueStorage(db contracts.Database, features featuremgmt.Fe
 	return &encryptedValStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
 	}, nil
 }
 
 type encryptedValStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (*contracts.EncryptedValue, error) {
+func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (ev *contracts.EncryptedValue, err error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Create", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
+	defer func() {
+		if ev != nil {
+			span.SetAttributes(attribute.String("uid", ev.UID))
+		}
+	}()
+
 	createdTime := time.Now().Unix()
 	encryptedValue := &EncryptedValue{
 		UID:           uuid.New().String(),
@@ -74,6 +89,12 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 }
 
 func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid string, encryptedData []byte) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Update", trace.WithAttributes(
+		attribute.String("uid", uid),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
 	req := updateEncryptedValue{
 		SQLTemplate:   sqltemplate.New(s.dialect),
 		Namespace:     namespace,
@@ -102,6 +123,12 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid 
 }
 
 func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid string) (*contracts.EncryptedValue, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Get", trace.WithAttributes(
+		attribute.String("uid", uid),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
 	req := &readEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
@@ -141,6 +168,12 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 }
 
 func (s *encryptedValStorage) Delete(ctx context.Context, namespace string, uid string) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Delete", trace.WithAttributes(
+		attribute.String("uid", uid),
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
 	req := deleteEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,

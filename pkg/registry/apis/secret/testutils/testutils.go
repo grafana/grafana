@@ -7,13 +7,13 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
@@ -71,18 +71,19 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		opt(&setupCfg)
 	}
 
+	tracer := noop.NewTracerProvider().Tracer("test")
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
-	database := database.ProvideDatabase(testDB)
+	database := database.ProvideDatabase(testDB, tracer)
 
-	outboxQueue := metadata.ProvideOutboxQueue(database)
+	outboxQueue := metadata.ProvideOutboxQueue(database, tracer)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -101,13 +102,13 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
 	encryptionManager, err := manager.ProvideEncryptionManager(
-		tracing.InitializeTracerForTest(),
+		tracer,
 		store,
 		cfg,
 		usageStats,
@@ -116,10 +117,10 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracing.InitializeTracerForTest(), encryptionManager, encValueStore)
+	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encValueStore)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
@@ -127,11 +128,13 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperService = setupCfg.keeperService
 	}
 
-	secretService := service.ProvideSecureValueService(accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+	secretService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
 
-	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
+	secureValueRest := reststorage.NewSecureValueRest(tracer, secretService, utils.ResourceInfo{})
 
-	worker, err := worker.NewWorker(setupCfg.workerCfg,
+	worker, err := worker.NewWorker(
+		setupCfg.workerCfg,
+		tracer,
 		database,
 		outboxQueue,
 		secureValueMetadataStorage,
