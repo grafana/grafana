@@ -1850,14 +1850,18 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-11T23:30:50Z"
+        "resourceVersion": "1750162291839",
+        "creationTimestamp": "2023-10-11T23:30:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 12:11:31.83962 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables RBAC support for library panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
