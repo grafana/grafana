@@ -22,6 +22,7 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
@@ -31,7 +32,6 @@ import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
-import { config } from '@grafana/runtime';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
