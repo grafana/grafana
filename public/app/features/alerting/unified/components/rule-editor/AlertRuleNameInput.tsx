@@ -8,7 +8,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import {
-  isDataSourceRecordingRulesTarget,
+  isDataSourceAllowedAsRecordingRulesTarget,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
 } from '../../utils/datasource';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
@@ -133,7 +133,7 @@ export const AlertRuleNameAndMetric = () => {
                   // Filter with `filter` prop instead of `type` prop to avoid showing the `-- Grafana --` data source
                   filter={(ds: DataSourceInstanceSettings) =>
                     isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&
-                    isDataSourceRecordingRulesTarget(ds)
+                    isDataSourceAllowedAsRecordingRulesTarget(ds)
                   }
                   onChange={(ds: DataSourceInstanceSettings) => {
                     setValue('targetDatasourceUid', ds.uid);

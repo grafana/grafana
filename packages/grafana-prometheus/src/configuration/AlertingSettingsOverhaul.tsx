@@ -15,7 +15,7 @@ interface Props<T extends DataSourceJsonData>
 
 interface AlertingConfig extends DataSourceJsonData {
   manageAlerts?: boolean;
-  manageRecordingRulesTarget?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
 }
 
 export function AlertingSettingsOverhaul<T extends AlertingConfig>({
@@ -89,15 +89,15 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
             >
               <Switch
                 value={
-                  options.jsonData.manageRecordingRulesTarget ?? config.defaultAllowRecordingRulesTargetAlertsUiToggle
+                  options.jsonData.allowAsRecordingRulesTarget ?? config.defaultAllowRecordingRulesTargetAlertsUiToggle
                 }
                 onChange={(event) =>
                   onOptionsChange({
                     ...options,
-                    jsonData: { ...options.jsonData, manageRecordingRulesTarget: event!.currentTarget.checked },
+                    jsonData: { ...options.jsonData, allowAsRecordingRulesTarget: event!.currentTarget.checked },
                   })
                 }
-                id={selectors.components.DataSource.Prometheus.configPage.manageRecordingRulesTarget}
+                id={selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}
               />
             </InlineField>
           </div>

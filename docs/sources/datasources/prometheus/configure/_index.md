@@ -266,7 +266,7 @@ After you have provisioned a data source you cannot edit it.
         jsonData:
           httpMethod: POST
           manageAlerts: true
-          manageRecordingRulesTarget: true
+          allowAsRecordingRulesTarget: true
           prometheusType: Prometheus
           prometheusVersion: 3.3.0
           cacheLevel: 'High'

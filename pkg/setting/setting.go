@@ -342,7 +342,7 @@ type Cfg struct {
 	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
 	// Default behavior for the "Allow as recording rules target" toggle when configuring a data source.
-	// It only works if the data source's `jsonData.manageRecordingRulesTarget` prop does not contain a previously configured value.
+	// It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
 	DefaultAllowRecordingRulesTargetAlertsUIToggle bool
 
 	// IP range access control
