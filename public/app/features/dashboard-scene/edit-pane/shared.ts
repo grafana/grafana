@@ -185,6 +185,7 @@ export const dashboardEditActions = {
     description: t('dashboard.description.action', 'Change dashboard description'),
     prop: 'description',
   }),
+
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
     const varsBeforeAddition = [...source.state.variables];
 
@@ -213,7 +214,6 @@ export const dashboardEditActions = {
       },
     });
   },
-
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
     description: t('dashboard.variable.name.action', 'Change variable name'),
     prop: 'name',
