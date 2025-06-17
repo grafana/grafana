@@ -51,6 +51,8 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   const isProvisioned = getIsProvisioned(rule, promRule);
 
   const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Update);
+  // If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
+  // as we have removed all requests to the ruler API in the list view.
   const [grafanaEditRuleSupported, grafanaEditRuleAllowed] = useGrafanaPromRuleAbility(
     prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken,
     AlertRuleAction.Update

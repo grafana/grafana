@@ -38,6 +38,8 @@ interface Props {
 /**
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
+ * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
+ * as we have removed all requests to the ruler API in the list view.
  */
 const AlertRuleMenu = ({
   promRule,
@@ -51,7 +53,7 @@ const AlertRuleMenu = ({
   buttonSize,
   fill,
 }: Props) => {
-  // check all abilities and permissions
+  // check all abilities and permissions using rulerRule
   const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
     useRulerRuleAbilities(rulerRule, groupIdentifier, [
       AlertRuleAction.Pause,
@@ -61,6 +63,7 @@ const AlertRuleMenu = ({
       AlertRuleAction.ModifyExport,
     ]);
 
+  // check all abilities and permissions using promRule
   const [
     grafanaPauseAbility,
     grafanaDeleteAbility,
