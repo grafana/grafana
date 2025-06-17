@@ -60,9 +60,8 @@ describe('DashboardEditFormSharedFields', () => {
         </FormWrapper>
       );
 
-      expect(screen.getByText('Path')).toBeInTheDocument();
-      expect(screen.getByText('File path inside the repository (.json or .yaml)')).toBeInTheDocument();
-      expect(screen.getByText('Comment')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Add a note to describe your changes (optional)')).toBeInTheDocument();
     });
 
