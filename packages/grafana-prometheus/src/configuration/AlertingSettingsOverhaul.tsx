@@ -15,6 +15,7 @@ interface Props<T extends DataSourceJsonData>
 
 interface AlertingConfig extends DataSourceJsonData {
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
 }
 
 export function AlertingSettingsOverhaul<T extends AlertingConfig>({
@@ -62,6 +63,41 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
                   })
                 }
                 id={selectors.components.DataSource.Prometheus.configPage.manageAlerts}
+              />
+            </InlineField>
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineField
+              labelWidth={30}
+              label={t(
+                'configuration.alerting-settings-overhaul.label-allow-as-recording-rules-target',
+                'Allow as recording rules target'
+              )}
+              disabled={options.readOnly}
+              tooltip={
+                <>
+                  <Trans i18nKey="configuration.alerting-settings-overhaul.tooltip-allow-as-recording-rules-target">
+                    Allow this data source to be selected as a target for writing recording rules.
+                  </Trans>{' '}
+                  {docsTip()}
+                </>
+              }
+              interactive={true}
+              className={styles.switchField}
+            >
+              <Switch
+                value={
+                  options.jsonData.allowAsRecordingRulesTarget ?? config.defaultAllowRecordingRulesTargetAlertsUiToggle
+                }
+                onChange={(event) =>
+                  onOptionsChange({
+                    ...options,
+                    jsonData: { ...options.jsonData, allowAsRecordingRulesTarget: event!.currentTarget.checked },
+                  })
+                }
+                id={selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}
               />
             </InlineField>
           </div>

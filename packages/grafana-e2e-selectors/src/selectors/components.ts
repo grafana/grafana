@@ -179,6 +179,9 @@ export const versionedComponents = {
         manageAlerts: {
           '10.4.0': 'prometheus-alerts-manager', // id for switch component
         },
+        allowAsRecordingRulesTarget: {
+          '12.1.0': 'prometheus-recording-rules-target',
+        },
         scrapeInterval: {
           '10.4.0': 'data-testid scrape interval',
         },
