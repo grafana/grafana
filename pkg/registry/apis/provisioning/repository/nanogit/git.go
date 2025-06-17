@@ -224,9 +224,16 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, err
 	}
 
+	// get root hash
+	// TODO: Fix GetTree in nanogit as it does not work commit hash
+	commit, err := r.client.GetCommit(ctx, refHash)
+	if err != nil {
+		return nil, fmt.Errorf("get commit: %w", err)
+	}
+
 	// Check if the path represents a directory
 	if safepath.IsDir(filePath) {
-		tree, err := r.client.GetTreeByPath(ctx, refHash, finalPath)
+		tree, err := r.client.GetTreeByPath(ctx, commit.Tree, finalPath)
 		if err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return nil, repository.ErrFileNotFound
@@ -240,13 +247,6 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 			Ref:  refHash.String(),
 			Hash: tree.Hash.String(),
 		}, nil
-	}
-
-	// get root hash
-	// TODO: Fix GetTree in nanogit as it does not work commit hash
-	commit, err := r.client.GetCommit(ctx, refHash)
-	if err != nil {
-		return nil, fmt.Errorf("get commit: %w", err)
 	}
 
 	blob, err := r.client.GetBlobByPath(ctx, commit.Tree, finalPath)

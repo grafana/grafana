@@ -688,11 +688,14 @@ func TestGitRepository_Read(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name: "success - read directory",
+			name: "can a read directory",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
 					Hash: hash.Hash{},
+				}, nil)
+				mockClient.GetCommitReturns(&nanogit.Commit{
+					Tree: hash.Hash([]byte("tree-hash")),
 				}, nil)
 				mockClient.GetTreeByPathReturns(&nanogit.Tree{
 					Hash: hash.Hash{},
