@@ -589,8 +589,8 @@ const getGridStyles = (
     '&:hover': {
       zIndex: theme.zIndex.tooltip - 2,
       whiteSpace: 'pre-line',
-      height: 'min-content',
-      minWidth: 'min-content',
+      height: 'fit-content',
+      minWidth: 'fit-content',
     },
   }),
   paginationContainer: css({

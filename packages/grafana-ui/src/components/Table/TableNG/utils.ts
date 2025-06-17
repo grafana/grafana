@@ -82,7 +82,7 @@ export function shouldTextOverflow(
 
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] === FieldType.string) {
+  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] !== FieldType.string) {
     return false;
   }
 

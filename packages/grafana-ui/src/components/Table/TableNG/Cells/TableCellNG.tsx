@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
-import { ReactNode, useCallback, useMemo, useRef } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 
 import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -56,8 +56,6 @@ export function TableCellNG(props: TableCellNGProps) {
   const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
   const { type: cellType } = cellOptions;
 
-  const divWidthRef = useRef<HTMLDivElement>(null);
-
   const showFilters = field.config.filterable && onCellFilterAdded;
 
   const isRightAligned = useMemo(() => getTextAlign(field) === 'flex-end', [field]);
@@ -66,7 +64,7 @@ export function TableCellNG(props: TableCellNGProps) {
     () => (rowBg ? rowBg(rowIdx) : getCellColors(theme, cellOptions, displayValue)),
     [theme, cellOptions, displayValue, rowBg, rowIdx]
   );
-  const styles = useStyles2(getStyles, height, isRightAligned, colors);
+  const styles = useStyles2(getStyles, isRightAligned, colors.bgHoverColor);
 
   const actions = useMemo(
     () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
@@ -154,8 +152,19 @@ export function TableCellNG(props: TableCellNGProps) {
     }
   }, [displayName, onCellFilterAdded, value]);
 
+  const styleOverride = useMemo(
+    () => ({
+      // this minHeight interacts with the `fit-content` property on
+      // the container for table cell overflow rendering.
+      minHeight: height - 1,
+      background: colors.bgColor || 'none',
+      color: colors.textColor,
+    }),
+    [height, colors]
+  );
+
   return (
-    <div ref={divWidthRef} className={styles.cell}>
+    <div className={styles.cell} style={styleOverride}>
       {renderedCell()}
       {hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
@@ -206,19 +215,13 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, defaultRowHeight: number, isRightAligned: boolean, color: CellColors) => ({
+const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, bgHoverColor?: string) => ({
   cell: css({
     height: '100%',
-    // this minHeight interacts with the `fit-content` property on
-    // the container for table cell overflow rendering.
-    minHeight: defaultRowHeight - 1,
     alignContent: 'center',
     paddingInline: TABLE.CELL_PADDING,
-    // TODO: follow-up on this: change styles on hover on table row level
-    background: color.bgColor || 'none',
-    color: color.textColor,
     '&:hover': {
-      background: color.bgHoverColor,
+      background: bgHoverColor,
       '.table-cell-actions': {
         display: 'flex',
       },
