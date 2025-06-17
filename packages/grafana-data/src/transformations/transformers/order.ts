@@ -1,7 +1,7 @@
 import { clone } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { getFieldDisplayName } from '../../field/fieldState';
+import { cacheFieldDisplayNames, getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
@@ -52,6 +52,8 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
     (source) =>
       source.pipe(
         map((data) => {
+          cacheFieldDisplayNames(data);
+
           const orderer =
             orderByMode === OrderByMode.Manual
               ? createFieldsOrdererManual(indexByName!)
@@ -91,9 +93,8 @@ const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
     for (let i = 0; i < orderBy.length; i++) {
       let { type, name = '', desc = false } = orderBy[i];
 
-      // TODO: use displayName?
-      let aVal = type === OrderByType.Name ? fieldA.name : (fieldA.labels?.[name] ?? '');
-      let bVal = type === OrderByType.Name ? fieldB.name : (fieldB.labels?.[name] ?? '');
+      let aVal = type === OrderByType.Name ? (fieldA.state?.displayName ?? fieldA.name) : (fieldA.labels?.[name] ?? '');
+      let bVal = type === OrderByType.Name ? (fieldB.state?.displayName ?? fieldB.name) : (fieldB.labels?.[name] ?? '');
 
       let res = compare(aVal, bVal) * (desc ? -1 : 1);
 
