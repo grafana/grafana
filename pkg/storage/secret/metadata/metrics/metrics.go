@@ -46,12 +46,14 @@ type StorageMetrics struct {
 	SecureValueMetadataListDuration   prometheus.Histogram
 	SecureValueMetadataListCount      prometheus.Counter
 	SecureValueGetForDecryptDuration  prometheus.Histogram
+	SecureValueSetExternalIDDuration  prometheus.Histogram
+	SecureValueSetStatusDuration      prometheus.Histogram
 
 	DecryptDuration     *prometheus.HistogramVec
 	DecryptRequestCount *prometheus.CounterVec
 }
 
-func newSecretsMetrics() *StorageMetrics {
+func newStorageMetrics() *StorageMetrics {
 	return &StorageMetrics{
 		// Outbox metrics
 		OutboxAppendDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -287,11 +289,45 @@ var (
 // NewStorageMetrics returns a singleton instance of the SecretsMetrics struct containing registered metrics
 func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	initOnce.Do(func() {
-		m := newSecretsMetrics()
+		m := newStorageMetrics()
 
 		if reg != nil {
 			reg.MustRegister(
 				m.OutboxAppendDuration,
+				m.OutboxAppendCount,
+				m.OutboxReceiveDuration,
+				m.OutboxReceiveCount,
+				m.OutboxDeleteDuration,
+				m.OutboxDeleteCount,
+				m.OutboxIncrementReceiveCountDuration,
+				m.OutboxIncrementReceiveCountCount,
+				m.OutboxTotalMessageLifetimeDuration,
+				m.KeeperMetadataCreateDuration,
+				m.KeeperMetadataCreateCount,
+				m.KeeperMetadataUpdateDuration,
+				m.KeeperMetadataUpdateCount,
+				m.KeeperMetadataDeleteDuration,
+				m.KeeperMetadataDeleteCount,
+				m.KeeperMetadataGetDuration,
+				m.KeeperMetadataGetCount,
+				m.KeeperMetadataListDuration,
+				m.KeeperMetadataListCount,
+				m.KeeperMetadataGetKeeperConfigDuration,
+				m.SecureValueMetadataCreateDuration,
+				m.SecureValueMetadataCreateCount,
+				m.SecureValueMetadataUpdateDuration,
+				m.SecureValueMetadataUpdateCount,
+				m.SecureValueMetadataDeleteDuration,
+				m.SecureValueMetadataDeleteCount,
+				m.SecureValueMetadataGetDuration,
+				m.SecureValueMetadataGetCount,
+				m.SecureValueMetadataListDuration,
+				m.SecureValueMetadataListCount,
+				m.SecureValueGetForDecryptDuration,
+				m.SecureValueSetExternalIDDuration,
+				m.SecureValueSetStatusDuration,
+				m.DecryptDuration,
+				m.DecryptRequestCount,
 			)
 		}
 
@@ -302,5 +338,5 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 }
 
 func NewTestMetrics() *StorageMetrics {
-	return newSecretsMetrics()
+	return newStorageMetrics()
 }

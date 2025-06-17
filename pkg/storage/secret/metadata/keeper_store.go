@@ -291,7 +291,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	}
 
 	s.metrics.KeeperMetadataListDuration.Observe(time.Since(start).Seconds())
-	s.metrics.KeeperMetadataListCount.Add(float64(len(keepers)))
+	s.metrics.KeeperMetadataListCount.Inc()
 
 	return keepers, nil
 }

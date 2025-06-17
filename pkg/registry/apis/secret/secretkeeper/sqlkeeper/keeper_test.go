@@ -181,7 +181,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	// Initialize the SQLKeeper
-	sqlKeeper := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	sqlKeeper := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore, nil)
 
 	return sqlKeeper, nil
 }

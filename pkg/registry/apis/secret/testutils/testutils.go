@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -76,14 +75,14 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB)
 
-	outboxQueue := metadata.ProvideOutboxQueue(database)
+	outboxQueue := metadata.ProvideOutboxQueue(database, nil)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features, nil)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -120,7 +119,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracing.InitializeTracerForTest(), encryptionManager, encValueStore)
+	sqlKeeper := sqlkeeper.NewSQLKeeper(tracing.InitializeTracerForTest(), encryptionManager, encValueStore, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
@@ -139,7 +138,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
-		metrics.NewTestMetrics(),
+		nil, // metrics
 	)
 	require.NoError(t, err)
 

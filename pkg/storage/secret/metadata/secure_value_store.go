@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -41,6 +42,7 @@ type secureValueMetadataStorage struct {
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	start := time.Now()
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = "Creating secure value"
 
@@ -114,10 +116,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
+	s.metrics.SecureValueMetadataCreateDuration.Observe(time.Since(start).Seconds())
+	s.metrics.SecureValueMetadataCreateCount.Inc()
+
 	return createdSecureValue, nil
 }
 
 func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	start := time.Now()
 	secureValue, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
@@ -128,10 +134,14 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
+	s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
+	s.metrics.SecureValueMetadataGetCount.Inc()
+
 	return secureValueKub, nil
 }
 
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	start := time.Now()
 	var newRow *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -211,10 +221,14 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
+	s.metrics.SecureValueMetadataUpdateDuration.Observe(time.Since(start).Seconds())
+	s.metrics.SecureValueMetadataUpdateCount.Inc()
+
 	return secureValue, nil
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	start := time.Now()
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -235,10 +249,14 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		return fmt.Errorf("deleting secure value rowsAffected=%d error=%w", rowsAffected, err)
 	}
 
+	s.metrics.SecureValueMetadataDeleteDuration.Observe(time.Since(start).Seconds())
+	s.metrics.SecureValueMetadataDeleteCount.Inc()
+
 	return nil
 }
 
 func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
+	start := time.Now()
 	req := listSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -284,10 +302,14 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
+	s.metrics.SecureValueMetadataListDuration.Observe(time.Since(start).Seconds())
+	s.metrics.SecureValueMetadataListCount.Inc()
+
 	return secureValues, nil
 }
 
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
+	start := time.Now()
 	req := updateExternalIdSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -313,10 +335,13 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	if modifiedCount > 1 {
 		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
 	}
+	s.metrics.SecureValueSetExternalIDDuration.Observe(time.Since(start).Seconds())
+
 	return nil
 }
 
 func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
+	start := time.Now()
 	req := updateStatusSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -343,10 +368,13 @@ func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xk
 	if modifiedCount > 1 {
 		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
 	}
+	s.metrics.SecureValueSetStatusDuration.Observe(time.Since(start).Seconds())
+
 	return nil
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
+	start := time.Now()
 	req := readSecureValueForDecrypt{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -382,6 +410,8 @@ func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespa
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
+
+	s.metrics.SecureValueGetForDecryptDuration.Observe(time.Since(start).Seconds())
 
 	return secureValue, nil
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Consumes and processes messages from the secure value outbox queue
@@ -22,7 +22,7 @@ type Worker struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	encryptionManager          contracts.EncryptionManager
-	metrics                    *metrics.SecretsMetrics
+	metrics                    *OutboxMetrics
 }
 
 type Config struct {
@@ -44,7 +44,7 @@ func NewWorker(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
 	encryptionManager contracts.EncryptionManager,
-	metrics *metrics.SecretsMetrics,
+	reg prometheus.Registerer,
 ) (*Worker, error) {
 	if config.BatchSize == 0 {
 		return nil, fmt.Errorf("config.BatchSize is required")
@@ -67,7 +67,7 @@ func NewWorker(
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		encryptionManager:          encryptionManager,
-		metrics:                    metrics,
+		metrics:                    NewOutboxMetrics(reg),
 	}, nil
 }
 

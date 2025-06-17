@@ -26,7 +26,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
@@ -55,7 +54,6 @@ type SecretAPIBuilder struct {
 	accessClient               claims.AccessClient
 	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
-	metrics                    *metrics.SecretsMetrics
 }
 
 func NewSecretAPIBuilder(
@@ -71,7 +69,6 @@ func NewSecretAPIBuilder(
 	decryptersAllowList map[string]struct{},
 	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
-	metrics := metrics.NewSecretsMetrics(registerer)
 	worker, err := worker.NewWorker(worker.Config{
 		BatchSize:                    20,
 		ReceiveTimeout:               5 * time.Second,
@@ -84,7 +81,7 @@ func NewSecretAPIBuilder(
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
-		metrics,
+		registerer,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
@@ -99,7 +96,6 @@ func NewSecretAPIBuilder(
 		accessClient:               accessClient,
 		worker:                     worker,
 		decryptersAllowList:        decryptersAllowList,
-		metrics:                    metrics,
 	}, nil
 }
 
