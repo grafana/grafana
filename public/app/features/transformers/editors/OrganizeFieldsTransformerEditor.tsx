@@ -257,7 +257,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
   return (
     <>
-      <InlineFieldRow>
+      <InlineFieldRow className={styles.fieldOrderRadio}>
         <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field order')}>
           <RadioButtonGroup
             options={[
@@ -326,6 +326,9 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 };
 
 const getDraggableStyles = (theme: GrafanaTheme2) => ({
+  fieldOrderRadio: css({
+    marginBottom: theme.spacing(1),
+  }),
   labelsDraggable: css({
     marginBottom: theme.spacing(3),
   }),

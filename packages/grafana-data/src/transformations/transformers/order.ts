@@ -2,7 +2,7 @@ import { clone } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { cacheFieldDisplayNames, getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -89,8 +89,18 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 
 /** @internal */
-export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
-  fields.slice().sort((fieldA, fieldB) => {
+export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
+  const fieldsToSort = fields.slice();
+
+  const firstTimeIdx = fieldsToSort.findIndex((field) => field.type === FieldType.time);
+
+  let timeField: Field | undefined = undefined;
+
+  if (firstTimeIdx !== -1) {
+    timeField = fieldsToSort.splice(firstTimeIdx, 1)[0];
+  }
+
+  const sortedFields = fieldsToSort.sort((fieldA, fieldB) => {
     for (let i = 0; i < orderBy.length; i++) {
       let { type, name = '', desc = false } = orderBy[i];
 
@@ -106,3 +116,10 @@ export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Fiel
 
     return 0;
   });
+
+  if (timeField !== undefined) {
+    sortedFields.unshift(timeField);
+  }
+
+  return sortedFields;
+};
