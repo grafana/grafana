@@ -339,7 +339,7 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
 }
 
 export function isDataSourceRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.manageRecordingRulesTarget !== false; //if this prop is undefined it defaults to true
+  return ds.jsonData.manageRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
 }
 
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
