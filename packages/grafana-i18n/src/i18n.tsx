@@ -41,7 +41,7 @@ export async function loadPluginResources(id: string, language: string, loaders?
   return Promise.all(
     loaders.map(async (loader) => {
       try {
-        const resources = await loader(resolvedLanguage);
+        const resources = await loader(resolvedLanguage.length);
         addResourceBundle(resolvedLanguage, id, resources);
       } catch (error) {
         console.error(`Error loading resources for plugin ${id} and language: ${resolvedLanguage}`, error);

@@ -23,5 +23,5 @@ export {
   DEFAULT_LANGUAGE,
 } from './constants';
 export { initPluginTranslations, t, Trans } from './i18n';
-export type { ResourceLoader, Resources, TFunction, TransProps } from './types';
+export type { ResourceLoader, TFunction, TransProps } from './types';
 export { formatDate, formatDuration, formatDateRange } from './dates';

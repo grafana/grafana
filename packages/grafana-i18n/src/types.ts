@@ -79,6 +79,6 @@ interface Resources extends Record<string, string | Resources | unknown> {}
  * @param resolvedLanguage - The resolved language to load resources for
  * @returns A promise that resolves to the resources
  */
-type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
+type ResourceLoader = (resolvedLanguage: number) => Promise<Resources>;
 
 export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };
