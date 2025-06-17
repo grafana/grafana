@@ -831,6 +831,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
+/.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
