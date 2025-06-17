@@ -1,3 +1,13 @@
+<!-- 11.3.8 START -->
+
+# 11.3.8 (2025-06-17)
+
+### Features and enhancements
+
+- **Dependencies:** Bump Go to v1.24.4 [#106571](https://github.com/grafana/grafana/pull/106571), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106120](https://github.com/grafana/grafana/pull/106120), [@macabu](https://github.com/macabu)
+
+<!-- 11.3.8 END -->
 <!-- 12.0.1+security-01 START -->
 
 # 12.0.1+security-01 (2025-06-13)
