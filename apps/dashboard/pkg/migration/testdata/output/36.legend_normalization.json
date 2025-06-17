@@ -1,0 +1,62 @@
+{
+  "panels": [
+    {
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": true
+        }
+      },
+      "title": "Panel with Boolean Legend True",
+      "type": "graph"
+    },
+    {
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": false
+        }
+      },
+      "title": "Panel with Boolean Legend False",
+      "type": "timeseries"
+    },
+    {
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": false
+        }
+      },
+      "title": "Panel with Hidden Legend DisplayMode",
+      "type": "graph"
+    },
+    {
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "showLegend": false
+        }
+      },
+      "title": "Panel with ShowLegend False",
+      "type": "timeseries"
+    },
+    {
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "showLegend": true
+        }
+      },
+      "title": "Panel with Visible Table Legend",
+      "type": "graph"
+    },
+    {
+      "options": {},
+      "title": "Panel with No Legend Config",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "title": "Legend Normalization Test Dashboard"
+}

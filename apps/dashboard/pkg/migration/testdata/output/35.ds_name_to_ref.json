@@ -1,0 +1,126 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "datasource": {
+          "uid": "Default"
+        }
+      },
+      {
+        "datasource": {
+          "uid": "Elasticsearch"
+        }
+      },
+      {
+        "datasource": {
+          "uid": "other-ds"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          }
+        }
+      ],
+      "title": "Panel with Null Datasource"
+    },
+    {
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Elasticsearch"
+          }
+        },
+        {
+          "datasource": {
+            "uid": "other-ds"
+          }
+        }
+      ],
+      "title": "Panel with Mixed Datasources"
+    },
+    {
+      "datasource": {
+        "uid": "Default"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Default"
+          }
+        },
+        {
+          "datasource": {
+            "uid": "Default"
+          }
+        }
+      ],
+      "title": "Panel with Default Datasource"
+    },
+    {
+      "datasource": {
+        "uid": "Elasticsearch"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Elasticsearch"
+          }
+        }
+      ],
+      "title": "Panel with Named Datasource"
+    },
+    {
+      "datasource": {
+        "uid": "other-ds"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "other-ds"
+          }
+        }
+      ],
+      "title": "Panel with UID Datasource"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "templating": {
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "Elasticsearch"
+        },
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "uid": "other-ds"
+        },
+        "type": "query"
+      }
+    ]
+  },
+  "title": "Datasource Reference Migration Test Dashboard"
+}

@@ -13,6 +13,8 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+import { readdirSync, readFileSync } from 'fs';
+import path from 'path';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 

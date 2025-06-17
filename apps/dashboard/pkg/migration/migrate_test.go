@@ -80,7 +80,7 @@ func testMigration(t *testing.T, dash map[string]interface{}, name string, input
 	t.Helper()
 	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 
-	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.%d.json", inputVersion, name, targetVersion))
+	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.json", inputVersion, name))
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
