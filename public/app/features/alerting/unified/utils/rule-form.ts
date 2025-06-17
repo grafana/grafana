@@ -277,11 +277,12 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+  const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
 
-  const defaultFormValues = getDefaultFormValues();
+  const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule);
   if (isGrafanaRulesSource(ruleSourceName)) {
     // GRAFANA-MANAGED RULES
-    if (rulerRuleType.grafana.recordingRule(rule)) {
+    if (isGrafanaRecordingRule) {
       // grafana recording rule
       const ga = rule.grafana_alert;
       return {
