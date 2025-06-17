@@ -11,6 +11,7 @@ import (
 	prometheusapp "github.com/grafana/grafana/apps/prometheus/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -30,15 +31,19 @@ type PrometheusAppProvider struct {
 func RegisterApp(
 	p *datasourceservice.Service,
 	cfg *setting.Cfg,
+	ac ac.AccessControl,
 ) *PrometheusAppProvider {
 	provider := &PrometheusAppProvider{
 		cfg:     cfg,
 		service: p,
 	}
 	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter:    prometheusv0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds:        prometheusapp.GetKinds(),
+		OpenAPIDefGetter: prometheusv0alpha1.GetOpenAPIDefinitions,
+		ManagedKinds:     prometheusapp.GetKinds(),
+		// TODO internally it looks like we're still using dual store  writer. We want single store for now (legacy only)
 		LegacyStorageGetter: provider.legacyStorageGetter,
+		// TODO add authorizer if we need custom permissions
+		Authorizer: provider.authorizer(ac),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, prometheusapp.New)
 	return provider
@@ -64,6 +69,7 @@ func (p *PrometheusAppProvider) legacyStorageGetter(requested schema.GroupVersio
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
@@ -73,6 +79,7 @@ func (p *PrometheusAppProvider) legacyStorageGetter(requested schema.GroupVersio
 				}
 				return []interface{}{
 					m.Name,
+					m.APIVersion,
 					m.Created.UTC().Format(time.RFC3339),
 				}, nil
 			},

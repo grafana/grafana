@@ -15,13 +15,21 @@ import (
 // TODO I did just enough to get rid of red lines when copying over from playlist. Lots of logic to go into here.
 // TODO how do we will in the spec for an "unstructured" object?
 func convertToK8sResource(v *datasources.DataSource, namespacer request.NamespaceMapper) *prometheus.Prometheus {
-	spec := prometheus.PrometheusSpec{}
+	spec := prometheus.PrometheusSpec{
+		Object: map[string]interface{}{
+			"url":       v.URL,
+			"user":      v.User,
+			"database":  v.Database,
+			"jsonData":  v.JsonData,
+			"isDefault": v.IsDefault,
+		},
+	}
 
 	p := &prometheus.Prometheus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Type + "-" + v.UID,
 			UID:               types.UID(v.UID),
-			ResourceVersion:   fmt.Sprintf("%d", v.Updated),
+			ResourceVersion:   fmt.Sprintf("%d", v.Version),
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 		},
@@ -42,8 +50,12 @@ func convertToK8sResource(v *datasources.DataSource, namespacer request.Namespac
 func convertToLegacyUpdateCommand(p *prometheus.Prometheus, orgId int64) (*datasources.UpdateDataSourceCommand, error) {
 	// TODO extract more fields from spec
 	cmd := &datasources.UpdateDataSourceCommand{
-		UID:  p.Name,
-		Name: p.Name,
+		Name:      p.Name,
+		OrgID:     orgId,
+		IsDefault: p.Spec.Object["isDefault"].(bool),
+		User:      p.Spec.Object["user"].(string),
+		Database:  p.Spec.Object["database"].(string),
+		URL:       p.Spec.Object["url"].(string),
 	}
 	return cmd, nil
 }
