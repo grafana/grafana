@@ -38,7 +38,7 @@ To set up Grafana Advisor you need:
 
 ### Enable feature toggles
 
-To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it is not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To activate Grafana Advisor, you need to enable the `grafanaAdvisor` feature toggle. This will automatically install the Grafana Advisor application to your server if it's not already installed. For additional information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
 
 To enable the required feature toggles, add them to your Grafana configuration file:
 
@@ -66,9 +66,9 @@ To enable the required feature toggles, add them to your Grafana configuration f
 
 This collapsible section displays issues requiring immediate attention:
 
-- Each issue is listed with descriptive text outlining the problem
+- For each item, Grafana Advisor displays the specific name of the item that needs to be fixed.
 - For data source issues, Grafana Advisor displays the specific data source name.
-- A "Fix me" button appears. This button points you to the relevant issues to fix
+- One or more buttons appear. These buttons point you to different links to fix the issue, retry the check or hide the error.
 
 ![Action needed](/media/docs/grafana-advisor/action_needed.png)
 
@@ -115,13 +115,3 @@ To resolve issues flagged by Grafana Advisor and maintain system reliability, fo
 - **Immediate Action:** Address "Action needed" items promptly to ensure system reliability
 - **Systematic Review:** After fixing flagged issues, use the "Refresh" button to confirm all checks pass
 - **Proactive Updates:** Address plugin update recommendations under "Investigation needed" even if they haven't caused failures yet
-
-## Types of checks performed
-
-| **Check type**           | **Purpose**                           | **What's verified**                                                                                                 | **Remediation**                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **UID validation**       | Ensure proper data source identifiers | Checks if the UID of a data source is valid. <br> This check is performed only in data sources with a backend.      | <ul><li>Follow the instructions listed [here](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.2/#what-do-i-do-if-im-affected) </ul>.                                                                                                                                                                                                                               |
-| **Health check**         | Verify data source connectivity       | Checks if a data source is healthy and responding.<br> This check is performed only in data sources with a backend. | <ul><li> Click "Fix me" to navigate to the data source instance <li> Click "Save and Test" to review the error message for the data source <li> Update the configuration to remediate the error. For example, it may be that the URL is incorrect or a token has expired and needs to be replaced</ul>                                                                                          |
-| **Missing plugin check** | Confirm required plugins are present  | Checks if the plugin associated with the data source is installed                                                   | <ul><li>Review the list of data sources. Orphaned instances which are no longer required can be deleted via this list <li>If the corresponding plugin is available in the catalog, click "Install plugin" to navigate to the plugin details page and then click "Install"</ul>                                                                                                                  |
-| **Deprecation check**    | Identify outdated components          | Checks if any installed plugins are deprecated                                                                      | <ul><li>If a plugin has been deprecated, it means it's no longer going to receive updates and you should plan to migrate to an alternative <li>Navigate to the plugin details page to review the deprecation notice which may include guidance on alternatives <li>If none are specified, review the [plugins catalog](https://grafana.com/grafana/plugins/) to discover potential options</ul> |
-| **Update check**         | Keep plugins current                  | Checks if an installed plugin has a newer version available                                                         | <ul><li>We strongly recommend running the latest version of plugins <li> Click "Upgrade" to navigate to the plugin details page and either select "Update" to move to the latest version, or choose a specific version of the plugin within the version history tab</ul>                                                                                                                        |
