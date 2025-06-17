@@ -42,6 +42,7 @@ func newBulkRV() *bulkRV {
 	}
 }
 
+// TODO: cleanup the this func
 func (x *bulkRV) next(obj metav1.Object) int64 {
 	ts := obj.GetCreationTimestamp().UnixMicro()
 	anno := obj.GetAnnotations()
