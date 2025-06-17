@@ -16,7 +16,7 @@ func RunTest(
 			" --grafana-host grafana --grafana-port 3001 %s", runnerFlags)
 
 	return GrafanaFrontend(d, cache, nodeVersion, src).
-		WithExec([]string{"apk", "add", "--no-cache", "git"}).
+		WithExec([]string{"/bin/sh", "-c", "apt-get update && apt-get install -y git"}).
 		WithWorkdir("/src").
 		WithServiceBinding("grafana", svc).
 		WithExec([]string{"/bin/bash", "-c", command}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny})
