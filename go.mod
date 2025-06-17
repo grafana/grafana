@@ -96,6 +96,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
+	github.com/grafana/nanogit v0.0.0-20250617140312-66d8ff309b96 // @grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -453,6 +454,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.6.0 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
+	github.com/moby/go-archive v0.1.0 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -469,7 +471,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing-contrib/go-grpc v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // @grafana/grafana-search-and-storage
