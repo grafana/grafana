@@ -7,8 +7,6 @@ import { BranchValidationError } from 'app/features/provisioning/Shared/BranchVa
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
-import { ProvisionedDashboardFormData } from '../../saving/shared';
-
 interface DashboardEditFormSharedFieldsProps {
   workflowOptions: Array<{ label: string; value: string }>;
   isNew?: boolean;
@@ -24,9 +22,6 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
       register,
       formState: { errors },
     } = useFormContext();
-    const pathFieldName: keyof ProvisionedDashboardFormData = 'path';
-    const commentFieldName: keyof ProvisionedDashboardFormData = 'comment';
-    const refFieldName: keyof ProvisionedDashboardFormData = 'ref';
 
     return (
       <>
@@ -39,14 +34,14 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" type="text" {...register(pathFieldName)} readOnly={!isNew} />
+          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
         </Field>
 
         {/* Comment */}
         <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-comment', 'Comment')}>
           <TextArea
             id="dashboard-comment"
-            {...register(commentFieldName)}
+            {...register('comment')}
             disabled={readOnly}
             placeholder={t(
               'dashboard-scene.save-or-delete-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
@@ -82,7 +77,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                 invalid={!!errors.ref}
                 error={errors.ref && <BranchValidationError />}
               >
-                <Input id="dashboard-branch" {...register(refFieldName, { validate: validateBranchName })} />
+                <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
               </Field>
             )}
           </>

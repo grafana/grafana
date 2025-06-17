@@ -67,7 +67,6 @@ export function DeleteProvisionedDashboardForm({
 
   useEffect(() => {
     // This effect runs when the delete file request state changes
-    // it checks if the request was successful or if there was an error
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
       const { ref, path } = request.data;
@@ -75,7 +74,7 @@ export function DeleteProvisionedDashboardForm({
       if (workflow === 'branch' && ref && path) {
         onDismiss();
         // Redirect to the provisioning preview pages
-        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`);
+        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
         return;
       }
 
