@@ -74,7 +74,7 @@ This collapsible section displays issues requiring immediate attention:
 
 ### Investigation needed section
 
-This collapsible section provides information on plugins that require an upgrade. Clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
+This collapsible section provides information on issues that may not require immediate action but require your attention. For example, it provides information on plugins that require an upgrade. Similar to the "Action needed" section, clicking an item opens the plugin's upgrade page. From there, you can either update to the latest version or select a specific version from the version history tab.
 
 ![Investigation needed](/media/docs/grafana-advisor/investigation-needed.png)
 
@@ -102,7 +102,7 @@ This collapsible section provides details about the checks performed:
 ![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
 
 {{< admonition type="tip" >}}
-Click the cogwheel in this section to access Grafana Advisor settings.
+Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable check according to your preference.
 {{< /admonition >}}
 
 ## Address issues
