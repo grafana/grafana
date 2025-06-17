@@ -1017,4 +1017,8 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
+  /**
+  * Applies OTel formatting templates to displayed logs
+  */
+  otelLogsFormatting?: boolean;
 }

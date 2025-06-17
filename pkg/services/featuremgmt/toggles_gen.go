@@ -918,4 +918,8 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
 )
