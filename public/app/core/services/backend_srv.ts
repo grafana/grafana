@@ -15,7 +15,7 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning, textUtil } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning, sanitizePath } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -547,7 +547,7 @@ export class BackendSrv implements BackendService {
     requestId?: BackendSrvRequest['requestId'],
     options?: Partial<BackendSrvRequest>
   ) {
-    const sanitizedUrl = options?.sanitizePath ? textUtil.sanitizePath(url) : url;
+    const sanitizedUrl = options?.sanitizePath ? sanitizePath(url) : url;
     return this.request<T>({ ...options, method: 'GET', url: sanitizedUrl, params, requestId });
   }
 
@@ -556,7 +556,7 @@ export class BackendSrv implements BackendService {
     data?: unknown, 
     options?: Partial<BackendSrvRequest>
   ) {
-    const sanitizedUrl = options?.sanitizePath ? textUtil.sanitizePath(url) : url;
+    const sanitizedUrl = options?.sanitizePath ? sanitizePath(url) : url;
     return this.request<T>({ ...options, method: 'DELETE', url: sanitizedUrl, data });
   }
 
@@ -565,7 +565,7 @@ export class BackendSrv implements BackendService {
     data?: unknown, 
     options?: Partial<BackendSrvRequest>
   ) {
-    const sanitizedUrl = options?.sanitizePath ? textUtil.sanitizePath(url) : url;
+    const sanitizedUrl = options?.sanitizePath ? sanitizePath(url) : url;
     return this.request<T>({ ...options, method: 'POST', url: sanitizedUrl, data });
   }
 
@@ -574,7 +574,7 @@ export class BackendSrv implements BackendService {
     data: unknown, 
     options?: Partial<BackendSrvRequest>
   ) {
-    const sanitizedUrl = options?.sanitizePath ? textUtil.sanitizePath(url) : url;
+    const sanitizedUrl = options?.sanitizePath ? sanitizePath(url) : url;
     return this.request<T>({ ...options, method: 'PATCH', url: sanitizedUrl, data });
   }
 
@@ -583,7 +583,7 @@ export class BackendSrv implements BackendService {
     data: unknown, 
     options?: Partial<BackendSrvRequest>
   ): Promise<T> {
-    const sanitizedUrl = options?.sanitizePath ? textUtil.sanitizePath(url) : url;
+    const sanitizedUrl = options?.sanitizePath ? sanitizePath(url) : url;
     return this.request<T>({ ...options, method: 'PUT', url: sanitizedUrl, data });
   }
 
