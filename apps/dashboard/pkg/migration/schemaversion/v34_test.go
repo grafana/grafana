@@ -177,6 +177,109 @@ func TestV34(t *testing.T) {
 			},
 		},
 		{
+			name: "handles invalid statistics in CloudWatch annotation queries",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistics":     []interface{}{123, "Sum", nil},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      "Sum",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles multiple valid statistics mixed with invalid ones in annotation",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistics":     []interface{}{123, "Sum", nil, "Average"},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - Sum",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      "Sum",
+						},
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation - Average",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistic":      "Average",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles CloudWatch annotation with all invalid statistics",
+			input: map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+							"statistics":     []interface{}{123, nil, map[string]interface{}{"invalid": "value"}},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"annotations": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "CloudWatch Annotation",
+							"dimensions":     map[string]interface{}{"InstanceId": "i-123"},
+							"namespace":      "AWS/EC2",
+							"region":         "us-east-1",
+							"prefixMatching": false,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "handles mixed query types in same panel",
 			input: map[string]interface{}{
 				"panels": []interface{}{
@@ -329,7 +432,81 @@ func TestV34(t *testing.T) {
 								"namespace":  "AWS/EC2",
 								"region":     "us-east-1",
 								"metricName": "CPUUtilization",
-								"statistics": []interface{}{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles invalid statistics values gracefully",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":      "A",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
+								"statistics": []interface{}{123, nil, "Average", map[string]interface{}{"invalid": "value"}},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":      "A",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
+								"statistic":  "Average",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "handles CloudWatch query with all invalid statistics",
+			input: map[string]interface{}{
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":      "A",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
+								"statistics": []interface{}{123, nil, map[string]interface{}{"invalid": "value"}},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": int(34),
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId":      "A",
+								"dimensions": map[string]interface{}{"InstanceId": "i-123"},
+								"namespace":  "AWS/EC2",
+								"region":     "us-east-1",
+								"metricName": "CPUUtilization",
 							},
 						},
 					},
