@@ -1,6 +1,6 @@
 import { Grammar } from 'prismjs';
 
-import { parseFlags } from '@grafana/data';
+import { escapeRegex, parseFlags } from '@grafana/data';
 
 import { LogListModel } from './processing';
 
@@ -40,7 +40,7 @@ export const generateTextMatchGrammar = (
     return new RegExp(`(?:${cleaned})`, flags);
   });
   if (search) {
-    expressions.push(new RegExp(search, 'gi'));
+    expressions.push(new RegExp(escapeRegex(search), 'gi'));
   }
   if (!expressions.length) {
     return {};
