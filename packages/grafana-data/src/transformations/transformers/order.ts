@@ -88,7 +88,8 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 
 const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 
-const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
+/** @internal */
+export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
   fields.slice().sort((fieldA, fieldB) => {
     for (let i = 0; i < orderBy.length; i++) {
       let { type, name = '', desc = false } = orderBy[i];

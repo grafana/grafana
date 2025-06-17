@@ -34,8 +34,9 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 
+import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
+import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
@@ -53,7 +54,23 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   const { indexByName, excludeByName, renameByName, includeByName, orderBy, orderByMode } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
-  const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
+  const orderedFieldNames = useMemo(() => {
+    if (input.length > 0 && orderByMode === OrderByMode.Auto) {
+      const autoOrderer = createFieldsOrdererAuto(orderBy ?? []);
+
+      return getAllFieldNamesFromDataFrames(
+        [
+          {
+            ...input[0],
+            fields: autoOrderer(input[0].fields),
+          },
+        ],
+        false
+      );
+    }
+
+    return orderFieldNamesByIndex(fieldNames, indexByName);
+  }, [input, fieldNames, indexByName, orderByMode, orderBy]);
 
   const uiOrderByItems = useMemo(() => {
     const uiOrderByItems: UIOrderByItem[] = [];
