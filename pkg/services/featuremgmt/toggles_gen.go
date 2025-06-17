@@ -928,6 +928,6 @@ const (
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
 	// FlagPreferLibraryPanelTitle
-	// Prefer library panel title over viz panel title
+	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 )

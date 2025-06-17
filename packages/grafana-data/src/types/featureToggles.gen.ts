@@ -1023,7 +1023,7 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Prefer library panel title over viz panel title
+  * Prefer library panel title over viz panel title.
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
