@@ -95,7 +95,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
       <ConfirmModal
         isOpen={parseModalOpen}
         title={t(
-          'querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
+          'grafana-prometheus.querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
           'Parsing error: Switch to the builder mode?'
         )}
         body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
@@ -122,11 +122,13 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           size="sm"
           onClick={handleOpenQueryPatternsModal}
         >
-          <Trans i18nKey="querybuilder.prom-query-editor-selector.kick-start-your-query">Kick start your query</Trans>
+          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+            Kick start your query
+          </Trans>
         </Button>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
-            label={t('querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
+            label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
             value={explain}
             onChange={onShowExplainChange}
           />
@@ -140,7 +142,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
-            <Trans i18nKey="querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
+            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
           </Button>
         )}
         <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />

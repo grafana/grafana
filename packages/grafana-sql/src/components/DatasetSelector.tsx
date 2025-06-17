@@ -76,7 +76,7 @@ export const DatasetSelector = ({
 
   return (
     <Select
-      aria-label={t('components.dataset-selector.aria-label-dataset-selector', 'Dataset selector')}
+      aria-label={t('grafana-sql.components.dataset-selector.aria-label-dataset-selector', 'Dataset selector')}
       inputId={inputId}
       value={dataset}
       options={state.value}

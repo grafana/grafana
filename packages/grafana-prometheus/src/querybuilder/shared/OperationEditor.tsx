@@ -54,7 +54,7 @@ export function OperationEditor({
   if (!def) {
     return (
       <span>
-        <Trans i18nKey="querybuilder.operation-editor.not-found" values={{ id: operation.id }}>
+        <Trans i18nKey="grafana-prometheus.querybuilder.operation-editor.not-found" values={{ id: operation.id }}>
           Operation {'{{id}}'} not found
         </Trans>
       </span>
@@ -119,7 +119,9 @@ export function OperationEditor({
                 fill="text"
                 icon="times"
                 variant="secondary"
-                title={t('querybuilder.operation-editor.title-remove', 'Remove {{name}}', { name: paramDef.name })}
+                title={t('grafana-prometheus.querybuilder.operation-editor.title-remove', 'Remove {{name}}', {
+                  name: paramDef.name,
+                })}
                 onClick={() => onRemoveRestParam(paramIndex)}
               />
             )}

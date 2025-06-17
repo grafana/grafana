@@ -135,7 +135,9 @@ function SelectInputParamEditor({
         <Button
           size="sm"
           variant="secondary"
-          title={t('querybuilder.operation-param-editor.title-add', 'Add {{name}}', { name: paramDef.name })}
+          title={t('grafana-prometheus.querybuilder.operation-param-editor.title-add', 'Add {{name}}', {
+            name: paramDef.name,
+          })}
           icon="plus"
           onClick={() => onChange(index, selectOptions[0].value)}
         >
@@ -163,7 +165,9 @@ function SelectInputParamEditor({
           fill="text"
           icon="times"
           variant="secondary"
-          title={t('querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', { name: paramDef.name })}
+          title={t('grafana-prometheus.querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', {
+            name: paramDef.name,
+          })}
           onClick={() => onChange(index, '')}
         />
       )}

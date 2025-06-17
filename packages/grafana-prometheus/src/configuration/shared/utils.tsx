@@ -14,7 +14,9 @@ export function docsTip(url?: string) {
 
   return (
     <TextLink href={url ? url : docsUrl} external>
-      <Trans i18nKey="configuration.docs-tip.visit-docs-for-more-details-here">Visit docs for more details here.</Trans>
+      <Trans i18nKey="grafana-prometheus.configuration.docs-tip.visit-docs-for-more-details-here">
+        Visit docs for more details here.
+      </Trans>
     </TextLink>
   );
 }

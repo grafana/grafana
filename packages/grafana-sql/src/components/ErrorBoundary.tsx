@@ -20,7 +20,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren<Props
     if (this.state.hasError) {
       const FallBack = this.props.fallBackComponent || (
         <div>
-          <Trans i18nKey="components.error-boundary.fall-back.error">Error</Trans>
+          <Trans i18nKey="grafana-sql.components.error-boundary.fall-back.error">Error</Trans>
         </div>
       );
       return FallBack;

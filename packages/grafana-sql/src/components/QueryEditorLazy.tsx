@@ -15,7 +15,7 @@ export function SqlQueryEditorLazy(props: SqlQueryEditorProps) {
     <Suspense
       fallback={
         <LoadingPlaceholder
-          text={t('components.sql-query-editor-lazy.text-loading-editor', 'Loading editor')}
+          text={t('grafana-sql.components.sql-query-editor-lazy.text-loading-editor', 'Loading editor')}
           className={styles.container}
         />
       }

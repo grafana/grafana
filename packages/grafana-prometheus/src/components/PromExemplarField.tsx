@@ -49,13 +49,19 @@ export function PromExemplarField({ datasource, onChange, query, ...rest }: Prop
     <InlineLabel width="auto" data-testid={rest['data-testid']}>
       <Tooltip content={error ?? ''}>
         <div className={styles.iconWrapper}>
-          <Trans i18nKey="components.prom-exemplar-field.exemplars">Exemplars</Trans>
+          <Trans i18nKey="grafana-prometheus.components.prom-exemplar-field.exemplars">Exemplars</Trans>
           <IconButton
             name="eye"
             tooltip={
               !!query.exemplar
-                ? t('components.prom-exemplar-field.tooltip-disable-query', 'Disable query with exemplars')
-                : t('components.prom-exemplar-field.tooltip-enable-query', 'Enable query with exemplars')
+                ? t(
+                    'grafana-prometheus.components.prom-exemplar-field.tooltip-disable-query',
+                    'Disable query with exemplars'
+                  )
+                : t(
+                    'grafana-prometheus.components.prom-exemplar-field.tooltip-enable-query',
+                    'Enable query with exemplars'
+                  )
             }
             disabled={!!error}
             className={iconButtonStyles}

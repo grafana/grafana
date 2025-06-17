@@ -64,7 +64,7 @@ export const QueryBuilderHints = ({
                   className={styles.hint}
                 >
                   <Trans
-                    i18nKey="querybuilder.query-builder-hints.hint-details"
+                    i18nKey="grafana-prometheus.querybuilder.query-builder-hints.hint-details"
                     values={{ hintDetails: hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ') }}
                   >
                     hint: {'{{hintDetails}}'}

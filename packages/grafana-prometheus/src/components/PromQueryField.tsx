@@ -166,7 +166,10 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             onChange={onChangeQuery}
             onRunQuery={onRunQuery}
             initialValue={query.expr ?? ''}
-            placeholder={t('components.prom-query-field.placeholder-enter-a-prom-ql-query', 'Enter a PromQL query…')}
+            placeholder={t(
+              'grafana-prometheus.components.prom-query-field.placeholder-enter-a-prom-ql-query',
+              'Enter a PromQL query…'
+            )}
             datasource={datasource}
             timeRange={range ?? getDefaultTimeRange()}
           />

@@ -84,18 +84,20 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const labelWidth = 40;
 
   return (
-    <ConfigSubSection title={t('components.connection-limits.title-connection-limits', 'Connection limits')}>
+    <ConfigSubSection
+      title={t('grafana-sql.components.connection-limits.title-connection-limits', 'Connection limits')}
+    >
       <Field
         label={
           <Label>
             <Stack gap={0.5}>
               <span>
-                <Trans i18nKey="components.connection-limits.max-open">Max open</Trans>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-open">Max open</Trans>
               </span>
               <Tooltip
                 content={
                   <span>
-                    <Trans i18nKey="components.connection-limits.content-max-open">
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-open">
                       The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
                       than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
                       <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
@@ -125,13 +127,13 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           <Label>
             <Stack gap={0.5}>
               <span>
-                <Trans i18nKey="components.connection-limits.auto-max-idle">Auto max idle</Trans>
+                <Trans i18nKey="grafana-sql.components.connection-limits.auto-max-idle">Auto max idle</Trans>
               </span>
               <Tooltip
                 content={
                   <span>
                     <Trans
-                      i18nKey="components.connection-limits.content-auto-max-idle"
+                      i18nKey="grafana-sql.components.connection-limits.content-auto-max-idle"
                       values={{ defaultMaxIdle: config.sqlConnectionLimits.maxIdleConns }}
                     >
                       If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
@@ -155,12 +157,12 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           <Label>
             <Stack gap={0.5}>
               <span>
-                <Trans i18nKey="components.connection-limits.max-idle">Max idle</Trans>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-idle">Max idle</Trans>
               </span>
               <Tooltip
                 content={
                   <span>
-                    <Trans i18nKey="components.connection-limits.content-max-idle">
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-idle">
                       The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
                       greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i>{' '}
                       will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections
@@ -194,12 +196,12 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           <Label>
             <Stack gap={0.5}>
               <span>
-                <Trans i18nKey="components.connection-limits.max-lifetime">Max lifetime</Trans>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-lifetime">Max lifetime</Trans>
               </span>
               <Tooltip
                 content={
                   <span>
-                    <Trans i18nKey="components.connection-limits.content-max-lifetime">
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-lifetime">
                       The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
                       reused forever.
                     </Trans>

@@ -23,17 +23,19 @@ export function LabelSelector() {
     <div className={styles.section}>
       <Label
         description={t(
-          'components.label-selector.description-select-labels',
+          'grafana-prometheus.components.label-selector.description-select-labels',
           'Once label values are selected, only possible label combinations are shown.'
         )}
       >
-        <Trans i18nKey="components.label-selector.select-labels-to-search-in">2. Select labels to search in</Trans>
+        <Trans i18nKey="grafana-prometheus.components.label-selector.select-labels-to-search-in">
+          2. Select labels to search in
+        </Trans>
       </Label>
       <div>
         <Input
           onChange={(e) => setLabelSearchTerm(e.currentTarget.value)}
           aria-label={t(
-            'components.label-selector.aria-label-filter-expression-for-label',
+            'grafana-prometheus.components.label-selector.aria-label-filter-expression-for-label',
             'Filter expression for label'
           )}
           value={labelSearchTerm}

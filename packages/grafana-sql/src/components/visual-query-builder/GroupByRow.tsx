@@ -47,14 +47,14 @@ function makeRenderColumn({ options }: { options?: Array<SelectableValue<string>
       <InputGroup>
         <Select
           value={item.property?.name ? toOption(item.property.name) : null}
-          aria-label={t('components.make-render-column.render-column.aria-label-group-by', 'Group by')}
+          aria-label={t('grafana-sql.components.make-render-column.render-column.aria-label-group-by', 'Group by')}
           options={options}
           menuShouldPortal
           onChange={({ value }) => value && onChangeItem(setGroupByField(value))}
         />
         <AccessoryButton
           title={t(
-            'components.make-render-column.render-column.title-remove-group-by-column',
+            'grafana-sql.components.make-render-column.render-column.title-remove-group-by-column',
             'Remove group by column'
           )}
           icon="times"
