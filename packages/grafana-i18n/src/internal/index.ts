@@ -17,4 +17,5 @@ export {
   getLanguage,
   getResolvedLanguage,
   initializeI18n,
+  loadPluginResources,
 } from '../i18n';

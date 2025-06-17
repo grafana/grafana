@@ -31,7 +31,8 @@ function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } =
 }
 
 // exported for testing
-export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
+// TODO - this is now used in grafana core (exported by internal) to load translations from packages like scenes
+export async function loadPluginResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
     return;
   }
@@ -42,9 +43,9 @@ export async function loadPluginResources(id: string, language: string, loaders?
     loaders.map(async (loader) => {
       try {
         const resources = await loader(resolvedLanguage);
-        addResourceBundle(resolvedLanguage, id, resources);
+        addResourceBundle(resolvedLanguage, namespace, resources);
       } catch (error) {
-        console.error(`Error loading resources for plugin ${id} and language: ${resolvedLanguage}`, error);
+        console.error(`Error loading resources for namespace ${namespace} and language: ${resolvedLanguage}`, error);
       }
     })
   );

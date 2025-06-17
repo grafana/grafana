@@ -19,7 +19,8 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { initializeI18n } from '@grafana/i18n/internal';
+import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { initializeI18n, loadPluginResources } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -49,7 +50,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { initTranslations as initScenesTranslations } from '@grafana/scenes';
+import { loadResources as loadScenesResources } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -147,7 +148,7 @@ export class GrafanaApp {
         updateConfig({ language });
 
         // Initialise scenes translations. Must finish before any scenes UI is rendered.
-        return initScenesTranslations();
+        return loadPluginResources('grafana', language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
       });
 
       setBackendSrv(backendSrv);
