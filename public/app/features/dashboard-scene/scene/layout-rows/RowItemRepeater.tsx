@@ -1,9 +1,17 @@
+import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, SceneVariableSet, LocalValueVariable, sceneGraph } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  SceneVariableSet,
+  LocalValueVariable,
+  sceneGraph,
+  VariableValueSingle,
+} from '@grafana/scenes';
+import { Spinner } from '@grafana/ui';
 
 import { getCloneKey } from '../../utils/clone';
-import { getMultiVariableValues } from '../../utils/utils';
+import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { RowItem } from './RowItem';
@@ -17,7 +25,6 @@ export interface Props {
 
 export function RowItemRepeater({
   row,
-  manager,
   variable,
 }: {
   row: RowItem;
@@ -26,18 +33,19 @@ export function RowItemRepeater({
 }) {
   const { repeatedRows } = row.useState();
 
+  // Subscribe to variable state changes and perform repeats when the variable changes
   useEffect(() => {
-    if (!sceneGraph.hasVariableDependencyInLoadingState(row)) {
-      performRowRepeats(variable, row);
-    }
+    performRowRepeats(variable, row);
 
-    const unsub = manager.registerVariableChangeHandler({
-      variable,
-      handler: () => performRowRepeats(variable, row),
-    });
+    const sub = variable.subscribeToState((state) => performRowRepeats(variable, row));
 
-    return unsub;
-  }, [variable, row, manager]);
+    return () => sub.unsubscribe();
+  }, [variable, row]);
+
+  if (sceneGraph.hasVariableDependencyInLoadingState(variable) || variable.state.loading) {
+    dashboardLog.logger('RowItemRepeater', false, 'Variable is loading, showing spinner');
+    return <Spinner />;
+  }
 
   return (
     <>
@@ -48,7 +56,25 @@ export function RowItemRepeater({
 }
 
 export function performRowRepeats(variable: MultiValueVariable, row: RowItem) {
+  if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
+    dashboardLog.logger('RowItemRepeater', false, 'skipped dependency in loading state');
+    return;
+  }
+
+  if (variable.state.loading) {
+    dashboardLog.logger('RowItemRepeater', false, 'skipped, variable is loading');
+    return;
+  }
+
   const { values, texts } = getMultiVariableValues(variable);
+  const prevValues = getPrevRepeatValues(row, variable.state.name);
+
+  if (isEqual(prevValues, values)) {
+    dashboardLog.logger('RowItemRepeater', false, 'skipped, values the same');
+    return;
+  }
+
+  dashboardLog.logger('RowItemRepeater', false, 'performing repeats', values);
 
   const variableValues = values.length ? values : [''];
   const variableTexts = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
@@ -98,4 +124,33 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem) {
 
   row.setState({ repeatedRows: clonedRows });
   row.publishEvent(new DashboardRepeatsProcessedEvent({ source: row }), true);
+}
+
+/**
+ * Get previous variable values given the current repeated state
+ */
+function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSingle[] {
+  const values: VariableValueSingle[] = [];
+
+  if (!mainRow.state.repeatedRows) {
+    return [];
+  }
+
+  function collectVariableValue(row: RowItem) {
+    const variable = sceneGraph.lookupVariable(varName, row);
+    if (variable) {
+      const value = variable.getValue();
+      if (value != null && !Array.isArray(value)) {
+        values.push(value);
+      }
+    }
+  }
+
+  collectVariableValue(mainRow);
+
+  for (const row of mainRow.state.repeatedRows) {
+    collectVariableValue(row);
+  }
+
+  return values;
 }

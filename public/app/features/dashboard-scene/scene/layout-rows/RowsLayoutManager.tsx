@@ -37,8 +37,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   public static Component = RowLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
 
-  protected _variableDependency = new RowsLayoutVariableDependencyHandler();
-
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
       return t('dashboard.rows-layout.name', 'Rows');
@@ -292,48 +290,5 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
 
     return duplicateTitles;
-  }
-
-  /**
-   * The row item repeats needs to process the variable change handler on the layout level, hence this subscription is here vs on RowItem
-   */
-  public registerVariableChangeHandler(sub: RowRepeatVariableChangerSubscription) {
-    return this._variableDependency.addChangeHandler(sub);
-  }
-}
-
-export interface RowRepeatVariableChangerSubscription {
-  variable: SceneVariable;
-  handler: () => void;
-}
-
-export class RowsLayoutVariableDependencyHandler implements SceneVariableDependencyConfigLike {
-  private _emptySet = new Set<string>();
-  private _changeHandlers = new Set<RowRepeatVariableChangerSubscription>();
-
-  constructor() {}
-
-  public getNames(): Set<string> {
-    return this._emptySet;
-  }
-
-  public hasDependencyOn(name: string): boolean {
-    return false;
-  }
-
-  public variableUpdateCompleted(variable: SceneVariable): void {
-    this._changeHandlers.forEach((sub) => {
-      if (sub.variable === variable) {
-        sub.handler();
-      }
-    });
-  }
-
-  public addChangeHandler(sub: RowRepeatVariableChangerSubscription): () => void {
-    this._changeHandlers.add(sub);
-
-    return () => {
-      this._changeHandlers.delete(sub);
-    };
   }
 }
