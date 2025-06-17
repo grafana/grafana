@@ -212,7 +212,7 @@ func TestIsValidGitBranchName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, isValidGitBranchName(tt.branch))
+			assert.Equal(t, tt.expected, IsValidGitBranchName(tt.branch))
 		})
 	}
 }
@@ -661,7 +661,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 
 			// If the config has a different URL, parse and set the owner/repo
 			if tt.config.Spec.GitHub.URL != "https://github.com/grafana/grafana" {
-				owner, githubRepo, _ := parseOwnerRepo(tt.config.Spec.GitHub.URL)
+				owner, githubRepo, _ := ParseOwnerRepoGithub(tt.config.Spec.GitHub.URL)
 				repo.owner = owner
 				repo.repo = githubRepo
 			}

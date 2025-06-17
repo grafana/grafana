@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -165,6 +166,13 @@ func RegisterAPIService(
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
+	}
+
+	logger := logging.DefaultLogger.With("logger", "provisioning startup")
+	if features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+		logger.Info("Using nanogit for repositories")
+	} else {
+		logger.Debug("Using go-git and Github API for repositories")
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
@@ -1122,7 +1130,39 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+
+		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+		if err != nil {
+			return nil, fmt.Errorf("create github API repository: %w", err)
+		}
+
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+			logger.Debug("Instantiating Github repository with go-git and Github API")
+			return apiRepo, nil
+		}
+
+		logger.Info("Instantiating Github repository with nanogit")
+
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
+		}
+
+		gitCfg := nanogit.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghCfg.Token,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		if err != nil {
+			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+		}
+
+		return nanogit.NewGithubRepository(apiRepo, nanogitRepo), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}
