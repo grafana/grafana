@@ -2,9 +2,11 @@ import { sortBy } from 'lodash';
 
 import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertInstanceKey,
@@ -309,9 +311,17 @@ export function stringifyErrorLike(error: unknown): string {
     if (error.message) {
       return error.message;
     }
+
+    // @TODO translate
     if ('message' in error.data && typeof error.data.message === 'string') {
-      return error.data.message;
+      const status = getStatusFromError(error);
+      const message = getMessageFromError(error);
+
+      const config = getRequestConfigFromError(error);
+
+      return `${config} ${t('alerting.errors.failedWith', `failed with`)} ${status}: ${message}`;
     }
+
     if (error.statusText) {
       return error.statusText;
     }

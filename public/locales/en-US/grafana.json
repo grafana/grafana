@@ -1065,6 +1065,9 @@
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
     },
+    "errors": {
+      "failedWith": "failed with"
+    },
     "evaluate-every-validation-options": {
       "message": {
         "required": "Required."
