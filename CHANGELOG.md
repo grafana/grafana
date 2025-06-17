@@ -2,15 +2,27 @@
 
 # 12.0.2 (2025-06-17)
 
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
 <!-- 12.0.2 END -->
 <!-- 11.6.3 START -->
 
 # 11.6.3 (2025-06-17)
 
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
 <!-- 11.6.3 END -->
 <!-- 11.5.6 START -->
 
 # 11.5.6 (2025-06-17)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
 
 <!-- 11.5.6 END -->
 <!-- 11.4.6 START -->
@@ -22,6 +34,10 @@
 - **Dependencies:** Bump Go to v1.24.4 [#106569](https://github.com/grafana/grafana/pull/106569), [@macabu](https://github.com/macabu)
 - **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106119](https://github.com/grafana/grafana/pull/106119), [@macabu](https://github.com/macabu)
 
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
 <!-- 11.4.6 END -->
 <!-- 11.3.8 START -->
 
@@ -31,6 +47,10 @@
 
 - **Dependencies:** Bump Go to v1.24.4 [#106571](https://github.com/grafana/grafana/pull/106571), [@macabu](https://github.com/macabu)
 - **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106120](https://github.com/grafana/grafana/pull/106120), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
 
 <!-- 11.3.8 END -->
 <!-- 12.0.1+security-01 START -->
