@@ -3490,27 +3490,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-<<<<<<< HEAD
 "@grafana/scenes-react@npm:6.21.0--canary.1155.15707838506.0":
   version: 6.21.0--canary.1155.15707838506.0
   resolution: "@grafana/scenes-react@npm:6.21.0--canary.1155.15707838506.0"
-||||||| 61430f027f6
-"@grafana/scenes-react@npm:^6.20.1":
-  version: 6.20.1
-  resolution: "@grafana/scenes-react@npm:6.20.1"
-=======
-"@grafana/scenes-react@npm:^6.20.1":
-  version: 6.20.2
-  resolution: "@grafana/scenes-react@npm:6.20.2"
->>>>>>> 8b6329a2243f3d5f818c1dca1b20c612fbc2c87e
   dependencies:
-<<<<<<< HEAD
     "@grafana/scenes": "npm:6.21.0--canary.1155.15707838506.0"
-||||||| 61430f027f6
-    "@grafana/scenes": "npm:6.20.1"
-=======
-    "@grafana/scenes": "npm:6.20.2"
->>>>>>> 8b6329a2243f3d5f818c1dca1b20c612fbc2c87e
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3522,29 +3506,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-<<<<<<< HEAD
   checksum: 10/b5994508674ae77bdb45cb9957da0759075a95e6c449f747f8a15121b45cdb742187caafc4f49abb579a6087ca34262c0febe24e768cd4f3beb645ee8584539f
-||||||| 61430f027f6
-  checksum: 10/55b828054328c202046f3ac808a15fe353075098ef7ce361c7308b0e244dc59929115983795bcaf89bdd549022331e3fd08fae5db12e57aabceb6254712f5745
-=======
-  checksum: 10/43bd83d0f265c1e8ac867d0d26d1e970bf9b7d87ff78abd263c51cb2c4af73d536642cbf50d75aa9e1c1af16e9802f1684cc50dfe9f43a8129687ed4831e0706
->>>>>>> 8b6329a2243f3d5f818c1dca1b20c612fbc2c87e
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "@grafana/scenes@npm:6.21.0--canary.1155.15707838506.0":
   version: 6.21.0--canary.1155.15707838506.0
   resolution: "@grafana/scenes@npm:6.21.0--canary.1155.15707838506.0"
-||||||| 61430f027f6
-"@grafana/scenes@npm:6.20.1, @grafana/scenes@npm:^6.20.1":
-  version: 6.20.1
-  resolution: "@grafana/scenes@npm:6.20.1"
-=======
-"@grafana/scenes@npm:6.20.2, @grafana/scenes@npm:^6.20.1":
-  version: 6.20.2
-  resolution: "@grafana/scenes@npm:6.20.2"
->>>>>>> 8b6329a2243f3d5f818c1dca1b20c612fbc2c87e
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3562,13 +3530,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-<<<<<<< HEAD
   checksum: 10/03b813dd6556b95f4e0678074f9f5c58db54b64603c7db2a20b2b0f3db03e168662a17b5100772ac03ed2a044925f2559cdcb7114f108ac9c47ed3e85e60a30f
-||||||| 61430f027f6
-  checksum: 10/fd8fa7a17bfd59e495e8102148b678832c974ce9d9e7ea825ccc027d7ec544cd5393f97295306e94cee04511be9258c030fabf3bb6be04f221571227ce1706db
-=======
-  checksum: 10/b71416a84773dbe684e348bdb71c8daa507b6e3d84225bc632d191389e8fbd6c7524b1098750bc07d886596786ec47107259966ef9303d603de04012a0ef4d37
->>>>>>> 8b6329a2243f3d5f818c1dca1b20c612fbc2c87e
   languageName: node
   linkType: hard
 
