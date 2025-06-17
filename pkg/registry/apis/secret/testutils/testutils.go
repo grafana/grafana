@@ -80,7 +80,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features)

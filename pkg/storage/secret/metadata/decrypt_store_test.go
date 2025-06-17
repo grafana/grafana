@@ -344,7 +344,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage

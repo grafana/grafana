@@ -47,7 +47,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := ProvideKeeperMetadataStorage(db, features)
+	keeperStorage, err := ProvideKeeperMetadataStorage(db, tracer, features)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {
