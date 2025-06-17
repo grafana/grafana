@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -82,8 +82,6 @@ interface ErrorMessageProps {
 }
 
 function ErrorMessage({ error }: ErrorMessageProps) {
-  const { t } = useTranslate();
-
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="Rule" />;
   }

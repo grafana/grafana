@@ -455,20 +455,17 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditor.tsx:5381": [
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditorRegistry.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-prometheus/src/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -766,10 +763,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/index.ts:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'./Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "1"]
     ],
     "packages/grafana-ui/src/components/uPlot/Plot.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1404,6 +1397,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/alerting/unified/hooks/useFilteredRules.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/alerting/unified/insights/InsightsMenuButton.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1849,9 +1845,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
-    ],
-    "public/app/features/dashboard/api/v1.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./AddLibraryPanelWidget\`)", "0"]

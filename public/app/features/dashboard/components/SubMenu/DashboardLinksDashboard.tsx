@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2, ScopedVars } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps } from '@grafana/ui/internal';
@@ -29,7 +29,7 @@ interface DashboardLinksMenuProps {
 function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
   const styles = useStyles2(getStyles);
   const resolvedLinks = useResolvedLinks({ dashboardUID, link });
-  const { t } = useTranslate();
+
   if (!resolvedLinks || resolveLinks.length === 0) {
     return null;
   }

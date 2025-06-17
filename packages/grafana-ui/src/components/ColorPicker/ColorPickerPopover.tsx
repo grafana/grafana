@@ -4,12 +4,14 @@ import { Component } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { stylesFactory, withTheme2 } from '../../themes';
+import { withTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable2 } from '../../types/theme';
-import { t } from '../../utils/i18n';
-import { Tab, TabsBar } from '../Tabs';
-import { PopoverContentProps } from '../Tooltip';
+import { Tab } from '../Tabs/Tab';
+import { TabsBar } from '../Tabs/TabsBar';
+import { PopoverContentProps } from '../Tooltip/types';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';

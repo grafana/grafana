@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
+	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -78,37 +80,39 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	pluginContextProvider *plugincontext.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	userService user.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                  cfg,
-		FeatureToggles:       featureToggles,
-		DataSourceCache:      dataSourceCache,
-		DataSourceService:    dataSourceService,
-		RouteRegister:        routeRegister,
-		SQLStore:             sqlStore,
-		KVStore:              kvStore,
-		ExpressionService:    expressionService,
-		DataProxy:            dataProxy,
-		QuotaService:         quotaService,
-		SecretsService:       secretsService,
-		Metrics:              m,
-		Log:                  log.New("ngalert"),
-		NotificationService:  notificationService,
-		folderService:        folderService,
-		accesscontrol:        ac,
-		dashboardService:     dashboardService,
-		renderService:        renderService,
-		bus:                  bus,
-		AccesscontrolService: accesscontrolService,
-		annotationsRepo:      annotationsRepo,
-		pluginsStore:         pluginsStore,
-		tracer:               tracer,
-		store:                ruleStore,
-		httpClientProvider:   httpClientProvider,
-		ResourcePermissions:  resourcePermissions,
-		userService:          userService,
+		Cfg:                   cfg,
+		FeatureToggles:        featureToggles,
+		DataSourceCache:       dataSourceCache,
+		DataSourceService:     dataSourceService,
+		RouteRegister:         routeRegister,
+		SQLStore:              sqlStore,
+		KVStore:               kvStore,
+		ExpressionService:     expressionService,
+		DataProxy:             dataProxy,
+		QuotaService:          quotaService,
+		SecretsService:        secretsService,
+		Metrics:               m,
+		Log:                   log.New("ngalert"),
+		NotificationService:   notificationService,
+		folderService:         folderService,
+		accesscontrol:         ac,
+		dashboardService:      dashboardService,
+		renderService:         renderService,
+		bus:                   bus,
+		AccesscontrolService:  accesscontrolService,
+		annotationsRepo:       annotationsRepo,
+		pluginsStore:          pluginsStore,
+		tracer:                tracer,
+		store:                 ruleStore,
+		httpClientProvider:    httpClientProvider,
+		pluginContextProvider: pluginContextProvider,
+		ResourcePermissions:   resourcePermissions,
+		userService:           userService,
 	}
 
 	if ng.IsDisabled() {
@@ -124,30 +128,31 @@ func ProvideService(
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg                 *setting.Cfg
-	FeatureToggles      featuremgmt.FeatureToggles
-	DataSourceCache     datasources.CacheService
-	DataSourceService   datasources.DataSourceService
-	RouteRegister       routing.RouteRegister
-	SQLStore            db.DB
-	KVStore             kvstore.KVStore
-	ExpressionService   *expr.Service
-	DataProxy           *datasourceproxy.DataSourceProxyService
-	QuotaService        quota.Service
-	SecretsService      secrets.Service
-	Metrics             *metrics.NGAlert
-	NotificationService notifications.Service
-	Log                 log.Logger
-	renderService       rendering.Service
-	ImageService        image.ImageService
-	RecordingWriter     schedule.RecordingWriter
-	schedule            schedule.ScheduleService
-	stateManager        *state.Manager
-	folderService       folder.Service
-	dashboardService    dashboards.DashboardService
-	Api                 *api.API
-	httpClientProvider  httpclient.Provider
-	InstanceStore       state.InstanceStore
+	Cfg                   *setting.Cfg
+	FeatureToggles        featuremgmt.FeatureToggles
+	DataSourceCache       datasources.CacheService
+	DataSourceService     datasources.DataSourceService
+	RouteRegister         routing.RouteRegister
+	SQLStore              db.DB
+	KVStore               kvstore.KVStore
+	ExpressionService     *expr.Service
+	DataProxy             *datasourceproxy.DataSourceProxyService
+	QuotaService          quota.Service
+	SecretsService        secrets.Service
+	Metrics               *metrics.NGAlert
+	NotificationService   notifications.Service
+	Log                   log.Logger
+	renderService         rendering.Service
+	ImageService          image.ImageService
+	RecordingWriter       schedule.RecordingWriter
+	schedule              schedule.ScheduleService
+	stateManager          *state.Manager
+	folderService         folder.Service
+	dashboardService      dashboards.DashboardService
+	Api                   *api.API
+	httpClientProvider    httpclient.Provider
+	pluginContextProvider *plugincontext.Provider
+	InstanceStore         state.InstanceStore
 	// StartupInstanceReader is used to fetch the state of alerts on startup.
 	StartupInstanceReader state.InstanceReader
 
@@ -187,15 +192,30 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if remotePrimary || remoteSecondary {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+		smtpCfg := remoteClient.SmtpConfig{
+			FromAddress:    ng.Cfg.Smtp.FromAddress,
+			FromName:       ng.Cfg.Smtp.FromName,
+			Host:           ng.Cfg.Smtp.Host,
+			User:           ng.Cfg.Smtp.User,
+			Password:       ng.Cfg.Smtp.Password,
+			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
+			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
+			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
+			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
+		}
+
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
 			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+
+			// TODO: Remove once everything can be sent in the 'smtp_config' field.
+			SmtpFrom:      ng.Cfg.Smtp.FromAddress,
+			StaticHeaders: ng.Cfg.Smtp.StaticHeaders,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
@@ -317,7 +337,7 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, ng.pluginContextProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -649,7 +669,7 @@ func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig
 	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
@@ -662,7 +682,7 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 		logger.Info("Setting up remote write using data sources",
 			"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
 
-		return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
+		return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, pluginContextProvider, clock, logger, m), nil
 	}
 
 	return writer.NoopWriter{}, nil

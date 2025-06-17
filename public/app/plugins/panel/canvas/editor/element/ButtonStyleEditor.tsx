@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ButtonVariant, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { defaultStyleConfig } from 'app/features/canvas/elements/button';
 
@@ -19,7 +19,6 @@ const variantOptions: SelectableValue[] = [
 ];
 
 export const ButtonStyleEditor = ({ value, onChange }: Props) => {
-  const { t } = useTranslate();
   if (!value) {
     value = defaultStyleConfig;
   }

@@ -1,9 +1,13 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
+import {
+  RepositoryViewList,
+  useGetRepositoryFilesQuery,
+  useGetResourceStatsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
@@ -37,7 +41,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
   );
   const requiresMigration = settingsData?.legacyStorage || resourceCount > 0;
   const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-  const { t } = useTranslate();
 
   useEffect(() => {
     // Pick a name nice name based on type+settings

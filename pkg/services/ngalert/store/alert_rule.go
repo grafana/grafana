@@ -373,7 +373,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(rules[i], err)
+						return ngmodels.ErrAlertRuleConflict(newRules[i].UID, newRules[i].OrgID, err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -431,7 +431,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(r.New, err)
+						return ngmodels.ErrAlertRuleConflict(r.New.UID, r.New.OrgID, err)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -1178,18 +1178,6 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
 	// and not by the user who changed the receiver's title.
 	return result, nil, st.UpdateAlertRules(ctx, &ngmodels.AlertingUserUID, updates)
-}
-
-func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
-		// return verbose conflicting alert rule error response
-		// see: https://github.com/grafana/grafana/issues/89755
-		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID}
-		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, errors.New("rule UID under the same organisation should be unique"))
-	} else {
-		return ngmodels.ErrAlertRuleConflict(rule, err)
-	}
 }
 
 // GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.

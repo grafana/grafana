@@ -32,7 +32,9 @@ import (
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	namespace := "default" // TODO... from command line
+	// Take namespace from command line
+	namespace := c.String("namespace")
+
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return err
@@ -65,7 +67,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	migrator := legacy.NewDashboardAccess(
 		legacysql.NewDatabaseProvider(sqlStore),
 		authlib.OrgNamespaceFormatter,
-		nil, provisioning, sort.ProvideService(),
+		nil, provisioning, nil, sort.ProvideService(),
 	)
 
 	if c.Bool("non-interactive") {

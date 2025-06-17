@@ -6,7 +6,7 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
@@ -62,7 +62,6 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
     },
     [onChange, value]
   );
-  const { t } = useTranslate();
 
   const onClearFixed = () => {
     onFixedChange('');

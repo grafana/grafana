@@ -262,6 +262,7 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   /**
   * Enables RBAC support for library panels
+  * @default true
   */
   libraryPanelRBAC?: boolean;
   /**
@@ -455,10 +456,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingQueryOptimization?: boolean;
-  /**
-  * Enables the nested folder picker without having nested folders enabled
-  */
-  newFolderPicker?: boolean;
   /**
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
@@ -834,6 +831,7 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+  * @default true
   */
   teamHttpHeadersMimir?: boolean;
   /**
@@ -958,10 +956,6 @@ export interface FeatureToggles {
   */
   alertingRuleRecoverDeleted?: boolean;
   /**
-  * Support Application Signals queries in the X-Ray datasource
-  */
-  xrayApplicationSignals?: boolean;
-  /**
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
@@ -1029,4 +1023,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
 }

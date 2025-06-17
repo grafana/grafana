@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
@@ -10,7 +11,7 @@ import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-import { MetricsModal } from './metrics-modal';
+import { MetricsModal } from './metrics-modal/MetricsModal';
 import { tracking } from './metrics-modal/state/helpers';
 
 export interface MetricComboboxProps {
@@ -87,7 +88,10 @@ export function MetricCombobox({
     return (
       <InputGroup>
         <Combobox
-          placeholder="Select metric"
+          placeholder={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.placeholder-select-metric',
+            'Select metric'
+          )}
           width="auto"
           minWidth={25}
           options={loadOptions}
@@ -97,8 +101,14 @@ export function MetricCombobox({
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
         />
         <Button
-          tooltip="Open metrics explorer"
-          aria-label="Open metrics explorer"
+          tooltip={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.tooltip-open-metrics-explorer',
+            'Open metrics explorer'
+          )}
+          aria-label={t(
+            'grafana-prometheus.querybuilder.metric-combobox.async-select.aria-label-open-metrics-explorer',
+            'Open metrics explorer'
+          )}
           variant="secondary"
           icon="book-open"
           onClick={() => {
@@ -125,16 +135,24 @@ export function MetricCombobox({
       {variableEditor ? (
         <InlineFieldRow>
           <InlineField
-            label="Metric"
+            label={t('grafana-prometheus.querybuilder.metric-combobox.label-metric', 'Metric')}
             labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            tooltip={
+              <div>
+                <Trans i18nKey="grafana-prometheus.querybuilder.metric-combobox.tooltip-metric">
+                  Optional: returns a list of label values for the label name in the specified metric.
+                </Trans>
+              </div>
+            }
           >
             {asyncSelect()}
           </InlineField>
         </InlineFieldRow>
       ) : (
         <EditorFieldGroup>
-          <EditorField label="Metric">{asyncSelect()}</EditorField>
+          <EditorField label={t('grafana-prometheus.querybuilder.metric-combobox.label-metric', 'Metric')}>
+            {asyncSelect()}
+          </EditorField>
         </EditorFieldGroup>
       )}
     </>

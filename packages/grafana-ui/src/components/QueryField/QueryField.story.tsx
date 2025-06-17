@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { TypeaheadInput } from '../../types';
+import { TypeaheadInput } from '../../types/completion';
 
 import { QueryField, QueryFieldProps } from './QueryField';
 
