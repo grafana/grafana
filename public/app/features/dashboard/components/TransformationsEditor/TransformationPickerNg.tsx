@@ -17,6 +17,7 @@ import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
+import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { FilterCategory } from './TransformationsEditor';
 
 const viewAllLabel = 'View all';
@@ -38,7 +39,9 @@ interface TransformationPickerNgProps {
   suffix: ReactNode;
   data: DataFrame[];
   showIllustrations?: boolean;
+  showCompactView?: boolean;
   onShowIllustrationsChange?: (showIllustrations: boolean) => void;
+  onShowCompactViewChange?: (showCompactView: boolean) => void;
   onSelectedFilterChange?: (category: FilterCategory) => void;
   selectedFilter?: FilterCategory;
 }
@@ -52,11 +55,13 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     onSearchChange,
     onSearchKeyDown,
     showIllustrations,
+    showCompactView,
     onTransformationAdd,
     selectedFilter,
     data,
     onClose,
     onShowIllustrationsChange,
+    onShowCompactViewChange,
     onSelectedFilterChange,
   } = props;
 
@@ -74,68 +79,83 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
       }}
       title={t('dashboard.transformation-picker-ng.title-add-another-transformation', 'Add another transformation')}
     >
-      <div className={styles.searchWrapper}>
-        <Input
-          data-testid={selectors.components.Transforms.searchInput}
-          className={styles.searchInput}
-          value={search ?? ''}
-          placeholder={t(
-            'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
-            'Search for transformation'
-          )}
-          onChange={onSearchChange}
-          onKeyDown={onSearchKeyDown}
-          suffix={suffix}
-          ref={searchInputRef}
-          autoFocus={true}
-        />
-        <div className={styles.showImages}>
-          <span className={styles.illustationSwitchLabel}>
-            <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
-          </span>{' '}
-          <Switch
-            value={showIllustrations}
-            onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
+      <div className={styles.drawerContent}>
+        {config?.featureToggles?.sqlExpressions && <SqlExpressionsBanner />}
+        <div className={styles.searchWrapper}>
+          <Input
+            data-testid={selectors.components.Transforms.searchInput}
+            className={styles.searchInput}
+            value={search ?? ''}
+            placeholder={t(
+              'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
+              'Search for transformation'
+            )}
+            onChange={onSearchChange}
+            onKeyDown={onSearchKeyDown}
+            suffix={suffix}
+            ref={searchInputRef}
+            autoFocus={true}
           />
+          <div className={styles.switchContainer}>
+            <div className={styles.switchWrapper}>
+              <span className={styles.switchLabel}>
+                <Trans i18nKey="dashboard.transformation-picker-ng.images">Images</Trans>
+              </span>
+              <Switch
+                value={showIllustrations && !showCompactView}
+                disabled={showCompactView}
+                onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
+              />
+            </div>
+            <div className={styles.switchWrapper}>
+              <span className={styles.switchLabel}>
+                <Trans i18nKey="dashboard.transformation-picker-ng.compact">Compact</Trans>
+              </span>
+              <Switch
+                value={showCompactView}
+                onChange={() => onShowCompactViewChange && onShowCompactViewChange(!showCompactView)}
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className={styles.filterWrapper}>
-        {filterCategoriesLabels.map(([slug, label]) => {
-          return (
-            <FilterPill
-              key={slug}
-              onClick={() => onSelectedFilterChange && onSelectedFilterChange(slug)}
-              label={label}
-              selected={selectedFilter === slug}
-            />
-          );
-        })}
-      </div>
+        <div className={styles.filterWrapper}>
+          {filterCategoriesLabels.map(([slug, label]) => {
+            return (
+              <FilterPill
+                key={slug}
+                onClick={() => onSelectedFilterChange && onSelectedFilterChange(slug)}
+                label={label}
+                selected={selectedFilter === slug}
+              />
+            );
+          })}
+        </div>
 
-      <TransformationsGrid
-        showIllustrations={showIllustrations}
-        transformations={xforms}
-        data={data}
-        onClick={(id) => {
-          onTransformationAdd({ value: id });
-        }}
-      />
+        <TransformationsGrid
+          showIllustrations={showIllustrations}
+          transformations={xforms}
+          data={data}
+          onClick={(id) => {
+            onTransformationAdd({ value: id });
+          }}
+          showCompactView={showCompactView}
+        />
+      </div>
     </Drawer>
   );
 }
 
 function getTransformationPickerStyles(theme: GrafanaTheme2) {
   return {
-    showImages: css({
-      flexBasis: '0',
+    drawerContent: css({
       display: 'flex',
-      gap: '8px',
-      alignItems: 'center',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
     }),
     pickerInformationLine: css({
       fontSize: '16px',
-      marginBottom: `${theme.spacing(2)}`,
+      marginBottom: theme.spacing(2),
     }),
     pickerInformationLineHighlight: css({
       verticalAlign: 'middle',
@@ -143,23 +163,31 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
     searchWrapper: css({
       display: 'flex',
       flexWrap: 'wrap',
-      columnGap: '27px',
-      rowGap: '16px',
+      columnGap: theme.spacing(2),
+      rowGap: theme.spacing(1),
       width: '100%',
     }),
     searchInput: css({
       flexGrow: '1',
       width: 'initial',
     }),
-    illustationSwitchLabel: css({
+    switchLabel: css({
       whiteSpace: 'nowrap',
     }),
+    switchContainer: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+    }),
+    switchWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
     filterWrapper: css({
-      padding: `${theme.spacing(1)} 0`,
       display: 'flex',
       flexWrap: 'wrap',
-      rowGap: `${theme.spacing(1)}`,
-      columnGap: `${theme.spacing(0.5)}`,
+      rowGap: theme.spacing(1),
+      columnGap: theme.spacing(0.5),
     }),
   };
 }
@@ -167,15 +195,22 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
 interface TransformationsGridProps {
   transformations: TransformerRegistryItem[];
   showIllustrations?: boolean;
+  showCompactView?: boolean;
   onClick: (id: string) => void;
   data: DataFrame[];
 }
 
-function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
+function TransformationsGrid({
+  showIllustrations,
+  showCompactView,
+  transformations,
+  onClick,
+  data,
+}: TransformationsGridProps) {
   const styles = useStyles2(getTransformationGridStyles);
 
   return (
-    <div className={styles.grid}>
+    <div className={showCompactView ? styles.compactGrid : styles.grid}>
       {transformations.map((transform) => {
         // Check to see if the transform
         // is applicable to the given data
@@ -200,12 +235,39 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           cardClasses = cx(styles.newCard, styles.cardDisabled);
         }
 
+        if (showCompactView) {
+          return (
+            <Card
+              className={cardClasses}
+              data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+              onClick={() => onClick(transform.id)}
+              key={transform.id}
+              noMargin
+            >
+              <div className={styles.compactInline}>
+                <span className={styles.compactTitle}>{transform.name}</span>
+                <PluginStateInfo state={transform.state} />
+                {!isApplicable && applicabilityDescription !== null && (
+                  <IconButton
+                    className={styles.compactApplicableInfo}
+                    name="info-circle"
+                    tooltip={applicabilityDescription}
+                    size="sm"
+                  />
+                )}
+                <span className={styles.description}>{getTransformationsRedesignDescriptions(transform.id)}</span>
+              </div>
+            </Card>
+          );
+        }
+
         return (
           <Card
             className={cardClasses}
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
             key={transform.id}
+            noMargin
           >
             <Card.Heading className={styles.heading}>
               <span>{transform.name}</span>
@@ -248,26 +310,23 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       },
     }),
     description: css({
-      fontSize: '12px',
+      fontSize: theme.typography.bodySmall.fontSize,
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
     }),
     image: css({
       display: 'block',
-      maxEidth: '100%`',
-      marginTop: `${theme.spacing(2)}`,
+      maxWidth: '100%',
     }),
     grid: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
       gridAutoRows: '1fr',
-      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      gap: theme.spacing(1),
       width: '100%',
     }),
     cardDisabled: css({
-      backgroundColor: 'rgb(204, 204, 220, 0.045)',
-      color: `${theme.colors.text.disabled} !important`,
       img: {
         filter: 'grayscale(100%)',
         opacity: 0.33,
@@ -275,14 +334,34 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     cardApplicableInfo: css({
       position: 'absolute',
-      bottom: `${theme.spacing(1)}`,
-      right: `${theme.spacing(1)}`,
+      bottom: theme.spacing(1),
+      right: theme.spacing(1),
     }),
     newCard: css({
       gridTemplateRows: 'min-content 0 1fr 0',
     }),
     pluginStateInfoWrapper: css({
-      marginLeft: '5px',
+      marginLeft: theme.spacing(0.5),
+    }),
+    compactInline: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      height: theme.spacing(1.5),
+    }),
+    compactTitle: css({
+      fontWeight: theme.typography.fontWeightBold,
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+    }),
+    compactApplicableInfo: css({
+      flexShrink: 0,
+    }),
+    compactGrid: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+      width: '100%',
     }),
   };
 }
