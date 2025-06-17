@@ -57,9 +57,8 @@ func V34(dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = int(34)
 
 	// Migrate panel queries if panels exist
-	panels, ok := dashboard["panels"].([]interface{})
-	if ok {
-		for _, panel := range panels {
+	panels, _ := dashboard["panels"].([]interface{})
+	for _, panel := range panels {
 			p, ok := panel.(map[string]interface{})
 			if !ok {
 				continue
@@ -68,11 +67,13 @@ func V34(dashboard map[string]interface{}) error {
 			migrateCloudWatchQueriesInPanel(p)
 
 			// Handle nested panels in collapsed rows
-			if nestedPanels, hasNested := p["panels"].([]interface{}); hasNested {
-				for _, nestedPanel := range nestedPanels {
-					if np, ok := nestedPanel.(map[string]interface{}); ok {
-						migrateCloudWatchQueriesInPanel(np)
-					}
+			nestedPanels, hasNested := p["panels"].([]interface{})
+			if !hasNested {
+				continue
+			}
+			for _, nestedPanel := range nestedPanels {
+				if np, ok := nestedPanel.(map[string]interface{}); ok {
+					migrateCloudWatchQueriesInPanel(np)
 				}
 			}
 		}
@@ -114,15 +115,18 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 				if stat, ok := statistics[0].(string); ok {
 					t["statistic"] = stat
 				}
-				delete(t, "statistics")
 			}
+			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
 
 		// Split query with multiple statistics into separate queries
 		for i, stat := range statistics {
-			if statString, ok := stat.(string); ok {
+			statString, ok := stat.(string)
+			if !ok {
+				continue
+			}
 				// Create a copy of the original query
 				newQuery := make(map[string]interface{})
 				for k, v := range t {
