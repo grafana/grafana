@@ -11,7 +11,7 @@ import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-import { MetricsModal } from './metrics-modal';
+import { MetricsModal } from './metrics-modal/MetricsModal';
 import { tracking } from './metrics-modal/state/helpers';
 
 export interface MetricComboboxProps {
