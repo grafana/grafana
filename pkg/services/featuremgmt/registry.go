@@ -437,10 +437,11 @@ var (
 		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -1441,7 +1442,7 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -1762,6 +1763,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:        "preferLibraryPanelTitle",
+			Description: "Prefer library panel title over viz panel title.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 	}
 )

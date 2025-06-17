@@ -56,7 +56,7 @@ dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
-libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false
+libraryPanelRBAC,GA,@grafana/dashboards-squad,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
@@ -189,7 +189,7 @@ improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,
 teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
-grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
+grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
@@ -230,3 +230,4 @@ restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,fa
 skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
+preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false

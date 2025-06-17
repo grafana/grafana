@@ -266,6 +266,7 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   /**
   * Enables RBAC support for library panels
+  * @default true
   */
   libraryPanelRBAC?: boolean;
   /**
@@ -1026,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
 }

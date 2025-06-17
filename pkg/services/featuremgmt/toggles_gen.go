@@ -930,4 +930,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagPreferLibraryPanelTitle
+	// Prefer library panel title over viz panel title.
+	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 )
