@@ -1,8 +1,61 @@
 package schemaversion
 
 // V33 migrates panel datasource references from string names to UIDs.
-// This migration converts datasource references in panels and their targets
-// from the old format (string name or UID) to the new format (object with uid, type, apiVersion).
+//
+// This migration addresses datasource references in dashboard panels and their targets
+// that use the legacy string format. The migration converts these references to the new
+// structured format with uid, type, and apiVersion fields.
+//
+// The migration works by:
+// 1. Identifying datasource references in panel-level datasource fields
+// 2. Converting string datasource references to structured reference objects
+// 3. Migrating target-level datasource references within each panel
+// 4. Handling nested panels in collapsed rows
+// 5. Always setting panel datasource (even if migration returns nil)
+// 6. Only setting target datasource if migration returns non-nil (preserves originals when nil)
+// 7. Using returnDefaultAsNull: true (so "default" and nil become nil for panels, preserved for targets)
+//
+// Panel Datasource Example - String to Object:
+//
+// Before migration:
+//
+//	panel: {
+//	  "datasource": "prometheus-uid",
+//	  "targets": [
+//	    { "refId": "A", "datasource": "elasticsearch-name" },
+//	    { "refId": "B", "datasource": null }
+//	  ]
+//	}
+//
+// After migration:
+//
+//	panel: {
+//	  "datasource": { "uid": "prometheus-uid", "type": "prometheus", "apiVersion": "v1" },
+//	  "targets": [
+//	    { "refId": "A", "datasource": { "uid": "elasticsearch-uid", "type": "elasticsearch", "apiVersion": "v2" } },
+//	    { "refId": "B", "datasource": null }
+//	  ]
+//	}
+//
+// Default Datasource Example - Null Conversion:
+//
+// Before migration:
+//
+//	panel: {
+//	  "datasource": "default",
+//	  "targets": [
+//	    { "refId": "A", "datasource": "default" }
+//	  ]
+//	}
+//
+// After migration:
+//
+//	panel: {
+//	  "datasource": null,
+//	  "targets": [
+//	    { "refId": "A", "datasource": "default" }
+//	  ]
+//	}
 func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 	datasources := dsInfo.GetDataSourceInfo()
 	return func(dashboard map[string]interface{}) error {
@@ -47,13 +100,11 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 
 // migratePanelDatasourcesV33 updates datasource references in a single panel and its targets for V33 migration
 func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []DataSourceInfo) {
-	// Handle panel datasource
-	if ds, exists := panelMap["datasource"]; exists {
-		if result := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
-			panelMap["datasource"] = result
-		} else {
-			panelMap["datasource"] = nil
-		}
+	// Handle panel datasource - always set result (even if nil)
+	if result := MigrateDatasourceNameToRef(panelMap["datasource"], map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
+		panelMap["datasource"] = result
+	} else {
+		panelMap["datasource"] = nil
 	}
 
 	// Handle target datasources
@@ -73,15 +124,10 @@ func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []D
 			continue
 		}
 
-		// Skip migration for lowercase "default" - should remain as string
-		if dsStr, ok := ds.(string); ok && dsStr == "default" {
-			continue
-		}
-
+		// Only set target datasource if migration result is not nil
 		if targetRef := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources); targetRef != nil {
 			targetMap["datasource"] = targetRef
-		} else {
-			targetMap["datasource"] = nil
 		}
+		// If targetRef is nil, leave target.datasource unchanged (preserves "default" strings, etc.)
 	}
 }
