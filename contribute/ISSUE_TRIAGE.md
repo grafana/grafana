@@ -41,7 +41,6 @@ flowchart TD
     G1 --> H
 ```
 
-
 ## Key functions of issue triage
 
 Triage helps ensure issues resolve quickly by:
