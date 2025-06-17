@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
-import { isEqual, map } from 'lodash';
+import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
@@ -10,7 +10,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
-import { PromQueryFormat } from '../../dataquery';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
@@ -24,17 +23,6 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { PromQueryCodeEditorAutocompleteInfo } from './PromQueryCodeEditorAutocompleteInfo';
-
-export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
-  { label: 'Heatmap', value: 'heatmap' },
-];
-
-export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
-  value,
-  label: '1/' + value,
-}));
 
 type Props = PromQueryEditorProps;
 
@@ -107,7 +95,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
       <ConfirmModal
         isOpen={parseModalOpen}
         title={t(
-          'querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
+          'grafana-prometheus.querybuilder.prom-query-editor-selector.title-parsing-error-switch-builder',
           'Parsing error: Switch to the builder mode?'
         )}
         body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
@@ -134,11 +122,13 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
           size="sm"
           onClick={handleOpenQueryPatternsModal}
         >
-          <Trans i18nKey="querybuilder.prom-query-editor-selector.kick-start-your-query">Kick start your query</Trans>
+          <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.kick-start-your-query">
+            Kick start your query
+          </Trans>
         </Button>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.explain}>
           <QueryHeaderSwitch
-            label={t('querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
+            label={t('grafana-prometheus.querybuilder.prom-query-editor-selector.label-explain', 'Explain')}
             value={explain}
             onChange={onShowExplainChange}
           />
@@ -152,7 +142,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
-            <Trans i18nKey="querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
+            <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
           </Button>
         )}
         <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />

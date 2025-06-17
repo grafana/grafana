@@ -2,10 +2,18 @@ import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  SceneGridRow,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
+import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
@@ -98,9 +106,25 @@ export interface RemoveElementActionHelperProps {
   undo: () => void;
 }
 
+export interface AddVariableActionHelperProps {
+  addedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface RemoveVariableActionHelperProps {
+  removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
 export interface ChangeTitleActionHelperProps {
   oldTitle: string;
   newTitle: string;
+  source: DashboardScene;
+}
+
+export interface ChangeDescriptionActionHelperProps {
+  oldDescription: string;
+  newDescription: string;
   source: DashboardScene;
 }
 
@@ -152,10 +176,39 @@ export const dashboardEditActions = {
     });
   },
 
+  addVariable({ source, addedObject }: AddVariableActionHelperProps) {
+    const varsBeforeAddition = [...source.state.variables];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ variables: [...varsBeforeAddition] });
+      },
+    });
+  },
+  removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
+    const varsBeforeRemoval = [...source.state.variables];
+
+    dashboardEditActions.removeElement({
+      source,
+      removedObject,
+      perform() {
+        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
+
   changeTitle({ source, oldTitle, newTitle }: ChangeTitleActionHelperProps) {
     dashboardEditActions.edit({
       description: t('dashboard.title.action', 'Change dashboard title'),
-      source: source,
+      source,
       perform: () => {
         source.setState({ title: newTitle });
       },
@@ -164,4 +217,21 @@ export const dashboardEditActions = {
       },
     });
   },
+
+  changeDescription({ source, oldDescription, newDescription }: ChangeDescriptionActionHelperProps) {
+    dashboardEditActions.edit({
+      description: t('dashboard.description.action', 'Change dashboard description'),
+      source,
+      perform: () => {
+        source.setState({ description: newDescription });
+      },
+      undo: () => {
+        source.setState({ description: oldDescription });
+      },
+    });
+  },
 };
+
+export function undoRedoWasClicked(e: React.FocusEvent) {
+  return e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
+}

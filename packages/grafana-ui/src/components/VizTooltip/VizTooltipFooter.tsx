@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
 import { Button } from '../Button/Button';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';

@@ -317,26 +317,71 @@ function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
 /**
  * Based on the search string it does a fuzzy search over all the unique labels, so we can highlight them later.
  */
-function useLabelSearch(
+export function useLabelSearch(
   search: string | undefined,
   data: FlameGraphDataContainer | undefined
 ): Set<string> | undefined {
   return useMemo(() => {
-    if (search && data) {
-      const foundLabels = new Set<string>();
-      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+    if (!search || !data) {
+      // In this case undefined means there was no search so no attempt to
+      // highlighting anything should be made.
+      return undefined;
+    }
 
-      if (idxs) {
-        for (let idx of idxs) {
-          foundLabels.add(data.getUniqueLabels()[idx]);
-        }
+    return labelSearch(search, data);
+  }, [search, data]);
+}
+
+export function labelSearch(search: string, data: FlameGraphDataContainer): Set<string> {
+  const foundLabels = new Set<string>();
+  const terms = search.split(',');
+
+  const regexFilter = (labels: string[], pattern: string): boolean => {
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern);
+    } catch (e) {
+      return false;
+    }
+
+    let foundMatch = false;
+    for (let label of labels) {
+      if (!regex.test(label)) {
+        continue;
       }
 
-      return foundLabels;
+      foundLabels.add(label);
+      foundMatch = true;
     }
-    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
-    return undefined;
-  }, [search, data]);
+    return foundMatch;
+  };
+
+  const fuzzyFilter = (labels: string[], term: string): boolean => {
+    let idxs = ufuzzy.filter(labels, term);
+    if (!idxs) {
+      return false;
+    }
+
+    let foundMatch = false;
+    for (let idx of idxs) {
+      foundLabels.add(labels[idx]);
+      foundMatch = true;
+    }
+    return foundMatch;
+  };
+
+  for (let term of terms) {
+    if (!term) {
+      continue;
+    }
+
+    const found = regexFilter(data.getUniqueLabels(), term);
+    if (!found) {
+      fuzzyFilter(data.getUniqueLabels(), term);
+    }
+  }
+
+  return foundLabels;
 }
 
 function getStyles(theme: GrafanaTheme2) {
