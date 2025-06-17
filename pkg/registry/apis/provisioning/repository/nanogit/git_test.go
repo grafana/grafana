@@ -2314,9 +2314,9 @@ func TestNewGitRepository_DecryptionError(t *testing.T) {
 
 func TestGitRepository_ValidateBranchNames(t *testing.T) {
 	tests := []struct {
-		name         string
-		branchName   string
-		expectValid  bool
+		name        string
+		branchName  string
+		expectValid bool
 	}{
 		{"valid simple branch", "main", true},
 		{"valid feature branch", "feature/new-feature", true},
@@ -2353,7 +2353,7 @@ func TestGitRepository_ValidateBranchNames(t *testing.T) {
 			}
 
 			errors := gitRepo.Validate()
-			
+
 			if tt.expectValid {
 				// Should not have a branch validation error for invalid branch name
 				for _, err := range errors {
@@ -2365,8 +2365,8 @@ func TestGitRepository_ValidateBranchNames(t *testing.T) {
 				// Should have a branch validation error (either required or invalid)
 				found := false
 				for _, err := range errors {
-					if err.Field == "spec.test_type.branch" && 
-					   (err.Type == field.ErrorTypeInvalid || err.Type == field.ErrorTypeRequired) {
+					if err.Field == "spec.test_type.branch" &&
+						(err.Type == field.ErrorTypeInvalid || err.Type == field.ErrorTypeRequired) {
 						found = true
 						break
 					}
@@ -2490,7 +2490,7 @@ func TestGitRepository_PathValidation(t *testing.T) {
 			}
 
 			errors := gitRepo.Validate()
-			
+
 			if tt.expectError {
 				found := false
 				for _, err := range errors {
@@ -2554,7 +2554,7 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			name: "file status type changed",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
-					Name: "refs/heads/main", 
+					Name: "refs/heads/main",
 					Hash: hash.Hash{1, 2, 3},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
@@ -2580,7 +2580,7 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 					Hash: hash.Hash{1, 2, 3},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
-					Name: "refs/heads/feature", 
+					Name: "refs/heads/feature",
 					Hash: hash.Hash{4, 5, 6},
 				}, nil)
 				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
@@ -2651,13 +2651,13 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, changes)
-				
+
 				// Verify that files outside configured path are filtered out
 				if tt.name == "files outside configured path" {
 					require.Len(t, changes, 1)
 					require.Equal(t, "included.yaml", changes[0].Path)
 				}
-				
+
 				// Verify type changed files are handled as updates
 				if tt.name == "file status type changed" {
 					require.Len(t, changes, 1)
@@ -2746,11 +2746,11 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, entries)
-				
+
 				if tt.name == "tree entries outside path" {
 					// Should only include entries inside the configured path
 					require.Len(t, entries, 2)
-					
+
 					// Find the blob entry
 					var blobEntry *repository.FileTreeEntry
 					var dirEntry *repository.FileTreeEntry
@@ -2761,11 +2761,11 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 							dirEntry = &entries[i]
 						}
 					}
-					
+
 					require.NotNil(t, blobEntry)
 					require.Equal(t, "included.yaml", blobEntry.Path)
 					require.True(t, blobEntry.Blob)
-					
+
 					require.NotNil(t, dirEntry)
 					require.Equal(t, "dir/", dirEntry.Path)
 					require.False(t, dirEntry.Blob)
@@ -3233,7 +3233,7 @@ func TestGitRepository_EmptyRefHandling(t *testing.T) {
 				Name: "refs/heads/main",
 				Hash: hash.Hash{1, 2, 3},
 			}, nil)
-			
+
 			mockWriter := &mocks.FakeStagedWriter{}
 			mockWriter.CreateBlobReturns(hash.Hash{}, nil)
 			mockWriter.UpdateBlobReturns(hash.Hash{}, nil)
@@ -3495,7 +3495,7 @@ func TestGitRepository_Update_DirectoryCheck(t *testing.T) {
 
 func TestGitRepository_Write_DefaultRef(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
-	// First call for Read check - file not found  
+	// First call for Read check - file not found
 	mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 		Name: "refs/heads/main",
 		Hash: hash.Hash{1, 2, 3},
