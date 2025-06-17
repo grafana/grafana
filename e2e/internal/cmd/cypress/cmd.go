@@ -1,19 +1,18 @@
 package cypress
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/grafana/grafana/e2e/internal/fpaths"
+	"github.com/grafana/grafana/e2e/internal/outs"
 	"github.com/urfave/cli/v3"
 )
 
@@ -127,12 +126,12 @@ func NewCmd() *cli.Command {
 
 func runAction(ctx context.Context, c *cli.Command) error {
 	suitePath := c.String("suite")
-	suitePath, err := normalisePath(suitePath)
+	suitePath, err := fpaths.NormalisePath(suitePath)
 	if err != nil {
 		return fmt.Errorf("failed to normalise suite path: %w", err)
 	}
 
-	repoRoot, err := gitRepoRoot(ctx, suitePath)
+	repoRoot, err := fpaths.RepoRoot(ctx, suitePath)
 	if err != nil {
 		return fmt.Errorf("failed to get git repo root: %w", err)
 	}
@@ -184,6 +183,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 		startServerPath := path.Join(repoRoot, "scripts", "grafana-server", "start-server")
 		waitForGrafanaPath := path.Join(repoRoot, "scripts", "grafana-server", "wait-for-grafana")
 		go func() {
+			defer cancel()
 			var args []string
 			if c.String("license-path") != "" {
 				args = append(args, c.String("license-path"))
@@ -234,29 +234,6 @@ func runAction(ctx context.Context, c *cli.Command) error {
 	return cmd.Run()
 }
 
-func gitRepoRoot(ctx context.Context, dir string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel")
-	cmd.Dir = dir
-	out, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to get git repo root: %w", err)
-	}
-	p := strings.TrimSpace(string(out))
-	p, err = normalisePath(p)
-	if err != nil {
-		return "", fmt.Errorf("failed to normalise git repo root path: %w", err)
-	}
-	return p, nil
-}
-
-func normalisePath(p string) (string, error) {
-	absPath, err := filepath.Abs(p)
-	if err != nil {
-		return "", fmt.Errorf("failed to get absolute path: %w", err)
-	}
-	return path.Clean(filepath.ToSlash(absPath)), nil
-}
-
 func joinCypressCfg(cfg map[string]string) string {
 	config := make([]string, 0, len(cfg))
 	for k, v := range cfg {
@@ -265,67 +242,10 @@ func joinCypressCfg(cfg map[string]string) string {
 	return strings.Join(config, ",")
 }
 
-const (
-	resetColor  = "\033[0m"
-	yellowColor = "\033[0;33m"
-	cyanColor   = "\033[0;36m"
-)
-
 func prefixCypress(w io.Writer) io.Writer {
-	if _, ok := os.LookupEnv("CI"); ok {
-		return w
-	}
-
-	return newWrappingOutput(cyanColor+"Cypress: ", resetColor, w)
+	return outs.Prefix(w, "Cypress", outs.CyanColor)
 }
 
 func prefixGrafana(w io.Writer) io.Writer {
-	if _, ok := os.LookupEnv("CI"); ok {
-		return w
-	}
-
-	return newWrappingOutput(yellowColor+"Grafana: ", resetColor, w)
-}
-
-var _ io.Writer = (*wrappingOutput)(nil)
-
-type wrappingOutput struct {
-	prefix        string
-	suffix        string
-	mu            *sync.Mutex
-	inner         io.Writer
-	writtenPrefix bool
-}
-
-func newWrappingOutput(prefix, suffix string, inner io.Writer) *wrappingOutput {
-	return &wrappingOutput{
-		prefix: prefix,
-		suffix: suffix,
-		mu:     &sync.Mutex{},
-		inner:  inner,
-	}
-}
-
-func (p *wrappingOutput) Write(b []byte) (int, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	for line := range bytes.Lines(b) {
-		if !p.writtenPrefix {
-			if _, err := p.inner.Write([]byte(p.prefix)); err != nil {
-				return 0, err
-			}
-			p.writtenPrefix = true
-		}
-		if _, err := p.inner.Write(line); err != nil {
-			return 0, err
-		}
-		if bytes.HasSuffix(line, []byte("\n")) {
-			p.writtenPrefix = false
-			if _, err := p.inner.Write([]byte(p.suffix)); err != nil {
-				return 0, err
-			}
-		}
-	}
-	return len(b), nil
+	return outs.Prefix(w, "Grafana", outs.YellowColor)
 }

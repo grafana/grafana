@@ -134,3 +134,39 @@ jobs:
           name: ${{ steps.set-suite-name.outputs.suite }}-${{ github.run_number }}
           path: videos
           retention-days: 1
+
+  run-a11y-test:
+    needs:
+      - build-grafana
+      - build-e2e-runner
+    name: A11y test
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-grafana.outputs.artifact }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-e2e-runner.outputs.artifact }}
+      - name: chmod +x
+        run: chmod +x ./e2e-runner
+      - name: Run PR a11y test
+        if: github.event_name == 'pull_request'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz
+            --flags="--json --config ./pa11yci-pr.conf.js"
+      - name: Run non-PR a11y test
+        if: github.event_name != 'pull_request'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz
+            --flags="--json --config ./pa11yci.conf.js"
