@@ -87,7 +87,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
               },
             ],
           },
-          defaultValue: 'default',
         });
     }
 

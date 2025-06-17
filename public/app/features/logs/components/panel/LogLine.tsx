@@ -236,7 +236,7 @@ const DisplayedFields = ({
   const { matchingUids, search } = useLogListSearchContext();
 
   const searchWords = useMemo(() => {
-    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
     if (search && matchingUids?.includes(log.uid)) {
       searchWords.push(search);
     }
@@ -271,7 +271,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
-    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords : [];
+    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
     if (search && matchingUids?.includes(log.uid)) {
       searchWords.push(search);
     }
