@@ -102,7 +102,7 @@ This collapsible section provides details about the checks performed:
 ![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
 
 {{< admonition type="tip" >}}
-Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable check according to your preference.
+Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable check according to your preferences.
 {{< /admonition >}}
 
 ## Address issues
