@@ -1,8 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.test.tsx
 import { FieldValidationMessage } from '@grafana/ui';
 
-import { validateInput } from './ConfigEditor';
-import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from './PromSettings';
+import { DURATION_REGEX, MULTIPLE_DURATION_REGEX } from '../constants';
+
+import { validateInput } from './shared/utils';
 
 const VALID_URL_REGEX = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
 
