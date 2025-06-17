@@ -681,14 +681,21 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Grafana Sharing Squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
-/public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
-/public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
-/pkg/api/render.go @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
-/pkg/services/publicdashboards/ @grafana/sharing-squad
-/pkg/services/rendering/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
+
+# Grafana Enterprise: Public Dashboards & Image Renderer
+/pkg/api/render.go @grafana/grafana-operator-experience-squad
+/pkg/services/publicdashboards/ @grafana/grafana-operator-experience-squad
+/pkg/services/rendering/ @grafana/grafana-operator-experience-squad
+/public/app/features/dashboard/containers/PublicDashboardPage* @grafana/grafana-operator-experience-squad
+/public/app/features/dashboard/components/PublicDashboard/ @grafana/grafana-operator-experience-squad
+/public/app/features/dashboard/components/PublicDashboardNotAvailable/ @grafana/grafana-operator-experience-squad
+/public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ @grafana/grafana-operator-experience-squad
+/public/app/features/dashboard-scene/sharing/public-dashboards/ @grafana/grafana-operator-experience-squad
+/public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/grafana-operator-experience-squad
+/public/app/features/manage-dashboards/PublicDashboardListPage.tsx* @grafana/grafana-operator-experience-squad
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/grafana-datasources-core-services
