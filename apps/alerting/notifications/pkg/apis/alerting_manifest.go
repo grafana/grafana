@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/notifications/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
+
+var ()
 
 var appManifestData = app.ManifestData{
 	AppName: "alerting",
