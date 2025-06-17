@@ -32,6 +32,7 @@ import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { config } from '@grafana/runtime';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
@@ -239,7 +240,13 @@ export const LogListContextProvider = ({
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
-  const displayedFields = useMemo(() => displayedFieldsProp.length > 0 ? displayedFieldsProp : getDisplayedFieldsForLogs(logs), [displayedFieldsProp, logs]);
+  const displayedFields = useMemo(
+    () =>
+      displayedFieldsProp.length > 0 || !config.featureToggles.otelLogsFormatting
+        ? displayedFieldsProp
+        : getDisplayedFieldsForLogs(logs),
+    [displayedFieldsProp, logs]
+  );
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
