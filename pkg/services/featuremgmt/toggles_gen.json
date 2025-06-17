@@ -2613,6 +2613,22 @@
     },
     {
       "metadata": {
+        "name": "preferLibraryPanelTitle",
+        "resourceVersion": "1750152018442",
+        "creationTimestamp": "2025-06-17T08:53:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 09:20:18.442539 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Prefer library panel title over viz panel title.",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-07T12:14:25Z"
