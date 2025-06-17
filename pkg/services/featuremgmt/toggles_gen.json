@@ -2014,7 +2014,8 @@
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-12-13T14:31:41Z"
+        "creationTimestamp": "2024-12-13T14:31:41Z",
+        "deletionTimestamp": "2025-06-05T07:41:51Z"
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
@@ -2039,7 +2040,8 @@
       "metadata": {
         "name": "lokiPredefinedOperations",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-06-02T10:52:36Z"
+        "creationTimestamp": "2023-06-02T10:52:36Z",
+        "deletionTimestamp": "2025-06-05T07:13:27Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",
@@ -2081,7 +2083,8 @@
       "metadata": {
         "name": "lokiQuerySplittingConfig",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-03-20T15:51:36Z"
+        "creationTimestamp": "2023-03-20T15:51:36Z",
+        "deletionTimestamp": "2025-06-05T07:36:22Z"
       },
       "spec": {
         "description": "Give users the option to configure split durations for Loki queries",
@@ -2105,13 +2108,17 @@
     {
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-22T19:30:43Z"
+        "resourceVersion": "1749108739509",
+        "creationTimestamp": "2024-08-22T19:30:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-05 07:32:19.509918 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Send dashboard and panel names to Loki when querying",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs"
+        "stage": "GA",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "true"
       }
     },
     {
@@ -2131,7 +2138,8 @@
       "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-11-16T16:06:14Z"
+        "creationTimestamp": "2023-11-16T16:06:14Z",
+        "deletionTimestamp": "2025-06-05T07:48:15Z"
       },
       "spec": {
         "description": "Enables the loki data source to request structured metadata from the Loki server",

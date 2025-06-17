@@ -28,7 +28,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=logvolhist", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -52,7 +52,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=datasample", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=foo", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryType("foo"), QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestApiLogVolume(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "categorize-labels", req.Header.Get("X-Loki-Response-Encoding-Flags"))
-		}, true)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestInfiniteScroll(t *testing.T) {
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
 			require.Equal(t, "Source=infinitescroll", req.Header.Get("X-Query-Tags"))
-		}, false)
+		})
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: dataquery.SupportingQueryTypeInfiniteScroll, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestApiUrlHandling(t *testing.T) {
 				wantedPrefix := test.rangeQueryPrefix
 				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
 				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
-			}, false)
+			})
 
 			query := lokiQuery{
 				QueryType: QueryTypeRange,
@@ -198,7 +198,7 @@ func TestApiUrlHandling(t *testing.T) {
 				wantedPrefix := test.instantQueryPrefix
 				failMessage := fmt.Sprintf(`wanted prefix: [%s], got string [%s]`, wantedPrefix, urlString)
 				require.True(t, strings.HasPrefix(urlString, wantedPrefix), failMessage)
-			}, false)
+			})
 
 			query := lokiQuery{
 				QueryType: QueryTypeInstant,
@@ -216,7 +216,7 @@ func TestApiUrlHandling(t *testing.T) {
 			api := makeMockedAPIWithUrl(test.dsUrl, 200, "application/json", response, func(req *http.Request) {
 				called = true
 				require.Equal(t, test.metaUrl, req.URL.String())
-			}, false)
+			})
 
 			_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
 			require.NoError(t, err)
