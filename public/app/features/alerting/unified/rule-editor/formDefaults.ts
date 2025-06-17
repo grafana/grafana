@@ -34,9 +34,12 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
-export const getDefaultFormValues = (): RuleFormValues => {
+export const getDefaultFormValues = (isGrafanaRecordingRule = false): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
   const type = (() => {
+    if (isGrafanaRecordingRule) {
+      return RuleFormType.grafanaRecording;
+    }
     if (canCreateGrafanaRules) {
       return RuleFormType.grafana;
     }
@@ -70,7 +73,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
-    editorSettings: getDefaultEditorSettings(),
+    editorSettings: getDefaultEditorSettings(isGrafanaRecordingRule),
     targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
 
     // cortex / loki
@@ -88,7 +91,11 @@ export const getDefautManualRouting = () => {
   return manualRouting !== 'false';
 };
 
-function getDefaultEditorSettings() {
+function getDefaultEditorSettings(isGrafanaRecordingRule = false) {
+  if (isGrafanaRecordingRule) {
+    return undefined;
+  }
+
   const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
   if (!editorSettingsEnabled) {
     return undefined;
@@ -140,8 +147,10 @@ export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>)
 }
 
 export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
+  const isGrafanaRecordingRule = ruleType === RuleFormType.grafanaRecording;
+
   return {
-    ...getDefaultFormValues(),
+    ...getDefaultFormValues(isGrafanaRecordingRule),
     condition: 'C',
     queries: getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
     type: ruleType,
