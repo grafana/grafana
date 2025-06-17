@@ -3571,3 +3571,133 @@ func TestGitRepository_Read_RefInFileInfo(t *testing.T) {
 	require.Equal(t, "feature", fileInfo.Ref) // Should preserve original ref, not hash
 	require.Equal(t, []byte("file content"), fileInfo.Data)
 }
+
+func TestGitRepository_Read_GetTreeByPath_NotFound(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{
+		Name: "refs/heads/main",
+		Hash: hash.Hash{1, 2, 3},
+	}, nil)
+	mockClient.GetTreeByPathReturns(nil, nanogit.ErrObjectNotFound)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		gitConfig: RepositoryConfig{
+			Branch: "main",
+			Path:   "configs",
+		},
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitHubRepositoryType,
+			},
+		},
+	}
+
+	// Test reading a directory that doesn't exist
+	fileInfo, err := gitRepo.Read(context.Background(), "missing-dir/", "main")
+
+	require.Error(t, err)
+	require.Nil(t, fileInfo)
+	require.ErrorIs(t, err, repository.ErrFileNotFound)
+}
+
+func TestGitRepository_ReadTree_GetFlatTree_NotFound(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{
+		Name: "refs/heads/main",
+		Hash: hash.Hash{1, 2, 3},
+	}, nil)
+	mockClient.GetFlatTreeReturns(nil, nanogit.ErrObjectNotFound)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		gitConfig: RepositoryConfig{
+			Branch: "main",
+			Path:   "configs",
+		},
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitHubRepositoryType,
+			},
+		},
+	}
+
+	// Test reading tree when the commit doesn't exist
+	entries, err := gitRepo.ReadTree(context.Background(), "main")
+
+	require.Error(t, err)
+	require.Nil(t, entries)
+	require.ErrorIs(t, err, repository.ErrRefNotFound)
+}
+
+func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *testing.T) {
+	tests := []struct {
+		name   string
+		status protocol.FileStatus
+	}{
+		{"FileStatusAdded outside path", protocol.FileStatusAdded},
+		{"FileStatusModified outside path", protocol.FileStatusModified},
+		{"FileStatusDeleted outside path", protocol.FileStatusDeleted},
+		{"FileStatusTypeChanged outside path", protocol.FileStatusTypeChanged},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{1, 2, 3},
+			}, nil)
+			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+				Name: "refs/heads/feature",
+				Hash: hash.Hash{4, 5, 6},
+			}, nil)
+			mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+				{
+					Path:   "other/file.yaml", // File outside "configs/" path
+					Status: tt.status,
+				},
+				{
+					Path:   "configs/included.yaml", // File inside configured path
+					Status: tt.status,
+				},
+			}, nil)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), "main", "feature")
+
+			require.NoError(t, err)
+			require.NotNil(t, changes)
+			// Should only include the file inside the configured path
+			require.Len(t, changes, 1)
+			require.Equal(t, "included.yaml", changes[0].Path)
+			require.Equal(t, "feature", changes[0].Ref)
+
+			// Verify the action based on status
+			switch tt.status {
+			case protocol.FileStatusAdded:
+				require.Equal(t, repository.FileActionCreated, changes[0].Action)
+			case protocol.FileStatusModified:
+				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
+			case protocol.FileStatusDeleted:
+				require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+				require.Equal(t, "main", changes[0].PreviousRef)
+				require.Equal(t, "included.yaml", changes[0].PreviousPath)
+			case protocol.FileStatusTypeChanged:
+				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
+			}
+		})
+	}
+}
