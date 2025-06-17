@@ -3584,6 +3584,9 @@ func TestGitRepository_Read_GetTreeByPath_NotFound(t *testing.T) {
 		Name: "refs/heads/main",
 		Hash: hash.Hash{1, 2, 3},
 	}, nil)
+	mockClient.GetCommitReturns(&nanogit.Commit{
+		Tree: hash.Hash([]byte("tree-hash")),
+	}, nil)
 	mockClient.GetTreeByPathReturns(nil, nanogit.ErrObjectNotFound)
 
 	gitRepo := &gitRepository{
