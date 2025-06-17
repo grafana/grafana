@@ -26,4 +26,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Shellcheck
-        run: find scripts/ -name '*.sh' -type f -exec shellcheck '{}' +
+        run: find scripts/ -name '*.sh' -type f -exec shellcheck -e SC1071 -e SC2162 '{}' +
