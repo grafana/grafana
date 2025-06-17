@@ -26,9 +26,6 @@ interface TranslationDefinition {
 
   /** The language name in its own language (e.g. "Français" for French) */
   name: string;
-
-  /** Indicates the language should be hidden from the UI, but is still a valid translation */
-  hidden?: boolean;
 }
 
 /**

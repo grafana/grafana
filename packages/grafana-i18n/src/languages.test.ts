@@ -20,7 +20,6 @@ const expectedLanguages = [
   { code: 'pl-PL', name: 'Polski' },
   { code: 'sv-SE', name: 'Svenska' },
   { code: 'tr-TR', name: 'Türkçe' },
-  { code: 'pseudo', name: 'Pseudo-locale', hidden: true },
 ];
 
 describe('LANGUAGES', () => {

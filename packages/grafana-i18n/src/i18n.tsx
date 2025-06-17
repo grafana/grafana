@@ -11,6 +11,14 @@ import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './t
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
+const VALID_LANGUAGES = [
+  ...LANGUAGES,
+  {
+    name: 'Pseudo',
+    code: PSEUDO_LOCALE,
+  },
+];
+
 function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } = {}) {
   if (id) {
     tFunc = getI18nInstance().getFixedT(null, id);
@@ -101,7 +109,6 @@ async function initTranslations({
   language = DEFAULT_LANGUAGE,
   module,
 }: InitializeI18nOptions): Promise<{ language: string | undefined }> {
-  const validLanguages = [...LANGUAGES.map((language) => language.code), PSEUDO_LOCALE];
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
     partialBundledLanguages: true,
@@ -111,7 +118,7 @@ async function initTranslations({
     returnEmptyString: false,
 
     // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
-    supportedLngs: validLanguages,
+    supportedLngs: VALID_LANGUAGES.map((lang) => lang.code),
     fallbackLng: DEFAULT_LANGUAGE,
 
     ns,
@@ -126,7 +133,7 @@ async function initTranslations({
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
     options.detection = detection;
   } else {
-    options.lng = LANGUAGES.find((lang) => lang.code === language)?.code ?? undefined;
+    options.lng = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? undefined;
   }
 
   if (module) {
@@ -168,7 +175,7 @@ export function getNamespaces() {
 }
 
 export async function changeLanguage(language?: string) {
-  const validLanguage = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
+  const validLanguage = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
   await getI18nInstance().changeLanguage(validLanguage);
 }
 
