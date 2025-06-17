@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -32,11 +31,17 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const tracingPrexfixBleve = "unified_search.bleve."
+const (
+	// tracingPrexfixBleve is the prefix used for tracing spans in the Bleve backend
+	tracingPrexfixBleve = "unified_search.bleve."
+	// Default index cache cleanup TTL is 1 minute
+	indexCacheCleanupInterval = time.Minute
+)
 
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
@@ -51,6 +56,9 @@ type BleveOptions struct {
 	// How big should a batch get before flushing
 	// ?? not totally sure the units
 	BatchSize int
+
+	// Index cache TTL for bleve indices
+	IndexCacheTTL time.Duration
 }
 
 type bleveBackend struct {
@@ -59,9 +67,7 @@ type bleveBackend struct {
 	opts   BleveOptions
 	start  time.Time
 
-	// cache info
-	cache   map[resource.NamespacedResource]*bleveIndex
-	cacheMu sync.RWMutex
+	cache *localcache.CacheService
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
@@ -82,7 +88,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	bleveBackend := &bleveBackend{
 		log:          slog.Default().With("logger", "bleve-backend"),
 		tracer:       tracer,
-		cache:        make(map[resource.NamespacedResource]*bleveIndex),
+		cache:        localcache.New(opts.IndexCacheTTL, indexCacheCleanupInterval),
 		opts:         opts,
 		start:        time.Now(),
 		features:     features,
@@ -96,14 +102,16 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 // This will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
-	b.cacheMu.RLock()
-	defer b.cacheMu.RUnlock()
-
-	idx, ok := b.cache[key]
-	if ok {
-		return idx, nil
+	val, ok := b.cache.Get(key.String())
+	if !ok {
+		return nil, nil
 	}
-	return nil, nil
+
+	idx, ok := val.(*bleveIndex)
+	if !ok {
+		return nil, fmt.Errorf("cache item is not a bleve index: %s", key.String())
+	}
+	return idx, nil
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -247,9 +255,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		}
 	}
 
-	b.cacheMu.Lock()
-	b.cache[key] = idx
-	b.cacheMu.Unlock()
+	b.cache.SetDefault(key.String(), idx)
 	return idx, nil
 }
 
@@ -293,8 +299,14 @@ func isValidPath(path, safeDir string) bool {
 // TotalDocs returns the total number of documents across all indices
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
-	for _, v := range b.cache {
-		c, err := v.index.DocCount()
+	for _, v := range b.cache.Items() {
+		idx, ok := v.Object.(*bleveIndex)
+		if !ok {
+			b.log.Warn("cache item is not a bleve index", "key", v.Object)
+			continue
+		}
+
+		c, err := idx.index.DocCount()
 		if err != nil {
 			continue
 		}

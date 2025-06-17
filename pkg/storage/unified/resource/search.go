@@ -36,6 +36,10 @@ func (s *NamespacedResource) Valid() bool {
 	return s.Namespace != "" && s.Group != "" && s.Resource != ""
 }
 
+func (s *NamespacedResource) String() string {
+	return fmt.Sprintf("%s/%s/%s", s.Namespace, s.Group, s.Resource)
+}
+
 type IndexAction int
 
 const (
