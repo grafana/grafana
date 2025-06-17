@@ -21,7 +21,6 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -32,6 +31,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -67,7 +67,7 @@ type bleveBackend struct {
 	opts   BleveOptions
 	start  time.Time
 
-	cache *gocache.Cache
+	cache *localcache.CacheService
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
@@ -88,7 +88,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	bleveBackend := &bleveBackend{
 		log:          slog.Default().With("logger", "bleve-backend"),
 		tracer:       tracer,
-		cache:        gocache.New(opts.IndexCacheTTL, indexCacheCleanupInterval),
+		cache:        localcache.New(opts.IndexCacheTTL, indexCacheCleanupInterval),
 		opts:         opts,
 		start:        time.Now(),
 		features:     features,
