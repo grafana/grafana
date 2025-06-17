@@ -773,27 +773,31 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
       // Verify that the default annotation layer has been correctly initialized
       expect(defaultAnnotationLayer.state.query).toEqual({
+        datasource: {
+          uid: '-- Grafana --',
+          type: 'grafana',
+        },
         builtIn: 1,
         enable: true,
-        hide: true,
         iconColor: 'rgba(0, 211, 255, 1)',
         name: 'Annotations & Alerts',
-        query: {
-          datasource: {
-            name: '-- Grafana --',
-          },
-          group: 'grafana',
-          kind: 'DataQuery',
-          spec: {},
-          version: 'v0',
-        },
+        filter: undefined,
+        hide: true,
       });
 
       const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
 
       // Verify that the legacyOptions have been merged into the query object
       expect(annotationLayer.state.query).toMatchObject({
+        datasource: {
+          uid: 'abc123',
+          type: 'prometheus',
+        },
         name: 'Annotation with legacy options',
+        builtIn: 0,
+        enable: true,
+        hide: false,
+        iconColor: 'purple',
         expr: 'rate(http_requests_total[5m])',
         queryType: 'range',
         legendFormat: '{{method}} {{endpoint}}',

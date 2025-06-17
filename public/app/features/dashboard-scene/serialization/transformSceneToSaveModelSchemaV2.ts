@@ -419,6 +419,12 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
       continue;
     }
     const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
+
+    const layerDs = layer.state.query.datasource;
+    if (!layerDs) {
+      throw new Error('Misconfigured AnnotationsDataLayer: Datasource is required for annotations');
+    }
+
     const result: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
@@ -427,19 +433,20 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         iconColor: layer.state.query.iconColor,
-        ...(datasource?.type && {
-          query: {
-            kind: 'DataQuery',
-            version: defaultDataQueryKind().version,
-            group: datasource.type,
-            datasource: {
-              name: datasource.uid,
-            },
-            spec: {},
-          },
-        }),
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: layerDs.type!, // Annotation layer has a datasource type provided in runtime.
+          spec: {},
+        },
       },
     };
+
+    if (datasource) {
+      result.spec.query!.datasource = {
+        name: datasource.uid,
+      };
+    }
 
     // Transform v1 dashboard (using target) to v2 structure
     // adds extra condition to prioritize query over target
@@ -501,10 +508,15 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
 
     // Store extra properties in the legacyOptions field instead of directly in the spec
     if (Object.keys(otherProps).length > 0) {
-      // Extract options property and get the rest of the properties
+      // // Extract options property and get the rest of the properties
       const { legacyOptions, ...restProps } = otherProps;
-      // Merge options with the rest of the properties
-      result.spec.legacyOptions = { ...legacyOptions, ...restProps };
+      if (legacyOptions) {
+        // Merge options with the rest of the properties
+        result.spec.legacyOptions = { ...legacyOptions, ...restProps };
+      }
+      result.spec.query!.spec = {
+        ...otherProps,
+      };
     }
 
     // If filter is an empty array, don't save it

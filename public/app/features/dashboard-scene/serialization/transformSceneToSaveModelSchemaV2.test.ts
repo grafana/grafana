@@ -411,9 +411,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result).toMatchSnapshot();
 
     // Check that the annotation layers are correctly transformed
-    expect(result.annotations).toHaveLength(3);
-    // Check annotation layer 3 without initial data source isn't updated with runtime default
-    expect(result.annotations?.[2].spec.query?.spec.datasource?.type).toBe(undefined);
+    expect(result.annotations).toHaveLength(2);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -1107,18 +1105,6 @@ function createAnnotationLayers() {
         iconColor: 'blue',
       },
       name: 'layer2',
-      isEnabled: true,
-      isHidden: true,
-    }),
-    // this could happen if a dahboard was created from code and the datasource was not defined
-    new DashboardAnnotationsDataLayer({
-      key: 'layer3',
-      query: {
-        name: 'query3',
-        enable: true,
-        iconColor: 'green',
-      },
-      name: 'layer3',
       isEnabled: true,
       isHidden: true,
     }),

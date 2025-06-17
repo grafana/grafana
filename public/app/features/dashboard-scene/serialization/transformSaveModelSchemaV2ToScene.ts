@@ -65,7 +65,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
-import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { getRuntimePanelDataSource, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -74,6 +74,7 @@ import {
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
 import { LEGACY_STRING_VALUE_KEY } from './transformToV2TypesUtils';
+import { AnnotationQuery } from '@grafana/data';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -98,25 +99,48 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    let annoQuerySpec = annotation.spec;
+    let { query: dataQuery, ...annotationQuery } = annotation.spec;
+
+    // Mapping from AnnotationQueryKind to AnnotationQuery used by scenes.
+    let annoQuerySpec: AnnotationQuery = {
+      builtIn: annotation.spec.builtIn ? 1 : 0,
+      enable: annotation.spec.enable,
+      iconColor: annotation.spec.iconColor,
+      name: annotation.spec.name,
+      filter: annotation.spec.filter,
+      hide: annotation.spec.hide,
+      ...dataQuery?.spec,
+    };
+
     // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.legacyOptions) {
+    if (annotationQuery.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.legacyOptions,
+        ...annotationQuery.legacyOptions,
+        legacyOptions: {
+          ...annotationQuery.legacyOptions,
+        },
       };
     }
-    return new DashboardAnnotationsDataLayer({
+
+    // get data source from annotation query
+    // TODO: remove
+    // @ts-ignore
+    const datasource = getRuntimePanelDataSource(dataQuery);
+
+    const layerState = {
       key: uniqueId('annotations-'),
       query: {
         ...annoQuerySpec,
-        builtIn: annotation.spec.builtIn ? 1 : 0,
+        datasource,
       },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
-    });
+    };
+
+    return new DashboardAnnotationsDataLayer(layerState);
   });
 
   const isDashboardEditable = Boolean(dashboard.editable);

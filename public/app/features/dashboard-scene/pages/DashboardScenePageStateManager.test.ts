@@ -37,6 +37,28 @@ jest.mock('@grafana/runtime', () => {
         ...original.config.featureToggles,
         dashboardNewLayouts: false, // Default value
       },
+
+      bootData: {
+        ...original.config.bootData,
+        settings: {
+          ...original.config.bootData.settings,
+          datasources: {
+            'gdev-testdata': {
+              id: 7,
+              uid: 'abc',
+              type: 'grafana-testdata-datasource',
+              name: 'gdev-testdata',
+              meta: {
+                id: 'grafana-testdata-datasource',
+                type: 'datasource',
+                name: 'TestData',
+                aliasIDs: ['testdata'],
+              },
+            },
+          },
+          defaultDatasource: 'gdev-testdata',
+        },
+      },
     },
   };
 });
@@ -1555,10 +1577,9 @@ const v2ProvisionedDashboardResource = {
             kind: 'AnnotationQuery',
             spec: {
               builtIn: true,
-
               query: {
-                group: 'grafana',
                 kind: 'DataQuery',
+                group: 'grafana',
                 spec: {},
                 version: 'v0',
               },

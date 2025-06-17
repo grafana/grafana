@@ -57,7 +57,7 @@ describe('getRuntimePanelDataSource', () => {
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',
@@ -80,7 +80,7 @@ describe('getRuntimePanelDataSource', () => {
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',
@@ -103,7 +103,7 @@ describe('getRuntimePanelDataSource', () => {
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'default-ds-uid',
@@ -129,7 +129,7 @@ describe('getRuntimePanelDataSource', () => {
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',

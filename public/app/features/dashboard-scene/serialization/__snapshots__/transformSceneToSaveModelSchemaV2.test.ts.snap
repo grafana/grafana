@@ -41,16 +41,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
       },
     },
-    {
-      "kind": "AnnotationQuery",
-      "spec": {
-        "builtIn": false,
-        "enable": true,
-        "hide": true,
-        "iconColor": "green",
-        "name": "query3",
-      },
-    },
   ],
   "cursorSync": "Crosshair",
   "description": "Test Description",

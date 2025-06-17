@@ -25,6 +25,30 @@
             "version": "v0"
           }
         }
+      },
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana-testdata-datasource",
+            "version": "v0",
+            "spec": {
+              "lines": 10,
+              "refId": "Anno",
+              "scenarioId": "annotations"
+            }
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "Test data annotations",
+          "builtIn": false,
+          "filter": {
+            "exclude": false,
+            "ids": [1]
+          }
+        }
       }
     ],
     "cursorSync": "Off",
