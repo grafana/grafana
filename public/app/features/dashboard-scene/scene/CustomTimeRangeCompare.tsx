@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneTimeRangeCompare, SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeCompareOptions } from '@grafana/schema';
 
@@ -52,8 +50,6 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
   }
 
   static Component = function CustomTimeRangeCompareRenderer({ model }: SceneComponentProps<SceneTimeRangeCompare>) {
-    const OriginalRenderer = SceneTimeRangeCompare.Component;
-
     // Get the parent VizPanel to check timeCompare option
     const vizPanel = sceneGraph.getAncestor(model, VizPanel);
     const { options } = vizPanel.useState();
@@ -61,36 +57,10 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
     // Check if timeCompare is enabled
     const isTimeCompareEnabled = hasTimeCompare(options) && options.timeCompare;
 
-    const Wrapper = React.forwardRef<HTMLDivElement, React.PropsWithChildren<{}>>((props, ref) => {
-      React.useEffect(() => {
-        const buttons = document.querySelectorAll('button');
-        buttons.forEach((button) => {
-          if (button.getAttribute('aria-label') === 'Enable time frame comparison') {
-            const divs = button.querySelectorAll('div');
-            divs.forEach((div) => {
-              if (div.textContent?.trim() === 'Comparison') {
-                div.style.display = 'none';
-              }
-            });
-          }
-        });
-      }, []);
+    if (!isTimeCompareEnabled) {
+      return <></>;
+    }
 
-      return (
-        <div
-          ref={ref}
-          {...props}
-          style={{
-            display: isTimeCompareEnabled ? 'block' : 'none',
-          }}
-        />
-      );
-    });
-
-    return (
-      <Wrapper>
-        <OriginalRenderer model={model} />
-      </Wrapper>
-    );
+    return <SceneTimeRangeCompare.Component model={model} />;
   };
 }
