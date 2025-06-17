@@ -2339,12 +2339,15 @@
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-17T19:05:46Z"
+        "resourceVersion": "1750056712608",
+        "creationTimestamp": "2025-02-17T19:05:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-16 06:51:52.608239 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
