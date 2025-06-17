@@ -18,11 +18,11 @@ export function ValueSelector() {
     <div className={styles.section}>
       <Label
         description={t(
-          'components.value-selector.description-search-field-values-across-selected-labels',
+          'grafana-prometheus.components.value-selector.description-search-field-values-across-selected-labels',
           'Use the search field to find values across selected labels.'
         )}
       >
-        <Trans i18nKey="components.value-selector.select-multiple-values-for-your-labels">
+        <Trans i18nKey="grafana-prometheus.components.value-selector.select-multiple-values-for-your-labels">
           3. Select (multiple) values for your labels
         </Trans>
       </Label>
@@ -30,7 +30,7 @@ export function ValueSelector() {
         <Input
           onChange={(e) => setValueSearchTerm(e.currentTarget.value)}
           aria-label={t(
-            'components.value-selector.aria-label-filter-expression-for-label-values',
+            'grafana-prometheus.components.value-selector.aria-label-filter-expression-for-label-values',
             'Filter expression for label values'
           )}
           value={valueSearchTerm}
@@ -47,9 +47,13 @@ export function ValueSelector() {
             <div
               role="list"
               key={lk}
-              aria-label={t('components.value-selector.aria-label-values-for', 'Values for {{labelKey}}', {
-                labelKey: lk,
-              })}
+              aria-label={t(
+                'grafana-prometheus.components.value-selector.aria-label-values-for',
+                'Values for {{labelKey}}',
+                {
+                  labelKey: lk,
+                }
+              )}
               className={styles.valueListWrapper}
             >
               <div className={styles.valueTitle}>

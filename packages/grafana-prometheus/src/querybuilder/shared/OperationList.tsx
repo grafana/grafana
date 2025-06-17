@@ -127,16 +127,16 @@ export function OperationList<T extends QueryWithOperations>({
               autoFocus={true}
               alwaysOpen={true}
               hideActiveLevelLabel={true}
-              placeholder={t('querybuilder.operation-list.placeholder-search', 'Search')}
+              placeholder={t('grafana-prometheus.querybuilder.operation-list.placeholder-search', 'Search')}
             />
           ) : (
             <Button
               icon={'plus'}
               variant={'secondary'}
               onClick={() => setCascaderOpen(true)}
-              title={t('querybuilder.operation-list.title-add-operation', 'Add operation')}
+              title={t('grafana-prometheus.querybuilder.operation-list.title-add-operation', 'Add operation')}
             >
-              <Trans i18nKey="querybuilder.operation-list.operations">Operations</Trans>
+              <Trans i18nKey="grafana-prometheus.querybuilder.operation-list.operations">Operations</Trans>
             </Button>
           )}
         </div>

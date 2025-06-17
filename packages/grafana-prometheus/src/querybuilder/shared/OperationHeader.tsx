@@ -56,7 +56,7 @@ export const OperationHeader = memo<Props>(
                 fill="text"
                 variant="secondary"
                 title={t(
-                  'querybuilder.operation-header.title-click-to-view-alternative-operations',
+                  'grafana-prometheus.querybuilder.operation-header.title-click-to-view-alternative-operations',
                   'Click to view alternative operations'
                 )}
               />
@@ -67,7 +67,7 @@ export const OperationHeader = memo<Props>(
                 onClick={() => onRemove(index)}
                 fill="text"
                 variant="secondary"
-                title={t('querybuilder.operation-header.title-remove-operation', 'Remove operation')}
+                title={t('grafana-prometheus.querybuilder.operation-header.title-remove-operation', 'Remove operation')}
               />
             </div>
           </>
@@ -77,7 +77,10 @@ export const OperationHeader = memo<Props>(
             <Select
               autoFocus
               openMenuOnFocus
-              placeholder={t('querybuilder.operation-header.placeholder-replace-with', 'Replace with')}
+              placeholder={t(
+                'grafana-prometheus.querybuilder.operation-header.placeholder-replace-with',
+                'Replace with'
+              )}
               options={state.alternatives}
               isOpen={true}
               onCloseMenu={onToggleSwitcher}

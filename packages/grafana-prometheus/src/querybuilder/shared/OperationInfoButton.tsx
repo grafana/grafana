@@ -56,7 +56,10 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   return (
     <>
       <Button
-        title={t('querybuilder.operation-info-button.title-click-to-show-description', 'Click to show description')}
+        title={t(
+          'grafana-prometheus.querybuilder.operation-info-button.title-click-to-show-description',
+          'Click to show description'
+        )}
         ref={refs.setReference}
         icon="info-circle"
         size="sm"
@@ -75,7 +78,10 @@ export const OperationInfoButton = memo<Props>(({ def, operation }) => {
                 onClick={() => setShow(false)}
                 fill="text"
                 variant="secondary"
-                title={t('querybuilder.operation-info-button.title-remove-operation', 'Remove operation')}
+                title={t(
+                  'grafana-prometheus.querybuilder.operation-info-button.title-remove-operation',
+                  'Remove operation'
+                )}
               />
             </div>
             <div

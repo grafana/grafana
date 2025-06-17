@@ -29,7 +29,7 @@ export function QueryEditorHints(props: PromQueryEditorProps) {
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button onClick={() => onHintButtonClick(hint, props)} fill="outline" size="sm" className={styles.hint}>
                   <Trans
-                    i18nKey="querybuilder.query-editor-hints.hint-details"
+                    i18nKey="grafana-prometheus.querybuilder.query-editor-hints.hint-details"
                     values={{ hintDetails: hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ') }}
                   >
                     hint: {'{{hintDetails}}'}

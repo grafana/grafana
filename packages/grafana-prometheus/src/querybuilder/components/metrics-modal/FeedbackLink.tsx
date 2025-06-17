@@ -18,14 +18,14 @@ export function FeedbackLink({ feedbackUrl }: Props) {
         href={feedbackUrl}
         className={styles.link}
         title={t(
-          'querybuilder.feedback-link.title-give-feedback',
+          'grafana-prometheus.querybuilder.feedback-link.title-give-feedback',
           'The metrics explorer is new, please let us know how we can improve it'
         )}
         target="_blank"
         rel="noreferrer noopener"
       >
         <Icon name="comment-alt-message" />{' '}
-        <Trans i18nKey="querybuilder.feedback-link.give-feedback">Give feedback</Trans>
+        <Trans i18nKey="grafana-prometheus.querybuilder.feedback-link.give-feedback">Give feedback</Trans>
       </a>
     </Stack>
   );

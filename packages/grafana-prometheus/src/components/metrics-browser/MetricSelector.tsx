@@ -23,17 +23,17 @@ export function MetricSelector() {
       <div className={styles.section}>
         <Label
           description={t(
-            'components.metric-selector.label-select-metric',
+            'grafana-prometheus.components.metric-selector.label-select-metric',
             'Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.'
           )}
         >
-          <Trans i18nKey="components.metric-selector.select-a-metric">1. Select a metric</Trans>
+          <Trans i18nKey="grafana-prometheus.components.metric-selector.select-a-metric">1. Select a metric</Trans>
         </Label>
         <div>
           <Input
             onChange={(e) => setMetricSearchTerm(e.currentTarget.value)}
             aria-label={t(
-              'components.metric-selector.aria-label-filter-expression-for-metric',
+              'grafana-prometheus.components.metric-selector.aria-label-filter-expression-for-metric',
               'Filter expression for metric'
             )}
             value={metricSearchTerm}
@@ -42,17 +42,17 @@ export function MetricSelector() {
         </div>
         <Label
           description={t(
-            'components.metric-selector.description-series-limit',
+            'grafana-prometheus.components.metric-selector.description-series-limit',
             'The limit applies to all metrics, labels, and values. Leave the field empty to use the default limit. Set to 0 to disable the limit and fetch everything — this may cause performance issues.'
           )}
         >
-          <Trans i18nKey="components.metric-selector.series-limit">Series limit</Trans>
+          <Trans i18nKey="grafana-prometheus.components.metric-selector.series-limit">Series limit</Trans>
         </Label>
         <div>
           <Input
             onChange={(e) => setSeriesLimit(e.currentTarget.value.trim())}
             aria-label={t(
-              'components.metric-selector.aria-label-limit-results-from-series-endpoint',
+              'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'
             )}
             value={seriesLimit}

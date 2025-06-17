@@ -28,7 +28,7 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
 
   return (
     <ConfigSubSection
-      title={t('configuration.alerting-settings-overhaul.title-alerting', 'Alerting')}
+      title={t('grafana-prometheus.configuration.alerting-settings-overhaul.title-alerting', 'Alerting')}
       className={cx(styles.container, styles.alertingTop)}
     >
       <div className="gf-form-group">
@@ -37,13 +37,13 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
             <InlineField
               labelWidth={30}
               label={t(
-                'configuration.alerting-settings-overhaul.label-manage-alerts-via-alerting-ui',
+                'grafana-prometheus.configuration.alerting-settings-overhaul.label-manage-alerts-via-alerting-ui',
                 'Manage alerts via Alerting UI'
               )}
               disabled={options.readOnly}
               tooltip={
                 <>
-                  <Trans i18nKey="configuration.alerting-settings-overhaul.tooltip-manage-alerts-via-alerting-ui">
+                  <Trans i18nKey="grafana-prometheus.configuration.alerting-settings-overhaul.tooltip-manage-alerts-via-alerting-ui">
                     Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager
                     data source.
                   </Trans>{' '}

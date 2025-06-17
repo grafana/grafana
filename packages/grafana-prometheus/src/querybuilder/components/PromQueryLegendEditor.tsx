@@ -67,9 +67,9 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
 
     return (
       <EditorField
-        label={t('querybuilder.prom-query-legend-editor.label-legend', 'Legend')}
+        label={t('grafana-prometheus.querybuilder.prom-query-legend-editor.label-legend', 'Legend')}
         tooltip={t(
-          'querybuilder.prom-query-legend-editor.tooltip-legend',
+          'grafana-prometheus.querybuilder.prom-query-legend-editor.tooltip-legend',
           'Series name override or template. Ex. {{templateExample}} will be replaced with label value for {{labelName}}.',
           { templateExample: '{{hostname}}', labelName: 'hostname' }
         )}
@@ -92,7 +92,7 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
               inputId="legend.mode"
               isSearchable={false}
               placeholder={t(
-                'querybuilder.prom-query-legend-editor.placeholder-select-legend-mode',
+                'grafana-prometheus.querybuilder.prom-query-legend-editor.placeholder-select-legend-mode',
                 'Select legend mode'
               )}
               options={legendModeOptions}

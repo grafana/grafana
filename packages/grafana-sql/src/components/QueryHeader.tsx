@@ -127,9 +127,9 @@ export function QueryHeader({
     <>
       <EditorHeader>
         <InlineSelect
-          label={t('components.query-header.label-format', 'Format')}
+          label={t('grafana-sql.components.query-header.label-format', 'Format')}
           value={query.format}
-          placeholder={t('components.query-header.placeholder-select-format', 'Select format')}
+          placeholder={t('grafana-sql.components.query-header.placeholder-select-format', 'Select format')}
           menuShouldPortal
           onChange={onFormatChange}
           options={QUERY_FORMAT_OPTIONS}
@@ -139,7 +139,7 @@ export function QueryHeader({
           <>
             <InlineSwitch
               id={`sql-filter-${htmlId}`}
-              label={t('components.query-header.label-filter', 'Filter')}
+              label={t('grafana-sql.components.query-header.label-filter', 'Filter')}
               data-testid={selectors.components.SQLQueryEditor.headerFilterSwitch}
               transparent={true}
               showLabel={true}
@@ -160,7 +160,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-group-${htmlId}`}
-              label={t('components.query-header.label-group', 'Group')}
+              label={t('grafana-sql.components.query-header.label-group', 'Group')}
               data-testid={selectors.components.SQLQueryEditor.headerGroupSwitch}
               transparent={true}
               showLabel={true}
@@ -181,7 +181,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-order-${htmlId}`}
-              label={t('components.query-header.label-order', 'Order')}
+              label={t('grafana-sql.components.query-header.label-order', 'Order')}
               data-testid={selectors.components.SQLQueryEditor.headerOrderSwitch}
               transparent={true}
               showLabel={true}
@@ -202,7 +202,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-preview-${htmlId}`}
-              label={t('components.query-header.label-preview', 'Preview')}
+              label={t('grafana-sql.components.query-header.label-preview', 'Preview')}
               data-testid={selectors.components.SQLQueryEditor.headerPreviewSwitch}
               transparent={true}
               showLabel={true}
@@ -227,13 +227,13 @@ export function QueryHeader({
 
         {isQueryRunnable ? (
           <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
-            <Trans i18nKey="components.query-header.run-query">Run query</Trans>
+            <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
           </Button>
         ) : (
           <Tooltip
             theme="error"
             content={
-              <Trans i18nKey="components.query-header.content-invalid-query">
+              <Trans i18nKey="grafana-sql.components.query-header.content-invalid-query">
                 Your query is invalid. Check below for details. <br />
                 However, you can still run this query.
               </Trans>
@@ -241,7 +241,7 @@ export function QueryHeader({
             placement="top"
           >
             <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
-              <Trans i18nKey="components.query-header.run-query">Run query</Trans>
+              <Trans i18nKey="grafana-sql.components.query-header.run-query">Run query</Trans>
             </Button>
           </Tooltip>
         )}
@@ -296,7 +296,7 @@ export function QueryHeader({
           <Space v={0.5} />
           <EditorRow>
             {datasetDropdownIsAvailable() && (
-              <EditorField label={t('components.query-header.label-dataset', 'Dataset')} width={25}>
+              <EditorField label={t('grafana-sql.components.query-header.label-dataset', 'Dataset')} width={25}>
                 <DatasetSelector
                   db={db}
                   inputId={`sql-dataset-${htmlId}`}
@@ -307,7 +307,7 @@ export function QueryHeader({
                 />
               </EditorField>
             )}
-            <EditorField label={t('components.query-header.label-table', 'Table')} width={25}>
+            <EditorField label={t('grafana-sql.components.query-header.label-table', 'Table')} width={25}>
               <TableSelector
                 db={db}
                 inputId={`sql-tableselect-${htmlId}`}
