@@ -60,6 +60,7 @@ storage:
 overrides:
   defaults:
     metrics_generator:
+      generate_native_histograms: both # 'classic' or 'native' or 'both'
       processors: [local-blocks, service-graphs, span-metrics]
 
 stream_over_http_enabled: true
