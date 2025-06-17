@@ -926,4 +926,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
 )
