@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { docsTip } from '../../../configuration/ConfigEditor';
+import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';

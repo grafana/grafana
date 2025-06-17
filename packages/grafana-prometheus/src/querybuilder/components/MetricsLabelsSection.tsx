@@ -6,8 +6,8 @@ import { SelectableValue, TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
-import { promQueryModeller } from '../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 

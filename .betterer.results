@@ -455,20 +455,17 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditor.tsx:5381": [
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditorRegistry.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-prometheus/src/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

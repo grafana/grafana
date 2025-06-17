@@ -8,26 +8,25 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
+import { PromQueryModellerInterface, PromVisualQuery } from '../types';
 
-import { LokiAndPromQueryModellerBase, PromLokiVisualQuery } from './LokiAndPromQueryModellerBase';
-
-export interface Props<T extends PromLokiVisualQuery> {
-  query: T;
+export interface Props {
+  query: PromVisualQuery;
   datasource: PrometheusDatasource;
-  queryModeller: LokiAndPromQueryModellerBase;
-  buildVisualQueryFromString: (expr: string) => { query: T };
-  onChange: (update: T) => void;
+  queryModeller: PromQueryModellerInterface;
+  buildVisualQueryFromString: (expr: string) => { query: PromVisualQuery };
+  onChange: (update: PromVisualQuery) => void;
   data?: PanelData;
 }
 
-export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
+export const QueryBuilderHints = ({
   datasource,
   query: visualQuery,
   onChange,
   data,
   queryModeller,
   buildVisualQueryFromString,
-}: Props<T>) => {
+}: Props) => {
   const [hints, setHints] = useState<QueryHint[]>([]);
   const styles = useStyles2(getStyles);
 

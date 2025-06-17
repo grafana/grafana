@@ -13,8 +13,8 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
-import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
 import { PromVisualQuery } from '../querybuilder/types';
 import {

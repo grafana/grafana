@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/operations.ts
 import { binaryScalarOperations } from './binaryScalarOperations';
-import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   defaultAddOperationHandler,
   functionRendererLeft,
@@ -216,7 +215,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
         {
           name: 'Destination Label',
           type: 'string',
-          editor: LabelParamEditor,
         },
         {
           name: 'Separator',
@@ -227,7 +225,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
         },
       ],
       defaultParams: ['', ',', ''],

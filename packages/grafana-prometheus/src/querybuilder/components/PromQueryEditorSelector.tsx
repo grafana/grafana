@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx
-import { isEqual, map } from 'lodash';
+import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
@@ -10,7 +10,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
-import { PromQueryFormat } from '../../dataquery';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
@@ -24,17 +23,6 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 import { PromQueryCodeEditorAutocompleteInfo } from './PromQueryCodeEditorAutocompleteInfo';
-
-export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
-  { label: 'Heatmap', value: 'heatmap' },
-];
-
-export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
-  value,
-  label: '1/' + value,
-}));
 
 type Props = PromQueryEditorProps;
 

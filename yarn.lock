@@ -3433,6 +3433,7 @@ __metadata:
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     react-window: "npm:1.8.11"
+    rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
