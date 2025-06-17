@@ -102,14 +102,12 @@ func TestGetContactPoints(t *testing.T) {
 			},
 		}
 
-		defaultEmailContactPointCount := 1
-
 		createdContactPoints := createContactPoints(t, ctx, s, user)
 
 		contactPoints, err := s.getContactPoints(ctx, user)
 		require.NoError(t, err)
 		require.NotNil(t, contactPoints)
-		require.Len(t, contactPoints, len(createdContactPoints)+defaultEmailContactPointCount)
+		require.Len(t, contactPoints, len(createdContactPoints))
 	})
 
 	t.Run("it returns an error when user lacks permission to read contact point secrets", func(t *testing.T) {

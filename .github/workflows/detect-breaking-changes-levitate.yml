@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -86,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -136,7 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v4
