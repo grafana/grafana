@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 
 import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { SceneCanvasText, sceneGraph, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
@@ -139,6 +139,21 @@ describe('LibraryPanelBehavior', () => {
 
     expect(behavior.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behavior.state._loadedPanel?.uid).toBe('111');
+  });
+
+  it('should set the title to the library panel title if the feature toggle is enabled', async () => {
+    config.featureToggles.preferLibraryPanelTitle = true;
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    expect(gridItem.state.body.state.title).toBe('LibraryPanel A title');
+    config.featureToggles.preferLibraryPanelTitle = false;
+  });
+
+  it('should set the title to the panel title if the feature toggle is disabled', async () => {
+    config.featureToggles.preferLibraryPanelTitle = false;
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    expect(gridItem.state.body.state.title).toBe('Panel A');
   });
 
   it('should not update panel if behavior not part of a vizPanel', async () => {
