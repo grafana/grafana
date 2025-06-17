@@ -5,8 +5,7 @@ import { languages } from 'monaco-editor';
 import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { prometheusRegularEscape } from '../../../datasource';
-import { escapeLabelValueInExactSelector } from '../../../language_utils';
+import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 

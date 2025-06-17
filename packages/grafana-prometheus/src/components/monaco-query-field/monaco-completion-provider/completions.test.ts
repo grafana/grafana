@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../language_provider';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
 import { getMockTimeRange } from '../../../test/__mocks__/datasource';
 

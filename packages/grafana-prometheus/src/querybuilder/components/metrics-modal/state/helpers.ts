@@ -8,12 +8,9 @@ import { getMetadataHelp, getMetadataType } from '../../../../language_provider'
 import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
-import { setFilteredMetricCount } from '../MetricsModal';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalMetadata, MetricsModalState } from './state';
-
-// const { setFilteredMetricCount } = stateSlice.actions;
+import { MetricsModalMetadata, MetricsModalState, setFilteredMetricCount } from './state';
 
 export async function setMetrics(
   datasource: PrometheusDatasource,
