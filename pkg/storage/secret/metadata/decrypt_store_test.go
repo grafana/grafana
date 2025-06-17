@@ -325,10 +325,10 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	database := database.ProvideDatabase(db, tracer)
 
 	// Initialize encryption manager and storage
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
 	encryptionManager, err := encryptionmanager.ProvideEncryptionManager(
