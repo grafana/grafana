@@ -18210,7 +18210,7 @@ __metadata:
     node-notifier: "npm:10.0.1"
     nx: "npm:20.7.1"
     ol: "npm:7.4.0"
-    ol-ext: "npm:4.0.32"
+    ol-ext: "npm:4.0.33"
     openapi-types: "npm:^12.1.3"
     pdf-parse: "npm:^1.1.1"
     plop: "npm:^4.0.1"
@@ -23888,12 +23888,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.32":
-  version: 4.0.32
-  resolution: "ol-ext@npm:4.0.32"
+"ol-ext@npm:4.0.33":
+  version: 4.0.33
+  resolution: "ol-ext@npm:4.0.33"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/340fbd38177d64575e6f418aebb6862cdb05d94e7a229bdebaafe809bf1f5e146294dc76be0a4f0b803880441a39097e162717be4673fef2e94d38da75c73f5e
+  checksum: 10/20eb7f08e824db2bdf3837bc654230409c207336c52c67b259a6eb6e5f56645d45c0f5eea1cfa87b19cebb4e8cee383ef1d04c06a5647896927f574849c59c49
   languageName: node
   linkType: hard
 
