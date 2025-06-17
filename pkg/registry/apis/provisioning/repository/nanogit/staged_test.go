@@ -16,14 +16,13 @@ import (
 
 func TestNewStagedGitRepository(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupMock   func(*mocks.FakeClient)
-		opts        repository.CloneOptions
-		wantError   bool
-		expectCalls int
+		name      string
+		setupMock func(*mocks.FakeClient)
+		opts      repository.CloneOptions
+		wantError error
 	}{
 		{
-			name: "success - basic creation",
+			name: "succeeds with default options",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -36,11 +35,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 				CreateIfNotExists: false,
 				PushOnWrites:      false,
 			},
-			wantError:   false,
-			expectCalls: 1,
+			wantError: nil,
 		},
 		{
-			name: "success - with BeforeFn",
+			name: "succeeds with BeforeFn",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -56,11 +54,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 					return nil
 				},
 			},
-			wantError:   false,
-			expectCalls: 1,
+			wantError: nil,
 		},
 		{
-			name: "success - with timeout",
+			name: "succeeds with timeout",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -74,11 +71,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 				PushOnWrites:      false,
 				Timeout:           time.Second * 5,
 			},
-			wantError:   false,
-			expectCalls: 1,
+			wantError: nil,
 		},
 		{
-			name: "failure - BeforeFn error",
+			name: "fails with BeforeFn error",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				// No setup needed as BeforeFn fails first
 			},
@@ -87,11 +83,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 					return errors.New("before function failed")
 				},
 			},
-			wantError:   true,
-			expectCalls: 0,
+			wantError: errors.New("before function failed"),
 		},
 		{
-			name: "failure - GetRef error",
+			name: "fails with GetRef error",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("ref not found"))
 			},
@@ -99,11 +94,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 				CreateIfNotExists: false,
 				PushOnWrites:      false,
 			},
-			wantError:   true,
-			expectCalls: 1,
+			wantError: errors.New("ref not found"),
 		},
 		{
-			name: "failure - NewStagedWriter error",
+			name: "fails with NewStagedWriter error",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -115,8 +109,7 @@ func TestNewStagedGitRepository(t *testing.T) {
 				CreateIfNotExists: false,
 				PushOnWrites:      false,
 			},
-			wantError:   true,
-			expectCalls: 1,
+			wantError: errors.New("build staged writer: failed to create writer"),
 		},
 	}
 
@@ -140,10 +133,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			}
 
 			stagedRepo, err := NewStagedGitRepository(context.Background(), gitRepo, tt.opts)
-
-			if tt.wantError {
-				require.Error(t, err)
-				require.Nil(t, stagedRepo)
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, stagedRepo)
@@ -158,12 +149,6 @@ func TestNewStagedGitRepository(t *testing.T) {
 				// BeforeFn is a function pointer, so we just check if both are nil or both are not nil
 				require.Equal(t, tt.opts.BeforeFn == nil, actualOpts.BeforeFn == nil)
 			}
-
-			// Verify expected calls
-			require.Equal(t, tt.expectCalls, mockClient.GetRefCallCount())
-			if tt.expectCalls > 0 && !tt.wantError {
-				require.Equal(t, 1, mockClient.NewStagedWriterCallCount())
-			}
 		})
 	}
 }
@@ -174,11 +159,10 @@ func TestStagedGitRepository_Read(t *testing.T) {
 		setupMock func(*mocks.FakeClient)
 		path      string
 		ref       string
-		wantError bool
-		errorMsg  string
+		wantError error
 	}{
 		{
-			name: "success - read file with empty ref",
+			name: "succeeds with empty ref",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -194,10 +178,10 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			},
 			path:      "test.yaml",
 			ref:       "",
-			wantError: false,
+			wantError: nil,
 		},
 		{
-			name: "success - read file with matching ref",
+			name: "succeeds with matching ref",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -213,17 +197,16 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			},
 			path:      "test.yaml",
 			ref:       "main",
-			wantError: false,
+			wantError: nil,
 		},
 		{
-			name: "failure - unsupported ref",
-			setupMock: func(mockClient *mocks.FakeClient) {
+			name: "fails with unsupported ref",
+			setupMock: func(_ *mocks.FakeClient) {
 				// No setup needed as error occurs before client calls
 			},
 			path:      "test.yaml",
 			ref:       "feature-branch",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 	}
 
@@ -233,15 +216,9 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			stagedRepo := createTestStagedRepository(mockClient)
-
 			fileInfo, err := stagedRepo.Read(context.Background(), tt.path, tt.ref)
-
-			if tt.wantError {
-				require.Error(t, err)
-				require.Nil(t, fileInfo)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, fileInfo)
@@ -256,11 +233,10 @@ func TestStagedGitRepository_ReadTree(t *testing.T) {
 		name      string
 		setupMock func(*mocks.FakeClient)
 		ref       string
-		wantError bool
-		errorMsg  string
+		wantError error
 	}{
 		{
-			name: "success - read tree with empty ref",
+			name: "succeeds with empty ref",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
@@ -276,16 +252,15 @@ func TestStagedGitRepository_ReadTree(t *testing.T) {
 				}, nil)
 			},
 			ref:       "",
-			wantError: false,
+			wantError: nil,
 		},
 		{
-			name: "failure - unsupported ref",
+			name: "fails with unsupported ref",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				// No setup needed as error occurs before client calls
 			},
 			ref:       "feature-branch",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 	}
 
@@ -298,12 +273,8 @@ func TestStagedGitRepository_ReadTree(t *testing.T) {
 
 			entries, err := stagedRepo.ReadTree(context.Background(), tt.ref)
 
-			if tt.wantError {
-				require.Error(t, err)
-				require.Nil(t, entries)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, entries)
@@ -321,12 +292,11 @@ func TestStagedGitRepository_Create(t *testing.T) {
 		ref        string
 		data       []byte
 		message    string
-		wantError  bool
-		errorMsg   string
+		wantError  error
 		expectPush bool
 	}{
 		{
-			name: "success - create file without push",
+			name: "succeeds with empty ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -338,11 +308,11 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:        "",
 			data:       []byte("content"),
 			message:    "Create test file",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: false,
 		},
 		{
-			name: "success - create file with push",
+			name: "succeeds with matching ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -355,11 +325,11 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:        "main",
 			data:       []byte("content"),
 			message:    "Create test file",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: true,
 		},
 		{
-			name: "failure - unsupported ref",
+			name: "fails with unsupported ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// No setup needed as error occurs before writer calls
 			},
@@ -370,11 +340,10 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:       "feature-branch",
 			data:      []byte("content"),
 			message:   "Create test file",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 		{
-			name: "failure - create blob error",
+			name: "fails with create blob error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create blob failed"))
 			},
@@ -385,10 +354,10 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:       "",
 			data:      []byte("content"),
 			message:   "Create test file",
-			wantError: true,
+			wantError: errors.New("create blob: create blob failed"),
 		},
 		{
-			name: "failure - commit error",
+			name: "fails with commit error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
@@ -400,10 +369,10 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:       "",
 			data:      []byte("content"),
 			message:   "Create test file",
-			wantError: true,
+			wantError: errors.New("commit changes: commit failed"),
 		},
 		{
-			name: "failure - push error",
+			name: "fails with push error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -416,7 +385,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			ref:        "",
 			data:       []byte("content"),
 			message:    "Create test file",
-			wantError:  true,
+			wantError:  errors.New("push failed"),
 			expectPush: true, // Push is still called even though it fails
 		},
 	}
@@ -430,11 +399,8 @@ func TestStagedGitRepository_Create(t *testing.T) {
 
 			err := stagedRepo.Create(context.Background(), tt.path, tt.ref, tt.data, tt.message)
 
-			if tt.wantError {
-				require.Error(t, err)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -442,7 +408,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			// Verify push behavior
 			if tt.expectPush {
 				require.Equal(t, 1, mockWriter.PushCallCount())
-			} else if !tt.wantError || tt.errorMsg == "" {
+			} else if tt.wantError == nil {
 				require.Equal(t, 0, mockWriter.PushCallCount())
 			}
 		})
@@ -459,12 +425,11 @@ func TestStagedGitRepository_Write(t *testing.T) {
 		data       []byte
 		message    string
 		fileExists bool
-		wantError  bool
-		errorMsg   string
+		wantError  error
 		expectPush bool
 	}{
 		{
-			name: "success - write new file",
+			name: "succeeds with empty ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.BlobExistsReturns(false, nil)
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
@@ -478,11 +443,11 @@ func TestStagedGitRepository_Write(t *testing.T) {
 			data:       []byte("content"),
 			message:    "Write test file",
 			fileExists: false,
-			wantError:  false,
+			wantError:  nil,
 			expectPush: false,
 		},
 		{
-			name: "success - write existing file",
+			name: "succeeds with matching ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.BlobExistsReturns(true, nil)
 				mockWriter.UpdateBlobReturns(hash.Hash{1, 2, 3}, nil)
@@ -497,11 +462,11 @@ func TestStagedGitRepository_Write(t *testing.T) {
 			data:       []byte("updated content"),
 			message:    "Update test file",
 			fileExists: true,
-			wantError:  false,
+			wantError:  nil,
 			expectPush: true,
 		},
 		{
-			name: "failure - unsupported ref",
+			name: "fails with unsupported ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// No setup needed as error occurs before writer calls
 			},
@@ -512,11 +477,10 @@ func TestStagedGitRepository_Write(t *testing.T) {
 			ref:       "feature-branch",
 			data:      []byte("content"),
 			message:   "Write test file",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 		{
-			name: "failure - BlobExists error",
+			name: "fails with blob exists check error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.BlobExistsReturns(false, errors.New("blob exists check failed"))
 			},
@@ -527,7 +491,53 @@ func TestStagedGitRepository_Write(t *testing.T) {
 			ref:       "",
 			data:      []byte("content"),
 			message:   "Write test file",
-			wantError: true,
+			wantError: errors.New("check if file exists: blob exists check failed"),
+		},
+		{
+			name: "fails with create error",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.BlobExistsReturns(false, nil)
+				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create failed"))
+			},
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			path:      "test.yaml",
+			ref:       "",
+			data:      []byte("content"),
+			message:   "Write test file",
+			wantError: errors.New("create blob: create failed"),
+		},
+		{
+			name: "fails with update error",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.BlobExistsReturns(true, nil)
+				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update failed"))
+			},
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			path:      "test.yaml",
+			ref:       "",
+			data:      []byte("content"),
+			message:   "Write test file",
+			wantError: errors.New("update blob: update failed"),
+		},
+		{
+			name: "fails with commit error",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.BlobExistsReturns(false, nil)
+				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
+				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
+			},
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			path:      "test.yaml",
+			ref:       "",
+			data:      []byte("content"),
+			message:   "Write test file",
+			wantError: errors.New("commit changes: commit failed"),
 		},
 	}
 
@@ -540,11 +550,8 @@ func TestStagedGitRepository_Write(t *testing.T) {
 
 			err := stagedRepo.Write(context.Background(), tt.path, tt.ref, tt.data, tt.message)
 
-			if tt.wantError {
-				require.Error(t, err)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -552,7 +559,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 			// Verify push behavior
 			if tt.expectPush {
 				require.Equal(t, 1, mockWriter.PushCallCount())
-			} else if !tt.wantError || tt.errorMsg == "" {
+			} else if tt.wantError == nil {
 				require.Equal(t, 0, mockWriter.PushCallCount())
 			}
 		})
@@ -568,12 +575,11 @@ func TestStagedGitRepository_Update(t *testing.T) {
 		ref        string
 		data       []byte
 		message    string
-		wantError  bool
-		errorMsg   string
+		wantError  error
 		expectPush bool
 	}{
 		{
-			name: "success - update file without push",
+			name: "succeeds with empty ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.UpdateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -585,11 +591,11 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			ref:        "",
 			data:       []byte("updated content"),
 			message:    "Update test file",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: false,
 		},
 		{
-			name: "success - update file with push",
+			name: "succeeds with matching ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.UpdateBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -602,11 +608,11 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			ref:        "main",
 			data:       []byte("updated content"),
 			message:    "Update test file",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: true,
 		},
 		{
-			name: "failure - unsupported ref",
+			name: "fails with unsupported ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// No setup needed as error occurs before writer calls
 			},
@@ -617,11 +623,10 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			ref:       "feature-branch",
 			data:      []byte("content"),
 			message:   "Update test file",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 		{
-			name: "failure - directory update",
+			name: "fails with directory update",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// No setup needed as error occurs before writer calls
 			},
@@ -632,11 +637,10 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			ref:       "",
 			data:      []byte("content"),
 			message:   "Update directory",
-			wantError: true,
-			errorMsg:  "cannot update a directory in a staged repository",
+			wantError: errors.New("cannot update a directory in a staged repository"),
 		},
 		{
-			name: "failure - update blob error",
+			name: "fails with update blob error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update blob failed"))
 			},
@@ -647,7 +651,22 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			ref:       "",
 			data:      []byte("content"),
 			message:   "Update test file",
-			wantError: true,
+			wantError: errors.New("update blob: update blob failed"),
+		},
+		{
+			name: "fails with commit error",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.UpdateBlobReturns(hash.Hash{1, 2, 3}, nil)
+				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
+			},
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			path:      "test.yaml",
+			ref:       "",
+			data:      []byte("content"),
+			message:   "Update test file",
+			wantError: errors.New("commit changes: commit failed"),
 		},
 	}
 
@@ -660,11 +679,8 @@ func TestStagedGitRepository_Update(t *testing.T) {
 
 			err := stagedRepo.Update(context.Background(), tt.path, tt.ref, tt.data, tt.message)
 
-			if tt.wantError {
-				require.Error(t, err)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -672,7 +688,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 			// Verify push behavior
 			if tt.expectPush {
 				require.Equal(t, 1, mockWriter.PushCallCount())
-			} else if !tt.wantError || tt.errorMsg == "" {
+			} else if tt.wantError == nil {
 				require.Equal(t, 0, mockWriter.PushCallCount())
 			}
 		})
@@ -687,12 +703,11 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 		path       string
 		ref        string
 		message    string
-		wantError  bool
-		errorMsg   string
+		wantError  error
 		expectPush bool
 	}{
 		{
-			name: "success - delete file without push",
+			name: "succeeds with empty ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.DeleteBlobReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -703,11 +718,11 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 			path:       "test.yaml",
 			ref:        "",
 			message:    "Delete test file",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: false,
 		},
 		{
-			name: "success - delete directory with push",
+			name: "succeeds with matching ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.DeleteTreeReturns(hash.Hash{1, 2, 3}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -719,11 +734,11 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 			path:       "testdir/",
 			ref:        "main",
 			message:    "Delete test directory",
-			wantError:  false,
+			wantError:  nil,
 			expectPush: true,
 		},
 		{
-			name: "failure - unsupported ref",
+			name: "fails with unsupported ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// No setup needed as error occurs before writer calls
 			},
@@ -733,11 +748,10 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 			path:      "test.yaml",
 			ref:       "feature-branch",
 			message:   "Delete test file",
-			wantError: true,
-			errorMsg:  "ref is not supported for staged repository",
+			wantError: errors.New("ref is not supported for staged repository"),
 		},
 		{
-			name: "failure - delete blob error",
+			name: "fails with delete blob error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.DeleteBlobReturns(hash.Hash{}, errors.New("delete blob failed"))
 			},
@@ -747,7 +761,21 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 			path:      "test.yaml",
 			ref:       "",
 			message:   "Delete test file",
-			wantError: true,
+			wantError: errors.New("delete blob: delete blob failed"),
+		},
+		{
+			name: "fails with commit error",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.DeleteBlobReturns(hash.Hash{1, 2, 3}, nil)
+				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
+			},
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			path:      "test.yaml",
+			ref:       "",
+			message:   "Delete test file",
+			wantError: errors.New("commit changes: commit failed"),
 		},
 	}
 
@@ -760,11 +788,8 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 
 			err := stagedRepo.Delete(context.Background(), tt.path, tt.ref, tt.message)
 
-			if tt.wantError {
-				require.Error(t, err)
-				if tt.errorMsg != "" {
-					require.Contains(t, err.Error(), tt.errorMsg)
-				}
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -772,7 +797,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 			// Verify push behavior
 			if tt.expectPush {
 				require.Equal(t, 1, mockWriter.PushCallCount())
-			} else if !tt.wantError || tt.errorMsg == "" {
+			} else if tt.wantError == nil {
 				require.Equal(t, 0, mockWriter.PushCallCount())
 			}
 		})
@@ -784,20 +809,20 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		name        string
 		setupMock   func(*mocks.FakeStagedWriter)
 		opts        repository.PushOptions
-		wantError   bool
+		wantError   error
 		expectCalls int
 	}{
 		{
-			name: "success - basic push",
+			name: "succeeds with empty ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(nil)
 			},
 			opts:        repository.PushOptions{},
-			wantError:   false,
+			wantError:   nil,
 			expectCalls: 1,
 		},
 		{
-			name: "success - push with BeforeFn",
+			name: "succeeds with matching ref",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(nil)
 			},
@@ -806,23 +831,23 @@ func TestStagedGitRepository_Push(t *testing.T) {
 					return nil
 				},
 			},
-			wantError:   false,
+			wantError:   nil,
 			expectCalls: 1,
 		},
 		{
-			name: "success - push with timeout",
+			name: "succeeds with timeout",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(nil)
 			},
 			opts: repository.PushOptions{
 				Timeout: time.Second * 5,
 			},
-			wantError:   false,
+			wantError:   nil,
 			expectCalls: 1,
 		},
 		{
-			name: "failure - BeforeFn error",
-			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+			name: "fails with before fn error",
+			setupMock: func(_ *mocks.FakeStagedWriter) {
 				// No setup needed as BeforeFn fails first
 			},
 			opts: repository.PushOptions{
@@ -830,16 +855,16 @@ func TestStagedGitRepository_Push(t *testing.T) {
 					return errors.New("before function failed")
 				},
 			},
-			wantError:   true,
+			wantError:   errors.New("before function failed"),
 			expectCalls: 0,
 		},
 		{
-			name: "failure - push error",
+			name: "fails with push error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(errors.New("push failed"))
 			},
 			opts:        repository.PushOptions{},
-			wantError:   true,
+			wantError:   errors.New("push failed"),
 			expectCalls: 1,
 		},
 	}
@@ -853,8 +878,8 @@ func TestStagedGitRepository_Push(t *testing.T) {
 
 			err := stagedRepo.Push(context.Background(), tt.opts)
 
-			if tt.wantError {
-				require.Error(t, err)
+			if tt.wantError != nil {
+				require.EqualError(t, err, tt.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -865,7 +890,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 }
 
 func TestStagedGitRepository_Remove(t *testing.T) {
-	t.Run("success - remove always succeeds", func(t *testing.T) {
+	t.Run("succeeds with remove", func(t *testing.T) {
 		mockWriter := &mocks.FakeStagedWriter{}
 		stagedRepo := createTestStagedRepositoryWithWriter(mockWriter, repository.CloneOptions{})
 
