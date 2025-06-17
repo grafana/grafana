@@ -2311,3 +2311,892 @@ func TestNewGitRepository_DecryptionError(t *testing.T) {
 	require.Nil(t, gitRepo)
 	require.Contains(t, err.Error(), "decrypt token")
 }
+
+func TestGitRepository_ValidateBranchNames(t *testing.T) {
+	tests := []struct {
+		name         string
+		branchName   string
+		expectValid  bool
+	}{
+		{"valid simple branch", "main", true},
+		{"valid feature branch", "feature/new-feature", true},
+		{"valid branch with numbers", "release-v1.2.3", true},
+		{"invalid double slash", "feature//branch", false},
+		{"invalid double dot", "feature..branch", false},
+		{"invalid ending with dot", "feature.", false},
+		{"invalid starting with slash", "/feature", false},
+		{"invalid ending with slash", "feature/", false},
+		{"invalid with space", "feature branch", false},
+		{"invalid with tilde", "feature~1", false},
+		{"invalid with caret", "feature^1", false},
+		{"invalid with colon", "feature:branch", false},
+		{"invalid with question mark", "feature?", false},
+		{"invalid with asterisk", "feature*", false},
+		{"invalid with square brackets", "feature[1]", false},
+		{"invalid with backslash", "feature\\branch", false},
+		{"invalid empty string", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gitRepo := &gitRepository{
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: "test_type",
+					},
+				},
+				gitConfig: RepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: tt.branchName,
+					Token:  "token123",
+				},
+			}
+
+			errors := gitRepo.Validate()
+			
+			if tt.expectValid {
+				// Should not have a branch validation error for invalid branch name
+				for _, err := range errors {
+					if err.Field == "spec.test_type.branch" && err.Type == field.ErrorTypeInvalid {
+						require.NotContains(t, err.Detail, "invalid branch name")
+					}
+				}
+			} else {
+				// Should have a branch validation error (either required or invalid)
+				found := false
+				for _, err := range errors {
+					if err.Field == "spec.test_type.branch" && 
+					   (err.Type == field.ErrorTypeInvalid || err.Type == field.ErrorTypeRequired) {
+						found = true
+						break
+					}
+				}
+				require.True(t, found, "Expected branch validation error for: %s", tt.branchName)
+			}
+		})
+	}
+}
+
+func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		ref       string
+		wantError bool
+		wantHash  string
+	}{
+		{
+			name: "valid short hash",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No setup needed for valid hash
+			},
+			ref:       "abc123",
+			wantError: false,
+		},
+		{
+			name: "invalid hex string treated as ref",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/invalid-hex",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+			},
+			ref:       "invalid-hex-zzz",
+			wantError: false,
+		},
+		{
+			name: "refs/heads/ prefix handling",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+			},
+			ref:       "refs/heads/feature",
+			wantError: false,
+		},
+		{
+			name: "refs/tags/ handling",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/tags/v1.0.0",
+					Hash: hash.Hash{7, 8, 9},
+				}, nil)
+			},
+			ref:       "refs/tags/v1.0.0",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			refHash, err := gitRepo.resolveRefToHash(context.Background(), tt.ref)
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, refHash)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, refHash)
+			}
+		})
+	}
+}
+
+func TestGitRepository_PathValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		expectError bool
+		errorMsg    string
+	}{
+		{"valid relative path", "configs/dir", false, ""},
+		{"path traversal with ../", "../configs", true, "path contains traversal attempt (./ or ../)"},
+		{"path traversal with ./", "./configs", true, "path contains traversal attempt (./ or ../)"},
+		{"absolute path", "/absolute/path", true, "path must be relative"},
+		{"empty path", "", false, ""},
+		{"path with multiple traversals", "../../etc/passwd", true, "path contains traversal attempt (./ or ../)"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gitRepo := &gitRepository{
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: "test_type",
+					},
+				},
+				gitConfig: RepositoryConfig{
+					URL:    "https://git.example.com/repo.git",
+					Branch: "main",
+					Token:  "token123",
+					Path:   tt.path,
+				},
+			}
+
+			errors := gitRepo.Validate()
+			
+			if tt.expectError {
+				found := false
+				for _, err := range errors {
+					if err.Field == "spec.test_type.path" && err.Type == field.ErrorTypeInvalid {
+						require.Contains(t, err.Detail, tt.errorMsg)
+						found = true
+						break
+					}
+				}
+				require.True(t, found, "Expected path validation error for: %s", tt.path)
+			} else {
+				// Should not have a path validation error
+				for _, err := range errors {
+					if err.Field == "spec.test_type.path" {
+						t.Errorf("Unexpected path validation error for %s: %s", tt.path, err.Detail)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		base      string
+		ref       string
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "both base and ref empty",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed
+			},
+			base:      "",
+			ref:       "",
+			wantError: true,
+			errorMsg:  "base and ref cannot be empty",
+		},
+		{
+			name: "compare commits error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.CompareCommitsReturns(nil, errors.New("compare error"))
+			},
+			base:      "main",
+			ref:       "feature",
+			wantError: true,
+			errorMsg:  "compare commits",
+		},
+		{
+			name: "file status type changed",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main", 
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+					{
+						Path:   "configs/changed-type.yaml",
+						Status: protocol.FileStatusTypeChanged,
+					},
+				}, nil)
+			},
+			base:      "main",
+			ref:       "feature",
+			wantError: false,
+		},
+		{
+			name: "files outside configured path",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/feature", 
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+					{
+						Path:   "other/file.yaml", // Outside configs/
+						Status: protocol.FileStatusAdded,
+					},
+					{
+						Path:   "configs/included.yaml", // Inside configs/
+						Status: protocol.FileStatusAdded,
+					},
+				}, nil)
+			},
+			base:      "main",
+			ref:       "feature",
+			wantError: false,
+		},
+		{
+			name: "unknown file status",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+					{
+						Path:   "configs/unknown.yaml",
+						Status: protocol.FileStatus("unknown"),
+					},
+				}, nil)
+			},
+			base:      "main",
+			ref:       "feature",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), tt.base, tt.ref)
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, changes)
+				if tt.errorMsg != "" {
+					require.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, changes)
+				
+				// Verify that files outside configured path are filtered out
+				if tt.name == "files outside configured path" {
+					require.Len(t, changes, 1)
+					require.Equal(t, "included.yaml", changes[0].Path)
+				}
+				
+				// Verify type changed files are handled as updates
+				if tt.name == "file status type changed" {
+					require.Len(t, changes, 1)
+					require.Equal(t, repository.FileActionUpdated, changes[0].Action)
+				}
+			}
+		})
+	}
+}
+
+func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		wantError bool
+		errorType error
+	}{
+		{
+			name: "get flat tree error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetFlatTreeReturns(nil, errors.New("flat tree error"))
+			},
+			wantError: true,
+		},
+		{
+			name: "tree entries outside path",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetFlatTreeReturns(&nanogit.FlatTree{
+					Entries: []nanogit.FlatTreeEntry{
+						{
+							Path: "other/file.yaml", // Outside configs/
+							Hash: hash.Hash{4, 5, 6},
+							Type: protocol.ObjectTypeBlob,
+						},
+						{
+							Path: "configs/included.yaml", // Inside configs/
+							Hash: hash.Hash{7, 8, 9},
+							Type: protocol.ObjectTypeBlob,
+						},
+						{
+							Path: "configs/dir", // Directory without trailing slash
+							Hash: hash.Hash{10, 11, 12},
+							Type: protocol.ObjectTypeTree,
+						},
+					},
+				}, nil)
+			},
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			entries, err := gitRepo.ReadTree(context.Background(), "main")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, entries)
+				if tt.errorType != nil {
+					require.ErrorIs(t, err, tt.errorType)
+				}
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, entries)
+				
+				if tt.name == "tree entries outside path" {
+					// Should only include entries inside the configured path
+					require.Len(t, entries, 2)
+					
+					// Find the blob entry
+					var blobEntry *repository.FileTreeEntry
+					var dirEntry *repository.FileTreeEntry
+					for i := range entries {
+						if entries[i].Blob {
+							blobEntry = &entries[i]
+						} else {
+							dirEntry = &entries[i]
+						}
+					}
+					
+					require.NotNil(t, blobEntry)
+					require.Equal(t, "included.yaml", blobEntry.Path)
+					require.True(t, blobEntry.Blob)
+					
+					require.NotNil(t, dirEntry)
+					require.Equal(t, "dir/", dirEntry.Path)
+					require.False(t, dirEntry.Blob)
+				}
+			}
+		})
+	}
+}
+
+func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
+	// This test would require mocking nanogit.NewHTTPClient which is difficult
+	// We test the path where the client creation would fail by using invalid URL
+	ctx := context.Background()
+	mockSecrets := &mockSecretsService{}
+
+	config := &provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+		},
+	}
+
+	gitConfig := RepositoryConfig{
+		URL:    "://invalid-url", // This should cause nanogit.NewHTTPClient to fail
+		Branch: "main",
+		Token:  "test-token",
+		Path:   "configs",
+	}
+
+	gitRepo, err := NewGitRepository(ctx, mockSecrets, config, gitConfig)
+
+	// We expect this to fail during client creation
+	require.Error(t, err)
+	require.Nil(t, gitRepo)
+	require.Contains(t, err.Error(), "create nanogit client")
+}
+
+func TestGitRepository_ensureBranchExists_ErrorConditions(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "GetRef error other than not found",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("network error"))
+			},
+			wantError: true,
+			errorMsg:  "check branch exists",
+		},
+		{
+			name: "CreateRef error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call - branch doesn't exist
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				// Second call - get source branch
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				// CreateRef fails
+				mockClient.CreateRefReturns(errors.New("create ref failed"))
+			},
+			wantError: true,
+			errorMsg:  "create branch",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			_, err := gitRepo.ensureBranchExists(context.Background(), "new-branch")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitRepository_Read_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		filePath  string
+		wantError bool
+		errorType error
+	}{
+		{
+			name: "get tree by path error (not ErrObjectNotFound)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetTreeByPathReturns(nil, errors.New("tree error"))
+			},
+			filePath:  "directory/",
+			wantError: true,
+		},
+		{
+			name: "get commit error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetCommitReturns(nil, errors.New("commit error"))
+			},
+			filePath:  "file.yaml",
+			wantError: true,
+		},
+		{
+			name: "get blob by path error (not ErrObjectNotFound)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetCommitReturns(&nanogit.Commit{
+					Tree: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.GetBlobByPathReturns(nil, errors.New("blob error"))
+			},
+			filePath:  "file.yaml",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			fileInfo, err := gitRepo.Read(context.Background(), tt.filePath, "main")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Nil(t, fileInfo)
+				if tt.errorType != nil {
+					require.ErrorIs(t, err, tt.errorType)
+				}
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, fileInfo)
+			}
+		})
+	}
+}
+
+func TestGitRepository_Create_ErrorConditions(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "NewStagedWriter error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
+			},
+			wantError: true,
+			errorMsg:  "create staged writer",
+		},
+		{
+			name: "CreateBlob error (not ErrObjectAlreadyExists)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create blob error"))
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			wantError: true,
+			errorMsg:  "create blob",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			err := gitRepo.Create(context.Background(), "test.yaml", "main", []byte("content"), "comment")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitRepository_Update_ErrorConditions(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "NewStagedWriter error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
+			},
+			wantError: true,
+			errorMsg:  "create staged writer",
+		},
+		{
+			name: "UpdateBlob error (not ErrObjectNotFound)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update blob error"))
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			wantError: true,
+			errorMsg:  "update blob",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			err := gitRepo.Update(context.Background(), "test.yaml", "main", []byte("content"), "comment")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		path      string
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "NewStagedWriter error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
+			},
+			path:      "test.yaml",
+			wantError: true,
+			errorMsg:  "create staged writer",
+		},
+		{
+			name: "DeleteBlob error (not ErrObjectNotFound)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockWriter.DeleteBlobReturns(hash.Hash{}, errors.New("delete blob error"))
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			path:      "test.yaml",
+			wantError: true,
+			errorMsg:  "delete blob",
+		},
+		{
+			name: "DeleteTree error (not ErrObjectNotFound)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockWriter.DeleteTreeReturns(hash.Hash{}, errors.New("delete tree error"))
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			path:      "testdir/",
+			wantError: true,
+			errorMsg:  "delete tree",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   "configs",
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			err := gitRepo.Delete(context.Background(), tt.path, "main", "comment")
+
+			if tt.wantError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	// Only setup for ref resolution
+	mockClient.GetRefReturns(nanogit.Ref{
+		Name: "refs/heads/feature",
+		Hash: hash.Hash{4, 5, 6},
+	}, nil)
+	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+		{
+			Path:   "configs/new-file.yaml",
+			Status: protocol.FileStatusAdded,
+		},
+	}, nil)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		gitConfig: RepositoryConfig{
+			Branch: "main",
+			Path:   "configs",
+		},
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitHubRepositoryType,
+			},
+		},
+	}
+
+	changes, err := gitRepo.CompareFiles(context.Background(), "", "feature")
+
+	require.NoError(t, err)
+	require.NotNil(t, changes)
+	require.Len(t, changes, 1)
+	require.Equal(t, "new-file.yaml", changes[0].Path)
+
+	// Verify CompareCommits was called with empty base hash and feature hash
+	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
+	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
+	require.Nil(t, baseHash) // Empty hash for empty base
+	require.Equal(t, hash.Hash{4, 5, 6}, refHash)
+}
