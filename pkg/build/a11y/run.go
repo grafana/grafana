@@ -13,7 +13,7 @@ func RunTest(
 	nodeVersion, runnerFlags string) *dagger.Container {
 	command := fmt.Sprintf(
 		"./e2e-runner a11y --start-grafana=false"+
-			" --grafana-base-url http://grafana:3001 %s", runnerFlags)
+			" --grafana-host grafana --grafana-port 3001 %s", runnerFlags)
 
 	return GrafanaFrontend(d, cache, nodeVersion, src).
 		WithWorkdir("/src").
