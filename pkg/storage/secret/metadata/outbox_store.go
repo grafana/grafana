@@ -49,7 +49,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 		attribute.String("name", input.Name),
 		attribute.String("namespace", input.Namespace),
 		attribute.String("type", string(input.Type)),
-		attribute.String("requestId", input.RequestID),
+		attribute.String("requestID", input.RequestID),
 	))
 	defer span.End()
 
@@ -60,7 +60,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 		}
 
 		if messageID != "" {
-			span.SetAttributes(attribute.String("messageId", messageID))
+			span.SetAttributes(attribute.String("messageID", messageID))
 		}
 	}()
 
@@ -215,7 +215,7 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 
 func (s *outboxStore) Delete(ctx context.Context, messageID string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
-		attribute.String("messageId", messageID),
+		attribute.String("messageID", messageID),
 	))
 	defer span.End()
 

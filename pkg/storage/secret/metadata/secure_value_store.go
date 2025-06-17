@@ -323,7 +323,7 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
-		attribute.String("externalId", externalID.String()),
+		attribute.String("externalID", externalID.String()),
 	))
 	defer span.End()
 
@@ -361,7 +361,7 @@ func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xk
 		attribute.String("namespace", namespace.String()),
 		attribute.String("status.phase", string(status.Phase)),
 		attribute.String("status.message", status.Message),
-		attribute.String("status.externalId", status.ExternalID),
+		attribute.String("status.externalID", status.ExternalID),
 	))
 	defer span.End()
 
