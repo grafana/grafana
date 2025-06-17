@@ -57,6 +57,13 @@ function getLanguageOptions(): ComboboxOption[] {
     return a.label.localeCompare(b.label);
   });
 
+  if (process.env.NODE_ENV === 'development') {
+    languageOptions.push({
+      value: PSEUDO_LOCALE,
+      label: 'Pseudo-locale',
+    });
+  }
+
   const options = [
     {
       value: '',
