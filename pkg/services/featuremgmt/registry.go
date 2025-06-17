@@ -352,6 +352,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "nanoGit",
+			Description:     "Use experimental git library for provisioning",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -430,10 +437,11 @@ var (
 		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -1411,10 +1419,11 @@ var (
 		{
 			Name:           "teamHttpHeadersMimir",
 			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 		},
 		{
 			Name:         "teamHttpHeadersTempo",
@@ -1433,7 +1442,7 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -1754,6 +1763,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:        "preferLibraryPanelTitle",
+			Description: "Prefer library panel title over viz panel title.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 	}
 )

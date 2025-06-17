@@ -218,6 +218,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Use experimental git library for provisioning
+  */
+  nanoGit?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -262,6 +266,7 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   /**
   * Enables RBAC support for library panels
+  * @default true
   */
   libraryPanelRBAC?: boolean;
   /**
@@ -830,6 +835,7 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+  * @default true
   */
   teamHttpHeadersMimir?: boolean;
   /**
@@ -1021,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
 }
