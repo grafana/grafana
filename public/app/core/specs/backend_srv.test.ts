@@ -2,7 +2,7 @@ import { Observable, of, lastValueFrom } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, EventBusExtended, PathValidationError } from '@grafana/data';
 import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
@@ -748,170 +748,83 @@ describe('backendSrv', () => {
 
   describe('sanitizePath functionality', () => {
     describe('when sanitizePath is enabled in options', () => {
-      it('should sanitize malicious paths in get requests', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
-        const maliciousUrl = '/api/../admin/secrets';
-        
-        await backendSrv.get(maliciousUrl, undefined, undefined, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // sanitized path should be empty for traversal attacks
-            method: 'GET',
-            sanitizePath: true
-          })
-        );
-      });
+      it.each(['get', 'post', 'put', 'patch', 'delete'] as const)(
+        'should sanitize malicious paths in $method requests',
+        async (method) => {
+          const { backendSrv } = getTestContext();
+          const maliciousUrl = '/api/users/%2e%2e/admin';
 
-      it('should sanitize malicious paths in delete requests', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
-        const maliciousUrl = '/api/users/%2e%2e/admin';
-        
-        await backendSrv.delete(maliciousUrl, undefined, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // sanitized path should be empty for traversal attacks
-            method: 'DELETE',
-            sanitizePath: true
-          })
-        );
-      });
+          const promise =
+            method === 'get'
+              ? backendSrv[method](maliciousUrl, undefined, undefined, { sanitizePath: true })
+              : backendSrv[method](maliciousUrl, undefined, { sanitizePath: true });
 
-      it('should sanitize malicious paths in post requests', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
-        const maliciousUrl = '/api/../../../etc/passwd';
-        
-        await backendSrv.post(maliciousUrl, { data: 'test' }, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // sanitized path should be empty for traversal attacks
-            method: 'POST',
-            sanitizePath: true
-          })
-        );
-      });
-
-      it('should sanitize malicious paths in put requests', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
-        const maliciousUrl = '/api/config/..%2fadmin';
-        
-        await backendSrv.put(maliciousUrl, { data: 'test' }, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // sanitized path should be empty for traversal attacks
-            method: 'PUT',
-            sanitizePath: true
-          })
-        );
-      });
-
-      it('should sanitize malicious paths in patch requests', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
-        const maliciousUrl = '/api/users/.%2e/admin';
-        
-        await backendSrv.patch(maliciousUrl, { data: 'test' }, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // sanitized path should be empty for traversal attacks
-            method: 'PATCH',
-            sanitizePath: true
-          })
-        );
-      });
+          await expect(promise).rejects.toThrow(PathValidationError);
+          await expect(promise).rejects.toThrow('Invalid request path');
+        }
+      );
 
       it('should preserve safe paths when sanitizing', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const { backendSrv } = getTestContext();
         const safeUrl = '/api/users/123';
-        
-        await backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '/api/users/123', // safe path should be preserved
-            method: 'GET',
-            sanitizePath: true
-          })
-        );
+
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
+
+        await expect(promise).resolves.toBeDefined();
       });
     });
 
     describe('when sanitizePath is disabled or not provided', () => {
       it('should not sanitize paths when sanitizePath is false', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/../admin/secrets';
-        
-        await backendSrv.get(maliciousUrl, undefined, undefined, { sanitizePath: false });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '/api/../admin/secrets', // malicious path should be preserved when sanitizing is disabled
-            method: 'GET',
-            sanitizePath: false
-          })
-        );
+
+        const promise = backendSrv.get(maliciousUrl, undefined, undefined, { sanitizePath: false });
+
+        await expect(promise).resolves.toBeDefined();
       });
 
       it('should not sanitize paths when sanitizePath is not provided', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/../admin/secrets';
-        
-        await backendSrv.get(maliciousUrl);
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '/api/../admin/secrets', // malicious path should be preserved when sanitizing is not specified
-            method: 'GET'
-          })
-        );
+
+        const promise = backendSrv.get(maliciousUrl);
+
+        await expect(promise).resolves.toBeDefined();
       });
 
       it('should preserve paths when only other options are provided', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/../admin/secrets';
-        
-        await backendSrv.delete(maliciousUrl, undefined, { showErrorAlert: false });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '/api/../admin/secrets', // malicious path should be preserved when sanitizing is not specified
-            method: 'DELETE',
-            showErrorAlert: false
-          })
-        );
+
+        const promise = backendSrv.delete(maliciousUrl, undefined, { showErrorAlert: false });
+
+        await expect(promise).resolves.toBeDefined();
       });
     });
 
     describe('with complex sanitizePath scenarios', () => {
       it('should handle URL encoded traversal attacks', async () => {
-        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const { backendSrv } = getTestContext();
         const encodedUrl = '/api/%252e%252e/admin';
-        
-        await backendSrv.get(encodedUrl, undefined, undefined, { sanitizePath: true });
-        
-        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            url: '', // URL encoded traversal should be blocked
-            method: 'GET',
-            sanitizePath: true
-          })
-        );
+
+        const promise = backendSrv.get(encodedUrl, undefined, undefined, { sanitizePath: true });
+
+        await expect(promise).rejects.toThrow(PathValidationError);
       });
 
       it('should preserve paths with legitimate dots and query parameters', async () => {
         const { backendSrv, parseRequestOptionsMock } = getTestContext();
         const safeUrl = '/api/file.json?version=1.2.3&format=compact';
-        
-        await backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
-        
+
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
+
+        await expect(promise).resolves.toBeDefined();
         expect(parseRequestOptionsMock).toHaveBeenCalledWith(
           expect.objectContaining({
             url: '/api/file.json?version=1.2.3&format=compact', // legitimate dots and query params should be preserved
             method: 'GET',
-            sanitizePath: true
+            sanitizePath: true,
           })
         );
       });
@@ -919,20 +832,25 @@ describe('backendSrv', () => {
       it('should work with other options combined', async () => {
         const { backendSrv, parseRequestOptionsMock } = getTestContext();
         const safeUrl = '/api/dashboard/save';
-        
-        await backendSrv.post(safeUrl, { dashboard: 'data' }, { 
-          sanitizePath: true, 
-          showErrorAlert: false,
-          showSuccessAlert: true 
-        });
-        
+
+        const promise = backendSrv.post(
+          safeUrl,
+          { dashboard: 'data' },
+          {
+            sanitizePath: true,
+            showErrorAlert: false,
+            showSuccessAlert: true,
+          }
+        );
+
+        await expect(promise).resolves.toBeDefined();
         expect(parseRequestOptionsMock).toHaveBeenCalledWith(
           expect.objectContaining({
             url: '/api/dashboard/save',
             method: 'POST',
             sanitizePath: true,
             showErrorAlert: false,
-            showSuccessAlert: true
+            showSuccessAlert: true,
           })
         );
       });

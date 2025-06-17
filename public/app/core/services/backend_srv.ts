@@ -107,10 +107,21 @@ export class BackendSrv implements BackendService {
     return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
-  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+  fetch<T>(rawOptions: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
     const id = uuidv4();
     const fetchQueue = this.fetchQueue;
+
+    let url = rawOptions.url;
+    if (rawOptions.sanitizePath) {
+      try {
+        url = validatePath(rawOptions.url);
+      } catch (error) {
+        return throwError(() => error);
+      }
+    }
+
+    const options = url === rawOptions.url ? rawOptions : { ...rawOptions, url };
 
     return new Observable((observer) => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
@@ -547,44 +558,23 @@ export class BackendSrv implements BackendService {
     requestId?: BackendSrvRequest['requestId'],
     options?: Partial<BackendSrvRequest>
   ) {
-    const sanitizedUrl = options?.sanitizePath ? validatePath(url) : url;
-    return this.request<T>({ ...options, method: 'GET', url: sanitizedUrl, params, requestId });
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = unknown>(
-    url: string, 
-    data?: unknown, 
-    options?: Partial<BackendSrvRequest>
-  ) {
-    const sanitizedUrl = options?.sanitizePath ? validatePath(url) : url;
-    return this.request<T>({ ...options, method: 'DELETE', url: sanitizedUrl, data });
+  async delete<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(
-    url: string, 
-    data?: unknown, 
-    options?: Partial<BackendSrvRequest>
-  ) {
-    const sanitizedUrl = options?.sanitizePath ? validatePath(url) : url;
-    return this.request<T>({ ...options, method: 'POST', url: sanitizedUrl, data });
+  async post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(
-    url: string, 
-    data: unknown, 
-    options?: Partial<BackendSrvRequest>
-  ) {
-    const sanitizedUrl = options?.sanitizePath ? validatePath(url) : url;
-    return this.request<T>({ ...options, method: 'PATCH', url: sanitizedUrl, data });
+  async patch<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(
-    url: string, 
-    data: unknown, 
-    options?: Partial<BackendSrvRequest>
-  ): Promise<T> {
-    const sanitizedUrl = options?.sanitizePath ? validatePath(url) : url;
-    return this.request<T>({ ...options, method: 'PUT', url: sanitizedUrl, data });
+  async put<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: () => Promise<void>) {

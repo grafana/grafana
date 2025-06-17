@@ -120,12 +120,27 @@ export function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-// Returns a validated path or URL, protects against path traversal attacks.
-// If a full URL is provided, only the path portion is checked for traversal attempts.
-// Returns the original input if safe, empty string if unsafe.
-export function validatePath(path: string): string {
+export class PathValidationError extends Error {
+  constructor(message = 'Invalid request path') {
+    super(message);
+    this.name = 'PathValidationError';
+    // Maintains proper stack trace for where error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PathValidationError);
+    }
+  }
+}
+
+/**
+ * Validates a path or URL, protecting against path traversal attacks.
+ * If a full URL is provided, only the path portion is checked for traversal attempts.
+ * Returns the original input if safe, or throw an error
+ */
+// We use a generic type to ensure that only the original path is ever returned from the function
+// and not some other string that might have been decoded.
+export function validatePath<OriginalPath extends string>(path: OriginalPath): OriginalPath {
   try {
-    let originalDecoded = path;
+    let originalDecoded: string = path; // down-cast to a string to indicate this can't be returned
     while (true) {
       const nextDecode = decodeURIComponent(originalDecoded);
       if (nextDecode === originalDecoded) {
@@ -137,16 +152,22 @@ export function validatePath(path: string): string {
     // Remove query params and fragments to check only the path portion
     const cleaned = originalDecoded.split(/[\?&#]/)[0];
     originalDecoded = cleaned;
-    
+
     // If the original string contains traversal attempts, block it
     if (originalDecoded.includes('..')) {
-      return '';
+      throw new PathValidationError();
     }
+
     return path;
   } catch (err) {
+    // Rethrow the original InvalidPathError to preserve the stack trace
+    if (err instanceof PathValidationError) {
+      throw err;
+    }
+
     // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
     // These are suspicious, so we treat them as traversal attempts.
-    return '';
+    throw new PathValidationError('Error validating request path');
   }
 }
 
