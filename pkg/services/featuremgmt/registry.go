@@ -1434,7 +1434,7 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
