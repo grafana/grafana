@@ -1,9 +1,9 @@
 import { mockDataSource } from '../mocks';
 
 import {
+  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
   isDataSourceManagingAlerts,
   isValidRecordingRulesTarget,
-  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
 } from './datasource';
 
 describe('isDataSourceManagingAlerts', () => {
