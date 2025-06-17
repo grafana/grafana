@@ -1,4 +1,7 @@
-import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  defaultDataQueryKind,
+  PanelQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getRuntimePanelDataSource } from './utils';
 
@@ -42,40 +45,42 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: 'test-ds-uid',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'prometheus-uid',
+          },
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'test-ds-uid',
-      type: 'test-ds-type',
+      uid: 'prometheus-uid',
+      type: 'prometheus',
     });
   });
 
-  it('should infer datasource based on query kind when datasource is not specified', () => {
+  it('should infer datasource based on query group when datasource is not specified', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: undefined,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',
@@ -89,15 +94,16 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: undefined,
         query: {
-          kind: 'unknown-type',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'unknown-type',
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'default-ds-uid',
@@ -111,18 +117,19 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: '',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: '',
+          },
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',
