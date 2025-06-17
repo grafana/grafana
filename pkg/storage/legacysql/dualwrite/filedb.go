@@ -14,7 +14,7 @@ import (
 // This migration will be called once, and will remove the file based option even if the input was invalid
 func migrateFileDBTo(cfg *setting.Cfg, db *keyvalueDB) {
 	fpath := filepath.Join(cfg.DataPath, "dualwrite.json")
-	v, err := os.ReadFile(fpath)
+	v, err := os.ReadFile(fpath) // nolint:gosec
 	if err != nil {
 		return // the file does not exist, so nothign required
 	}
