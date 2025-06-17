@@ -90,36 +90,32 @@ const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: tru
 
 /** @internal */
 export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
-  const fieldsToSort = fields.slice();
-
-  const firstTimeIdx = fieldsToSort.findIndex((field) => field.type === FieldType.time);
-
-  let timeField: Field | undefined = undefined;
-
-  if (firstTimeIdx !== -1) {
-    timeField = fieldsToSort.splice(firstTimeIdx, 1)[0];
-  }
-
-  const sortedFields = fieldsToSort.sort((fieldA, fieldB) => {
-    for (let i = 0; i < orderBy.length; i++) {
-      let { type, name = '', desc = false } = orderBy[i];
-
-      let aVal = type === OrderByType.Name ? (fieldA.state?.displayName ?? fieldA.name) : (fieldA.labels?.[name] ?? '');
-      let bVal = type === OrderByType.Name ? (fieldB.state?.displayName ?? fieldB.name) : (fieldB.labels?.[name] ?? '');
-
-      let res = compare(aVal, bVal) * (desc ? -1 : 1);
-
-      if (res !== 0) {
-        return res;
-      }
+  let foundFirstTimeField: Field | undefined = undefined;
+  return fields.slice().sort((fieldA, fieldB) => {
+    if (foundFirstTimeField === undefined && (fieldA.type === FieldType.time || fieldB.type) === FieldType.time) {
+      foundFirstTimeField = fieldB.type === FieldType.time ? fieldB : fieldA;
     }
 
-    return 0;
+    if (fieldA.name === foundFirstTimeField?.name) {
+      return -1;
+    } else if (fieldB.name === foundFirstTimeField?.name) {
+      return 1;
+    } else {
+      for (let i = 0; i < orderBy.length; i++) {
+        let { type, name = '', desc = false } = orderBy[i];
+
+        let aVal =
+          type === OrderByType.Name ? (fieldA.state?.displayName ?? fieldA.name) : (fieldA.labels?.[name] ?? '');
+        let bVal =
+          type === OrderByType.Name ? (fieldB.state?.displayName ?? fieldB.name) : (fieldB.labels?.[name] ?? '');
+
+        let res = compare(aVal, bVal) * (desc ? -1 : 1);
+
+        if (res !== 0) {
+          return res;
+        }
+      }
+      return 0;
+    }
   });
-
-  if (timeField !== undefined) {
-    sortedFields.unshift(timeField);
-  }
-
-  return sortedFields;
 };
