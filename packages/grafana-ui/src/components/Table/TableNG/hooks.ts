@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useLayoutEffect, RefObject } from 'react';
-import { DataGridHandle, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect } from 'react';
+import { SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
@@ -265,22 +265,6 @@ export function useFooterCalcs(
       return getFooterItem(rows, field, footerOptions);
     });
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
-}
-
-export function useScrollbarWidth(
-  ref: RefObject<DataGridHandle>,
-  height: number,
-  rows: TableRow[],
-  expandedRows: Record<string, boolean>
-) {
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-
-  useLayoutEffect(() => {
-    let el = ref.current!.element!;
-    setScrollbarWidth(el.offsetWidth - el.clientWidth);
-  }, [ref, height, rows, expandedRows]);
-
-  return scrollbarWidth;
 }
 
 export function useTextWraps(fields: Field[]): Record<string, boolean> {

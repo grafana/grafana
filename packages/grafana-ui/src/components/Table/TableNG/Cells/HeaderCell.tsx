@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +9,7 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Filter } from '../Filter/Filter';
-import { TableColumnResizeActionCallback, FilterType, TableRow, TableSummaryRow } from '../types';
+import { FilterType, TableRow, TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
 interface HeaderCellProps {
@@ -21,7 +21,6 @@ interface HeaderCellProps {
   justifyContent: Property.JustifyContent;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  onColumnResize?: TableColumnResizeActionCallback;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
   showTypeIcons?: boolean;
@@ -36,63 +35,28 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   justifyContent,
   filter,
   setFilter,
-  onColumnResize,
   crossFilterOrder,
   crossFilterRows,
   showTypeIcons,
 }) => {
   const styles = useStyles2(getStyles, justifyContent);
-  const headerRef = useRef<HTMLDivElement>(null);
+  const displayName = useMemo(() => getDisplayName(field), [field]);
+  const filterable = useMemo(() => field.config.custom?.filterable ?? false, [field]);
 
-  const filterable = field.config?.custom?.filterable ?? false;
-  const displayName = getDisplayName(field);
-
-  let isColumnFilterable = filterable;
-  if (field.config.custom?.filterable !== filterable) {
-    isColumnFilterable = field.config.custom?.filterable || false;
-  }
   // we have to remove/reset the filter if the column is not filterable
-  if (!isColumnFilterable && filter[displayName]) {
-    setFilter((filter: FilterType) => {
-      const newFilter = { ...filter };
-      delete newFilter[displayName];
-      return newFilter;
-    });
-  }
-
-  const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const isMultiSort = event.shiftKey;
-    onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
-  };
-
-  // TODO: this is a workaround to handle manual column resize;
   useEffect(() => {
-    const headerCellParent = headerRef.current?.parentElement;
-    if (headerCellParent) {
-      // `lastElement` is an HTML element added by react-data-grid for resizing columns.
-      // We add event listeners to `lastElement` to handle the resize operation.
-      const lastElement = headerCellParent.lastElementChild;
-      if (lastElement) {
-        const handleMouseUp = () => {
-          let newWidth = headerCellParent.clientWidth;
-          onColumnResize?.(column.key, newWidth);
-        };
-
-        lastElement.addEventListener('click', handleMouseUp);
-
-        return () => {
-          lastElement.removeEventListener('click', handleMouseUp);
-        };
-      }
+    if (!filterable && filter[displayName]) {
+      setFilter((filter: FilterType) => {
+        const newFilter = { ...filter };
+        delete newFilter[displayName];
+        return newFilter;
+      });
     }
-    // to handle "Not all code paths return a value." error
-    return;
-  }, [column]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterable, displayName, filter, setFilter]);
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      ref={headerRef}
       className={styles.headerCell}
       // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
       // Unblock spacebar event
@@ -102,14 +66,20 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
         }
       }}
     >
-      <button className={styles.headerCellLabel} onClick={handleSort}>
+      <button
+        className={styles.headerCellLabel}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+          const isMultiSort = event.shiftKey;
+          onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
+        }}
+      >
         {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
         {/* Used cached displayName if available, otherwise use the column name (nested tables) */}
         <div>{getDisplayName(field)}</div>
         {direction && (direction === 'ASC' ? <Icon name="arrow-up" size="lg" /> : <Icon name="arrow-down" size="lg" />)}
       </button>
 
-      {isColumnFilterable && (
+      {filterable && (
         <Filter
           name={column.key}
           rows={rows}

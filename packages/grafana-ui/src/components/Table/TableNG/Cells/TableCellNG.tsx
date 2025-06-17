@@ -74,18 +74,15 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 
   // Common props for all cells
-  const commonProps = useMemo(
-    () => ({
-      value,
-      field,
-      rowIdx,
-      justifyContent,
-    }),
-    [value, field, rowIdx, justifyContent]
-  );
+  const commonProps = {
+    value,
+    field,
+    rowIdx,
+    justifyContent,
+  } as const;
 
   // Get the correct cell type
-  const renderedCell = useMemo((): ReactNode => {
+  const renderedCell = (): ReactNode => {
     switch (cellType) {
       case TableCellDisplayMode.Sparkline:
         return <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />;
@@ -133,7 +130,7 @@ export function TableCellNG(props: TableCellNGProps) {
         return <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
       }
     }
-  }, [cellType, commonProps, theme, timeRange, width, height, cellOptions, field, rowIdx, actions, value, frame]);
+  };
 
   const hasActions = cellInspect || showFilters;
 
@@ -159,7 +156,7 @@ export function TableCellNG(props: TableCellNGProps) {
 
   return (
     <div ref={divWidthRef} className={styles.cell}>
-      {renderedCell}
+      {renderedCell()}
       {hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (

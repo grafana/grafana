@@ -1,18 +1,10 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, DataGridHandle, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
+import { useLayoutEffect, useMemo, useState } from 'react';
+import { DataGrid, DataGridProps, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
 
-import {
-  DataFrame,
-  DataHoverClearEvent,
-  DataHoverEvent,
-  Field,
-  FieldType,
-  GrafanaTheme2,
-  ReducerID,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -27,15 +19,7 @@ import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
-import {
-  useFilteredRows,
-  useFooterCalcs,
-  usePaginatedRows,
-  useRowHeight,
-  useScrollbarWidth,
-  useSortedRows,
-  useTextWraps,
-} from './hooks';
+import { useFilteredRows, useFooterCalcs, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ColumnTypes } from './types';
 import {
   frameToRecords,
@@ -57,7 +41,7 @@ export function TableNG(props: TableNGProps) {
     cellHeight,
     data,
     enablePagination,
-    enableSharedCrosshair,
+    enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
     getActions,
@@ -135,15 +119,13 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const gridHandle = useRef<DataGridHandle>(null);
 
   // vt scrollbar accounting for column auto-sizing
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
-  const scrollbarWidth = useScrollbarWidth(gridHandle, height, sortedRows, expandedRows);
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - scrollbarWidth - COLUMN.EXPANDER_WIDTH : width - scrollbarWidth),
-    [width, hasNestedFrames, scrollbarWidth]
+    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
+    [width, hasNestedFrames]
   );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
@@ -169,6 +151,39 @@ export function TableNG(props: TableNGProps) {
   const textWraps = useTextWraps(data.fields);
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const rowBg = useMemo(() => getRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
+
+  const commonDataGridProps = useMemo(
+    () =>
+      ({
+        enableVirtualization,
+        defaultColumnOptions: {
+          minWidth: 50,
+          resizable: true,
+          sortable: true,
+          // draggable: true,
+        },
+        onCellContextMenu: ({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
+
+          const cellValue = row[column.key];
+          setContextMenuProps({
+            // rowIdx: rows.indexOf(row),
+            value: String(cellValue ?? ''),
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        },
+        sortColumns,
+        rowHeight,
+        headerRowClass: styles.dataGridHeaderRow,
+        headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
+        bottomSummaryRows: hasFooter ? [{}] : undefined,
+      }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
+    [enableVirtualization, hasFooter, noHeader, rowHeight, sortColumns, styles.dataGridHeaderRow]
+  );
 
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
@@ -234,7 +249,6 @@ export function TableNG(props: TableNGProps) {
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
               justifyContent={justifyColumnContent}
-              onColumnResize={onColumnResize}
               showTypeIcons={showTypeIcons}
             />
           ),
@@ -256,80 +270,82 @@ export function TableNG(props: TableNGProps) {
 
     const result: TableColumn[] = columnsFromFields(visibleFields, widths);
 
+    if (!hasNestedFrames) {
+      return result;
+    }
+
+    // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
+    const nestedData = memoizedRows.find((r) => r.data)?.data;
+    if (!nestedData) {
+      return result;
+    }
+    const renderRow = renderRowFactory(nestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, availableWidth));
+
     // If we have nested frames, we need to add a column for the row expansion
-    // If nested frames, add expansion control column
-    if (hasNestedFrames) {
-      result.unshift({
-        key: 'expanded',
+    result.unshift({
+      key: 'expanded',
+      name: '',
+      field: {
         name: '',
-        field: {
-          name: '',
-          type: FieldType.other,
-          config: {},
-          values: [],
-        },
-        cellClass(row) {
-          if (Number(row.__depth) !== 0) {
-            return styles.cellNested;
-          }
-          return;
-        },
-        colSpan(args) {
-          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? data.fields.length : 1;
-        },
-        renderCell: ({ row }) => {
-          if (Number(row.__depth) === 0) {
-            return (
-              <RowExpander
-                height={defaultRowHeight}
-                isExpanded={expandedRows[row.__index] ?? false}
-                onCellExpand={() => {
-                  setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
-                }}
-              />
-            );
-          }
-
-          // If it's a child, render entire DataGrid at first column position
-          let expandedColumns: TableColumn[] = [];
-          let expandedRecords: TableRow[] = [];
-
-          // Type guard to check if data exists as it's optional
-          const nestedData = row.data;
-          if (nestedData) {
-            expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, availableWidth));
-            expandedRecords = frameToRecords(nestedData);
-            // TODO: support filtering, and find a way to improve performance
-            expandedRecords =
-              sortColumns.length > 0 ? applySort(expandedRecords, nestedData.fields, sortColumns) : expandedRecords;
-          }
-
+        type: FieldType.other,
+        config: {},
+        values: [],
+      },
+      cellClass(row) {
+        if (Number(row.__depth) !== 0) {
+          return styles.cellNested;
+        }
+        return;
+      },
+      colSpan(args) {
+        return args.type === 'ROW' && Number(args.row.__depth) === 1 ? data.fields.length : 1;
+      },
+      renderCell: ({ row }) => {
+        if (Number(row.__depth) === 0) {
           return (
-            <DataGrid<TableRow, TableSummaryRow>
-              enableVirtualization={enableVirtualization}
-              className={cx(styles.grid, styles.gridNested)}
-              rows={expandedRecords}
-              columns={expandedColumns}
-              rowHeight={rowHeight}
-              sortColumns={sortColumns}
-              headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
+            <RowExpander
+              height={defaultRowHeight}
+              isExpanded={expandedRows[row.__index] ?? false}
+              onCellExpand={() => {
+                setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
+              }}
             />
           );
-        },
-        width: COLUMN.EXPANDER_WIDTH,
-        minWidth: COLUMN.EXPANDER_WIDTH,
-      });
-    }
+        }
+
+        // Type guard to check if data exists as it's optional
+        const nestedData = row.data;
+        if (!nestedData) {
+          return null;
+        }
+
+        const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+
+        return (
+          <DataGrid<TableRow, TableSummaryRow>
+            {...commonDataGridProps}
+            className={cx(styles.grid, styles.gridNested)}
+            columns={expandedColumns}
+            rows={expandedRecords}
+            renderers={{ renderRow }}
+          />
+        );
+      },
+      width: COLUMN.EXPANDER_WIDTH,
+      minWidth: COLUMN.EXPANDER_WIDTH,
+    });
 
     return result;
   }, [
     availableWidth,
     columnTypes,
+    commonDataGridProps,
     crossFilterOrder,
     crossFilterRows,
     data,
     defaultRowHeight,
-    enableVirtualization,
+    enableSharedCrosshair,
     expandedRows,
     filter,
     footerCalcs,
@@ -338,11 +354,10 @@ export function TableNG(props: TableNGProps) {
     isCountRowsSet,
     memoizedRows,
     onCellFilterAdded,
-    onColumnResize,
     onSortByChange,
+    panelContext,
     replaceVariables,
     rowBg,
-    rowHeight,
     setFilter,
     setSortColumns,
     showTypeIcons,
@@ -354,6 +369,11 @@ export function TableNG(props: TableNGProps) {
     widths,
   ]);
 
+  const renderRow = useMemo(
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
+    [data, enableSharedCrosshair, expandedRows, panelContext]
+  );
+
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
@@ -362,17 +382,10 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid<TableRow, TableSummaryRow>
+        {...commonDataGridProps}
         className={styles.grid}
-        ref={gridHandle}
         columns={columns}
         rows={paginatedRows}
-        enableVirtualization={enableVirtualization}
-        defaultColumnOptions={{
-          minWidth: 50,
-          resizable: true,
-          sortable: true,
-          // draggable: true,
-        }}
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -397,21 +410,17 @@ export function TableNG(props: TableNGProps) {
           });
           setIsContextMenuOpen(true);
         }}
-        onColumnWidthsChange={(widths) => {
-          for (const [key, entry] of widths) {
-            onColumnResize?.(key, entry.width);
+        onColumnWidthsChange={(updatedColWidths) => {
+          for (const [key, entry] of updatedColWidths) {
+            const fieldIdx = visibleFields.findIndex((f) => getDisplayName(f) === key);
+            if (fieldIdx !== -1 && widths[fieldIdx] !== entry.width) {
+              onColumnResize?.(key, entry.width);
+            }
           }
         }}
-        sortColumns={sortColumns}
-        rowHeight={rowHeight}
-        headerRowClass={styles.dataGridHeaderRow}
-        headerRowHeight={noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT}
-        bottomSummaryRows={hasFooter ? [{}] : undefined}
-        renderers={{
-          renderRow: (key, rowProps) =>
-            renderRow(key, rowProps, expandedRows, panelContext, data, enableSharedCrosshair ?? false),
-        }}
+        renderers={{ renderRow }}
       />
+
       {enablePagination && (
         <div className={styles.paginationContainer}>
           <Pagination
@@ -464,46 +473,49 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-function renderRow(
-  key: React.Key,
-  props: RenderRowProps<TableRow, TableSummaryRow>,
-  expandedRows: Record<string, boolean>,
-  panelContext: PanelContext,
-  data: DataFrame,
-  enableSharedCrosshair: boolean
-): React.ReactNode {
-  const { row } = props;
-  const rowIdx = Number(row.__index);
-  const isExpanded = !!expandedRows[rowIdx];
+const renderRowFactory =
+  (
+    fields: Field[],
+    panelContext: PanelContext,
+    expandedRows: Record<string, boolean>,
+    enableSharedCrosshair: boolean
+  ) =>
+  (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
+    const { row } = props;
+    const rowIdx = Number(row.__index);
+    const isExpanded = !!expandedRows[rowIdx];
 
-  // Don't render non expanded child rows
-  if (Number(row.__depth) === 1 && !isExpanded) {
-    return null;
-  }
+    // Don't render non expanded child rows
+    if (Number(row.__depth) === 1 && !isExpanded) {
+      return null;
+    }
 
-  // Add aria-expanded to parent rows that have nested data
-  if (row.data) {
-    return <Row key={key} {...props} aria-expanded={isExpanded} />;
-  }
+    // Add aria-expanded to parent rows that have nested data
+    if (row.data) {
+      return <Row key={key} {...props} aria-expanded={isExpanded} />;
+    }
 
-  const timeField = data?.fields.find((f) => f.type === FieldType.time);
-  const handlers: Partial<typeof props> = {};
-  if (enableSharedCrosshair && timeField) {
-    handlers.onMouseEnter = () => {
-      panelContext.eventBus.publish(
-        new DataHoverEvent({
-          point: {
-            time: timeField?.values[rowIdx],
-          },
-        })
-      );
-    };
-    handlers.onMouseLeave = () => {
-      panelContext.eventBus.publish(new DataHoverClearEvent());
-    };
-  }
-  return <Row key={key} {...props} {...handlers} />;
-}
+    const handlers: Partial<typeof props> = {};
+    if (enableSharedCrosshair) {
+      const timeField = fields.find((f) => f.type === FieldType.time);
+      if (timeField) {
+        handlers.onMouseEnter = () => {
+          panelContext.eventBus.publish(
+            new DataHoverEvent({
+              point: {
+                time: timeField?.values[rowIdx],
+              },
+            })
+          );
+        };
+        handlers.onMouseLeave = () => {
+          panelContext.eventBus.publish(new DataHoverClearEvent());
+        };
+      }
+    }
+
+    return <Row key={key} {...props} {...handlers} />;
+  };
 
 const getGridStyles = (
   theme: GrafanaTheme2,
@@ -660,9 +672,9 @@ min and max (used for sparklines and gauge) need much better contextual info in 
 - Field description
 - Field overrides for nested fields
 - Monospace (fieldOverride?)
-	- default for number?
-	- custom format
-	- currency format
+  - default for number?
+  - custom format
+  - currency format
 - Pagination, filter, and sort persistence via URL
 -----
 accessible sorting and filtering
