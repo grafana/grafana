@@ -8,14 +8,20 @@ import { LogListModel } from '../panel/processing';
  */
 const OTEL_PROBE_FIELD = 'severity_number';
 export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
-  const languages = logs
-    .filter((log) => log.labels[OTEL_PROBE_FIELD] !== undefined)
-    .filter((log) => log.labels.telemetry_sdk_language !== undefined)
-    .map((log) => log.labels.telemetry_sdk_language);
+  const languages = logs.map((log) => identifyOTelLanguage(log)).filter((language) => language !== undefined);
   return [...new Set(languages)];
 }
 
-export function getDisplayedFieldsForLanguages(languages: string[]) {
+export function identifyOTelLanguage(log: LogListModel | LogRowModel): string | undefined {
+  if ('otelLanguage' in log && log.otelLanguage) {
+    return log.otelLanguage;
+  }
+  return log.labels[OTEL_PROBE_FIELD] !== undefined && log.labels.telemetry_sdk_language
+    ? log.labels.telemetry_sdk_language
+    : undefined;
+}
+
+export function getDisplayedFieldsForLanguages(logs: LogListModel[] | LogRowModel[], languages: string[]) {
   const displayedFields: string[] = [];
 
   languages.forEach((language) => {
@@ -27,11 +33,13 @@ export function getDisplayedFieldsForLanguages(languages: string[]) {
     });
   });
 
-  return displayedFields;
+  return displayedFields.filter(
+    (field) => field === LOG_LINE_BODY_FIELD_NAME || logs.some((log) => log.labels[field] !== undefined)
+  );
 }
 
 export function getDisplayedFieldsForLogs(logs: LogListModel[] | LogRowModel[]): string[] {
-  return getDisplayedFieldsForLanguages(identifyOTelLanguages(logs));
+  return getDisplayedFieldsForLanguages(logs, identifyOTelLanguages(logs));
 }
 
 export function getDisplayFormatForLanguage(language: string) {
@@ -40,4 +48,16 @@ export function getDisplayFormatForLanguage(language: string) {
 
 export function getDefaultOTelDisplayFormat() {
   return ['severity_text', 'scope_name', 'exception_type', 'exception_message', LOG_LINE_BODY_FIELD_NAME];
+}
+
+export function getOtelFormattedBody(log: LogListModel) {
+  if (!log.otelLanguage) {
+    return log.raw;
+  }
+  const additionalFields = ['timestamp', 'detected_level', 'flags', 'scope_name', 'trace_id', 'span_id'];
+  return (
+    log.raw +
+    ' ' +
+    additionalFields.map((field) => (log.labels[field] ? `${field}=${log.labels[field]}` : '')).join(' ')
+  );
 }
