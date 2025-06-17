@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
+import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import provisioningSvg from 'img/provisioning/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
