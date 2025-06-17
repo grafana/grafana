@@ -120,29 +120,32 @@ export function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-// Returns a sanitized path, protects against path traversal attacks.
-export function sanitizePath(path: string): string {
+// Returns a validated path or URL, protects against path traversal attacks.
+// If a full URL is provided, only the path portion is checked for traversal attempts.
+// Returns the original input if safe, empty string if unsafe.
+export function validatePath(path: string): string {
   try {
-    let decodedForCheck = path;
-    try {
-      while (true) {
-        const nextDecode = decodeURIComponent(decodedForCheck);
-        if (nextDecode === decodedForCheck) {
-          break; // Path is fully decoded.
-        }
-        decodedForCheck = nextDecode;
+    let originalDecoded = path;
+    while (true) {
+      const nextDecode = decodeURIComponent(originalDecoded);
+      if (nextDecode === originalDecoded) {
+        break; // String is fully decoded.
       }
-    } catch (e) {
-      // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
-      // These are suspicious, so we treat them as traversal attempts.
-      return '';
+      originalDecoded = nextDecode;
     }
 
-    if (decodedForCheck.includes('..')) {
+    // Remove query params and fragments to check only the path portion
+    const cleaned = originalDecoded.split(/[\?&#]/)[0];
+    originalDecoded = cleaned;
+    
+    // If the original string contains traversal attempts, block it
+    if (originalDecoded.includes('..')) {
       return '';
     }
     return path;
   } catch (err) {
+    // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
+    // These are suspicious, so we treat them as traversal attempts.
     return '';
   }
 }
@@ -156,5 +159,5 @@ export const textUtil = {
   sanitizeSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
-  sanitizePath,
+  validatePath,
 };

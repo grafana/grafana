@@ -98,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil, sanitizePath } from './text/sanitize';
+export { textUtil, validatePath } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';

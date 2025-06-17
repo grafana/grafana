@@ -1,4 +1,4 @@
-import { sanitizeTextPanelContent, sanitizeUrl, sanitize } from './sanitize';
+import { sanitizeTextPanelContent, sanitizeUrl, sanitize, validatePath } from './sanitize';
 
 describe('sanitizeTextPanelContent', () => {
   it('should allow whitelisted styles in text panel', () => {
@@ -54,5 +54,89 @@ describe('sanitize', () => {
     const html = '<script>alert(1)</script>';
     const str = sanitize(html);
     expect(str).toBe('');
+  });
+});
+
+describe('validatePath', () => {
+  describe('path traversal protection', () => {
+    it('should block simple path traversal attempts', () => {
+        expect(validatePath('/api/../admin')).toBe('');
+        expect(validatePath('api/../admin')).toBe('');
+        expect(validatePath('../admin')).toBe('');
+    });
+
+    it('should block URL encoded path traversal attempts', () => {
+        expect(validatePath('/api/%2e%2e/admin')).toBe('');
+        expect(validatePath('/api/%252e%252e/admin')).toBe('');
+    });
+
+    it('should block double encoded traversal attempts', () => {
+        expect(validatePath('/api/%252e%252e/admin')).toBe('');
+    });
+
+    it('should handle malformed URI encoding gracefully', () => {
+        expect(validatePath('/api/%/admin')).toBe('');
+        expect(validatePath('/api/%2/admin')).toBe('');
+    });
+  });
+
+  describe('safe paths', () => {
+    it('should preserve safe paths', () => {
+        expect(validatePath('/api/users/123')).toBe('/api/users/123');
+        expect(validatePath('/api/dashboard/save')).toBe('/api/dashboard/save');
+        expect(validatePath('api/config')).toBe('api/config');
+    });
+
+    it('should preserve paths with file extensions', () => {
+        expect(validatePath('/api/file.json')).toBe('/api/file.json');
+        expect(validatePath('/static/image.png')).toBe('/static/image.png');
+    });
+
+    it('should preserve paths with query parameters', () => {
+        expect(validatePath('/api/search?q=test')).toBe('/api/search?q=test');
+        expect(validatePath('/api/file.json?version=1.2.3&format=compact')).toBe('/api/file.json?version=1.2.3&format=compact');
+    });
+
+    it('should handle empty and root paths', () => {
+        expect(validatePath('')).toBe('');
+        expect(validatePath('/')).toBe('/');
+    });
+  });
+
+  describe('full URL handling', () => {
+    it('should preserve safe full URLs', () => {
+      const safeUrl = 'https://api.example.com/users/123';
+      expect(validatePath(safeUrl)).toBe(safeUrl);
+    });
+
+    it('should preserve URLs with query parameters and fragments', () => {
+      const urlWithQuery = 'https://api.example.com/search?q=test&limit=10#results';
+      expect(validatePath(urlWithQuery)).toBe(urlWithQuery);
+    });
+
+    it('should block traversal in URL paths while preserving query params', () => {
+      expect(validatePath('https://api.example.com/api/../admin?token=abc')).toBe('');
+      expect(validatePath('http://localhost:3000/api/%2e%2e/secrets?param=value')).toBe('');
+    });
+
+    it('should allow legitimate dots in URL paths with query params', () => {
+      const urlWithDots = 'https://cdn.example.com/files/document.v1.2.pdf?download=true';
+      expect(validatePath(urlWithDots)).toBe(urlWithDots);
+    });
+
+    it('should allow query parameters that contain dots', () => {
+      const urlWithDotsInQuery = 'https://api.example.com/search?version=1.2.3&file=../config';
+      expect(validatePath(urlWithDotsInQuery)).toBe(urlWithDotsInQuery);
+    });
+
+    it('should handle malformed URLs gracefully', () => {
+      expect(validatePath('not-a-url://../admin')).toBe('');
+      expect(validatePath('://malformed')).toBe('://malformed'); // No traversal attempt, so it's allowed
+    });
+
+    it('should handle URLs with different protocols', () => {
+      expect(validatePath('ftp://files.example.com/safe/path')).toBe('ftp://files.example.com/safe/path');
+      expect(validatePath('ftp://files.example.com/../secrets')).toBe('');
+    });
   });
 });
