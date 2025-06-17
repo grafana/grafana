@@ -189,24 +189,23 @@ func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromQuery(v url.Values) ([]eval.State, error) {
-	var states []eval.State
+func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
+	states := make(map[eval.State]struct{})
 	for _, s := range v["state"] {
 		s = strings.ToLower(s)
 		switch s {
 		case "normal", "inactive":
-			states = append(states, eval.Normal)
+			states[eval.Normal] = struct{}{}
 		case "alerting", "firing":
-			states = append(states, eval.Alerting)
+			states[eval.Alerting] = struct{}{}
 		case "pending":
-			states = append(states, eval.Pending)
+			states[eval.Pending] = struct{}{}
 		case "nodata":
-			states = append(states, eval.NoData)
-		// nolint:goconst
+			states[eval.NoData] = struct{}{}
 		case "error":
-			states = append(states, eval.Error)
+			states[eval.Error] = struct{}{}
 		case "recovering":
-			states = append(states, eval.Recovering)
+			states[eval.Recovering] = struct{}{}
 		default:
 			return states, fmt.Errorf("unknown state '%s'", s)
 		}
@@ -414,28 +413,20 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilter, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := getStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
-	}
-	stateFilterSet := make(map[eval.State]struct{})
-	for _, state := range stateFilter {
-		stateFilterSet[state] = struct{}{}
 	}
 
-	healthFilter, err := getHealthFromQuery(opts.Query)
+	healthFilterSet, err := getHealthFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
-	}
-	healthFilterSet := make(map[string]struct{})
-	for health := range healthFilter {
-		healthFilterSet[health] = struct{}{}
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -517,11 +508,11 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			rulesTotals[k] += v
 		}
 
-		if len(stateFilter) > 0 {
+		if len(stateFilterSet) > 0 {
 			filterRulesByState(ruleGroup, stateFilterSet)
 		}
 
-		if len(healthFilter) > 0 {
+		if len(healthFilterSet) > 0 {
 			filterRulesByHealth(ruleGroup, healthFilterSet)
 		}
 
@@ -529,7 +520,9 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		if len(ruleGroup.Rules) > 0 {
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		}
 	}
 
 	ruleResponse.Data.NextToken = newToken
