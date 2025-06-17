@@ -22,18 +22,24 @@ func migrateAnnotations(dashboard map[string]interface{}, datasources []DataSour
 	if !ok {
 		return
 	}
+
 	list, ok := annotations["list"].([]interface{})
 	if !ok {
 		return
 	}
+
 	for _, query := range list {
 		queryMap, ok := query.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		if ds, exists := queryMap["datasource"]; exists {
-			queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+
+		ds, exists := queryMap["datasource"]
+		if !exists {
+			continue
 		}
+
+		queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 	}
 }
 
@@ -43,87 +49,119 @@ func migrateTemplateVariables(dashboard map[string]interface{}, datasources []Da
 	if !ok {
 		return
 	}
+
 	list, ok := templating["list"].([]interface{})
 	if !ok {
 		return
 	}
+
 	for _, variable := range list {
 		varMap, ok := variable.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		if varType, ok := varMap["type"].(string); ok && varType == "query" {
-			if ds, exists := varMap["datasource"]; exists {
-				varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
-			}
+
+		varType, ok := varMap["type"].(string)
+		if !ok || varType != "query" {
+			continue
 		}
+
+		ds, exists := varMap["datasource"]
+		if !exists {
+			continue
+		}
+
+		varMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 	}
 }
 
 // migratePanels updates datasource references in dashboard panels
 func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInfo) {
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panel := range panels {
-			if panelMap, ok := panel.(map[string]interface{}); ok {
-				migratePanelDatasources(panelMap, datasources)
-			}
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, panel := range panels {
+		panelMap, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
 		}
+		migratePanelDatasources(panelMap, datasources)
 	}
 }
 
 // migratePanelDatasources updates datasource references in a single panel and its targets
 func migratePanelDatasources(panelMap map[string]interface{}, datasources []DataSourceInfo) {
-	if targets, hasTargets := panelMap["targets"].([]interface{}); hasTargets && len(targets) > 0 {
-		panelDataSourceWasDefault := false
+	targets, hasTargets := panelMap["targets"].([]interface{})
+	if !hasTargets || len(targets) == 0 {
+		return
+	}
 
-		// Handle panel datasource
-		if ds, exists := panelMap["datasource"]; exists {
-			if ds == nil {
-				defaultDS := GetDefaultDSInstanceSettings(datasources)
-				panelMap["datasource"] = GetDataSourceRef(defaultDS)
-				panelDataSourceWasDefault = true
-			} else {
-				panelMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
+	panelDataSourceWasDefault := false
+
+	// Handle panel datasource
+	if ds, exists := panelMap["datasource"]; exists {
+		if ds == nil {
+			defaultDS := GetDefaultDSInstanceSettings(datasources)
+			panelMap["datasource"] = GetDataSourceRef(defaultDS)
+			panelDataSourceWasDefault = true
+		} else {
+			panelMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
+		}
+	}
+
+	// Handle target datasources
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		ds, exists := targetMap["datasource"]
+
+		// Check if target datasource is null or has no uid
+		isNullOrNoUID := !exists || ds == nil
+		if !isNullOrNoUID {
+			dsMap, ok := ds.(map[string]interface{})
+			if ok {
+				uid, hasUID := dsMap["uid"]
+				if !hasUID || uid == nil {
+					isNullOrNoUID = true
+				}
 			}
 		}
 
-		// Handle target datasources
-		for _, target := range targets {
-			if targetMap, ok := target.(map[string]interface{}); ok {
-				ds, exists := targetMap["datasource"]
-
-				// Check if target datasource is null or has no uid
-				isNullOrNoUID := !exists || ds == nil
-				if !isNullOrNoUID {
-					if dsMap, ok := ds.(map[string]interface{}); ok {
-						if uid, hasUID := dsMap["uid"]; !hasUID || uid == nil {
-							isNullOrNoUID = true
-						}
-					}
-				}
-
-				if isNullOrNoUID {
-					// If panel doesn't have mixed datasource, use panel's datasource
-					if panelDS, ok := panelMap["datasource"].(map[string]interface{}); ok {
-						if uid, hasUID := panelDS["uid"].(string); hasUID && uid != "-- Mixed --" {
-							targetMap["datasource"] = panelDS
-						}
-					}
-				} else {
-					// Migrate existing target datasource
-					targetDS := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
-					targetMap["datasource"] = targetDS
-				}
-
-				// Update panel datasource if it was default and target is not an expression
-				if panelDataSourceWasDefault {
-					if targetDS, ok := targetMap["datasource"].(map[string]interface{}); ok {
-						if uid, ok := targetDS["uid"].(string); ok && uid != "__expr__" {
-							panelMap["datasource"] = targetDS
-						}
-					}
-				}
+		if isNullOrNoUID {
+			// If panel doesn't have mixed datasource, use panel's datasource
+			panelDS, ok := panelMap["datasource"].(map[string]interface{})
+			if !ok {
+				continue
 			}
+
+			uid, hasUID := panelDS["uid"].(string)
+			if hasUID && uid != "-- Mixed --" {
+				targetMap["datasource"] = panelDS
+			}
+		} else {
+			// Migrate existing target datasource
+			targetDS := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
+			targetMap["datasource"] = targetDS
+		}
+
+		// Update panel datasource if it was default and target is not an expression
+		if !panelDataSourceWasDefault {
+			continue
+		}
+
+		targetDS, ok := targetMap["datasource"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		uid, ok := targetDS["uid"].(string)
+		if ok && uid != "__expr__" {
+			panelMap["datasource"] = targetDS
 		}
 	}
 }

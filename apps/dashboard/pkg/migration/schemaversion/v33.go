@@ -16,20 +16,31 @@ func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 
 // migratePanelsV33 updates datasource references in dashboard panels for V33 migration
 func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSourceInfo) {
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panel := range panels {
-			if panelMap, ok := panel.(map[string]interface{}); ok {
-				migratePanelDatasourcesV33(panelMap, datasources)
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return
+	}
 
-				// Handle nested panels in collapsed rows
-				if nestedPanels, hasNested := panelMap["panels"].([]interface{}); hasNested {
-					for _, nestedPanel := range nestedPanels {
-						if np, ok := nestedPanel.(map[string]interface{}); ok {
-							migratePanelDatasourcesV33(np, datasources)
-						}
-					}
-				}
+	for _, panel := range panels {
+		panelMap, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		migratePanelDatasourcesV33(panelMap, datasources)
+
+		// Handle nested panels in collapsed rows
+		nestedPanels, hasNested := panelMap["panels"].([]interface{})
+		if !hasNested {
+			continue
+		}
+
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
 			}
+			migratePanelDatasourcesV33(np, datasources)
 		}
 	}
 }
@@ -38,20 +49,39 @@ func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSource
 func migratePanelDatasourcesV33(panelMap map[string]interface{}, datasources []DataSourceInfo) {
 	// Handle panel datasource
 	if ds, exists := panelMap["datasource"]; exists {
-		panelMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
+		if result := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources); result != nil {
+			panelMap["datasource"] = result
+		} else {
+			panelMap["datasource"] = nil
+		}
 	}
 
 	// Handle target datasources
-	if targets, hasTargets := panelMap["targets"].([]interface{}); hasTargets {
-		for _, target := range targets {
-			if targetMap, ok := target.(map[string]interface{}); ok {
-				if ds, exists := targetMap["datasource"]; exists {
-					targetRef := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
-					if targetRef != nil {
-						targetMap["datasource"] = targetRef
-					}
-				}
-			}
+	targets, hasTargets := panelMap["targets"].([]interface{})
+	if !hasTargets {
+		return
+	}
+
+	for _, target := range targets {
+		targetMap, ok := target.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		ds, exists := targetMap["datasource"]
+		if !exists {
+			continue
+		}
+
+		// Skip migration for lowercase "default" - should remain as string
+		if dsStr, ok := ds.(string); ok && dsStr == "default" {
+			continue
+		}
+
+		if targetRef := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources); targetRef != nil {
+			targetMap["datasource"] = targetRef
+		} else {
+			targetMap["datasource"] = nil
 		}
 	}
 }

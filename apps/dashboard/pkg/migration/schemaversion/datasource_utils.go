@@ -40,26 +40,32 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 		return GetDefaultDSInstanceSettings(datasources)
 	}
 
+	// Check if it's a reference object without UID - should return default
+	if ref, ok := nameOrRef.(map[string]interface{}); ok {
+		if _, hasUID := ref["uid"]; !hasUID {
+			return GetDefaultDSInstanceSettings(datasources)
+		}
+	}
+
 	for _, ds := range datasources {
-		if str, ok := nameOrRef.(string); ok {
-			if str == ds.Name || str == ds.UID {
+		// Try string match first
+		if str, ok := nameOrRef.(string); ok && (str == ds.Name || str == ds.UID) {
+			return &DataSourceInfo{
+				UID:        ds.UID,
+				Type:       ds.Type,
+				Name:       ds.Name,
+				APIVersion: ds.APIVersion,
+			}
+		}
+
+		// Try reference object match
+		if ref, ok := nameOrRef.(map[string]interface{}); ok {
+			if uid, hasUID := ref["uid"]; hasUID && uid == ds.UID {
 				return &DataSourceInfo{
 					UID:        ds.UID,
 					Type:       ds.Type,
 					Name:       ds.Name,
 					APIVersion: ds.APIVersion,
-				}
-			}
-		}
-		if ref, ok := nameOrRef.(map[string]interface{}); ok {
-			if uid, hasUID := ref["uid"]; hasUID {
-				if uid == ds.UID {
-					return &DataSourceInfo{
-						UID:        ds.UID,
-						Type:       ds.Type,
-						Name:       ds.Name,
-						APIVersion: ds.APIVersion,
-					}
 				}
 			}
 		}
