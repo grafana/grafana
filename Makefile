@@ -266,6 +266,10 @@ run-go: ## Build and run web server immediately.
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
+.PHONY: run-air
+run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration.
+	air -c .air.toml
+
 ##@ Testing
 
 .PHONY: test-go
