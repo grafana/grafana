@@ -184,7 +184,7 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,preview,@grafana/identity-access-team,false,false,false
+teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
@@ -198,7 +198,7 @@ alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
-newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
+newShareReportDrawer,preview,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
