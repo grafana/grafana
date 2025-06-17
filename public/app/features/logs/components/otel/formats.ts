@@ -54,7 +54,7 @@ export function getOtelFormattedBody(log: LogListModel) {
   if (!log.otelLanguage) {
     return log.raw;
   }
-  const additionalFields = ['timestamp', 'detected_level', 'flags', 'scope_name', 'trace_id', 'span_id'];
+  const additionalFields = ['timestamp', 'detected_level', 'flags', 'trace_id', 'span_id'];
   return (
     log.raw +
     ' ' +
