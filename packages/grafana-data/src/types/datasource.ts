@@ -642,7 +642,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
-  manageRecordingRulesTarget?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }

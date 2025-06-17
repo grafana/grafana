@@ -51,7 +51,7 @@ describe('isValidRecordingRulesTarget', () => {
           mockDataSource({
             type,
             jsonData: {
-              manageRecordingRulesTarget: true,
+              allowAsRecordingRulesTarget: true,
             },
           })
         )
@@ -79,7 +79,7 @@ describe('isValidRecordingRulesTarget', () => {
         mockDataSource({
           type: 'loki',
           jsonData: {
-            manageRecordingRulesTarget: true,
+            allowAsRecordingRulesTarget: true,
           },
         })
       )

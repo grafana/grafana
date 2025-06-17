@@ -338,8 +338,8 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
 }
 
-export function isDataSourceRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.manageRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
+export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
 }
 
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
@@ -395,5 +395,5 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
 ] as const satisfies string[];
 
 export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
-  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceRecordingRulesTarget(ds);
+  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
 }

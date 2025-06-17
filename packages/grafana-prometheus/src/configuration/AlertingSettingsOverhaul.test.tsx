@@ -57,29 +57,29 @@ describe(AlertingSettingsOverhaul.name, () => {
   });
 
   describe('Recording Rules Target toggle', () => {
-    describe('when options.jsonData.manageRecordingRulesTarget is unset', () => {
+    describe('when options.jsonData.allowAsRecordingRulesTarget is unset', () => {
       it('defaults to `true` (enabled)', () => {
         const options = createDefaultConfigOptions();
-        options.jsonData.manageRecordingRulesTarget = undefined;
+        options.jsonData.allowAsRecordingRulesTarget = undefined;
 
         const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
 
         const recordingRulesTargetToggle = container.querySelector(
-          `#${selectors.components.DataSource.Prometheus.configPage.manageRecordingRulesTarget}`
+          `#${selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}`
         );
         expect(recordingRulesTargetToggle).toBeChecked();
       });
     });
 
-    describe('when options.jsonData.manageRecordingRulesTarget is set', () => {
-      it.each([true, false])('uses the manageRecordingRulesTarget value %s', (value) => {
+    describe('when options.jsonData.allowAsRecordingRulesTarget is set', () => {
+      it.each([true, false])('uses the allowAsRecordingRulesTarget value %s', (value) => {
         const options = createDefaultConfigOptions();
-        options.jsonData.manageRecordingRulesTarget = value;
+        options.jsonData.allowAsRecordingRulesTarget = value;
 
         const { container } = render(<AlertingSettingsOverhaul onOptionsChange={() => {}} options={options} />);
 
         const recordingRulesTargetToggle = container.querySelector(
-          `#${selectors.components.DataSource.Prometheus.configPage.manageRecordingRulesTarget}`
+          `#${selectors.components.DataSource.Prometheus.configPage.allowAsRecordingRulesTarget}`
         );
 
         if (value) {
