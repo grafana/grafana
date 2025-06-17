@@ -734,7 +734,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             timeZone={timeZone}
             splitOpen={splitOpen}
             onLoadLogsVolume={loadLogsVolumeData}
-            onHiddenSeriesChanged={console.log}
+            onDisplayedSeriesChanged={console.log}
             eventBus={logsVolumeEventBus}
             onClose={() => onToggleLogsVolumeCollapse(true)}
           />
