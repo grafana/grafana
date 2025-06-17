@@ -107,6 +107,16 @@ export interface RemoveElementActionHelperProps {
   undo: () => void;
 }
 
+export interface AddVariableActionHelperProps {
+  addedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface RemoveVariableActionHelperProps {
+  removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
 export interface ChangeTitleActionHelperProps {
   oldTitle: string;
   newTitle: string;
@@ -175,6 +185,34 @@ export const dashboardEditActions = {
     description: t('dashboard.description.action', 'Change dashboard description'),
     prop: 'description',
   }),
+  addVariable({ source, addedObject }: AddVariableActionHelperProps) {
+    const varsBeforeAddition = [...source.state.variables];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ variables: [...varsBeforeAddition] });
+      },
+    });
+  },
+  removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
+    const varsBeforeRemoval = [...source.state.variables];
+
+    dashboardEditActions.removeElement({
+      source,
+      removedObject,
+      perform() {
+        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
 
   changeVariableName: makeEditAction<SceneVariable, 'name'>({
     description: t('dashboard.variable.name.action', 'Change variable name'),

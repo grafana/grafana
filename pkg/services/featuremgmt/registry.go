@@ -430,10 +430,11 @@ var (
 		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			FrontendOnly:    false,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -1411,10 +1412,11 @@ var (
 		{
 			Name:           "teamHttpHeadersMimir",
 			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 		},
 		{
 			Name:         "teamHttpHeadersTempo",
@@ -1433,7 +1435,7 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -1519,7 +1521,7 @@ var (
 		{
 			Name:              "newShareReportDrawer",
 			Description:       "Enables the report creation drawer in a dashboard",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
@@ -1754,6 +1756,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:        "preferLibraryPanelTitle",
+			Description: "Prefer library panel title over viz panel title.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 	}
 )
