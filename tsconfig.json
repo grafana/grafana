@@ -14,7 +14,10 @@
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
-    }
+    },
+    // will force usage of source files for packages in our monorepository compiled with tsdown
+    // see https://colinhacks.com/essays/live-types-typescript-monorepo
+    "customConditions": ["@grafana/source"]
   },
   "ts-node": {
     "compilerOptions": {
