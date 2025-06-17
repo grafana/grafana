@@ -117,14 +117,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - yarn storybook --quiet
   depends_on:
   - yarn-install
   detach: true
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: start-storybook
 - commands:
   - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
@@ -461,7 +461,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq bash
@@ -472,7 +472,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-frontend-packages
 - failure: ignore
   image: grafana/drone-downstream
@@ -538,7 +538,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-test-plugins
 - commands:
   - apk add --update tar bash
@@ -756,7 +756,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-storybook
   when:
     paths:
@@ -1067,7 +1067,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:checkDocs
@@ -1075,7 +1075,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1386,7 +1386,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:checkDocs
@@ -1394,7 +1394,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1603,14 +1603,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - yarn storybook --quiet
   depends_on:
   - yarn-install
   detach: true
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: start-storybook
 - commands:
   - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
@@ -1710,7 +1710,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq
@@ -1721,7 +1721,7 @@ steps:
   - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: update-package-json-version
 - commands:
   - apk add --update jq bash
@@ -1733,7 +1733,7 @@ steps:
   - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-frontend-packages
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
@@ -1790,7 +1790,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-test-plugins
 - commands:
   - apk add --update tar bash
@@ -2008,7 +2008,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: build-storybook
   when:
     paths:
@@ -2058,7 +2058,7 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: publish-frontend-metrics
   when:
     repo:
@@ -2098,7 +2098,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: release-canary-npm-packages
   when:
     paths:
@@ -2468,14 +2468,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer:ci
   depends_on:
   - yarn-install
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -2483,7 +2483,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: test-frontend
 trigger:
   branch:
@@ -2524,7 +2524,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -2534,7 +2534,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: lint-frontend
 - commands:
   - |-
@@ -3360,7 +3360,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
@@ -3384,7 +3384,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: release-npm-packages
 trigger:
   event:
@@ -3419,7 +3419,7 @@ steps:
     1\n                else\n                    sleep 60\n                fi\n            done\n
     \           "
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: verify-grafanacom
 trigger:
   event:
@@ -3519,7 +3519,7 @@ steps:
     \           "
   depends_on:
   - publish-grafanacom
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: verify-grafanacom
 trigger:
   event:
@@ -3903,14 +3903,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer:ci
   depends_on:
   - yarn-install
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -3918,7 +3918,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:22.11.0-alpine
+  image: node:22.16.0-alpine
   name: test-frontend
 trigger:
   cron:
@@ -4874,7 +4874,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.24.4-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22.11.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22.16.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
@@ -4911,7 +4911,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.24.4-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22.11.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22.16.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:22-bookworm
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
@@ -5166,6 +5166,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7e8153bfa84e7d0f077703184a21d7e855e2a6be93e7877b9d4740a0acb9e2db
+hmac: 3aac355a5391ddeb89373f25dbae8003fb89e5c2645a7e8456dbbc5b6be44db1
 
 ...
