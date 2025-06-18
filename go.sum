@@ -1008,8 +1008,8 @@ github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMn
 github.com/circonus-labs/circonus-gometrics v2.3.1+incompatible/go.mod h1:nmEj6Dob7S7YxXgwXpfOuvO54S+tGdZdw9fuRZt25Ag=
 github.com/circonus-labs/circonusllhist v0.1.3/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/cloudflare/circl v1.6.0 h1:cr5JKic4HI+LkINy2lg3W2jF8sHCVTBncJr5gIIq7qk=
-github.com/cloudflare/circl v1.6.0/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
+github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
+github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/cncf/udpa/go v0.0.0-20201120205902-5459f2c99403/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -1506,8 +1506,8 @@ github.com/google/pprof v0.0.0-20210226084205-cbba55b83ad5/go.mod h1:kpwsk12EmLe
 github.com/google/pprof v0.0.0-20210601050228-01bbb1931b22/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/pprof v0.0.0-20210609004039-a478d1d731e9/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
-github.com/google/pprof v0.0.0-20250317173921-a4b03ec1a45e h1:ijClszYn+mADRFY17kjQEVQ1XRhq2/JR1M3sGqeJoxs=
-github.com/google/pprof v0.0.0-20250317173921-a4b03ec1a45e/go.mod h1:boTsfXsheKC2y+lKOCMpSfarhxDeIzfZG1jqGcPl3cA=
+github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 h1:BHT72Gu3keYf3ZEu2J0b1vyeLSOYI8bm5wbJM/8yDe8=
+github.com/google/pprof v0.0.0-20250403155104-27863c87afa6/go.mod h1:boTsfXsheKC2y+lKOCMpSfarhxDeIzfZG1jqGcPl3cA=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/s2a-go v0.1.0/go.mod h1:OJpEgntRZo8ugHpF9hkoLJbS5dSI20XZeXJ9JVywLlM=
 github.com/google/s2a-go v0.1.3/go.mod h1:Ej+mSEMGRnqRzjc7VtF+jdBwYG5fuJfiZ8ELkjEwM0A=
@@ -1611,8 +1611,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250527064921-326081cdb7a1 h1:k7
 github.com/grafana/grafana/apps/advisor v0.0.0-20250527064921-326081cdb7a1/go.mod h1:T4eaJioKjG8GQJS6sf8xMrzWV1QZrcOjxrSf4hbBiXM=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1 h1:aE74WuajAAxB3FwMlIDjpsGoGLRsk4OOMvEDBLd+fmk=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1/go.mod h1:u5uyB/n3LAUJzQyvacslofKbqpmaJlbNhf5D5DuqqfQ=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250616135341-59c2f154336b h1:uCxmMbnpar9Q5uQO5mcMyL1B0ya/jvUgkSc4PNqRTCE=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250616135341-59c2f154336b/go.mod h1:OIlvNnUufYDhBXa4xK4CyzPI2C69ZJkHy5+aFDyPtXw=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf h1:4dylGFxAO/B2up1n5x4smAVdfTYkStSExS3WaLD5jXY=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf/go.mod h1:XcJIUxPfKAhDb9mx9jHeV9U2xVA2WgE93ukd4Bx8U/M=
 github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 h1:SkVUcSlXIUi46gSGfe5/Xqn2p51c/unmkZRDX+274Os=
 github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1/go.mod h1:z9u5VFG9q1CcIt62c9RIP8dEWHX81NdiPCjtpKKeuFU=
 github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 h1:IN+KiBwtvJ3JCLdsPyAmGKJupWckH3h5iXpELd78rPo=
@@ -1637,6 +1637,8 @@ github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718k
 github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608/go.mod h1:f3JSoxBTPXX5ec4FxxeC19nTBSxoTz+cBgS3cYLMcr0=
 github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw=
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
+github.com/grafana/nanogit v0.0.0-20250617163817-5673133b88c5 h1:VaJW9la/ey2DhlJxZRKuDE0kyMbkpILuXZxtKf827UY=
+github.com/grafana/nanogit v0.0.0-20250617163817-5673133b88c5/go.mod h1:tN93IZUaAmnSWgL0IgnKdLv6DNeIhTJGvl1wvQMrWco=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36 h1:AjZ58JRw1ZieFH/SdsddF5BXtsDKt5kSrKNPWrzYz3Y=

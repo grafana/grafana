@@ -96,6 +96,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
+	github.com/grafana/nanogit v0.0.0-20250617163817-5673133b88c5 // @grafana-app-platform-squad0
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -210,7 +211,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250527064921-326081cdb7a1 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250616135341-59c2f154336b // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
@@ -324,7 +325,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476 // indirect
-	github.com/cloudflare/circl v1.6.0 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect

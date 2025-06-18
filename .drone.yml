@@ -1116,44 +1116,6 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: pr-shellcheck
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - apt-get update -yq && apt-get install shellcheck
-  - shellcheck -e SC1071 -e SC2162 scripts/**/*.sh
-  image: ubuntu:22.04
-  name: shellcheck
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-    include:
-    - scripts/**/*.sh
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
 image_pull_secrets:
 - gcr
 - gar
@@ -4933,7 +4895,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:14.3.2
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM scottyhardy/docker-wine:stable-9.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
@@ -4971,7 +4932,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:14.3.2
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
   - trivy --exit-code 1 --severity HIGH,CRITICAL scottyhardy/docker-wine:stable-9.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
@@ -5206,6 +5166,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7f318d682f431d61add0d60afcb9360f390217961709adeb88c34f11feec35b0
+hmac: 3aac355a5391ddeb89373f25dbae8003fb89e5c2645a7e8456dbbc5b6be44db1
 
 ...

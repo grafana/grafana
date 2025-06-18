@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	MIN_VERSION    = 35
+	MIN_VERSION    = 34
 	LATEST_VERSION = 41
 )
 
@@ -26,6 +26,7 @@ type DataSourceInfoProvider interface {
 
 func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		35: V35,
 		36: V36(dsInfoProvider),
 		37: V37,
 		38: V38,
