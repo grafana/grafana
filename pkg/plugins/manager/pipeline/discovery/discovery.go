@@ -46,7 +46,7 @@ func New(_ *config.PluginManagementCfg, opts Opts) *Discovery {
 
 // Discover will execute the Filter step of the Discovery stage.
 func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-	// Use the source's own Discover method instead of the external finder
+	// Use the source's own Discover method
 	found, err := src.Discover(ctx)
 	if err != nil {
 		d.log.Warn("Discovery source failed", "class", src.PluginClass(ctx), "error", err)
