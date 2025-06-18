@@ -5038,7 +5038,6 @@
       "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "success": "Dashboard deleted successfully",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "description-label": {
@@ -5050,6 +5049,9 @@
           "edit-link": "Edit link"
         }
       }
+    },
+    "edit-provisioned-dashboard-form": {
+      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5331,7 +5333,6 @@
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
-      "api-success": "Dashboard changes saved",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",

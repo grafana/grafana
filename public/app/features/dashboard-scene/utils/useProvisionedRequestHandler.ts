@@ -27,6 +27,7 @@ interface ProvisionedRequest {
   data?: DeleteRepositoryFilesWithPathApiResponse | GetRepositoryFilesWithPathApiResponse;
 }
 
+// This hook handles save new dashboard, edit existing dashboard, and delete dashboard response logic for provisioned dashboards.
 export function useProvisionedRequestHandler({
   dashboard,
   request,
