@@ -24,6 +24,8 @@ export class EmptyLanguageProviderMock {
   queryLabelKeys = jest.fn().mockResolvedValue([]);
   queryLabelValues = jest.fn().mockResolvedValue([]);
   retrieveLabelKeys = jest.fn().mockReturnValue([]);
-  retrieveMetricsMetadata = jest.fn().mockReturnValue({});
+  retrieveMetricsMetadata = jest
+    .fn()
+    .mockReturnValue({ histogram_metric_sum: { type: 'counter', help: '', unit: 'sum' } });
   queryMetricsMetadata = jest.fn().mockResolvedValue({});
 }
