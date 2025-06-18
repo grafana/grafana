@@ -127,6 +127,7 @@ type ConvertPrometheusSrv struct {
 }
 
 type Alertmanager interface {
+	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
@@ -579,7 +580,26 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
-	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
+
+	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	if err != nil {
+		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully deleted extra alertmanager configuration", "identifier", identifier)
+	return successfulResponse()
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header
