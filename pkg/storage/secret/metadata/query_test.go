@@ -379,17 +379,24 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					},
 				},
 			},
-
-			sqlSecureValueOutboxReceiveN: {
+			sqlSecureValueOutboxFetchMessageIDs: {
 				{
 					Name: "basic",
-					Data: &receiveNSecureValueOutbox{
+					Data: &fetchMessageIDsOutbox{
 						SQLTemplate:  mocks.NewTestingSQLTemplate(),
 						ReceiveLimit: 10,
 					},
 				},
 			},
-
+			sqlSecureValueOutboxReceiveN: {
+				{
+					Name: "basic",
+					Data: &receiveNSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MessageIDs:  []string{"a", "b", "c"},
+					},
+				},
+			},
 			sqlSecureValueOutboxDelete: {
 				{
 					Name: "basic",

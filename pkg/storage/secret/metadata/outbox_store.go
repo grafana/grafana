@@ -118,10 +118,18 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 	return messageID, nil
 }
 
-func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxMessage, error) {
+func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.OutboxMessage, error) {
+	messageIDs, err := s.fetchMessageIdsInQueue(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("fetching message ids from queue: %w", err)
+	}
+	// If queue is empty
+	if len(messageIDs) == 0 {
+		return nil, nil
+	}
 	req := receiveNSecureValueOutbox{
-		SQLTemplate:  sqltemplate.New(s.dialect),
-		ReceiveLimit: n,
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageIDs:  messageIDs,
 	}
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxReceiveN, req)
@@ -187,6 +195,40 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	}
 
 	return messages, nil
+}
+
+func (s *outboxStore) fetchMessageIdsInQueue(ctx context.Context, limit uint) ([]string, error) {
+	req := fetchMessageIDsOutbox{
+		SQLTemplate:  sqltemplate.New(s.dialect),
+		ReceiveLimit: limit,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxFetchMessageIDs, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxFetchMessageIDs.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching rows from secure value outbox table: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	messageIDs := make([]string, 0, limit)
+
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, fmt.Errorf("scanning row; %w", err)
+		}
+		messageIDs = append(messageIDs, s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("reading rows: %w", err)
+	}
+
+	return messageIDs, nil
 }
 
 func (s *outboxStore) Delete(ctx context.Context, messageID string) error {

@@ -11,9 +11,9 @@ SELECT
   {{ .Ident "created" }}
 FROM
   {{ .Ident "secret_secure_value_outbox" }}
+WHERE 
+  {{ .Ident "uid" }} IN ({{ .ArgList .MessageIDs }})
 ORDER BY
   {{ .Ident "created" }} ASC
-LIMIT
-  {{ .Arg .ReceiveLimit }}
 {{ .SelectFor "UPDATE SKIP LOCKED" }}
 ;

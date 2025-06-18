@@ -11,8 +11,8 @@ SELECT
   "created"
 FROM
   "secret_secure_value_outbox"
+WHERE 
+  "uid" IN ('a', 'b', 'c')
 ORDER BY
   "created" ASC
-LIMIT
-  10
 ;
