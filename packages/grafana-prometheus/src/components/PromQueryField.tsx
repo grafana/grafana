@@ -45,7 +45,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
 
   const updateLanguage = useCallback(() => {
-    if (languageProvider.metrics) {
+    if (languageProvider.retrieveMetrics()) {
       setSyntaxLoaded(true);
     }
   }, [languageProvider]);

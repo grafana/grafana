@@ -29,7 +29,7 @@ const defaultProps = {
       start: () => Promise.resolve([]),
       syntax: () => {},
       getLabelKeys: () => [],
-      metrics: [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource,
   query: {
