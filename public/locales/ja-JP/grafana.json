@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "アラートステート",
       "annotations": "注釈",
-      "description-missing-series-evaluations": "アラート状態が古いとみなされ自動的に解決されるまでに、連続して発生する必要のある次元データなしの評価間隔の数。値が指定されていない場合、デフォルト値は2になります。",
+      "description-missing-series-evaluations": "",
       "evaluation": "評価",
       "evaluation-paused": "アラート評価は現在一時停止しています",
       "evaluation-paused-description": "このルールの通知は、ルールの一時停止が解除されるまで発生せず、アラートインスタンスも作成されません。",
@@ -363,6 +363,14 @@
       "last-updated-by": "最終更新者",
       "missing-series-resolve": "解決されるまでに必要なデータが欠落した評価回数",
       "no-annotations": "注釈なし",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "コンタクトポイント",
+        "group-by": "次でグループ化：",
+        "group-title": "",
+        "mute-timings": "ミュート期間",
+        "timing-options": ""
+      },
       "pending-period": "保留期間",
       "rule": "ルール",
       "rule-identifier": "ルール識別子",
@@ -445,6 +453,15 @@
       "export": "エクスポート",
       "silence-notifications": "通知を消音",
       "with-modifications": "修正あり"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -895,6 +912,7 @@
     "copy-to-clipboard": "「{{label}}」をクリップボードにコピー",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "ダッシュボード",
         "dashboard-and-panel": "",
         "evaluation-interval": "評価間隔",
@@ -1504,6 +1522,10 @@
         "no-rules-body": "インポートするルールはありません。別の名前空間またはルールグループを選択してください。",
         "no-rules-body-yaml": "",
         "no-rules-title": "インポートするルールはありません",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "情報"
+        },
         "plugin-rules-warning": {
           "text": "一部のルールがプラグインによって管理されていることが検出されました。これらのルールはインポートされません。",
           "title": "一部のルールはインポートから除外されます"
@@ -4005,6 +4027,9 @@
         "title": "行オプション"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "プロパティを削除"
@@ -4494,7 +4519,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "変更",
-      "label-details": "詳細"
+      "label-details": "詳細",
+      "title": "ダッシュボードを保存",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "選択したフォルダには同じ名前のダッシュボードがすでに存在します。<1></1><2>このダッシュボードの保存を続行しますか？</2>",
@@ -4568,6 +4596,9 @@
       "tab-warning": {
         "title-not-unique": "このタイトルは重複しています"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "追加",
@@ -5102,6 +5133,11 @@
       "body-name-already-exists": "選択したフォルダに同じ名前のダッシュボードがすでに存在します。このダッシュボードの保存を続行しますか？",
       "title-name-already-exists": "名前はすでに存在します"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5219,7 +5255,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "変更",
-        "label-details": "詳細"
+        "label-details": "詳細",
+        "title": "ダッシュボードを保存",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7639,6 +7678,14 @@
       "show-details": "ログの詳細を非表示",
       "unpin-from-outline": "ログのピン留めを解除する"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "その他のログを読み込む際にエラーが発生しました。",
       "no-more-logs-available": "このほかのログはありません。",
@@ -7692,6 +7739,7 @@
       "escape-newlines": "ログ行で誤ってエスケープされた改行とタブシーケンスを修正",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
       "newest-first": "最新のログ順に並び替え - クリックして最も古いログを最初に表示",
@@ -7700,6 +7748,7 @@
       "remove-escaping": "エスケープを削除",
       "scroll-bottom": "一番下までスクロール",
       "scroll-top": "一番上までスクロール",
+      "show-search": "",
       "show-timestamps": "タイムスタンプを表示",
       "show-unique-labels": "一意のラベルを表示",
       "unwrap-lines": "行の折り返しを解除",
@@ -10581,6 +10630,11 @@
       "tooltip-disable": "無効にする",
       "tooltip-enable": "有効にする"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "オフ"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "列挙値を追加",
       "generate-enum-values-from-data": "データから列挙値を生成"
@@ -10759,6 +10813,9 @@
       "time-in-ascending-order": "時間は昇順です"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "自動",
+      "field-order-manual": "",
       "first-frame-warning": "フィールドの整理は単一フレームでのみ機能します。最初に変換の結合を適用するか、入力をフィルタリングすることを検討してください。"
     },
     "partion-by-values-editor": {
