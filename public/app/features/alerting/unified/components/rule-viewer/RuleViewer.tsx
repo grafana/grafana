@@ -93,6 +93,7 @@ const RuleViewer = () => {
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+  const { returnTo } = useReturnTo('/alerting/list');
   const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
@@ -119,7 +120,7 @@ const RuleViewer = () => {
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
-          returnToHref="/alerting/list"
+          returnToHref={returnTo}
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
