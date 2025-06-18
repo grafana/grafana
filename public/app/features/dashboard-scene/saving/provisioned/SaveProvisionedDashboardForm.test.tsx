@@ -1,8 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -29,6 +28,12 @@ jest.mock('@grafana/runtime', () => {
         },
       },
     },
+  };
+});
+
+jest.mock('app/features/dashboard-scene/utils/useProvisionedRequestHandler', () => {
+  return {
+    useProvisionedRequestHandler: jest.fn(),
   };
 });
 
@@ -127,13 +132,11 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repository: {
-      name: 'repo-xyz',
-      type: 'github',
-      workflows: ['write', 'branch'],
-      title: 'Test Repository',
-      target: 'folder',
-    },
+    readOnly: false,
+    workflowOptions: [
+      { label: 'Branch', value: 'branch' },
+      { label: 'Write', value: 'write' },
+    ],
     ...props,
   };
 
@@ -186,6 +189,10 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('should save a new dashboard successfully', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const { user, props } = setup();
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -202,9 +209,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     };
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
     const pathInput = screen.getByRole('textbox', { name: /path/i });
@@ -224,9 +229,6 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
-    });
-    await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
@@ -235,16 +237,13 @@ describe('SaveProvisionedDashboardForm', () => {
         body: newDashboard,
       });
     });
-    const appEvents = getAppEvents();
-    expect(appEvents.publish).toHaveBeenCalledWith({
-      type: AppEvents.alertSuccess.name,
-      payload: ['Dashboard changes saved'],
-    });
-    expect(props.dashboard.closeModal).toHaveBeenCalled();
-    expect(locationService.partial).toHaveBeenCalledWith({ viewPanel: null, editPanel: null });
   });
 
   it('should update an existing dashboard successfully', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = { ...mockRequestBase, isSuccess: true };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const updatedDashboard = {
       apiVersion: 'dashboard.grafana.app/vXyz',
       metadata: {
@@ -256,7 +255,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
       spec: { title: 'Test Dashboard', description: 'Test Description' },
     };
-    const { user, props } = setup({
+    const { user } = setup({
       isNew: false,
       dashboard: {
         useState: () => ({
@@ -276,9 +275,7 @@ describe('SaveProvisionedDashboardForm', () => {
         setManager: jest.fn(),
       } as unknown as DashboardScene,
     });
-    const mockAction = jest.fn();
-    const mockRequest = { ...mockRequestBase, isSuccess: true };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
     pathInput.removeAttribute('readonly'); // save won't get called unless we have a value
@@ -291,9 +288,6 @@ describe('SaveProvisionedDashboardForm', () => {
     const submitButton = screen.getByRole('button', { name: /save/i });
     await user.click(submitButton);
     await waitFor(() => {
-      expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
-    });
-    await waitFor(() => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
@@ -302,11 +296,17 @@ describe('SaveProvisionedDashboardForm', () => {
         body: updatedDashboard,
       });
     });
-    expect(props.dashboard.closeModal).toHaveBeenCalled();
-    expect(locationService.partial).toHaveBeenCalledWith({ viewPanel: null, editPanel: null });
   });
 
   it('should show error when save fails', async () => {
+    const mockAction = jest.fn();
+    const mockRequest = {
+      ...mockRequestBase,
+      isSuccess: false,
+      isError: true,
+      error: 'Failed to save dashboard',
+    };
+    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
     const { user, props } = setup();
     const newDashboard = {
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -323,14 +323,7 @@ describe('SaveProvisionedDashboardForm', () => {
       },
     };
     props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
-    const mockAction = jest.fn();
-    const mockRequest = {
-      ...mockRequestBase,
-      isSuccess: false,
-      isError: true,
-      error: 'Failed to save dashboard',
-    };
-    (useCreateOrUpdateRepositoryFile as jest.Mock).mockReturnValue([mockAction, mockRequest]);
+
     const titleInput = screen.getByRole('textbox', { name: /title/i });
     const descriptionInput = screen.getByRole('textbox', { name: /description/i });
     const pathInput = screen.getByRole('textbox', { name: /path/i });
@@ -356,13 +349,6 @@ describe('SaveProvisionedDashboardForm', () => {
         path: 'error-dashboard.json',
         message: 'Error commit',
         body: newDashboard,
-      });
-    });
-    await waitFor(() => {
-      const appEvents = getAppEvents();
-      expect(appEvents.publish).toHaveBeenCalledWith({
-        type: AppEvents.alertError.name,
-        payload: ['Error saving dashboard', 'Failed to save dashboard'],
       });
     });
   });
@@ -393,13 +379,7 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,
-      repository: {
-        name: 'repo-abc',
-        type: 'github',
-        workflows: [],
-        target: 'folder',
-        title: 'Read-only Repository',
-      },
+      readOnly: true,
     });
 
     // Alert is shown
