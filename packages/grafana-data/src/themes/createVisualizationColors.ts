@@ -17,25 +17,42 @@ export interface ThemeVisualizationColors {
 /**
  * @alpha
  */
-export interface ThemeVizColor {
+export interface ThemeVizColor<T extends ThemeVizColorName> {
   color: string;
-  name: string;
+  name: ThemeVizColorShadeName<T>;
   aliases?: string[];
   primary?: boolean;
 }
 
+type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
+
+type ThemeVizColorShadeName<T extends ThemeVizColorName> =
+  | `super-light-${T}`
+  | `light-${T}`
+  | T
+  | `semi-dark-${T}`
+  | `dark-${T}`;
+
 /**
  * @alpha
  */
-export interface ThemeVizHue {
-  name: string;
-  shades: ThemeVizColor[];
-}
+export type ThemeVizHueGeneric<T extends ThemeVizColorName> = {
+  name: T;
+  shades: Array<ThemeVizColor<T>>;
+};
 
-export interface ThemeVisualizationColorsInput {
+export type ThemeVisualizationColorsInput = {
   hues?: ThemeVizHue[];
   palette?: string[];
-}
+};
+
+type ThemeVizHue =
+  | ThemeVizHueGeneric<'red'>
+  | ThemeVizHueGeneric<'orange'>
+  | ThemeVizHueGeneric<'yellow'>
+  | ThemeVizHueGeneric<'green'>
+  | ThemeVizHueGeneric<'blue'>
+  | ThemeVizHueGeneric<'purple'>;
 
 /**
  * @internal
