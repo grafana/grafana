@@ -131,19 +131,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if b.enableAuthZResources {
 		// v0alpha1
-		coreRoleResource := iamv0b.CoreRoleInfo
-		store, err := NewLocalStore(
-			coreRoleResource,
-			apiGroupInfo.Scheme,
-			opts.OptsGetter,
-			b.reg,
-			b.accessClient,
-			b.coreRolesStorage,
-		)
+		store, err := NewLocalStore(iamv0b.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
 			return err
 		}
-		storage[coreRoleResource.StoragePath()] = store
+		storage[iamv0b.CoreRoleInfo.StoragePath()] = store
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
