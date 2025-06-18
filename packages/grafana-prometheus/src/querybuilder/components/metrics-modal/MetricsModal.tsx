@@ -3,7 +3,7 @@ import { cx } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -20,6 +20,9 @@ import {
 } from '@grafana/ui';
 
 import { getDebounceTimeInMilliseconds } from '../../../caching';
+import { METRIC_LABEL } from '../../../components/metrics-browser/types';
+import { regexifyLabelValuesQueryString } from '../../parsingUtils';
+import { formatPrometheusLabelFilters } from '../MetricCombobox';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
