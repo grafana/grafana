@@ -605,9 +605,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
 	}
 
-	respBody := apimodels.AlertmanagerUserConfig{
-		AlertmanagerConfig: extraCfg.AlertmanagerConfig,
-		TemplateFiles:      extraCfg.TemplateFiles,
+	// Parse the configuration into our Gettable struct which will automatically
+	// sanitize secrets and exclude global settings when marshaled back to YAML.
+	var prometheusConfig amconfig.Config
+	if err := yaml.Unmarshal([]byte(extraCfg.AlertmanagerConfig), &prometheusConfig); err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid Alertmanager configuration format", err)
+	}
+
+	respBody := apimodels.GettableAlertmanagerUserConfig{
+		AlertmanagerConfig: apimodels.GettableAlertmanagerConfig{
+			Config: prometheusConfig,
+		},
+		TemplateFiles: extraCfg.TemplateFiles,
 	}
 
 	resp := response.YAML(http.StatusOK, respBody)

@@ -5727,6 +5727,62 @@
         "$ref": "#/definitions/Frame"
       }
     },
+    "GettableAlertmanagerConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "mute_time_intervals": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Receiver"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
+    "GettableAlertmanagerUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableAlertmanagerConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "GettableAlertmanagers": {
       "type": "object",
       "properties": {
@@ -7999,8 +8055,8 @@
       }
     },
     "Route": {
-      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
+      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -8041,12 +8097,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "object_matchers": {
-          "$ref": "#/definitions/ObjectMatchers"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"

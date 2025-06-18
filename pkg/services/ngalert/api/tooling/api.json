@@ -742,9 +742,15 @@
      "type": "array"
     },
     "mute_time_intervals": {
-     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
+     "description": "Deprecated. Remove before v1.0 release.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array"
     },
@@ -1437,6 +1443,62 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
+  },
+  "GettableAlertmanagerConfig": {
+   "properties": {
+    "global": {
+     "$ref": "#/definitions/GlobalConfig"
+    },
+    "inhibit_rules": {
+     "items": {
+      "$ref": "#/definitions/InhibitRule"
+     },
+     "type": "array"
+    },
+    "mute_time_intervals": {
+     "description": "Deprecated. Remove before v1.0 release.",
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
+     },
+     "type": "array"
+    },
+    "route": {
+     "$ref": "#/definitions/Route"
+    },
+    "templates": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GettableAlertmanagerUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/GettableAlertmanagerConfig"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
