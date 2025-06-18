@@ -14,6 +14,7 @@ export function ExtensionToolbarItem() {
     useExtensionSidebarContext();
 
   let dockedComponentTitle = '';
+  let dockedPluginId = '';
   if (dockedComponentId) {
     const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
     if (dockedComponent) {
