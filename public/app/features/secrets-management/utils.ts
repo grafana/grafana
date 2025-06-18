@@ -39,8 +39,8 @@ export function transformToSecret(subject: SecretsListResponseItem): Secret {
  * @return {SecretPayload}
  */
 export function payloadFromFormValues(formValues: SecretFormValues): SecretPayload {
-  const isNew = !!formValues.uid;
-  const decrypters = formValues.decrypters.map((decrypter) => decrypter.value);
+  const isNew = !formValues.uid;
+  const decrypters = formValues.decrypters?.map((decrypter) => decrypter.value) ?? [];
   const labels = (formValues?.labels ?? []).reduce<{ labels: Record<string, string> } | undefined>((acc, label) => {
     if (!acc) {
       acc = { labels: {} };
@@ -62,6 +62,7 @@ export function payloadFromFormValues(formValues: SecretFormValues): SecretPaylo
       },
       spec: {
         description,
+        decrypters,
         value: value ?? '',
       },
     };
@@ -70,6 +71,7 @@ export function payloadFromFormValues(formValues: SecretFormValues): SecretPaylo
   // An existing secret cannot update name
   return {
     metadata: {
+      name,
       ...labels,
     },
     spec: {

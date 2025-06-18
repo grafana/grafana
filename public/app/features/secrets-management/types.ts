@@ -61,7 +61,7 @@ export interface CreateSecretPayload {
 
 export interface UpdateSecretPayload {
   metadata: {
-    name?: never;
+    name: string;
     labels?: Record<string, string>;
   };
 
