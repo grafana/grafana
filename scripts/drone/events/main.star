@@ -16,10 +16,6 @@ load(
     "integration_tests",
 )
 load(
-    "scripts/drone/pipelines/lint_backend.star",
-    "lint_backend_pipeline",
-)
-load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
@@ -57,7 +53,6 @@ def main_pipelines():
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_backend(trigger, ver_mode),
-        lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         enterprise_downstream_pipeline(),

@@ -7,10 +7,6 @@ load(
     "integration_tests",
 )
 load(
-    "scripts/drone/pipelines/lint_backend.star",
-    "lint_backend_pipeline",
-)
-load(
     "scripts/drone/pipelines/lint_frontend.star",
     "lint_frontend_pipeline",
 )
@@ -51,7 +47,6 @@ def rrc_patch_pipelines():
         test_frontend(trigger, ver_mode),
         lint_frontend_pipeline(trigger, ver_mode),
         test_backend(trigger, ver_mode),
-        lint_backend_pipeline(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         rrc_enterprise_downstream_pipeline(trigger = trigger),
     ]

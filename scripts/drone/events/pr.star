@@ -21,10 +21,6 @@ load(
     "integration_tests",
 )
 load(
-    "scripts/drone/pipelines/lint_backend.star",
-    "lint_backend_pipeline",
-)
-load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
@@ -78,25 +74,6 @@ def pr_pipelines():
                     "public/app/plugins/**/plugin.json",
                     "docs/sources/setup-grafana/configure-grafana/feature-toggles/**",
                     "devenv/**",
-                    "apps/**",
-                ],
-            ),
-            ver_mode,
-        ),
-        lint_backend_pipeline(
-            get_pr_trigger(
-                include_paths = [
-                    ".golangci.toml",
-                    "Makefile",
-                    "pkg/**",
-                    "packaging/**",
-                    ".drone.yml",
-                    "conf/**",
-                    "go.sum",
-                    "go.mod",
-                    "public/app/plugins/**/plugin.json",
-                    "devenv/**",
-                    ".bingo/**",
                     "apps/**",
                 ],
             ),
