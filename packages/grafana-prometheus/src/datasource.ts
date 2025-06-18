@@ -44,7 +44,7 @@ import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
 import { SUGGESTIONS_LIMIT } from './constants';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
-import PrometheusLanguageProvider from './language_provider';
+import PrometheusLanguageProvider, { exportToAbstractQuery, importFromAbstractQuery } from './language_provider';
 import {
   expandRecordingRules,
   getClientCacheDurationInMinutes,
@@ -127,7 +127,6 @@ export class PrometheusDatasource
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
-    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
@@ -148,6 +147,7 @@ export class PrometheusDatasource
     });
 
     this.annotations = PrometheusAnnotationSupport(this);
+    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
   }
 
   init = async () => {
@@ -284,11 +284,11 @@ export class PrometheusDatasource
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
-    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+    return queries.map((query) => exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components
