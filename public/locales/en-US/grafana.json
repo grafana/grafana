@@ -363,6 +363,14 @@
       "last-updated-by": "Last updated by",
       "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
+      "notification-configuration": {
+        "active-timings": "Active time intervals",
+        "contact-point": "Contact point",
+        "group-by": "Grouped by",
+        "group-title": "Notification configuration",
+        "mute-timings": "Mute timings",
+        "timing-options": "Timings"
+      },
       "pending-period": "Pending period",
       "rule": "Rule",
       "rule-identifier": "Rule identifier",
@@ -910,6 +918,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
@@ -1055,6 +1064,9 @@
     },
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
+    },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1519,6 +1531,10 @@
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "Rules managed by integrations or plugins should not be imported to Grafana-managed rules.",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
@@ -3254,9 +3270,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3293,6 +3306,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -4032,6 +4048,9 @@
         "title": "Row options"
       }
     },
+    "description": {
+      "action": "Change dashboard description"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -4039,6 +4058,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
@@ -4522,7 +4542,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
@@ -4596,6 +4619,9 @@
       "tab-warning": {
         "title-not-unique": "This title is not unique"
       }
+    },
+    "title": {
+      "action": "Change dashboard title"
     },
     "toolbar": {
       "add": "Add",
@@ -5253,7 +5279,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Changes",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Save dashboard",
+        "title-copy": "Save dashboard copy",
+        "title-provisioned": "Provisioned dashboard"
       }
     },
     "save-dashboard-form": {
@@ -7679,6 +7708,14 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
@@ -7732,6 +7769,7 @@
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
       "font-size-default": "Use small font size",
       "font-size-small": "Use default font size",
+      "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7740,6 +7778,7 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
@@ -8470,9 +8509,6 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
-    "drawer": {
-      "close": "Close drawer"
-    },
     "link-title": "Go to Grafana labs blog",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
@@ -9718,7 +9754,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
@@ -10630,6 +10665,11 @@
       "tooltip-disable": "Disable",
       "tooltip-enable": "Enable"
     },
+    "draggable-sort-order": {
+      "asc": "ASC",
+      "desc": "DESC",
+      "off": "Off"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
       "generate-enum-values-from-data": "Generate enum values from data"
@@ -10808,6 +10848,9 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "Field order",
+      "field-order-auto": "Auto",
+      "field-order-manual": "Manual",
       "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
     },
     "partion-by-values-editor": {
