@@ -38,7 +38,7 @@ beforeEach(() => {
 const ui = {
   dsSection: (ds: string | RegExp) => byRole('listitem', { name: ds }),
   namespace: (ns: string | RegExp) => byRole('treeitem', { name: ns }),
-  group: (group: string | RegExp) => byRole('treeitem', { name: group }),
+  group: (group: string | RegExp) => byRole('link', { name: group }),
   loadMoreButton: () => byRole('button', { name: /Show more/i }),
 };
 
@@ -90,24 +90,26 @@ describe('RuleList - GroupedView', () => {
 
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
     const promNamespace = await ui.namespace(/test-prometheus-namespace/).find(prometheusSection);
+    const loadMoreButton = ui.loadMoreButton();
 
     // initial load – should have all groups 1-40
-    await ui.group(/test-group-([1-9]|[1-3][0-9]|40)/).findAll(promNamespace);
+    await ui.group('test-group-40').find(promNamespace);
 
     // fetch page 2
-    const loadMoreButton = await ui.loadMoreButton().find(prometheusSection);
-    await waitFor(() => expect(loadMoreButton).toBeEnabled());
-
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-80
-    await ui.group(/test-group-([1-9]|[1-7][0-9]|80)/).findAll(promNamespace);
+    await ui.group('test-group-80').find(promNamespace);
 
-    // fetch third page
-    await waitFor(() => expect(loadMoreButton).toBeEnabled());
-    await user.click(loadMoreButton);
+    // fetch page 3
+    await user.click(await loadMoreButton.find(prometheusSection));
+    // we should now have all groups 1-120
+    await ui.group('test-group-120').find(promNamespace);
 
+    // fetch page 4
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-130
-    await ui.group(/test-group-([1-9]|[1-9][0-9]|1[0-2][0-9]|130)/).findAll(promNamespace);
+    await ui.group('test-group-130').find(promNamespace);
 
-    expect(loadMoreButton).not.toBeInTheDocument();
+    expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
   });
 });
