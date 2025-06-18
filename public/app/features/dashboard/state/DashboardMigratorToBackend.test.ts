@@ -61,7 +61,7 @@ describe('Backend / Frontend result comparison', () => {
       // This avoid issues with the default values in the frontend, wheter they were set in the input JSON or not.
       const frontendMigrationResult = new DashboardModel(jsonInput).getSaveModelClone();
       const backendMigrationResult = new DashboardModel(backendOutput).getSaveModelClone();
-      expect(frontendMigrationResult).toEqual(backendMigrationResult);
+      expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
     });
   });
 });

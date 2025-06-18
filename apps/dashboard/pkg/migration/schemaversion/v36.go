@@ -1,9 +1,42 @@
 package schemaversion
 
-// V36 migrates dashboard datasource references from string names to UIDs.
-// This migration converts datasource references in annotations, template variables, and panels
-// from the old format (string name or UID) to the new format (object with uid, type, apiVersion).
-// This matches the frontend migration in DashboardMigrator.ts.
+// V36 migrates dashboard datasource references from string names to structured objects.
+//
+// This migration addresses the need to standardize datasource references across dashboards.
+// Previously, datasources could be referenced as simple strings (names or UIDs), which created
+// inconsistencies and made it difficult to track datasource metadata like type and API version.
+//
+// The migration works by:
+// 1. Converting all annotation datasource references to structured objects
+// 2. Migrating query-type template variable datasource references
+// 3. Transforming panel-level datasource references with special handling for null values
+// 4. Processing target-level datasources with inheritance logic for mixed panels
+//
+// This ensures consistent datasource referencing throughout the dashboard while preserving
+// existing functionality. Unknown datasources are handled gracefully by creating fallback
+// objects that maintain the original reference string as the UID.
+//
+// Example transformation:
+//
+// Before migration:
+//
+//	annotations: {
+//	  list: [{ datasource: "prometheus-uid" }]
+//	},
+//	panels: [{
+//	  datasource: "Elasticsearch",
+//	  targets: [{ datasource: null }]
+//	}]
+//
+// After migration:
+//
+//	annotations: {
+//	  list: [{ datasource: { uid: "prometheus-uid", type: "prometheus" } }]
+//	},
+//	panels: [{
+//	  datasource: { uid: "elasticsearch-uid", type: "elasticsearch" },
+//	  targets: [{ datasource: { uid: "elasticsearch-uid", type: "elasticsearch" } }]
+//	}]
 func V36(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 	datasources := dsInfo.GetDataSourceInfo()
 	return func(dashboard map[string]interface{}) error {

@@ -1,87 +1,139 @@
-
 {
-  "title": "Datasource Reference Migration Test Dashboard",
+  "title": "Datasource Reference Migration Test Dashboard", 
   "schemaVersion": 35,
   "annotations": {
     "list": [
       {
+        "name": "Default Annotation",
         "datasource": "Default"
       },
       {
+        "name": "Named Datasource Annotation", 
         "datasource": "Elasticsearch"
       },
       {
+        "name": "UID Datasource Annotation",
         "datasource": "other-ds"
+      },
+      {
+        "name": "Null Datasource Annotation",
+        "datasource": null
       }
     ]
   },
   "templating": {
     "list": [
       {
+        "name": "query_var_null",
         "type": "query",
         "datasource": null
       },
       {
-        "type": "query",
+        "name": "query_var_named",
+        "type": "query", 
         "datasource": "Elasticsearch"
       },
       {
+        "name": "query_var_uid",
         "type": "query",
         "datasource": "other-ds"
+      },
+      {
+        "name": "non_query_var",
+        "type": "constant",
+        "datasource": null
       }
     ]
   },
   "panels": [
     {
-      "title": "Panel with Null Datasource",
+      "id": 1,
+      "title": "Panel with Null Datasource and Targets",
       "datasource": null,
       "targets": [
-        {}
+        {
+          "refId": "A",
+          "datasource": null
+        }
       ]
     },
     {
-      "title": "Panel with Mixed Datasources",
+      "id": 2, 
+      "title": "Panel with Null Datasource and Empty Targets",
+      "datasource": null,
+      "targets": []
+    },
+    {
+      "id": 3,
+      "title": "Panel with No Targets Array",
+      "datasource": null
+    },
+    {
+      "id": 4,
+      "title": "Panel with Mixed Datasources", 
       "datasource": {
         "uid": "-- Mixed --"
       },
       "targets": [
         {
-          "datasource": "Elasticsearch"
-        },
-        {
-          "datasource": "other-ds"
-        }
-      ]
-    },
-    {
-      "title": "Panel with Default Datasource",
-      "datasource": "Default",
-      "targets": [
-        {
+          "refId": "A",
           "datasource": null
         },
         {
+          "refId": "B",
           "datasource": {
-            "uid": null
+            "uid": "Elasticsearch"
           }
         }
       ]
     },
     {
-      "title": "Panel with Named Datasource",
-      "datasource": "Elasticsearch",
+      "id": 5,
+      "title": "Panel with Existing Object Datasource",
+      "datasource": {
+        "uid": "existing-ds",
+        "type": "prometheus"
+      },
       "targets": [
         {
-          "datasource": "Elasticsearch"
+          "refId": "A",
+          "datasource": {
+            "uid": "target-ds",
+            "type": "loki"
+          }
         }
       ]
     },
     {
-      "title": "Panel with UID Datasource",
-      "datasource": "other-ds",
+      "id": 7,
+      "title": "Panel with Expression Query",
+      "datasource": null,
       "targets": [
         {
-          "datasource": "other-ds"
+          "refId": "A",
+          "datasource": {
+            "uid": "Elasticsearch"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "uid": "__expr__",
+            "type": "__expr__"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Panel Inheriting from Target",
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "other-ds"
+          }
         }
       ]
     }

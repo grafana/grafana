@@ -3,7 +3,6 @@
     {
       "options": {
         "legend": {
-          "displayMode": "list",
           "showLegend": true
         }
       },
@@ -13,7 +12,6 @@
     {
       "options": {
         "legend": {
-          "displayMode": "list",
           "showLegend": false
         }
       },

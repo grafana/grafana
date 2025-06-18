@@ -32,8 +32,7 @@ func V37(dashboard map[string]interface{}) error {
 		// Convert boolean legend to object format
 		if legendBool, ok := legendValue.(bool); ok {
 			options["legend"] = map[string]interface{}{
-				"displayMode": "list",
-				"showLegend":  legendBool,
+				"showLegend": legendBool,
 			}
 			continue
 		}
@@ -44,18 +43,17 @@ func V37(dashboard map[string]interface{}) error {
 			continue
 		}
 
-		displayMode, hasDisplayMode := legend["displayMode"].(string)
+		displayMode, _ := legend["displayMode"].(string)
 		showLegend, hasShowLegend := legend["showLegend"].(bool)
 
-		// Normalize hidden legends
-		if (hasDisplayMode && displayMode == "hidden") || (hasShowLegend && !showLegend) {
+		// There were two ways to hide the legend, this normalizes to `legend.showLegend`
+		if displayMode == "hidden" || (hasShowLegend && !showLegend) {
 			legend["displayMode"] = "list"
 			legend["showLegend"] = false
-			continue
+		} else {
+			// Equivalent to: { ...panel.options?.legend, showLegend: true }
+			legend["showLegend"] = true
 		}
-
-		// Ensure visible legends have showLegend true
-		legend["showLegend"] = true
 	}
 
 	return nil
