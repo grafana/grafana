@@ -12941,6 +12941,9 @@
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "queriedDatasourceUIDs": {
           "type": "array",
           "items": {
@@ -12997,7 +13000,8 @@
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "$ref": "#/definitions/Config"
+          "description": "Configuration for Alertmanager in YAML format.\nin: body",
+          "type": "string"
         },
         "template_files": {
           "type": "object",
@@ -13891,10 +13895,16 @@
           }
         },
         "mute_time_intervals": {
-          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
+          "description": "Deprecated. Remove before v1.0 release.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Receiver"
           }
         },
         "route": {
@@ -15355,6 +15365,26 @@
         }
       }
     },
+    "ExtraConfiguration": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "type": "string"
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "merge_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "FailedUser": {
       "description": "FailedUser holds the information of an user that failed",
       "type": "object",
@@ -15863,11 +15893,53 @@
         }
       }
     },
+    "GettableAlertmanagerConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "mute_time_intervals": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Receiver"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
     "GettableAlertmanagerUserConfig": {
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "type": "string"
+          "$ref": "#/definitions/GettableAlertmanagerConfig"
         },
         "template_files": {
           "type": "object",
@@ -16303,6 +16375,12 @@
       "properties": {
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
         },
         "template_file_provenances": {
           "type": "object",
@@ -18657,6 +18735,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/PostableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -20203,6 +20287,9 @@
         },
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "query": {
           "type": "string"

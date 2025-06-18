@@ -263,6 +263,7 @@
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
 /devenv/docker/blocks/jaeger/ @grafana/oss-big-tent
+/devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
@@ -839,8 +840,10 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
+/.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/release-build.yml  @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
+/.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
