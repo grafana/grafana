@@ -23,7 +23,6 @@ const createMockDatasource = () => {
     getVariables: jest.fn().mockReturnValue(['$var1', '$var2']),
     interpolateString: jest.fn((str) => str),
     hasLabelsMatchAPISupport: jest.fn().mockReturnValue(true),
-    getDebounceTimeInMilliseconds: jest.fn().mockReturnValue(300),
     lookupsDisabled: false,
     languageProvider: {
       fetchLabels: jest.fn().mockResolvedValue({}),
@@ -126,7 +125,7 @@ describe('MetricsLabelsSection', () => {
     // Check that LabelFilters was called with correct props
     expect(LabelFilters).toHaveBeenCalledWith(
       expect.objectContaining({
-        debounceDuration: 300,
+        debounceDuration: 350,
         labelsFilters: defaultQuery.labels,
         variableEditor: undefined,
       }),

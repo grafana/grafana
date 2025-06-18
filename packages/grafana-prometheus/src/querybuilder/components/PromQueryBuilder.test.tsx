@@ -13,7 +13,7 @@ import {
 import { TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import * as queryHints from '../../query_hints';
 import { PromApplication, PromOptions } from '../../types';
@@ -338,7 +338,7 @@ describe('PromQueryBuilder', () => {
 });
 
 function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptions>>) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const datasource = new PrometheusDatasource(
     {
       url: '',

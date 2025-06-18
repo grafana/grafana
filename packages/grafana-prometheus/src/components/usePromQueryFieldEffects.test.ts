@@ -2,12 +2,12 @@ import { renderHook } from '@testing-library/react';
 
 import { DataFrame, dateTime, TimeRange } from '@grafana/data';
 
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
 
 type TestProps = {
-  languageProvider: PromQlLanguageProvider;
+  languageProvider: PrometheusLanguageProviderInterface;
   range: TimeRange | undefined;
   series: DataFrame[];
 };
@@ -39,7 +39,7 @@ describe('usePromQueryFieldEffects', () => {
     loadLabelKeys: jest.fn(),
     loadLabelValues: jest.fn(),
     modifyQuery: jest.fn(),
-  } as unknown as PromQlLanguageProvider;
+  } as unknown as PrometheusLanguageProviderInterface;
 
   const mockRange: TimeRange = {
     from: dateTime('2022-01-01T00:00:00Z'),
