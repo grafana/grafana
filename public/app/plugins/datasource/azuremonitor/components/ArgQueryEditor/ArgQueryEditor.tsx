@@ -2,7 +2,7 @@ import { intersection } from 'lodash';
 import { useState, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Combobox } from '@grafana/ui';
 
@@ -84,8 +84,6 @@ const ArgQueryEditor = ({
     // We are only interested in re-fetching subscriptions if the data source changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource, query?.azureResourceGraph?.scope]);
-
-  const { t } = useTranslate();
 
   const onChangeScope = (change: SelectableValue<ARGScope>) => {
     onChange({
