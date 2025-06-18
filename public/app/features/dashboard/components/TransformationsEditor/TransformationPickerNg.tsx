@@ -265,13 +265,6 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       display: 'block',
       maxWidth: '100%',
     }),
-    grid: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-      gridAutoRows: '1fr',
-      gap: theme.spacing(1),
-      width: '100%',
-    }),
     cardDisabled: css({
       img: {
         filter: 'grayscale(100%)',
