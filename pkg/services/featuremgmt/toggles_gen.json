@@ -963,7 +963,8 @@
       "metadata": {
         "name": "disableAppChromeExtensions",
         "resourceVersion": "1750158825326",
-        "creationTimestamp": "2025-06-17T11:13:45Z"
+        "creationTimestamp": "2025-06-17T11:13:45Z",
+        "deletionTimestamp": "2025-06-18T08:25:11Z"
       },
       "spec": {
         "description": "Set this to true to disable all app chrome extensions registered by plugins.",
@@ -1080,6 +1081,22 @@
         "description": "Enables less memory intensive Elasticsearch result parsing",
         "stage": "experimental",
         "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableAppChromeExtensions",
+        "resourceVersion": "1750235111726",
+        "creationTimestamp": "2025-06-18T08:25:11Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all app chrome extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

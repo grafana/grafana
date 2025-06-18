@@ -17,7 +17,11 @@ const excludedRoutes: Record<string, boolean> = {
 export function AppChromeExtensionPoint(): JSX.Element | null {
   const location = useLocation();
 
-  if (excludedRoutes[location.pathname] || config.featureToggles.disableAppChromeExtensions === true) {
+  if (config.featureToggles.enableAppChromeExtensions !== true) {
+    return null;
+  }
+
+  if (excludedRoutes[location.pathname]) {
     return null;
   }
 
