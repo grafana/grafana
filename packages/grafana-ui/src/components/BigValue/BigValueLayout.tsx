@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType, ThemeVisualizationColors } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 

@@ -5,7 +5,7 @@ import { useObservable } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { NestedValueAccess, PanelOptionsSupplier } from '@grafana/data/internal';
-import { useTranslate, Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
@@ -26,7 +26,6 @@ import { getLayerEditor } from '../layer/layerEditor';
 import { TabsEditor } from './TabsEditor';
 
 export function InlineEditBody() {
-  const { t } = useTranslate();
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
   const styles = useStyles2(getStyles);
