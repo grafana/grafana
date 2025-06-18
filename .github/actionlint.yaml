@@ -1,0 +1,8 @@
+# These are just aliases to github-hosted runners
+self-hosted-runner:
+  labels:
+    - github-hosted-ubuntu-arm64
+    - github-hosted-ubuntu-arm64-large
+    - github-hosted-ubuntu-x64-small
+    - github-hosted-ubuntu-x64-large
+    - github-hosted-windows-x64-large

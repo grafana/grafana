@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 
 interface Props {
   className?: string;

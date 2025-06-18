@@ -1,7 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';

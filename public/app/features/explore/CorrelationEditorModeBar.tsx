@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useBeforeUnload, useUnmount } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
@@ -114,8 +114,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
       dispatch(runQueries({ exploreId: pane[0] }));
     });
   });
-
-  const { t } = useTranslate();
 
   const resetEditor = () => {
     dispatch(

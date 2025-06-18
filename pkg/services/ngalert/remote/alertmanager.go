@@ -70,6 +70,8 @@ type Alertmanager struct {
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
+
+	smtp remoteClient.SmtpConfig
 }
 
 type AlertmanagerConfig struct {
@@ -87,15 +89,19 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
-	SmtpFrom      string
-	StaticHeaders map[string]string
+	// SmtpConfig has all the necessary settings for the remote Alertmanager to create an email sender.
+	SmtpConfig remoteClient.SmtpConfig
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
+
+	// TODO: Remove once everything can be send in the 'smtp_config' field.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
+	StaticHeaders map[string]string
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -131,6 +137,10 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+
+		Smtp: cfg.SmtpConfig,
+
+		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
@@ -200,12 +210,15 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		metrics:           metrics,
 		mimirClient:       mc,
 		orgID:             cfg.OrgID,
-		smtpFrom:          cfg.SmtpFrom,
 		state:             store,
 		sender:            s,
 		syncInterval:      cfg.SyncInterval,
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
+		smtp:              cfg.SmtpConfig,
+
+		// TODO: Remove once it can be sent only in the 'smtp_config' field.
+		smtpFrom: cfg.SmtpFrom,
 	}, nil
 }
 
@@ -686,11 +699,34 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
+	// TODO: Remove when the from address can be sent only in the 'smtp_config' field.
 	if rc.SmtpFrom != am.smtpFrom {
 		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true
 	}
 
+	// Compare SMTP configs.
+	if rc.SmtpConfig.EhloIdentity != am.smtp.EhloIdentity ||
+		rc.SmtpConfig.Password != am.smtp.Password ||
+		rc.SmtpConfig.FromAddress != am.smtp.FromAddress ||
+		rc.SmtpConfig.FromName != am.smtp.FromName ||
+		rc.SmtpConfig.Host != am.smtp.Host ||
+		rc.SmtpConfig.SkipVerify != am.smtp.SkipVerify ||
+		rc.SmtpConfig.StartTLSPolicy != am.smtp.StartTLSPolicy ||
+		len(rc.SmtpConfig.StaticHeaders) != len(am.smtp.StaticHeaders) ||
+		rc.SmtpConfig.User != am.smtp.User {
+		am.log.Debug("SMTP config is different, sending the configuration to the remote Alertmanager")
+		return true
+	}
+
+	for k, v := range rc.SmtpConfig.StaticHeaders {
+		if value, ok := am.smtp.StaticHeaders[k]; !ok || v != value {
+			am.log.Debug("SMTP static headers are different, sending the configuration to the remote Alertmanager")
+			return true
+		}
+	}
+
+	// Hash and compare Alertmanager configs.
 	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
 	if err != nil {
 		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)

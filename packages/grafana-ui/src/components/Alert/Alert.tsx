@@ -4,10 +4,10 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { t } from '../../utils/i18n';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
