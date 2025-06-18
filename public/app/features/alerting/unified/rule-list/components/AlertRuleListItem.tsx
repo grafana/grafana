@@ -256,7 +256,7 @@ function Summary({ content, error }: SummaryProps) {
   }
   if (content) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" truncate>
         {content}
       </Text>
     );
