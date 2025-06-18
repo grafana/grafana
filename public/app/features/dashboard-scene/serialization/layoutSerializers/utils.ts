@@ -243,6 +243,10 @@ function getDataSourceForQuery(
     // Fallback to default datasource even if type doesn't match
     // In the datasource list from bootData "id" is the type and the uid could be uid or the name
     // in cases like grafana, dashboard or mixed datasource
+
+    console.warn(
+      `Could not find datasource for query kind ${queryKind}, defaulting to ${dsList[defaultDatasource].meta.id}`
+    );
     return {
       uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
       type: dsList[defaultDatasource].meta.id,
