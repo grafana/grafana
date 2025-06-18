@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
 import { OrgRole, Role } from 'app/types';
@@ -137,8 +137,6 @@ export const RolePickerMenu = ({
       },
     });
   }, [options]);
-
-  const { t } = useTranslate();
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];

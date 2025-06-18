@@ -1,4 +1,4 @@
-import { HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
+import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
 import { config } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
@@ -35,7 +35,7 @@ import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handle
 
 export type HandlerOptions = {
   delay?: number;
-  response?: HttpResponse;
+  response?: HttpResponse<DefaultBodyType>;
 };
 
 /**

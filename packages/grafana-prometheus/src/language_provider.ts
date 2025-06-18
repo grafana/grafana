@@ -17,7 +17,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
+import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -34,8 +34,7 @@ import { MATCH_ALL_LABELS_STR, PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
-// Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
-export const SUGGESTIONS_LIMIT = 10000;
+const EMPTY_SELECTOR = '{}';
 
 /**
  * Prometheus API endpoints for fetching resources

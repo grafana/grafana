@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { FieldSet, Icon, Label, Spinner, Stack, Switch, Text, TimeRangeLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -31,8 +31,6 @@ export default function ShareConfiguration() {
   const disableForm = isLoading || !hasWritePermissions;
   const timeRangeState = sceneGraph.getTimeRange(dashboard);
   const timeRange = timeRangeState.useState();
-
-  const { t } = useTranslate();
 
   const { handleSubmit, setValue, control } = useForm<FormInput>({
     defaultValues: {

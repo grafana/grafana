@@ -160,7 +160,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto)
 	}
 
 	for _, opt := range opts {
@@ -179,16 +179,20 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:        cfg.UnifiedAlerting.HARedisAddr,
-			name:        cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:      cfg.UnifiedAlerting.HARedisPrefix,
-			password:    cfg.UnifiedAlerting.HARedisPassword,
-			username:    cfg.UnifiedAlerting.HARedisUsername,
-			db:          cfg.UnifiedAlerting.HARedisDB,
-			maxConns:    cfg.UnifiedAlerting.HARedisMaxConns,
-			tlsEnabled:  cfg.UnifiedAlerting.HARedisTLSEnabled,
-			tls:         cfg.UnifiedAlerting.HARedisTLSConfig,
-			clusterMode: cfg.UnifiedAlerting.HARedisClusterModeEnabled,
+			addr:             cfg.UnifiedAlerting.HARedisAddr,
+			name:             cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:           cfg.UnifiedAlerting.HARedisPrefix,
+			password:         cfg.UnifiedAlerting.HARedisPassword,
+			username:         cfg.UnifiedAlerting.HARedisUsername,
+			db:               cfg.UnifiedAlerting.HARedisDB,
+			maxConns:         cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled:       cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:              cfg.UnifiedAlerting.HARedisTLSConfig,
+			clusterMode:      cfg.UnifiedAlerting.HARedisClusterModeEnabled,
+			sentinelMode:     cfg.UnifiedAlerting.HARedisSentinelModeEnabled,
+			masterName:       cfg.UnifiedAlerting.HARedisSentinelMasterName,
+			sentinelUsername: cfg.UnifiedAlerting.HARedisSentinelUsername,
+			sentinelPassword: cfg.UnifiedAlerting.HARedisSentinelPassword,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)

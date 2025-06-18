@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
 import { PrometheusLanguageProviderInterface } from '../language_provider';
@@ -261,7 +262,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByLabelText('label-select');
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
     //display label in label select
@@ -287,7 +290,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByLabelText('label-select');
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
 

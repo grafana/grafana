@@ -4,7 +4,7 @@ import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
@@ -126,8 +126,6 @@ export const CorrelationTransformationAddModal = ({
     });
     return () => subscription.unsubscribe();
   }, [fieldList, formFieldsVis.expressionDetails.show, watch]);
-
-  const { t } = useTranslate();
 
   return (
     <Modal
