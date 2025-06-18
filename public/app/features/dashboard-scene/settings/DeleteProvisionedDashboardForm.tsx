@@ -39,7 +39,7 @@ export function DeleteProvisionedDashboardForm({
   onDismiss,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, reset } = methods;
+  const { handleSubmit, watch } = methods;
 
   const [ref, workflow] = watch(['ref', 'workflow']);
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
@@ -72,9 +72,15 @@ export function DeleteProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
-    reset();
     onDismiss();
     navigate('/dashboards');
+  };
+
+  const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
+    onDismiss();
+    navigate(
+      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
+    );
   };
 
   useProvisionedRequestHandler({
@@ -82,10 +88,7 @@ export function DeleteProvisionedDashboardForm({
     request,
     workflow,
     handlers: {
-      onBranchSuccess: ({ path, urls }) =>
-        navigate(
-          `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
-        ),
+      onBranchSuccess: ({ path, urls }) => onBranchSuccess(path, urls),
       onWriteSuccess,
       onError: onRequestError,
     },

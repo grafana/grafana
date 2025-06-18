@@ -156,7 +156,7 @@ describe('DeleteProvisionedDashboardDrawer', () => {
     });
 
     it('should return null when defaultValues are not provided', () => {
-       setup({
+      setup({
         provisionedData: {
           defaultValues: null,
         },

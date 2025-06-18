@@ -45,7 +45,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -66,7 +66,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
-    dashboard.closeModal();
+    drawer.onClose();
     locationService.partial({
       viewPanel: null,
       editPanel: null,
@@ -74,6 +74,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
+    drawer.onClose();
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -85,16 +86,17 @@ export function SaveProvisionedDashboardForm({
     navigate(url);
   };
 
+  const onBranchSuccess = (ref: string, path: string) => {
+    drawer.onClose();
+    navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+  };
+
   useProvisionedRequestHandler({
     dashboard,
     request,
     workflow,
     handlers: {
-      onBranchSuccess: ({ ref, path }) => {
-        dashboard.closeModal();
-        panelEditor?.onDiscard();
-        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
-      },
+      onBranchSuccess: ({ ref, path }) => onBranchSuccess(ref, path),
       onWriteSuccess,
       onNewDashboardSuccess,
       onError: onRequestError,
