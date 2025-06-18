@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -111,7 +112,7 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 
 		for _, message := range messages {
 			messageIDs = append(messageIDs, message.MessageID)
-			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
+
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
@@ -129,14 +130,25 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	// Detached and long running process, so we start a new root span every time.
-	ctx, span := w.tracer.Start(ctx, "Worker.ProcessMessage", trace.WithNewRoot(), trace.WithAttributes(
+	opts := []trace.SpanStartOption{}
+
+	// If there's no request ID in the message, start a new root span and log an error.
+	ctx, err := tracectx.HexDecodeTraceIntoContext(ctx, message.RequestID)
+	if err != nil {
+		opts = append(opts, trace.WithNewRoot())
+		logging.FromContext(ctx).Error("decoding trace context from message", "err", err.Error(), "message.requestID", message.RequestID)
+	}
+
+	opts = append(opts, trace.WithAttributes(
+		attribute.String("message.requestID", message.RequestID),
 		attribute.String("message.id", message.MessageID),
 		attribute.String("message.type", string(message.Type)),
 		attribute.String("message.namespace", message.Namespace),
 		attribute.String("message.secureValue.name", message.Name),
 		attribute.Int("message.receive.count", message.ReceiveCount),
 	))
+
+	ctx, span := w.tracer.Start(ctx, "Worker.ProcessMessage", opts...)
 	defer span.End()
 
 	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
