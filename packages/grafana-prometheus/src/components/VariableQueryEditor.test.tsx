@@ -138,7 +138,6 @@ describe('PromVariableQueryEditor', () => {
         hasLabelsMatchAPISupport: () => true,
         languageProvider: {
           start: () => Promise.resolve([]),
-          syntax: () => {},
           getLabelKeys: () => [],
           metrics: [],
           metricsMetadata: {},

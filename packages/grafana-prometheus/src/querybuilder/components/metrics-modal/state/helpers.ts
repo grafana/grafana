@@ -4,7 +4,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../../../datasource';
-import { getMetadataHelp, getMetadataType } from '../../../../language_provider';
+import { PromMetricsMetadata } from '../../../../types';
 import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
@@ -84,6 +84,14 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
   };
 
   return metricData;
+}
+
+export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.help;
+}
+
+export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.type;
 }
 
 /**
