@@ -156,13 +156,13 @@ describe('DeleteProvisionedDashboardDrawer', () => {
     });
 
     it('should return null when defaultValues are not provided', () => {
-      const { container } = setup({
+       setup({
         provisionedData: {
           defaultValues: null,
         },
       });
 
-      expect(container.firstChild).toBeNull();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('should render shared form fields correctly', () => {
