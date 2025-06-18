@@ -4,10 +4,6 @@ It also includes a function generating a PR trigger from a list of included and 
 """
 
 load(
-    "scripts/drone/pipelines/benchmarks.star",
-    "integration_benchmarks",
-)
-load(
     "scripts/drone/pipelines/build.star",
     "build_e2e",
 )
@@ -55,9 +51,6 @@ def pr_pipelines():
         ),
         build_e2e(trigger, ver_mode),
         docs_pipelines(ver_mode, trigger_docs_pr()),
-        integration_benchmarks(
-            prefix = ver_mode,
-        ),
     ]
 
 def get_pr_trigger(include_paths = None, exclude_paths = None):

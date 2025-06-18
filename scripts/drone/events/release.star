@@ -3,11 +3,6 @@ This module returns all the pipelines used in the event of a release along with 
 """
 
 load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_pipeline_volumes",
@@ -16,19 +11,9 @@ load(
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "download_grabpl_step",
-    "identify_runner_step",
-    "memcached_integration_tests_steps",
-    "mysql_integration_tests_steps",
-    "postgres_integration_tests_steps",
     "publish_grafanacom_step",
     "publish_linux_packages_step",
-    "redis_integration_tests_steps",
-    "remote_alertmanager_integration_tests_steps",
-    "verify_gen_cue_step",
-    "verify_gen_jsonnet_step",
     "verify_grafanacom_step",
-    "wire_install_step",
     "yarn_install_step",
 )
 load(
