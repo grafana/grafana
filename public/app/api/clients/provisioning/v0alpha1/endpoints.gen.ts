@@ -835,6 +835,20 @@ export type JobList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type GitRepositoryConfig = {
+  /** The branch to use in the repository. */
+  branch: string;
+  /** Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. */
+  encryptedToken?: string;
+  /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
+    
+    When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
+  path?: string;
+  /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
+  token?: string;
+  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  url?: string;
+};
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. */
   branch: string;
@@ -869,7 +883,9 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** Repository description */
   description?: string;
-  /** The repository on GitHub. Mutually exclusive with local | github. */
+  /** The repository on Git. Mutually exclusive with local | github | git. */
+  git?: GitRepositoryConfig;
+  /** The repository on GitHub. Mutually exclusive with local | github | git. */
   github?: GitHubRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | github. */
   local?: LocalRepositoryConfig;
@@ -880,9 +896,10 @@ export type RepositorySpec = {
   /** The repository type.  When selected oneOf the values below should be non-nil
     
     Possible enum values:
+     - `"git"`
      - `"github"`
      - `"local"` */
-  type: 'github' | 'local';
+  type: 'git' | 'github' | 'local';
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
@@ -1014,9 +1031,10 @@ export type ResourceRepositoryInfo = {
   /** The repository type
     
     Possible enum values:
+     - `"git"`
      - `"github"`
      - `"local"` */
-  type: 'github' | 'local';
+  type: 'git' | 'github' | 'local';
 };
 export type Unstructured = {
   [key: string]: any;
@@ -1150,9 +1168,10 @@ export type RepositoryView = {
   /** The repository type
     
     Possible enum values:
+     - `"git"`
      - `"github"`
      - `"local"` */
-  type: 'github' | 'local';
+  type: 'git' | 'github' | 'local';
   /** The supported workflows */
   workflows: ('branch' | 'write')[];
 };

@@ -414,12 +414,38 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
+	if r.Spec.Type == provisioning.GitRepositoryType {
+		if r.Spec.Git == nil {
+			return fmt.Errorf("git configuration is required")
+		}
+
+		if r.Spec.GitHub != nil {
+			return fmt.Errorf("git and github cannot be used together")
+		}
+
+		if r.Spec.Local != nil {
+			return fmt.Errorf("git and local cannot be used together")
+		}
+
+		// Trim trailing slash and ensure .git is present
+		if len(r.Spec.Git.URL) > 5 {
+			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
+
+			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
+				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
+			}
+		}
+	}
 
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
 	if err := b.encryptGithubToken(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
+	if err := b.encryptGitToken(ctx, r); err != nil {
 		return fmt.Errorf("failed to encrypt secrets: %w", err)
 	}
 
@@ -443,6 +469,21 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 			return err
 		}
 		repo.Spec.GitHub.Token = ""
+	}
+
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.Git != nil &&
+		repo.Spec.Git.Token != "" {
+		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.Git.Token = ""
 	}
 
 	return nil
@@ -1126,6 +1167,14 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitRepositoryType:
+		return nanogit.NewGitRepository(ctx, b.secrets, r, nanogit.RepositoryConfig{
+			URL:            r.Spec.Git.URL,
+			Branch:         r.Spec.Git.Branch,
+			Path:           r.Spec.Git.Path,
+			Token:          r.Spec.Git.Token,
+			EncryptedToken: r.Spec.Git.EncryptedToken,
+		})
 	case provisioning.GitHubRepositoryType:
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
