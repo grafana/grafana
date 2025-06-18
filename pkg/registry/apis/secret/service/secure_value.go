@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -57,6 +58,9 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("encrypting secure value secret: %w", err)
 	}
 
+	// Especifically here so that the spans from the worker are not inside the transaction.
+	requestID := tracectx.HexEncodeTraceFromContext(ctx)
+
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 		if err != nil {
@@ -65,7 +69,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		out = createdSecureValue
 
 		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			RequestID:       contracts.GetRequestId(ctx),
+			RequestID:       requestID,
 			Type:            contracts.CreateSecretOutboxMessage,
 			Name:            sv.Name,
 			Namespace:       sv.Namespace,
@@ -160,6 +164,9 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		encryptedSecret = string(buffer)
 	}
 
+	// Especifically here so that the spans from the worker are not inside the transaction.
+	requestID := tracectx.HexEncodeTraceFromContext(ctx)
+
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
@@ -190,6 +197,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		// Only the value needs to be updated asynchronously by the outbox worker
 		if encryptedSecret != "" {
 			if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+				RequestID:       requestID,
 				Type:            contracts.UpdateSecretOutboxMessage,
 				Name:            newSecureValue.Name,
 				Namespace:       newSecureValue.Namespace,
@@ -219,6 +227,9 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	// Set inside of the transaction callback
 	var out *secretv0alpha1.SecureValue
 
+	// Especifically here so that the spans from the worker are not inside the transaction.
+	requestID := tracectx.HexEncodeTraceFromContext(ctx)
+
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
@@ -236,6 +247,7 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 		}
 
 		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID:  requestID,
 			Type:       contracts.DeleteSecretOutboxMessage,
 			Name:       name,
 			Namespace:  namespace.String(),
