@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Stav výstrahy",
       "annotations": "Vysvětlivky",
-      "description-missing-series-evaluations": "Kolik po sobě jdoucích intervalů hodnocení bez dat pro rozměr musí projít, než je stav výstrahy považován za zastaralý a je automaticky vyřešen. Pokud není zadána žádná hodnota, bude výchozí hodnota 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Hodnocení",
       "evaluation-paused": "Hodnocení výstrah je aktuálně pozastaveno",
       "evaluation-paused-description": "Oznámení pro toto pravidlo nebudou aktivována a nebudou vytvořeny žádné instance oznámení, dokud nebude pravidlo znovu aktivováno.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Naposledy upraveno uživatelem",
       "missing-series-resolve": "Chybějící série hodnocení k vyřešení",
       "no-annotations": "Žádné vysvětlivky",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Kontaktní bod",
+        "group-by": "Seskupeno podle",
+        "group-title": "",
+        "mute-timings": "Ztlumit časování",
+        "timing-options": ""
+      },
       "pending-period": "Čekající období",
       "rule": "Pravidlo",
       "rule-identifier": "Identifikátor pravidla",
@@ -457,6 +465,15 @@
       "export": "Exportovat",
       "silence-notifications": "Potlačit oznámení",
       "with-modifications": "S úpravami"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -913,6 +930,7 @@
     "copy-to-clipboard": "Kopírovat „{{label}}“ do schránky",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Nástěnka",
         "dashboard-and-panel": "",
         "evaluation-interval": "Interval hodnocení",
@@ -1522,6 +1540,10 @@
         "no-rules-body": "Neexistují žádná pravidla k importu. Vyberte jiný jmenný prostor nebo skupinu pravidel.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Žádná pravidla k importu",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informace"
+        },
         "plugin-rules-warning": {
           "text": "Zjistili jsme, že některá pravidla jsou spravována pluginy. Tato pravidla nebudou importována.",
           "title": "Některá pravidla jsou vyloučena z importu"
@@ -4059,6 +4081,9 @@
         "title": "Možnosti řádku"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Odebrat vlastnost"
@@ -4551,7 +4576,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Změny",
-      "label-details": "Podrobnosti"
+      "label-details": "Podrobnosti",
+      "title": "Uložit nástěnku",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem.<1></1><2>Chcete přesto tuto nástěnku uložit?</2>",
@@ -4625,6 +4653,9 @@
       "tab-warning": {
         "title-not-unique": "Tento název není jedinečný"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Přidat",
@@ -5162,6 +5193,11 @@
       "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
       "title-name-already-exists": "Název již existuje"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5279,7 +5315,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Změny",
-        "label-details": "Podrobnosti"
+        "label-details": "Podrobnosti",
+        "title": "Uložit nástěnku",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7717,6 +7756,14 @@
       "show-details": "Skrýt podrobnosti protokolu",
       "unpin-from-outline": "Odepnout protokol"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Chyba při načítání dalších protokolů.",
       "no-more-logs-available": "Nejsou k dispozici žádné další protokoly.",
@@ -7770,6 +7817,7 @@
       "escape-newlines": "Opravit nesprávně uniklé sekvence nového řádku a záložek v řádcích protokolu",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
       "newest-first": "Seřazeno od nejnovějších protokolů – kliknutím zobrazíte nejstarší protokoly jako první",
@@ -7778,6 +7826,7 @@
       "remove-escaping": "Odebrat únik",
       "scroll-bottom": "Posunout dolů",
       "scroll-top": "Posunout nahoru",
+      "show-search": "",
       "show-timestamps": "Zobrazit časová razítka",
       "show-unique-labels": "Zobrazit jedinečné štítky",
       "unwrap-lines": "Rozbalit řádky",
@@ -10686,6 +10735,11 @@
       "tooltip-disable": "Deaktivovat",
       "tooltip-enable": "Povolit"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Vypnuto"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Přidat hodnotu výčtu",
       "generate-enum-values-from-data": "Generovat hodnoty výčtu z dat"
@@ -10864,6 +10918,9 @@
       "time-in-ascending-order": "Čas ve vzestupném pořadí"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automaticky",
+      "field-order-manual": "",
       "first-frame-warning": "Uspořádání polí funguje jenom s jedním snímkem. Nejprve zvažte použití transformace spojení nebo filtrování vstupu."
     },
     "partion-by-values-editor": {

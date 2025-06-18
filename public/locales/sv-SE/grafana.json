@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Varningstillstånd",
       "annotations": "Kommentarer",
-      "description-missing-series-evaluations": "Hur många på varandra följande utvärderingsintervall utan data för en dimension som måste passera innan larmtillståndet anses vara inaktuellt och automatiskt åtgärdat. Om inget värde anges kommer värdet som standard att ställas in på 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Bedömning",
       "evaluation-paused": "Utvärdering av varning för närvarande pausad",
       "evaluation-paused-description": "Aviseringar för den här regeln kommer inte att utlösas och inga varningsinstanser kommer att skapas innan regeln har återaktiverats.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Senast uppdaterad av",
       "missing-series-resolve": "Saknade serieutvärderingar att åtgärda",
       "no-annotations": "Inga kommentarer",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Kontaktpunkt",
+        "group-by": "Grupperad efter",
+        "group-title": "",
+        "mute-timings": "Tysta tidsinställningarna",
+        "timing-options": ""
+      },
       "pending-period": "Väntande period",
       "rule": "Regel",
       "rule-identifier": "Regelidentifierare",
@@ -449,6 +457,15 @@
       "export": "Exportera",
       "silence-notifications": "Tysta aviseringar",
       "with-modifications": "Med ändringar"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Kopiera ”{{label}}” till klippbordet",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Instrumentpanel",
         "dashboard-and-panel": "",
         "evaluation-interval": "Utvärderingsintervall",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Det finns inga regler att importera. Välj ett annat namnområde eller en annan regelgrupp.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Inga regler att importera",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "Vi har upptäckt att vissa regler hanteras av plugin-program. Dessa regler kommer inte att importeras.",
           "title": "Vissa regler är undantagna från import"
@@ -4023,6 +4045,9 @@
         "title": "Radalternativ"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Ta bort egenskap"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Ändringar",
-      "label-details": "Detaljer"
+      "label-details": "Detaljer",
+      "title": "Spara instrumentpanel",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. <1></1><2>Vill du fortfarande spara denna instrumentpanel?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Den här titeln är inte unik"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Lägg till",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
       "title-name-already-exists": "Namnet finns redan"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Ändringar",
-        "label-details": "Detaljer"
+        "label-details": "Detaljer",
+        "title": "Spara instrumentpanel",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Dölj loggdetaljer",
       "unpin-from-outline": "Frigör logg"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Fel vid laddning av fler loggar.",
       "no-more-logs-available": "Inga fler loggar tillgängliga.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Åtgärda felaktiga undantagstecken för radbrytningar och tabbar i loggrader",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Dölj tidsstämplar",
       "hide-unique-labels": "Dölj unika etiketter",
       "newest-first": "Sorterat efter nyaste loggar först – klicka om du vill visa äldsta först",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Ta bort undantagstecken",
       "scroll-bottom": "Skrolla längst ner",
       "scroll-top": "Skrolla till toppen",
+      "show-search": "",
       "show-timestamps": "Visa tidsstämplar",
       "show-unique-labels": "Visa unika etiketter",
       "unwrap-lines": "Ta bort radbrytningar",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Inaktivera",
       "tooltip-enable": "Aktivera"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Av"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Lägg till uppräkningsvärde",
       "generate-enum-values-from-data": "Generera uppräkningsvärde från data"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Tid i stigande ordning"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Auto",
+      "field-order-manual": "",
       "first-frame-warning": "Organisera fält fungerar endast med en enda ram. Överväg att tillämpa en kopplingstransformation eller filtrera indata först."
     },
     "partion-by-values-editor": {

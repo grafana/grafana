@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "提醒状态",
       "annotations": "注释",
-      "description-missing-series-evaluations": "必须连续经过多少个没有维度数据的评估时间间隔，警报状态才会被视为过时并自动解除。如果未提供值，则值会默认设为 2。",
+      "description-missing-series-evaluations": "",
       "evaluation": "评估",
       "evaluation-paused": "提醒评估当前已暂停",
       "evaluation-paused-description": "在此规则取消暂停之前，不会触发此规则的通知，也不会创建提醒实例。",
@@ -363,6 +363,14 @@
       "last-updated-by": "上次更新者",
       "missing-series-resolve": "缺少要解除的序列评估",
       "no-annotations": "无注释",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "联络点",
+        "group-by": "分组方式",
+        "group-title": "",
+        "mute-timings": "静音时间设定",
+        "timing-options": ""
+      },
       "pending-period": "待处理时段",
       "rule": "规则",
       "rule-identifier": "规则标识符",
@@ -445,6 +453,15 @@
       "export": "导出",
       "silence-notifications": "静默通知",
       "with-modifications": "含修改"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -895,6 +912,7 @@
     "copy-to-clipboard": "将“{{label}}”复制到剪贴板",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "仪表板",
         "dashboard-and-panel": "",
         "evaluation-interval": "评估间隔",
@@ -1504,6 +1522,10 @@
         "no-rules-body": "没有要导入的规则。请选择其他命名空间或规则组。",
         "no-rules-body-yaml": "",
         "no-rules-title": "没有要导入的规则",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "信息"
+        },
         "plugin-rules-warning": {
           "text": "我们检测到某些规则由插件管理。这些规则将不会被导入。",
           "title": "某些规则被排除在导入之外"
@@ -4005,6 +4027,9 @@
         "title": "行选项"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "移除属性"
@@ -4494,7 +4519,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "变更",
-      "label-details": "详情"
+      "label-details": "详情",
+      "title": "保存仪表板",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<1></1><2>您仍然要保存此数据面板吗？。",
@@ -4568,6 +4596,9 @@
       "tab-warning": {
         "title-not-unique": "此标题并不唯一"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "添加",
@@ -5102,6 +5133,11 @@
       "body-name-already-exists": "所选文件夹中已存在具有相同名称的数据面板。您仍然要保存此数据面板吗？",
       "title-name-already-exists": "名称已存在"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5219,7 +5255,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "变更",
-        "label-details": "详情"
+        "label-details": "详情",
+        "title": "保存仪表板",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7639,6 +7678,14 @@
       "show-details": "隐藏日志详情",
       "unpin-from-outline": "取消固定日志"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "加载更多日志时出错。",
       "no-more-logs-available": "没有更多的日志。",
@@ -7692,6 +7739,7 @@
       "escape-newlines": "修复日志行中错误转义的换行和制表符序列",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "隐藏时间戳",
       "hide-unique-labels": "隐藏唯一标签",
       "newest-first": "先显示最新日志 - 点击以先显示最旧日志",
@@ -7700,6 +7748,7 @@
       "remove-escaping": "移除转义",
       "scroll-bottom": "滚动到底部",
       "scroll-top": "滚动到顶部",
+      "show-search": "",
       "show-timestamps": "显示时间戳",
       "show-unique-labels": "显示唯一标签",
       "unwrap-lines": "取消多行显示",
@@ -10581,6 +10630,11 @@
       "tooltip-disable": "禁用",
       "tooltip-enable": "启用"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "关"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "添加枚举值",
       "generate-enum-values-from-data": "从数据生成枚举值"
@@ -10759,6 +10813,9 @@
       "time-in-ascending-order": "时间按升序排列"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "自动",
+      "field-order-manual": "",
       "first-frame-warning": "组织字段仅适用于单个帧。请考虑先应用连接转换或筛选输入。"
     },
     "partion-by-values-editor": {

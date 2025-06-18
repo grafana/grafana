@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "État d'alerte",
       "annotations": "Annotations",
-      "description-missing-series-evaluations": "Combien d’intervalles d’évaluation consécutifs sans données pour une dimension doivent s’écouler avant que l’état d’alerte ne soit considéré comme obsolète et automatiquement résolu ? Si aucune valeur n’est fournie, la valeur par défaut sera 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Évaluation",
       "evaluation-paused": "Évaluation de l'alerte actuellement en pause",
       "evaluation-paused-description": "Les notifications relatives à cette règle ne seront pas déclenchées et aucune instance d'alerte ne sera créée tant que la règle n'aura pas été désactivée.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Dernière modification par",
       "missing-series-resolve": "Évaluations de séries manquantes à résoudre",
       "no-annotations": "Pas d'annotations",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Point de contact",
+        "group-by": "Groupé par",
+        "group-title": "",
+        "mute-timings": "Horaires de mise en sourdine",
+        "timing-options": ""
+      },
       "pending-period": "Période en attente",
       "rule": "Règle",
       "rule-identifier": "Identifiant de la règle",
@@ -449,6 +457,15 @@
       "export": "Exporter",
       "silence-notifications": "Mettre les notifications en sourdine",
       "with-modifications": "Avec modifications"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Copier « {{label}} » dans le presse-papiers",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Tableau de bord",
         "dashboard-and-panel": "",
         "evaluation-interval": "Intervalle d’évaluation",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Il n’y a pas de règles à importer. Veuillez sélectionner un autre namespace ou groupe de règles.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Aucune règle à importer",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "Nous avons détecté que certaines règles sont gérées par des plugins. Ces règles ne seront pas importées.",
           "title": "Certaines règles sont exclues de l’importation"
@@ -4023,6 +4045,9 @@
         "title": "Options de ligne"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Supprimer la propriété"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Modifications",
-      "label-details": "Détails"
+      "label-details": "Détails",
+      "title": "Enregistrer le tableau de bord",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné.<1></1><2>Voulez-vous vraiment enregistrer ce tableau de bord ?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Ce titre n’est pas unique"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Ajouter",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
       "title-name-already-exists": "Nom déjà existant"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Modifications",
-        "label-details": "Détails"
+        "label-details": "Détails",
+        "title": "Enregistrer le tableau de bord",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Masquer les détails du journal",
       "unpin-from-outline": "Désépingler le journal"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Erreur lors du chargement de journaux supplémentaires.",
       "no-more-logs-available": "Plus de journaux disponibles.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Correction des séquences de sauts de ligne et de tabulations incorrectement échappées dans les lignes du journal",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
       "newest-first": "Trié par les journaux les plus récents en premier - Cliquez pour afficher les plus anciens en premier",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Supprimer l’échappement",
       "scroll-bottom": "Faire défiler vers le bas",
       "scroll-top": "Retour en haut de page",
+      "show-search": "",
       "show-timestamps": "Afficher les horodatages",
       "show-unique-labels": "Afficher les étiquettes uniques",
       "unwrap-lines": "Dérouler les lignes",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Désactiver",
       "tooltip-enable": "Activer"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Désactivé"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Ajouter une valeur énumérée",
       "generate-enum-values-from-data": "Générer des valeurs énumérée à partir de données"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Temps par ordre croissant"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Auto",
+      "field-order-manual": "",
       "first-frame-warning": "L’organisation des champs ne fonctionne qu’avec un seul cadre. Envisagez d’appliquer une transformation d’union ou de filtrer d’abord les données d’entrée."
     },
     "partion-by-values-editor": {

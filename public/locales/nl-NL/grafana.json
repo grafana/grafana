@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Status van de waarschuwing",
       "annotations": "Annotaties",
-      "description-missing-series-evaluations": "Het aantal opeenvolgende evaluatie-intervallen zonder gegevens voor een dimensie die moeten verstrijken voordat de waarschuwingsstatus als verouderd wordt beschouwd en automatisch wordt opgelost. Als er geen waarde is opgegeven, wordt de waarde standaard ingesteld op 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Evaluatie",
       "evaluation-paused": "Waarschuwingsevaluatie is momenteel gepauzeerd",
       "evaluation-paused-description": "Meldingen voor deze regel worden niet geactiveerd en er worden geen waarschuwingsinstanties gemaakt totdat de regel wordt hervat.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Laatst bijgewerkt door",
       "missing-series-resolve": "Ontbrekende reeksevaluaties om op te lossen",
       "no-annotations": "Geen annotaties",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Contactpunt",
+        "group-by": "Gegroepeerd op",
+        "group-title": "",
+        "mute-timings": "Demptimings",
+        "timing-options": ""
+      },
       "pending-period": "Wachttijd",
       "rule": "Regel",
       "rule-identifier": "Regel-id",
@@ -449,6 +457,15 @@
       "export": "Exporteren",
       "silence-notifications": "Stiltemeldingen",
       "with-modifications": "Met wijzigingen"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Label '{{label}}' kopiëren naar klembord",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "",
         "evaluation-interval": "Evaluatie-interval",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Er zijn geen regels om te importeren. Selecteer een andere namespace of regelgroep.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Geen regels om te importeren",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informatie"
+        },
         "plugin-rules-warning": {
           "text": "We hebben gedetecteerd dat sommige regels worden beheerd door plug-ins. Deze regels worden niet geïmporteerd.",
           "title": "Sommige regels zijn uitgesloten van import"
@@ -4023,6 +4045,9 @@
         "title": "Opties voor rijen"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Eigenschap verwijderen"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Wijzigingen",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Dashboard opslaan",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map.<1></1><2>Wil je dit dashboard nog steeds opslaan?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Deze titel is niet uniek"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Toevoegen",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
       "title-name-already-exists": "Naam bestaat al"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Wijzigingen",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Dashboard opslaan",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Logboekdetails verbergen",
       "unpin-from-outline": "Logboek vastzetten ongedaan maken"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Er is een fout opgetreden bij het laden van meer logs.",
       "no-more-logs-available": "Geen logs beschikbaar.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Corrigeer onjuist escaped nieuwe lijn en tabbladsequenties in logregels",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Tijdstempels verbergen",
       "hide-unique-labels": "Unieke labels verbergen",
       "newest-first": "Gesorteerd op nieuwste logboeken eerst - klik om oudste eerst weer te geven",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Escaping verwijderen",
       "scroll-bottom": "Naar beneden scrollen",
       "scroll-top": "Naar boven scrollen",
+      "show-search": "",
       "show-timestamps": "Tijdstempels weergeven",
       "show-unique-labels": "Unieke labels weergeven",
       "unwrap-lines": "Lijnen omsluiten",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Uitschakelen",
       "tooltip-enable": "Inschakelen"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Uit"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Enum-waarde toevoegen",
       "generate-enum-values-from-data": "Enum-waarden genereren uit gegevens"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Tijd in oplopende volgorde"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automatisch",
+      "field-order-manual": "",
       "first-frame-warning": "Velden organiseren werkt alleen met een enkel frame. Overweeg om eerst een verbindingstransformatie toe te passen of de invoer te filteren."
     },
     "partion-by-values-editor": {

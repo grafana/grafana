@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Uyarı durumu",
       "annotations": "Ek açıklamalar",
-      "description-missing-series-evaluations": "Bir boyutta veri alınamadığında uyarı durumunun eski kabul edilip otomatik çözümlenmesi için kaç ardışık değerlendirme aralığının geçmesi gerekir. Değer belirtilmediği takdirde varsayılan değer 2 olarak kullanılır.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Değerlendirme",
       "evaluation-paused": "Uyarı değerlendirmesi şu anda duraklatıldı",
       "evaluation-paused-description": "Bu kural için bildirimler tetiklenmeyecek ve kural tekrar etkinleştirilene kadar hiçbir uyarı örneği oluşturulmayacaktır.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Son güncelleyen",
       "missing-series-resolve": "Çözüm için eksik dizi değerlendirmeleri",
       "no-annotations": "Ek açıklama yok",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "İletişim noktası",
+        "group-by": "Gruplandırma ölçütü",
+        "group-title": "",
+        "mute-timings": "Sessize alma zamanlamaları",
+        "timing-options": ""
+      },
       "pending-period": "Bekleme süresi",
       "rule": "Kural",
       "rule-identifier": "Kural tanımlayıcı",
@@ -449,6 +457,15 @@
       "export": "Dışa aktar",
       "silence-notifications": "Bildirimleri sessize al",
       "with-modifications": "Değişikliklerle birlikte"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "\"{{label}}\" metnini panoya kopyala",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Pano",
         "dashboard-and-panel": "",
         "evaluation-interval": "Değerlendirme aralığı",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "İçe aktarılacak kural yok. Lütfen farklı bir ad alanı veya kural grubu seçin.",
         "no-rules-body-yaml": "",
         "no-rules-title": "İçe aktarılacak kural yok",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Bilgi"
+        },
         "plugin-rules-warning": {
           "text": "Bazı kuralların eklentiler tarafından yönetildiği tespit edildi. Bu kurallar içe aktarılmayacak.",
           "title": "Bazı kurallar içe aktarmadan hariç tutuldu"
@@ -4023,6 +4045,9 @@
         "title": "Satır seçenekleri"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Özelliği kaldır"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Değişiklikler",
-      "label-details": "Ayrıntılar"
+      "label-details": "Ayrıntılar",
+      "title": "Panoyu kaydet",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Seçilen klasörde aynı isimde bir pano zaten mevcut. <1></1><2>Yine de bu panoyu kaydetmek istiyor musunuz?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Bu başlık benzersiz değil"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Ekle",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Seçilen klasörde aynı isimde bir pano zaten mevcut. Yine de bu panoyu kaydetmek istiyor musunuz?",
       "title-name-already-exists": "Bu ad zaten mevcut"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Değişiklikler",
-        "label-details": "Ayrıntılar"
+        "label-details": "Ayrıntılar",
+        "title": "Panoyu kaydet",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Günlük ayrıntılarını gizle",
       "unpin-from-outline": "Günlüğü sabitlemeyi kaldır"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Daha fazla günlük kaydı yüklenirken hata oluştu.",
       "no-more-logs-available": "Başka günlük kaydı yok.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Günlük kaydı satırlarındaki kaçış karakterli satır sonu ve sekme dizilerini düzelt",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Kaçış karakterini kaldır",
       "scroll-bottom": "En alta kaydır",
       "scroll-top": "En üste kaydır",
+      "show-search": "",
       "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
       "unwrap-lines": "Satırları çöz",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Devre dışı bırak",
       "tooltip-enable": "Etkinleştir"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Kapalı"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Sıralı dizi değeri ekle",
       "generate-enum-values-from-data": "Veriden sıralı dizi değerleri oluştur"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Zamana göre artan sıralama"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Otomatik",
+      "field-order-manual": "",
       "first-frame-warning": "Alanları düzenleme yalnızca tek bir çerçeveyle çalışır. Önce birleştirme dönüşümü uygulamayı veya girdiyi filtrelemeyi düşünün."
     },
     "partion-by-values-editor": {
