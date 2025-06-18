@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -137,7 +136,7 @@ type JSONData struct {
 	Languages []string `json:"languages,omitempty"`
 }
 
-func ReadPluginJSON(reader io.Reader, features config.Features) (JSONData, error) {
+func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	plugin := JSONData{}
 	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
 		return JSONData{}, err
@@ -149,10 +148,6 @@ func ReadPluginJSON(reader io.Reader, features config.Features) (JSONData, error
 
 	if plugin.ID == "grafana-piechart-panel" {
 		plugin.Name = "Pie Chart (old)"
-	}
-
-	if plugin.ID == "tempo" && !features.TempoAlertingEnabled {
-		plugin.Alerting = false
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {

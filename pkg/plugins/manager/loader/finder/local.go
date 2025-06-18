@@ -152,10 +152,14 @@ func (l *Local) readPluginJSON(pluginJSONPath string, features config.Features) 
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
-	plugin, err := plugins.ReadPluginJSON(reader, features)
+	plugin, err := plugins.ReadPluginJSON(reader)
 	if err != nil {
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
+	}
+
+	if plugin.ID == "tempo" && !features.TempoAlertingEnabled {
+		plugin.Alerting = false
 	}
 
 	return plugin, nil

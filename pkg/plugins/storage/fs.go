@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -242,7 +241,7 @@ func readPluginJSON(pluginDir string) (plugins.JSONData, error) {
 	}
 
 	// Feature toggles are supported only in local plugins (see finder/local.go)
-	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data), config.Features{})
+	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data))
 	if err != nil {
 		return plugins.JSONData{}, err
 	}
