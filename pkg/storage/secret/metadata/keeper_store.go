@@ -65,7 +65,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 			return err
 		}
 
-		result, err := s.db.ExecContext(ctx, sqlKeeperCreate.Name(), query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
 		}
@@ -127,7 +127,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	res, err := s.db.QueryContext(ctx, sqlKeeperRead.Name(), query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row for %s in namespace %s: %w", name, namespace, err)
 	}
@@ -192,7 +192,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 			return fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
 		}
 
-		result, err := s.db.ExecContext(ctx, sqlKeeperUpdate.Name(), query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("updating row: %w", err)
 		}
@@ -238,7 +238,7 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
 	}
 
-	result, err := s.db.ExecContext(ctx, sqlKeeperDelete.Name(), query, req.GetArgs()...)
+	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
@@ -276,7 +276,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperList.Name(), err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, sqlKeeperList.Name(), query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
 	}
@@ -349,7 +349,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, sqlSecureValueListByName.Name(), querySecureValueList, reqSecureValue.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("executing query: %w", err)
 	}
@@ -422,7 +422,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
 	}
 
-	keepersRows, err := s.db.QueryContext(ctx, sqlKeeperListByName.Name(), qKeeper, reqKeeper.GetArgs()...)
+	keepersRows, err := s.db.QueryContext(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}

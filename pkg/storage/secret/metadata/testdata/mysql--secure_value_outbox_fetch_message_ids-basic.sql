@@ -1,6 +1,6 @@
 SELECT
   `uid`
 FROM `secret_secure_value_outbox`
-ORDER BY created DESC
+ORDER BY created ASC
 LIMIT 10
 ;
