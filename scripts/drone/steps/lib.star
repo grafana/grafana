@@ -608,23 +608,6 @@ def test_frontend_step():
         ],
     }
 
-def lint_frontend_step():
-    return {
-        "name": "lint-frontend",
-        "image": images["node"],
-        "environment": {
-            "TEST_MAX_WORKERS": "50%",
-        },
-        "depends_on": [
-            "yarn-install",
-        ],
-        "commands": [
-            "yarn run prettier:check",
-            "yarn run lint",
-            "yarn run typecheck",
-        ],
-    }
-
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
     uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."

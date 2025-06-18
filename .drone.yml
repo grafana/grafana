@@ -1467,80 +1467,6 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: rrc-lint-frontend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.21.3
-  name: identify-runner
-- commands:
-  - yarn install --immutable || yarn install --immutable
-  depends_on: []
-  image: node:22.16.0-alpine
-  name: yarn-install
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: node:22.16.0-alpine
-  name: lint-frontend
-- commands:
-  - |-
-    make i18n-extract || (echo "
-    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
-    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'make i18n-extract',
-    commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
-  depends_on:
-  - yarn-install
-  image: node:22-bookworm
-  name: verify-i18n
-- commands:
-  - yarn generate-apis
-  - "\n            file_diff=$(git diff ':!conf')\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo \"\nAPI client
-    generation has not been committed. Please run 'yarn generate-apis', commit the
-    changes and push again.\"\n                exit 1\n            fi\n            "
-  depends_on:
-  - yarn-install
-  image: node:22-bookworm
-  name: verify-api-clients
-trigger:
-  branch:
-  - instant
-  - fast
-  - steady
-  - slow
-  ref:
-    include:
-    - refs/tags/rrc*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
 name: rrc-trigger-downstream
 node:
   type: no-parallel
@@ -3505,6 +3431,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3d6b743992e061888123070c7f9a088f816188acea79cc9436d89cbbf8f89d60
+hmac: 94e3c6a6222254917420d91b327a13807c4c0ac67c1a7279dadb0a10db2fb07d
 
 ...
