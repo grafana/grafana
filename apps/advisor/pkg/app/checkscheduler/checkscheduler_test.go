@@ -36,7 +36,7 @@ func TestRunner_Run(t *testing.T) {
 		runner := &Runner{
 			client:             mockClient,
 			typesClient:        mockTypesClient,
-			log:                logging.DefaultLogger,
+			log:                &logging.NoOpLogger{},
 			evaluationInterval: 1 * time.Hour,
 		}
 
@@ -56,10 +56,10 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), logging.DefaultLogger)
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 	assert.True(t, lastCreated.IsZero())
 }
@@ -89,10 +89,10 @@ func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	lastCreated, err := runner.checkLastCreated(context.Background(), logging.DefaultLogger)
+	lastCreated, err := runner.checkLastCreated(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 	assert.True(t, lastCreated.IsZero())
 	assert.Equal(t, "check-1", identifier.Name)
@@ -104,6 +104,8 @@ func TestRunner_checkLastCreated_UnprocessedCheck(t *testing.T) {
 }
 
 func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return nil, errors.New("create error")
@@ -121,16 +123,19 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client:      mockClient,
-		typesClient: mockTypesClient,
-		log:         logging.DefaultLogger,
+		checkRegistry: mockCheckService,
+		client:        mockClient,
+		typesClient:   mockTypesClient,
+		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 }
 
 func TestRunner_createChecks_Success(t *testing.T) {
+	mockCheckService := &MockCheckService{checks: []checks.Check{&mockCheck{id: "check-1"}}}
+
 	mockClient := &MockClient{
 		createFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.CreateOptions) (resource.Object, error) {
 			return &advisorv0alpha1.Check{}, nil
@@ -148,12 +153,13 @@ func TestRunner_createChecks_Success(t *testing.T) {
 	}
 
 	runner := &Runner{
-		client:      mockClient,
-		typesClient: mockTypesClient,
-		log:         logging.DefaultLogger,
+		checkRegistry: mockCheckService,
+		client:        mockClient,
+		typesClient:   mockTypesClient,
+		log:           &logging.NoOpLogger{},
 	}
 
-	err := runner.createChecks(context.Background())
+	err := runner.createChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 }
 
@@ -166,10 +172,10 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.Error(t, err)
 }
 
@@ -187,10 +193,10 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    logging.DefaultLogger,
+		log:    &logging.NoOpLogger{},
 	}
 
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 }
 
@@ -217,9 +223,9 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        logging.DefaultLogger,
+		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.ErrorContains(t, err, "delete error")
 }
 
@@ -253,9 +259,9 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        logging.DefaultLogger,
+		log:        &logging.NoOpLogger{},
 	}
-	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
+	err := runner.cleanupChecks(context.Background(), &logging.NoOpLogger{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }
@@ -333,4 +339,27 @@ func (m *MockClient) Delete(ctx context.Context, identifier resource.Identifier,
 
 func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
 	return m.patchFunc(ctx, identifier, patch, options, into)
+}
+
+type MockCheckService struct {
+	checks []checks.Check
+}
+
+func (m *MockCheckService) Checks() []checks.Check {
+	return m.checks
+}
+
+type mockCheck struct {
+	checks.Check
+
+	id    string
+	steps []checks.Step
+}
+
+func (m *mockCheck) ID() string {
+	return m.id
+}
+
+func (m *mockCheck) Steps() []checks.Step {
+	return m.steps
 }

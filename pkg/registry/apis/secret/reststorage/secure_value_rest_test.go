@@ -314,13 +314,15 @@ func TestSecureValueRestCreate(t *testing.T) {
 				Description: "desc1",
 			},
 			Status: secretv0alpha1.SecureValueStatus{
-				Phase: secretv0alpha1.SecureValuePhasePending,
+				Phase:      secretv0alpha1.SecureValuePhasePending,
+				ExternalID: "test-external-id",
 			},
 		}
 
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v1")
-		_, err := sut.CreateSv(testutils.CreateSvWithSv(sv))
+		createdSv, err := sut.CreateSv(testutils.CreateSvWithSv(sv))
 		require.NoError(t, err)
+		require.Empty(t, createdSv.Status.ExternalID)
 
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 		_, err = sut.CreateSv(testutils.CreateSvWithSv(sv))

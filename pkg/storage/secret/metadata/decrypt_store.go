@@ -5,6 +5,9 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -16,6 +19,7 @@ import (
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
 	features featuremgmt.FeatureToggles,
+	tracer trace.Tracer,
 	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -31,6 +35,7 @@ func ProvideDecryptStorage(
 	}
 
 	return &decryptStorage{
+		tracer:                     tracer,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -40,6 +45,7 @@ func ProvideDecryptStorage(
 
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
+	tracer                     trace.Tracer
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -48,12 +54,23 @@ type decryptStorage struct {
 
 // Decrypt decrypts a secure value from the keeper.
 func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv0alpha1.ExposedSecureValue, decryptErr error) {
+	ctx, span := s.tracer.Start(ctx, "DecryptStorage.Decrypt", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("name", name),
+	))
+	defer span.End()
+
 	var decrypterIdentity string
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
 	defer func() {
+		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
+
 		if decryptErr == nil {
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
 		} else {
+			span.SetStatus(codes.Error, "Decrypt failed")
+			span.RecordError(decryptErr)
+
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
 		}
 	}()

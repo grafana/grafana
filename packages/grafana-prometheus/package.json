@@ -26,13 +26,14 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "i18n-extract": "i18next --config src/locales/i18next-parser.config.cjs",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json"
@@ -42,6 +43,7 @@
     "@floating-ui/react": "0.27.12",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
+    "@grafana/i18n": "12.1.0-pre",
     "@grafana/plugin-ui": "0.10.6",
     "@grafana/runtime": "12.1.0-pre",
     "@grafana/schema": "12.1.0-pre",
@@ -87,13 +89,13 @@
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.5",
     "esbuild": "0.25.0",
+    "i18next-parser": "9.3.0",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-select-event": "5.5.1",
     "rollup": "^4.22.4",
-    "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "testing-library-selector": "0.3.1",
