@@ -18,6 +18,9 @@ permissions:
 jobs:
   dispatch-job:
     uses: grafana/grafana/.github/workflows/pr-patch-check.yml@main
+    permissions:
+      id-token: write
+      contents: read
     with:
       head_ref: ${{ github.head_ref }}
       base_ref: ${{ github.base_ref }}
