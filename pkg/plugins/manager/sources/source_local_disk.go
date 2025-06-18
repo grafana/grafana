@@ -30,6 +30,7 @@ type LocalSource struct {
 	log        log.Logger
 }
 
+// NewLocalSource represents a plugin with a fixed set of files.
 func NewLocalSource(class plugins.Class, paths []string) *LocalSource {
 	return &LocalSource{
 		paths:      paths,
@@ -39,11 +40,13 @@ func NewLocalSource(class plugins.Class, paths []string) *LocalSource {
 	}
 }
 
-func NewUnsafeLocalSource(cfg *config.PluginManagementCfg, class plugins.Class, paths []string) *LocalSource {
+// NewUnsafeLocalSource represents a plugin that has an unbounded set of files. This useful when running in
+// dev mode whilst developing a plugin.
+func NewUnsafeLocalSource(class plugins.Class, paths []string) *LocalSource {
 	return &LocalSource{
 		paths:      paths,
 		class:      class,
-		strictMode: !cfg.DevMode,
+		strictMode: false,
 		log:        log.New("local.source"),
 	}
 }
@@ -274,7 +277,11 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPath string, clas
 
 	sources := make([]*LocalSource, len(pluginDirs))
 	for i, dir := range pluginDirs {
-		sources[i] = NewUnsafeLocalSource(cfg, class, []string{dir})
+		if cfg.DevMode {
+			sources[i] = NewUnsafeLocalSource(class, []string{dir})
+		} else {
+			sources[i] = NewLocalSource(class, []string{dir})
+		}
 	}
 
 	return sources, nil

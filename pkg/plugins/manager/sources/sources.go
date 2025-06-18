@@ -59,7 +59,11 @@ func (s *Service) pluginSettingSources() []plugins.PluginSource {
 		if !exists || path == "" {
 			continue
 		}
-		sources = append(sources, NewUnsafeLocalSource(s.cfg, plugins.ClassExternal, []string{path}))
+		if s.cfg.DevMode {
+			sources = append(sources, NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
+		} else {
+			sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
+		}
 	}
 
 	return sources
