@@ -201,6 +201,16 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
+func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheService, req *parsedRequest, exprService *expr.Service) (*backend.QueryDataResponse, error) {
+	s := &ServiceImpl{
+		log:               log,
+		dataSourceCache:   dscache,
+		expressionService: exprService,
+		//ExecutePipeline:   ExecutePipelineWithClient,
+	} // or however you initialize it
+	return s.handleExpressions(ctx, nil, req)
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
@@ -272,6 +282,19 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 
 	return s.pluginClient.QueryData(ctx, req)
+}
+
+func Parse(ctx context.Context, log log.Logger, dscache datasources.CacheService, reqDTO dtos.MetricRequest) (req *parsedRequest, hasExpression bool, err error) {
+	s := &ServiceImpl{
+		log:             log,
+		dataSourceCache: dscache,
+	} // or however you initialize it
+	req, err = s.parseMetricRequest(ctx, nil, true, reqDTO)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return req, req.hasExpression, nil
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid

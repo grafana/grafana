@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,15 +25,45 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
+	sse_query "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type queryREST struct {
 	logger  log.Logger
 	builder *QueryAPIBuilder
+}
+
+type MyCacheService struct {
+	legacy service.LegacyDataSourceLookup
+}
+
+func (mcs *MyCacheService) GetDatasource(ctx context.Context, datasourceID int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	ref, err := mcs.legacy.GetDataSourceFromDeprecatedFields(ctx, "", datasourceID)
+	if err != nil {
+		return nil, err
+	}
+	return &datasources.DataSource{
+		UID:  ref.UID,
+		Type: ref.Type,
+	}, nil
+}
+
+func (mcs *MyCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	ref, err := mcs.legacy.GetDataSourceFromDeprecatedFields(ctx, datasourceUID, 0)
+	if err != nil {
+		return nil, err
+	}
+	return &datasources.DataSource{
+		UID:  ref.UID,
+		Type: ref.Type,
+	}, nil
 }
 
 var (
@@ -145,8 +178,42 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			responder.Error(err)
 			return
 		}
+
 		// Parses the request and splits it into multiple sub queries (if necessary)
-		req, err := b.parser.parseRequest(ctx, raw)
+		req, err := b.parser.parseRequest(ctx, raw) //TODO replace this somehow
+		var jsonQueries []*simplejson.Json
+		for _, query := range raw.Queries {
+			jsonBytes, err := json.Marshal(query)
+			if err != nil {
+				if err != nil {
+					b.log.Error("error marshalling", err)
+				}
+			}
+
+			sjQuery, _ := simplejson.NewJson(jsonBytes)
+			if err != nil {
+				b.log.Error("error unmarshalling", err)
+			}
+
+			jsonQueries = append(jsonQueries, sjQuery)
+		}
+		cache := &MyCacheService{
+			legacy: b.parser.legacy,
+		}
+		zz, hasExpression, ex := sse_query.Parse(ctx, b.log, cache, dtos.MetricRequest{
+			From:    raw.From,
+			To:      raw.To,
+			Queries: jsonQueries,
+		})
+		spew.Dump(zz)
+		spew.Dump(ex)
+		if hasExpression {
+			qdr, err := sse_query.Handle(ctx, b.log, cache, zz, b.exprService)
+			if err != nil {
+				spew.Dump(err)
+			}
+			spew.Dump(qdr)
+		}
 		if err != nil {
 			var refError ErrorWithRefID
 			statusCode := http.StatusBadRequest
@@ -247,7 +314,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, in
 
 	if len(req.Expressions) > 0 {
 		b.log.Debug("executing expressions")
-		qdr, err = b.handleExpressions(ctx, req, qdr)
+		qdr, err = b.handleExpressions(ctx, req, qdr) //TODO replace this with pkg/services/query/query.go:203
 		if err != nil {
 			b.log.Debug("handleExpressions failed", "err", err)
 		}
