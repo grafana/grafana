@@ -4,7 +4,7 @@ import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
 import { ReactNode } from 'react';
 
-import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { FieldType, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -119,29 +119,17 @@ const getStyles = (theme: GrafanaTheme2, justifyColumnContent: Property.JustifyC
   }),
 });
 
-type TableNGCellRenderer = (props: Omit<TableCellNGProps, 'children'>) => ReactNode;
+export type TableNGCellRenderer = (props: Omit<TableCellNGProps, 'children'>) => ReactNode;
 
-const SPARKLINE_RENDERER: TableNGCellRenderer = (props) => <SparklineCell {...props} />;
 const GAUGE_RENDERER: TableNGCellRenderer = (props) => <BarGaugeCell {...props} />;
-const JSON_RENDERER: TableNGCellRenderer = (props) => <JSONCell {...props} />;
-const AUTO_RENDERER: TableNGCellRenderer = (props) => {
-  const { field } = props;
-  // Handle auto cell type detection
-  if (field.type === FieldType.geo) {
-    return <GeoCell {...props} />;
-  }
-  if (field.type === FieldType.frame) {
-    const firstValue = field.values[0];
-    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-      return SPARKLINE_RENDERER(props);
-    }
-    return JSON_RENDERER(props);
-  }
-  if (field.type === FieldType.other) {
-    return JSON_RENDERER(props);
-  }
-  return <AutoCell {...props} />;
-};
+const AUTO_RENDERER: TableNGCellRenderer = (props) => <AutoCell {...props} />;
+
+/** @internal */
+export const SPARKLINE_RENDERER: TableNGCellRenderer = (props) => <SparklineCell {...props} />;
+/** @internal */
+export const JSON_RENDERER: TableNGCellRenderer = (props) => <JSONCell {...props} />;
+/** @internal */
+export const GEO_RENDERER: TableNGCellRenderer = (props) => <GeoCell {...props} />;
 
 export const CELL_RENDERERS: Record<TableCellDisplayMode, TableNGCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,

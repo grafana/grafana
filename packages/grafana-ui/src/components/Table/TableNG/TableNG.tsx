@@ -14,7 +14,16 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import {
+  DataHoverClearEvent,
+  DataHoverEvent,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  isDataFrame,
+  isTimeSeriesFrame,
+  ReducerID,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -28,7 +37,14 @@ import { CellColors } from '../types';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
-import { CELL_RENDERERS, TableCellNG } from './Cells/TableCellNG';
+import {
+  CELL_RENDERERS,
+  GEO_RENDERER,
+  JSON_RENDERER,
+  SPARKLINE_RENDERER,
+  TableCellNG,
+  TableNGCellRenderer,
+} from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import { useFilteredRows, useFooterCalcs, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, TableCellNGProps } from './types';
@@ -243,8 +259,28 @@ export function TableNG(props: TableNGProps) {
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyColumnContent).headerCell;
         const cellOptions = getCellOptions(field);
+
         const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
-        const renderFieldCell = CELL_RENDERERS[cellType];
+
+        let renderFieldCell: TableNGCellRenderer = CELL_RENDERERS[cellType];
+
+        // Handle auto cell type detection
+        if (cellType === TableCellDisplayMode.Auto) {
+          if (field.type === FieldType.geo) {
+            renderFieldCell = GEO_RENDERER;
+          }
+          if (field.type === FieldType.frame) {
+            const firstValue = field.values[0];
+            if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+              renderFieldCell = SPARKLINE_RENDERER;
+            } else {
+              renderFieldCell = JSON_RENDERER;
+            }
+          }
+          if (field.type === FieldType.other) {
+            renderFieldCell = JSON_RENDERER;
+          }
+        }
 
         return {
           field,
