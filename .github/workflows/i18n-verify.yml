@@ -1,0 +1,12 @@
+name: Verify i18n markup has been committed
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+jobs:
+  verify-i18n:
+    uses: grafana/grafana-github-actions/.github/workflows/verify-i18n.yml@main
