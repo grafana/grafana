@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
+import { Stack, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { QueryValidator, QueryValidatorProps } from './QueryValidator';
 
@@ -70,7 +70,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
       </div>
       {showTools && (
         <div>
-          <HorizontalGroup spacing="sm">
+          <Stack gap={1}>
             {onFormatCode && (
               <IconButton
                 onClick={() => {
@@ -111,7 +111,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
             >
               <Icon className={styles.hint} name="keyboard" />
             </Tooltip>
-          </HorizontalGroup>
+          </Stack>
         </div>
       )}
     </div>
