@@ -239,7 +239,6 @@ Additional configuration is available for some cell types.
 If you want to apply a cell type to only some fields instead of all fields, you can do so using the **Cell options > Cell type** field override.
 
 <!-- prettier-ignore-start -->
-
 | Cell type                                 | Description                                                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | [Auto](#auto)                             | Automatically displays values with sensible defaults applied. |
@@ -247,29 +246,26 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Colored text](#colored-text)             | If thresholds are set, then the field text is displayed in the appropriate threshold color. |
 | [Colored background](#colored-background) | If thresholds are set, then the field background is displayed in the appropriate threshold color. |
 | [Gauge](#gauge)                           | Cells can be displayed as a graphical gauge, with several different presentation types. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
-| [Data links](#data-links)                 | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
 | [Image](#image)                           | If the field value is an image URL or a base64 encoded image, the table displays the image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
-
 <!-- prettier-ignore-end -->
 
-##### Auto
+#### Auto
 
 This cell type automatically displays values with sensible defaults applied.
 
 It has the following cell options:
 
 <!-- prettier-ignore-start -->
-
 | Option | Description |
 | ------ | ----------- |
 | Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
-
 <!-- prettier-ignore-end -->
 
-##### Sparkline
+#### Sparkline
 
 This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
@@ -280,7 +276,6 @@ The sparkline cell type options are described in the following table.
 For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
 
 <!-- prettier-start-ignore -->
-
 | Option                                      | Description                                                                                   |
 | ------------------------------------------- | ---------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
@@ -294,10 +289,9 @@ For more detailed information about all of the sparkline styling options (except
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
 | Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
 | Bar alignment       | Set the position of the bar relative to a data point. |
-
 <!-- prettier-end-ignore -->
 
-##### Colored text
+#### Colored text
 
 {{< admonition type="note" >}}
 The colored text cell type is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Do not enable this feature in production environments.
@@ -312,36 +306,34 @@ If thresholds are set, with this cell type, the field text is displayed in the a
 The colored text cell type has the following options:
 
 <!-- prettier-ignore-start -->
-
 | Option | Description |
 | ------ | ----------- |
 | Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
-
 <!-- prettier-ignore-end -->
 
-##### Colored background
+#### Colored background
 
 If thresholds are set, with this cell type, the field background is displayed in the appropriate threshold color.
 
 ![Table with colored background cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-bkgrnd-v11.3-2.png)
 
+You can also set background cell color by row:
+
+![Table with background cell color applied to row](/media/docs/grafana/panels-visualizations/screenshot-table-colored-row-v11.3.png)
+
 The colored background cell type has the following options:
 
 <!-- prettier-ignore-start -->
-
 | Option | Description |
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
 | Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
-
 <!-- prettier-ignore-end -->
 
-![Table with background cell color applied to row](/media/docs/grafana/panels-visualizations/screenshot-table-colored-row-v11.3.png)
-
-##### Gauge
+#### Gauge
 
 With this cell type, cells can be displayed as a graphical gauge, with several different presentation types controlled by the [gauge display mode](#gauge-display-mode) and the [value display](#value-display).
 
@@ -350,56 +342,60 @@ The maximum and minimum values of the gauges are configured automatically from t
 If you don't want the max/min values to be pulled from the whole dataset, you can configure them for each column using [field overrides](#field-overrides).
 {{< /admonition >}}
 
-###### Gauge display mode
+##### Gauge display mode
 
 You can set three gauge display modes.
 
 <!-- prettier-ignore-start -->
-
 | Option | Description |
 | ------ | ----------- |
 | Basic | Shows a simple gauge with the threshold levels defining the color of gauge. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-basic-v11.3.png" alt="Table cell with basic gauge mode" >}} |
 | Gradient | The threshold levels define a gradient. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-gradient-v11.3.png" alt="Table cell with gradient gauge mode" >}} |
 | Retro LCD | The gauge is split up in small cells that are lit or unlit. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-retro-v11.3.png" alt="Table cell with retro LCD gauge mode" >}} |
-
 <!-- prettier-ignore-end -->
 
-###### Value display
+##### Value display
 
 Labels displayed alongside of the gauges can be set to be colored by value, match the theme text color, or be hidden.
 
 <!-- prettier-ignore-start -->
-
 | Option | Description |
 | ------ | ----------- |
 | Value color | Labels are colored by value. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-value-color-v11.3.png" alt="Table with labels in value color" >}} |
 | Text color | Labels match the theme text color. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-text-color-v11.3.png" alt="Table with labels in theme color" >}} |
 | Hidden | Labels are hidden. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-hidden-v11.3.png" alt="Table with labels hidden" >}} |
-
 <!-- prettier-ignore-end -->
 
-##### Data links
-
-
-##### JSON View
+#### JSON View
 
 This cell type shows values formatted as code.
 If a value is an object the JSON view allowing browsing the JSON object will appear on hover.
 
 {{< figure src="/static/img/docs/tables/json-view.png" max-width="350px" alt="JSON view" class="docs-image--no-shadow" >}}
 
-##### Image
+For the JSON view cell type, you can set enable **Cell value inspect**.
+This enables value inspection from table cells.
+When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.
+
+Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
+However, you can switch back and forth between tabs
+
+If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.
+
+#### Image
 
 If you have a field value that is an image URL or a base64 encoded image, this cell type displays it as an image.
 
 ![Table with image cell type](/media/docs/grafana/panels-visualizations/screenshot-table-cell-image-v11.3.png)
 
-Set the following options:
+It has the following options:
 
-- **Alt text** - Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
-- **Title text** - Set the text that's displayed when the image is hovered over with a cursor.
+| Option | Description |
+| ------ | ----------- |
+| Alt text | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
+| Title text | Set the text that's displayed when the image is hovered over with a cursor. |
 
-##### Actions
+#### Actions
 
 The cell displays a button that triggers a basic, unauthenticated API call when clicked.
 Configure the API call with the following options:
@@ -413,19 +409,7 @@ Configure the API call with the following options:
 | Query parameters | Enter as many **Key**, **Value** pairs as you need. |
 | Header parameters | Enter as many **Key**, **Value** pairs as you need. |
 | Payload | Enter the body of the API call. |
-
 <!-- prettier-ignore-end -->
-
-
-#### Cell value inspect
-
-
-
-
-
-This option is available for the following cell types: **Auto**, **Colored text**, **Colored background**, and **JSON View**.
-
-
 
 ### Standard options
 
