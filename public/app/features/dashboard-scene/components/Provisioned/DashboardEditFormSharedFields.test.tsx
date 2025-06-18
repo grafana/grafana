@@ -89,7 +89,7 @@ describe('DashboardEditFormSharedFields', () => {
     it('should render workflow fields when isGitHub is true', () => {
       setup({ isGitHub: true });
 
-      expect(screen.getByText('Workflow')).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup')).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Write directly' })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Create branch' })).toBeInTheDocument();
     });
