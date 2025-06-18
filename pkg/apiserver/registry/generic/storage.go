@@ -12,6 +12,9 @@ func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, o
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
 	strategy := NewStrategy(scheme, gv)
+	if resourceInfo.IsClusterScoped() {
+		strategy = strategy.WithClusterScope()
+	}
 	store := &registry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
