@@ -407,9 +407,7 @@ export class DefaultGridLayoutManager
       // Flatten repeated grid items
       if (child instanceof DashboardGridItem) {
         if (child.state.repeatedPanels) {
-          child.state.repeatedPanels.forEach((panel) => {
-            children.push(panel);
-          });
+          children.push(...child.state.repeatedPanels);
         }
       } else {
         children.push(child);
