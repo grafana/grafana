@@ -772,6 +772,33 @@ describe('backendSrv', () => {
 
         await expect(promise).resolves.toBeDefined();
       });
+
+      it('should sanitise paths when calling .request', async () => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/users/%2e%2e/admin';
+
+        const promise = backendSrv.request({ url: maliciousUrl, method: 'GET', validatePath: true });
+
+        await expect(promise).rejects.toThrow(PathValidationError);
+      });
+
+      it('should sanitise paths when calling .fetch', (done) => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/users/%2e%2e/admin';
+
+        const observable = backendSrv.fetch({ url: maliciousUrl, method: 'GET', validatePath: true });
+
+        observable.subscribe({
+          next: () => {
+            throw new Error('Should not succeed');
+          },
+          error: (err) => {
+            expect(err).toBeInstanceOf(PathValidationError);
+            expect(err.message).toBe('Invalid request path');
+            done();
+          },
+        });
+      });
     });
 
     describe('when validatePath is disabled or not provided', () => {

@@ -113,7 +113,7 @@ export class BackendSrv implements BackendService {
     const fetchQueue = this.fetchQueue;
 
     let url = rawOptions.url;
-    if (rawOptions.sanitizePath) {
+    if (rawOptions.validatePath) {
       try {
         url = validatePath(rawOptions.url);
       } catch (error) {
