@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'es-toolkit/compat';
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 

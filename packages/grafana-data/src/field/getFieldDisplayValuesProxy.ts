@@ -1,4 +1,4 @@
-import { toNumber } from 'lodash';
+import { toNumber } from 'es-toolkit/compat';
 
 import { DataFrame } from '../types/dataFrame';
 import { DisplayValue } from '../types/displayValue';

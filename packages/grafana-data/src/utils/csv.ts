@@ -1,5 +1,4 @@
-// Libraries
-import { defaults } from 'lodash';
+import { defaults } from 'es-toolkit/compat';
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 
 // Types

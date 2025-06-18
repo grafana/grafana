@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'es-toolkit/compat';
 
 import { TimeZone, DefaultTimeZone } from '../types/time';
 

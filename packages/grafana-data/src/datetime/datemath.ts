@@ -1,4 +1,4 @@
-import { isDate } from 'lodash';
+import { isDate } from 'es-toolkit/compat';
 
 import { TimeZone } from '@grafana/schema';
 

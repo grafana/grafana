@@ -1,5 +1,4 @@
-// Libraries
-import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
+import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'es-toolkit/compat';
 
 // Types
 import { getFieldTypeFromValue } from '../dataframe/processDataFrame';

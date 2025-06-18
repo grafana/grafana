@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { isEqual } from 'es-toolkit/compat';
 
 import { DataFrame } from '../types/dataFrame';
 

@@ -1,4 +1,4 @@
-import { each } from 'lodash';
+import { each } from 'es-toolkit/compat';
 
 import * as dateMath from './datemath';
 import { dateTime, DurationUnit, DateTime } from './moment_wrapper';

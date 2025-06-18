@@ -1,4 +1,4 @@
-import { memoize } from 'lodash';
+import { memoize } from 'es-toolkit/compat';
 import moment from 'moment-timezone';
 
 import { TimeZone } from '../types/time';

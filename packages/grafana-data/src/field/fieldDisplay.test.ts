@@ -1,4 +1,4 @@
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes/createTheme';

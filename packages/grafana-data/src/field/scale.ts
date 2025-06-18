@@ -1,4 +1,4 @@
-import { isNumber } from 'lodash';
+import { isNumber } from 'es-toolkit/compat';
 
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';

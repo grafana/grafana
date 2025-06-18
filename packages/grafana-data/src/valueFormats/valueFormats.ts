@@ -1,4 +1,4 @@
-import { clamp } from 'lodash';
+import { clamp } from 'es-toolkit/compat';
 
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types/time';

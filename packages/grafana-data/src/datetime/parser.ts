@@ -1,5 +1,4 @@
-/* eslint-disable id-blacklist, no-restricted-imports */
-import { lowerCase } from 'lodash';
+import { lowerCase } from 'es-toolkit/compat';
 import moment from 'moment-timezone';
 
 import { DateTimeOptions, getTimeZone } from './common';

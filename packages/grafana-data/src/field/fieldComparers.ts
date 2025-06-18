@@ -1,4 +1,4 @@
-import { isNumber } from 'lodash';
+import { isNumber } from 'es-toolkit/compat';
 
 import { isDateTimeInput, dateTime } from '../datetime/moment_wrapper';
 import { Field, FieldType } from '../types/dataFrame';

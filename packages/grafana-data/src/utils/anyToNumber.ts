@@ -1,4 +1,4 @@
-import { toNumber } from 'lodash';
+import { toNumber } from 'es-toolkit/compat';
 
 /**
  * Will return any value as a number or NaN
