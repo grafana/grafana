@@ -567,6 +567,86 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+<<<<<<< HEAD
+=======
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: pr-swagger-gen
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  failure: ignore
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
+  - apk add --update curl jq bash
+  - GITHUB_TOKEN=$(cat /github-app/token)
+  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  depends_on:
+  - github-app-generate-token
+  failure: ignore
+  image: alpine/git:2.40.1
+  name: clone-enterprise
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
+  - apk add --update git make
+  - make swagger-clean && make openapi3-gen
+  - for f in public/api-merged.json public/openapi3.json; do git add $f; done
+  - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
+    date!"; else git diff --cached && echo "Please ensure the branch is up-to-date,
+    then regenerate the specification by running make swagger-clean && make openapi3-gen"
+    && return 1; fi
+  depends_on:
+  - clone-enterprise
+  image: golang:1.24.4-alpine
+  name: swagger-gen
+trigger:
+  event:
+  - pull_request
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: github-app
+  temp: {}
+---
+clone:
+  retries: 3
+depends_on: []
+>>>>>>> a7dc6bdfb99 (Drone: Remove shellcheck pipeline)
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -3511,6 +3591,10 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
+<<<<<<< HEAD
 hmac: 32762207fc8a48b6c00e25e83f3f163438bd218354e2ceb543b7a6877ebbd1a0
+=======
+hmac: 1d9e6499d7c9ecb8feea1fdf8ea8abe57fc344b62fc01650aaf83bd686b5625f
+>>>>>>> a7dc6bdfb99 (Drone: Remove shellcheck pipeline)
 
 ...

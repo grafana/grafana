@@ -55,6 +55,12 @@ def pr_pipelines():
         ),
         build_e2e(trigger, ver_mode),
         docs_pipelines(ver_mode, trigger_docs_pr()),
+<<<<<<< HEAD
+=======
+        swagger_gen(
+            ver_mode,
+        ),
+>>>>>>> a7dc6bdfb99 (Drone: Remove shellcheck pipeline)
         integration_benchmarks(
             prefix = ver_mode,
         ),
