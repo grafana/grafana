@@ -1781,6 +1781,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzApis",
+        "resourceVersion": "1747897123910",
+        "creationTimestamp": "2025-05-22T06:58:43Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-18T23:11:26Z"
@@ -1850,14 +1864,18 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-11T23:30:50Z"
+        "resourceVersion": "1750162291839",
+        "creationTimestamp": "2023-10-11T23:30:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 12:11:31.83962 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables RBAC support for library panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
@@ -2230,6 +2248,19 @@
         "description": "Use double quotes to escape keyword in a MySQL query",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "nanoGit",
+        "resourceVersion": "1750087021356",
+        "creationTimestamp": "2025-06-16T15:17:01Z"
+      },
+      "spec": {
+        "description": "Use experimental git library for provisioning",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {

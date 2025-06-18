@@ -97,13 +97,13 @@ export function LabelFilters({
               width={20}
               tooltip={
                 <div>
-                  <Trans i18nKey="querybuilder.label-filters.tooltip-label-filters">
+                  <Trans i18nKey="grafana-prometheus.querybuilder.label-filters.tooltip-label-filters">
                     Optional: used to filter the metric select for this query type.
                   </Trans>
                 </div>
               }
             >
-              <Trans i18nKey="querybuilder.label-filters.label-filters">Label filters</Trans>
+              <Trans i18nKey="grafana-prometheus.querybuilder.label-filters.label-filters">Label filters</Trans>
             </InlineLabel>
             {editorList()}
           </div>
@@ -111,7 +111,7 @@ export function LabelFilters({
       ) : (
         <EditorFieldGroup>
           <EditorField
-            label={t('querybuilder.label-filters.label-label-filters', 'Label filters')}
+            label={t('grafana-prometheus.querybuilder.label-filters.label-label-filters', 'Label filters')}
             error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
             invalid={labelFilterRequired && !hasLabelFilter}
           >
