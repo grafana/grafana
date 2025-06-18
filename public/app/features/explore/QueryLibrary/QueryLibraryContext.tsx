@@ -20,7 +20,11 @@ export type QueryLibraryContextType = {
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
-  openDrawer: (datasourceFilters: string[], onSelectQuery: OnSelectQueryType, options?: { context?: string }) => void;
+  openDrawer: (
+    datasourceFilters: string[],
+    onSelectQuery: OnSelectQueryType,
+    options?: { isReplacingQuery?: boolean; context?: string }
+  ) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
 
@@ -31,7 +35,10 @@ export type QueryLibraryContextType = {
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
-  openAddQueryModal: (query: DataQuery, options?: { onSave?: () => void; context?: string }) => void;
+  openAddQueryModal: (
+    query: DataQuery,
+    options?: { isDuplicating?: boolean; onSave?: () => void; context?: string }
+  ) => void;
   closeAddQueryModal: () => void;
 
   /**
