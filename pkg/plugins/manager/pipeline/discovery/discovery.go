@@ -33,7 +33,7 @@ type Opts struct {
 }
 
 // New returns a new Discovery stage.
-func New(cfg *config.PluginManagementCfg, opts Opts) *Discovery {
+func New(_ *config.PluginManagementCfg, opts Opts) *Discovery {
 	if opts.FilterFuncs == nil {
 		opts.FilterFuncs = []FilterFunc{} // no filters by default
 	}

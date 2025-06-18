@@ -24,7 +24,6 @@ func TestRenderer(t *testing.T) {
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				require.True(t, src.PluginClass(ctx) == plugins.ClassExternal)
 
-				// Use type assertion to get paths from LocalSource
 				if localSrc, ok := src.(*sources.LocalSource); ok {
 					paths := localSrc.Paths()
 					require.Len(t, paths, 1)
@@ -64,7 +63,6 @@ func TestRenderer(t *testing.T) {
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				numLoaded++
 
-				// Use type assertion to get paths from LocalSource
 				if localSrc, ok := src.(*sources.LocalSource); ok {
 					paths := localSrc.Paths()
 					if strings.HasPrefix(paths[0], filepath.Join(testdataDir, "renderer")) {

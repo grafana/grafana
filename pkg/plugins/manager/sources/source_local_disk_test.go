@@ -104,8 +104,6 @@ func TestDirAsLocalSources(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-
-			// Use cmp.Diff with compareOpts to ignore the log field
 			if !cmp.Equal(got, tt.expected, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.expected, compareOpts...))
 			}
