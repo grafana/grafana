@@ -72,13 +72,13 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
             <InlineField
               labelWidth={30}
               label={t(
-                'configuration.alerting-settings-overhaul.label-allow-as-recording-rules-target',
+                'grafana-prometheus.configuration.alerting-settings-overhaul.label-allow-as-recording-rules-target',
                 'Allow as recording rules target'
               )}
               disabled={options.readOnly}
               tooltip={
                 <>
-                  <Trans i18nKey="configuration.alerting-settings-overhaul.tooltip-allow-as-recording-rules-target">
+                  <Trans i18nKey="grafana-prometheus.configuration.alerting-settings-overhaul.tooltip-allow-as-recording-rules-target">
                     Allow this data source to be selected as a target for writing recording rules.
                   </Trans>{' '}
                   {docsTip()}
