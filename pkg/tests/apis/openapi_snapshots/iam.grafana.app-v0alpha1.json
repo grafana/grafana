@@ -1796,6 +1796,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.SSOSetting": {
         "type": "object",
+        "required": [
+          "metadata"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1806,7 +1809,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
