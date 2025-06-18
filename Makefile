@@ -267,7 +267,7 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
 
 .PHONY: run-air
-run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration.
+run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
 	air -c .air.toml
 
 ##@ Testing
