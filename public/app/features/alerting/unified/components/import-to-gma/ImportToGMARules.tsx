@@ -25,7 +25,11 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { Folder } from '../../types/rule-form';
-import { DataSourceType } from '../../utils/datasource';
+import {
+  DataSourceType,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -319,11 +323,11 @@ function YamlTargetDataSourceField() {
             noDefault
             inputId="yaml-target-data-source"
             alerting
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={(ds: DataSourceInstanceSettings) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('yamlImportTargetDatasourceUID', ds.uid);
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
-              if (!recordingRulesTargetDs) {
+              if (!recordingRulesTargetDs && isValidRecordingRulesTarget(ds)) {
                 setValue('targetDatasourceUID', ds.uid);
               }
             }}
@@ -367,7 +371,7 @@ function TargetDataSourceForRecordingRulesField() {
             current={field.value}
             inputId="recording-rules-target-data-source"
             noDefault
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={isValidRecordingRulesTarget}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('targetDatasourceUID', ds.uid);
             }}
@@ -479,7 +483,7 @@ function DataSourceField() {
               // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
               if (!recordingRulesTargetDs) {
-                const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                const targetDataSourceUID = isValidRecordingRulesTarget(ds) ? ds.uid : undefined;
                 setValue('targetDatasourceUID', targetDataSourceUID);
               }
             }}

@@ -1,9 +1,10 @@
 package definitions
 
 import (
+	"encoding/json"
+
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
 )
 
 // Route for mimirtool
@@ -230,7 +231,7 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       200: GettableAlertmanagerUserConfig
+//       200: AlertmanagerUserConfig
 //       403: ForbiddenError
 
 // Route for `mimirtool alertmanager delete`
@@ -347,33 +348,35 @@ type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
 
 // swagger:model
 type AlertmanagerUserConfig struct {
-	AlertmanagerConfig config.Config     `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// Configuration for Alertmanager in YAML format.
+	// in: body
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 }
 
-func (c *AlertmanagerUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// mimirtool sends alertmanager_config as a string
-	type cortexAlertmanagerUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexAlertmanagerUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-	c.TemplateFiles = tmp.TemplateFiles
-
-	return nil
-}
+// GettableAlertmanagerUserConfig is like AlertmanagerUserConfig but uses the normal config structure
+// that automatically sanitizes secrets when marshaled to YAML/JSON.
 
 // swagger:model
 type GettableAlertmanagerUserConfig struct {
-	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig GettableAlertmanagerConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles      map[string]string          `yaml:"template_files" json:"template_files"`
+}
+
+type GettableAlertmanagerConfig struct {
+	config.Config `yaml:",inline" json:",inline"`
+}
+
+func (c GettableAlertmanagerConfig) MarshalYAML() (any, error) {
+	type base config.Config
+	cfg := base(c.Config)
+	cfg.Global = nil // not used in Grafana
+	return cfg, nil
+}
+
+func (c GettableAlertmanagerConfig) MarshalJSON() ([]byte, error) {
+	type base config.Config
+	cfg := base(c.Config)
+	cfg.Global = nil // not used in Grafana
+	return json.Marshal(cfg)
 }

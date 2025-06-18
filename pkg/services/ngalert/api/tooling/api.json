@@ -514,6 +514,9 @@
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "queriedDatasourceUIDs": {
      "items": {
       "type": "string"
@@ -579,7 +582,8 @@
   "AlertmanagerUserConfig": {
    "properties": {
     "alertmanager_config": {
-     "$ref": "#/definitions/Config"
+     "description": "Configuration for Alertmanager in YAML format.\nin: body",
+     "type": "string"
     },
     "template_files": {
      "additionalProperties": {
@@ -738,9 +742,15 @@
      "type": "array"
     },
     "mute_time_intervals": {
-     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
+     "description": "Deprecated. Remove before v1.0 release.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array"
     },
@@ -1123,6 +1133,26 @@
    },
    "type": "object"
   },
+  "ExtraConfiguration": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "identifier": {
+     "type": "string"
+    },
+    "merge_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -1414,10 +1444,52 @@
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
   },
+  "GettableAlertmanagerConfig": {
+   "properties": {
+    "global": {
+     "$ref": "#/definitions/GlobalConfig"
+    },
+    "inhibit_rules": {
+     "items": {
+      "$ref": "#/definitions/InhibitRule"
+     },
+     "type": "array"
+    },
+    "mute_time_intervals": {
+     "description": "Deprecated. Remove before v1.0 release.",
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
+     },
+     "type": "array"
+    },
+    "route": {
+     "$ref": "#/definitions/Route"
+    },
+    "templates": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "GettableAlertmanagerUserConfig": {
    "properties": {
     "alertmanager_config": {
-     "type": "string"
+     "$ref": "#/definitions/GettableAlertmanagerConfig"
     },
     "template_files": {
      "additionalProperties": {
@@ -1853,6 +1925,12 @@
    "properties": {
     "alertmanager_config": {
      "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
     },
     "template_file_provenances": {
      "additionalProperties": {
@@ -3057,6 +3135,12 @@
     "alertmanager_config": {
      "$ref": "#/definitions/PostableApiAlertingConfig"
     },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
+    },
     "template_files": {
      "additionalProperties": {
       "type": "string"
@@ -3842,6 +3926,9 @@
     },
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "query": {
      "type": "string"
