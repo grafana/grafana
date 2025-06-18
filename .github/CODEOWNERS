@@ -263,6 +263,7 @@
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
 /devenv/docker/blocks/jaeger/ @grafana/oss-big-tent
+/devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
