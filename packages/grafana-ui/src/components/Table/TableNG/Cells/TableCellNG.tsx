@@ -77,6 +77,7 @@ export function TableCellNG(props: TableCellNGProps) {
             <>
               <IconButton
                 name={'search-plus'}
+                aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
                 onClick={() => {
                   onCellFilterAdded?.({
                     key: displayName,
@@ -84,10 +85,10 @@ export function TableCellNG(props: TableCellNGProps) {
                     value: String(value ?? ''),
                   });
                 }}
-                tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
               />
               <IconButton
                 name={'search-minus'}
+                aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
                 onClick={() => {
                   onCellFilterAdded?.({
                     key: displayName,
@@ -95,7 +96,6 @@ export function TableCellNG(props: TableCellNGProps) {
                     value: String(value ?? ''),
                   });
                 }}
-                tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
               />
             </>
           )}
@@ -110,22 +110,13 @@ const getStyles = (theme: GrafanaTheme2, justifyColumnContent: Property.JustifyC
     display: 'none',
     position: 'absolute',
     top: 0,
-    left: justifyColumnContent === 'flex-end' ? 0 : undefined,
-    right: justifyColumnContent === 'flex-end' ? undefined : 0,
     margin: 'auto',
     height: '100%',
     color: theme.colors.text.primary,
-  }),
-  cellInspectButton: css({
-    display: 'flex',
-    margin: 0,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
     padding: theme.spacing.x0_5,
-    [justifyColumnContent === 'flex-end' ? 'paddingLeft' : 'paddingRight']: theme.spacing.x1,
-    height: '100%',
-    '&:hover:before': {
-      height: '100%',
-      width: '100%',
-    },
+    paddingInlineStart: theme.spacing.x1,
+    [justifyColumnContent === 'flex-end' ? 'left' : 'right']: 0,
   }),
 });
 
