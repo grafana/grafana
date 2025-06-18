@@ -240,7 +240,6 @@ func readPluginJSON(pluginDir string) (plugins.JSONData, error) {
 		}
 	}
 
-	// Feature toggles are supported only in local plugins (see finder/local.go)
 	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data))
 	if err != nil {
 		return plugins.JSONData{}, err
