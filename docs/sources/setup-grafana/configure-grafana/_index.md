@@ -54,6 +54,10 @@ By default, the configuration file is located at `/opt/homebrew/etc/grafana/graf
 For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly.
 Otherwise, add a configuration file named `custom.ini` to the `conf` directory to override the settings defined in `conf/defaults.ini`.
 
+### Grafana Cloud
+
+There is no local configuration file for Grafana Cloud stacks, but many of these settings are still configurable. To edit configurable settings, open a support ticket.
+
 ## Remove comments in the .ini files
 
 Grafana uses semicolons (`;`) to comment out lines in the INI file.
@@ -475,7 +479,11 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ### `[remote_cache]`
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+
+{{< admonition type="note" >}}
+This setting doesn't control user session storage. User sessions are _always_ stored in the main database configured in `[database]` regardless of your `[remote_cache]` settings.
+{{< /admonition >}}
 
 #### `type`
 
@@ -879,6 +887,10 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 #### `default_manage_alerts_ui_toggle`
 
 Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+
+#### `default_allow_recording_rules_target_alerts_ui_toggle`
+
+Default behavior for the "Allow as recording rules target" toggle when configuring a data source. It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
 
 ### `[sql_datasources]`
 
@@ -2101,7 +2113,7 @@ Setting `0` means the short links are cleaned up approximately every 10 minutes.
 A negative value such as `-1` disables expiry.
 
 {{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted.
+Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
 {{< /admonition >}}
 
 <hr>
@@ -2809,6 +2821,40 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 #### `default_week_start`
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
+
+### `[time_picker]`
+
+This section controls system-wide defaults for the time picker, such as the default quick ranges.
+
+#### `quick_ranges`
+
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry must have a `from`, `to`, and `display` field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
+
+The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
+
+If no configuration is provided, the default time ranges will be used.
+
+For example:
+
+```ini
+[time_picker]
+quick_ranges = [
+  {
+    "display": "Last 5 minutes",
+    "from": "now-5m",
+    "to": "now",
+  },
+  {
+    "display": "Yesterday",
+    "from": "now-1d/d",
+  },
+  {
+    "display": "Today so far",
+    "from": "now/d",
+    "to": "now",
+  }
+]
+```
 
 ### `[expressions]`
 

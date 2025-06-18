@@ -11,7 +11,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
 import { PromVisualQueryBinary } from '../types';
 
-import { PromQueryBuilder } from './PromQueryBuilder';
+import { QueryBuilderContent } from './shared/QueryBuilderContent';
 
 export interface NestedQueryProps {
   nestedQuery: PromVisualQueryBinary;
@@ -31,7 +31,7 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.name}>
-          <Trans i18nKey="querybuilder.nested-query.operator">Operator</Trans>
+          <Trans i18nKey="grafana-prometheus.querybuilder.nested-query.operator">Operator</Trans>
         </div>
         <Select
           width="auto"
@@ -45,7 +45,7 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
           }}
         />
         <div className={styles.name}>
-          <Trans i18nKey="querybuilder.nested-query.vector-matches">Vector matches</Trans>
+          <Trans i18nKey="grafana-prometheus.querybuilder.nested-query.vector-matches">Vector matches</Trans>
         </div>
         <div className={styles.vectorMatchWrapper}>
           <Select<PromVisualQueryBinary['vectorMatchesType']>
@@ -53,8 +53,11 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
             value={nestedQuery.vectorMatchesType || 'on'}
             allowCustomValue
             options={[
-              { value: 'on', label: t('querybuilder.nested-query.label.on', 'On') },
-              { value: 'ignoring', label: t('querybuilder.nested-query.label.ignoring', 'Ignoring') },
+              { value: 'on', label: t('grafana-prometheus.querybuilder.nested-query.label.on', 'On') },
+              {
+                value: 'ignoring',
+                label: t('grafana-prometheus.querybuilder.nested-query.label.ignoring', 'Ignoring'),
+              },
             ]}
             onChange={(val) => {
               onChange(index, {
@@ -81,12 +84,12 @@ export const NestedQuery = memo<NestedQueryProps>((props) => {
           name="times"
           size="sm"
           onClick={() => onRemove(index)}
-          tooltip={t('querybuilder.nested-query.tooltip-remove-match', 'Remove match')}
+          tooltip={t('grafana-prometheus.querybuilder.nested-query.tooltip-remove-match', 'Remove match')}
         />
       </div>
       <div className={styles.body}>
         <EditorRows>
-          <PromQueryBuilder
+          <QueryBuilderContent
             showExplain={showExplain}
             query={nestedQuery.query}
             datasource={datasource}

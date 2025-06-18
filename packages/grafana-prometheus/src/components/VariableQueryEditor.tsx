@@ -13,8 +13,8 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
-import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
+import { promQueryModeller } from '../querybuilder/shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
 import { PromVisualQuery } from '../querybuilder/types';
 import {
@@ -260,19 +260,25 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
     <>
       <InlineFieldRow>
         <InlineField
-          label={t('components.prom-variable-query-editor.label-query-type', 'Query type')}
+          label={t('grafana-prometheus.components.prom-variable-query-editor.label-query-type', 'Query type')}
           labelWidth={20}
           tooltip={
             <div>
-              <Trans i18nKey="components.prom-variable-query-editor.tooltip-query-type">
+              <Trans i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-query-type">
                 The Prometheus data source plugin provides the following query types for template variables.
               </Trans>
             </div>
           }
         >
           <Select
-            placeholder={t('components.prom-variable-query-editor.placeholder-select-query-type', 'Select query type')}
-            aria-label={t('components.prom-variable-query-editor.aria-label-query-type', 'Query type')}
+            placeholder={t(
+              'grafana-prometheus.components.prom-variable-query-editor.placeholder-select-query-type',
+              'Select query type'
+            )}
+            aria-label={t(
+              'grafana-prometheus.components.prom-variable-query-editor.aria-label-query-type',
+              'Query type'
+            )}
             onChange={onQueryTypeChange}
             value={qryType}
             options={variableOptions}
@@ -286,13 +292,13 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
         <>
           <InlineFieldRow>
             <InlineField
-              label={t('components.prom-variable-query-editor.label-label', 'Label')}
+              label={t('grafana-prometheus.components.prom-variable-query-editor.label-label', 'Label')}
               labelWidth={20}
               required
               aria-labelledby="label-select"
               tooltip={
                 <div>
-                  <Trans i18nKey="components.prom-variable-query-editor.tooltip-label">
+                  <Trans i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-label">
                     Returns a list of label values for the label name in all metrics unless the metric is specified.
                   </Trans>
                 </div>
@@ -324,12 +330,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       {qryType === QueryType.LabelNames && (
         <InlineFieldRow>
           <InlineField
-            label={t('components.prom-variable-query-editor.label-metric-regex', 'Metric regex')}
+            label={t('grafana-prometheus.components.prom-variable-query-editor.label-metric-regex', 'Metric regex')}
             labelWidth={20}
             aria-labelledby="Metric regex"
             tooltip={
               <div>
-                <Trans i18nKey="components.prom-variable-query-editor.tooltip-metric-regex">
+                <Trans i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-metric-regex">
                   Returns a list of label names, optionally filtering by specified metric regex.
                 </Trans>
               </div>
@@ -337,8 +343,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
           >
             <Input
               type="text"
-              aria-label={t('components.prom-variable-query-editor.aria-label-metric-regex', 'Metric regex')}
-              placeholder={t('components.prom-variable-query-editor.placeholder-metric-regex', 'Metric regex')}
+              aria-label={t(
+                'grafana-prometheus.components.prom-variable-query-editor.aria-label-metric-regex',
+                'Metric regex'
+              )}
+              placeholder={t(
+                'grafana-prometheus.components.prom-variable-query-editor.placeholder-metric-regex',
+                'Metric regex'
+              )}
               value={labelNamesMatch}
               onBlur={(event) => {
                 setLabelNamesMatch(event.currentTarget.value);
@@ -357,12 +369,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       {qryType === QueryType.MetricNames && (
         <InlineFieldRow>
           <InlineField
-            label={t('components.prom-variable-query-editor.label-metric-regex', 'Metric regex')}
+            label={t('grafana-prometheus.components.prom-variable-query-editor.label-metric-regex', 'Metric regex')}
             labelWidth={20}
             aria-labelledby="Metric selector"
             tooltip={
               <div>
-                <Trans i18nKey="components.prom-variable-query-editor.returns-metrics-matching-specified-metric-regex">
+                <Trans i18nKey="grafana-prometheus.components.prom-variable-query-editor.returns-metrics-matching-specified-metric-regex">
                   Returns a list of metrics matching the specified metric regex.
                 </Trans>
               </div>
@@ -370,8 +382,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
           >
             <Input
               type="text"
-              aria-label={t('components.prom-variable-query-editor.aria-label-metric-selector', 'Metric selector')}
-              placeholder={t('components.prom-variable-query-editor.placeholder-metric-regex', 'Metric regex')}
+              aria-label={t(
+                'grafana-prometheus.components.prom-variable-query-editor.aria-label-metric-selector',
+                'Metric selector'
+              )}
+              placeholder={t(
+                'grafana-prometheus.components.prom-variable-query-editor.placeholder-metric-regex',
+                'Metric regex'
+              )}
               value={metric}
               onChange={(e) => {
                 setMetric(e.currentTarget.value);
@@ -390,12 +408,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       {qryType === QueryType.VarQueryResult && (
         <InlineFieldRow>
           <InlineField
-            label={t('components.prom-variable-query-editor.label-query', 'Query')}
+            label={t('grafana-prometheus.components.prom-variable-query-editor.label-query', 'Query')}
             labelWidth={20}
             tooltip={
               <div>
                 <Trans
-                  i18nKey="components.prom-variable-query-editor.tooltip-query"
+                  i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-query"
                   values={{ exampleQuery: 'sum(go_goroutines)' }}
                 >
                   Returns a list of Prometheus query results for the query. This can include Prometheus functions, i.e.
@@ -406,8 +424,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
           >
             <TextArea
               type="text"
-              aria-label={t('components.prom-variable-query-editor.aria-label-prometheus-query', 'Prometheus Query')}
-              placeholder={t('components.prom-variable-query-editor.placeholder-prometheus-query', 'Prometheus Query')}
+              aria-label={t(
+                'grafana-prometheus.components.prom-variable-query-editor.aria-label-prometheus-query',
+                'Prometheus Query'
+              )}
+              placeholder={t(
+                'grafana-prometheus.components.prom-variable-query-editor.placeholder-prometheus-query',
+                'Prometheus Query'
+              )}
               value={varQuery}
               onChange={onVarQueryChange}
               onBlur={() => {
@@ -425,12 +449,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       {qryType === QueryType.SeriesQuery && (
         <InlineFieldRow>
           <InlineField
-            label={t('components.prom-variable-query-editor.label-series-query', 'Series Query')}
+            label={t('grafana-prometheus.components.prom-variable-query-editor.label-series-query', 'Series Query')}
             labelWidth={20}
             tooltip={
               <div>
                 <Trans
-                  i18nKey="components.prom-variable-query-editor.tooltip-series-query"
+                  i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-series-query"
                   values={{
                     example1: 'go_goroutines{instance="localhost:9090"}',
                     example2: 'go_goroutines',
@@ -446,8 +470,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
           >
             <Input
               type="text"
-              aria-label={t('components.prom-variable-query-editor.aria-label-series-query', 'Series Query')}
-              placeholder={t('components.prom-variable-query-editor.placeholder-series-query', 'Series Query')}
+              aria-label={t(
+                'grafana-prometheus.components.prom-variable-query-editor.aria-label-series-query',
+                'Series Query'
+              )}
+              placeholder={t(
+                'grafana-prometheus.components.prom-variable-query-editor.placeholder-series-query',
+                'Series Query'
+              )}
               value={seriesQuery}
               onChange={onSeriesQueryChange}
               onBlur={() => {
@@ -465,12 +495,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       {qryType === QueryType.ClassicQuery && (
         <InlineFieldRow>
           <InlineField
-            label={t('components.prom-variable-query-editor.label-classic-query', 'Classic Query')}
+            label={t('grafana-prometheus.components.prom-variable-query-editor.label-classic-query', 'Classic Query')}
             labelWidth={20}
             tooltip={
               <div>
                 <Trans
-                  i18nKey="components.prom-variable-query-editor.tooltip-classic-query"
+                  i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-classic-query"
                   values={{
                     exampleQuery: 'label_values(label, metric)',
                   }}
@@ -483,8 +513,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
           >
             <Input
               type="text"
-              aria-label={t('components.prom-variable-query-editor.aria-label-classic-query', 'Classic Query')}
-              placeholder={t('components.prom-variable-query-editor.placeholder-classic-query', 'Classic Query')}
+              aria-label={t(
+                'grafana-prometheus.components.prom-variable-query-editor.aria-label-classic-query',
+                'Classic Query'
+              )}
+              placeholder={t(
+                'grafana-prometheus.components.prom-variable-query-editor.placeholder-classic-query',
+                'Classic Query'
+              )}
               value={classicQuery}
               onChange={onClassicQueryChange}
               onBlur={() => {

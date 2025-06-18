@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "警報狀態",
       "annotations": "註釋",
-      "description-missing-series-evaluations": "在警報狀態被認為已過期並自動解決之前，必須經過多少個連續且沒有維度資料的評估間隔。若未提供數值，則數值將預設為 2。",
+      "description-missing-series-evaluations": "",
       "evaluation": "評價",
       "evaluation-paused": "警報評估目前已暫停",
       "evaluation-paused-description": "在規則取消暫停之前，不會觸發此規則的通知，也不會建立警報執行個體。",
@@ -363,6 +363,14 @@
       "last-updated-by": "最後更新者",
       "missing-series-resolve": "缺少要解析的系列評估",
       "no-annotations": "沒有註釋",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "聯絡點",
+        "group-by": "分組依據",
+        "group-title": "",
+        "mute-timings": "靜音時間",
+        "timing-options": ""
+      },
       "pending-period": "待處理期間",
       "rule": "規則",
       "rule-identifier": "規則識別碼",
@@ -445,6 +453,15 @@
       "export": "匯出",
       "silence-notifications": "靜音通知",
       "with-modifications": "經過修改"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -895,6 +912,7 @@
     "copy-to-clipboard": "將「{{label}}」複製到剪貼簿",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "儀表板",
         "dashboard-and-panel": "",
         "evaluation-interval": "評估間隔",
@@ -1504,6 +1522,10 @@
         "no-rules-body": "沒有要匯入的規則。請選擇其他命名空間或規則群組。",
         "no-rules-body-yaml": "",
         "no-rules-title": "沒有要匯入的規則",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "資訊"
+        },
         "plugin-rules-warning": {
           "text": "我們已偵測到某些規則由外掛程式管理。系統不會匯入這些規則。",
           "title": "某些規則被排除在匯入內容之外"
@@ -4005,6 +4027,9 @@
         "title": "列選項"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "移除屬性"
@@ -4494,7 +4519,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "變更",
-      "label-details": "詳細資訊"
+      "label-details": "詳細資訊",
+      "title": "儲存儀表板",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "所選資料夾中已存在名稱相同的儀表板。<1></1><2>仍要儲存此儀表板嗎？</2>",
@@ -4568,6 +4596,9 @@
       "tab-warning": {
         "title-not-unique": "此標題不是唯一"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "新增",
@@ -5102,6 +5133,11 @@
       "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
       "title-name-already-exists": "名稱已存在"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5219,7 +5255,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "變更",
-        "label-details": "詳細資訊"
+        "label-details": "詳細資訊",
+        "title": "儲存儀表板",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7639,6 +7678,14 @@
       "show-details": "隱藏紀錄詳細資料",
       "unpin-from-outline": "取消釘選日誌"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "載入更多紀錄時發生錯誤。",
       "no-more-logs-available": "沒有其他可用的紀錄。",
@@ -7692,6 +7739,7 @@
       "escape-newlines": "修復紀錄行中新行和分頁序列的錯誤轉義",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "隱藏時間戳記",
       "hide-unique-labels": "隱藏唯一標籤",
       "newest-first": "按最新紀錄排序 - 按一下以顯示最舊紀錄",
@@ -7700,6 +7748,7 @@
       "remove-escaping": "移除轉義",
       "scroll-bottom": "滾動到底部",
       "scroll-top": "捲動回頂部",
+      "show-search": "",
       "show-timestamps": "顯示時間戳記",
       "show-unique-labels": "顯示唯一標籤",
       "unwrap-lines": "取消換行",
@@ -10581,6 +10630,11 @@
       "tooltip-disable": "停用",
       "tooltip-enable": "啟用"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "關閉"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "新增列舉值",
       "generate-enum-values-from-data": "從資料產生列舉值"
@@ -10759,6 +10813,9 @@
       "time-in-ascending-order": "時間遞增排序"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "自動",
+      "field-order-manual": "",
       "first-frame-warning": "組織欄位僅適用於單個框架。請考慮先套用加入轉換或篩選輸入。"
     },
     "partion-by-values-editor": {
