@@ -90,13 +90,12 @@ const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: tru
 
 /** @internal */
 export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
-  const foundFirstTimeField = fields.find((f) => f.type === FieldType.time);
+  const firstTimeField = fields.find((f) => f.type === FieldType.time);
   return fields.slice().sort((fieldA, fieldB) => {
-    if (fieldA.name === foundFirstTimeField?.name) {
+    if (fieldA === firstTimeField) {
       return -1;
     }
-
-    if (fieldB.name === foundFirstTimeField?.name) {
+    if (fieldB === firstTimeField) {
       return 1;
     }
     for (let i = 0; i < orderBy.length; i++) {
