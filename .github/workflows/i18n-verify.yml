@@ -1,5 +1,7 @@
 name: Verify i18n markup has been committed
 
+permissions: {}
+
 on:
   pull_request:
   push:
