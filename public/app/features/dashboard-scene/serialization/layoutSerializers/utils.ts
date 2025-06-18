@@ -224,14 +224,29 @@ function getDataSourceForQuery(
   const defaultDatasource = config.bootData.settings.defaultDatasource;
   const dsList = config.bootData.settings.datasources;
 
-  // Look up by query type/kind
+  // First check if the default datasource matches the query type
+  if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {
+    // In the datasource list from bootData "id" is the type and the uid could be uid or the name
+    // in cases like grafana, dashboard or mixed datasource
+    return {
+      uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+      type: dsList[defaultDatasource].meta.id,
+    };
+  }
+
+  // Look up by query type/kind from all available datasources
   const bestGuess = dsList && Object.values(dsList).find((ds) => ds.meta.id === queryKind);
 
   if (bestGuess) {
     return { uid: bestGuess.uid, type: bestGuess.meta.id };
   } else if (dsList && dsList[defaultDatasource]) {
+    // Fallback to default datasource even if type doesn't match
     // In the datasource list from bootData "id" is the type and the uid could be uid or the name
     // in cases like grafana, dashboard or mixed datasource
+
+    console.warn(
+      `Could not find datasource for query kind ${queryKind}, defaulting to ${dsList[defaultDatasource].meta.id}`
+    );
     return {
       uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
       type: dsList[defaultDatasource].meta.id,
