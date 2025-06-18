@@ -14,7 +14,6 @@ load(
     "compile_build_cmd",
     "download_grabpl_step",
     "e2e_tests_artifacts",
-    "e2e_tests_step",
     "enterprise_downstream_step",
     "frontend_metrics_step",
     "grafana_server_step",
