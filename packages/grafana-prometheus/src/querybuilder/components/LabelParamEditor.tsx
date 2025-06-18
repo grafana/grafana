@@ -71,7 +71,7 @@ async function loadGroupByLabels(
   }
 
   const expr = modeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchLabelsWithMatch(timeRange, expr);
+  const result = await datasource.languageProvider.queryLabelKeys(timeRange, expr);
 
   return Object.keys(result).map((x) => ({
     label: x,
