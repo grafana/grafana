@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { sortBy, get } from 'lodash'; 
+import { sortBy, get } from 'lodash';
 import * as React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
@@ -81,7 +81,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
-      const value = name ? get(formValues, name) : ''; 
+      const value = name ? get(formValues, name) : '';
       if (name === typeFieldPath && type === 'change') {
         if (initialValues && value === initialValues.type) {
           // Restore values when switching back to the default type
@@ -90,7 +90,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           // Clear all settings when switching to a new type
           const currentSettings = getValues(settingsFieldPath);
           const clearedSettings = Object.keys(currentSettings).reduce<Record<string, unknown>>((acc, key) => {
-            acc[key] = ''; 
+            acc[key] = '';
             return acc;
           }, {});
           setValue(settingsFieldPath, clearedSettings);
@@ -107,7 +107,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch, getValues]); 
+  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch, getValues]);
 
   // const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
   const formSecureFields = useWatch({ control, name: `${channelFieldPath}.secureFields` });
