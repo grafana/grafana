@@ -230,7 +230,22 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.setState({ tabs, currentTabIndex: 0 });
   }
 
-  public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
+  public moveTab(fromIndex: number, toIndex: number) {
+    const objectToMove = this.state.tabs[fromIndex];
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: objectToMove,
+      perform: () => {
+        this.rearrangeTabs(fromIndex, toIndex);
+      },
+      undo: () => {
+        this.rearrangeTabs(toIndex, fromIndex);
+      },
+    });
+  }
+
+  private rearrangeTabs(fromIndex: number, toIndex: number) {
     const tabs = [...this.state.tabs];
     const [removed] = tabs.splice(fromIndex, 1);
     tabs.splice(toIndex, 0, removed);
