@@ -44,9 +44,10 @@ export function createVisualizationColors(
   colors: ThemeColors,
   options: ThemeVisualizationColorsInput
 ): ThemeVisualizationColors {
-  const hues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+  const baseHues = colors.mode === 'light' ? getLightHues() : getDarkHues();
   const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
 
+  const hues = [...baseHues];
   // override hues with user provided
   for (const hueOverride of hueOverrides) {
     const existingHue = hues.find((hue) => hue.name === hueOverride.name);
