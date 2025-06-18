@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -272,7 +273,17 @@ type (
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
 	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
+
+	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
+
+var (
+	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
+)
+
+func errInvalidExtraConfiguration(err error) error {
+	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
+}
 
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
@@ -673,12 +684,12 @@ func (c ExtraConfiguration) Validate() error {
 	}
 
 	if len(c.MergeMatchers) == 0 {
-		return errors.New("at least one matcher is required")
+		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
 	}
 
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
-			return errors.New("only matchers with type equal are supported")
+			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
 		}
 	}
 
@@ -686,7 +697,7 @@ func (c ExtraConfiguration) Validate() error {
 	am := config.Config{}
 	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
 	if err != nil {
-		return fmt.Errorf("invalid alertmanager configuration: %w", err)
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
 	}
 
 	return nil
