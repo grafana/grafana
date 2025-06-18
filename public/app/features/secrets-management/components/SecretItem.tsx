@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
 
 import { DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
@@ -18,7 +18,6 @@ interface SecretItemProps {
 
 export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const isPending = isSecretPending(secret);

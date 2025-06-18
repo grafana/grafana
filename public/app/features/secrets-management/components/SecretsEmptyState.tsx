@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, EmptyState } from '@grafana/ui';
 
 interface SecretsEmptyStateProps {
@@ -6,8 +6,6 @@ interface SecretsEmptyStateProps {
 }
 
 export function SecretsEmptyState({ onCreateSecret }: SecretsEmptyStateProps) {
-  const { t } = useTranslate();
-
   return (
     <EmptyState
       variant="call-to-action"

@@ -1,9 +1,7 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState } from '@grafana/ui';
 
 export function SecretsSearchEmptyState() {
-  const { t } = useTranslate();
-
   return (
     <EmptyState variant="not-found" message={t('secrets.search-result.no-results', 'No secrets found')}>
       <Trans i18nKey="secrets.search-result.clear-filters">Clear active filter to see all secrets.</Trans>

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Button, EmptyState, FilterInput, InlineField, TextLink, useStyles2, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageContents } from 'app/core/components/Page/PageContents';
@@ -15,7 +15,6 @@ import { getErrorMessage } from './utils';
 
 export default function SecretsManagementPage() {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   // Api test
   const [pollingInterval, setPollingInterval] = useState(0);

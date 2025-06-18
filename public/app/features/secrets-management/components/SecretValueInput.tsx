@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Stack, TextArea } from '@grafana/ui';
 
 export type SecretValueInputProps = React.ComponentProps<typeof TextArea> & {
@@ -10,7 +10,6 @@ export type SecretValueInputProps = React.ComponentProps<typeof TextArea> & {
 
 export const SecretValueInput = React.forwardRef<HTMLTextAreaElement, SecretValueInputProps>(
   ({ isConfigured, onReset, rows = 5, ...props }, ref) => {
-    const { t } = useTranslate();
     return (
       <Stack>
         {!isConfigured && (
