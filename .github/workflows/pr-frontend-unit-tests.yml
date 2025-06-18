@@ -69,3 +69,30 @@ jobs:
         TEST_MAX_WORKERS: 2
         TEST_SHARD: ${{ matrix.chunk }}
         TEST_SHARD_TOTAL: 8
+
+  # This is the job that is actually required by rulesets.
+  # We need to require EITHER the OSS or the Enterprise job to pass.
+  # However, if one is skipped, GitHub won't flat-map the shards,
+  #   so they won't be accepted by a ruleset.
+  required-frontend-unit-tests:
+    needs:
+      - frontend-unit-tests
+      - frontend-unit-tests-enterprise
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All frontend unit tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"
