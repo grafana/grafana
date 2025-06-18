@@ -20,6 +20,7 @@ export function useCreateOrUpdateRepository(name?: string) {
         // HACK: we need to provide a name to the test configuration
         name: name || 'new',
         body: {
+          metadata: {},
           spec: data,
         },
       }).unwrap();
