@@ -437,6 +437,60 @@ describe('SeriesApiClient', () => {
       expect(secondResult).toEqual(['grafana', 'prometheus']);
       expect(mockRequest).not.toHaveBeenCalled();
     });
+
+    it('should create a proper matcher when the given match is a metric name only', async () => {
+      mockRequest.mockResolvedValue([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', 'metric1');
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1",job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should create a proper matcher when the given match is a query', async () => {
+      mockRequest.mockResolvedValue([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', 'metric1{instance="test"}');
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric1",instance="test",job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should create a proper matcher when the given match is a utf8 query', async () => {
+      mockRequest.mockResolvedValue([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      await client.queryLabelValues(mockTimeRange, 'job', '{"metric.name", instance="test"}');
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{__name__="metric.name",instance="test",job!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
   });
 
   describe('SeriesCache', () => {
