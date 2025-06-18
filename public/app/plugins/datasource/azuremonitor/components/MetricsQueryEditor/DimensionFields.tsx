@@ -149,7 +149,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
   ) => {
     return (
       <Stack gap={0}>
-         <Select
+        <Select
           menuShouldPortal
           placeholder={t('components.dimension-fields.placeholder-field', 'Field')}
           value={item.dimension}
