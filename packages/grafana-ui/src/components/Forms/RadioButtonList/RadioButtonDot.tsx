@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 export interface RadioButtonDotProps<T>
   extends Omit<React.HTMLProps<HTMLInputElement>, 'label' | 'value' | 'onChange' | 'type'> {

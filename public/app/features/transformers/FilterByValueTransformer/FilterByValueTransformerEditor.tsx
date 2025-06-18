@@ -20,7 +20,7 @@ import {
   FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/internal';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -38,7 +38,6 @@ const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
 ];
 
 export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
-  const { t } = useTranslate();
   const { input, options, onChange } = props;
   const fieldsInfo = useFieldsInfo(input);
 

@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { DataSourceJsonData } from '@grafana/schema';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -25,7 +25,7 @@ export function SmartAlertTypeDetector({
   onClickSwitch,
 }: SmartAlertTypeDetectorProps) {
   const { getValues } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
+
   const [ruleFormType] = getValues(['type']);
   const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
 

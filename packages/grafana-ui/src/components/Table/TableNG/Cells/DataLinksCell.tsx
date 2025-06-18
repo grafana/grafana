@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
 import { getCellLinks } from '../utils';
 

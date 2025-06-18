@@ -174,6 +174,21 @@
     },
     {
       "metadata": {
+        "name": "alertingImportAlertmanagerAPI",
+        "resourceVersion": "1749365901136",
+        "creationTimestamp": "2025-06-08T06:58:21Z"
+      },
+      "spec": {
+        "description": "Enables the API to import Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1747836716080",
         "creationTimestamp": "2025-05-21T14:11:56Z"
@@ -2272,7 +2287,8 @@
       "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-01-15T11:43:19Z"
+        "creationTimestamp": "2024-01-15T11:43:19Z",
+        "deletionTimestamp": "2025-05-14T09:11:28Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
@@ -3449,7 +3465,8 @@
       "metadata": {
         "name": "xrayApplicationSignals",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-01T14:42:02Z"
+        "creationTimestamp": "2025-04-01T14:42:02Z",
+        "deletionTimestamp": "2025-06-11T11:57:58Z"
       },
       "spec": {
         "description": "Support Application Signals queries in the X-Ray datasource",

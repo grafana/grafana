@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Combobox, ComboboxOption, Label, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorWhereExpressionItems } from '../../dataquery.gen';
@@ -34,7 +34,6 @@ export const FilterItem: React.FC<FilterItemProps> = ({
   getFilterValues,
   showOr,
 }) => {
-  const { t } = useTranslate();
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Select
