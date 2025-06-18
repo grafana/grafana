@@ -34,17 +34,18 @@ export function TableCellNG(props: TableCellNGProps) {
     onCellFilterAdded,
     justifyContent,
     children,
+
+    cellInspect,
+    showFilters,
   } = props;
 
-  const cellInspect = field.config?.custom?.inspect ?? false;
-  const showFilters = field.config.filterable && onCellFilterAdded;
+  // meh, just action styles
   const styles = useStyles2(getStyles, justifyContent);
-  const hasActions = cellInspect || showFilters;
 
   return (
     <>
       {children}
-      {hasActions && (
+      {(cellInspect || showFilters) && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
             <IconButton

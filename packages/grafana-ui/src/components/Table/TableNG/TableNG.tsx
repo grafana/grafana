@@ -254,10 +254,10 @@ export function TableNG(props: TableNGProps) {
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
     const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
       f.map((field, i): TableColumn => {
-        const justifyColumnContent = getTextAlign(field);
-        const footerStyles = getFooterStyles(justifyColumnContent);
+        const justifyContent = getTextAlign(field);
+        const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyColumnContent).headerCell;
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
         const cellOptions = getCellOptions(field);
 
         const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -282,29 +282,47 @@ export function TableNG(props: TableNGProps) {
           }
         }
 
+        const cellInspect = Boolean(field.config.custom?.inspect);
+        const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
+
+        const width = w[i];
+        const frame = data;
+
         return {
           field,
-          key: getDisplayName(field),
-          name: getDisplayName(field),
-          width: w[i],
+          key: displayName,
+          name: displayName,
+          width,
           headerCellClass,
           renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+            // TODO: once per row
+            const height = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
+            // TODO: defer until click?
+            const actions = getActions?.(frame, field, props.row.__index, replaceVariables);
+
+            const rowIdx = props.row.__index;
+            const value = props.row[displayName];
+
             const p: Omit<TableCellNGProps, 'children'> = {
-              actions: getActions?.(data, field, props.row.__index, replaceVariables),
+              actions,
               cellOptions,
               displayName,
               field,
-              frame: data,
-              height: typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight,
-              justifyContent: justifyColumnContent,
+              frame,
+              height,
+              justifyContent,
               onCellFilterAdded,
-              rowIdx: props.row.__index,
+              rowIdx,
               setContextMenuProps,
               setIsInspecting,
               theme,
-              value: props.row[displayName],
-              width: widths[i],
+              value,
+              width,
+
+              cellInspect,
+              showFilters,
             };
+
             return (
               <TableCellNG key={displayName} {...p}>
                 {renderFieldCell(p)}

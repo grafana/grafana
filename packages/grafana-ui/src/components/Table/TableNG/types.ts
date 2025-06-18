@@ -166,6 +166,10 @@ export interface TableCellNGProps {
   width: number;
   height: number;
   frame: DataFrame;
+
+  // flags that are static per column
+  cellInspect: boolean;
+  showFilters: boolean;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
