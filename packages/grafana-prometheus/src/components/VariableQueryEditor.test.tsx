@@ -143,6 +143,7 @@ describe('PromVariableQueryEditor', () => {
           metricsMetadata: {},
           getLabelValues: jest.fn().mockImplementation(() => ['that']),
           fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
+          queryLabelValues: jest.fn().mockResolvedValue([]),
         } as Partial<PrometheusLanguageProviderInterface>,
         getTagKeys: jest
           .fn()
