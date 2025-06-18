@@ -1,8 +1,7 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { Icon, Spinner, Stack, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
