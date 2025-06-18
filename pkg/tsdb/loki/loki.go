@@ -24,7 +24,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/promlib/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
@@ -56,9 +55,6 @@ var (
 	stagePrepareRequest  = "prepareRequest"
 	stageDatabaseRequest = "databaseRequest"
 	stageParseResponse   = "parseResponse"
-
-	dashboardTitleHeader = "X-Dashboard-Title"
-	panelTitleHeader     = "X-Panel-Title"
 )
 
 type datasourceInfo struct {
@@ -184,28 +180,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logsDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	if isFeatureEnabled(ctx, featuremgmt.FlagLokiSendDashboardPanelNames) {
-		s.applyHeaders(ctx, req)
-	}
-
 	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), isFeatureEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata), isFeatureEnabled(ctx, featuremgmt.FlagLogQLScope))
-}
-
-func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
-	reqCtx := contexthandler.FromContext(ctx)
-	if req == nil || reqCtx == nil || reqCtx.Req == nil {
-		return
-	}
-
-	var hList = []string{dashboardTitleHeader, panelTitleHeader}
-
-	for _, hName := range hList {
-		hVal := reqCtx.Req.Header.Get(hName)
-		if hVal == "" {
-			continue
-		}
-		req.SetHTTPHeader(hName, hVal)
-	}
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata, logQLScopes bool) (*backend.QueryDataResponse, error) {
