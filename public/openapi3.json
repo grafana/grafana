@@ -5406,6 +5406,26 @@
         },
         "type": "object"
       },
+      "ExtraConfiguration": {
+        "properties": {
+          "alertmanager_config": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string"
+          },
+          "merge_matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "FailedUser": {
         "description": "FailedUser holds the information of an user that failed",
         "properties": {
@@ -6353,6 +6373,12 @@
         "properties": {
           "alertmanager_config": {
             "$ref": "#/components/schemas/GettableApiAlertingConfig"
+          },
+          "extra_config": {
+            "items": {
+              "$ref": "#/components/schemas/ExtraConfiguration"
+            },
+            "type": "array"
           },
           "template_file_provenances": {
             "additionalProperties": {
@@ -8102,14 +8128,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [
@@ -8707,6 +8733,12 @@
           "alertmanager_config": {
             "$ref": "#/components/schemas/PostableApiAlertingConfig"
           },
+          "extra_config": {
+            "items": {
+              "$ref": "#/components/schemas/ExtraConfiguration"
+            },
+            "type": "array"
+          },
           "template_files": {
             "additionalProperties": {
               "type": "string"
@@ -8730,15 +8762,15 @@
             "description": "Selected language (beta)",
             "type": "string"
           },
-          "locale": {
-            "description": "Selected locale (beta)",
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "description": "Selected locale (beta)",
+            "type": "string"
           },
           "theme": {
             "description": "light, dark, empty is default",
@@ -10092,7 +10124,6 @@
         "type": "object"
       },
       "Route": {
-        "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
           "active_time_intervals": {
             "items": {
@@ -10134,12 +10165,6 @@
             },
             "type": "array"
           },
-          "object_matchers": {
-            "$ref": "#/components/schemas/ObjectMatchers"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
           "receiver": {
             "type": "string"
           },
@@ -10153,6 +10178,7 @@
             "type": "array"
           }
         },
+        "title": "A Route is a node that contains definitions of how to handle alerts.",
         "type": "object"
       },
       "RouteExport": {
@@ -12345,14 +12371,14 @@
           "language": {
             "type": "string"
           },
-          "locale": {
-            "type": "string"
-          },
           "navbar": {
             "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "regionalFormat": {
+            "type": "string"
           },
           "theme": {
             "enum": [
