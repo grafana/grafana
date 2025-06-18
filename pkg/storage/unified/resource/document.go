@@ -103,7 +103,7 @@ type IndexableDocument struct {
 
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
-	References ResourceReferences `json:"reference,omitempty"`
+	References ResourceReferences `json:"references,omitempty"`
 
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
@@ -285,7 +285,8 @@ const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
-const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
+const SEARCH_FIELD_LABELS = "labels"         // All labels, not a specific one
+const SEARCH_FIELD_REFERENCES = "references" // List of references to other resources
 
 const SEARCH_FIELD_FOLDER = "folder"
 const SEARCH_FIELD_CREATED = "created"
@@ -399,6 +400,10 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Type of manager, which is responsible for managing the resource",
 			},
+			// {
+			// 	Name: SEARCH_FIELD_REFERENCES,
+			// 	Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			// },
 			// TODO: below fields only need to be returned from search, but do not need to be searchable
 			{
 				Name: SEARCH_FIELD_MANAGER_ID,

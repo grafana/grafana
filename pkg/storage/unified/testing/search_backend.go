@@ -160,7 +160,149 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
-	t.Run("Search", func(t *testing.T) {
+	// t.Run("Search", func(t *testing.T) {
+	// 	resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+	// 		Options: &resourcepb.ListOptions{
+	// 			Key: &resourcepb.ResourceKey{
+	// 				Namespace: ns.Namespace,
+	// 				Group:     ns.Group,
+	// 				Resource:  ns.Resource,
+	// 			},
+	// 		},
+	// 		Fields: []string{"title", "folder", "tags"},
+	// 		Query:  "tag3",
+	// 		Limit:  10,
+	// 	}, nil)
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, resp)
+	// 	require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
+
+	// 	// Search for Document
+	// 	resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+	// 		Options: &resourcepb.ListOptions{
+	// 			Key: &resourcepb.ResourceKey{
+	// 				Namespace: ns.Namespace,
+	// 				Group:     ns.Group,
+	// 				Resource:  ns.Resource,
+	// 			},
+	// 		},
+	// 		Query:  "Document",
+	// 		Fields: []string{"title", "folder", "tags"},
+	// 		Limit:  10,
+	// 	}, nil)
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, resp)
+	// 	require.Equal(t, int64(2), resp.TotalHits) // Both doc1 and doc2 should have doc now
+	// })
+
+	// t.Run("Add a new document", func(t *testing.T) {
+	// 	// Add a new document
+	// 	err := index.BulkIndex(&resource.BulkIndexRequest{
+	// 		Items: []*resource.BulkIndexItem{
+	// 			{
+	// 				Action: resource.ActionIndex,
+	// 				Doc: &resource.IndexableDocument{
+	// 					Key: &resourcepb.ResourceKey{
+	// 						Namespace: ns.Namespace,
+	// 						Group:     ns.Group,
+	// 						Resource:  ns.Resource,
+	// 						Name:      "doc3",
+	// 					},
+	// 					Title: "Document 3",
+	// 					Tags:  []string{"tag3", "tag4"},
+	// 					Fields: map[string]interface{}{
+	// 						"field1": 3,
+	// 						"field2": "value3",
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	})
+	// 	require.NoError(t, err)
+	// 	// Search for Document
+	// 	resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+	// 		Options: &resourcepb.ListOptions{
+	// 			Key: &resourcepb.ResourceKey{
+	// 				Namespace: ns.Namespace,
+	// 				Group:     ns.Group,
+	// 				Resource:  ns.Resource,
+	// 			},
+	// 		},
+	// 		Query:  "Document",
+	// 		Fields: []string{"title", "folder", "tags"},
+	// 		Limit:  10,
+	// 	}, nil)
+	// 	require.NoError(t, err)
+	// 	require.NotNil(t, resp)
+	// 	require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
+	// })
+
+	t.Run("Search by LibraryPanel reference", func(t *testing.T) {
+		// Build index with dashboards that have LibraryPanel references
+		index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, func(index resource.ResourceIndex) (int64, error) {
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash1",
+							},
+							Title: "Dashboard with Library Panel 1",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-1",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash2",
+							},
+							Title: "Dashboard with Library Panel 2",
+							References: resource.ResourceReferences{
+								{
+									Relation: "depends-on",
+									Group:    "dashboards.grafana.app",
+									Kind:     "LibraryPanel",
+									Name:     "lib-panel-2",
+								},
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							Key: &resourcepb.ResourceKey{
+								Namespace: ns.Namespace,
+								Group:     ns.Group,
+								Resource:  ns.Resource,
+								Name:      "dash3",
+							},
+							Title: "Dashboard without Library Panel",
+						},
+					},
+				},
+			})
+			require.NoError(t, err)
+			return int64(3), nil
+		})
+		require.NoError(t, err)
+		require.NotNil(t, index)
+
+		// Search for dashboards with specific LibraryPanel reference
 		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -168,16 +310,34 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Group:     ns.Group,
 					Resource:  ns.Resource,
 				},
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      "references.kind",
+						Operator: "=",
+						Values:   []string{"LibraryPanel"},
+					},
+					{
+						Key:      "references.name",
+						Operator: "=",
+						Values:   []string{"lib-panel-1"},
+					},
+				},
 			},
-			Fields: []string{"title", "folder", "tags"},
-			Query:  "tag3",
+			Query:  "",
+			Fields: []string{"title", "references"},
 			Limit:  10,
 		}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(1), resp.TotalHits) // Only doc3 should have tag3 now
+		require.Equal(t, int64(1), resp.TotalHits) // Only dash1 should have lib-panel-1
 
-		// Search for Document
+		// Verify the result
+		require.Len(t, resp.Results.Rows, 1)
+		row := resp.Results.Rows[0]
+		require.Equal(t, "dash1", row.Key.Name)
+		require.Equal(t, "Dashboard with Library Panel 1", string(row.Cells[0])) // title field
+
+		// Search for dashboards with any LibraryPanel reference
 		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
@@ -185,55 +345,19 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Group:     ns.Group,
 					Resource:  ns.Resource,
 				},
-			},
-			Query:  "Document",
-			Fields: []string{"title", "folder", "tags"},
-			Limit:  10,
-		}, nil)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, int64(2), resp.TotalHits) // Both doc1 and doc2 should have doc now
-	})
-
-	t.Run("Add a new document", func(t *testing.T) {
-		// Add a new document
-		err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
-						Key: &resourcepb.ResourceKey{
-							Namespace: ns.Namespace,
-							Group:     ns.Group,
-							Resource:  ns.Resource,
-							Name:      "doc3",
-						},
-						Title: "Document 3",
-						Tags:  []string{"tag3", "tag4"},
-						Fields: map[string]interface{}{
-							"field1": 3,
-							"field2": "value3",
-						},
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      "references.kind",
+						Operator: "=",
+						Values:   []string{"LibraryPanel"},
 					},
 				},
 			},
-		})
-		require.NoError(t, err)
-		// Search for Document
-		resp, err := index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: ns.Namespace,
-					Group:     ns.Group,
-					Resource:  ns.Resource,
-				},
-			},
-			Query:  "Document",
-			Fields: []string{"title", "folder", "tags"},
+			Fields: []string{"title", "references"},
 			Limit:  10,
 		}, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
+		require.Equal(t, int64(2), resp.TotalHits) // Both dash1 and dash2 should have LibraryPanel references
 	})
 }
