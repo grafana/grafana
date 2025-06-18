@@ -2,7 +2,11 @@ import { FormApi } from 'final-form';
 import { FC, useEffect, useState } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
-import { InstanceAvailableType, RemoteInstanceCredentials } from 'app/percona/add-instance/panel.types';
+import {
+  InstanceAvailableType,
+  InstanceTypesExtra,
+  RemoteInstanceCredentials,
+} from 'app/percona/add-instance/panel.types';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
@@ -277,8 +281,9 @@ export const getAdditionalOptions = (
           />
         </>
       );
+    case InstanceTypesExtra.external:
     case Databases.haproxy:
-      return null;
+      return <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />;
     default:
       return (
         <>

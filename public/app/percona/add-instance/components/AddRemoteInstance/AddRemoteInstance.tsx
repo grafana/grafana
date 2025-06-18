@@ -122,14 +122,12 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({
       <>
         <ConnectionDetails form={form} type={type} />
         <Labels />
-        {type !== InstanceTypesExtra.external && (
-          <AdditionalOptions
-            remoteInstanceCredentials={remoteInstanceCredentials}
-            loading={loading}
-            instanceType={type}
-            form={form}
-          />
-        )}
+        <AdditionalOptions
+          remoteInstanceCredentials={remoteInstanceCredentials}
+          loading={loading}
+          instanceType={type}
+          form={form}
+        />
       </>
     ),
     [ConnectionDetails, loading, remoteInstanceCredentials, type]
