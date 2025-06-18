@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	unifiedsql "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/assert"
@@ -20,13 +23,19 @@ type outboxStore struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
 	metrics *metrics.StorageMetrics
+	tracer  trace.Tracer
 }
 
-func ProvideOutboxQueue(db contracts.Database, reg prometheus.Registerer) contracts.OutboxQueue {
+func ProvideOutboxQueue(
+	db contracts.Database,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
+) contracts.OutboxQueue {
 	return &outboxStore{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		metrics: metrics.NewStorageMetrics(reg),
+		tracer:  tracer,
 	}
 }
 
@@ -43,11 +52,30 @@ type outboxMessageDB struct {
 	Created         int64
 }
 
-func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
+func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (messageID string, err error) {
+	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
+		attribute.String("name", input.Name),
+		attribute.String("namespace", input.Namespace),
+		attribute.String("type", string(input.Type)),
+		attribute.String("requestID", input.RequestID),
+	))
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to append outbox message")
+			span.RecordError(err)
+		}
+
+		if messageID != "" {
+			span.SetAttributes(attribute.String("messageID", messageID))
+		}
+	}()
+
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
 	start := time.Now()
-	messageID, err := s.insertMessage(ctx, input)
+	messageID, err = s.insertMessage(ctx, input)
 	if err != nil {
 		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
 	}
@@ -201,7 +229,19 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	return messages, nil
 }
 
-func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
+func (s *outboxStore) Delete(ctx context.Context, messageID string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
+		attribute.String("messageID", messageID),
+	))
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to delete message from outbox")
+			span.RecordError(err)
+		}
+	}()
+
 	assert.True(messageID != "", "outboxStore.Delete: messageID is required")
 
 	start := time.Now()

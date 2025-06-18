@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
@@ -37,7 +39,7 @@ var (
 )
 
 type EncryptionManager struct {
-	tracer     tracing.Tracer
+	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
 	enc        cipher.Cipher
 	cfg        *setting.Cfg
@@ -56,7 +58,7 @@ type EncryptionManager struct {
 
 // ProvideEncryptionManager returns an EncryptionManager that uses the OSS KMS providers, along with any additional third-party (e.g. Enterprise) KMS providers
 func ProvideEncryptionManager(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	store contracts.DataKeyStorage,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
@@ -152,7 +154,9 @@ func (s *EncryptionManager) registerUsageMetrics() {
 var b64 = base64.RawStdEncoding
 
 func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Encrypt", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	var err error
@@ -161,6 +165,11 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 			"success":   strconv.FormatBool(err == nil),
 			"operation": OpEncrypt,
 		}).Inc()
+
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
 	}()
 
 	label := encryption.KeyLabel(s.currentProviderID)
@@ -196,6 +205,12 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
 func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.CurrentDataKey", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("label", label),
+	))
+	defer span.End()
+
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
@@ -255,6 +270,12 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
 func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.NewDataKey", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("label", label),
+	))
+	defer span.End()
+
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -303,7 +324,9 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "secretsService.Decrypt")
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Decrypt", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
 	defer span.End()
 
 	var err error
@@ -314,6 +337,9 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 		}).Inc()
 
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+
 			s.log.FromContext(ctx).Error("Failed to decrypt secret", "error", err)
 		}
 	}()
@@ -365,6 +391,12 @@ func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace str
 // dataKeyById looks up for data key in cache.
 // Otherwise, it fetches it from database and returns it decrypted.
 func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id string) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.GetDataKey", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	// 0. Get decrypted data key from in-memory cache.
 	if entry, exists := s.dataKeyCache.getById(namespace, id); exists {
 		return entry.dataKey, nil

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type outboxStoreModel struct {
@@ -110,10 +111,11 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 		t.Parallel()
 
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		tracer := noop.NewTracerProvider().Tracer("test")
 
 		ctx := context.Background()
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:       "1",
@@ -142,10 +144,11 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 
 func TestOutboxStore(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -212,8 +215,9 @@ func TestOutboxStoreProperty(t *testing.T) {
 	// The number of iterations was decided arbitrarily based on the time the test takes to run
 	for range 10 {
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		tracer := noop.NewTracerProvider().Tracer("test")
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB), nil)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		model := newOutboxStoreModel()
 

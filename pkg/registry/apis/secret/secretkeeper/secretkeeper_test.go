@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
@@ -52,20 +52,21 @@ func Test_OSSKeeperService(t *testing.T) {
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error) {
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	database := database.ProvideDatabase(testDB)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	database := database.ProvideDatabase(testDB, tracer)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features, nil)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	encryptionManager, err := manager.ProvideEncryptionManager(tracing.InitializeTracerForTest(), dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)
+	encryptionManager, err := manager.ProvideEncryptionManager(tracer, dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), encValueStore, encryptionManager, nil)
+	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager, nil)
 
 	return keeperService, err
 }

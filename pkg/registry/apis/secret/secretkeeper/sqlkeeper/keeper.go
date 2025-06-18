@@ -6,14 +6,15 @@ import (
 	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type SQLKeeper struct {
-	tracer            tracing.Tracer
+	tracer            trace.Tracer
 	encryptionManager contracts.EncryptionManager
 	store             contracts.EncryptedValueStorage
 	metrics           *metrics.KeeperMetrics
@@ -22,7 +23,7 @@ type SQLKeeper struct {
 var _ contracts.Keeper = (*SQLKeeper)(nil)
 
 func NewSQLKeeper(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	encryptionManager contracts.EncryptionManager,
 	store contracts.EncryptedValueStorage,
 	reg prometheus.Registerer,
@@ -35,8 +36,9 @@ func NewSQLKeeper(
 	}
 }
 
+// TODO: parameter cfg is not being used
 func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
-	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Store")
+	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store", trace.WithAttributes(attribute.String("namespace", namespace)))
 	defer span.End()
 
 	start := time.Now()
@@ -51,12 +53,17 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 	}
 
 	s.metrics.StoreDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
+	externalID := contracts.ExternalID(encryptedVal.UID)
+	span.SetAttributes(attribute.String("externalID", externalID.String()))
 
-	return contracts.ExternalID(encryptedVal.UID), nil
+	return externalID, nil
 }
 
 func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
-	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Expose")
+	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("externalID", externalID.String()),
+	))
 	defer span.End()
 
 	start := time.Now()
@@ -77,7 +84,10 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 }
 
 func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
-	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Delete")
+	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("externalID", externalID.String()),
+	))
 	defer span.End()
 
 	start := time.Now()
@@ -92,7 +102,10 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 }
 
 func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
-	ctx, span := s.tracer.Start(ctx, "sqlKeeper.Update")
+	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("externalID", externalID.String()),
+	))
 	defer span.End()
 
 	start := time.Now()
