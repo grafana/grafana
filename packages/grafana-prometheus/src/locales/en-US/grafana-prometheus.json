@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "Manage alerts via Alerting UI",
         "label-allow-as-recording-rules-target": "Allow as recording rules target",
+        "label-manage-alerts-via-alerting-ui": "Manage alerts via Alerting UI",
         "title-alerting": "Alerting",
-        "tooltip-manage-alerts-via-alerting-ui": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
-        "tooltip-allow-as-recording-rules-target": "Allow this data source to be selected as a target for writing recording rules."
+        "tooltip-allow-as-recording-rules-target": "Allow this data source to be selected as a target for writing recording rules.",
+        "tooltip-manage-alerts-via-alerting-ui": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source."
       },
       "config-editor": {
         "browser-access-mode-error": "Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.",

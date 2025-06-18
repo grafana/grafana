@@ -8505,9 +8505,6 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
-    "drawer": {
-      "close": "Close drawer"
-    },
     "link-title": "Go to Grafana labs blog",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
