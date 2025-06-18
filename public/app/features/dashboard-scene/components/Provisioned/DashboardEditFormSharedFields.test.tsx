@@ -78,7 +78,6 @@ describe('DashboardEditFormSharedFields', () => {
 
       expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Add a note to describe your changes (optional)')).toBeInTheDocument();
     });
 
     it('should not render workflow fields when isGitHub is false', () => {
