@@ -38,7 +38,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               return;
             }
 
-            model.moveTab(result.draggableId, result.source.index, result.destination.index);
+            model.moveTab(result.source.index, result.destination.index);
           }}
         >
           <div className={styles.tabsRow}>
