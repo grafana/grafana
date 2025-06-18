@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -24,7 +25,7 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
 
 export const K8S_V1_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
@@ -33,20 +34,22 @@ export const K8S_V1_DASHBOARD_API_CONFIG = {
 };
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
-  private client: ResourceClient<DashboardDataDTO>;
+  private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
-    const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
+    const dashboard = options.dashboard;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
         ...options?.k8s,
       },
       spec: {
         ...dashboard,
+        title: dashboard.title ?? '',
+        uid: dashboard.uid ?? '',
       },
     };
 
@@ -171,5 +174,15 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
       throw e;
     }
+  }
+
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions) {
+    return await this.client.list({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
+    // reset the resource version to create a new resource
+    dashboard.metadata.resourceVersion = '';
+    return this.client.create(dashboard);
   }
 }

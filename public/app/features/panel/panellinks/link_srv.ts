@@ -19,7 +19,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
@@ -256,18 +256,18 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: DashboardLink) {
-    let params: { [key: string]: boolean } = {};
+    let url = link.url ?? '';
 
     if (link.keepTime) {
-      params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.keepTime}`);
     }
 
     if (link.includeVars) {
-      params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+      url = urlUtil.appendQueryToUrl(url, `\$${DataLinkBuiltInVars.includeVars}`);
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
     url = getTemplateSrv().replace(url);
+    url = locationUtil.assureBaseUrl(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }

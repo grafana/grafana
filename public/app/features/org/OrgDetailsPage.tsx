@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';

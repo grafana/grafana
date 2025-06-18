@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
 import { useState } from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 import mdx from './ColorPicker.mdx';
 import { ColorPickerPopover } from './ColorPickerPopover';

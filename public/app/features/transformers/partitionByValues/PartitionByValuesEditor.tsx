@@ -8,7 +8,7 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   InlineField,
   InlineFieldRow,
@@ -29,7 +29,6 @@ export function PartitionByValuesEditor({
   options,
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
-  const { t } = useTranslate();
   const names = useFieldDisplayNames(input);
   const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
