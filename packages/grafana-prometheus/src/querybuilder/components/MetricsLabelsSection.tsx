@@ -7,7 +7,6 @@ import { getDebounceTimeInMilliseconds } from '../../caching';
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';
 import { PromMetricsMetadata } from '../../types';
-import { PromMetricsMetadata } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../shared/types';
