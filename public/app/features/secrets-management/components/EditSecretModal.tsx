@@ -1,8 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Box, Modal, Spinner, Text } from '@grafana/ui';
 
