@@ -746,8 +746,8 @@ describe('backendSrv', () => {
     });
   });
 
-  describe('sanitizePath functionality', () => {
-    describe('when sanitizePath is enabled in options', () => {
+  describe('validatePath functionality', () => {
+    describe('when validatePath is enabled in options', () => {
       it.each(['get', 'post', 'put', 'patch', 'delete'] as const)(
         'should sanitize malicious paths in $method requests',
         async (method) => {
@@ -756,8 +756,8 @@ describe('backendSrv', () => {
 
           const promise =
             method === 'get'
-              ? backendSrv[method](maliciousUrl, undefined, undefined, { sanitizePath: true })
-              : backendSrv[method](maliciousUrl, undefined, { sanitizePath: true });
+              ? backendSrv[method](maliciousUrl, undefined, undefined, { validatePath: true })
+              : backendSrv[method](maliciousUrl, undefined, { validatePath: true });
 
           await expect(promise).rejects.toThrow(PathValidationError);
           await expect(promise).rejects.toThrow('Invalid request path');
@@ -768,23 +768,23 @@ describe('backendSrv', () => {
         const { backendSrv } = getTestContext();
         const safeUrl = '/api/users/123';
 
-        const promise = backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { validatePath: true });
 
         await expect(promise).resolves.toBeDefined();
       });
     });
 
-    describe('when sanitizePath is disabled or not provided', () => {
-      it('should not sanitize paths when sanitizePath is false', async () => {
+    describe('when validatePath is disabled or not provided', () => {
+      it('should not sanitize paths when validatePath is false', async () => {
         const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/../admin/secrets';
 
-        const promise = backendSrv.get(maliciousUrl, undefined, undefined, { sanitizePath: false });
+        const promise = backendSrv.get(maliciousUrl, undefined, undefined, { validatePath: false });
 
         await expect(promise).resolves.toBeDefined();
       });
 
-      it('should not sanitize paths when sanitizePath is not provided', async () => {
+      it('should not sanitize paths when validatePath is not provided', async () => {
         const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/../admin/secrets';
 
@@ -803,12 +803,12 @@ describe('backendSrv', () => {
       });
     });
 
-    describe('with complex sanitizePath scenarios', () => {
+    describe('with complex validatePath scenarios', () => {
       it('should handle URL encoded traversal attacks', async () => {
         const { backendSrv } = getTestContext();
         const encodedUrl = '/api/%252e%252e/admin';
 
-        const promise = backendSrv.get(encodedUrl, undefined, undefined, { sanitizePath: true });
+        const promise = backendSrv.get(encodedUrl, undefined, undefined, { validatePath: true });
 
         await expect(promise).rejects.toThrow(PathValidationError);
       });
@@ -817,14 +817,14 @@ describe('backendSrv', () => {
         const { backendSrv, parseRequestOptionsMock } = getTestContext();
         const safeUrl = '/api/file.json?version=1.2.3&format=compact';
 
-        const promise = backendSrv.get(safeUrl, undefined, undefined, { sanitizePath: true });
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { validatePath: true });
 
         await expect(promise).resolves.toBeDefined();
         expect(parseRequestOptionsMock).toHaveBeenCalledWith(
           expect.objectContaining({
             url: '/api/file.json?version=1.2.3&format=compact', // legitimate dots and query params should be preserved
             method: 'GET',
-            sanitizePath: true,
+            validatePath: true,
           })
         );
       });
@@ -837,7 +837,7 @@ describe('backendSrv', () => {
           safeUrl,
           { dashboard: 'data' },
           {
-            sanitizePath: true,
+            validatePath: true,
             showErrorAlert: false,
             showSuccessAlert: true,
           }
@@ -848,7 +848,7 @@ describe('backendSrv', () => {
           expect.objectContaining({
             url: '/api/dashboard/save',
             method: 'POST',
-            sanitizePath: true,
+            validatePath: true,
             showErrorAlert: false,
             showSuccessAlert: true,
           })
