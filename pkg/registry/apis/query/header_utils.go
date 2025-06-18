@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	q "github.com/grafana/grafana/pkg/services/query"
+	queryService "github.com/grafana/grafana/pkg/services/query"
 )
 
 // Set of headers that we want to forward to the datasource api servers. Those are used i.e. for
@@ -20,23 +20,23 @@ import (
 // The usage of strings.ToLower is because the server would convert `FromAlert` to `Fromalert`. So the make matching
 // easier, we just match all headers in lower case.
 var expectedHeaders = map[string]string{
-	strings.ToLower(models.FromAlertHeaderName): models.FromAlertHeaderName,
-	strings.ToLower(models.CacheSkipHeaderName): models.CacheSkipHeaderName,
-	strings.ToLower("X-Rule-Name"):              "X-Rule-Name",
-	strings.ToLower("X-Rule-Uid"):               "X-Rule-Uid",
-	strings.ToLower("X-Rule-Folder"):            "X-Rule-Folder",
-	strings.ToLower("X-Rule-Source"):            "X-Rule-Source",
-	strings.ToLower("X-Rule-Type"):              "X-Rule-Type",
-	strings.ToLower("X-Rule-Version"):           "X-Rule-Version",
-	strings.ToLower("X-Grafana-Org-Id"):         "X-Grafana-Org-Id",
-	strings.ToLower(q.HeaderQueryGroupID):       q.HeaderQueryGroupID,
-	strings.ToLower(q.HeaderPanelID):            q.HeaderPanelID,
-	strings.ToLower(q.HeaderDashboardUID):       q.HeaderDashboardUID,
-	strings.ToLower(q.HeaderDatasourceUID):      q.HeaderDatasourceUID,
-	strings.ToLower(q.HeaderFromExpression):     q.HeaderFromExpression,
-	strings.ToLower(q.HeaderPanelPluginId):      q.HeaderPanelPluginId,
-	strings.ToLower(q.HeaderDashboardTitle):     q.HeaderDashboardTitle,
-	strings.ToLower(q.HeaderPanelTitle):         q.HeaderPanelTitle,
+	strings.ToLower(models.FromAlertHeaderName):        models.FromAlertHeaderName,
+	strings.ToLower(models.CacheSkipHeaderName):        models.CacheSkipHeaderName,
+	strings.ToLower("X-Rule-Name"):                     "X-Rule-Name",
+	strings.ToLower("X-Rule-Uid"):                      "X-Rule-Uid",
+	strings.ToLower("X-Rule-Folder"):                   "X-Rule-Folder",
+	strings.ToLower("X-Rule-Source"):                   "X-Rule-Source",
+	strings.ToLower("X-Rule-Type"):                     "X-Rule-Type",
+	strings.ToLower("X-Rule-Version"):                  "X-Rule-Version",
+	strings.ToLower("X-Grafana-Org-Id"):                "X-Grafana-Org-Id",
+	strings.ToLower(queryService.HeaderQueryGroupID):   queryService.HeaderQueryGroupID,
+	strings.ToLower(queryService.HeaderPanelID):        queryService.HeaderPanelID,
+	strings.ToLower(queryService.HeaderDashboardUID):   queryService.HeaderDashboardUID,
+	strings.ToLower(queryService.HeaderDatasourceUID):  queryService.HeaderDatasourceUID,
+	strings.ToLower(queryService.HeaderFromExpression): queryService.HeaderFromExpression,
+	strings.ToLower(queryService.HeaderPanelPluginId):  queryService.HeaderPanelPluginId,
+	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
+	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {
