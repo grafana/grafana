@@ -19,6 +19,8 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
+import { getDebounceTimeInMilliseconds } from '../../../caching';
+
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
@@ -106,7 +108,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             isLoading: false,
           })
         );
-      }, datasource.getDebounceTimeInMilliseconds()),
+      }, getDebounceTimeInMilliseconds(datasource.cacheLevel)),
     [datasource, query]
   );
 
