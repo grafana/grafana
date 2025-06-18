@@ -11,6 +11,7 @@ import {
   RenderCellProps,
   RenderRowProps,
   Row,
+  SortColumn,
 } from 'react-data-grid';
 
 import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
@@ -38,7 +39,6 @@ import {
   getIsNestedTable,
   getTextAlign,
   getVisibleFields,
-  updateSortColumns,
   shouldTextOverflow,
   getRowBgFn,
   getColumnTypes,
@@ -109,7 +109,7 @@ export function TableNG(props: TableNGProps) {
     };
   }, [isContextMenuOpen]);
 
-  const memoizedRows = useMemo(() => frameToRecords(data), [data]);
+  const rows = useMemo(() => frameToRecords(data), [data]);
   const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
 
@@ -119,7 +119,7 @@ export function TableNG(props: TableNGProps) {
     setFilter,
     crossFilterOrder,
     crossFilterRows,
-  } = useFilteredRows(memoizedRows, data.fields, { hasNestedFrames });
+  } = useFilteredRows(rows, data.fields, { hasNestedFrames });
 
   const {
     rows: sortedRows,
@@ -149,7 +149,7 @@ export function TableNG(props: TableNGProps) {
     }
     return debounce((column, newSize) => {
       onColumnResize(column.key, Math.floor(newSize));
-    }, 50) satisfies DataGridProps<TableRow, TableSummaryRow>['onColumnResize'];
+    }, 100) satisfies DataGridProps<TableRow, TableSummaryRow>['onColumnResize'];
   }, [onColumnResize]);
 
   const {
@@ -208,13 +208,31 @@ export function TableNG(props: TableNGProps) {
           });
           setIsContextMenuOpen(true);
         },
+        onSortColumnsChange: (newSortColumns: SortColumn[]) => {
+          setSortColumns(newSortColumns);
+          onSortByChange?.(
+            newSortColumns.map(({ columnKey, direction }) => ({
+              displayName: columnKey,
+              desc: direction === 'DESC',
+            }))
+          );
+        },
         sortColumns,
         rowHeight,
         headerRowClass: styles.headerRow,
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [enableVirtualization, hasFooter, noHeader, rowHeight, sortColumns, styles.headerRow]
+    [
+      enableVirtualization,
+      sortColumns,
+      rowHeight,
+      styles.headerRow,
+      noHeader,
+      hasFooter,
+      setSortColumns,
+      onSortByChange,
+    ]
   );
 
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
@@ -223,7 +241,7 @@ export function TableNG(props: TableNGProps) {
         const justifyColumnContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyColumnContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = cx(styles.headerCell, field.type === FieldType.number ? styles.headerCellRight : null);
+        const headerCellClass = getHeaderCellStyles(theme, justifyColumnContent).headerCell;
         const cellOptions = getCellOptions(field);
         const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
         const renderFieldCell = CELL_RENDERERS[cellType];
@@ -260,27 +278,13 @@ export function TableNG(props: TableNGProps) {
           renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
             <HeaderCell
               column={column}
-              rows={memoizedRows}
+              rows={rows}
               field={field}
-              onSort={(columnKey, direction, isMultiSort) => {
-                const updatedSortColumns = updateSortColumns(columnKey, direction, isMultiSort, sortColumns);
-                setSortColumns(updatedSortColumns);
-                // Update panel context with the new sort order
-                if (typeof onSortByChange === 'function') {
-                  onSortByChange(
-                    updatedSortColumns.map(({ columnKey, direction }) => ({
-                      displayName: columnKey,
-                      desc: direction === 'DESC',
-                    }))
-                  );
-                }
-              }}
               filter={filter}
               setFilter={setFilter}
               crossFilterOrder={crossFilterOrder}
               crossFilterRows={crossFilterRows}
               direction={sortDirection}
-              justifyContent={justifyColumnContent}
               showTypeIcons={showTypeIcons}
             />
           ),
@@ -308,7 +312,7 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const nestedData = memoizedRows.find((r) => r.data)?.data;
+    const nestedData = rows.find((r) => r.data)?.data;
     if (!nestedData) {
       return result;
     }
@@ -362,6 +366,7 @@ export function TableNG(props: TableNGProps) {
             columns={expandedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell }}
+            sortColumns={sortColumns}
           />
         );
       },
@@ -384,15 +389,13 @@ export function TableNG(props: TableNGProps) {
     getActions,
     hasNestedFrames,
     isCountRowsSet,
-    memoizedRows,
     onCellFilterAdded,
-    onSortByChange,
     panelContext,
     replaceVariables,
     renderCell,
+    rows,
     rowHeight,
     setFilter,
-    setSortColumns,
     showTypeIcons,
     sortColumns,
     styles,
@@ -605,8 +608,8 @@ const getGridStyles = (
     // overlay/overflow on hover inherit this background and need to occlude cells below
     '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
 
-    // TODO: hate this magic number, lets see if there's a flexbox-based way to dynamically
-    // size the pagination in when needed.
+    // TODO: magic 32px number is unfortunate. it would be better to have the content
+    // flow using flexbox rather than hard-coding this size via a calc
     blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
     scrollbarWidth: 'thin',
     scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
@@ -632,19 +635,10 @@ const getGridStyles = (
       outline: 'none',
     },
   }),
-  headerCell: css({
-    zIndex: theme.zIndex.tooltip - 1,
-    paddingInline: TABLE.CELL_PADDING,
-    paddingBlock: TABLE.CELL_PADDING,
-    borderInlineEnd: 'none',
-  }),
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
     ...(noHeader && { display: 'none' }),
-  }),
-  headerCellRight: css({
-    textAlign: 'right',
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -673,6 +667,18 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   footerCell: css({
     display: 'flex',
     justifyContent: justifyContent || 'space-between',
+  }),
+});
+
+const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+  headerCell: css({
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    zIndex: theme.zIndex.tooltip - 1,
+    paddingInline: TABLE.CELL_PADDING,
+    paddingBlock: TABLE.CELL_PADDING,
+    borderInlineEnd: 'none',
+    justifyContent,
   }),
 });
 
@@ -710,27 +716,3 @@ const getCellStyles = (
     },
   }),
 });
-
-/*
-TODO:
-enable pagination disables footer?
-revisit z-index stuff in the styles
-double click on header divider to resize width isn't triggering a resize in the field overrides
-min and max (used for sparklines and gauge) need much better contextual info in the sidebar
-width override does not apply after a manual resize with the handle
------
-- Max row height
-  - also, disable overflow?
-- Text wrap column heading
-- Field description
-- Field overrides for nested fields
-- Monospace (fieldOverride?)
-  - default for number?
-  - custom format
-  - currency format
-- Pagination, filter, and sort persistence via URL
------
-accessible sorting and filtering
-accessible table navigation
-action, inspect, and context UX need to be consolidated a bit
-*/

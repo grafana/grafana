@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 import React, { useEffect, useMemo } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
@@ -16,9 +15,7 @@ interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
-  onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
   direction?: SortDirection;
-  justifyContent: Property.JustifyContent;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   crossFilterOrder: string[];
@@ -30,16 +27,14 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   rows,
   field,
-  onSort,
   direction,
-  justifyContent,
   filter,
   setFilter,
   crossFilterOrder,
   crossFilterRows,
   showTypeIcons,
 }) => {
-  const styles = useStyles2(getStyles, justifyContent);
+  const styles = useStyles2(getStyles);
   const displayName = useMemo(() => getDisplayName(field), [field]);
   const filterable = useMemo(() => field.config.custom?.filterable ?? false, [field]);
 
@@ -56,28 +51,13 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
 
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.headerCell}
-      // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
-      // Unblock spacebar event
-      onKeyDown={(event) => {
-        if (event.key === ' ') {
-          event.stopPropagation();
-        }
-      }}
-    >
-      <button
-        className={styles.headerCellLabel}
-        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-          const isMultiSort = event.shiftKey;
-          onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
-        }}
-      >
+    <>
+      <span className={styles.headerCellLabel}>
         {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
         {/* Used cached displayName if available, otherwise use the column name (nested tables) */}
         <div>{getDisplayName(field)}</div>
         {direction && (direction === 'ASC' ? <Icon name="arrow-up" size="lg" /> : <Icon name="arrow-down" size="lg" />)}
-      </button>
+      </span>
 
       {filterable && (
         <Filter
@@ -90,16 +70,11 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           crossFilterRows={crossFilterRows}
         />
       )}
-    </div>
+    </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
-  headerCell: css({
-    display: 'flex',
-    gap: theme.spacing(0.5),
-    justifyContent,
-  }),
+const getStyles = (theme: GrafanaTheme2) => ({
   headerCellLabel: css({
     border: 'none',
     padding: 0,

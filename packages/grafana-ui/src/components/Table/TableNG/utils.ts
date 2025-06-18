@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { SortColumn, SortDirection } from 'react-data-grid';
+import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { varPreLine } from 'uwrap';
 
@@ -39,6 +39,10 @@ import {
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
 
+/**
+ * @internal
+ * Returns a function that calculates the height of a cell based on its text content and width.
+ */
 export function getCellHeightCalculator(
   // should be pre-configured with font and letterSpacing
   ctx: CanvasRenderingContext2D,
@@ -55,7 +59,11 @@ export function getCellHeightCalculator(
   };
 }
 
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
+/**
+ * @internal
+ * Returns the default row height based on the theme and cell height setting.
+ */
+export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
 
@@ -71,6 +79,10 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
 }
 
+/**
+ * @internal
+ * Returns true if text overflow handling should be applied to the cell.
+ */
 export function shouldTextOverflow(
   key: string,
   columnTypes: ColumnTypes,
@@ -89,6 +101,10 @@ export function shouldTextOverflow(
   return true;
 }
 
+/**
+ * @internal
+ * Returns the text alignment for a field based on its type and configuration.
+ */
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
@@ -116,6 +132,10 @@ export function getTextAlign(field?: Field): Property.JustifyContent {
 
 const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
 
+/**
+ * @internal
+ * Returns the cell options for a field, migrating from old displayMode if necessary.
+ */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
     return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
@@ -129,6 +149,7 @@ export function getCellOptions(field: Field): TableCellOptions {
 }
 
 /**
+ * @internal
  * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
  * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
  * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
@@ -171,7 +192,11 @@ export function getAlignmentFactor(
 }
 
 /* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItem(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
+/**
+ * @internal
+ * Returns the footer item for a field based on the provided rows and footer calculation options.
+ */
+export function getFooterItem(rows: TableRow[], field: Field, options?: TableFooterCalc): string {
   if (options === undefined) {
     return '';
   }
@@ -211,6 +236,10 @@ const CELL_COLOR_DARKENING_MULTIPLIER = 10;
 const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
+/**
+ * @internal
+ * Returns the text and background colors for a table cell based on its options and display value.
+ */
 export function getCellColors(
   theme: GrafanaTheme2,
   cellOptions: TableCellOptions,
@@ -251,16 +280,12 @@ export function getCellColors(
   return { textColor, bgColor, bgHoverColor };
 }
 
-/** Extracts numeric pixel value from theme spacing */
+/**
+ * @internal
+ * Extracts numeric pixel value from theme spacing
+ */
 export const extractPixelValue = (spacing: string | number): number => {
   return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
-};
-
-/** Converts an RGBA color to hex by blending it with a background color */
-export const convertRGBAToHex = (backgroundColor: string, rgbaColor: string): string => {
-  const bg = tinycolor(backgroundColor);
-  const rgba = tinycolor(rgbaColor);
-  return tinycolor.mix(bg, rgba, rgba.getAlpha() * 100).toHexString();
 };
 
 /* ------------------------------- Data links ------------------------------- */
@@ -300,36 +325,48 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */
-export const updateSortColumns = (
-  columnKey: string,
-  direction: SortDirection,
-  isMultiSort: boolean,
-  sortColumns: SortColumn[]
-): SortColumn[] => {
-  let currentSortColumn: SortColumn | undefined;
+/**
+ * @internal
+ */
+export function applySort(
+  rows: TableRow[],
+  fields: Field[],
+  sortColumns: SortColumn[],
+  columnTypes: ColumnTypes = getColumnTypes(fields),
+  hasNestedFrames: boolean = getIsNestedTable(fields)
+): TableRow[] {
+  if (sortColumns.length === 0) {
+    return rows;
+  }
 
-  const updatedSortColumns = sortColumns.filter((column) => {
-    const isCurrentColumn = column.columnKey === columnKey;
-    if (isCurrentColumn) {
-      currentSortColumn = column;
+  const compareRows = (a: TableRow, b: TableRow): number => {
+    let result = 0;
+    for (let i = 0; i < sortColumns.length; i++) {
+      const { columnKey, direction } = sortColumns[i];
+      const compare = getComparator(columnTypes[columnKey]);
+      const sortDir = direction === 'ASC' ? 1 : -1;
+
+      result = sortDir * compare(a[columnKey], b[columnKey]);
+      if (result !== 0) {
+        break;
+      }
     }
-    return !isCurrentColumn;
-  });
+    return result;
+  };
 
-  // sorted column exists and is descending -> remove it to reset sorting
-  if (currentSortColumn && currentSortColumn.direction === 'DESC') {
-    return updatedSortColumns;
+  // Handle nested tables
+  if (hasNestedFrames) {
+    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
   }
 
-  // new sort column or changed direction
-  if (isMultiSort) {
-    return [...updatedSortColumns, { columnKey, direction }];
-  }
-
-  return [{ columnKey, direction }];
-};
+  // Regular sort for tables without nesting
+  return [...rows].sort(compareRows);
+}
 
 /* ----------------------------- Data grid mapping ---------------------------- */
+/**
+ * @internal
+ */
 export const frameToRecords = (frame: DataFrame): TableRow[] => {
   const fnBody = `
     const rows = Array(frame.length);
@@ -379,6 +416,9 @@ const frameCompare: Comparator = (a, b) => {
   return (a?.value ?? 0) - (b?.value ?? 0);
 };
 
+/**
+ * @internal
+ */
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     // Handle sorting for frame type fields (sparklines)
@@ -444,11 +484,17 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   }
 }
 
-/** Returns true if the DataFrame contains nested frames */
+/**
+ * @internal
+ * Returns true if the DataFrame contains nested frames
+ */
 export const getIsNestedTable = (fields: Field[]): boolean =>
   fields.some(({ type }) => type === FieldType.nestedFrames);
 
-/** Processes nested table rows */
+/**
+ * @internal
+ * Processes nested table rows
+ */
 export const processNestedTableRows = (
   rows: TableRow[],
   processParents: (parents: TableRow[]) => TableRow[]
@@ -483,14 +529,26 @@ export const processNestedTableRows = (
   return result;
 };
 
+/**
+ * @internal
+ * returns the display name of a field
+ */
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
 };
 
+/**
+ * @internal
+ * returns only fields that are not nested tables and not explicitly hidden
+ */
 export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
 }
 
+/**
+ * @internal
+ * returns a map of column types by display name
+ */
 export function getColumnTypes(fields: Field[]): ColumnTypes {
   return fields.reduce<ColumnTypes>((acc, field) => {
     switch (field.type) {
@@ -506,66 +564,43 @@ export function getColumnTypes(fields: Field[]): ColumnTypes {
   }, {});
 }
 
-export function applySort(
-  rows: TableRow[],
-  fields: Field[],
-  sortColumns: SortColumn[],
-  columnTypes: ColumnTypes = getColumnTypes(fields),
-  hasNestedFrames: boolean = getIsNestedTable(fields)
-): TableRow[] {
-  if (sortColumns.length === 0) {
-    return rows;
-  }
-
-  const compareRows = (a: TableRow, b: TableRow): number => {
-    let result = 0;
-    for (let i = 0; i < sortColumns.length; i++) {
-      const { columnKey, direction } = sortColumns[i];
-      const compare = getComparator(columnTypes[columnKey]);
-      const sortDir = direction === 'ASC' ? 1 : -1;
-
-      result = sortDir * compare(a[columnKey], b[columnKey]);
-      if (result !== 0) {
-        break;
-      }
-    }
-    return result;
-  };
-
-  // Handle nested tables
-  if (hasNestedFrames) {
-    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
-  }
-
-  // Regular sort for tables without nesting
-  return [...rows].sort(compareRows);
-}
-
-// 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
-// 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+/**
+ * @internal
+ * calculates the width of each field, with the following logic:
+ * 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
+ * 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+ */
 export function computeColWidths(fields: Field[], availWidth: number) {
   let autoCount = 0;
   let definedWidth = 0;
 
-  return fields
-    .map((field, i) => {
-      const width: number = field.config.custom?.width ?? 0;
+  return (
+    fields
+      // first pass to add up how many fields have pre-defined widths and what that width totals to.
+      .map((field) => {
+        const width: number = field.config.custom?.width ?? 0;
 
-      if (width === 0) {
-        autoCount++;
-      } else {
-        definedWidth += width;
-      }
+        if (width === 0) {
+          autoCount++;
+        } else {
+          definedWidth += width;
+        }
 
-      return width;
-    })
-    .map(
-      (width, i) =>
-        width ||
-        Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
-    );
+        return width;
+      })
+      // second pass once `autoCount` and `definedWidth` are known.
+      .map(
+        (width, i) =>
+          width ||
+          Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
+      )
+  );
 }
 
+/**
+ * @internal
+ * if applyToRow is true in any field, return a function that gets the row background color
+ */
 export function getRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
   for (const field of fields) {
     const cellOptions = getCellOptions(field);
@@ -580,6 +615,10 @@ export function getRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: n
   }
 }
 
+/**
+ * @internal
+ * Type guard for custom cell options fields.
+ */
 export function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
 }

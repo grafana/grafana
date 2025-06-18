@@ -1,5 +1,3 @@
-import { SortColumn } from 'react-data-grid';
-
 import {
   createDataFrame,
   createTheme,
@@ -20,7 +18,6 @@ import {
 
 import { TABLE } from './constants';
 import {
-  convertRGBAToHex,
   extractPixelValue,
   frameToRecords,
   getAlignmentFactor,
@@ -32,7 +29,6 @@ import {
   getFooterItem,
   getIsNestedTable,
   getTextAlign,
-  updateSortColumns,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
 } from './utils';
@@ -351,37 +347,6 @@ describe('TableNG utils', () => {
         time: 1,
         value: 10,
       });
-    });
-  });
-
-  describe('handleSort', () => {
-    it('should set initial sort', () => {
-      expect(updateSortColumns('Value', 'ASC', false, [])).toEqual([{ columnKey: 'Value', direction: 'ASC' }]);
-    });
-
-    it('should toggle sort direction on same column', () => {
-      expect(updateSortColumns('Value', 'DESC', false, [{ columnKey: 'Value', direction: 'ASC' }])).toEqual([
-        { columnKey: 'Value', direction: 'DESC' },
-      ]);
-    });
-
-    it('should handle multi-sort with shift key', () => {
-      expect(updateSortColumns('Value', 'ASC', true, [{ columnKey: 'Time', direction: 'ASC' }])).toEqual([
-        { columnKey: 'Time', direction: 'ASC' },
-        { columnKey: 'Value', direction: 'ASC' },
-      ]);
-    });
-
-    it('should remove sort when toggling through all states', () => {
-      let cols: SortColumn[] = [{ columnKey: 'Value', direction: 'ASC' }];
-
-      // Toggle to DESC
-      cols = updateSortColumns('Value', 'DESC', false, cols);
-      expect(cols).toEqual([{ columnKey: 'Value', direction: 'DESC' }]);
-
-      // Toggle to no sort
-      cols = updateSortColumns('Value', 'DESC', false, cols);
-      expect(cols).toEqual([]);
     });
   });
 
@@ -970,14 +935,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('')).toBe(0);
       expect(extractPixelValue(null as any)).toBe(0);
       expect(extractPixelValue(undefined as any)).toBe(0);
-    });
-  });
-
-  describe('convertRGBAToHex', () => {
-    it('should convert RGBA format to hex with alpha', () => {
-      expect(convertRGBAToHex('#181b1f', 'rgba(255, 0, 0, 1)')).toBe('#ff0000');
-      expect(convertRGBAToHex('#181b1f', 'rgba(0, 255, 0, 0.5)')).toBe('#0c8d10');
-      expect(convertRGBAToHex('#181b1f', 'rgba(0, 0, 255, 0)')).toBe('#181b1f');
     });
   });
 
