@@ -4762,6 +4762,9 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
+      "sql-expressions-message": "SQL Expressions",
+      "sql-expressions-message-description": "A new way to manipulate and transform the results of data source queries using MySQL-like syntax.",
+      "sql-expressions-message-link": "Learn more",
       "title-add-another-transformation": "Add another transformation"
     },
     "un-themed-transformations-editor": {

@@ -213,7 +213,6 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
             data-testid={selectors.components.TransformTab.newTransform(transform.name)}
             onClick={() => onClick(transform.id)}
             key={transform.id}
-            noMargin
           >
             <Card.Heading className={styles.heading}>
               <span>{transform.name}</span>
