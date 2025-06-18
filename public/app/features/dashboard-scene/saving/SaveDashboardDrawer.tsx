@@ -77,11 +77,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       </TabsBar>
     );
 
-    let title = 'Save dashboard';
+    let title = t('dashboard-scene.save-dashboard-drawer.tabs.title', 'Save dashboard');
     if (saveAsCopy) {
-      title = 'Save dashboard copy';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
     } else if (isProvisioned || isProvisionedNG) {
-      title = 'Provisioned dashboard';
+      title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
     }
 
     const renderBody = () => {

@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Stato avviso",
       "annotations": "Annotazioni",
-      "description-missing-series-evaluations": "Quanti intervalli consecutivi di valutazione senza dati per una dimensione devono passare prima che lo stato di avviso venga considerato obsoleto e risolto automaticamente. Se non viene fornito alcun valore, il valore predefinito sarà 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Valutazione",
       "evaluation-paused": "Valutazione degli avvisi attualmente sospesa",
       "evaluation-paused-description": "Le notifiche per questa regola non verranno attivate e non verranno create istanze di avviso fino a quando la regola non verrà riattivata.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Ultimo aggiornamento di",
       "missing-series-resolve": "Valutazioni in serie mancanti da risolvere",
       "no-annotations": "Nessuna annotazione",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Punto di contatto",
+        "group-by": "Raggruppato per",
+        "group-title": "",
+        "mute-timings": "Orari di disattivazione dell'audio",
+        "timing-options": ""
+      },
       "pending-period": "Periodo di attesa",
       "rule": "Regola",
       "rule-identifier": "Identificatore della regola",
@@ -449,6 +457,15 @@
       "export": "Esporta",
       "silence-notifications": "Silenzia notifiche",
       "with-modifications": "Con modifiche"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Copia \"{{label}}\" negli appunti",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "",
         "evaluation-interval": "Intervallo di valutazione",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Non sono presenti regole da importare. Seleziona uno spazio dei nomi o un gruppo di regole diverso.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Nessuna regola da importare",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informazioni"
+        },
         "plugin-rules-warning": {
           "text": "Abbiamo rilevato che alcune regole sono gestite da componenti aggiuntivi. Queste regole non verranno importate.",
           "title": "Alcune regole sono escluse dall'importazione"
@@ -4023,6 +4045,9 @@
         "title": "Opzioni riga"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Rimuovi proprietà"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Modifiche",
-      "label-details": "Dettagli"
+      "label-details": "Dettagli",
+      "title": "Salva dashboard",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata.<1></1><2>Desideri comunque salvare questa dashboard?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Questo titolo non è univoco"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Aggiungi",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
       "title-name-already-exists": "Nome già in uso"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Modifiche",
-        "label-details": "Dettagli"
+        "label-details": "Dettagli",
+        "title": "Salva dashboard",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Nascondi i dettagli del registro",
       "unpin-from-outline": "Sblocca registro"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Errore durante il caricamento di altri registri.",
       "no-more-logs-available": "Non ci sono altri registri disponibili.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Correggi le sequenze di nuove righe e tabulazioni non corrette nelle righe del registro",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Nascondi marca temporale",
       "hide-unique-labels": "Nascondi etichette univoche",
       "newest-first": "Ordine: prima i registri più recenti – Fai clic per mostrare prima i meno recenti",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Rimuovi escaping",
       "scroll-bottom": "Scorri verso il basso",
       "scroll-top": "Scorri verso l'alto",
+      "show-search": "",
       "show-timestamps": "Mostra marca temporale",
       "show-unique-labels": "Mostra etichette univoche",
       "unwrap-lines": "Rimuovi a capo",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Disabilita",
       "tooltip-enable": "Abilita"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Off"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Aggiungi valore enum",
       "generate-enum-values-from-data": "Genera valori enum dai dati"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Orario in ordine crescente"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automatico",
+      "field-order-manual": "",
       "first-frame-warning": "Organizza campi funziona solo con un singolo fotogramma. Valuta di applicare una trasformazione di unione o di filtrare prima l'inserimento."
     },
     "partion-by-values-editor": {

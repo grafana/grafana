@@ -1065,6 +1065,9 @@
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
     },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+    },
     "evaluate-every-validation-options": {
       "message": {
         "required": "Required."
@@ -3267,9 +3270,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3306,6 +3306,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -4045,6 +4048,9 @@
         "title": "Row options"
       }
     },
+    "description": {
+      "action": "Change dashboard description"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -4052,6 +4058,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
@@ -4535,7 +4542,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
@@ -5281,7 +5291,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Changes",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Save dashboard",
+        "title-copy": "Save dashboard copy",
+        "title-provisioned": "Provisioned dashboard"
       }
     },
     "save-dashboard-form": {
@@ -8509,9 +8522,6 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
-    "drawer": {
-      "close": "Close drawer"
-    },
     "link-title": "Go to Grafana labs blog",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
@@ -9757,7 +9767,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
@@ -10669,6 +10678,11 @@
       "tooltip-disable": "Disable",
       "tooltip-enable": "Enable"
     },
+    "draggable-sort-order": {
+      "asc": "ASC",
+      "desc": "DESC",
+      "off": "Off"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
       "generate-enum-values-from-data": "Generate enum values from data"
@@ -10847,6 +10861,9 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "Field order",
+      "field-order-auto": "Auto",
+      "field-order-manual": "Manual",
       "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
     },
     "partion-by-values-editor": {

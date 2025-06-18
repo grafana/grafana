@@ -16,13 +16,9 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
-import {
-  extractRuleMappingFromGroups,
-  PrometheusDatasource,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
-} from './datasource';
-import PromQlLanguageProvider from './language_provider';
+import { extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import { PrometheusLanguageProviderInterface } from './language_provider';
 import {
   createDataRequest,
   createDefaultPromResponse,
@@ -1015,7 +1011,7 @@ describe('PrometheusDatasource2', () => {
 
     ds.languageProvider = {
       histogramMetrics: ['tns_request_duration_seconds_bucket'],
-    } as PromQlLanguageProvider;
+    } as PrometheusLanguageProviderInterface;
 
     const request = {
       targets: [targetA, targetB],

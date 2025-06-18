@@ -122,6 +122,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.clearSelection();
     }
 
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
+    }
+
     if (action.removedObject) {
       this.newObjectAddedToCanvas(action.removedObject);
     }
@@ -137,6 +141,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
+    }
+
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
     if (action.removedObject) {
@@ -255,6 +263,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
-    this.state.selection!.markAsNewElement();
+    this.state.selection?.markAsNewElement();
   }
 }
