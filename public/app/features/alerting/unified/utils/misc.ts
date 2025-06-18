@@ -312,14 +312,17 @@ export function stringifyErrorLike(error: unknown): string {
       return error.message;
     }
 
-    // @TODO translate
     if ('message' in error.data && typeof error.data.message === 'string') {
       const status = getStatusFromError(error);
       const message = getMessageFromError(error);
 
       const config = getRequestConfigFromError(error);
 
-      return `${config} ${t('alerting.errors.failedWith', `failed with`)} ${status}: ${message}`;
+      return t('alerting.errors.failedWith', '{{- config}} failed with {{status}}: {{message}}', {
+        config,
+        status,
+        message,
+      });
     }
 
     if (error.statusText) {
