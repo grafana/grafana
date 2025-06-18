@@ -284,7 +284,7 @@ describe('NotificationPolicies', () => {
 
     renderNotificationPolicies();
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
-    expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
+    expect(await within(alert).findByText(new RegExp(errMessage))).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 

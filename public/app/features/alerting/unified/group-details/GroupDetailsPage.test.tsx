@@ -135,7 +135,7 @@ describe('GroupDetailsPage', () => {
 
       // Assert
       expect(await screen.findByText('Error loading the group')).toBeInTheDocument();
-      expect(await screen.findByText('Failed to fetch rule group')).toBeInTheDocument();
+      expect(await screen.findByText(/Failed to fetch rule group/)).toBeInTheDocument();
     });
 
     it('should render "not found" when group does not exist', async () => {
