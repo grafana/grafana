@@ -1,3 +1,6 @@
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-v5-compat';
+
+import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
@@ -7,24 +10,64 @@ import { useEditConfigurationDrawer } from './components/settings/ConfigurationD
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
+import { settingsExtensions } from './settings/extensions';
+import { useSettingsPageNav } from './settings/navigation';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 function SettingsPage() {
   return (
+    <Routes>
+      <Route path="alertmanager" element={<AlertmanagerSettingsPage />} />
+      {Array.from(settingsExtensions.entries()).map(([key, { element }]) => (
+        <Route key={key} path={key} element={element} />
+      ))}
+      <Route path="enterprise" element={<EnterprisePlaceholder />} />
+      <Route index element={<Navigate replace to="/alerting/admin/alertmanager" />} />
+    </Routes>
+  );
+}
+
+function EnterprisePlaceholder() {
+  const pageNav = useSettingsPageNav();
+  return (
+    <AlertingPageWrapper pageNav={pageNav} navId="alerting-admin">
+      <Stack direction="column" gap={2}>
+        <Text variant="h4">Enterprise Features</Text>
+        <Text color="secondary">Enterprise alerting features will be displayed here when available.</Text>
+      </Stack>
+    </AlertingPageWrapper>
+  );
+}
+
+const externalPages = new Map<string, React.ReactNode>();
+
+function addSettingsPage(pageNav: NavModelItem, ReactNode: React.ReactNode) {
+  if (!pageNav.id) {
+    console.warn('Unable to add settings page, PageNav must have an id');
+    return;
+  }
+  externalPages.set(pageNav.id, ReactNode);
+}
+
+function AlertmanagerSettingsPage() {
+  return (
     <SettingsProvider>
-      <SettingsContent />
+      <AlertmanagerSettingsContent />
     </SettingsProvider>
   );
 }
 
-function SettingsContent() {
+function AlertmanagerSettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
+
+  const pageNav = useSettingsPageNav();
 
   return (
     <AlertingPageWrapper
       navId="alerting-admin"
       isLoading={isLoading}
+      pageNav={pageNav}
       actions={[
         <WithReturnButton
           key="add-alertmanager"
