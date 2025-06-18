@@ -54,7 +54,6 @@ export function DeleteProvisionedDashboardForm({
     const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Delete dashboard: ${dashboard.state.title}`;
 
-    // Call delete API
     deleteRepoFile({
       name: repo,
       path: path,
