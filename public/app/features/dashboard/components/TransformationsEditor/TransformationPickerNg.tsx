@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
+import { Card, Drawer, FilterPill, Grid, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
@@ -182,7 +182,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
   const styles = useStyles2(getTransformationGridStyles);
 
   return (
-    <div className={styles.grid}>
+    <Grid columns={3} gap={1}>
       {transformations.map((transform) => {
         // Check to see if the transform
         // is applicable to the given data
@@ -239,7 +239,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           </Card>
         );
       })}
-    </div>
+    </Grid>
   );
 }
 
