@@ -59,6 +59,7 @@ jobs:
       - name: Build E2E test runner
         id: artifact
         run: |
+          set -euo pipefail
           # We want a static binary, so we need to set CGO_ENABLED=0
           CGO_ENABLED=0 go build -o ./e2e-runner ./e2e/
           echo "artifact=e2e-runner-${{github.run_number}}" >> "$GITHUB_OUTPUT"
@@ -127,6 +128,7 @@ jobs:
         env:
           SUITE: ${{ matrix.path }}
         run: |
+          set -euo pipefail
           echo "suite=$(echo "$SUITE" | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: success() || failure()
