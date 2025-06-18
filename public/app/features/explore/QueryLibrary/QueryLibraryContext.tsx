@@ -34,10 +34,11 @@ export type QueryLibraryContextType = {
    * @param options.onSave Callback that will be called after the query is saved.
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
+   * @param options.title Default title for the modal, can be overridden by the query title.
    */
   openAddQueryModal: (
     query: DataQuery,
-    options?: { isDuplicating?: boolean; onSave?: () => void; context?: string }
+    options?: { onSave?: () => void; context?: string; title?: string; isDuplicating?: boolean }
   ) => void;
   closeAddQueryModal: () => void;
 

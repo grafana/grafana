@@ -2413,7 +2413,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
-      "loading-more-groups": "Loading more groups...",
+      "loading-more-groups": "Loading more groups…",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
