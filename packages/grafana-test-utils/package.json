@@ -46,7 +46,7 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "msw": "2.7.0"
+    "msw": "2.10.2"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",

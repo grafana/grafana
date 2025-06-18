@@ -219,7 +219,7 @@
     "jsdom-testing-mocks": "^1.13.1",
     "lerna": "8.2.1",
     "mini-css-extract-plugin": "2.9.2",
-    "msw": "2.7.0",
+    "msw": "2.10.2",
     "mutationobserver-shim": "0.3.7",
     "node-notifier": "10.0.1",
     "nx": "20.7.1",
