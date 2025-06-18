@@ -106,6 +106,7 @@ describe('getRuntimePanelDataSource', () => {
   });
 
   it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -125,6 +126,10 @@ describe('getRuntimePanelDataSource', () => {
       uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not find datasource for query kind unknown-type, defaulting to prometheus'
+    );
   });
 
   it('should handle the case when datasource uid is empty string', () => {
