@@ -79,7 +79,9 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
+    "@rollup/plugin-dynamic-import-vars": "2.1.5",
     "@rollup/plugin-image": "3.0.3",
+    "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.2.0",
@@ -95,6 +97,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-select-event": "5.5.1",
+    "rimraf": "6.0.1",
     "rollup": "^4.22.4",
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
