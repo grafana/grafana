@@ -1,63 +1,27 @@
-# Owned by grafana-delivery-squad
-# Intended to be dropped into the base repo Ex: grafana/grafana
 name: Dispatch check for patch conflicts
-run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - reopened
       - synchronize
     branches:
       - "main"
-      - "v*.*.*"
       - "release-*"
 
-permissions: {}
+permissions:
+  id-token: write
+  contents: read
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    permissions:
-      id-token: write
-      contents: read
-      actions: write
-    env:
-      HEAD_REF: ${{ github.head_ref }}
-      BASE_REF: ${{ github.base_ref }}
-      REPO: ${{ github.repository }}
-      SENDER: ${{ github.event.sender.login }}
-      SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: "Dispatch job"
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
-
-            await github.rest.actions.createWorkflowDispatch({
-                owner: 'grafana',
-                repo: 'security-patch-actions',
-                workflow_id: 'test-patches-event.yml',
-                ref: 'main',
-                inputs: {
-                  src_repo: REPO,
-                  src_ref: HEAD_REF,
-                  src_merge_sha: SHA,
-                  src_pr_commit_sha: PR_COMMIT_SHA,
-                  patch_repo: REPO + '-security-patches',
-                  patch_ref: BASE_REF,
-                  triggering_github_handle: SENDER
-                }
-            })
+    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@main
+    with:
+      head_ref: ${{ github.head_ref }}
+      base_ref: ${{ github.base_ref }}
+      repo: ${{ github.repository }}
+      sender_login: ${{ github.event.sender.login }}
+      sha: ${{ github.sha }}
+      pr_commit_sha: ${{ github.event.pull_request.head.sha }}

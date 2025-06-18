@@ -15,11 +15,6 @@ on:
         description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
         required: true
         type: string
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID:
-        required: true
-      GRAFANA_DELIVERY_BOT_APP_PEM:
-        required: true
   workflow_dispatch:
     inputs:
       from:
@@ -34,24 +29,30 @@ on:
         description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
         required: true
         type: string
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID:
-        required: true
-      GRAFANA_DELIVERY_BOT_APP_PEM:
-        required: true
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Migrate PRs
-        uses: grafana/grafana-github-actions-go/migrate-open-prs@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/grafana-github-actions-go/migrate-open-prs@main
         with:
           token: ${{ steps.generate_token.outputs.token }}
           ownerRepo: ${{ inputs.ownerRepo }}

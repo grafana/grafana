@@ -1,27 +1,14 @@
-name: Crowdin Create Tasks
+name: Crowdin automatic task management
 
 on:
   workflow_dispatch:
+  # once a week on Sunday at midnight
+  # TODO enable once we're ready to create tasks automatically
   # schedule:
-  #   - cron: "0 0 * * *"
+  #   - cron: "0 0 * * 0"
 
 jobs:
   create-tasks-in-crowdin:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: Create tasks
-        env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        run: node ./.github/workflows/scripts/crowdin/create-tasks.js
+    uses: grafana/grafana-github-actions/.github/workflows/crowdin-create-tasks.yml@main
+    with:
+      crowdin_project_id: 5

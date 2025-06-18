@@ -21,10 +21,18 @@ permissions: {}
 
 jobs:
   grafana:
-    # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`, 
+    # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
-    name: Grafana
+    strategy:
+      matrix:
+        shard: [
+          1/8, 2/8, 3/8, 4/8,
+          5/8, 6/8, 7/8, 8/8,
+        ]
+      fail-fast: false
+
+    name: Grafana (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
     continue-on-error: true
     permissions:
@@ -42,17 +50,31 @@ jobs:
       - name: Generate Go code
         run: make gen-go
       - name: Run unit tests
-        run: make test-go-unit
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
+          go test -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    # If it gets merged into `main` or `release-*`, then a junit test result is uploaded to GCS.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    name: Grafana Enterprise
+    strategy:
+      matrix:
+        shard: [
+          1/8, 2/8, 3/8, 4/8,
+          5/8, 6/8, 7/8, 8/8,
+        ]
+      fail-fast: false
+
+    name: Grafana Enterprise (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
       id-token: write
     steps:
+      # Set up repository clone
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -65,7 +87,46 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
+
+      # Prepare what we need to upload test results
+      - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
+        env:
+          SHARD: ${{ matrix.shard }}
+      - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
+
+      # Run code
       - name: Generate Go code
         run: make gen-go
       - name: Run unit tests
-        run: make test-go-unit
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
+          # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
+          # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
+          go test -short -v -timeout=30m "${PACKAGES[@]}" | tee >(go-junit-report -set-exit-code > "$RESULTS_FILE")
+
+      # Upload results to GCS
+      - name: Log in to GCS
+        if: github.repository == 'grafana/grafana' && (success() || failure())
+        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs-v0.2.0
+        with:
+          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
+          bucket: grafana-test-results
+      - if: github.repository == 'grafana/grafana' && (success() || failure())
+        run: |
+          BUCKET_PATH="go-unit-tests/$(echo "${REF_NAME}" | sed 's/\//-/g')"
+          echo "BUCKET_PATH=$BUCKET_PATH" >> "$GITHUB_ENV"
+        env:
+          REF_NAME: ${{ github.ref_name }}
+      - name: Upload test results
+        if: github.repository == 'grafana/grafana' && (success() || failure())
+        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        with:
+          bucket: grafana-test-results
+          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
+          environment: "dev" # Can be dev/prod (defaults to dev)
+          path: ${{ env.RESULTS_FILE }}
+          bucket_path: ${{ env.BUCKET_PATH }}
