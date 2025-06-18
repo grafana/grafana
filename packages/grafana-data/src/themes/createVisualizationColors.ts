@@ -32,11 +32,33 @@ export interface ThemeVizHue {
   shades: ThemeVizColor[];
 }
 
+export interface ThemeVisualizationColorsInput {
+  hues?: ThemeVizHue[];
+  palette?: string[];
+}
+
 /**
  * @internal
  */
-export function createVisualizationColors(colors: ThemeColors): ThemeVisualizationColors {
+export function createVisualizationColors(
+  colors: ThemeColors,
+  options: ThemeVisualizationColorsInput
+): ThemeVisualizationColors {
   const hues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+  const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
+
+  // override hues with user provided
+  for (const hueOverride of hueOverrides) {
+    const existingHue = hues.find((hue) => hue.name === hueOverride.name);
+    if (existingHue) {
+      for (const shadeOverride of hueOverride.shades) {
+        const existingShade = existingHue.shades.find((shade) => shade.name === shadeOverride.name);
+        if (existingShade) {
+          existingShade.color = shadeOverride.color;
+        }
+      }
+    }
+  }
 
   const byNameIndex: Record<string, string> = {};
 
@@ -82,8 +104,6 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
 
     return colorName;
   };
-
-  const palette = getClassicPalette();
 
   return {
     hues,
