@@ -9,12 +9,12 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     bootData: {
       settings: {
-        defaultDatasource: 'default-ds-grafana',
+        defaultDatasource: 'default-ds-prometheus',
         datasources: {
-          'default-ds-grafana': {
-            uid: 'default-ds-uid',
-            name: 'Default DS',
-            meta: { id: 'default-ds-grafana' },
+          'default-ds-prometheus': {
+            uid: 'default-prometheus-uid',
+            name: 'Default Prometheus',
+            meta: { id: 'prometheus' },
             type: 'datasource',
           },
           prometheus: {
@@ -61,7 +61,7 @@ describe('getRuntimePanelDataSource', () => {
     });
   });
 
-  it('should infer datasource based on query kind when datasource is not specified', () => {
+  it('should prioritize default datasource when it matches the query kind', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -78,12 +78,35 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query);
 
     expect(result).toEqual({
-      uid: 'prometheus-uid',
+      uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
   });
 
+  it('should fall back to first available datasource when default datasource type does not match query kind', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        datasource: undefined,
+        query: {
+          kind: 'loki',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query);
+
+    expect(result).toEqual({
+      uid: 'loki-uid',
+      type: 'loki',
+    });
+  });
+
   it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
@@ -100,9 +123,13 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query);
 
     expect(result).toEqual({
-      uid: 'default-ds-uid',
-      type: 'default-ds-grafana',
+      uid: 'default-prometheus-uid',
+      type: 'prometheus',
     });
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not find datasource for query kind unknown-type, defaulting to prometheus'
+    );
   });
 
   it('should handle the case when datasource uid is empty string', () => {
@@ -125,7 +152,7 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query);
 
     expect(result).toEqual({
-      uid: 'prometheus-uid',
+      uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
   });
