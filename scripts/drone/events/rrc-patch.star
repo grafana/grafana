@@ -3,10 +3,6 @@ This module returns all the pipelines used in the event of pushes to an RRC bran
 """
 
 load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
-)
-load(
     "scripts/drone/steps/lib.star",
     "enterprise_downstream_step",
 )
@@ -32,7 +28,6 @@ trigger = {
 
 def rrc_patch_pipelines():
     pipelines = [
-        test_frontend(trigger, ver_mode),
         rrc_enterprise_downstream_pipeline(trigger = trigger),
     ]
 

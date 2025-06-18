@@ -11,10 +11,6 @@ load(
     "verify_release_pipeline",
 )
 load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_pipeline_volumes",
@@ -247,7 +243,6 @@ def rgm_nightly_build():
         name = "rgm-nightly-build",
         trigger = nightly_trigger,
         steps = rgm_run("rgm-build", "drone_build_nightly_grafana.sh") + copy_steps,
-        depends_on = ["nightly-test-frontend"],
     )
 
 def rgm_nightly_publish():
@@ -273,7 +268,6 @@ def rgm_nightly_publish():
 
 def rgm_nightly_pipeline():
     return [
-        test_frontend(nightly_trigger, "nightly"),
         rgm_nightly_build(),
         rgm_nightly_publish(),
     ]

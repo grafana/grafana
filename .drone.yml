@@ -1411,62 +1411,6 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: rrc-test-frontend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.21.3
-  name: identify-runner
-- commands:
-  - yarn install --immutable || yarn install --immutable
-  depends_on: []
-  image: node:22.16.0-alpine
-  name: yarn-install
-- commands:
-  - apk add --update git bash
-  - yarn betterer:ci
-  depends_on:
-  - yarn-install
-  image: node:22.16.0-alpine
-  name: betterer-frontend
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: node:22.16.0-alpine
-  name: test-frontend
-trigger:
-  branch:
-  - instant
-  - fast
-  - steady
-  - slow
-  ref:
-    include:
-    - refs/tags/rrc*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
 name: rrc-trigger-downstream
 node:
   type: no-parallel
@@ -2423,61 +2367,6 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: nightly-test-frontend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.21.3
-  name: identify-runner
-- commands:
-  - yarn install --immutable || yarn install --immutable
-  depends_on: []
-  image: node:22.16.0-alpine
-  name: yarn-install
-- commands:
-  - apk add --update git bash
-  - yarn betterer:ci
-  depends_on:
-  - yarn-install
-  image: node:22.16.0-alpine
-  name: betterer-frontend
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: node:22.16.0-alpine
-  name: test-frontend
-trigger:
-  cron:
-    include:
-    - nightly-release
-  event:
-    include:
-    - cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- nightly-test-frontend
 image_pull_secrets:
 - gcr
 - gar
@@ -3431,6 +3320,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 94e3c6a6222254917420d91b327a13807c4c0ac67c1a7279dadb0a10db2fb07d
+hmac: 551fbd37209bf27c39d5763258d32c86de568551ecfe72141ea703457334a823
 
 ...
