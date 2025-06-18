@@ -1510,7 +1510,7 @@ func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org
 	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
 }
 
-func (m *mockAlertmanager) DeleteAndApplyExtraConfiguration(ctx context.Context, org int64, identifier string) error {
+func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
 	args := m.Called(ctx, org, identifier)
 	return args.Error(0)
 }
@@ -1797,5 +1797,69 @@ func TestFormatMergeMatchers(t *testing.T) {
 		}
 		result := formatMergeMatchers(matchers)
 		require.Equal(t, "env=prod,team=backend", result)
+	})
+}
+
+func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
+	const identifier = "test-config"
+	const orgID = int64(1)
+
+	mockAM := &mockAlertmanager{}
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	t.Run("should parse identifier header and call DeleteExtraConfiguration", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return error when identifier header is missing", func(t *testing.T) {
+		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "identifier cannot be empty")
+	})
+
+	t.Run("should return error when DeleteExtraConfiguration fails", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(errors.New("delete error")).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return not implemented when feature toggle is disabled", func(t *testing.T) {
+		ft := featuremgmt.WithFeatures()
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusNotImplemented, response.Status())
+	})
+
+	t.Run("should return error for empty identifier header", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, "")
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "identifier cannot be empty")
 	})
 }
