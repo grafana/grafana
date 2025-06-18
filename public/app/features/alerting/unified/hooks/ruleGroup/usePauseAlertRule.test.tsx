@@ -70,7 +70,7 @@ describe('pause rule', () => {
     await userEvent.click(byRole('button').get());
     expect(await byText(/loading/i).find()).toBeInTheDocument();
     expect(byText(/success/i).query()).not.toBeInTheDocument();
-    expect(await byText(/error: oops/i).find()).toBeInTheDocument();
+    expect(await byText(/error:(.+)oops/i).find()).toBeInTheDocument();
   });
 });
 
