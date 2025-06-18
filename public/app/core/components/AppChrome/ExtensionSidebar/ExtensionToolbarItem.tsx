@@ -18,6 +18,7 @@ export function ExtensionToolbarItem() {
     const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
     if (dockedComponent) {
       dockedComponentTitle = dockedComponent.componentTitle;
+      dockedPluginId = dockedComponent.pluginId;
     }
   }
 
@@ -47,6 +48,7 @@ export function ExtensionToolbarItem() {
               setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
             }
           }}
+          pluginId={components[0].pluginId}
         />
         <NavToolbarSeparator />
       </>
@@ -69,6 +71,7 @@ export function ExtensionToolbarItem() {
                 setDockedComponentId(id);
               }
             }}
+            pluginId={dockedPluginId}
           />
         );
       })}
@@ -85,6 +88,7 @@ export function ExtensionToolbarItem() {
               setDockedComponentId(undefined);
             }
           }}
+          pluginId={dockedPluginId}
         />
       ) : (
         <Dropdown overlay={MenuItems} placement="bottom-end">
