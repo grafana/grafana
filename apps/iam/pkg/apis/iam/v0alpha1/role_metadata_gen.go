@@ -24,5 +24,8 @@ type RoleMetadata struct {
 
 // NewRoleMetadata creates a new RoleMetadata object.
 func NewRoleMetadata() *RoleMetadata {
-	return &RoleMetadata{}
+	return &RoleMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

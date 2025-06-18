@@ -271,9 +271,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 // FilterOptions provides filtering for alert rule queries.
 // All fields are optional and will be applied as filters if provided.
 type FilterOptions struct {
-	ImportedPrometheusRule *bool
-	RuleGroups             []string
-	NamespaceUIDs          []string
+	HasPrometheusRuleDefinition *bool
+	RuleGroups                  []string
+	NamespaceUIDs               []string
 }
 
 func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertRulesQuery {
@@ -281,8 +281,8 @@ func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertR
 		return q
 	}
 
-	if opts.ImportedPrometheusRule != nil {
-		q.ImportedPrometheusRule = opts.ImportedPrometheusRule
+	if opts.HasPrometheusRuleDefinition != nil {
+		q.HasPrometheusRuleDefinition = opts.HasPrometheusRuleDefinition
 	}
 
 	if len(opts.NamespaceUIDs) > 0 {

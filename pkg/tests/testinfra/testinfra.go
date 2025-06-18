@@ -18,6 +18,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/dskit/kv"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -491,6 +492,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 	}
+	if opts.UnifiedStorageMaxPageSizeBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
+		require.NoError(t, err)
+	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
@@ -508,17 +515,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	if db.IsTestDBSpanner() {
-		_, err = dbSection.NewKey("max_open_conn", "20")
-	} else {
-		_, err = dbSection.NewKey("max_open_conn", "2")
-	}
+	_, err = dbSection.NewKey("max_open_conn", "2")
 	require.NoError(t, err)
-	if db.IsTestDBSpanner() {
-		_, err = dbSection.NewKey("max_idle_conn", "20")
-	} else {
-		_, err = dbSection.NewKey("max_idle_conn", "2")
-	}
+	_, err = dbSection.NewKey("max_idle_conn", "2")
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -563,6 +562,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string

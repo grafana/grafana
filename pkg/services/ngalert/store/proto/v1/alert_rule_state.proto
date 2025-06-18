@@ -17,6 +17,7 @@ message AlertInstance {
     google.protobuf.Timestamp last_sent_at = 8;
     google.protobuf.Timestamp resolved_at = 9;
     string result_fingerprint = 10;
+    google.protobuf.Timestamp fired_at = 11;
 }
 
 message AlertInstances {

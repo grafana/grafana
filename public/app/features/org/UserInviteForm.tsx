@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -62,7 +62,7 @@ const defaultValues: FormModel = {
 
 export const UserInviteForm = () => {
   const dispatch = useDispatch();
-  const { t } = useTranslate();
+
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
     locationService.push('/admin/users/');
@@ -79,7 +79,7 @@ export const UserInviteForm = () => {
                 error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
                 label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
               >
-                {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+                {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
                 <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
               </Field>
               <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')}>

@@ -54,7 +54,6 @@ type InitTestDBOpt = sqlstore.InitTestDBOpt
 var SetupTestDB = sqlstore.SetupTestDB
 var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
-var SkipTestsOnSpanner = sqlstore.SkipTestsOnSpanner
 
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
 	db, _ := InitTestDBWithCfg(t, opts...)
@@ -92,14 +91,6 @@ func IsTestDbPostgres() bool {
 func IsTestDBMSSQL() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		return db == migrator.MSSQL
-	}
-
-	return false
-}
-
-func IsTestDBSpanner() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.Spanner
 	}
 
 	return false

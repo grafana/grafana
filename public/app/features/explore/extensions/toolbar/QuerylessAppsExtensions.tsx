@@ -1,6 +1,6 @@
 import { first } from 'lodash';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
@@ -8,7 +8,6 @@ import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 import { ExtensionDropdownProps } from './types';
 
 export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
-  const { t } = useTranslate();
   const { links, setSelectedExtension, setIsModalOpen, isModalOpen, noQueriesInPane } = props;
 
   if (links.length === 0) {

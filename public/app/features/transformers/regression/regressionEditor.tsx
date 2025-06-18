@@ -9,7 +9,7 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
@@ -33,8 +33,14 @@ export const RegressionTransformerEditor = ({
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
   const modelTypeOptions = [
-    { label: 'Linear', value: ModelType.linear },
-    { label: 'Polynomial', value: ModelType.polynomial },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear'),
+      value: ModelType.linear,
+    },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial'),
+      value: ModelType.polynomial,
+    },
   ];
 
   useEffect(() => {
@@ -72,8 +78,6 @@ export const RegressionTransformerEditor = ({
       onChange({ ...options, xFieldName: x.name, yFieldName: y.name });
     }
   });
-
-  const { t } = useTranslate();
 
   return (
     <>
@@ -138,10 +142,10 @@ export const RegressionTransformerEditor = ({
           <Select<number>
             value={options.degree ?? DEFAULTS.degree}
             options={[
-              { label: 'Quadratic', value: 2 },
-              { label: 'Cubic', value: 3 },
-              { label: 'Quartic', value: 4 },
-              { label: 'Quintic', value: 5 },
+              { label: t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
+              { label: t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
+              { label: t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
+              { label: t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
             ]}
             onChange={(v) => {
               onChange({ ...options, degree: v.value });

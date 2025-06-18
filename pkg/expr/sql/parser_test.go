@@ -105,7 +105,7 @@ func TestTablesList(t *testing.T) {
 			)
 			SELECT name, price
 			FROM top_products;`,
-			expected: []string{"products", "top_products"},
+			expected: []string{"products"},
 		},
 		{
 			name:     "with quote",

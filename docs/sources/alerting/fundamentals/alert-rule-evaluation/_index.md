@@ -25,19 +25,15 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
-  evaluation-of-imported-ds-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/#evaluation-of-imported-rules
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/#evaluation-of-imported-rules
 ---
 
 # Alert rule evaluation
 
-The criteria determining when an alert rule fires are based on two settings:
+The criteria determining when an alert rule fires are based on three settings:
 
 - [Evaluation group](#evaluation-group): how frequently the alert rule is evaluated.
 - [Pending period](#pending-period): how long the condition must be met to start firing.
+- [Keep firing for](#pending-period): how long the alert continues to fire after the condition is no longer met.
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-2.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." caption="Set alert rule evaluation" >}}
 
@@ -55,7 +51,7 @@ Rules in different groups can be evaluated simultaneously.
 
 - **Data source-managed** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
 
-- **Grafana-managed rules [imported from data source-managed rules](ref:import-ds-rules)** can be evaluated sequentially or in parallel, depending on how they are imported. For more information, refer to [Evaluation of imported rules](ref:evaluation-of-imported-ds-rules).
+- **Grafana-managed rules [imported from data source-managed rules](ref:import-ds-rules)** are also evaluated sequentially.
 
 ## Pending period
 

@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
-import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
+import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/mocks';
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
   return (

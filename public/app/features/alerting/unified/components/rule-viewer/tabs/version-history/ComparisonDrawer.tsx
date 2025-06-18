@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Drawer } from '@grafana/ui';
 import { VersionHistoryComparison } from 'app/core/components/VersionHistory/VersionHistoryComparison';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
@@ -32,7 +32,6 @@ export const ComparisonDrawer = ({
 }: ComparisonDrawerProps) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const onDismiss = useCallback(() => setShowDrawer(false), [setShowDrawer]);
-  const { t } = useTranslate();
 
   const oldVersionSummary = parseVersionInfoToSummary(oldVersion);
   const newVersionSummary = parseVersionInfoToSummary(newVersion);
