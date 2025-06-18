@@ -39,6 +39,7 @@ export function DeleteProvisionedDashboardForm({
   onDismiss,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
+  const { editPanel: panelEditor } = dashboard.useState();
   const { handleSubmit, watch } = methods;
 
   const [ref, workflow] = watch(['ref', 'workflow']);
@@ -72,11 +73,13 @@ export function DeleteProvisionedDashboardForm({
   };
 
   const onWriteSuccess = () => {
+    panelEditor?.onDiscard();
     onDismiss();
     navigate('/dashboards');
   };
 
   const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
+    panelEditor?.onDiscard();
     onDismiss();
     navigate(
       `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
