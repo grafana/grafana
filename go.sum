@@ -1639,6 +1639,8 @@ github.com/grafana/loki/v3 v3.2.1 h1:VB7u+KHfvL5aHAxgoVBvz5wVhsdGuqKC7uuOFOOe7jw
 github.com/grafana/loki/v3 v3.2.1/go.mod h1:WvdLl6wOS+yahaeQY+xhD2m2XzkHDfKr5FZaX7D/X2Y=
 github.com/grafana/nanogit v0.0.0-20250617163817-5673133b88c5 h1:VaJW9la/ey2DhlJxZRKuDE0kyMbkpILuXZxtKf827UY=
 github.com/grafana/nanogit v0.0.0-20250617163817-5673133b88c5/go.mod h1:tN93IZUaAmnSWgL0IgnKdLv6DNeIhTJGvl1wvQMrWco=
+github.com/grafana/nanogit v0.0.0-20250618070615-33870cd15b07 h1:6LyFLrTnDWt7x7mkRdnD3E38QyUlb7zCNTTf0RpS8gU=
+github.com/grafana/nanogit v0.0.0-20250618070615-33870cd15b07/go.mod h1:tN93IZUaAmnSWgL0IgnKdLv6DNeIhTJGvl1wvQMrWco=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36 h1:AjZ58JRw1ZieFH/SdsddF5BXtsDKt5kSrKNPWrzYz3Y=
