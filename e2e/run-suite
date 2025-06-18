@@ -12,6 +12,7 @@ fi
 HOST=${HOST:-$DEFAULT_HOST}
 PORT=${PORT:-$DEFAULT_PORT}
 
+
 echo -e "Starting Cypress scenarios"
 
 args=("$@")
@@ -203,7 +204,7 @@ function join () {
 
 export TZ="Pacific/Honolulu"
 
-yarn run $CMD --env "$(join env)" \
+DEBUG="cypress:network:agent" yarn run $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
 
