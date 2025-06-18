@@ -25,14 +25,6 @@ load(
     "lint_backend_pipeline",
 )
 load(
-    "scripts/drone/pipelines/shellcheck.star",
-    "shellcheck_pipeline",
-)
-load(
-    "scripts/drone/pipelines/swagger_gen.star",
-    "swagger_gen",
-)
-load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
@@ -136,10 +128,6 @@ def pr_pipelines():
             prefix = ver_mode,
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
-        shellcheck_pipeline(),
-        swagger_gen(
-            ver_mode,
-        ),
         integration_benchmarks(
             prefix = ver_mode,
         ),

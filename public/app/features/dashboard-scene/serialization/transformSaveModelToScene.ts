@@ -308,7 +308,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
-      version: oldModel.version,
     }),
   ];
 
@@ -354,6 +353,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
           quickRanges: oldModel.timepicker.quick_ranges,
+          defaultQuickRanges: config.quickRanges,
         }),
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,

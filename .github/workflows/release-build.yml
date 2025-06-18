@@ -1,0 +1,137 @@
+name: Build Release Packages
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release-*.*.*
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Builds the following artifacts:
+#
+# npm:grafana
+# storybook
+# targz:grafana:linux/amd64
+# targz:grafana:linux/arm64
+# targz:grafana:linux/arm/v6
+# targz:grafana:linux/arm/v7
+# deb:grafana:linux/amd64
+# deb:grafana:linux/arm64
+# deb:grafana:linux/arm/v6
+# deb:grafana:linux/arm/v7
+# rpm:grafana:linux/amd64:sign
+# rpm:grafana:linux/arm64:sign
+# docker:grafana:linux/amd64
+# docker:grafana:linux/arm64
+# docker:grafana:linux/arm/v7
+# docker:grafana:linux/amd64:ubuntu
+# docker:grafana:linux/arm64:ubuntu
+# docker:grafana:linux/arm/v7:ubuntu
+# targz:grafana:windows/amd64
+# targz:grafana:windows/arm64
+# targz:grafana:darwin/amd64
+# targz:grafana:darwin/arm64
+# zip:grafana:windows/amd64
+# msi:grafana:windows/amd64
+jobs:
+  setup:
+    name: setup
+    runs-on: github-hosted-ubuntu-x64-small
+    outputs:
+      version: ${{ steps.output.outputs.version }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up version (Release Branches)
+        if: startsWith(github.ref_name, 'release-')
+        run: echo "${REF_NAME#release-}" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+      - name: Set up version (Non-release branches)
+        if: ${{ !startsWith(github.ref_name, 'release-') }}
+        run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          BUILD_ID: ${{ github.run_number }}
+      - id: output
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+  build:
+    runs-on: github-hosted-ubuntu-x64-large
+    needs: [setup]
+    permissions:
+      contents: read
+      id-token: write
+    name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
+    strategy:
+      matrix:
+        # The artifacts in these lists are grouped by their os+arch because the
+        # build process can reuse the binaries for each artifact.
+        # The downside to this is that the frontend will be built for each one when it could be reused for all of them.
+        # This could be a future improvement.
+        include:
+          - name: linux-amd64
+            artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+          - name: linux-arm64
+            artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+          - name: linux-s390x
+            artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+          - name: linux-armv7
+            artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+          - name: linux-armv6
+            artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+          - name: windows-amd64
+            artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+          - name: windows-arm64
+            artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+          - name: darwin-amd64
+            artifacts: targz:grafana:darwin/amd64
+          - name: darwin-arm64
+            artifacts: targz:grafana:darwin/arm64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v7.0.0-28
+      - uses: ./.github/actions/build-package
+        id: build
+        with:
+          artifacts: ${{ matrix.artifacts }}
+          checksum: true
+          grafana-path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ needs.setup.outputs.version }}
+          output: artifacts-${{ matrix.name }}.txt
+          verify: true
+          build-id: ${{ github.run_number }}
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        with:
+          environment: prod
+      - name: Upload artifacts
+        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        with:
+          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
+          environment: prod
+          parent: false
+          path: ${{ steps.build.outputs.dist-dir }}
+          bucket_path: ${{ needs.setup.outputs.version }}
+      - name: Upload manifest
+        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        with:
+          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
+          environment: prod
+          path: ${{ steps.build.outputs.file }}
+          bucket_path: ${{ needs.setup.outputs.version }}

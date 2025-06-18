@@ -2,7 +2,7 @@ import pluralize from 'pluralize';
 import { Fragment } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 
 interface Props {
@@ -12,7 +12,6 @@ interface Props {
 }
 
 export const AlertGroupsSummary = ({ active = 0, suppressed = 0, unprocessed = 0 }: Props) => {
-  const { t } = useTranslate();
   const statsComponents: React.ReactNode[] = [];
   const total = active + suppressed + unprocessed;
 

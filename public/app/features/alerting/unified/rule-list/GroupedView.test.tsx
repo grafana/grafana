@@ -10,7 +10,7 @@ import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 
 import { GroupedView } from './GroupedView';
-import { DATA_SOURCE_GROUP_PAGE_SIZE } from './PaginatedDataSourceLoader';
+import { FRONTED_GROUPED_PAGE_SIZE } from './paginationLimits';
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -19,6 +19,9 @@ setReturnToPreviousHook(() => () => {});
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 setupMswServer();
+
+// increase timeout for this test file, it's a rather slow one since we're testing with a _lot_ of DOM data
+jest.setTimeout(60 * 1000);
 
 const mimirGroups = alertingFactory.prometheus.group.buildList(500, { file: 'test-mimir-namespace' });
 alertingFactory.prometheus.group.rewindSequence();
@@ -64,7 +67,7 @@ describe('RuleList - GroupedView', () => {
     const mimirNamespace = await ui.namespace(/test-mimir-namespace/).find(mimirSection);
     const firstPageGroups = await ui.group(/test-group-([1-9]|[1-3][0-9]|40)/).findAll(mimirNamespace);
 
-    expect(firstPageGroups).toHaveLength(40);
+    expect(firstPageGroups).toHaveLength(FRONTED_GROUPED_PAGE_SIZE);
     expect(firstPageGroups[0]).toHaveTextContent('test-group-1');
     expect(firstPageGroups[24]).toHaveTextContent('test-group-25');
     expect(firstPageGroups[39]).toHaveTextContent('test-group-40');
@@ -76,7 +79,7 @@ describe('RuleList - GroupedView', () => {
 
     const secondPageGroups = await ui.group(/test-group-(4[1-9]|[5-7][0-9]|80)/).findAll(mimirNamespace);
 
-    expect(secondPageGroups).toHaveLength(DATA_SOURCE_GROUP_PAGE_SIZE);
+    expect(secondPageGroups).toHaveLength(FRONTED_GROUPED_PAGE_SIZE);
     expect(secondPageGroups[0]).toHaveTextContent('test-group-41');
     expect(secondPageGroups[24]).toHaveTextContent('test-group-65');
     expect(secondPageGroups[39]).toHaveTextContent('test-group-80');

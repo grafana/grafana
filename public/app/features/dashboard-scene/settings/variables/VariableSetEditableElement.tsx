@@ -4,14 +4,13 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -65,8 +64,12 @@ function VariableList({ set }: { set: SceneVariableSet }) {
     const { variables } = set.state;
     const nextName = getNextAvailableId(type, variables);
     const newVar = getVariableScene(type, { name: nextName });
-    set.setState({ variables: [...variables, newVar] });
-    set.publishEvent(new NewObjectAddedToCanvasEvent(newVar), true);
+
+    dashboardEditActions.addVariable({
+      source: set,
+      addedObject: newVar,
+    });
+
     setIsAdding(false);
   };
 
@@ -113,7 +116,6 @@ interface VariableTypeSelectionProps {
 function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
   const options = getVariableTypeSelectOptions();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <Stack direction={'column'} gap={0}>

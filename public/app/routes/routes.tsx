@@ -249,13 +249,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/org/apikeys',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionAPIKeysRead]),
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
-      ),
-    },
-    {
       path: '/org/serviceaccounts',
       roles: () =>
         contextSrv.evaluatePermission([

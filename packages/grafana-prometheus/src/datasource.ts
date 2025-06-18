@@ -42,18 +42,19 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
+import { SUGGESTIONS_LIMIT } from './constants';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
   populateMatchParamsFromQueries,
   PrometheusLanguageProvider,
   PrometheusLanguageProviderInterface,
-  SUGGESTIONS_LIMIT,
 } from './language_provider';
 import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
-import { promQueryModeller } from './querybuilder/PromQueryModeller';
+import { renderLabelsWithoutBrackets } from './querybuilder/shared/rendering/labels';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { transformV2 } from './result_transformer';
@@ -581,7 +582,7 @@ export class PrometheusDatasource
       op: f.operator,
     }));
     // Extract label filters from the filters we have already
-    const labelsMatch = promQueryModeller.renderLabelsWithoutBrackets(labelFilters);
+    const labelsMatch = renderLabelsWithoutBrackets(labelFilters);
     // Create a matcher using metric names and label filters
     return `{${[metricMatch, ...labelsMatch].join(',')}}`;
   }
@@ -907,48 +908,4 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
         }, mapping),
     {}
   );
-}
-
-// NOTE: these two functions are similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
-// no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape<T>(value: T) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
-    // don't escape the encapsulating quotes
-    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
-      return value;
-    }
-
-    return value
-      .replace(/\\/g, '\\\\') // escape backslashes
-      .replace(/"/g, '\\"'); // escape double quotes
-  }
-
-  // classic behavior
-  return value
-    .replace(/\\/g, '\\\\') // escape backslashes
-    .replace(/'/g, "\\\\'"); // escape single quotes
-}
-
-export function prometheusSpecialRegexEscape<T>(value: T) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-    return value
-      .replace(/\\/g, '\\\\\\\\') // escape backslashes
-      .replace(/"/g, '\\\\\\"') // escape double quotes
-      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
-  }
-
-  // classic behavior
-  return value
-    .replace(/\\/g, '\\\\\\\\') // escape backslashes
-    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }

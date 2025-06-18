@@ -1,12 +1,13 @@
 import { isEmpty } from 'lodash';
 
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
-
-import { getAPINamespace } from '../../../api/utils';
+import { isResourceList } from 'app/features/apiserver/guards';
+import { DashboardDataDTO } from 'app/types';
 
 import {
   DashboardQueryResult,
@@ -16,13 +17,14 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { replaceCurrentFolderQuery } from './utils';
+import { replaceCurrentFolderQuery, resourceToSearchResult } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
+const baseURL = getAPIBaseURL('dashboard.grafana.app', 'v0alpha1');
+const searchURI = `${baseURL}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -120,8 +122,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return this.fallbackSearcher.search(query);
     }
 
-    const meta = first.meta?.custom || ({} as SearchResultMeta);
+    const customMeta = first.meta?.custom;
+    const meta: SearchResultMeta = {
+      count: customMeta?.count ?? first.length,
+      max_score: customMeta?.max_score ?? 1,
+      locationInfo: customMeta?.locationInfo ?? {},
+      sortBy: customMeta?.sortBy,
+    };
     meta.locationInfo = await this.locationInfo;
+
+    // Update the DataFrame meta to point to the typed meta object
+    if (first.meta) {
+      first.meta.custom = meta;
+    }
 
     // Set the field name to a better display name
     if (meta.sortBy?.length) {
@@ -165,10 +178,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
         view.dataFrame.length = length;
 
         // Add all the location lookup info
-        const submeta = frame.meta?.custom as SearchResultMeta;
+        const submeta = frame.meta?.custom;
         if (submeta?.locationInfo && meta) {
-          for (const [key, value] of Object.entries(submeta.locationInfo)) {
-            meta.locationInfo[key] = value;
+          // Merge locationInfo from submeta into meta
+          const subLocationInfo = submeta.locationInfo;
+          if (subLocationInfo && typeof subLocationInfo === 'object') {
+            Object.assign(meta.locationInfo, subLocationInfo);
           }
         }
       }
@@ -194,11 +209,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async fetchResponse(uri: string) {
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    if (isResourceList<DashboardDataDTO>(rsp)) {
+      const hits = resourceToSearchResult(rsp);
+      const totalHits = rsp.items.length;
+      return { ...rsp, hits, totalHits };
+    }
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;
     }
-    // sync the location info ( folders )
+    // sync the location info (folders)
     this.locationInfo = loadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
@@ -212,13 +232,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
         return { ...hit, location: 'general', folder: 'general' };
       }
 
-      // this means user has permission to see this dashboard, but not the folder contents
+      // this means a user has permission to see this dashboard, but not the folder contents
       if (locationInfo[hit.folder] === undefined) {
         return { ...hit, location: 'sharedwithme', folder: 'sharedwithme' };
       }
 
       return hit;
     });
+
     const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
     return { ...rsp, hits, totalHits };
   }
@@ -265,6 +286,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.uid?.length) {
       // legacy support for filtering by dashboard uid
       uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
+
+    if (query.deleted) {
+      uri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
     return uri;
   }
