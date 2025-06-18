@@ -77,7 +77,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation !== false) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -173,7 +173,7 @@ export function RecordingRuleListItem({
   showLocation = true,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation !== false) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -225,7 +225,7 @@ export function RuleOperationListItem({
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation !== false) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
