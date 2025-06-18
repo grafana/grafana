@@ -6,14 +6,62 @@ import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
-import { getOperationParamId } from '../operationUtils';
+import { LabelParamEditor } from '../components/LabelParamEditor';
 
+import { getOperationParamId } from './param_utils';
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from './types';
 
+/**
+ * Registry of operation parameter editors that can be referenced by key.
+ *
+ * This approach solves a circular dependency problem in the codebase:
+ * - Operation definitions need to reference editors (e.g., LabelParamEditor)
+ * - Editors need to reference the modeller instance
+ * - The modeller instance needs to reference operation definitions
+ *
+ * By using string keys instead of direct imports, we break this cycle:
+ * 1. Operation definitions reference editors by key (no component import needed)
+ * 2. The registry maps these keys to actual editor components
+ * 3. The wrapper component (OperationParamEditorWrapper) injects the modeller instance
+ *
+ * This creates a clear dependency flow:
+ * Operation Definitions -> Registry -> Editor Components <- Wrapper <- Modeller Instance
+ *
+ * @example
+ * ```ts
+ * {
+ *   id: 'someOperation',
+ *   params: [{
+ *     name: 'Label',
+ *     type: 'string',
+ *     editor: 'LabelParamEditor' // Reference by key instead of supplying the component directly
+ *   }]
+ * }
+ * ```
+ */
+const editorMap: Record<string, ComponentType<QueryBuilderOperationParamEditorProps>> = {
+  // The wrapper component will ensure the modeller is provided
+  LabelParamEditor: LabelParamEditor as ComponentType<QueryBuilderOperationParamEditorProps>,
+};
+
+/**
+ * Resolves an operation parameter editor based on the parameter definition.
+ *
+ * The editor can be specified in three ways:
+ * 1. As a string key referencing a registered editor in editorMap
+ * 2. As a direct component reference
+ * 3. Based on the parameter type (string, number, boolean) or options
+ *
+ * This flexibility allows operation definitions to be decoupled from editor implementations
+ * while maintaining type safety and clear dependencies.
+ */
 export function getOperationParamEditor(
   paramDef: QueryBuilderOperationParamDef
 ): ComponentType<QueryBuilderOperationParamEditorProps> {
   if (paramDef.editor) {
+    if (typeof paramDef.editor === 'string') {
+      return editorMap[paramDef.editor] || SimpleInputParamEditor;
+    }
     return paramDef.editor;
   }
 
@@ -87,7 +135,9 @@ function SelectInputParamEditor({
         <Button
           size="sm"
           variant="secondary"
-          title={t('querybuilder.operation-param-editor.title-add', 'Add {{name}}', { name: paramDef.name })}
+          title={t('grafana-prometheus.querybuilder.operation-param-editor.title-add', 'Add {{name}}', {
+            name: paramDef.name,
+          })}
           icon="plus"
           onClick={() => onChange(index, selectOptions[0].value)}
         >
@@ -115,7 +165,9 @@ function SelectInputParamEditor({
           fill="text"
           icon="times"
           variant="secondary"
-          title={t('querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', { name: paramDef.name })}
+          title={t('grafana-prometheus.querybuilder.operation-param-editor.title-remove', 'Remove {{name}}', {
+            name: paramDef.name,
+          })}
           onClick={() => onChange(index, '')}
         />
       )}
