@@ -118,6 +118,11 @@ func RegisterAPIService(
 	encryptionManager contracts.EncryptionManager,
 	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
+	// Don't register the API.
+	if cfg.StackID != "" {
+		return nil, nil
+	}
+
 	ctx, span := tracer.Start(context.Background(), "secret.RegisterAPIService")
 	defer span.End()
 
