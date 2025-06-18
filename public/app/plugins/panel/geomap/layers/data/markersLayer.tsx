@@ -122,9 +122,26 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Track if we find any line strings during feature processing
           let hasLineString = false;
+          
+          // Track coordinates to avoid rendering duplicate markers at the same location
+          const processedCoordinates = new Set<string>();
 
           source.forEachFeature((feature) => {
-            const isLineString = feature.getGeometry()?.getType() === 'LineString';
+            const geometry = feature.getGeometry();
+            const isLineString = geometry?.getType() === 'LineString';
+            
+            // For point geometries, check if we've already processed this coordinate
+            if (geometry?.getType() === 'Point') {
+              const coordinates = geometry.getCoordinates();
+              const coordKey = `${coordinates[0]},${coordinates[1]}`;
+              
+              // Skip this feature if we've already processed a marker at this coordinate
+              if (processedCoordinates.has(coordKey)) {
+                return;
+              }
+              processedCoordinates.add(coordKey);
+            }
+            
             if (isLineString) {
               hasLineString = true;
             }
