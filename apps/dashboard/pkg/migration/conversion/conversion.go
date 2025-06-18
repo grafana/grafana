@@ -69,47 +69,12 @@ func Convert_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope convers
 func Convert_V0_to_V2(in *dashv0.Dashboard, out *dashv2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// Convert basic fields
+	// TODO (@radiohead): implement V0 to V2 conversion
+	// This is the bare minimum conversion that is needed to make the dashboard servable.
+
 	if v, ok := in.Spec.Object["title"]; ok {
 		if title, ok := v.(string); ok {
 			out.Spec.Title = title
-		}
-	}
-
-	// Convert other basic fields
-	if v, ok := in.Spec.Object["description"]; ok {
-		if description, ok := v.(string); ok {
-			out.Spec.Description = &description
-		}
-	}
-
-	if v, ok := in.Spec.Object["tags"]; ok {
-		if tagsRaw, ok := v.([]interface{}); ok {
-			tags := make([]string, 0, len(tagsRaw))
-			for _, tagRaw := range tagsRaw {
-				if tag, ok := tagRaw.(string); ok {
-					tags = append(tags, tag)
-				}
-			}
-			out.Spec.Tags = tags
-		}
-	}
-
-	if v, ok := in.Spec.Object["editable"]; ok {
-		if editable, ok := v.(bool); ok {
-			out.Spec.Editable = &editable
-		}
-	}
-
-	if v, ok := in.Spec.Object["liveNow"]; ok {
-		if liveNow, ok := v.(bool); ok {
-			out.Spec.LiveNow = &liveNow
-		}
-	}
-
-	if v, ok := in.Spec.Object["preload"]; ok {
-		if preload, ok := v.(bool); ok {
-			out.Spec.Preload = preload
 		}
 	}
 
@@ -132,21 +97,6 @@ func Convert_V0_to_V2(in *dashv0.Dashboard, out *dashv2.Dashboard, scope convers
 			Spec: dashv2.DashboardGridLayoutSpec{},
 		},
 	}
-
-	// Set basic time settings
-	browserTZ := "browser"
-	out.Spec.TimeSettings = dashv2.DashboardTimeSettingsSpec{
-		From:                 "now-6h",
-		To:                   "now",
-		Timezone:             &browserTZ,
-		AutoRefresh:          "",
-		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
-		HideTimepicker:       false,
-		FiscalYearStartMonth: 0,
-	}
-
-	// Set default cursor sync
-	out.Spec.CursorSync = dashv2.DashboardDashboardCursorSyncOff
 
 	// Mark conversion as successful (partially implemented)
 	out.Status = dashv2.DashboardStatus{
@@ -335,47 +285,12 @@ func Convert_V1_to_V0(in *dashv1.Dashboard, out *dashv0.Dashboard, scope convers
 func Convert_V1_to_V2(in *dashv1.Dashboard, out *dashv2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// Convert basic fields
+	// TODO (@radiohead): implement V1 to V2 conversion
+	// This is the bare minimum conversion that is needed to make the dashboard servable.
+
 	if v, ok := in.Spec.Object["title"]; ok {
 		if title, ok := v.(string); ok {
 			out.Spec.Title = title
-		}
-	}
-
-	// Convert other basic fields
-	if v, ok := in.Spec.Object["description"]; ok {
-		if description, ok := v.(string); ok {
-			out.Spec.Description = &description
-		}
-	}
-
-	if v, ok := in.Spec.Object["tags"]; ok {
-		if tagsRaw, ok := v.([]interface{}); ok {
-			tags := make([]string, 0, len(tagsRaw))
-			for _, tagRaw := range tagsRaw {
-				if tag, ok := tagRaw.(string); ok {
-					tags = append(tags, tag)
-				}
-			}
-			out.Spec.Tags = tags
-		}
-	}
-
-	if v, ok := in.Spec.Object["editable"]; ok {
-		if editable, ok := v.(bool); ok {
-			out.Spec.Editable = &editable
-		}
-	}
-
-	if v, ok := in.Spec.Object["liveNow"]; ok {
-		if liveNow, ok := v.(bool); ok {
-			out.Spec.LiveNow = &liveNow
-		}
-	}
-
-	if v, ok := in.Spec.Object["preload"]; ok {
-		if preload, ok := v.(bool); ok {
-			out.Spec.Preload = preload
 		}
 	}
 
@@ -398,21 +313,6 @@ func Convert_V1_to_V2(in *dashv1.Dashboard, out *dashv2.Dashboard, scope convers
 			Spec: dashv2.DashboardGridLayoutSpec{},
 		},
 	}
-
-	// Set basic time settings
-	browserTZ2 := "browser"
-	out.Spec.TimeSettings = dashv2.DashboardTimeSettingsSpec{
-		From:                 "now-6h",
-		To:                   "now",
-		Timezone:             &browserTZ2,
-		AutoRefresh:          "",
-		AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"},
-		HideTimepicker:       false,
-		FiscalYearStartMonth: 0,
-	}
-
-	// Set default cursor sync
-	out.Spec.CursorSync = dashv2.DashboardDashboardCursorSyncOff
 
 	// Mark conversion as successful (partially implemented)
 	out.Status = dashv2.DashboardStatus{
