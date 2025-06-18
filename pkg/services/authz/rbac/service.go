@@ -45,7 +45,7 @@ type Service struct {
 	identityStore   legacy.LegacyIdentityStore
 	settings        Settings
 
-	mapper MappingRegistry
+	mapper MapperRegistry
 
 	logger  log.Logger
 	tracer  tracing.Tracer
@@ -93,7 +93,7 @@ func NewService(
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
-		mapper:          NewMappingRegistry(),
+		mapper:          NewMapperRegistry(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),

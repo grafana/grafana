@@ -30,7 +30,7 @@ func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer, per
 		log:          log.New("permissions.sync"),
 		permRegistry: permRegistry,
 		tracer:       tracer,
-		mapper:       rbac.NewMappingRegistry(),
+		mapper:       rbac.NewMapperRegistry(),
 	}
 }
 
@@ -39,7 +39,7 @@ type RBACSync struct {
 	permRegistry permreg.PermissionRegistry
 	log          log.Logger
 	tracer       tracing.Tracer
-	mapper       rbac.MappingRegistry
+	mapper       rbac.MapperRegistry
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
@@ -101,10 +101,7 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 			s.addPermissionsForAction(action, &permissions)
 		}
 		// Add K8s permissions
-		k8sPermissions, err := s.translateK8sPermissions(ctx, k8s)
-		if err != nil {
-			return nil, err
-		}
+		k8sPermissions := s.translateK8sPermissions(ctx, k8s)
 		permissions = append(permissions, k8sPermissions...)
 		return permissions, nil
 	}
@@ -136,48 +133,33 @@ func (s *RBACSync) addPermissionsForAction(action string, permissions *[]accessc
 	}
 }
 
-// translateK8sPermissions converts K8s-style permissions into Grafana's internal permission format.
-// It parses permissions in the format "group/resource:verb" and uses the mapper to translate them.
-func (s *RBACSync) translateK8sPermissions(ctx context.Context, k8sPerms []string) ([]accesscontrol.Permission, error) {
+func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string) []accesscontrol.Permission {
 	permissions := make([]accesscontrol.Permission, 0, len(k8sPerms))
 	for _, k8sPerm := range k8sPerms {
+		parts := strings.Split(k8sPerm, ":")
+		if len(parts) != 2 {
+			s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+			continue
+		}
+		groupResource := strings.Split(parts[0], "/")
+		group := groupResource[0]
+		verb := parts[1]
 		switch {
-		// Case group:*
-		case strings.HasSuffix(k8sPerm, ":*") && !strings.Contains(k8sPerm, "/"):
-			// Case group:*
-			group := strings.TrimSuffix(k8sPerm, ":*")
-			mappings := s.mapper.GetAll(group)
-			if len(mappings) == 0 {
-				s.log.Warn("No mappings found for group", "group", group)
-				continue
-			}
-
-			for _, mapping := range mappings {
-				actions := mapping.AllActions()
-				for _, action := range actions {
-					s.addPermissionsForAction(action, &permissions)
-				}
-			}
-
-		// Case group:verb
-		case strings.Contains(k8sPerm, ":") && !strings.Contains(k8sPerm, "/") && !strings.HasSuffix(k8sPerm, ":*"):
+		case len(groupResource) == 1:
 			// Case group:verb
-			parts := strings.Split(k8sPerm, ":")
-			if len(parts) != 2 {
-				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
-				continue
-			}
-
-			group := parts[0]
-			verb := parts[1]
-
-			mappings := s.mapper.GetAll(group)
-			if len(mappings) == 0 {
+			resourceMappings := s.mapper.GetAll(group)
+			if len(resourceMappings) == 0 {
 				s.log.Warn("No mappings found for group", "group", group)
 				continue
 			}
-
-			for _, mapping := range mappings {
+			for _, mapping := range resourceMappings {
+				if verb == "*" {
+					actions := mapping.AllActions()
+					for _, action := range actions {
+						s.addPermissionsForAction(action, &permissions)
+					}
+					continue
+				}
 				action, ok := mapping.Action(verb)
 				if !ok {
 					s.log.Warn("Unknown K8s verb for group", "group", group, "verb", verb)
@@ -185,52 +167,33 @@ func (s *RBACSync) translateK8sPermissions(ctx context.Context, k8sPerms []strin
 				}
 				s.addPermissionsForAction(action, &permissions)
 			}
-
-		// Case group/resource:<verb/*>
-		case strings.Contains(k8sPerm, "/"):
-			parts := strings.Split(k8sPerm, "/")
-			if len(parts) != 2 {
-				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
-				continue
-			}
-
-			group := parts[0]
-			resourceVerb := strings.Split(parts[1], ":")
-			if len(resourceVerb) != 2 {
-				s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
-				continue
-			}
-
-			resource := resourceVerb[0]
-			verb := resourceVerb[1]
-
-			t, ok := s.mapper.Get(group, resource)
+		case len(groupResource) == 2:
+			// Case group/resource:verb
+			resource := groupResource[1]
+			resourceMappings, ok := s.mapper.Get(group, resource)
 			if !ok {
 				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
 				continue
 			}
-
 			if verb == "*" {
-				// Case group/resource:*
-				actions := t.AllActions()
+				actions := resourceMappings.AllActions()
 				for _, action := range actions {
 					s.addPermissionsForAction(action, &permissions)
 				}
-			} else {
-				// Case group/resource:verb
-				action, ok := t.Action(verb)
-				if !ok {
-					s.log.Warn("Unknown K8s verb", "group", group, "resource", resource, "verb", verb)
-					continue
-				}
-				s.addPermissionsForAction(action, &permissions)
+				continue
 			}
-
+			action, ok := resourceMappings.Action(verb)
+			if !ok {
+				s.log.Warn("Unknown K8s verb", "group", group, "resource", resource, "verb", verb)
+				continue
+			}
+			s.addPermissionsForAction(action, &permissions)
 		default:
 			s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+			continue
 		}
 	}
-	return permissions, nil
+	return permissions
 }
 
 func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {

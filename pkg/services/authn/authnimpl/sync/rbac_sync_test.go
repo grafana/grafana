@@ -533,13 +533,19 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			name: "should skip invalid permissions group/resource/additional/part:verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folder/fold1/subresource:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := setupTestEnv(t)
-			perms, err := s.translateK8sPermissions(context.Background(), tt.k8sPerms)
-			assert.ErrorIs(t, tt.expectedError, err)
+			perms := s.translateK8sPermissions(context.Background(), tt.k8sPerms)
 			assert.ElementsMatch(t, tt.expectedPerms, perms)
 		})
 	}
@@ -582,7 +588,7 @@ func setupTestEnv(t *testing.T) *RBACSync {
 		log:          log.NewNopLogger(),
 		tracer:       tracing.InitializeTracerForTest(),
 		permRegistry: permRegistry,
-		mapper:       rbac.NewMappingRegistry(),
+		mapper:       rbac.NewMapperRegistry(),
 	}
 	return s
 }

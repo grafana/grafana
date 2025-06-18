@@ -58,8 +58,8 @@ func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
 }
 
-// MappingRegistry is a registry of mappers that maps a group and resource to a translation.
-type MappingRegistry interface {
+// MapperRegistry is a registry of mappers that maps a group and resource to a translation.
+type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource string) (Mapping, bool)
@@ -93,7 +93,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 	}
 }
 
-func NewMappingRegistry() MappingRegistry {
+func NewMapperRegistry() MapperRegistry {
 	mapper := mapper(map[string]map[string]translation{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
