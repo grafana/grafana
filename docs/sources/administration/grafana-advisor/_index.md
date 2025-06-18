@@ -80,7 +80,7 @@ This collapsible section provides information on issues that may not require imm
 
 ### More info section
 
-This collapsible section provides details about the checks performed on data sources, plugins and your SSO settings.
+This collapsible section provides more details about which checks have been performed and how many items have been analyzed.
 
 ![<Grafana Advisor - More info tab>](/media/docs/grafana-advisor/more_info.png)
 
