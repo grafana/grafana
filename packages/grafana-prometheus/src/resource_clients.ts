@@ -77,6 +77,8 @@ export abstract class BaseResourceClient {
 }
 
 export class LabelsApiClient extends BaseResourceClient implements ResourceApiClient {
+  private _cache: ResourceClientsCache = new ResourceClientsCache(this.datasource.cacheLevel);
+
   public histogramMetrics: string[] = [];
   public metrics: string[] = [];
   public labelKeys: string[] = [];
@@ -90,6 +92,7 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
     this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL);
     this.histogramMetrics = processHistogramMetrics(this.metrics);
+    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, this.metrics);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -110,10 +113,16 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     let url = '/api/v1/labels';
     const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
+    const effectiveMatch = match ?? '';
+    const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, limit);
+    if (maybeCachedKeys) {
+      return maybeCachedKeys;
+    }
 
     const res = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
+      this._cache.setLabelKeys(timeRange, effectiveMatch, limit, this.labelKeys);
       return this.labelKeys.slice();
     }
 
@@ -139,14 +148,21 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
     const interpolatedName = this.datasource.interpolateString(labelKey);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
+    const effectiveMatch = `${match ?? ''}-${interpolatedAndEscapedName}`;
+    const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
+    if (maybeCachedValues) {
+      return maybeCachedValues;
+    }
+
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    this._cache.setLabelValues(timeRange, effectiveMatch, limit, value ?? []);
     return value ?? [];
   };
 }
 
 export class SeriesApiClient extends BaseResourceClient implements ResourceApiClient {
-  private _seriesCache: SeriesCache = new SeriesCache(this.datasource.cacheLevel);
+  private _cache: ResourceClientsCache = new ResourceClientsCache(this.datasource.cacheLevel);
 
   public histogramMetrics: string[] = [];
   public metrics: string[] = [];
@@ -163,8 +179,8 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
-    this._seriesCache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, metrics);
-    this._seriesCache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
+    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, metrics);
+    this._cache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -174,14 +190,14 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
-    const maybeCachedKeys = this._seriesCache.getLabelKeys(timeRange, effectiveMatch, limit);
+    const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, limit);
     if (maybeCachedKeys) {
       return maybeCachedKeys;
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelKeys } = processSeries(series);
-    this._seriesCache.setLabelKeys(timeRange, effectiveMatch, limit, labelKeys);
+    this._cache.setLabelKeys(timeRange, effectiveMatch, limit, labelKeys);
     return labelKeys;
   };
 
@@ -196,19 +212,19 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
       !match || match === EMPTY_MATCHER
         ? `{${utf8SafeLabelKey}!=""}`
         : match.slice(0, match.length - 1).concat(`,${utf8SafeLabelKey}!=""}`);
-    const maybeCachedValues = this._seriesCache.getLabelValues(timeRange, effectiveMatch, limit);
+    const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
     if (maybeCachedValues) {
       return maybeCachedValues;
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelValues } = processSeries(series, labelKey);
-    this._seriesCache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
+    this._cache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
     return labelValues;
   };
 }
 
-class SeriesCache {
+class ResourceClientsCache {
   private readonly MAX_CACHE_ENTRIES = 1000; // Maximum number of cache entries
   private readonly MAX_CACHE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB max cache size
 
