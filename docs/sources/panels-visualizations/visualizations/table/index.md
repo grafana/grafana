@@ -260,10 +260,14 @@ This cell type automatically displays values with sensible defaults applied.
 
 It has the following cell options:
 
+<!-- prettier-ignore-start -->
+
 | Option | Description |
 | ------ | ----------- |
-| [Wrap text](#wrap-text) | Wrap text in the cell that contains the longest content in your table. |
-| [Cell value inspect](#cell-value-inspect) | Enables value inspection from table cells. |
+| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
+
+<!-- prettier-ignore-end -->
 
 ##### Sparkline
 
@@ -272,7 +276,8 @@ To show sparklines on data with multiple time series, use the [Time series to ta
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
-The sparkline cell type has the following options:
+The sparkline cell type options are described in the following table.
+For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
 
 <!-- prettier-start-ignore -->
 
@@ -292,24 +297,28 @@ The sparkline cell type has the following options:
 
 <!-- prettier-end-ignore -->
 
-For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
-
 ##### Colored text
+
+{{< admonition type="note" >}}
+The colored text cell type is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Do not enable this feature in production environments.
+{{< /admonition >}}
+
+<!-- remove this experimental note in a separate PR -->
 
 If thresholds are set, with this cell type, the field text is displayed in the appropriate threshold color.
 
 ![Table with colored text cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-text-v11.3-2.png)
 
-{{< admonition type="note" >}}
-This is an experimental feature.
-{{< /admonition >}}
-
 The colored text cell type has the following options:
+
+<!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| [Wrap text](#wrap-text) | Wrap text in the cell that contains the longest content in your table. |
-| [Cell value inspect](#cell-value-inspect) | Enables value inspection from table cells. |
+| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
+
+<!-- prettier-ignore-end -->
 
 ##### Colored background
 
@@ -317,8 +326,18 @@ If thresholds are set, with this cell type, the field background is displayed in
 
 ![Table with colored background cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-bkgrnd-v11.3-2.png)
 
-- **Background display mode** - Choose between **Basic** and **Gradient**.
-- **Apply to entire row** - Toggle the switch on to apply the background color that's configured for the cell to the whole row.
+The colored background cell type has the following options:
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Background display mode | Choose between **Basic** and **Gradient**. |
+| Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. |
+| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
+| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p><p>If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.</p> |
+
+<!-- prettier-ignore-end -->
 
 ![Table with background cell color applied to row](/media/docs/grafana/panels-visualizations/screenshot-table-colored-row-v11.3.png)
 
@@ -397,30 +416,16 @@ Configure the API call with the following options:
 
 <!-- prettier-ignore-end -->
 
-#### Wrap text
-
-{{< admonition type="note" >}}
-Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.
-We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
-{{< /admonition >}}
-
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-
-To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.
-
-This option is available for the following cell types: **Auto**, **Colored text**, and **Colored background**.
 
 #### Cell value inspect
 
-Enables value inspection from table cells. When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer.
 
-The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**.
-Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
-However, you can switch back and forth between tabs.
+
+
 
 This option is available for the following cell types: **Auto**, **Colored text**, **Colored background**, and **JSON View**.
 
-If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.
+
 
 ### Standard options
 
