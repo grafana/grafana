@@ -5,6 +5,7 @@ import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
+import { createReturnTo } from '../hooks/useReturnTo';
 import { GrafanaRulesSource } from '../utils/datasource';
 import { totalFromStats } from '../utils/ruleStats';
 import { rulerRuleType } from '../utils/rules';
@@ -100,6 +101,8 @@ export function GrafanaRuleListItem({
   namespaceName,
   operation,
 }: GrafanaRuleListItemProps) {
+  const returnTo = createReturnTo();
+
   const {
     grafana_alert: { uid, title, provenance, is_paused },
     annotations = {},
@@ -111,7 +114,7 @@ export function GrafanaRuleListItem({
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
     namespace: namespaceName,
-    href: createRelativeUrl(`/alerting/grafana/${uid}/view`),
+    href: createRelativeUrl(`/alerting/grafana/${uid}/view`, { returnTo }),
     health: rule?.health,
     error: rule?.lastError,
     labels: labels,
