@@ -154,6 +154,7 @@ func schema_apimachinery_apis_common_v0alpha1_Scope(ref common.ReferenceCallback
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{

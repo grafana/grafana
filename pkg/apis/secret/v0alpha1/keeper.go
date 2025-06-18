@@ -11,7 +11,7 @@ type Keeper struct {
 	// Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// This is the actual keeper schema.
 	// +patchStrategy=replace

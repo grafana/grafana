@@ -8,7 +8,7 @@ import (
 // This is a temporary solution until this object (or similar) can be moved to the app-sdk or kindsys
 type GrafanaResource[Spec any, Status any] struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	Spec   *Spec   `json:"spec,omitempty"`
 	Status *Status `json:"status,omitempty"`

@@ -371,7 +371,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptions(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{

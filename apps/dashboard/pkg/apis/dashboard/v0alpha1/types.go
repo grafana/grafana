@@ -55,7 +55,7 @@ type LibraryPanel struct {
 	// Standard object's metadata
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Panel properties
 	Spec LibraryPanelSpec `json:"spec"`

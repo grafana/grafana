@@ -1907,6 +1907,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.ServiceAccount": {
         "type": "object",
+        "required": [
+          "metadata"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2048,6 +2051,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Team": {
         "type": "object",
+        "required": [
+          "metadata"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2089,6 +2095,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.TeamBinding": {
         "type": "object",
+        "required": [
+          "metadata"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2383,6 +2392,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.User": {
         "type": "object",
+        "required": [
+          "metadata"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",

@@ -10,7 +10,7 @@ import (
 type DashboardSnapshot struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Snapshot summary info
 	Spec SnapshotInfo `json:"spec"`
@@ -52,7 +52,7 @@ type DashboardSnapshotWithDeleteKey struct {
 type FullDashboardSnapshot struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Snapshot summary info
 	Info SnapshotInfo `json:"info"`
@@ -118,7 +118,7 @@ type DashboardCreateResponse struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SharingOptions struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Show the options inline
 	Spec SnapshotSharingOptions `json:"spec"`
