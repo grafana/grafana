@@ -374,6 +374,7 @@ func (ng *AlertNG) init() error {
 		ac.NewRuleService(ng.accesscontrol),
 		ng.DataSourceService,
 		ng.httpClientProvider,
+		ng.pluginContextProvider,
 		clk,
 		ng.Metrics.GetRemoteWriterMetrics(),
 	)
@@ -632,6 +633,7 @@ func configureHistorianBackend(
 	ac historian.AccessControl,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
+	pluginContextProvider *plugincontext.Provider,
 	clock clock.Clock,
 	mw *metrics.RemoteWriter,
 ) (Historian, error) {
@@ -649,7 +651,7 @@ func configureHistorianBackend(
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, clock, mw)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -658,7 +660,7 @@ func configureHistorianBackend(
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, clock, mw)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -702,7 +704,7 @@ func configureHistorianBackend(
 		}
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "prometheus"})
 		prometheusBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
-		w := writer.NewDatasourceWriter(writerCfg, datasourceService, httpClientProvider, clock, prometheusBackendLogger, mw)
+		w := writer.NewDatasourceWriter(writerCfg, datasourceService, httpClientProvider, pluginContextProvider, clock, prometheusBackendLogger, mw)
 		if w == nil {
 			return nil, fmt.Errorf("failed to create alert state metrics writer")
 		}
