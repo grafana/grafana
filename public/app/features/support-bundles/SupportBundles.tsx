@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -45,8 +45,6 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
       checkBundles();
     }
   });
-
-  const { t } = useTranslate();
 
   const hasAccess = contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesCreate);
   const hasDeleteAccess = contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesDelete);

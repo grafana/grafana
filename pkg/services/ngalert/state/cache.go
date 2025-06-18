@@ -109,9 +109,25 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
+	// If the result contains an error, we want to add the ref_id and datasource_uid labels
+	// to the new state if the alert rule should be in the ErrorErrState.
+	var errorLabels data.Labels
+	if result.State == eval.Error && alertRule.ExecErrState == ngModels.ErrorErrState {
+		refID, datasourceUID := datasourceErrorInfo(result.Error, alertRule)
+		if refID != "" || datasourceUID != "" {
+			errorLabels = data.Labels{
+				"ref_id":         refID,
+				"datasource_uid": datasourceUID,
+			}
+		}
+	}
+
+	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range errorLabels {
 		lbs[key] = val
 	}
 	for key, val := range labels {

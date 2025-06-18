@@ -62,6 +62,21 @@
     },
     {
       "metadata": {
+        "name": "alertEnrichment",
+        "resourceVersion": "1749210731545",
+        "creationTimestamp": "2025-06-06T11:52:11Z"
+      },
+      "spec": {
+        "description": "Enable configuration of alert enrichments in Grafana Cloud.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2025-03-05T14:15:26Z"
@@ -155,6 +170,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingImportAlertmanagerAPI",
+        "resourceVersion": "1749365901136",
+        "creationTimestamp": "2025-06-08T06:58:21Z"
+      },
+      "spec": {
+        "description": "Enables the API to import Alertmanager configuration",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -1420,12 +1450,15 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "resourceVersion": "1750155856840",
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 10:24:16.840675 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Advisor app",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -1449,6 +1482,7 @@
         "name": "grafanaManagedRecordingRulesDatasources",
         "resourceVersion": "1746998568254",
         "creationTimestamp": "2025-03-07T13:30:40Z",
+        "deletionTimestamp": "2025-05-19T10:18:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
         }
@@ -1747,6 +1781,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzApis",
+        "resourceVersion": "1747897123910",
+        "creationTimestamp": "2025-05-22T06:58:43Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-18T23:11:26Z"
@@ -1816,14 +1864,18 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-11T23:30:50Z"
+        "resourceVersion": "1750162291839",
+        "creationTimestamp": "2023-10-11T23:30:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 12:11:31.83962 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables RBAC support for library panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
@@ -2200,6 +2252,19 @@
     },
     {
       "metadata": {
+        "name": "nanoGit",
+        "resourceVersion": "1750087021356",
+        "creationTimestamp": "2025-06-16T15:17:01Z"
+      },
+      "spec": {
+        "description": "Use experimental git library for provisioning",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nestedFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2022-10-26T14:15:14Z"
@@ -2256,7 +2321,8 @@
       "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-01-15T11:43:19Z"
+        "creationTimestamp": "2024-01-15T11:43:19Z",
+        "deletionTimestamp": "2025-05-14T09:11:28Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
@@ -2294,12 +2360,15 @@
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-17T19:05:46Z"
+        "resourceVersion": "1750056712608",
+        "creationTimestamp": "2025-02-17T19:05:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-16 06:51:52.608239 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
@@ -2575,14 +2644,18 @@
     },
     {
       "metadata": {
-        "name": "postgresDSUsePGX",
-        "resourceVersion": "1745320933872",
-        "creationTimestamp": "2025-04-22T11:22:13Z"
+        "name": "preferLibraryPanelTitle",
+        "resourceVersion": "1750152018442",
+        "creationTimestamp": "2025-06-17T08:53:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 09:20:18.442539 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
+        "description": "Prefer library panel title over viz panel title.",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
       }
     },
     {
@@ -3021,6 +3094,24 @@
     },
     {
       "metadata": {
+        "name": "skipTokenRotationIfRecent",
+        "resourceVersion": "1748363818965",
+        "creationTimestamp": "2025-05-27T16:30:53Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-27 16:36:58.965629 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-06-06T16:28:52Z"
@@ -3074,15 +3165,19 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "resourceVersion": "1749024523226",
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-04 08:08:43.226801 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "requiresRestart": true,
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -3143,14 +3238,18 @@
     {
       "metadata": {
         "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "resourceVersion": "1749732225616",
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-12 12:43:45.616224 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -3423,7 +3522,8 @@
       "metadata": {
         "name": "xrayApplicationSignals",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-01T14:42:02Z"
+        "creationTimestamp": "2025-04-01T14:42:02Z",
+        "deletionTimestamp": "2025-06-11T11:57:58Z"
       },
       "spec": {
         "description": "Support Application Signals queries in the X-Ray datasource",

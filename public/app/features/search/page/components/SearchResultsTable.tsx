@@ -7,7 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
@@ -167,8 +167,6 @@ export const SearchResultsTable = React.memo(
         response.view.dataFrame,
       ]
     );
-
-    const { t } = useTranslate();
 
     if (!rows.length) {
       return (

@@ -62,6 +62,27 @@ export abstract class BaseResourceClient {
   }
 
   /**
+   * Validates and transforms a matcher string for Prometheus series queries.
+   *
+   * @param match - The matcher string to validate and transform. Can be undefined, a specific matcher, or '{}'.
+   * @returns The validated and potentially transformed matcher string.
+   * @throws Error if the matcher is undefined or empty (null, undefined, or empty string).
+   *
+   * @example
+   * // Returns '{__name__!=""}' for empty matcher
+   * validateAndTransformMatcher('{}')
+   *
+   * // Returns the original matcher for specific matchers
+   * validateAndTransformMatcher('{job="grafana"}')
+   */
+  protected validateAndTransformMatcher(match?: string): string {
+    if (!match) {
+      throw new Error('Series endpoint always expects at least one matcher');
+    }
+    return match === '{}' ? MATCH_ALL_LABELS : match;
+  }
+
+  /**
    * Fetches all time series that match a specific label matcher using **series** endpoint.
    *
    * @param {TimeRange} timeRange - Time range to use for the query

@@ -2,9 +2,11 @@ import { sortBy } from 'lodash';
 
 import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertInstanceKey,
@@ -193,6 +195,17 @@ export function makePanelLink(dashboardUID: string, panelId: string): string {
   return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
+export function makeEditContactPointLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`, options);
+}
+
+export function makeEditTimeIntervalLink(name: string, options?: Record<string, string>) {
+  return createRelativeUrl('/alerting/routes/mute-timing/edit', {
+    ...options,
+    muteName: name,
+  });
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,
@@ -298,9 +311,20 @@ export function stringifyErrorLike(error: unknown): string {
     if (error.message) {
       return error.message;
     }
+
     if ('message' in error.data && typeof error.data.message === 'string') {
-      return error.data.message;
+      const status = getStatusFromError(error);
+      const message = getMessageFromError(error);
+
+      const config = getRequestConfigFromError(error);
+
+      return t('alerting.errors.failedWith', '{{-config}} failed with {{status}}: {{-message}}', {
+        config,
+        status,
+        message,
+      });
     }
+
     if (error.statusText) {
       return error.statusText;
     }

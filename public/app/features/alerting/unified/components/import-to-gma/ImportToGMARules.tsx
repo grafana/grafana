@@ -3,7 +3,7 @@ import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Box,
@@ -25,12 +25,17 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { Folder } from '../../types/rule-form';
-import { DataSourceType } from '../../utils/datasource';
+import {
+  DataSourceType,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 import { CloudRulesSourcePicker } from '../rule-editor/CloudRulesSourcePicker';
+import { NeedHelpInfo } from '../rule-editor/NeedHelpInfo';
 
 import { ConfirmConversionModal } from './ConfirmConvertModal';
 import { NamespaceAndGroupFilter } from './NamespaceAndGroupFilter';
@@ -81,7 +86,6 @@ const ImportToGMARules = () => {
   const [formImportPayload, setFormImportPayload] = useState<ImportFormValues | null>(null);
   const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
 
-  const { t } = useTranslate();
   const onSubmit: SubmitHandler<ImportFormValues> = async (formData) => {
     setFormImportPayload(formData);
   };
@@ -239,7 +243,6 @@ const ImportToGMARules = () => {
 };
 
 function YamlFileUpload() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
   } = useFormContext<ImportFormValues>();
@@ -293,7 +296,6 @@ function YamlFileUpload() {
 }
 
 function YamlTargetDataSourceField() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
     setValue,
@@ -321,11 +323,11 @@ function YamlTargetDataSourceField() {
             noDefault
             inputId="yaml-target-data-source"
             alerting
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={(ds: DataSourceInstanceSettings) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('yamlImportTargetDatasourceUID', ds.uid);
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
-              if (!recordingRulesTargetDs) {
+              if (!recordingRulesTargetDs && isValidRecordingRulesTarget(ds)) {
                 setValue('targetDatasourceUID', ds.uid);
               }
             }}
@@ -343,7 +345,6 @@ function YamlTargetDataSourceField() {
 }
 
 function TargetDataSourceForRecordingRulesField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -370,7 +371,7 @@ function TargetDataSourceForRecordingRulesField() {
             current={field.value}
             inputId="recording-rules-target-data-source"
             noDefault
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={isValidRecordingRulesTarget}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('targetDatasourceUID', ds.uid);
             }}
@@ -390,7 +391,6 @@ function TargetDataSourceForRecordingRulesField() {
 }
 
 function TargetFolderField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -439,7 +439,6 @@ function TargetFolderField() {
 }
 
 function DataSourceField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -449,7 +448,22 @@ function DataSourceField() {
 
   return (
     <Field
-      label={t('alerting.import-to-gma.datasource.label', 'Data source')}
+      label={
+        <Stack direction="row" gap={1}>
+          <Text variant="bodySmall" color="secondary">
+            {t('alerting.import-to-gma.datasource.label', 'Data source')}
+          </Text>
+          <NeedHelpInfo
+            externalLink={'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/'}
+            linkText={`Read importing to Grafana alerting`}
+            contentText={t(
+              'alerting.import-to-gma.datasource.help-info.content',
+              'The dropdown only displays Mimir or Loki data sources that have the ruler API available.'
+            )}
+            title={t('alerting.import-to-gma.datasource.help-info.title', 'Data source')}
+          />
+        </Stack>
+      }
       invalid={!!errors.selectedDatasourceName}
       error={errors.selectedDatasourceName?.message}
       htmlFor="datasource-picker"
@@ -469,7 +483,7 @@ function DataSourceField() {
               // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
               if (!recordingRulesTargetDs) {
-                const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                const targetDataSourceUID = isValidRecordingRulesTarget(ds) ? ds.uid : undefined;
                 setValue('targetDatasourceUID', targetDataSourceUID);
               }
             }}

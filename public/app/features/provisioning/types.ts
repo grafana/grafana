@@ -1,4 +1,4 @@
-import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning';
+import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning/v0alpha1';
 
 export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local' | 'workflows'> &
   GitHubRepositoryConfig &

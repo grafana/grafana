@@ -20,10 +20,10 @@ import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TraceLink, TNil } from '../../types';
+import { TNil } from '../../types';
 
 import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable from './KeyValuesTable';
+import KeyValuesTable, { KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
@@ -94,7 +94,7 @@ export type AccordianKeyValuesProps = {
   interactive?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 
