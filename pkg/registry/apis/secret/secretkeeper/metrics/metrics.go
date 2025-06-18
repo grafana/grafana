@@ -18,10 +18,6 @@ type KeeperMetrics struct {
 }
 
 func newKeeperMetrics() *KeeperMetrics {
-	//Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (ExternalID, error)
-	// Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID, exposedValueOrRef string) error
-	// Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (secretv0alpha1.ExposedSecureValue, error)
-	// Delete(ctx c
 	return &KeeperMetrics{
 		StoreDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,

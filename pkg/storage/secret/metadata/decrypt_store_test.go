@@ -342,7 +342,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
+	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager, nil)
 	require.NoError(t, err)
 
 	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, nil)
