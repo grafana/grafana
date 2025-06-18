@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -65,6 +66,75 @@ func setupAMTest(t *testing.T) *alertmanager {
 func TestAlertmanager_newAlertmanager(t *testing.T) {
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
+}
+
+func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
+	am := setupAMTest(t)
+
+	cfg := &definitions.PostableUserConfig{
+		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Config: definitions.Config{
+				Route: &definitions.Route{
+					Receiver: "default-receiver",
+				},
+			},
+			Receivers: []*definitions.PostableApiReceiver{
+				{
+					Receiver: config.Receiver{Name: "default-receiver"},
+				},
+			},
+		},
+		ExtraConfigs: []definitions.ExtraConfiguration{
+			{
+				Identifier:    "external-prometheus",
+				MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
+				AlertmanagerConfig: `
+route:
+  receiver: webhook-receiver
+receivers:
+  - name: webhook-receiver
+    webhook_configs:
+      - url: 'https://webhook.example.com/alerts'
+        http_config:
+          basic_auth:
+            username: 'admin'
+            password: 'super-secret-password'
+      - url: 'https://slack.com/webhook/ABC123'
+        send_resolved: true
+  - name: email-receiver
+    email_configs:
+      - to: 'alerts@example.com'
+        from: 'grafana@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'grafana@example.com'
+        auth_password: 'another-secret-password'`,
+			},
+		},
+	}
+
+	err := am.SaveAndApplyConfig(context.Background(), cfg)
+	require.NoError(t, err)
+
+	savedConfig, err := am.Store.GetLatestAlertmanagerConfiguration(context.Background(), am.Base.TenantID())
+	require.NoError(t, err)
+
+	// Verify secrets are encrypted in stored config
+	var savedUserConfig definitions.PostableUserConfig
+	err = json.Unmarshal([]byte(savedConfig.AlertmanagerConfiguration), &savedUserConfig)
+	require.NoError(t, err)
+
+	require.Len(t, savedUserConfig.ExtraConfigs, 1)
+	extraConfig := savedUserConfig.ExtraConfigs[0]
+
+	require.Equal(t, "external-prometheus", extraConfig.Identifier)
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "super-secret-password")
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "another-secret-password")
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "ABC123")
+
+	// Apply the saved configuration again and check that it is applied without errors
+	err = am.ApplyConfig(context.Background(), savedConfig)
+	require.NoError(t, err)
+	require.True(t, am.Ready())
 }
 
 func TestAlertmanager_ApplyConfig(t *testing.T) {
