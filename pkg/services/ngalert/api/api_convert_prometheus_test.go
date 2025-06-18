@@ -1651,24 +1651,24 @@ receivers:
 
 		require.Equal(t, http.StatusOK, response.Status())
 
-		expectedResponse := `alertmanager_config:
+		expectedResponse := `alertmanager_config: |
   route:
-    receiver: webhook
-    continue: false
+      receiver: webhook
+      continue: false
   receivers:
-    - name: webhook
-      webhook_configs:
-        - url: "<secret>"
-          url_file: ""
-          http_config:
-            authorization:
-              type: "Bearer"
-              credentials: "<secret>"
-            enable_http2: true
-            follow_redirects: true
-          send_resolved: true
-          max_alerts: 0
-          timeout: "0s"
+      - name: webhook
+        webhook_configs:
+          - send_resolved: true
+            http_config:
+              authorization:
+                  type: Bearer
+                  credentials: <secret>
+              follow_redirects: true
+              enable_http2: true
+            url: <secret>
+            url_file: ""
+            max_alerts: 0
+            timeout: 0s
   templates: []
 template_files:
   test.tmpl: '{{ define "test" }}Hello{{ end }}'`

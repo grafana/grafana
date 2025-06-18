@@ -1300,7 +1300,7 @@ func (a apiClient) RawConvertPrometheusPostAlertmanagerConfig(t *testing.T, amCf
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 }
 
-func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.GettableAlertmanagerUserConfig {
+func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) apimodels.AlertmanagerUserConfig {
 	t.Helper()
 
 	config, status, raw := a.RawConvertPrometheusGetAlertmanagerConfig(t, headers)
@@ -1309,7 +1309,7 @@ func (a apiClient) ConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers 
 	return config
 }
 
-func (a apiClient) RawConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.GettableAlertmanagerUserConfig, int, string) {
+func (a apiClient) RawConvertPrometheusGetAlertmanagerConfig(t *testing.T, headers map[string]string) (apimodels.AlertmanagerUserConfig, int, string) {
 	t.Helper()
 
 	path := "%s/api/convert/api/v1/alerts"
@@ -1321,7 +1321,7 @@ func (a apiClient) RawConvertPrometheusGetAlertmanagerConfig(t *testing.T, heade
 		req.Header.Set(key, value)
 	}
 
-	config, status, raw := sendRequestYAML[apimodels.GettableAlertmanagerUserConfig](t, req, http.StatusOK)
+	config, status, raw := sendRequestYAML[apimodels.AlertmanagerUserConfig](t, req, http.StatusOK)
 
 	return config, status, raw
 }
