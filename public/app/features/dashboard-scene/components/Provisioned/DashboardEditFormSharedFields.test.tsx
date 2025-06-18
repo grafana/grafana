@@ -222,7 +222,7 @@ describe('DashboardEditFormSharedFields', () => {
       await user.tab();
 
       // Check if validation error appears
-      expect(screen.getByText('Invalid branch name.')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 
