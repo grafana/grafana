@@ -1381,9 +1381,9 @@
         ],
         "responses": {
           "200": {
-            "description": "GettableAlertmanagerUserConfig",
+            "description": "AlertmanagerUserConfig",
             "schema": {
-              "$ref": "#/definitions/GettableAlertmanagerUserConfig"
+              "$ref": "#/definitions/AlertmanagerUserConfig"
             }
           },
           "403": {
@@ -4812,6 +4812,9 @@
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "queriedDatasourceUIDs": {
           "type": "array",
           "items": {
@@ -4868,7 +4871,8 @@
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "$ref": "#/definitions/Config"
+          "description": "Configuration for Alertmanager in YAML format.\nin: body",
+          "type": "string"
         },
         "template_files": {
           "type": "object",
@@ -5721,20 +5725,6 @@
       "title": "Frames is a slice of Frame pointers.",
       "items": {
         "$ref": "#/definitions/Frame"
-      }
-    },
-    "GettableAlertmanagerUserConfig": {
-      "type": "object",
-      "properties": {
-        "alertmanager_config": {
-          "type": "string"
-        },
-        "template_files": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
       }
     },
     "GettableAlertmanagers": {
@@ -8171,6 +8161,9 @@
         },
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "query": {
           "type": "string"
