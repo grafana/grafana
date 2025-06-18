@@ -45,7 +45,7 @@ type Service struct {
 	identityStore   legacy.LegacyIdentityStore
 	settings        Settings
 
-	mapper mapper
+	mapper MapperRegistry
 
 	logger  log.Logger
 	tracer  tracing.Tracer
@@ -93,7 +93,7 @@ func NewService(
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
-		mapper:          newMapper(),
+		mapper:          NewMapperRegistry(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
@@ -334,13 +334,13 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.translation(group, resource)
+	t, ok := s.mapper.Get(group, resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", group, "resource", resource)
 		return "", status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	action, ok := t.action(verb)
+	action, ok := t.Action(verb)
 	if !ok {
 		ctxLogger.Error("unsupport verb", "group", group, "resource", resource, "verb", verb)
 		return "", status.Error(codes.NotFound, "unsupported verb")
@@ -585,17 +585,17 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return true, nil
 	}
 
-	t, ok := s.mapper.translation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	if req.Name != "" && scopeMap[t.scope(req.Name)] {
+	if req.Name != "" && scopeMap[t.Scope(req.Name)] {
 		return true, nil
 	}
 
-	if !t.folderSupport {
+	if !t.HasFolderSupport() {
 		return false, nil
 	}
 
@@ -679,14 +679,14 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.translation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	var tree folderTree
-	if t.folderSupport {
+	if t.HasFolderSupport() {
 		var err error
 		tree, err = s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {
@@ -699,7 +699,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.prefix())
+		res = buildItemList(scopeMap, tree, t.Prefix())
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
