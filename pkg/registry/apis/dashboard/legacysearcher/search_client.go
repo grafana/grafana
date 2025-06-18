@@ -229,7 +229,15 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
 			query.ManagerIdentity = vals[0]
+		case resource.SEARCH_FIELD_TITLE_PHRASE:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one title supported")
+			}
+
+			query.Title = vals[0]
+			query.TitleExactMatch = true
 		}
+
 	}
 
 	columns := c.getColumns(sortByField, query)
