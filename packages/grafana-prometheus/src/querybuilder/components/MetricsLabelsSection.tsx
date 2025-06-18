@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 
+import { getDebounceTimeInMilliseconds } from '../../caching';
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';
 import { PromMetricsMetadata } from '../../types';
@@ -210,7 +211,7 @@ export function MetricsLabelsSection({
         variableEditor={variableEditor}
       />
       <LabelFilters
-        debounceDuration={datasource.getDebounceTimeInMilliseconds()}
+        debounceDuration={getDebounceTimeInMilliseconds(datasource.cacheLevel)}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
         labelsFilters={query.labels}
         onChange={onChangeLabels}
