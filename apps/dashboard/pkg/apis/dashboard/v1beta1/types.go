@@ -51,10 +51,7 @@ type VersionsQueryOptions struct {
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibraryPanel struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
 	// Panel properties

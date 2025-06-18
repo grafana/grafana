@@ -14,10 +14,7 @@ import (
 )
 
 type TestResource struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec Spec `json:"spec,omitempty"`
@@ -77,7 +74,6 @@ type TestResource2 struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec Spec2 `json:"spec,omitempty"`
