@@ -1781,6 +1781,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzApis",
+        "resourceVersion": "1747897123910",
+        "creationTimestamp": "2025-05-22T06:58:43Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-18T23:11:26Z"
