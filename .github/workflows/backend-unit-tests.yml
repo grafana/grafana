@@ -53,6 +53,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           go test -short -timeout=30m "${PACKAGES[@]}"
 
@@ -117,6 +118,7 @@ jobs:
           bucket: grafana-test-results
       - if: github.repository == 'grafana/grafana' && (success() || failure())
         run: |
+          set -euo pipefail
           BUCKET_PATH="go-unit-tests/$(echo "${REF_NAME}" | sed 's/\//-/g')"
           echo "BUCKET_PATH=$BUCKET_PATH" >> "$GITHUB_ENV"
         env:
