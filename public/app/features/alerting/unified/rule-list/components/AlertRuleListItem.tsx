@@ -45,6 +45,8 @@ export interface AlertRuleListItemProps {
   actions?: ReactNode;
   origin?: RulePluginOrigin;
   operation?: RuleOperation;
+  // the grouped view doesn't need to show the location again – it's redundant
+  showLocation?: boolean;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -69,12 +71,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     origin,
     actions = null,
     operation,
+    showLocation = true,
   } = props;
 
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -167,9 +170,10 @@ export function RecordingRuleListItem({
   isPaused,
   origin,
   actions,
+  showLocation = true,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -206,6 +210,7 @@ interface RuleOperationListItemProps {
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
   operation: RuleOperation;
+  showLocation?: boolean;
 }
 
 export function RuleOperationListItem({
@@ -215,11 +220,12 @@ export function RuleOperationListItem({
   rulesSource,
   application,
   operation,
+  showLocation = true,
 }: RuleOperationListItemProps) {
   const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
-  if (namespace && group) {
+  if (namespace && group && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
@@ -256,7 +262,7 @@ function Summary({ content, error }: SummaryProps) {
   }
   if (content) {
     return (
-      <Text variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary" truncate>
         {content}
       </Text>
     );

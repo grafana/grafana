@@ -98,6 +98,7 @@ export function GrafanaGroupLoader({
               groupIdentifier={groupIdentifier}
               namespaceName={namespaceName}
               operation={RuleOperation.Creating}
+              showLocation={false}
             />
           );
         }
@@ -109,6 +110,8 @@ export function GrafanaGroupLoader({
             rulerRule={rulerRule}
             groupIdentifier={groupIdentifier}
             namespaceName={namespaceName}
+            // we don't show the location again for rules, it's redundant because they are shown in a folder > group hierarchy
+            showLocation={false}
           />
         );
       })}
@@ -121,6 +124,7 @@ export function GrafanaGroupLoader({
           rulesSource={GrafanaRulesSource}
           application="grafana"
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
     </>
