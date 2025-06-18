@@ -72,7 +72,7 @@ export interface EditableDashboardElement {
   onChangeName?(name: string): { errorMessage?: string } | void;
 
   /**
-   * Conatainer objects can have children
+   * Container objects can have children
    */
   getOutlineChildren?(): SceneObject[];
 }
