@@ -39,7 +39,7 @@ func (model *outboxStoreModel) Append(messageID string, message contracts.Append
 func (model *outboxStoreModel) ReceiveN(n uint) []contracts.OutboxMessage {
 	maxMessages := min(len(model.rows), int(n))
 	if maxMessages == 0 {
-		return []contracts.OutboxMessage{}
+		return nil
 	}
 	return model.rows[:maxMessages]
 }
