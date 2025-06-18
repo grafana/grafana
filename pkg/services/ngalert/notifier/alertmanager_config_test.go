@@ -150,7 +150,7 @@ receivers:
 	})
 }
 
-func TestMultiOrgAlertmanager_DeleteAndApplyExtraConfiguration(t *testing.T) {
+func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
 	orgID := int64(1)
 
 	t.Run("successfully delete existing extra configuration", func(t *testing.T) {
@@ -176,7 +176,7 @@ receivers:
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 
-		err = mam.DeleteAndApplyExtraConfiguration(ctx, orgID, identifier)
+		err = mam.DeleteExtraConfiguration(ctx, orgID, identifier)
 		require.NoError(t, err)
 
 		gettableConfig, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false)
@@ -189,7 +189,7 @@ receivers:
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
-		err := mam.DeleteAndApplyExtraConfiguration(ctx, orgID, "non-existent")
+		err := mam.DeleteExtraConfiguration(ctx, orgID, "non-existent")
 		require.NoError(t, err)
 	})
 
@@ -197,7 +197,7 @@ receivers:
 		mam := setupMam(t, nil)
 		ctx := context.Background()
 
-		err := mam.DeleteAndApplyExtraConfiguration(ctx, 999, "test-config")
+		err := mam.DeleteExtraConfiguration(ctx, 999, "test-config")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "failed to get current configuration")
 	})
