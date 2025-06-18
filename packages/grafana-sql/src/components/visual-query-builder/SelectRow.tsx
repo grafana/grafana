@@ -30,8 +30,8 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
   // Add necessary alias options for time series format
   // when that format has been selected
   if (query.format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: t('components.select-row.label.time', 'time'), value: 'time' });
-    timeSeriesAliasOpts.push({ label: t('components.select-row.label.value', 'value'), value: 'value' });
+    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
+    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
   }
 
   const onAggregationChange = useCallback(
@@ -93,8 +93,11 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
 
   const aggregateOptions = () => {
     const options: Array<SelectableValue<string>> = [
-      { label: t('components.select-row.aggregate-options.options.label.aggregations', 'Aggregations'), options: [] },
-      { label: t('components.select-row.aggregate-options.options.label.macros', 'Macros'), options: [] },
+      {
+        label: t('grafana-sql.components.select-row.aggregate-options.options.label.aggregations', 'Aggregations'),
+        options: [],
+      },
+      { label: t('grafana-sql.components.select-row.aggregate-options.options.label.macros', 'Macros'), options: [] },
     ];
     for (const func of db.functions()) {
       // Create groups for macros
@@ -113,7 +116,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
         <div key={index}>
           <Stack gap={2} alignItems="end">
             <EditorField
-              label={t('components.select-row.label-data-operations', 'Data operations')}
+              label={t('grafana-sql.components.select-row.label-data-operations', 'Data operations')}
               optional
               width={25}
             >
@@ -137,7 +140,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
               db={db}
             />
 
-            <EditorField label={t('components.select-row.label-alias', 'Alias')} optional width={15}>
+            <EditorField label={t('grafana-sql.components.select-row.label-alias', 'Alias')} optional width={15}>
               <Select
                 value={item.alias ? toOption(item.alias) : null}
                 inputId={`select-alias-${index}-${uniqueId()}`}
@@ -150,7 +153,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
               />
             </EditorField>
             <Button
-              title={t('components.select-row.title-remove-column', 'Remove column')}
+              title={t('grafana-sql.components.select-row.title-remove-column', 'Remove column')}
               type="button"
               icon="trash-alt"
               variant="secondary"
@@ -164,7 +167,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
         type="button"
         onClick={addColumn}
         variant="secondary"
-        title={t('components.select-row.title-add-column', 'Add column')}
+        title={t('grafana-sql.components.select-row.title-add-column', 'Add column')}
         size="md"
         icon="plus"
         className={styles.addButton}

@@ -176,9 +176,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
     <Modal
       data-testid={metricsModaltestIds.metricModal}
       isOpen={isOpen}
-      title={t('querybuilder.metrics-modal.title-metrics-explorer', 'Metrics explorer')}
+      title={t('grafana-prometheus.querybuilder.metrics-modal.title-metrics-explorer', 'Metrics explorer')}
       onDismiss={onClose}
-      aria-label={t('querybuilder.metrics-modal.aria-label-browse-metrics', 'Browse metrics')}
+      aria-label={t('grafana-prometheus.querybuilder.metrics-modal.aria-label-browse-metrics', 'Browse metrics')}
       className={styles.modal}
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
@@ -216,7 +216,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
         <div className={styles.inputItem}>
           <Toggletip
-            aria-label={t('querybuilder.metrics-modal.aria-label-additional-settings', 'Additional settings')}
+            aria-label={t(
+              'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
+              'Additional settings'
+            )}
             content={additionalSettings}
             placement="bottom-end"
             closeButton={false}
@@ -229,7 +232,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 data-testid={metricsModaltestIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
-                <Trans i18nKey="querybuilder.metrics-modal.additional-settings">Additional Settings</Trans>
+                <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.additional-settings">
+                  Additional Settings
+                </Trans>
               </Button>
               <Button
                 className={styles.noBorder}
@@ -243,7 +248,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
       <div className={styles.resultsData}>
         {query.metric && (
           <i className={styles.currentlySelected}>
-            <Trans i18nKey="querybuilder.metrics-modal.currently-selected" values={{ selected: query.metric }}>
+            <Trans
+              i18nKey="grafana-prometheus.querybuilder.metrics-modal.currently-selected"
+              values={{ selected: query.metric }}
+            >
               Currently selected: {'{{selected}}'}
             </Trans>
           </i>
@@ -253,7 +261,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             <Icon name="info-circle" size="sm" />
             <div className={styles.resultsDataFilteredText}>
               &nbsp;
-              <Trans i18nKey="querybuilder.metrics-modal.metrics-pre-filtered">
+              <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.metrics-pre-filtered">
                 These metrics have been pre-filtered by labels chosen in the label filters.
               </Trans>
             </div>
@@ -275,7 +283,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
       <div className={styles.resultsFooter}>
         <div className={styles.resultsAmount}>
           <Trans
-            i18nKey="querybuilder.metrics-modal.results-amount"
+            i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-amount"
             values={{ num: state.filteredMetricCount }}
             count={state.totalMetricCount}
           >
@@ -292,12 +300,15 @@ export const MetricsModal = (props: MetricsModalProps) => {
         />
         <div className={styles.resultsPerPageWrapper}>
           <p className={styles.resultsPerPageLabel}>
-            <Trans i18nKey="querybuilder.metrics-modal.results-per-page">Results per page</Trans>
+            <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-per-page">Results per page</Trans>
           </p>
           <Input
             data-testid={metricsModaltestIds.resultsPerPage}
             value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-            placeholder={t('querybuilder.metrics-modal.placeholder-results-per-page', 'results per page')}
+            placeholder={t(
+              'grafana-prometheus.querybuilder.metrics-modal.placeholder-results-per-page',
+              'results per page'
+            )}
             width={10}
             title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
             type="number"
