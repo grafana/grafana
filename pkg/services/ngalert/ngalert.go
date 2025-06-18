@@ -362,7 +362,21 @@ func (ng *AlertNG) init() error {
 		FeatureToggles:       ng.FeatureToggles,
 	}
 
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))
+	history, err := configureHistorianBackend(
+		initCtx,
+		ng.Cfg.UnifiedAlerting.StateHistory,
+		ng.annotationsRepo,
+		ng.dashboardService,
+		ng.store,
+		ng.Metrics.GetHistorianMetrics(),
+		ng.Log,
+		ng.tracer,
+		ac.NewRuleService(ng.accesscontrol),
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		clk,
+		ng.Metrics.GetRemoteWriterMetrics(),
+	)
 	if err != nil {
 		return err
 	}
@@ -606,7 +620,21 @@ type Historian interface {
 	state.Historian
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer, ac historian.AccessControl) (Historian, error) {
+func configureHistorianBackend(
+	ctx context.Context,
+	cfg setting.UnifiedAlertingStateHistorySettings,
+	ar annotations.Repository,
+	ds dashboards.DashboardService,
+	rs historian.RuleStore,
+	met *metrics.Historian,
+	l log.Logger,
+	tracer tracing.Tracer,
+	ac historian.AccessControl,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
+	clock clock.Clock,
+	mw *metrics.RemoteWriter,
+) (Historian, error) {
 	if !cfg.Enabled {
 		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
@@ -621,7 +649,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, clock, mw)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -630,7 +658,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, clock, mw)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -642,7 +670,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "annotations"})
+		annotationBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
@@ -651,7 +680,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
 		req := historian.NewRequester()
-		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "loki"})
+		lokiBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
 		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer, rs, ac)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
@@ -659,6 +689,25 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		if err := backend.TestConnection(testConnCtx); err != nil {
 			l.Error("Failed to communicate with configured remote Loki backend, state history may not be persisted", "error", err)
 		}
+		return backend, nil
+	}
+
+	if backend == historian.BackendTypePrometheus {
+		pcfg, err := historian.NewPrometheusConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("invalid remote prometheus configuration: %w", err)
+		}
+		writerCfg := writer.DatasourceWriterConfig{
+			Timeout: cfg.PrometheusWriteTimeout,
+		}
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "prometheus"})
+		prometheusBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
+		w := writer.NewDatasourceWriter(writerCfg, datasourceService, httpClientProvider, clock, prometheusBackendLogger, mw)
+		if w == nil {
+			return nil, fmt.Errorf("failed to create alert state metrics writer")
+		}
+		backend := historian.NewRemotePrometheusBackend(pcfg, w, prometheusBackendLogger)
+
 		return backend, nil
 	}
 
