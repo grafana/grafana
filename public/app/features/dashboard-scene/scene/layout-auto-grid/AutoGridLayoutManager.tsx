@@ -89,12 +89,7 @@ export class AutoGridLayoutManager
   }
 
   public getOutlineChildren(): SceneObject[] {
-    const outlineChildren: SceneObject[] = [];
-
-    for (const gridItem of this.state.layout.state.children) {
-      outlineChildren.push(gridItem.state.body);
-    }
-
+    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
     return outlineChildren;
   }
 
