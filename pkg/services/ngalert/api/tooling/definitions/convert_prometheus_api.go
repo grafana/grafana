@@ -1,9 +1,6 @@
 package definitions
 
 import (
-	"encoding/json"
-
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 )
 
@@ -352,31 +349,4 @@ type AlertmanagerUserConfig struct {
 	// in: body
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-}
-
-// GettableAlertmanagerUserConfig is like AlertmanagerUserConfig but uses the normal config structure
-// that automatically sanitizes secrets when marshaled to YAML/JSON.
-
-// swagger:model
-type GettableAlertmanagerUserConfig struct {
-	AlertmanagerConfig GettableAlertmanagerConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	TemplateFiles      map[string]string          `yaml:"template_files" json:"template_files"`
-}
-
-type GettableAlertmanagerConfig struct {
-	config.Config `yaml:",inline" json:",inline"`
-}
-
-func (c GettableAlertmanagerConfig) MarshalYAML() (any, error) {
-	type base config.Config
-	cfg := base(c.Config)
-	cfg.Global = nil // not used in Grafana
-	return cfg, nil
-}
-
-func (c GettableAlertmanagerConfig) MarshalJSON() ([]byte, error) {
-	type base config.Config
-	cfg := base(c.Config)
-	cfg.Global = nil // not used in Grafana
-	return json.Marshal(cfg)
 }

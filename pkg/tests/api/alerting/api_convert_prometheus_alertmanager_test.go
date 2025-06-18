@@ -86,10 +86,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Contains(t, retrievedConfig.TemplateFiles, "test.tmpl")
 		require.Equal(t, `{{ define "test.template" }}Test template{{ end }}`, retrievedConfig.TemplateFiles["test.tmpl"])
 
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
-		require.Equal(t, "webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
-		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
 	})
 
 	t.Run("delete alertmanager configuration", func(t *testing.T) {
@@ -245,10 +244,9 @@ receivers:
 		retrievedConfig := apiClient.ConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
 
 		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
-		require.Equal(t, "updated-webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
-		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
 
 		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 	})
