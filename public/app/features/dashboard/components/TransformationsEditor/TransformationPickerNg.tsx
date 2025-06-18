@@ -39,9 +39,7 @@ interface TransformationPickerNgProps {
   suffix: ReactNode;
   data: DataFrame[];
   showIllustrations?: boolean;
-  showCompactView?: boolean;
   onShowIllustrationsChange?: (showIllustrations: boolean) => void;
-  onShowCompactViewChange?: (showCompactView: boolean) => void;
   onSelectedFilterChange?: (category: FilterCategory) => void;
   selectedFilter?: FilterCategory;
 }
@@ -55,13 +53,11 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     onSearchChange,
     onSearchKeyDown,
     showIllustrations,
-    showCompactView,
     onTransformationAdd,
     selectedFilter,
     data,
     onClose,
     onShowIllustrationsChange,
-    onShowCompactViewChange,
     onSelectedFilterChange,
   } = props;
 
@@ -96,26 +92,14 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
             ref={searchInputRef}
             autoFocus={true}
           />
-          <div className={styles.switchContainer}>
-            <div className={styles.switchWrapper}>
-              <span className={styles.switchLabel}>
-                <Trans i18nKey="dashboard.transformation-picker-ng.images">Images</Trans>
-              </span>
-              <Switch
-                value={showIllustrations && !showCompactView}
-                disabled={showCompactView}
-                onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
-              />
-            </div>
-            <div className={styles.switchWrapper}>
-              <span className={styles.switchLabel}>
-                <Trans i18nKey="dashboard.transformation-picker-ng.compact">Compact</Trans>
-              </span>
-              <Switch
-                value={showCompactView}
-                onChange={() => onShowCompactViewChange && onShowCompactViewChange(!showCompactView)}
-              />
-            </div>
+          <div className={styles.switchWrapper}>
+            <span className={styles.switchLabel}>
+              <Trans i18nKey="dashboard.transformation-picker-ng.images">Images</Trans>
+            </span>
+            <Switch
+              value={showIllustrations}
+              onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
+            />
           </div>
         </div>
 
@@ -139,7 +123,6 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           onClick={(id) => {
             onTransformationAdd({ value: id });
           }}
-          showCompactView={showCompactView}
         />
       </div>
     </Drawer>
@@ -195,22 +178,15 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
 interface TransformationsGridProps {
   transformations: TransformerRegistryItem[];
   showIllustrations?: boolean;
-  showCompactView?: boolean;
   onClick: (id: string) => void;
   data: DataFrame[];
 }
 
-function TransformationsGrid({
-  showIllustrations,
-  showCompactView,
-  transformations,
-  onClick,
-  data,
-}: TransformationsGridProps) {
+function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   const styles = useStyles2(getTransformationGridStyles);
 
   return (
-    <div className={showCompactView ? styles.compactGrid : styles.grid}>
+    <div className={styles.grid}>
       {transformations.map((transform) => {
         // Check to see if the transform
         // is applicable to the given data
@@ -233,32 +209,6 @@ function TransformationsGrid({
         let cardClasses = styles.newCard;
         if (!isApplicable) {
           cardClasses = cx(styles.newCard, styles.cardDisabled);
-        }
-
-        if (showCompactView) {
-          return (
-            <Card
-              className={cardClasses}
-              data-testid={selectors.components.TransformTab.newTransform(transform.name)}
-              onClick={() => onClick(transform.id)}
-              key={transform.id}
-              noMargin
-            >
-              <div className={styles.compactInline}>
-                <span className={styles.compactTitle}>{transform.name}</span>
-                <PluginStateInfo state={transform.state} />
-                {!isApplicable && applicabilityDescription !== null && (
-                  <IconButton
-                    className={styles.compactApplicableInfo}
-                    name="info-circle"
-                    tooltip={applicabilityDescription}
-                    size="sm"
-                  />
-                )}
-                <span className={styles.description}>{getTransformationsRedesignDescriptions(transform.id)}</span>
-              </div>
-            </Card>
-          );
         }
 
         return (

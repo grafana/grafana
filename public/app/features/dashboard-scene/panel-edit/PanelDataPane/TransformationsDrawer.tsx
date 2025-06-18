@@ -12,7 +12,6 @@ import {
 interface DrawerState {
   search: string;
   showIllustrations: boolean;
-  showCompactView?: boolean;
   selectedFilter?: FilterCategory;
 }
 
@@ -29,7 +28,6 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
   const [drawerState, setDrawerState] = useState<DrawerState>({
     search: '',
     showIllustrations: true,
-    showCompactView: false,
   });
 
   const onSearchChange = (e: FormEvent<HTMLInputElement>) =>
@@ -37,9 +35,6 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
 
   const onShowIllustrationsChange = (showIllustrations: boolean): void =>
     setDrawerState({ ...drawerState, ...{ showIllustrations } });
-
-  const onShowCompactViewChange = (showCompactView: boolean): void =>
-    setDrawerState({ ...drawerState, ...{ showCompactView } });
 
   const onSelectedFilterChange = (selectedFilter: FilterCategory): void =>
     setDrawerState({ ...drawerState, ...{ selectedFilter } });
@@ -92,9 +87,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
       onSearchChange={onSearchChange}
       onSearchKeyDown={() => {}}
       showIllustrations={drawerState.showIllustrations}
-      showCompactView={drawerState.showCompactView}
       onShowIllustrationsChange={onShowIllustrationsChange}
-      onShowCompactViewChange={onShowCompactViewChange}
       onSelectedFilterChange={onSelectedFilterChange}
       onClose={onClose}
     />
