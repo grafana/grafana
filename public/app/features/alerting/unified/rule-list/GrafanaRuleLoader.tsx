@@ -92,6 +92,7 @@ interface GrafanaRuleListItemProps {
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
   operation?: RuleOperation;
+  showLocation?: boolean;
 }
 
 export function GrafanaRuleListItem({
@@ -100,6 +101,7 @@ export function GrafanaRuleListItem({
   groupIdentifier,
   namespaceName,
   operation,
+  showLocation = true,
 }: GrafanaRuleListItemProps) {
   const returnTo = createReturnTo();
 
@@ -122,6 +124,7 @@ export function GrafanaRuleListItem({
     isPaused: rule?.isPaused ?? is_paused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    showLocation,
   };
 
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {

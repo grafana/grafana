@@ -22,6 +22,7 @@ export interface DataSourceRuleListItemProps {
   groupIdentifier: DataSourceRuleGroupIdentifier;
   application?: RulesSourceApplication;
   actions?: React.ReactNode;
+  showLocation?: boolean;
 }
 
 export function DataSourceRuleListItem({
@@ -30,6 +31,7 @@ export function DataSourceRuleListItem({
   groupIdentifier,
   application,
   actions,
+  showLocation = true,
 }: DataSourceRuleListItemProps) {
   const returnTo = createReturnTo();
   const { rulesSource, namespace, groupName } = groupIdentifier;
@@ -56,6 +58,7 @@ export function DataSourceRuleListItem({
     labels,
     actions,
     origin: originMeta,
+    showLocation,
   };
 
   switch (rule.type) {
