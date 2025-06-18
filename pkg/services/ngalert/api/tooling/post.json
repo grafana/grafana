@@ -1438,6 +1438,62 @@
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
   },
+  "GettableAlertmanagerConfig": {
+   "properties": {
+    "global": {
+     "$ref": "#/definitions/GlobalConfig"
+    },
+    "inhibit_rules": {
+     "items": {
+      "$ref": "#/definitions/InhibitRule"
+     },
+     "type": "array"
+    },
+    "mute_time_intervals": {
+     "description": "Deprecated. Remove before v1.0 release.",
+     "items": {
+      "$ref": "#/definitions/MuteTimeInterval"
+     },
+     "type": "array"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
+     },
+     "type": "array"
+    },
+    "route": {
+     "$ref": "#/definitions/Route"
+    },
+    "templates": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "GettableAlertmanagerUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/GettableAlertmanagerConfig"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "GettableAlertmanagers": {
    "properties": {
     "data": {
@@ -3709,7 +3765,6 @@
    "type": "object"
   },
   "Route": {
-   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -3751,12 +3806,6 @@
      },
      "type": "array"
     },
-    "object_matchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
     "receiver": {
      "type": "string"
     },
@@ -3770,6 +3819,7 @@
      "type": "array"
     }
    },
+   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {

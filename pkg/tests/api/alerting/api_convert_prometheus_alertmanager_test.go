@@ -11,19 +11,15 @@ import (
 )
 
 const testAlertmanagerConfigYAML = `
-global:
-  smtp_smarthost: localhost:587
-  smtp_from: alertmanager@example.org
-
 route:
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: web.hook
+  receiver: webhook
 
 receivers:
-- name: web.hook
+- name: webhook
   webhook_configs:
   - url: 'http://127.0.0.1:5001/'
 
@@ -53,8 +49,17 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
+	cleanup := func(identifier string) {
+		deleteHeaders := map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		}
+		_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.Equal(t, http.StatusAccepted, status)
+	}
+
 	t.Run("create and get alertmanager configuration", func(t *testing.T) {
 		identifier := "test-create-get-config"
+		defer cleanup(identifier)
 		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
@@ -81,19 +86,15 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Contains(t, retrievedConfig.TemplateFiles, "test.tmpl")
 		require.Equal(t, `{{ define "test.template" }}Test template{{ end }}`, retrievedConfig.TemplateFiles["test.tmpl"])
 
-		// Verify the configuration contains expected content
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "smtp_smarthost: localhost:587")
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "web.hook")
-
-		// Cleanup
-		deleteHeaders := map[string]string{
-			"X-Grafana-Alerting-Config-Identifier": identifier,
-		}
-		apiClient.ConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
+		require.Equal(t, "webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
+		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
+		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
 	})
 
 	t.Run("delete alertmanager configuration", func(t *testing.T) {
 		identifier := "test-delete-config"
+		defer cleanup(identifier)
 		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
@@ -194,6 +195,7 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 	t.Run("update existing configuration", func(t *testing.T) {
 		identifier := "test-update-config"
+		defer cleanup(identifier)
 
 		headers := map[string]string{
 			"Content-Type":                         "application/yaml",
@@ -213,19 +215,15 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 		// Update the same configuration with new content
 		updatedConfigYAML := `
-global:
-  smtp_smarthost: localhost:25
-  smtp_from: updated@example.org
-
 route:
   group_by: ['service']
   group_wait: 5s
   group_interval: 5s
   repeat_interval: 30m
-  receiver: updated.hook
+  receiver: updated-webhook
 
 receivers:
-- name: updated.hook
+- name: updated-webhook
   webhook_configs:
   - url: 'http://127.0.0.1:8080/updated'
 `
@@ -245,21 +243,20 @@ receivers:
 			"X-Grafana-Alerting-Config-Identifier": identifier,
 		}
 		retrievedConfig := apiClient.ConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
-		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "updated@example.org")
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "updated.hook")
-		require.Contains(t, retrievedConfig.TemplateFiles, "updated.tmpl")
-		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 
-		deleteHeaders := map[string]string{
-			"X-Grafana-Alerting-Config-Identifier": identifier,
-		}
-		apiClient.ConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
+		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
+		require.Equal(t, "updated-webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
+		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
+		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
+
+		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 	})
 
 	t.Run("multiple extra configurations conflict", func(t *testing.T) {
 		firstIdentifier := "first-config"
 		secondIdentifier := "second-config"
+		defer cleanup(firstIdentifier)
 
 		// Create first configuration
 		firstHeaders := map[string]string{

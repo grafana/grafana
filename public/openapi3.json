@@ -3944,9 +3944,15 @@
             "type": "array"
           },
           "mute_time_intervals": {
-            "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
+            "description": "Deprecated. Remove before v1.0 release.",
             "items": {
               "$ref": "#/components/schemas/MuteTimeInterval"
+            },
+            "type": "array"
+          },
+          "receivers": {
+            "items": {
+              "$ref": "#/components/schemas/Receiver"
             },
             "type": "array"
           },
@@ -5934,6 +5940,62 @@
           },
           "uid": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GettableAlertmanagerConfig": {
+        "properties": {
+          "global": {
+            "$ref": "#/components/schemas/GlobalConfig"
+          },
+          "inhibit_rules": {
+            "items": {
+              "$ref": "#/components/schemas/InhibitRule"
+            },
+            "type": "array"
+          },
+          "mute_time_intervals": {
+            "description": "Deprecated. Remove before v1.0 release.",
+            "items": {
+              "$ref": "#/components/schemas/MuteTimeInterval"
+            },
+            "type": "array"
+          },
+          "receivers": {
+            "items": {
+              "$ref": "#/components/schemas/Receiver"
+            },
+            "type": "array"
+          },
+          "route": {
+            "$ref": "#/components/schemas/Route"
+          },
+          "templates": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeInterval"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "GettableAlertmanagerUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/GettableAlertmanagerConfig"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
           }
         },
         "type": "object"
