@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
 )
@@ -510,7 +511,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := tt.pluginJSON(t)
-			got, err := ReadPluginJSON(p)
+			got, err := ReadPluginJSON(p, config.Features{})
 
 			// Check if the test returns the same error as expected
 			// (unneccary to check further if there is an error at this point)
