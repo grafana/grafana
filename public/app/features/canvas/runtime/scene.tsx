@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
+import InfiniteViewer from 'infinite-viewer';
 import Moveable from 'moveable';
-import { createRef, CSSProperties, RefObject } from 'react';
-import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';
 
@@ -26,7 +25,12 @@ import {
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
-import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+// import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
+import {
+  Connections,
+  // CONNECTION_VERTEX_ADD_ID,
+  // CONNECTION_VERTEX_ID,
+} from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
@@ -35,7 +39,8 @@ import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
-import { SceneTransformWrapper } from './SceneTransformWrapper';
+// import { SceneTransformWrapper } from './SceneTransformWrapper';
+// import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -60,29 +65,36 @@ export class Scene {
   width = 0;
   height = 0;
   scale = 1;
-  style: CSSProperties = {};
+  scrollLeft = 0;
+  scrollTop = 0;
+  // style doesn't seem to be used anywhere
+  // style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
   moveable?: Moveable;
-  div?: HTMLDivElement;
+  infiniteViewer?: InfiniteViewer;
+  // div?: HTMLDivElement;
+  viewerDiv?: HTMLDivElement;
+  viewportDiv?: HTMLDivElement;
   connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
-  shouldInfinitePan?: boolean;
+  zoomToContent?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
   contextMenuVisible?: boolean;
+  openContextMenu?: (position: AnchorPoint) => void;
   contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
     const transformInstance = getTransformInstance(this);
     if (transformInstance) {
       if (visible) {
-        transformInstance.setup.disabled = true;
+        // transformInstance.setup.disabled = true;
       } else {
-        transformInstance.setup.disabled = false;
+        // transformInstance.setup.disabled = false;
       }
     }
   };
@@ -103,18 +115,18 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
-  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
+  // transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean,
+    zoomToContent: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, zoomToContent);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -125,7 +137,7 @@ export class Scene {
 
     this.panel = panel;
     this.connections = new Connections(this);
-    this.transformComponentRef = createRef();
+    // this.transformComponentRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -152,7 +164,7 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean
+    zoomToContent: boolean
   ) {
     this.root = new RootElement(
       cfg ?? {
@@ -166,10 +178,17 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
-    this.shouldInfinitePan = infinitePan;
+    this.zoomToContent = zoomToContent;
 
     setTimeout(() => {
-      if (this.div) {
+      // if (this.div) {
+      if (this.viewportDiv && this.viewerDiv) {
+        if (!this.shouldPanZoom) {
+          this.scale = 1;
+          this.scrollLeft = 0;
+          this.scrollTop = 0;
+        }
+
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
         initMoveable(destroySelecto, enableEditing, this);
@@ -177,6 +196,9 @@ export class Scene {
         this.selection.next([]);
         this.connections.select(undefined);
         this.connections.updateState();
+        // update initial connections svg size
+        this.updateConnectionsSize();
+        this.fitContent(this, zoomToContent);
       }
     });
     return this.root;
@@ -199,17 +221,45 @@ export class Scene {
   updateSize(width: number, height: number) {
     this.width = width;
     this.height = height;
-    this.style = { width, height };
+    // this.style doesn't seem to be used anywhere
+    // this.style = { width, height };
 
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
+    }
+
+    this.updateConnectionsSize();
+    this.fitContent(this, this.zoomToContent!);
+
+    this.root.elements.forEach((el) => {
+      el.applyLayoutStylesToDiv(false);
+    });
+  }
+
+  updateConnectionsSize() {
+    const svgConnections = this.connections.connectionsSVG;
+
+    if (svgConnections) {
+      const scale = this.infiniteViewer!.getZoom();
+      const left = this.infiniteViewer!.getScrollLeft();
+      const top = this.infiniteViewer!.getScrollTop();
+      const width = this.width;
+      const height = this.height;
+
+      svgConnections.style.left = `${left}px`;
+      svgConnections.style.top = `${top}px`;
+      svgConnections.style.width = `${width / scale}px`;
+      svgConnections.style.height = `${height / scale}px`;
+
+      svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
     }
   }
 
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
-    this.selecto?.clickTarget(event, this.div);
+    // this.selecto?.clickTarget(event, this.div);
+    this.selecto?.clickTarget(event, this.viewportDiv);
   }
 
   save = (updateMoveable = false) => {
@@ -217,8 +267,10 @@ export class Scene {
 
     if (updateMoveable) {
       setTimeout(() => {
-        if (this.div) {
+        // if (this.div) {
+        if (this.viewportDiv && this.viewerDiv) {
           initMoveable(true, this.isEditingEnabled, this);
+          this.updateConnectionsSize();
         }
       });
     }
@@ -240,8 +292,16 @@ export class Scene {
     }
   };
 
-  setRef = (sceneContainer: HTMLDivElement) => {
-    this.div = sceneContainer;
+  // setRef = (sceneContainer: HTMLDivElement) => {
+  //   this.div = sceneContainer;
+  // };
+
+  setViewerRef = (viewerContainer: HTMLDivElement) => {
+    this.viewerDiv = viewerContainer;
+  };
+
+  setViewportRef = (viewportContainer: HTMLDivElement) => {
+    this.viewportDiv = viewportContainer;
   };
 
   select = (selection: SelectionParams) => {
@@ -282,6 +342,83 @@ export class Scene {
     }
   };
 
+  fitContent = (scene: Scene, zoomToContent: boolean) => {
+    const { root, viewerDiv, infiniteViewer } = scene;
+    if (zoomToContent && root.div && infiniteViewer && viewerDiv) {
+      const dimentions = this.calculateZoomToFitScale(Array.from(root.div.children), viewerDiv);
+      const { scale, centerX, centerY } = dimentions;
+      infiniteViewer.setZoom(scale);
+      infiniteViewer.scrollTo(centerX, centerY);
+    }
+  };
+
+  calculateZoomToFitScale(elements: Element[], container: HTMLDivElement, paddingRatio = 0.05) {
+    const bounds = this.calculateGroupBoundingBox(elements);
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    const paddedWidth = containerWidth * (1 - 2 * paddingRatio);
+    const paddedHeight = containerHeight * (1 - 2 * paddingRatio);
+
+    const scaleX = paddedWidth / bounds.width;
+    const scaleY = paddedHeight / bounds.height;
+
+    // Use the smaller one to fit both horizontally and vertically
+    const scale = Math.min(scaleX, scaleY);
+
+    // calculate value to move to center
+    const centerX = (bounds.centerX * scale - containerWidth / 2) / scale;
+    const centerY = (bounds.centerY * scale - containerHeight / 2) / scale;
+
+    return {
+      scale,
+      centerX,
+      centerY,
+    };
+  }
+
+  extractTranslateFromTransform(transform: string) {
+    const matrix = new DOMMatrix(transform);
+    return { x: matrix.m41, y: matrix.m42 }; // m41 = translateX, m42 = translateY
+  }
+
+  calculateGroupBoundingBox(elements: Element[]) {
+    let minX = Infinity,
+      minY = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity;
+
+    for (const el of elements) {
+      const style = window.getComputedStyle(el);
+      const { x: tx, y: ty } = this.extractTranslateFromTransform(style.transform || '');
+
+      const width = parseFloat(style.width);
+      const height = parseFloat(style.height);
+
+      const left = tx;
+      const top = ty;
+      const right = tx + width;
+      const bottom = ty + height;
+
+      minX = Math.min(minX, left);
+      minY = Math.min(minY, top);
+      maxX = Math.max(maxX, right);
+      maxY = Math.max(maxY, bottom);
+    }
+
+    return {
+      left: minX,
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2,
+    };
+  }
+
   render() {
     const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
     const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
@@ -290,7 +427,8 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+      <>
+        {/* <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}> */}
         {this.connections.render()}
         {this.root.render()}
         {this.isEditingEnabled && (
@@ -307,11 +445,19 @@ export class Scene {
             <CanvasTooltip scene={this} />
           </Portal>
         )}
-      </div>
+        {/* </div> */}
+      </>
     );
 
     return config.featureToggles.canvasPanelPanZoom ? (
-      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
+      <>
+        {/* <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper> */}
+        <div className={this.styles.viewer} ref={this.setViewerRef} key={this.revId}>
+          <div className={this.styles.viewport} ref={this.setViewportRef} key={this.revId}>
+            {sceneDiv}
+          </div>
+        </div>
+      </>
     ) : (
       sceneDiv
     );
@@ -322,5 +468,19 @@ const getStyles = () => ({
   wrap: css({
     overflow: 'hidden',
     position: 'relative',
+    // border: `2px solid green`,
+  }),
+  selected: css({
+    zIndex: '999 !important',
+  }),
+  viewer: css({
+    width: '100%',
+    height: '100%',
+  }),
+  viewport: css({
+    // overflow: 'hidden',
+    // position: 'relative',
+    width: '100%',
+    height: '100%',
   }),
 });

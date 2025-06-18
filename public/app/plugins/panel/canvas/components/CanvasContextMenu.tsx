@@ -31,6 +31,17 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   const selectedElements = scene.selecto?.getSelectedTargets();
   const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
+  useEffect(() => {
+    scene.openContextMenu = (position: AnchorPoint) => {
+      setAnchorPoint(position);
+      setIsMenuVisible(true);
+      onVisibilityChange(true);
+    };
+
+    // Clean up the openContextMenu on unmount
+    return () => (scene.openContextMenu = undefined);
+  }, [scene, onVisibilityChange]);
+
   const handleContextMenu = useCallback(
     (event: Event) => {
       if (!(event instanceof MouseEvent) || event.ctrlKey) {
@@ -40,7 +51,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       event.preventDefault();
       panel.setActivePanel();
 
-      const shouldSelectElement = event.currentTarget !== scene.div;
+      const shouldSelectElement = event.currentTarget !== scene.viewportDiv;
       if (
         shouldSelectElement &&
         (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
@@ -61,12 +72,6 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       });
     }
   }, [handleContextMenu, scene.selecto]);
-
-  useEffect(() => {
-    if (scene.div) {
-      scene.div.addEventListener('contextmenu', handleContextMenu);
-    }
-  }, [handleContextMenu, scene.div]);
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);
@@ -128,9 +133,10 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       const onClickItem = (option: SelectableValue<string>) => {
         let offsetY = anchorPoint.y;
         let offsetX = anchorPoint.x;
-        if (scene.div) {
-          const transformScale = scene.scale;
-          const sceneContainerDimensions = scene.div.getBoundingClientRect();
+        if (scene.viewportDiv) {
+          // const transformScale = scene.scale;
+          const transformScale = 1;
+          const sceneContainerDimensions = scene.viewportDiv.getBoundingClientRect();
           offsetY = (offsetY - sceneContainerDimensions.top) / transformScale;
           offsetX = (offsetX - sceneContainerDimensions.left) / transformScale;
         }
