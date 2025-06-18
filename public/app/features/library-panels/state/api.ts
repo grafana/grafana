@@ -88,7 +88,7 @@ export async function getLibraryPanelByName(name: string): Promise<LibraryElemen
     undefined,
     undefined,
     {
-      sanitizePath: true,
+      validatePath: true,
     }
   );
   return result;

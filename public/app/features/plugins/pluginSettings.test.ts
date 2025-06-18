@@ -30,7 +30,7 @@ describe('PluginSettings', () => {
     expect(response).toEqual(testPluginResponse);
     expect(getRequestSpy).toHaveBeenCalledTimes(1);
     expect(getRequestSpy).toHaveBeenCalledWith('/api/plugins/test/settings', undefined, undefined, {
-      sanitizePath: true,
+      validatePath: true,
     });
   });
 
