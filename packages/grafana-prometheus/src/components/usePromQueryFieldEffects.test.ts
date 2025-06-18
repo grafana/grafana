@@ -21,8 +21,6 @@ describe('usePromQueryFieldEffects', () => {
     datasource: {},
     lookupsDisabled: false,
     syntax: jest.fn(),
-    // getLabelKeys: jest.fn(),
-    // cleanText: jest.fn(),
     hasLookupsDisabled: jest.fn(),
     getBeginningCompletionItems: jest.fn(),
     getLabelCompletionItems: jest.fn(),
@@ -30,13 +28,8 @@ describe('usePromQueryFieldEffects', () => {
     getTermCompletionItems: jest.fn(),
     request: jest.fn(),
     importQueries: jest.fn(),
-    // labelKeys: [],
     labelFetchTs: 0,
     getDefaultCacheHeaders: jest.fn(),
-    // loadMetricsMetadata: jest.fn(),
-    // loadMetrics: jest.fn(),
-    // loadLabelKeys: jest.fn(),
-    // loadLabelValues: jest.fn(),
     modifyQuery: jest.fn(),
   } as unknown as PrometheusLanguageProviderInterface;
 
