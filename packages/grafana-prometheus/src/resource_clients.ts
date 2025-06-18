@@ -6,7 +6,8 @@ import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
-import { PrometheusCacheLevel } from './types';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { EMPTY_MATCHER, MATCH_ALL_LABELS, METRIC_LABEL, PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
@@ -32,10 +33,6 @@ type RequestFn = (
   params?: Record<string, unknown>,
   options?: Partial<BackendSrvRequest>
 ) => Promise<unknown>;
-
-const EMPTY_MATCHER = '{}';
-const MATCH_ALL_LABELS = '{__name__!=""}';
-const METRIC_LABEL = '__name__';
 
 export abstract class BaseResourceClient {
   constructor(
@@ -208,10 +205,24 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
     const utf8SafeLabelKey = utf8Support(labelKey);
-    const effectiveMatch =
-      !match || match === EMPTY_MATCHER
-        ? `{${utf8SafeLabelKey}!=""}`
-        : match.slice(0, match.length - 1).concat(`,${utf8SafeLabelKey}!=""}`);
+    let effectiveMatch = '';
+    if (!match || match === EMPTY_MATCHER) {
+      // Just and empty matcher {} or no matcher
+      effectiveMatch = `{${utf8SafeLabelKey}!=""}`;
+    } else {
+      const {
+        query: { metric, labels },
+      } = buildVisualQueryFromString(match);
+      labels.push({
+        label: utf8SafeLabelKey,
+        op: '!=',
+        value: '',
+      });
+      const metricFilter = metric ? `__name__="${metric}",` : '';
+      const labelFilters = labels.map((lf) => `${utf8Support(lf.label)}${lf.op}"${lf.value}"`).join(',');
+      effectiveMatch = `{${metricFilter}${labelFilters}}`;
+    }
+
     const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
     if (maybeCachedValues) {
       return maybeCachedValues;
@@ -234,6 +245,9 @@ class ResourceClientsCache {
   constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
 
   public setLabelKeys(timeRange: TimeRange, match: string, limit: string, keys: string[]) {
+    if (keys.length === 0) {
+      return;
+    }
     // Check and potentially clean cache before adding new entry
     this.cleanCacheIfNeeded();
     const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
@@ -252,6 +266,9 @@ class ResourceClientsCache {
   }
 
   public setLabelValues(timeRange: TimeRange, match: string, limit: string, values: string[]) {
+    if (values.length === 0) {
+      return;
+    }
     // Check and potentially clean cache before adding new entry
     this.cleanCacheIfNeeded();
     const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');

@@ -138,26 +138,18 @@ describe('PromVariableQueryEditor', () => {
         hasLabelsMatchAPISupport: () => true,
         languageProvider: {
           start: () => Promise.resolve([]),
-          getLabelKeys: () => [],
-          metrics: [],
-          metricsMetadata: {},
-          getLabelValues: jest.fn().mockImplementation(() => ['that']),
-          fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
-          queryLabelValues: jest.fn().mockResolvedValue([]),
+          queryLabelKeys: jest.fn().mockResolvedValue(['those']),
+          queryLabelValues: jest.fn().mockResolvedValue(['that']),
         } as Partial<PrometheusLanguageProviderInterface>,
-        getTagKeys: jest
-          .fn()
-          .mockImplementation(() => Promise.resolve([{ text: 'this', value: 'this', label: 'this' }])),
-        getVariables: jest.fn().mockImplementation(() => []),
-        metricFindQuery: jest.fn().mockImplementation(() =>
-          Promise.resolve([
-            {
-              text: 'that',
-              value: 'that',
-              label: 'that',
-            },
-          ])
-        ),
+        getTagKeys: jest.fn().mockResolvedValue([{ text: 'this', value: 'this', label: 'this' }]),
+        getVariables: jest.fn().mockReturnValue([]),
+        metricFindQuery: jest.fn().mockResolvedValue([
+          {
+            text: 'that',
+            value: 'that',
+            label: 'that',
+          },
+        ]),
       } as Partial<PrometheusDatasource> as PrometheusDatasource,
       query: {
         refId: 'test',

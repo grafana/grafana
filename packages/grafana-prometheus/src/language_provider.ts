@@ -17,7 +17,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { REMOVE_SERIES_LIMIT, DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
+import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -30,14 +30,14 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
-import { PromMetricsMetadata, PromQuery } from './types';
+import { MATCH_ALL_LABELS_STR, PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 
 /**
- * Prometheus API endpoints for fetching resoruces
+ * Prometheus API endpoints for fetching resources
  */
 const API_V1 = {
   METADATA: '/api/v1/metadata',
@@ -785,23 +785,26 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * This is used to filter time series data based on existing queries.
  * Handles UTF8 metrics by properly escaping them.
  *
- * @param {URLSearchParams} initialParams - Initial URL parameters
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {URLSearchParams} URL parameters with match[] parameters added
+ * @returns {string} Metric names as a regex matcher
  */
-export const populateMatchParamsFromQueries = (
-  initialParams: URLSearchParams,
-  queries?: PromQuery[]
-): URLSearchParams => {
-  return (queries ?? []).reduce((params, query) => {
+export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+  if (!queries) {
+    return MATCH_ALL_LABELS_STR;
+  }
+
+  const metrics = (queries ?? []).reduce<string[]>((params, query) => {
     const visualQuery = buildVisualQueryFromString(query.expr);
-    const isUtf8Metric = !isValidLegacyName(visualQuery.query.metric);
-    params.append('match[]', isUtf8Metric ? `{"${visualQuery.query.metric}"}` : visualQuery.query.metric);
+    if (visualQuery.query.metric !== '') {
+      params.push(visualQuery.query.metric);
+    }
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
-        params.append('match[]', isUtf8Metric ? `{"${bq.query.metric}"}` : bq.query.metric);
+        params.push(bq.query.metric);
       });
     }
     return params;
-  }, initialParams);
+  }, []);
+
+  return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
 };
