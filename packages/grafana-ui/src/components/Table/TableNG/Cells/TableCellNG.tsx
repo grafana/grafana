@@ -50,7 +50,6 @@ export function TableCellNG(props: TableCellNGProps) {
             <IconButton
               name="eye"
               aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
-              className={styles.cellInspectButton}
               onClick={() => {
                 let inspectValue = value;
                 let mode = TableCellInspectorMode.text;

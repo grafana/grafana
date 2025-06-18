@@ -7,14 +7,13 @@ import { TableCellDisplayMode } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
+import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
 import {
   getDisplayName,
   getIsNestedTable,
   processNestedTableRows,
   getCellHeightCalculator,
   getFooterItem,
-  getColumnTypes,
   applySort,
   getCellOptions,
 } from './utils';
@@ -29,7 +28,7 @@ const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
   return displayedValue;
 };
 
-export interface FilteredRowResult {
+export interface FilteredRowsResult {
   rows: TableRow[];
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
@@ -37,20 +36,26 @@ export interface FilteredRowResult {
   crossFilterRows: Record<string, TableRow[]>;
 }
 
-export function useFilteredRows(rows: TableRow[], fields: Field[]): FilteredRowResult {
+export interface FilteredRowsOptions {
+  hasNestedFrames: boolean;
+}
+
+export function useFilteredRows(
+  rows: TableRow[],
+  fields: Field[],
+  { hasNestedFrames }: FilteredRowsOptions
+): FilteredRowsResult {
   // TODO: allow persisted filter selection via url
   const [filter, setFilter] = useState<FilterType>({});
   const filterValues = useMemo(() => Object.entries(filter), [filter]);
 
-  const crossFilterOrder: FilteredRowResult['crossFilterOrder'] = useMemo(
+  const crossFilterOrder: FilteredRowsResult['crossFilterOrder'] = useMemo(
     () => Array.from(new Set(filterValues.map(([key]) => key))),
     [filterValues]
   );
 
-  const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
-
   const [filteredRows, crossFilterRows] = useMemo(() => {
-    const crossFilterRows: FilteredRowResult['crossFilterRows'] = {};
+    const crossFilterRows: FilteredRowsResult['crossFilterRows'] = {};
 
     const filterRows = (row: TableRow): boolean => {
       for (const [key, value] of filterValues) {
@@ -82,6 +87,8 @@ export function useFilteredRows(rows: TableRow[], fields: Field[]): FilteredRowR
 }
 
 export interface SortedRowsOptions {
+  columnTypes: ColumnTypes;
+  hasNestedFrames: boolean;
   initialSortBy?: TableSortByFieldState[];
 }
 
@@ -94,7 +101,7 @@ export interface SortedRowsResult {
 export function useSortedRows(
   rows: TableRow[],
   fields: Field[],
-  { initialSortBy }: SortedRowsOptions = {}
+  { initialSortBy, columnTypes, hasNestedFrames }: SortedRowsOptions
 ): SortedRowsResult {
   const initialSortColumns = useMemo<SortColumn[]>(
     () =>
@@ -112,9 +119,6 @@ export function useSortedRows(
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
-
-  const hasNestedFrames = useMemo(() => getIsNestedTable(fields), [fields]);
-  const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
   const sortedRows = useMemo(
     () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),

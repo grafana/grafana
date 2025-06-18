@@ -111,6 +111,7 @@ export function TableNG(props: TableNGProps) {
 
   const memoizedRows = useMemo(() => frameToRecords(data), [data]);
   const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
+  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
 
   const {
     rows: filteredRows,
@@ -118,30 +119,24 @@ export function TableNG(props: TableNGProps) {
     setFilter,
     crossFilterOrder,
     crossFilterRows,
-  } = useFilteredRows(memoizedRows, data.fields);
+  } = useFilteredRows(memoizedRows, data.fields, { hasNestedFrames });
 
   const {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, {
-    initialSortBy,
-  });
+  } = useSortedRows(filteredRows, data.fields, { columnTypes, hasNestedFrames, initialSortBy });
 
   const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // vt scrollbar accounting for column auto-sizing
-  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
-  const visibleFieldsByDisplayName = useMemo(() => {
-    const map: Record<string, Field> = {};
-    for (const f of visibleFields) {
-      map[getDisplayName(f)] = f;
-    }
-    return map;
-  }, [visibleFields]);
+  const visibleFieldsByDisplayName: Record<string, Field> = useMemo(
+    () => visibleFields.reduce((acc, f) => ({ ...acc, [getDisplayName(f)]: f }), {}),
+    [visibleFields]
+  );
   const availableWidth = useMemo(
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
     [width, hasNestedFrames]

@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { Field, FieldType } from '@grafana/data';
 
 import { useFilteredRows, usePaginatedRows, useSortedRows } from './hooks';
+import { getColumnTypes } from './utils';
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -43,13 +44,13 @@ describe('TableNG hooks', () => {
   describe('useFilteredRows', () => {
     it('should correctly initialize with provided fields and rows', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
+      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
       expect(result.current.rows[0].name).toBe('Alice');
     });
 
     it('should apply filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
+      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
 
       act(() => {
         result.current.setFilter({
@@ -63,7 +64,7 @@ describe('TableNG hooks', () => {
 
     it('should clear filters correctly', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
+      const { result } = renderHook(() => useFilteredRows(rows, fields, { hasNestedFrames: false }));
 
       act(() => {
         result.current.setFilter({
@@ -79,13 +80,20 @@ describe('TableNG hooks', () => {
 
       expect(result.current.rows.length).toBe(3);
     });
+
+    it.todo('should handle nested frames');
   });
 
   describe('useSortedRows', () => {
     it('should correctly set up the table with an initial sort', () => {
       const { fields, rows } = setupData();
+      const columnTypes = getColumnTypes(fields);
       const { result } = renderHook(() =>
-        useSortedRows(rows, fields, { initialSortBy: [{ displayName: 'age', desc: false }] })
+        useSortedRows(rows, fields, {
+          columnTypes,
+          hasNestedFrames: false,
+          initialSortBy: [{ displayName: 'age', desc: false }],
+        })
       );
 
       // Initial state checks
@@ -95,8 +103,13 @@ describe('TableNG hooks', () => {
 
     it('should change the sort on setSortColumns', () => {
       const { fields, rows } = setupData();
+      const columnTypes = getColumnTypes(fields);
       const { result } = renderHook(() =>
-        useSortedRows(rows, fields, { initialSortBy: [{ displayName: 'age', desc: false }] })
+        useSortedRows(rows, fields, {
+          columnTypes,
+          hasNestedFrames: false,
+          initialSortBy: [{ displayName: 'age', desc: false }],
+        })
       );
 
       expect(result.current.rows[0].name).toBe('Bob');
@@ -113,6 +126,8 @@ describe('TableNG hooks', () => {
 
       expect(result.current.rows[0].name).toBe('Alice');
     });
+
+    it.todo('should handle nested frames');
   });
 
   describe('usePaginatedRows', () => {
