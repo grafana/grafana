@@ -315,14 +315,16 @@ def store_storybook_step(ver_mode, trigger = None):
     return step
 
 def e2e_tests_artifacts():
+    # Note: This function is kept for backward compatibility but now only handles 
+    # artifacts from the remaining E2E tests that haven't been migrated to GitHub Actions
     return {
         "name": "e2e-tests-artifacts-upload",
         "image": images["cloudsdk"],
         "depends_on": [
-            "end-to-end-tests-dashboards-suite",
-            "end-to-end-tests-panels-suite",
-            "end-to-end-tests-smoke-tests-suite",
-            "end-to-end-tests-various-suite",
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Only depend on remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
             github_app_generate_token_step()["name"],
         ],
         "failure": "ignore",
@@ -338,8 +340,8 @@ def e2e_tests_artifacts():
         },
         "commands": [
             "export GITHUB_TOKEN=$(cat /github-app/token)",
-            # if no videos found do nothing
-            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
+            # if no videos found do nothing (may be fewer videos now that main tests are in GitHub Actions)
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'no e2e videos found from remaining tests'; exit 0; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
@@ -970,10 +972,10 @@ def release_canary_npm_packages_step(trigger = None):
     return step
 
 def upload_packages_step(ver_mode, trigger = None, depends_on = [
-    "end-to-end-tests-dashboards-suite",
-    "end-to-end-tests-panels-suite",
-    "end-to-end-tests-smoke-tests-suite",
-    "end-to-end-tests-various-suite",
+    # Note: Main E2E tests have been migrated to GitHub Actions
+    # Updated dependencies to only include remaining Drone E2E tests
+    "end-to-end-tests-cloud-plugins-suite-azure",
+    "playwright-plugin-e2e",
 ]):
     """Upload packages to object storage.
 
@@ -1135,11 +1137,11 @@ def verify_gen_jsonnet_step():
     }
 
 def end_to_end_tests_deps():
+    # Note: Main E2E tests have been migrated to GitHub Actions
+    # Only return dependencies for E2E tests that still run in Drone
     return [
-        "end-to-end-tests-dashboards-suite",
-        "end-to-end-tests-panels-suite",
-        "end-to-end-tests-smoke-tests-suite",
-        "end-to-end-tests-various-suite",
+        "end-to-end-tests-cloud-plugins-suite-azure",
+        "playwright-plugin-e2e",
     ]
 
 def compile_build_cmd():
