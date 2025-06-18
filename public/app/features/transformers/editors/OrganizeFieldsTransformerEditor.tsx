@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
@@ -432,7 +432,7 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
                     'Drag and drop to reorder'
                   )}
                   size="lg"
-                  className={styles.draggable}
+                  className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
                 />
               </span>
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
@@ -469,6 +469,10 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       color: theme.colors.text.maxContrast,
     },
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    pointerEvents: 'none',
   }),
 });
 
