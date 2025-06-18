@@ -655,7 +655,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer(3),
+					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
 				},
 			},
 		}

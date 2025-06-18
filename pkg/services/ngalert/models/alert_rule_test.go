@@ -1113,7 +1113,7 @@ func TestValidateAlertRule(t *testing.T) {
 	t.Run("missingSeriesEvalsToResolve", func(t *testing.T) {
 		testCases := []struct {
 			name                        string
-			missingSeriesEvalsToResolve *int
+			missingSeriesEvalsToResolve *int64
 			expectedErrorContains       string
 		}{
 			{
@@ -1122,17 +1122,17 @@ func TestValidateAlertRule(t *testing.T) {
 			},
 			{
 				name:                        "should reject negative value",
-				missingSeriesEvalsToResolve: util.Pointer(-1),
+				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should reject 0",
-				missingSeriesEvalsToResolve: util.Pointer(0),
+				missingSeriesEvalsToResolve: util.Pointer[int64](0),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should accept positive value",
-				missingSeriesEvalsToResolve: util.Pointer(2),
+				missingSeriesEvalsToResolve: util.Pointer[int64](2),
 			},
 		}
 

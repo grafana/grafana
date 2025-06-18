@@ -299,10 +299,10 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 //   - == 0, returns nil (reset to default)
 //   - == nil && UID == "", returns nil (new rule)
 //   - == nil && UID != "", returns -1 (existing rule)
-func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}

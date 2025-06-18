@@ -639,6 +639,18 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
+		// FIXME: record is nullable but we don't save it as null when it's nil
+		switch query.RuleType {
+		case ngmodels.RuleTypeFilterAlerting:
+			q = q.Where("record = ''")
+		case ngmodels.RuleTypeFilterRecording:
+			q = q.Where("record != ''")
+		case ngmodels.RuleTypeFilterAll:
+			// no additional filter
+		default:
+			return fmt.Errorf("unknown rule type filter %q", query.RuleType)
+		}
+
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)

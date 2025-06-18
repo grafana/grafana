@@ -80,6 +80,50 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
+func (service *AlertRuleService) GetFilteredRules(ctx context.Context, user identity.Requester, filter models.RuleTypeFilter) ([]*models.AlertRule, map[string]models.Provenance, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:    user.GetOrgID(),
+		RuleType: filter,
+	}
+	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return nil, nil, err
+	}
+	provenances := make(map[string]models.Provenance)
+	if len(rules) > 0 {
+		resourceType := rules[0].ResourceType()
+		provenances, err = service.provenanceStore.GetProvenances(ctx, user.GetOrgID(), resourceType)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	can, err := service.authz.CanReadAllRules(ctx, user)
+	if err != nil {
+		return nil, nil, err
+	}
+	if can {
+		return rules, provenances, nil
+	}
+	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
+	groups := models.GroupByAlertRuleGroupKey(rules)
+	result := make([]*models.AlertRule, 0, len(rules))
+	for _, group := range groups {
+		if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
+			if errors.Is(err, accesscontrol.ErrAuthorizationBase) {
+				// remove provenances for rules that will not be added to the output
+				for _, rule := range group {
+					delete(provenances, rule.ResourceID())
+				}
+				continue
+			}
+			return nil, nil, err
+		}
+		result = append(result, group...)
+	}
+	return result, provenances, nil
+}
+
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]models.Provenance, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),
@@ -199,6 +243,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+	// FIXME(@moustafab||@rwwiv): need to allow for different intervals for sentinel group (non-grouped apis)
 	if canWriteAllRules {
 		groupInterval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 		// if the alert group does not exist we just use the default interval
