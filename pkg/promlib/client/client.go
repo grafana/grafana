@@ -20,6 +20,23 @@ type doer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+var endpointsSupportOnlyGet = []string{
+	"api/v1/label/", // label values endpoint api/v1/label/<label-key>/values
+	"api/v1/metadata",
+	"api/v1/targets",
+	"api/v1/rules",
+	"api/v1/alerts",
+	"api/v1/targets/metadata",
+	"api/v1/alertmanagers",
+	"api/v1/status/config",
+	"api/v1/status/flags",
+	"api/v1/status/runtimeinfo",
+	"api/v1/status/buildinfo",
+	"api/v1/status/tsdb",
+	"api/v1/status/walreplay",
+	"api/v1/notifications",
+}
+
 // Client is a custom Prometheus client. Reason for this is that Prom Go client serializes response into its own
 // objects, we have to go through them and then serialize again into DataFrame which isn't very efficient. Using custom
 // client we can parse response directly into DataFrame.
@@ -90,26 +107,96 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Res
 }
 
 func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceRequest) (*http.Response, error) {
-	// The way URL is represented in CallResourceRequest and what we need for the fetch function is different
-	// so here we have to do a bit of parsing, so we can then compose it with the base url in correct way.
-	reqUrlParsed, err := url.Parse(req.URL)
+	u, err := c.prepareResourceURL(req.URL, req.Path)
 	if err != nil {
 		return nil, err
 	}
-	u, err := c.createUrl(req.Path, nil)
+
+	useGet := c.shouldUseGetMethod(req.Path)
+	return c.executeResourceQueryWithFallback(ctx, u, req.Body, useGet)
+}
+
+func (c *Client) executeResourceQueryWithFallback(ctx context.Context, u *url.URL, body []byte, useGet bool) (*http.Response, error) {
+	var httpRequest *http.Request
+	var err error
+
+	if useGet {
+		addBodyToQueryParams(u, body)
+		httpRequest, err = createRequest(ctx, http.MethodGet, u, http.NoBody)
+	} else {
+		httpRequest, err = createRequest(ctx, http.MethodPost, u, bytes.NewReader(body))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.doer.Do(httpRequest)
+	if resp == nil {
+		return nil, err
+	}
+
+	// Try GET if POST fails with 405 or 400
+	if err == nil && httpRequest.Method == http.MethodPost &&
+		(resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusBadRequest) {
+		if err = resp.Body.Close(); err != nil {
+			return nil, err
+		}
+
+		addBodyToQueryParams(u, body)
+		httpRequest, err = createRequest(ctx, http.MethodGet, u, http.NoBody)
+		if err != nil {
+			return nil, err
+		}
+
+		return c.doer.Do(httpRequest)
+	}
+
+	return resp, err
+}
+
+func (c *Client) prepareResourceURL(reqURL, reqPath string) (*url.URL, error) {
+	reqUrlParsed, err := url.Parse(reqURL)
+	if err != nil {
+		return nil, err
+	}
+	u, err := c.createUrl(reqPath, nil)
 	if err != nil {
 		return nil, err
 	}
 	u.RawQuery = reqUrlParsed.RawQuery
+	return u, nil
+}
 
-	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
-	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
-	if err != nil {
-		return nil, err
+func (c *Client) shouldUseGetMethod(reqPath string) bool {
+	if c.method == http.MethodGet {
+		return true
 	}
 
-	return c.doer.Do(httpRequest)
+	for _, endpoint := range endpointsSupportOnlyGet {
+		if strings.HasPrefix(reqPath, endpoint) {
+			return true
+		}
+	}
+	return false
+}
+
+// addBodyToQueryParams parses the request body as form data and adds its parameters to the URL query string
+func addBodyToQueryParams(u *url.URL, body []byte) {
+	if len(body) > 0 {
+		// Try to parse the body as form data
+		formValues, err := url.ParseQuery(string(body))
+		if err == nil && len(formValues) > 0 {
+			// Merge query params from URL and body
+			queryValues := u.Query()
+			for key, values := range formValues {
+				for _, value := range values {
+					queryValues.Add(key, value)
+				}
+			}
+			u.RawQuery = queryValues.Encode()
+		}
+	}
 }
 
 func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map[string]string) (*http.Request, error) {
