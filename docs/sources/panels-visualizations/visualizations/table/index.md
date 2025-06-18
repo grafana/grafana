@@ -262,7 +262,6 @@ It has the following cell options:
 
 | Option | Description |
 | ------ | ----------- |
-| [Cell type](#cell-type) | Control the default cell display settings. |
 | [Wrap text](#wrap-text) | Wrap text in the cell that contains the longest content in your table. |
 | [Cell value inspect](#cell-value-inspect) | Enables value inspection from table cells. |
 
@@ -304,6 +303,13 @@ If thresholds are set, with this cell type, the field text is displayed in the a
 {{< admonition type="note" >}}
 This is an experimental feature.
 {{< /admonition >}}
+
+The colored text cell type has the following options:
+
+| Option | Description |
+| ------ | ----------- |
+| [Wrap text](#wrap-text) | Wrap text in the cell that contains the longest content in your table. |
+| [Cell value inspect](#cell-value-inspect) | Enables value inspection from table cells. |
 
 ##### Colored background
 
