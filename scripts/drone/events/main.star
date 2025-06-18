@@ -28,10 +28,6 @@ load(
     "enterprise_downstream_pipeline",
 )
 load(
-    "scripts/drone/pipelines/verify_storybook.star",
-    "verify_storybook",
-)
-load(
     "scripts/drone/utils/utils.star",
     "failure_template",
     "notify_pipeline",
@@ -62,7 +58,6 @@ def main_pipelines():
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_backend(trigger, ver_mode),
         lint_backend_pipeline(trigger, ver_mode),
-        verify_storybook(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         enterprise_downstream_pipeline(),

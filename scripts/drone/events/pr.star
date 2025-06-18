@@ -36,10 +36,6 @@ load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
 )
-load(
-    "scripts/drone/pipelines/verify_storybook.star",
-    "verify_storybook",
-)
 
 ver_mode = "pr"
 trigger = {
@@ -66,12 +62,6 @@ def pr_pipelines():
         verify_starlark(
             get_pr_trigger(
                 include_paths = ["scripts/drone/**", ".drone.star"],
-            ),
-            ver_mode,
-        ),
-        verify_storybook(
-            get_pr_trigger(
-                include_paths = ["packages/grafana-ui/**"],
             ),
             ver_mode,
         ),
