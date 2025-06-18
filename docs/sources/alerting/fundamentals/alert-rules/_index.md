@@ -57,7 +57,7 @@ The following data sources are supported:
 
 Data source-managed alert rules can improve query performance via [recording rules](#recording-rules) and ensure high-availability and fault tolerance when implementing a distributed architecture.
 
-They are only supported for Prometheus-based or Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
+They are only supported for Prometheus-based or Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<LOKI_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<MIMIR_VERSION>/references/http-api/#ruler).
 
 {{< figure src="/media/docs/alerting/mimir-managed-alerting-architecture-v2.png" max-width="750px" caption="Mimir-managed alerting architecture" >}}
 
