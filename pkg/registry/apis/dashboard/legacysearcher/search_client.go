@@ -237,7 +237,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			query.Title = vals[0]
 			query.TitleExactMatch = true
 		}
-
 	}
 
 	columns := c.getColumns(sortByField, query)
