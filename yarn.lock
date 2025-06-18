@@ -3728,7 +3728,7 @@ __metadata:
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.34.0"
     rc-drawer: "npm:7.3.0"
-    rc-picker: "npm:4.9.2"
+    rc-picker: "npm:4.11.3"
     rc-slider: "npm:11.1.8"
     rc-tooltip: "npm:6.4.0"
     react: "npm:18.3.1"
@@ -26085,9 +26085,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-picker@npm:4.9.2":
-  version: 4.9.2
-  resolution: "rc-picker@npm:4.9.2"
+"rc-picker@npm:4.11.3":
+  version: 4.11.3
+  resolution: "rc-picker@npm:4.11.3"
   dependencies:
     "@babel/runtime": "npm:^7.24.7"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -26111,7 +26111,7 @@ __metadata:
       optional: true
     moment:
       optional: true
-  checksum: 10/5bf0abec3b0fc778a8b0d64023d395f22692b910ead0e63b1f9b941ee510769c814525733bf9084d504567aa449fa50c4dafb18ae95b8e1a291c857e535aeb28
+  checksum: 10/e1e3236338e2ff0d0fa6fcde568457f7dd6ad13a88d870db8fca1de39f452463c26be71a565c1ee7557a2a109bb4737816b8a729f404169403daec8f8a014fff
   languageName: node
   linkType: hard
 
