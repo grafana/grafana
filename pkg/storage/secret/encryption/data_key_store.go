@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
@@ -17,9 +18,14 @@ type encryptionStoreImpl struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
 	log     log.Logger
+	metrics *DataKeyMetrics
 }
 
-func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.DataKeyStorage, error) {
+func ProvideDataKeyStorage(
+	db contracts.Database,
+	features featuremgmt.FeatureToggles,
+	registerer prometheus.Registerer,
+) (contracts.DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
@@ -29,6 +35,7 @@ func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureTo
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		log:     log.New("encryption.store"),
+		metrics: NewDataKeyMetrics(registerer),
 	}
 
 	return store, nil

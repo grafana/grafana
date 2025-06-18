@@ -326,7 +326,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	tracer := tracing.InitializeTracerForTest()
 
 	// Initialize encryption manager and storage
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features, nil)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)

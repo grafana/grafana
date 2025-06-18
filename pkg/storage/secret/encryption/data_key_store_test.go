@@ -29,7 +29,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
+	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB), features, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()

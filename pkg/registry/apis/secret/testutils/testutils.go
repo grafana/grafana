@@ -101,7 +101,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, features, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
