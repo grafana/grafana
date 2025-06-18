@@ -94,7 +94,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           />
           <div className={styles.switchWrapper}>
             <span className={styles.switchLabel}>
-              <Trans i18nKey="dashboard.transformation-picker-ng.images">Images</Trans>
+              <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
             </span>
             <Switch
               value={showIllustrations}
