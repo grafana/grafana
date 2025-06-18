@@ -18,11 +18,13 @@ import {
   POLISH_POLAND,
   SWEDISH_SWEDEN,
   TURKISH_TURKEY,
-  PSEUDO_LOCALE,
 } from './constants';
 
 interface TranslationDefinition {
+  /** IETF language tag */
   code: string;
+
+  /** The language name in its own language (e.g. "Français" for French) */
   name: string;
 }
 
@@ -50,7 +52,3 @@ export const LANGUAGES: TranslationDefinition[] = [
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
 ];
-
-if (process.env.NODE_ENV === 'development') {
-  LANGUAGES.push({ code: PSEUDO_LOCALE, name: 'Pseudo-locale' });
-}

@@ -14,14 +14,20 @@ import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
-import { SUGGESTIONS_LIMIT } from '../language_provider';
+import {
+  DURATION_REGEX,
+  MULTIPLE_DURATION_REGEX,
+  NON_NEGATIVE_INTEGER_REGEX,
+  PROM_CONFIG_LABEL_WIDTH,
+  SUGGESTIONS_LIMIT,
+} from '../constants';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromApplication, PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH, validateInput } from './ConfigEditor';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
+import { docsTip, overhaulStyles, validateInput } from './shared/utils';
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -50,14 +56,6 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
-
-// single duration input
-export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
-
-// multiple duration input
-export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
-
-export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; // non-negative integers, including scientific notation
 
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
 export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
@@ -102,7 +100,7 @@ export const PromSettings = (props: Props) => {
   return (
     <>
       <ConfigSubSection
-        title={t('configuration.prom-settings.title-interval-behaviour', 'Interval behaviour')}
+        title={t('grafana-prometheus.configuration.prom-settings.title-interval-behaviour', 'Interval behaviour')}
         className={styles.container}
       >
         <div className="gf-form-group">
@@ -110,11 +108,14 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineField
-                label={t('configuration.prom-settings.label-scrape-interval', 'Scrape interval')}
+                label={t('grafana-prometheus.configuration.prom-settings.label-scrape-interval', 'Scrape interval')}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-scrape-interval" values={{ default: '15s' }}>
+                    <Trans
+                      i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-scrape-interval"
+                      values={{ default: '15s' }}
+                    >
                       This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and
                       evaluation interval configured in your Prometheus config file. If you set this to a greater value
                       than your Prometheus config file interval, Grafana will evaluate the data according to this
@@ -151,11 +152,11 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineField
-                label={t('configuration.prom-settings.label-query-timeout', 'Query timeout')}
+                label={t('grafana-prometheus.configuration.prom-settings.label-query-timeout', 'Query timeout')}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-query-timeout">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-query-timeout">
                       Set the Prometheus query timeout.
                     </Trans>{' '}
                     {docsTip()}
@@ -189,17 +190,17 @@ export const PromSettings = (props: Props) => {
       </ConfigSubSection>
 
       <ConfigSubSection
-        title={t('configuration.prom-settings.title-query-editor', 'Query editor')}
+        title={t('grafana-prometheus.configuration.prom-settings.title-query-editor', 'Query editor')}
         className={styles.container}
       >
         <div className="gf-form-group">
           <div className="gf-form">
             <InlineField
-              label={t('configuration.prom-settings.label-default-editor', 'Default editor')}
+              label={t('grafana-prometheus.configuration.prom-settings.label-default-editor', 'Default editor')}
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
               tooltip={
                 <>
-                  <Trans i18nKey="configuration.prom-settings.tooltip-default-editor">
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-default-editor">
                     Set default editor option for all users of this data source.
                   </Trans>{' '}
                   {docsTip()}
@@ -210,7 +211,7 @@ export const PromSettings = (props: Props) => {
             >
               <Select
                 aria-label={t(
-                  'configuration.prom-settings.aria-label-default-editor',
+                  'grafana-prometheus.configuration.prom-settings.aria-label-default-editor',
                   'Default Editor (Code or Builder)'
                 )}
                 options={editorOptions}
@@ -227,10 +228,13 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form">
             <InlineField
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              label={t('configuration.prom-settings.label-disable-metrics-lookup', 'Disable metrics lookup')}
+              label={t(
+                'grafana-prometheus.configuration.prom-settings.label-disable-metrics-lookup',
+                'Disable metrics lookup'
+              )}
               tooltip={
                 <>
-                  <Trans i18nKey="configuration.prom-settings.tooltip-disable-metrics-lookup">
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-disable-metrics-lookup">
                     Checking this option will disable the metrics chooser and metric/label support in the query
                     field&apos;s autocomplete. This helps if you have performance issues with bigger Prometheus
                     instances.{' '}
@@ -253,14 +257,14 @@ export const PromSettings = (props: Props) => {
       </ConfigSubSection>
 
       <ConfigSubSection
-        title={t('configuration.prom-settings.title-performance', 'Performance')}
+        title={t('grafana-prometheus.configuration.prom-settings.title-performance', 'Performance')}
         className={styles.container}
       >
         {!optionsWithDefaults.jsonData.prometheusType &&
           !optionsWithDefaults.jsonData.prometheusVersion &&
           optionsWithDefaults.readOnly && (
             <div className={styles.versionMargin}>
-              <Trans i18nKey="configuration.prom-settings.more-info">
+              <Trans i18nKey="grafana-prometheus.configuration.prom-settings.more-info">
                 For more information on configuring prometheus type and version in data sources, see the{' '}
                 <TextLink external href="https://grafana.com/docs/grafana/latest/administration/provisioning/">
                   provisioning documentation
@@ -273,12 +277,12 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineField
-                label={t('configuration.prom-settings.label-prometheus-type', 'Prometheus type')}
+                label={t('grafana-prometheus.configuration.prom-settings.label-prometheus-type', 'Prometheus type')}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
                     {/* , and attempt to detect the version */}
-                    <Trans i18nKey="configuration.prom-settings.tooltip-prometheus-type">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prometheus-type">
                       Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos.
                       Changing this field will save your current settings. Certain types of Prometheus supports or does
                       not support various APIs. For example, some types support regex matching for label queries to
@@ -293,7 +297,10 @@ export const PromSettings = (props: Props) => {
                 disabled={optionsWithDefaults.readOnly}
               >
                 <Select
-                  aria-label={t('configuration.prom-settings.aria-label-prometheus-type', 'Prometheus type')}
+                  aria-label={t(
+                    'grafana-prometheus.configuration.prom-settings.aria-label-prometheus-type',
+                    'Prometheus type'
+                  )}
                   options={prometheusFlavorSelectItems}
                   value={prometheusFlavorSelectItems.find(
                     (o) => o.value === optionsWithDefaults.jsonData.prometheusType
@@ -309,14 +316,18 @@ export const PromSettings = (props: Props) => {
             {optionsWithDefaults.jsonData.prometheusType && (
               <div className="gf-form">
                 <InlineField
-                  label={t('configuration.prom-settings.label-prom-type-version', '{{promType}} version', {
-                    promType: optionsWithDefaults.jsonData.prometheusType,
-                  })}
+                  label={t(
+                    'grafana-prometheus.configuration.prom-settings.label-prom-type-version',
+                    '{{promType}} version',
+                    {
+                      promType: optionsWithDefaults.jsonData.prometheusType,
+                    }
+                  )}
                   labelWidth={PROM_CONFIG_LABEL_WIDTH}
                   tooltip={
                     <>
                       <Trans
-                        i18nKey="configuration.prom-settings.tooltip-prom-type-version"
+                        i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-prom-type-version"
                         values={{ promType: optionsWithDefaults.jsonData.prometheusType }}
                       >
                         Use this to set the version of your {'{{promType}}'} instance if it is not automatically
@@ -329,9 +340,13 @@ export const PromSettings = (props: Props) => {
                   disabled={optionsWithDefaults.readOnly}
                 >
                   <Select
-                    aria-label={t('configuration.prom-settings.aria-label-prom-type-type', '{{promType}} type', {
-                      promType: optionsWithDefaults.jsonData.prometheusType,
-                    })}
+                    aria-label={t(
+                      'grafana-prometheus.configuration.prom-settings.aria-label-prom-type-type',
+                      '{{promType}} type',
+                      {
+                        promType: optionsWithDefaults.jsonData.prometheusType,
+                      }
+                    )}
                     options={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]}
                     value={PromFlavorVersions[optionsWithDefaults.jsonData.prometheusType]?.find(
                       (o) => o.value === optionsWithDefaults.jsonData.prometheusVersion
@@ -348,11 +363,11 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
               <InlineField
-                label={t('configuration.prom-settings.label-cache-level', 'Cache level')}
+                label={t('grafana-prometheus.configuration.prom-settings.label-cache-level', 'Cache level')}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-cache-level">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-cache-level">
                       Sets the browser caching level for editor queries. Higher cache settings are recommended for high
                       cardinality data sources.
                     </Trans>
@@ -380,13 +395,13 @@ export const PromSettings = (props: Props) => {
               <div className="gf-form">
                 <InlineField
                   label={t(
-                    'configuration.prom-settings.label-metric-names-suggestion-limit',
+                    'grafana-prometheus.configuration.prom-settings.label-metric-names-suggestion-limit',
                     'Metric names suggestion limit'
                   )}
                   labelWidth={PROM_CONFIG_LABEL_WIDTH}
                   tooltip={
                     <>
-                      <Trans i18nKey="configuration.prom-settings.tooltip-metric-names-suggestion-limit">
+                      <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-metric-names-suggestion-limit">
                         The maximum number of metric names that may appear as autocomplete suggestions in the query
                         editor&apos;s Code mode.
                       </Trans>
@@ -430,11 +445,14 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
               <InlineField
-                label={t('configuration.prom-settings.label-incremental-querying-beta', 'Incremental querying (beta)')}
+                label={t(
+                  'grafana-prometheus.configuration.prom-settings.label-incremental-querying-beta',
+                  'Incremental querying (beta)'
+                )}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-incremental-querying-beta">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-incremental-querying-beta">
                       This feature will change the default behavior of relative queries to always request fresh data
                       from the prometheus instance, instead query results will be cached, and only new records are
                       requested. Turn this on to decrease database and network load.
@@ -457,12 +475,15 @@ export const PromSettings = (props: Props) => {
           <div className="gf-form-inline">
             {optionsWithDefaults.jsonData.incrementalQuerying && (
               <InlineField
-                label={t('configuration.prom-settings.label-query-overlap-window', 'Query overlap window')}
+                label={t(
+                  'grafana-prometheus.configuration.prom-settings.label-query-overlap-window',
+                  'Query overlap window'
+                )}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
                     <Trans
-                      i18nKey="configuration.prom-settings.tooltip-query-overlap-window"
+                      i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-query-overlap-window"
                       values={{
                         example1: '10m',
                         example2: '120s',
@@ -504,13 +525,13 @@ export const PromSettings = (props: Props) => {
             <div className="gf-form max-width-30">
               <InlineField
                 label={t(
-                  'configuration.prom-settings.label-disable-recording-rules-beta',
+                  'grafana-prometheus.configuration.prom-settings.label-disable-recording-rules-beta',
                   'Disable recording rules (beta)'
                 )}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-disable-recording-rules-beta">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-disable-recording-rules-beta">
                       This feature will disable recording rules. Turn this on to improve dashboard performance
                     </Trans>
                   </>
@@ -530,17 +551,23 @@ export const PromSettings = (props: Props) => {
         </div>
       </ConfigSubSection>
 
-      <ConfigSubSection title={t('configuration.prom-settings.title-other', 'Other')} className={styles.container}>
+      <ConfigSubSection
+        title={t('grafana-prometheus.configuration.prom-settings.title-other', 'Other')}
+        className={styles.container}
+      >
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
               <InlineField
-                label={t('configuration.prom-settings.label-custom-query-parameters', 'Custom query parameters')}
+                label={t(
+                  'grafana-prometheus.configuration.prom-settings.label-custom-query-parameters',
+                  'Custom query parameters'
+                )}
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
                     <Trans
-                      i18nKey="configuration.prom-settings.tooltip-custom-query-parameters"
+                      i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-custom-query-parameters"
                       values={{
                         example1: 'timeout',
                         example2: 'partial_response',
@@ -566,7 +593,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('customQueryParameters', optionsWithDefaults, onOptionsChange)}
                   spellCheck={false}
                   placeholder={t(
-                    'configuration.prom-settings.placeholder-example-maxsourceresolutionmtimeout',
+                    'grafana-prometheus.configuration.prom-settings.placeholder-example-maxsourceresolutionmtimeout',
                     'Example: {{example}}',
                     { example: 'max_source_resolution=5m&timeout=10' }
                   )}
@@ -582,7 +609,7 @@ export const PromSettings = (props: Props) => {
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    <Trans i18nKey="configuration.prom-settings.tooltip-http-method">
+                    <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-http-method">
                       You can use either POST or GET HTTP method to query your Prometheus data source. POST is the
                       recommended method as it allows bigger queries. Change this to GET if you have a Prometheus
                       version older than 2.1 or if POST requests are restricted in your network.
@@ -591,12 +618,15 @@ export const PromSettings = (props: Props) => {
                   </>
                 }
                 interactive={true}
-                label={t('configuration.prom-settings.label-http-method', 'HTTP method')}
+                label={t('grafana-prometheus.configuration.prom-settings.label-http-method', 'HTTP method')}
                 disabled={optionsWithDefaults.readOnly}
               >
                 <Select
                   width={40}
-                  aria-label={t('configuration.prom-settings.aria-label-select-http-method', 'Select HTTP method')}
+                  aria-label={t(
+                    'grafana-prometheus.configuration.prom-settings.aria-label-select-http-method',
+                    'Select HTTP method'
+                  )}
                   options={httpOptions}
                   value={httpOptions.find((o) => o.value === optionsWithDefaults.jsonData.httpMethod)}
                   onChange={onChangeHandler('httpMethod', optionsWithDefaults, onOptionsChange)}
@@ -607,11 +637,11 @@ export const PromSettings = (props: Props) => {
           </div>
           <InlineField
             labelWidth={PROM_CONFIG_LABEL_WIDTH}
-            label={t('configuration.prom-settings.label-use-series-endpoint', 'Use series endpoint')}
+            label={t('grafana-prometheus.configuration.prom-settings.label-use-series-endpoint', 'Use series endpoint')}
             tooltip={
               <>
                 <Trans
-                  i18nKey="configuration.prom-settings.tooltip-use-series-endpoint"
+                  i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-use-series-endpoint"
                   values={{ exampleParameter: 'match[]' }}
                 >
                   Checking this option will favor the series endpoint with {'{{exampleParameter}}'} parameter over the

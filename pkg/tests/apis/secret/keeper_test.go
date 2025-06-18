@@ -134,7 +134,6 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		t.Run("and updating the keeper to reference securevalues that does not exist returns an error", func(t *testing.T) {
-			t.Skip("skipping because storing credentials as securevalues is not implemented yet")
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["aws"] = map[string]any{
@@ -184,7 +183,6 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper that references securevalues that does not exist returns an error", func(t *testing.T) {
-		t.Skip("skipping because storing credentials as securevalues is not implemented yet")
 		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 		testDataKeeper.Object["spec"].(map[string]any)["aws"] = map[string]any{
 			"accessKeyId": map[string]any{

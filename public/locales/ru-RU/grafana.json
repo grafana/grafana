@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Состояние оповещения",
       "annotations": "Аннотации",
-      "description-missing-series-evaluations": "Количество последовательных интервалов оценки без данных для измерения, которое должно пройти, прежде чем оповещение будет автоматически устранено как просроченное. Если значение не указано, по умолчанию будет установлено значение 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Оценка",
       "evaluation-paused": "Оценка оповещения в настоящее время приостановлена",
       "evaluation-paused-description": "Уведомления для этого правила не будут отправляться. Экземпляры оповещений также не будут создаваться, пока правило не будет возобновлено.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Кем выполнено последнее обновление",
       "missing-series-resolve": "Отсутствуют оценки рядов (необходимо решить)",
       "no-annotations": "Нет аннотаций",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Точка контакта",
+        "group-by": "Группировка по",
+        "group-title": "",
+        "mute-timings": "Время отключения звука",
+        "timing-options": ""
+      },
       "pending-period": "Период ожидания",
       "rule": "Правило",
       "rule-identifier": "Идентификатор правила",
@@ -457,6 +465,15 @@
       "export": "Экспорт",
       "silence-notifications": "Отключить звук уведомлений",
       "with-modifications": "С изменениями"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -913,6 +930,7 @@
     "copy-to-clipboard": "Копировать метку «{{label}}» в буфер обмена",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Дашборд",
         "dashboard-and-panel": "",
         "evaluation-interval": "Интервал оценки",
@@ -1522,6 +1540,10 @@
         "no-rules-body": "Нет правил для импорта. Выберите другое пространство имен или группу правил.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Нет правил для импорта",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Информация"
+        },
         "plugin-rules-warning": {
           "text": "Мы обнаружили, что некоторые правила управляются плагинами. Эти правила не будут импортированы.",
           "title": "Некоторые правила исключены из импорта"
@@ -4059,6 +4081,9 @@
         "title": "Параметры строки"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Удалить свойство"
@@ -4551,7 +4576,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Изменения",
-      "label-details": "Подробности"
+      "label-details": "Подробности",
+      "title": "Сохранить дашборд",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Дашборд с таким именем уже существует в выбранной папке.<1></1><2>Все равно сохранить дашборд?</2>",
@@ -4625,6 +4653,9 @@
       "tab-warning": {
         "title-not-unique": "Заголовок не является уникальным"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Добавить",
@@ -5162,6 +5193,11 @@
       "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
       "title-name-already-exists": "Название уже существует"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5279,7 +5315,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Изменения",
-        "label-details": "Подробности"
+        "label-details": "Подробности",
+        "title": "Сохранить дашборд",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7717,6 +7756,14 @@
       "show-details": "Скрыть сведения о журнале",
       "unpin-from-outline": "Открепить журнал"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Ошибка при загрузке дополнительных журналов.",
       "no-more-logs-available": "Больше нет доступных журналов.",
@@ -7770,6 +7817,7 @@
       "escape-newlines": "Исправить неправильно экранированные последовательности новой строки и табуляции в строках журнала",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Скрыть метки времени",
       "hide-unique-labels": "Скрыть уникальные метки",
       "newest-first": "Сначала отображаются самые новые журналы. Нажмите, чтобы показать сначала самые старые",
@@ -7778,6 +7826,7 @@
       "remove-escaping": "Удалить экранирование",
       "scroll-bottom": "Прокрутить вниз",
       "scroll-top": "Прокрутить вверх",
+      "show-search": "",
       "show-timestamps": "Показать метки времени",
       "show-unique-labels": "Показать уникальные метки",
       "unwrap-lines": "Не переносить строки",
@@ -10686,6 +10735,11 @@
       "tooltip-disable": "Отключить",
       "tooltip-enable": "Включить"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Выкл."
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Добавить перечислимое значение",
       "generate-enum-values-from-data": "Создать перечислимые значения из данных"
@@ -10864,6 +10918,9 @@
       "time-in-ascending-order": "Время в порядке возрастания"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Авто",
+      "field-order-manual": "",
       "first-frame-warning": "Функция упорядочивания полей работает только с одиночным фреймом. Попробуйте сначала применить преобразование соединения или отфильтровать ввод."
     },
     "partion-by-values-editor": {
