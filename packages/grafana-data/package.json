@@ -38,7 +38,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
@@ -86,7 +86,7 @@
     "@rollup/plugin-node-resolve": "16.0.0",
     "@types/history": "4.7.11",
     "@types/lodash": "4.17.15",
-    "@types/node": "22.12.0",
+    "@types/node": "22.15.0",
     "@types/papaparse": "5.3.16",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
@@ -96,7 +96,6 @@
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
-    "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "typescript": "5.7.3"

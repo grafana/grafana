@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
@@ -101,7 +101,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
-  const { t } = useTranslate();
+
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**

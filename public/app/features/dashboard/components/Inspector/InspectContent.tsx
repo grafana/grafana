@@ -11,8 +11,7 @@ import {
   LoadingState,
   DataQueryError,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -57,7 +56,7 @@ export const InspectContent = ({
   onClose,
 }: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
-  const { t } = useTranslate();
+
   if (!plugin) {
     return null;
   }

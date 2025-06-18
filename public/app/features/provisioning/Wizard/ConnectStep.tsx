@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -18,7 +18,7 @@ export function ConnectStep() {
   } = useFormContext<WizardFormData>();
 
   const [tokenConfigured, setTokenConfigured] = useState(false);
-  const { t } = useTranslate();
+
   const type = getValues('repository.type');
   const isGithub = type === 'github';
 

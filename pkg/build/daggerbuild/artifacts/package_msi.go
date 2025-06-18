@@ -29,6 +29,7 @@ type MSI struct {
 	BuildID      string
 	Distribution backend.Distribution
 	Enterprise   bool
+	Grafana      *dagger.Directory
 
 	Tarball *pipeline.Artifact
 }
@@ -40,7 +41,7 @@ func (d *MSI) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
 }
 
 func (d *MSI) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
-	return msi.Builder(opts.Client)
+	return msi.Builder(opts.Client, d.Grafana), nil
 }
 
 func (d *MSI) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
@@ -105,6 +106,11 @@ func NewMSIFromString(ctx context.Context, log *slog.Logger, artifact string, st
 		return nil, fmt.Errorf("distribution ('%s') for exe '%s' is not a Windows distribution", string(p.Distribution), artifact)
 	}
 
+	src, err := GrafanaDir(ctx, state, p.Enterprise)
+	if err != nil {
+		return nil, err
+	}
+
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Handler: &MSI{
@@ -114,6 +120,7 @@ func NewMSIFromString(ctx context.Context, log *slog.Logger, artifact string, st
 			Distribution: p.Distribution,
 			Enterprise:   p.Enterprise,
 			Tarball:      targz,
+			Grafana:      src,
 		},
 		Type:  pipeline.ArtifactTypeFile,
 		Flags: ZipFlags,

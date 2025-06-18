@@ -49,6 +49,11 @@ To use the Grafana migration assistant, you need:
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
 - Internet access from your existing Grafana OSS/Enterprise instance.
+- If your network requires external services to be on an allowlist to allow access, add the following IPs and URLs to your allowlist:
+  - [Hosted Grafana](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+  - [Hosted Alerts](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-alerts)
+  - [AWS IP address ranges](https://docs.aws.amazon.com/en_us/vpc/latest/userguide/aws-ip-ranges.html) for the S3 service
+  - `*.grafana.net`
 
 ## Access the migration assistant
 
@@ -109,7 +114,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Folders | Nothing else |
    | All Alert rule groups | All other resources |
    | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
    | Notification Templates | Nothing else |
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
@@ -185,6 +190,10 @@ The migration assistant can migrate the majority of Grafana Alerting resources t
 - Mute timings
 - Notification policy tree
 - Notification templates
+
+{{< admonition type="note">}}
+The `grafana-default-email` contact point that's provisioned with every new Grafana instance doesn't have a UID by default and won't be migrated unless you edit or update and save it. You do not need to change the contact point for a UID to be generated when saved.
+{{< /admonition >}}
 
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
 

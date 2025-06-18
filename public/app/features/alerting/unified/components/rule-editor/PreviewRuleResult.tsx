@@ -3,7 +3,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { FieldConfigSource, FieldMatcherID, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
@@ -18,7 +18,7 @@ type Props = {
 export function PreviewRuleResult(props: Props): React.ReactElement | null {
   const { preview } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [
