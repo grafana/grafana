@@ -2,8 +2,16 @@ import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
 import { debounce } from 'lodash';
-import { useLayoutEffect, useMemo, useState } from 'react';
-import { DataGrid, DataGridProps, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
+import { Key, useLayoutEffect, useMemo, useState } from 'react';
+import {
+  Cell,
+  CellRendererProps,
+  DataGrid,
+  DataGridProps,
+  RenderCellProps,
+  RenderRowProps,
+  Row,
+} from 'react-data-grid';
 
 import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -15,13 +23,14 @@ import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { CellColors } from '../types';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
-import { TableCellNG } from './Cells/TableCellNG';
+import { CELL_RENDERERS, TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import { useFilteredRows, useFooterCalcs, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ColumnTypes } from './types';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, TableCellNGProps } from './types';
 import {
   frameToRecords,
   getDefaultRowHeight,
@@ -35,6 +44,8 @@ import {
   getColumnTypes,
   computeColWidths,
   applySort,
+  getCellColors,
+  getCellOptions,
 } from './utils';
 
 export function TableNG(props: TableNGProps) {
@@ -124,6 +135,13 @@ export function TableNG(props: TableNGProps) {
   // vt scrollbar accounting for column auto-sizing
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const visibleFieldsByDisplayName = useMemo(() => {
+    const map: Record<string, Field> = {};
+    for (const f of visibleFields) {
+      map[getDisplayName(f)] = f;
+    }
+    return map;
+  }, [visibleFields]);
   const availableWidth = useMemo(
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
     [width, hasNestedFrames]
@@ -161,6 +179,16 @@ export function TableNG(props: TableNGProps) {
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const rowBg = useMemo(() => getRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
+  const renderRow = useMemo(
+    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
+    [data, enableSharedCrosshair, expandedRows, panelContext]
+  );
+
+  const renderCell = useMemo(
+    () => renderCellFactory(columnTypes, rowBg, rowHeight, textWraps, theme, visibleFieldsByDisplayName),
+    [columnTypes, rowBg, rowHeight, textWraps, theme, visibleFieldsByDisplayName]
+  );
+
   const commonDataGridProps = useMemo(
     () =>
       ({
@@ -187,11 +215,11 @@ export function TableNG(props: TableNGProps) {
         },
         sortColumns,
         rowHeight,
-        headerRowClass: styles.dataGridHeaderRow,
+        headerRowClass: styles.headerRow,
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [enableVirtualization, hasFooter, noHeader, rowHeight, sortColumns, styles.dataGridHeaderRow]
+    [enableVirtualization, hasFooter, noHeader, rowHeight, sortColumns, styles.headerRow]
   );
 
   const columns = useMemo<TableColumn[]>((): TableColumn[] => {
@@ -200,38 +228,38 @@ export function TableNG(props: TableNGProps) {
         const justifyColumnContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyColumnContent);
         const displayName = getDisplayName(field);
-        const cellClasses = getCellClasses(field, styles, columnTypes, textWraps, displayName);
+        const headerCellClass = cx(styles.headerCell, field.type === FieldType.number ? styles.headerCellRight : null);
+        const cellOptions = getCellOptions(field);
+        const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
+        const renderFieldCell = CELL_RENDERERS[cellType];
 
         return {
           field,
           key: getDisplayName(field),
           name: getDisplayName(field),
           width: w[i],
-          headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
-          cellClass: cellClasses.length > 0 ? cx(cellClasses) : undefined,
+          headerCellClass,
           renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-            const { row } = props;
-            const value = row[displayName];
-
-            // Cell level rendering here
+            const p: Omit<TableCellNGProps, 'children'> = {
+              actions: getActions?.(data, field, props.row.__index, replaceVariables),
+              cellOptions,
+              displayName,
+              field,
+              frame: data,
+              height: typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight,
+              justifyContent: justifyColumnContent,
+              onCellFilterAdded,
+              rowIdx: props.row.__index,
+              setContextMenuProps,
+              setIsInspecting,
+              theme,
+              value: props.row[displayName],
+              width: widths[i],
+            };
             return (
-              <TableCellNG
-                frame={data}
-                key={displayName}
-                value={value}
-                field={field}
-                theme={theme}
-                height={defaultRowHeight}
-                width={widths[i]}
-                justifyContent={justifyColumnContent}
-                rowIdx={row.__index}
-                setIsInspecting={setIsInspecting}
-                setContextMenuProps={setContextMenuProps}
-                getActions={getActions}
-                rowBg={rowBg}
-                onCellFilterAdded={onCellFilterAdded}
-                replaceVariables={replaceVariables}
-              />
+              <TableCellNG key={displayName} {...p}>
+                {renderFieldCell(p)}
+              </TableCellNG>
             );
           },
           renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
@@ -279,6 +307,7 @@ export function TableNG(props: TableNGProps) {
 
     const result: TableColumn[] = columnsFromFields(visibleFields, widths);
 
+    // handle nested frames rendering from here.
     if (!hasNestedFrames) {
       return result;
     }
@@ -337,7 +366,7 @@ export function TableNG(props: TableNGProps) {
             className={cx(styles.grid, styles.gridNested)}
             columns={expandedColumns}
             rows={expandedRecords}
-            renderers={{ renderRow }}
+            renderers={{ renderRow, renderCell }}
           />
         );
       },
@@ -348,7 +377,6 @@ export function TableNG(props: TableNGProps) {
     return result;
   }, [
     availableWidth,
-    columnTypes,
     commonDataGridProps,
     crossFilterOrder,
     crossFilterRows,
@@ -366,22 +394,17 @@ export function TableNG(props: TableNGProps) {
     onSortByChange,
     panelContext,
     replaceVariables,
-    rowBg,
+    renderCell,
+    rowHeight,
     setFilter,
     setSortColumns,
     showTypeIcons,
     sortColumns,
     styles,
-    textWraps,
     theme,
     visibleFields,
     widths,
   ]);
-
-  const renderRow = useMemo(
-    () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
-    [data, enableSharedCrosshair, expandedRows, panelContext]
-  );
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
@@ -420,7 +443,7 @@ export function TableNG(props: TableNGProps) {
           setIsContextMenuOpen(true);
         }}
         onColumnResize={debouncedResizeHandler}
-        renderers={{ renderRow }}
+        renderers={{ renderRow, renderCell }}
       />
 
       {enablePagination && (
@@ -519,6 +542,60 @@ const renderRowFactory =
     return <Row key={key} {...props} {...handlers} />;
   };
 
+const renderCellFactory =
+  (
+    columnTypes: Record<string, FieldType>,
+    rowBg: ((rowIdx: number) => CellColors) | undefined,
+    rowHeight: number | ((row: TableRow) => number),
+    textWraps: Record<string, boolean>,
+    theme: GrafanaTheme2,
+    visibleFieldsByDisplayName: Record<string, Field>
+  ) =>
+  (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>) => {
+    const displayName = props.column.key;
+    const field = visibleFieldsByDisplayName[displayName];
+
+    // exit early if we fail to look up the field from the column key.
+    if (!field) {
+      return <Cell key={key} {...props} />;
+    }
+
+    const cellOptions = getCellOptions(field);
+    const cellType = cellOptions.type;
+    const value = props.row[props.column.key];
+
+    const colors: CellColors = (() => {
+      if (rowBg) {
+        return rowBg(props.rowIdx);
+      }
+      const displayValue = field.display?.(value);
+      if (displayValue && cellOptions) {
+        return getCellColors(theme, cellOptions, displayValue);
+      }
+      return {};
+    })();
+
+    const rh = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
+    const shouldOverflow = shouldTextOverflow(
+      displayName,
+      columnTypes,
+      textWraps[getDisplayName(field)],
+      field,
+      cellType
+    );
+    const shouldWrap = textWraps[displayName] ?? false;
+    const cellStyle = getCellStyles(theme, field, rh, shouldWrap, shouldOverflow, colors);
+
+    return (
+      <Cell
+        key={key}
+        {...props}
+        className={cx(props.className, cellStyle.cell)}
+        style={{ color: colors.textColor ?? 'inherit' }}
+      />
+    );
+  };
+
 const getGridStyles = (
   theme: GrafanaTheme2,
   { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
@@ -541,27 +618,6 @@ const getGridStyles = (
 
     border: 'none',
 
-    '.rdg-cell': {
-      // clip the overflow (like OG), without this the default is ellipsis
-      textOverflow: 'initial',
-      paddingInline: 0,
-
-      '&:last-child': {
-        borderInlineEnd: 'none',
-      },
-    },
-
-    '.rdg-header-row': {
-      fontWeight: 'normal',
-
-      '.rdg-cell': {
-        zIndex: theme.zIndex.tooltip - 1,
-        paddingInline: TABLE.CELL_PADDING,
-        paddingBlock: TABLE.CELL_PADDING,
-        borderInlineEnd: 'none',
-      },
-    },
-
     '.rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
@@ -581,19 +637,19 @@ const getGridStyles = (
       outline: 'none',
     },
   }),
-  cellWrapped: css({
-    whiteSpace: 'pre-line',
+  headerCell: css({
+    zIndex: theme.zIndex.tooltip - 1,
+    paddingInline: TABLE.CELL_PADDING,
+    paddingBlock: TABLE.CELL_PADDING,
+    borderInlineEnd: 'none',
   }),
-  cellRight: css({
+  headerRow: css({
+    paddingBlockStart: 0,
+    fontWeight: 'normal',
+    ...(noHeader && { display: 'none' }),
+  }),
+  headerCellRight: css({
     textAlign: 'right',
-  }),
-  cellOverflow: css({
-    '&:hover': {
-      zIndex: theme.zIndex.tooltip - 2,
-      whiteSpace: 'pre-line',
-      height: 'fit-content',
-      minWidth: 'fit-content',
-    },
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -608,10 +664,6 @@ const getGridStyles = (
     display: 'flex',
     justifyContent: 'flex-end',
     padding: theme.spacing(0, 1, 0, 2),
-  }),
-  dataGridHeaderRow: css({
-    paddingBlockStart: 0,
-    ...(noHeader && { display: 'none' }),
   }),
   menuItem: css({
     maxWidth: '200px',
@@ -629,35 +681,40 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   }),
 });
 
-function getCellClasses(
+const getCellStyles = (
+  theme: GrafanaTheme2,
   field: Field,
-  styles: ReturnType<typeof getGridStyles>,
-  columnTypes: ColumnTypes,
-  textWraps: Record<string, boolean>,
-  displayName: string
-): string[] {
-  const cellClasses = [];
-  const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
-  if (field.type === FieldType.number) {
-    cellClasses.push(styles.cellRight);
-  }
-  if (shouldTextOverflow(displayName, columnTypes, textWraps[getDisplayName(field)], field, cellType)) {
-    cellClasses.push(styles.cellOverflow);
-  }
-  switch (cellType) {
-    case TableCellDisplayMode.Auto:
-    case TableCellDisplayMode.ColorBackground:
-    case TableCellDisplayMode.ColorBackgroundSolid:
-    case TableCellDisplayMode.ColorText:
-      if (field.config.custom?.cellOptions?.wrapText) {
-        cellClasses.push(styles.cellWrapped);
-      }
-      break;
-    default:
-      break;
-  }
-  return cellClasses;
-}
+  rowHeight: number,
+  shouldWrap: boolean,
+  shouldOverflow: boolean,
+  colors: CellColors
+) => ({
+  cell: css({
+    textOverflow: 'initial',
+    background: colors.bgColor ?? 'none',
+    alignContent: 'center',
+    justifyContent: getTextAlign(field),
+    paddingInline: TABLE.CELL_PADDING,
+    height: '100%',
+    minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+    ...(shouldWrap && { whiteSpace: 'pre-line' }),
+    '&:last-child': {
+      borderInlineEnd: 'none',
+    },
+    '&:hover': {
+      background: colors.bgHoverColor,
+      '.table-cell-actions': {
+        display: 'flex',
+      },
+      ...(shouldOverflow && {
+        zIndex: theme.zIndex.tooltip - 2,
+        whiteSpace: 'pre-line',
+        height: 'fit-content',
+        minWidth: 'fit-content',
+      }),
+    },
+  }),
+});
 
 /*
 TODO:

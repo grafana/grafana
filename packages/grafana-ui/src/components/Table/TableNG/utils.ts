@@ -20,10 +20,10 @@ import {
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
-  TableCellOptions,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { TableCellOptions, TableCustomCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
 import {
@@ -216,6 +216,7 @@ export function getCellColors(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
+  // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
@@ -567,17 +568,20 @@ export function computeColWidths(fields: Field[], availWidth: number) {
 
 export function getRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
   for (const field of fields) {
-    const cellOptions: TableCellOptions | void = field.config.custom?.cellOptions;
+    const cellOptions = getCellOptions(field);
     const fieldDisplay = field.display;
     if (
       fieldDisplay !== undefined &&
-      cellOptions !== undefined &&
       cellOptions.type === TableCellDisplayMode.ColorBackground &&
       cellOptions.applyToRow === true
     ) {
       return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
+}
+
+export function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
+  return options.type === TableCellDisplayMode.Custom;
 }
 
 /**

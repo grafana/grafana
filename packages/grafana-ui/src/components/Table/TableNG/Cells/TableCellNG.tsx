@@ -1,24 +1,18 @@
 import { css, cx } from '@emotion/css';
+import { Property } from 'csstype';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode } from 'react';
 
-import { FieldType, getDefaultTimeRange, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableAutoCellOptions, TableCellDisplayMode } from '@grafana/schema';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
-import { TABLE } from '../constants';
-import {
-  CellColors,
-  CustomCellRendererProps,
-  FILTER_FOR_OPERATOR,
-  FILTER_OUT_OPERATOR,
-  TableCellNGProps,
-} from '../types';
-import { getCellColors, getDisplayName, getTextAlign } from '../utils';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellNGProps } from '../types';
+import { isCustomCellOptions } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
@@ -32,140 +26,24 @@ import { SparklineCell } from './SparklineCell';
 export function TableCellNG(props: TableCellNGProps) {
   const {
     field,
-    frame,
     value,
-    theme,
-    timeRange = getDefaultTimeRange(),
-    height,
-    rowIdx,
-    justifyContent,
+    cellOptions,
+    displayName,
     setIsInspecting,
     setContextMenuProps,
-    getActions,
-    rowBg,
     onCellFilterAdded,
-    replaceVariables,
-    width,
+    justifyContent,
+    children,
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
-  const displayName = getDisplayName(field);
-
-  const { config: fieldConfig } = field;
-  const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
-  const cellOptions = fieldConfig.custom?.cellOptions ?? defaultCellOptions;
-  const { type: cellType } = cellOptions;
-
   const showFilters = field.config.filterable && onCellFilterAdded;
-
-  const isRightAligned = useMemo(() => getTextAlign(field) === 'flex-end', [field]);
-  const displayValue = useMemo(() => field.display!(value), [field.display, value]);
-  const colors: CellColors = useMemo(
-    () => (rowBg ? rowBg(rowIdx) : getCellColors(theme, cellOptions, displayValue)),
-    [theme, cellOptions, displayValue, rowBg, rowIdx]
-  );
-  const styles = useStyles2(getStyles, isRightAligned, colors.bgHoverColor);
-
-  const actions = useMemo(
-    () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
-    [getActions, frame, field, rowIdx, replaceVariables]
-  );
-
-  // Common props for all cells
-  const commonProps = {
-    value,
-    field,
-    rowIdx,
-    justifyContent,
-  } as const;
-
-  // Get the correct cell type
-  const renderedCell = (): ReactNode => {
-    switch (cellType) {
-      case TableCellDisplayMode.Sparkline:
-        return <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />;
-      case TableCellDisplayMode.Gauge:
-      case TableCellDisplayMode.BasicGauge:
-      case TableCellDisplayMode.GradientGauge:
-      case TableCellDisplayMode.LcdGauge: {
-        return (
-          <BarGaugeCell
-            {...commonProps}
-            theme={theme}
-            timeRange={timeRange}
-            height={height}
-            width={width}
-            actions={actions}
-          />
-        );
-      }
-      case TableCellDisplayMode.Image:
-        return <ImageCell {...commonProps} cellOptions={cellOptions} height={height} actions={actions} />;
-      case TableCellDisplayMode.JSONView:
-        return <JSONCell {...commonProps} actions={actions} />;
-      case TableCellDisplayMode.DataLinks:
-        return <DataLinksCell field={field} rowIdx={rowIdx} />;
-      case TableCellDisplayMode.Actions:
-        return <ActionsCell actions={actions} />;
-      case TableCellDisplayMode.Custom:
-        const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-        return <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
-      case TableCellDisplayMode.Auto:
-      default: {
-        // Handle auto cell type detection
-        if (field.type === FieldType.geo) {
-          return <GeoCell {...commonProps} height={height} />;
-        } else if (field.type === FieldType.frame) {
-          const firstValue = field.values[0];
-          if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-            return <SparklineCell {...commonProps} theme={theme} timeRange={timeRange} width={width} />;
-          } else {
-            return <JSONCell {...commonProps} actions={actions} />;
-          }
-        } else if (field.type === FieldType.other) {
-          return <JSONCell {...commonProps} actions={actions} />;
-        }
-        return <AutoCell {...commonProps} cellOptions={cellOptions} actions={actions} />;
-      }
-    }
-  };
-
+  const styles = useStyles2(getStyles, justifyContent);
   const hasActions = cellInspect || showFilters;
 
-  const onFilterFor = useCallback(() => {
-    if (onCellFilterAdded) {
-      onCellFilterAdded({
-        key: displayName,
-        operator: FILTER_FOR_OPERATOR,
-        value: String(value ?? ''),
-      });
-    }
-  }, [displayName, onCellFilterAdded, value]);
-
-  const onFilterOut = useCallback(() => {
-    if (onCellFilterAdded) {
-      onCellFilterAdded({
-        key: displayName,
-        operator: FILTER_OUT_OPERATOR,
-        value: String(value ?? ''),
-      });
-    }
-  }, [displayName, onCellFilterAdded, value]);
-
-  const styleOverride = useMemo(
-    () => ({
-      // this minHeight interacts with the `fit-content` property on
-      // the container for table cell overflow rendering.
-      minHeight: height - 1,
-      background: colors.bgColor || 'none',
-      color: colors.textColor,
-    }),
-    [height, colors]
-  );
-
   return (
-    <div className={styles.cell} style={styleOverride}>
-      {renderedCell()}
+    <>
+      {children}
       {hasActions && (
         <div className={cx(styles.cellActions, 'table-cell-actions')}>
           {cellInspect && (
@@ -183,7 +61,7 @@ export function TableCellNG(props: TableCellNGProps) {
                     dataProjection: 'EPSG:4326',
                   });
                   mode = TableCellInspectorMode.code;
-                } else if (cellType === TableCellDisplayMode.JSONView) {
+                } else if ('cellType' in cellOptions && cellOptions.cellType === TableCellDisplayMode.JSONView) {
                   mode = TableCellInspectorMode.code;
                 }
 
@@ -199,40 +77,41 @@ export function TableCellNG(props: TableCellNGProps) {
             <>
               <IconButton
                 name={'search-plus'}
-                onClick={onFilterFor}
+                onClick={() => {
+                  onCellFilterAdded?.({
+                    key: displayName,
+                    operator: FILTER_FOR_OPERATOR,
+                    value: String(value ?? ''),
+                  });
+                }}
                 tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
               />
               <IconButton
                 name={'search-minus'}
-                onClick={onFilterOut}
+                onClick={() => {
+                  onCellFilterAdded?.({
+                    key: displayName,
+                    operator: FILTER_OUT_OPERATOR,
+                    value: String(value ?? ''),
+                  });
+                }}
                 tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
               />
             </>
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, bgHoverColor?: string) => ({
-  cell: css({
-    height: '100%',
-    alignContent: 'center',
-    paddingInline: TABLE.CELL_PADDING,
-    '&:hover': {
-      background: bgHoverColor,
-      '.table-cell-actions': {
-        display: 'flex',
-      },
-    },
-  }),
+const getStyles = (theme: GrafanaTheme2, justifyColumnContent: Property.JustifyContent) => ({
   cellActions: css({
     display: 'none',
     position: 'absolute',
     top: 0,
-    left: isRightAligned ? 0 : undefined,
-    right: isRightAligned ? undefined : 0,
+    left: justifyColumnContent === 'flex-end' ? 0 : undefined,
+    right: justifyColumnContent === 'flex-end' ? undefined : 0,
     margin: 'auto',
     height: '100%',
     color: theme.colors.text.primary,
@@ -241,7 +120,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, bgHoverColor?:
     display: 'flex',
     margin: 0,
     padding: theme.spacing.x0_5,
-    [isRightAligned ? 'paddingLeft' : 'paddingRight']: theme.spacing.x1,
+    [justifyColumnContent === 'flex-end' ? 'paddingLeft' : 'paddingRight']: theme.spacing.x1,
     height: '100%',
     '&:hover:before': {
       height: '100%',
@@ -249,6 +128,53 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, bgHoverColor?:
     },
   }),
 });
+
+type TableNGCellRenderer = (props: Omit<TableCellNGProps, 'children'>) => ReactNode;
+
+const SPARKLINE_RENDERER: TableNGCellRenderer = (props) => <SparklineCell {...props} />;
+const GAUGE_RENDERER: TableNGCellRenderer = (props) => <BarGaugeCell {...props} />;
+const JSON_RENDERER: TableNGCellRenderer = (props) => <JSONCell {...props} />;
+const AUTO_RENDERER: TableNGCellRenderer = (props) => {
+  const { field } = props;
+  // Handle auto cell type detection
+  if (field.type === FieldType.geo) {
+    return <GeoCell {...props} />;
+  }
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values[0];
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return SPARKLINE_RENDERER(props);
+    }
+    return JSON_RENDERER(props);
+  }
+  if (field.type === FieldType.other) {
+    return JSON_RENDERER(props);
+  }
+  return <AutoCell {...props} />;
+};
+
+export const CELL_RENDERERS: Record<TableCellDisplayMode, TableNGCellRenderer> = {
+  [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
+  [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
+  [TableCellDisplayMode.BasicGauge]: GAUGE_RENDERER,
+  [TableCellDisplayMode.GradientGauge]: GAUGE_RENDERER,
+  [TableCellDisplayMode.LcdGauge]: GAUGE_RENDERER,
+  [TableCellDisplayMode.JSONView]: JSON_RENDERER,
+  [TableCellDisplayMode.Image]: (props) => <ImageCell {...props} />,
+  [TableCellDisplayMode.DataLinks]: (props) => <DataLinksCell {...props} />,
+  [TableCellDisplayMode.Actions]: (props) => <ActionsCell {...props} />,
+  [TableCellDisplayMode.Custom]: (props) => {
+    if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
+      return null; // nonsensical case, but better to typeguard it.
+    }
+    const CustomCellComponent = props.cellOptions.cellComponent;
+    return <CustomCellComponent {...props} rowIndex={props.rowIdx} />;
+  },
+  [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
+  [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
+  [TableCellDisplayMode.ColorBackgroundSolid]: AUTO_RENDERER,
+  [TableCellDisplayMode.Auto]: AUTO_RENDERER,
+};
 
 /**
  * Uncovered lines:

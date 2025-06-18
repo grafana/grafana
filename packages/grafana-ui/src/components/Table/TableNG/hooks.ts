@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
-import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 
@@ -16,6 +16,7 @@ import {
   getFooterItem,
   getColumnTypes,
   applySort,
+  getCellOptions,
 } from './utils';
 
 // Helper function to get displayed value
@@ -270,13 +271,12 @@ export function useFooterCalcs(
 export function useTextWraps(fields: Field[]): Record<string, boolean> {
   return useMemo(
     () =>
-      fields.reduce<{ [key: string]: boolean }>(
-        (acc, field) => ({
-          ...acc,
-          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
-        }),
-        {}
-      ),
+      fields.reduce<{ [key: string]: boolean }>((acc, field) => {
+        const cellOptions = getCellOptions(field);
+        const displayName = getDisplayName(field);
+        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
+        return { ...acc, [displayName]: !!wrapText };
+      }, {}),
     [fields]
   );
 }
@@ -321,9 +321,9 @@ export function useRowHeight(
           return false;
         }
 
-        const cellOptions: TableCellOptions = field.config?.custom?.cellOptions ?? {};
+        const cellOptions = getCellOptions(field);
         const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        const type = cellOptions.type ?? TableCellDisplayMode.Auto;
+        const type = cellOptions.type;
         const result = !!wrapText && type !== TableCellDisplayMode.Image;
         if (result === true) {
           hasWrappedCols = true;

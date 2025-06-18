@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { SyntheticEvent } from 'react';
+import { ReactNode, SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -15,9 +15,10 @@ import {
   DataFrameWithValue,
   SelectableValue,
 } from '@grafana/data';
-import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { TableCellOptions } from '../types';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -149,10 +150,10 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellNGProps {
+  actions?: ActionModel[];
+  cellOptions: TableCellOptions;
+  displayName: string;
   field: Field;
-  frame: DataFrame;
-  getActions?: GetActionsFunction;
-  height: number;
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
@@ -160,10 +161,11 @@ export interface TableCellNGProps {
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   value: TableCellValue;
-  rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;
-  replaceVariables?: InterpolateFunction;
+  children: ReactNode;
   width: number;
+  height: number;
+  frame: DataFrame;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
@@ -178,7 +180,7 @@ export interface SparklineCellProps {
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
   value: TableCellValue;
   width: number;
 }
@@ -190,7 +192,6 @@ export interface BarGaugeCellProps extends ActionCellProps {
   theme: GrafanaTheme2;
   value: TableCellValue;
   width: number;
-  timeRange: TimeRange;
 }
 
 export interface ImageCellProps extends ActionCellProps {

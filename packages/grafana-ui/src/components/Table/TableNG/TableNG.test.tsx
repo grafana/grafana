@@ -1375,8 +1375,8 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const styleAttr = window.getComputedStyle(div);
+      const cell = cells[0];
+      const styleAttr = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(styleAttr.background).toBe('rgb(255, 0, 0)');
@@ -1412,8 +1412,8 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const computedStyle = window.getComputedStyle(div);
+      const cell = cells[0];
+      const computedStyle = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
