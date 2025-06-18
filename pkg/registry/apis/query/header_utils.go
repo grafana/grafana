@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	q "github.com/grafana/grafana/pkg/services/query"
 )
 
 // Set of headers that we want to forward to the datasource api servers. Those are used i.e. for
@@ -12,6 +13,9 @@ import (
 //
 // The headers related to grafana alerting (x-rule-*), should match the list at
 // https://github.com/grafana/grafana/blob/f8ae71e4583499dd461ebaed31451966be04220b/pkg/services/pluginsintegration/clientmiddleware/usealertingheaders_middleware.go#L23
+//
+// The headers related to grafana query should match the list at
+// https://github.com/grafana/grafana/blob/f8ae71e4583499dd461ebaed31451966be04220b/pkg/services/pluginsintegration/clientmiddleware/tracing_header_middleware.go#L36
 //
 // The usage of strings.ToLower is because the server would convert `FromAlert` to `Fromalert`. So the make matching
 // easier, we just match all headers in lower case.
@@ -25,6 +29,14 @@ var expectedHeaders = map[string]string{
 	strings.ToLower("X-Rule-Type"):              "X-Rule-Type",
 	strings.ToLower("X-Rule-Version"):           "X-Rule-Version",
 	strings.ToLower("X-Grafana-Org-Id"):         "X-Grafana-Org-Id",
+	strings.ToLower(q.HeaderQueryGroupID):       q.HeaderQueryGroupID,
+	strings.ToLower(q.HeaderPanelID):            q.HeaderPanelID,
+	strings.ToLower(q.HeaderDashboardUID):       q.HeaderDashboardUID,
+	strings.ToLower(q.HeaderDatasourceUID):      q.HeaderDatasourceUID,
+	strings.ToLower(q.HeaderFromExpression):     q.HeaderFromExpression,
+	strings.ToLower(q.HeaderPanelPluginId):      q.HeaderPanelPluginId,
+	strings.ToLower(q.HeaderDashboardTitle):     q.HeaderDashboardTitle,
+	strings.ToLower(q.HeaderPanelTitle):         q.HeaderPanelTitle,
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {
