@@ -691,7 +691,7 @@ const getCellStyles = (
 ) => ({
   cell: css({
     textOverflow: 'initial',
-    background: colors.bgColor ?? 'none',
+    background: colors.bgColor ?? 'inherit',
     alignContent: 'center',
     justifyContent: getTextAlign(field),
     paddingInline: TABLE.CELL_PADDING,

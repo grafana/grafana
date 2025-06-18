@@ -342,8 +342,8 @@ export function useRowHeight(
       return defaultRowHeight;
     }
 
-    const HPADDING = 6;
-    const VPADDING = 6;
+    const HPADDING = TABLE.CELL_PADDING;
+    const VPADDING = TABLE.CELL_PADDING;
     const BORDER_RIGHT = 0.666667;
     const LINE_HEIGHT = 22;
 

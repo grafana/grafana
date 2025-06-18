@@ -1177,9 +1177,6 @@ describe('TableNG', () => {
       const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] > div:last-child');
       const handle = resizeHandles[0];
 
-      // TODO: This `if` doesn't even trigger - the test is evergreen.
-      // We should work out a reliable way to actually find and trigger the resize methods
-      // The querySelector doesn't return anything!
       if (!handle) {
         throw new Error('Resize handle not found');
       }
