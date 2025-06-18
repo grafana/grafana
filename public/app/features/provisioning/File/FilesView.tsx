@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CellProps, Column, FilterInput, InteractiveTable, LinkButton, Spinner, Stack } from '@grafana/ui';
-import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisioning';
+import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../constants';
 import { FileDetails } from '../types';
@@ -20,8 +20,6 @@ export function FilesView({ repo }: FilesViewProps) {
   const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const { t } = useTranslate();
 
   const columns: Array<Column<FileDetails>> = [
     {

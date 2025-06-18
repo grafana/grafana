@@ -63,7 +63,13 @@ export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformatio
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
 export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
-export { createOrderFieldsComparer } from '../transformations/transformers/order';
+export {
+  createOrderFieldsComparer,
+  Order,
+  OrderByMode,
+  OrderByType,
+  type OrderByItem,
+} from '../transformations/transformers/order';
 export { type RenameByRegexTransformerOptions } from '../transformations/transformers/renameByRegex';
 export { type OrganizeFieldsTransformerOptions } from '../transformations/transformers/organize';
 export { compareValues } from '../transformations/matchers/compareValues';

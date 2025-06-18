@@ -386,7 +386,7 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScope(f.UID))
+		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		canEdit, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canEditEvaluator)
 		canSave := canEdit
 		canAdminEvaluator := accesscontrol.EvalAll(
@@ -394,7 +394,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
 		)
 		canAdmin, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canAdminEvaluator)
-		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScope(f.UID))
+		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		canDelete, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canDeleteEvaluator)
 
 		// Finding creator and last updater of the folder
@@ -409,7 +409,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
 
 		if checkCanView {
-			canViewEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScope(f.UID))
+			canViewEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 			canView, _ := hs.AccessControl.Evaluate(ctx, c.SignedInUser, canViewEvaluator)
 			if !canView {
 				return dtos.Folder{

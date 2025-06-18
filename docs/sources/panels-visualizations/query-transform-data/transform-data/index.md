@@ -461,13 +461,13 @@ The available conditions for string fields are:
 - **Contains substring** - Match if the value contains the specified substring (case insensitive).
 - **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
-The available conditions for number fields are:
+The available conditions for number and time fields are:
 
 - **Greater** - Match if the value is greater than the specified value.
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **Range** - Match a range between a specified minimum and maximum, min and max included.
+- **Range** - Match a range between a specified minimum and maximum, min and max included. A time field will pre-populate with variables to filter by selected time.
 
 Consider the following dataset:
 
@@ -1131,6 +1131,7 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
+- **Set field order mode** - If the mode is **Manual**, you can change the field order by hovering the cursor over a field and dragging the field to its new position. If it's **Auto**, use the **OFF**, **ASC**, and **DESC** options to order by any labels on the field or by the field name. You can then drag the labels and the field name to set the priority of the sorting.
 - **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
 - **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
 - **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.

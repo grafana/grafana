@@ -12,8 +12,7 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -191,10 +190,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 enableNamedColors={true}
               />
             </div>
-            {isPercent && (
-              // eslint-disable-next-line @grafana/no-untranslated-strings
-              <div className={styles.percentIcon}>%</div>
-            )}
+            {isPercent && <div className={styles.percentIcon}>%</div>}
           </div>
         }
         suffix={

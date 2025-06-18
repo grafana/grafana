@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
@@ -26,7 +26,7 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+import { RulesViewModeSelector, SupportedView } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
   { label: 'Alert ', value: PromRuleType.Alerting },
@@ -44,14 +44,18 @@ const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlActi
 
 interface RulesFilerProps {
   onClear?: () => void;
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-  label: alertStateToReadable(value),
-  value,
-}));
+const RuleStateOptions = Object.entries(PromAlertingRuleState)
+  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
+  .map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
-const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
@@ -70,7 +74,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   useEffect(() => {
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
-  const { t } = useTranslate();
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
     const dataSourceNames =
@@ -259,8 +262,8 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -317,7 +320,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             <Label>
               <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
             </Label>
-            <RulesViewModeSelector />
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
           </div>
         </Stack>
         {hasActiveFilters && (
@@ -351,7 +354,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function SearchQueryHelp() {
   const styles = useStyles2(helpStyles);
-  const { t } = useTranslate();
+
   return (
     <div>
       <div>

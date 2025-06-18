@@ -568,34 +568,6 @@ def build_plugins_step(ver_mode):
         ],
     }
 
-def test_backend_step():
-    return {
-        "name": "test-backend",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
-            # mime.TypeByExtension function.
-            "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
-        ],
-    }
-
-def test_backend_integration_step():
-    return {
-        "name": "test-backend-integration",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update build-base",
-            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-        ],
-    }
-
 def betterer_frontend_step():
     """Run betterer on frontend code.
 
@@ -612,44 +584,6 @@ def betterer_frontend_step():
         "commands": [
             "apk add --update git bash",
             "yarn betterer:ci",
-        ],
-    }
-
-def test_frontend_step():
-    """Runs tests on frontend code.
-
-    Returns:
-      Drone step.
-    """
-
-    return {
-        "name": "test-frontend",
-        "image": images["node"],
-        "environment": {
-            "TEST_MAX_WORKERS": "50%",
-        },
-        "depends_on": [
-            "yarn-install",
-        ],
-        "commands": [
-            "yarn run ci:test-frontend",
-        ],
-    }
-
-def lint_frontend_step():
-    return {
-        "name": "lint-frontend",
-        "image": images["node"],
-        "environment": {
-            "TEST_MAX_WORKERS": "50%",
-        },
-        "depends_on": [
-            "yarn-install",
-        ],
-        "commands": [
-            "yarn run prettier:check",
-            "yarn run lint",
-            "yarn run typecheck",
         ],
     }
 
@@ -835,23 +769,6 @@ def start_storybook_step():
         "detach": True,
     }
 
-def e2e_storybook_step():
-    return {
-        "name": "end-to-end-tests-storybook-suite",
-        "image": images["cypress"],
-        "depends_on": [
-            "start-storybook",
-        ],
-        "environment": {
-            "HOST": "start-storybook",
-            "PORT": "9001",
-        },
-        "commands": [
-            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
-            "yarn e2e:storybook",
-        ],
-    }
-
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -1013,129 +930,6 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         step = dict(step, failure = "ignore")
 
     return step
-
-def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None, canFail = False):
-    """Integration test steps
-
-    Args:
-      name: the name of the step.
-      cmds: the commands to run to perform the integration tests.
-      hostname: the hostname where the remote server is available.
-      port: the port where the remote server is available.
-      environment: Any extra environment variables needed to run the integration tests.
-      canFail: controls whether the step can fail.
-
-    Returns:
-      A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
-      available is also returned.
-    """
-    dockerize_name = "wait-for-{}".format(name)
-
-    depends = [
-        "wire-install",
-    ]
-
-    step = {
-        "name": "{}-integration-tests".format(name),
-        "image": images["go"],
-        "depends_on": depends,
-        "commands": [
-            "apk add --update build-base",
-        ] + cmds,
-    }
-
-    if canFail:
-        step["failure"] = "ignore"
-
-    if environment:
-        step["environment"] = environment
-
-    if hostname == None:
-        return [step]
-
-    depends = depends.append(dockerize_name)
-
-    return [
-        dockerize_step(dockerize_name, hostname, port),
-        step,
-    ]
-
-def integration_benchmarks_step(name, environment = None):
-    cmds = [
-        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
-        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
-    ]
-
-    return integration_tests_steps("{}-benchmark".format(name), cmds, environment = environment)
-
-def postgres_integration_tests_steps():
-    cmds = [
-        "apk add --update postgresql-client",
-        "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
-        "devenv/docker/blocks/postgres_tests/setup.sql",
-        "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-    ]
-
-    environment = {
-        "PGPASSWORD": "grafanatest",
-        "GRAFANA_TEST_DB": "postgres",
-        "POSTGRES_HOST": "postgres",
-    }
-
-    return integration_tests_steps("postgres", cmds, "postgres", "5432", environment)
-
-def mysql_integration_tests_steps(hostname, version):
-    cmds = [
-        "apk add --update mariadb-client",  # alpine doesn't package mysql anymore; more info: https://wiki.alpinelinux.org/wiki/MySQL
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h {} -P 3306 -u root -prootpass --disable-ssl-verify-server-cert".format(hostname),
-        "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-    ]
-
-    environment = {
-        "GRAFANA_TEST_DB": "mysql",
-        "MYSQL_HOST": hostname,
-    }
-
-    return integration_tests_steps("mysql-{}".format(version), cmds, hostname, "3306", environment)
-
-def redis_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
-    ]
-
-    environment = {
-        "REDIS_URL": "redis://redis:6379/0",
-    }
-
-    return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
-
-def remote_alertmanager_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...",
-    ]
-
-    environment = {
-        "AM_TENANT_ID": "test",
-        "AM_URL": "http://mimir_backend:8080",
-    }
-
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
-
-def memcached_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
-    ]
-
-    environment = {
-        "MEMCACHED_HOSTS": "memcached:11211",
-    }
-
-    return integration_tests_steps("memcached", cmds, "memcached", "11211", environment)
 
 def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.

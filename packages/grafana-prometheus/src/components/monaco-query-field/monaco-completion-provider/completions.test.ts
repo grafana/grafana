@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../language_provider';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
 import { getMockTimeRange } from '../../../test/__mocks__/datasource';
 
@@ -16,6 +16,10 @@ const dataProviderSettings = {
     },
     getLabelKeys: jest.fn(),
     getLabelValues: jest.fn(),
+    queryLabelKeys: jest.fn(),
+    queryLabelValues: jest.fn(),
+    retrieveLabelKeys: jest.fn(),
+    retrieveMetricsMetadata: jest.fn(),
     getSeriesLabels: jest.fn(),
     getSeriesValues: jest.fn(),
     metrics: [],
