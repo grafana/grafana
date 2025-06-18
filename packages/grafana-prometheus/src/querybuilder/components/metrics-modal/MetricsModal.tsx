@@ -20,7 +20,6 @@ import {
 } from '@grafana/ui';
 
 import { getDebounceTimeInMilliseconds } from '../../../caching';
-import { getDebounceTimeInMilliseconds } from '../../../caching';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
