@@ -75,7 +75,8 @@ export function DeleteProvisionedDashboardForm({
   const onWriteSuccess = () => {
     panelEditor?.onDiscard();
     onDismiss();
-    navigate('/dashboards');
+    // TODO reset search state instead
+    window.location.href = '/dashboards';
   };
 
   const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
