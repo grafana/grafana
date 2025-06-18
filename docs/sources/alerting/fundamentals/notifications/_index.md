@@ -74,9 +74,10 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 ## How it works at a glance
 
-- Grafana alerting periodically [evaluates your alert rules](ref:alert-rule-evaluation) and triggers notifications for firing and resolved alert instances.
-- You can configure the alert rule to send notifications to a contact point or route them via Notification Policies for greater flexibility.
-- To minimize alert noise, group similar alerts into a single notification by grouping alert labels and notification timings.
+- Grafana alerting periodically [evaluates your alert rules](ref:alert-rule-evaluation).
+- It triggers notifications for alert instances that are **firing** or **resolved**.
+- You can configure an alert rule to send notifications to a **contact point** or route them through **notification policies** for greater flexibility.
+- To reduce the number of notifications, you can **group related alerts** into a single notification by using label grouping and notification timings.
 
 ## Fundamentals
 
