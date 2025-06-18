@@ -181,7 +181,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshot(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
@@ -279,7 +279,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotWithDeleteKey(r
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
@@ -328,7 +328,7 @@ func schema_pkg_apis_dashboardsnapshot_v0alpha1_FullDashboardSnapshot(ref common
 						},
 					},
 				},
-				Required: []string{"info", "dashboard"},
+				Required: []string{"metadata", "info", "dashboard"},
 			},
 		},
 		Dependencies: []string{
