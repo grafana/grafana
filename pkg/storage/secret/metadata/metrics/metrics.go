@@ -263,6 +263,20 @@ func newStorageMetrics() *StorageMetrics {
 			Help:      "Duration of secure value get for decrypt operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
+		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_set_external_id_duration_seconds",
+			Help:      "Duration of secure value set external id operations",
+			Buckets:   prometheus.DefBuckets,
+		}),
+		SecureValueSetStatusDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "secure_value_set_status_duration_seconds",
+			Help:      "Duration of secure value set status operations",
+			Buckets:   prometheus.DefBuckets,
+		}),
 
 		// Decrypt metrics
 		DecryptDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
