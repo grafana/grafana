@@ -16,6 +16,7 @@ import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks
 
 import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
+import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -50,68 +51,62 @@ export function SaveProvisionedDashboardForm({
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, control, reset, register } = methods;
-  const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
+  const [workflow] = watch(['workflow']);
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  useEffect(() => {
-    if (request.isSuccess) {
-      dashboard.setState({ isDirty: false });
+  const onRequestError = (error: unknown) => {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
+    });
+  };
 
-      const { ref, path } = request.data;
+  const onWriteSuccess = () => {
+    dashboard.closeModal();
+    locationService.partial({
+      viewPanel: null,
+      editPanel: null,
+    });
+  };
 
-      if (workflow === 'branch' && ref && path) {
+  const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
+    const url = locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid: upsert.metadata.name,
+        slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
+        currentQueryParams: window.location.search,
+      })
+    );
+
+    navigate(url);
+  };
+
+  useProvisionedRequestHandler({
+    dashboard,
+    request,
+    workflow,
+    handlers: {
+      onBranchSuccess: ({ ref, path }) => {
         dashboard.closeModal();
         panelEditor?.onDiscard();
-        // Redirect to the provisioning preview pages
         navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
-        return;
-      }
-
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-success', 'Dashboard changes saved')],
-      });
-
-      // Load the new URL
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const upsert = request.data.resource.upsert as Resource<Dashboard>;
-      if (isNew && upsert?.metadata?.name) {
-        const url = locationUtil.assureBaseUrl(
-          getDashboardUrl({
-            uid: upsert.metadata.name,
-            slug: kbn.slugifyForUrl(upsert.spec.title ?? ''),
-            currentQueryParams: window.location.search,
-          })
-        );
-
-        navigate(url);
-        return;
-      }
-
-      // Keep the same URL
-      dashboard.closeModal();
-      locationService.partial({
-        viewPanel: null,
-        editPanel: null,
-      });
-    } else if (request.isError) {
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'),
-          request.error,
-        ],
-      });
-    }
-  }, [appEvents, dashboard, defaultValues.repo, drawer, isNew, navigate, panelEditor, path, ref, request, workflow]);
+      },
+      onWriteSuccess,
+      onNewDashboardSuccess,
+      onError: onRequestError,
+    },
+    isNew,
+  });
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+    // Validate required fields
     if (!repo || !path) {
+      console.error('Missing required fields for saving:', { repo, path });
       return;
     }
 

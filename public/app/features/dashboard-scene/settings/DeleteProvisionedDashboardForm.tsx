@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -12,6 +11,7 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { DashboardEditFormSharedFields } from '../components/Provisioned/DashboardEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -41,7 +41,7 @@ export function DeleteProvisionedDashboardForm({
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, reset } = methods;
 
-  const [ref, workflow, path] = watch(['ref', 'workflow', 'path']);
+  const [ref, workflow] = watch(['ref', 'workflow']);
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
@@ -65,39 +65,32 @@ export function DeleteProvisionedDashboardForm({
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // This effect runs when the delete file request state changes
-    if (request.isSuccess) {
-      dashboard.setState({ isDirty: false });
-      const { ref, path } = request.data;
+  const onRequestError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error],
+    });
+  };
 
-      if (workflow === 'branch' && ref && path) {
-        onDismiss();
-        // Redirect to the provisioning preview pages
-        navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
-        return;
-      }
+  const onWriteSuccess = () => {
+    reset();
+    onDismiss();
+    navigate('/dashboards');
+  };
 
-      // Show success message
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('dashboard-scene.delete-provisioned-dashboard-form.success', 'Dashboard deleted successfully')],
-      });
-
-      // Reset form and close drawer
-      reset();
-      onDismiss();
-      navigate('/dashboards');
-    } else if (request.isError) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'),
-          request.error,
-        ],
-      });
-    }
-  }, [request, onDismiss, reset, dashboard, workflow, ref, path, navigate, defaultValues.repo]);
+  useProvisionedRequestHandler({
+    dashboard,
+    request,
+    workflow,
+    handlers: {
+      onBranchSuccess: ({ path, urls }) =>
+        navigate(
+          `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
+        ),
+      onWriteSuccess,
+      onError: onRequestError,
+    },
+  });
 
   return (
     <Drawer
