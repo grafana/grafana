@@ -141,6 +141,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
             rule={rule}
             groupIdentifier={groupIdentifier}
             application={dsFeatures?.application}
+            showLocation={false}
           />
         ))}
       </>
@@ -194,6 +195,7 @@ export function RulerBasedGroupRules({
             actions={
               <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
             }
+            showLocation={false}
           />
         ) : (
           <RuleOperationListItem
@@ -204,6 +206,7 @@ export function RulerBasedGroupRules({
             rulesSource={groupIdentifier.rulesSource}
             application={application}
             operation={RuleOperation.Creating}
+            showLocation={false}
           />
         );
       })}
@@ -216,6 +219,7 @@ export function RulerBasedGroupRules({
           rulesSource={groupIdentifier.rulesSource}
           application={application}
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
     </>
