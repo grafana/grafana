@@ -3267,9 +3267,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3306,6 +3303,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -9750,7 +9750,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {

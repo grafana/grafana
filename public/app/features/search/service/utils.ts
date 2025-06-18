@@ -3,9 +3,12 @@ import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils'
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { DashboardViewItem, DashboardViewItemKind } from '../types';
+import { DashboardDataDTO } from '../../../types';
+import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
+import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
+import { SearchHit } from './unified';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -64,25 +67,6 @@ export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: bool
   }
 }
 
-// export function getIconForItem(itemOrKind: string | DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
-//   const kind = typeof itemOrKind === 'string' ? itemOrKind : itemOrKind.kind;
-//   const item = typeof itemOrKind === 'string' ? undefined : itemOrKind;
-
-//   if (kind === 'dashboard') {
-//     return 'apps';
-//   }
-
-//   if (item && isSharedWithMe(item.uid)) {
-//     return 'users-alt';
-//   }
-
-//   if (kind === 'folder') {
-//     return isOpen ? 'folder-open' : 'folder';
-//   }
-
-//   return 'question-circle';
-// }
-
 function parseKindString(kind: string): DashboardViewItemKind {
   switch (kind) {
     case 'dashboard':
@@ -94,11 +78,16 @@ function parseKindString(kind: string): DashboardViewItemKind {
   }
 }
 
+function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
+  return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
-  const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
+  const customMeta = view?.dataFrame.meta?.custom;
+  const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -131,4 +120,44 @@ export function queryResultToViewItem(
   }
 
   return viewItem;
+}
+
+export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>): SearchHit[] {
+  return resource.items.map((item) => {
+    const hit = {
+      resource: 'dashboards',
+      name: item.metadata.name,
+      title: item.spec.title,
+      location: 'general',
+      folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
+      tags: item.spec.tags || [],
+      field: {},
+      url: '',
+    };
+    if (!hit.folder) {
+      return { ...hit, location: 'general', folder: 'general' };
+    }
+
+    return hit;
+  });
+}
+
+export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
+  return searchHits.map((hit) => {
+    const dashboardHit: DashboardSearchHit = {
+      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+      title: hit.title,
+      uid: hit.name, // k8s name is the uid
+      url: hit.url,
+      tags: hit.tags || [],
+      isDeleted: true, // All results from trash are deleted
+      sortMeta: 0, // Default value for deleted items
+    };
+
+    if (hit.folder && hit.folder !== 'general') {
+      dashboardHit.folderUid = hit.folder;
+    }
+
+    return dashboardHit;
+  });
 }
