@@ -44,13 +44,13 @@ import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
 import { SUGGESTIONS_LIMIT } from './constants';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
-import PrometheusLanguageProvider from './language_provider';
 import {
-  expandRecordingRules,
-  getClientCacheDurationInMinutes,
-  getPrometheusTime,
-  getRangeSnapInterval,
-} from './language_utils';
+  exportToAbstractQuery,
+  importFromAbstractQuery,
+  PrometheusLanguageProvider,
+  PrometheusLanguageProviderInterface,
+} from './language_provider';
+import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/shared/modeller_instance';
@@ -95,7 +95,7 @@ export class PrometheusDatasource
   withCredentials: boolean;
   interval: string;
   httpMethod: string;
-  languageProvider: PrometheusLanguageProvider;
+  languageProvider: PrometheusLanguageProviderInterface;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: URLSearchParams;
@@ -112,7 +112,7 @@ export class PrometheusDatasource
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    languageProvider?: PrometheusLanguageProvider
+    languageProvider?: PrometheusLanguageProviderInterface
   ) {
     super(instanceSettings);
 
@@ -127,7 +127,6 @@ export class PrometheusDatasource
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
-    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
@@ -148,6 +147,7 @@ export class PrometheusDatasource
     });
 
     this.annotations = PrometheusAnnotationSupport(this);
+    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
   }
 
   init = async () => {
@@ -284,11 +284,11 @@ export class PrometheusDatasource
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
-    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+    return queries.map((query) => exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -862,32 +862,6 @@ export class PrometheusDatasource
     }
 
     return range.raw.from.includes('now') || range.raw.to.includes('now');
-  }
-
-  getDebounceTimeInMilliseconds(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 600;
-      case PrometheusCacheLevel.High:
-        return 1200;
-      default:
-        return 350;
-    }
-  }
-
-  getDaysToCacheMetadata(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 7;
-      case PrometheusCacheLevel.High:
-        return 30;
-      default:
-        return 1;
-    }
-  }
-
-  getCacheDurationInMinutes(): number {
-    return getClientCacheDurationInMinutes(this.cacheLevel);
   }
 
   getDefaultQuery(app: CoreApp): PromQuery {

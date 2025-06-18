@@ -128,6 +128,7 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
@@ -532,7 +533,44 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
-	return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
+
+	mergeMatchers, err := parseMergeMatchersHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse merge matchers header", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
+
+	ec := apimodels.ExtraConfiguration{
+		Identifier:         identifier,
+		MergeMatchers:      mergeMatchers,
+		TemplateFiles:      amCfg.TemplateFiles,
+		AlertmanagerConfig: amCfg.AlertmanagerConfig,
+	}
+	err = ec.Validate()
+	if err != nil {
+		logger.Error("Invalid alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
+
+	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec)
+	if err != nil {
+		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier)
+	return successfulResponse()
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
@@ -567,9 +605,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
 	}
 
-	respBody := apimodels.AlertmanagerUserConfig{
-		AlertmanagerConfig: extraCfg.AlertmanagerConfig,
-		TemplateFiles:      extraCfg.TemplateFiles,
+	// Parse the configuration into our Gettable struct which will automatically
+	// sanitize secrets and exclude global settings when marshaled back to YAML.
+	var prometheusConfig amconfig.Config
+	if err := yaml.Unmarshal([]byte(extraCfg.AlertmanagerConfig), &prometheusConfig); err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid Alertmanager configuration format", err)
+	}
+
+	respBody := apimodels.GettableAlertmanagerUserConfig{
+		AlertmanagerConfig: apimodels.GettableAlertmanagerConfig{
+			Config: prometheusConfig,
+		},
+		TemplateFiles: extraCfg.TemplateFiles,
 	}
 
 	resp := response.YAML(http.StatusOK, respBody)

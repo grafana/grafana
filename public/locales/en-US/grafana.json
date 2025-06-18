@@ -1065,6 +1065,9 @@
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
     },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+    },
     "evaluate-every-validation-options": {
       "message": {
         "required": "Required."
@@ -3267,9 +3270,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3306,6 +3306,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -4055,6 +4058,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
@@ -9750,7 +9754,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {

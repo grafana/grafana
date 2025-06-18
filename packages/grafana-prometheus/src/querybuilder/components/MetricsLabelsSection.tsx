@@ -3,9 +3,10 @@ import { useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 
+import { getDebounceTimeInMilliseconds } from '../../caching';
 import { PrometheusDatasource } from '../../datasource';
-import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
+import { PromMetricsMetadata } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../shared/types';
@@ -210,7 +211,7 @@ export function MetricsLabelsSection({
         variableEditor={variableEditor}
       />
       <LabelFilters
-        debounceDuration={datasource.getDebounceTimeInMilliseconds()}
+        debounceDuration={getDebounceTimeInMilliseconds(datasource.cacheLevel)}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
         labelsFilters={query.labels}
         onChange={onChangeLabels}
@@ -256,4 +257,12 @@ async function getMetrics(
     value: m,
     description: getMetadataString(m, datasource.languageProvider.metricsMetadata!),
   }));
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
