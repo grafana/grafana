@@ -43,11 +43,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -55,7 +55,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -74,14 +73,10 @@ var (
 )
 
 type APIBuilder struct {
-	urlProvider      func(namespace string) string
-	webhookSecretKey string
-	isPublic         bool
+	features featuremgmt.FeatureToggles
 
-	features            featuremgmt.FeatureToggles
 	getter              rest.Getter
 	localFileResolver   *repository.LocalFolderResolver
-	render              rendering.Service
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -101,6 +96,9 @@ type APIBuilder struct {
 	secrets          secrets.Service
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
+	statusPatcher    *controller.RepositoryStatusPatcher
+	// Extras provides additional functionality to the API.
+	extras []Extra
 }
 
 // NewAPIBuilder creates an API builder.
@@ -108,10 +106,7 @@ type APIBuilder struct {
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
-	urlProvider func(namespace string) string,
-	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
-	render rendering.Service,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
@@ -120,25 +115,19 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	access authlib.AccessChecker,
+	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
-	// HACK: Assume is only public if it is HTTPS
-	isPublic := strings.HasPrefix(urlProvider(""), "https://")
-
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	return &APIBuilder{
-		urlProvider:         urlProvider,
+	b := &APIBuilder{
 		localFileResolver:   local,
-		webhookSecretKey:    webhookSecretKey,
-		isPublic:            isPublic,
 		features:            features,
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
 		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
-		render:              render,
 		clonedir:            clonedir,
 		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
@@ -148,6 +137,12 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 	}
+
+	for _, builder := range extraBuilders {
+		b.extras = append(b.extras, builder(b))
+	}
+
+	return b
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -158,7 +153,6 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
@@ -168,25 +162,30 @@ func RegisterAPIService(
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
+	}
+
+	logger := logging.DefaultLogger.With("logger", "provisioning startup")
+	if features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+		logger.Info("Using nanogit for repositories")
+	} else {
+		logger.Debug("Using go-git and Github API for repositories")
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
-	urlProvider := func(namespace string) string {
-		return cfg.AppURL
-	}
-
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client,
+	builder := NewAPIBuilder(folderResolver, features,
+		client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		secrets.NewSingleTenant(secretsSvc), access,
+		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -219,6 +218,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "failed to find requester", err
 			}
 
+			// Check if any extra authorizer has a decision.
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			switch a.GetResource() {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
@@ -230,19 +237,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "webhook":
-					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
-					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
-					// For context on the anonymous user, check the authn/clients/provisioning.go file.
-					return authorizer.DecisionAllow, "", nil
-
 				case "files":
 					// Access to files is controlled by the AccessClient
-					return authorizer.DecisionAllow, "", nil
-
-				case "render":
-					// This is used to read a blob from unified storage, for GitHub PR comments.
-					// GH uses a proxy for all images, so we need to accept it, always.
 					return authorizer.DecisionAllow, "", nil
 
 				case "resources", "sync", "history":
@@ -300,6 +296,14 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
 
+func (b *APIBuilder) GetJobQueue() jobs.Queue {
+	return b.jobs
+}
+
+func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+	return b.statusPatcher
+}
+
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := provisioning.AddToScheme(scheme)
 	if err != nil {
@@ -345,7 +349,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = NewWebhookConnector(b, b, b.jobs, b.isPublic)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
@@ -362,9 +365,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		jobs:       b.jobs,
 		historic:   b.jobHistory,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
-		blob: b.unified,
+
+	// Add any extra storage
+	for _, extra := range b.extras {
+		if err := extra.UpdateStorage(storage); err != nil {
+			return fmt.Errorf("update storage for extra %T: %w", extra, err)
+		}
 	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -406,13 +414,76 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
 	}
+	if r.Spec.Type == provisioning.GitRepositoryType {
+		if r.Spec.Git == nil {
+			return fmt.Errorf("git configuration is required")
+		}
+
+		if r.Spec.GitHub != nil {
+			return fmt.Errorf("git and github cannot be used together")
+		}
+
+		if r.Spec.Local != nil {
+			return fmt.Errorf("git and local cannot be used together")
+		}
+
+		// Trim trailing slash and ensure .git is present
+		if len(r.Spec.Git.URL) > 5 {
+			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
+
+			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
+				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
+			}
+		}
+	}
 
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptSecrets(ctx, r); err != nil {
+	if err := b.encryptGithubToken(ctx, r); err != nil {
 		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
+	if err := b.encryptGitToken(ctx, r); err != nil {
+		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
+	// Mutate the repository with any extra mutators
+	for _, extra := range b.extras {
+		if err := extra.Mutate(ctx, r); err != nil {
+			return fmt.Errorf("failed to mutate repository: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+	}
+
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.Git != nil &&
+		repo.Spec.Git.Token != "" {
+		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.Git.Token = ""
 	}
 
 	return nil
@@ -538,13 +609,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
-			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
 				b.storageStatus,
-				statusPatcher.Patch,
+				b.statusPatcher.Patch,
 				syncer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
@@ -577,18 +648,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
-			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
-			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+
+			// Add any extra workers
+			for _, extra := range b.extras {
+				workers = append(workers, extra.GetJobWorkers()...)
+			}
 
 			driver, err := jobs.NewJobDriver(
 				time.Minute*20, // Max time for each job
 				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
 				time.Second*30, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
-				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+				workers...,
+			)
 			if err != nil {
 				return err
 			}
@@ -614,6 +687,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			return nil
 		},
 	}
+
 	return postStartHooks, nil
 }
 
@@ -648,11 +722,6 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 				},
 			},
 		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
 	ref := &spec3.Parameter{
@@ -883,36 +952,11 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	delete(oas.Paths.Paths, repoprefix+"/render")
-	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
-	if sub != nil {
-		sub.Get.Description = "get a rendered preview image"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"image/png": {},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
+	// Run all extra post-processors.
+	for _, extra := range b.extras {
+		if err := extra.PostProcessOpenAPI(oas); err != nil {
+			return nil, fmt.Errorf("post-process OpenAPI for extra %T: %w", extra, err)
 		}
-
-		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
-		for _, v := range sub.Parameters {
-			if v.Name == "path" {
-				v.Name = "guid"
-				v.Description = "Image GUID"
-				break
-			}
-		}
-
-		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
-		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
 	}
 
 	// Add any missing definitions
@@ -979,29 +1023,6 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-	}
-
-	if repo.Status.Webhook != nil &&
-		repo.Status.Webhook.Secret != "" {
-		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
-		if err != nil {
-			return err
-		}
-		repo.Status.Webhook.Secret = ""
-	}
-	return nil
 }
 
 // FIXME: This logic does not belong in provisioning! (but required for now)
@@ -1131,28 +1152,66 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repo
 }
 
 func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	// Try first with any extra
+	for _, extra := range b.extras {
+		r, err := extra.AsRepository(ctx, r)
+		if err != nil {
+			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
+		}
+
+		if r != nil {
+			return r, nil
+		}
+	}
+
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitRepositoryType:
+		return nanogit.NewGitRepository(ctx, b.secrets, r, nanogit.RepositoryConfig{
+			URL:            r.Spec.Git.URL,
+			Branch:         r.Spec.Git.Branch,
+			Path:           r.Spec.Git.Path,
+			Token:          r.Spec.Git.Token,
+			EncryptedToken: r.Spec.Git.EncryptedToken,
+		})
 	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		var webhookURL string
-		if b.isPublic {
-			webhookURL = fmt.Sprintf(
-				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-				b.urlProvider(r.GetNamespace()),
-				gvr.Group,
-				gvr.Version,
-				r.GetNamespace(),
-				gvr.Resource,
-				r.GetName(),
-			)
-		}
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+		if err != nil {
+			return nil, fmt.Errorf("create github API repository: %w", err)
+		}
+
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+			logger.Debug("Instantiating Github repository with go-git and Github API")
+			return apiRepo, nil
+		}
+
+		logger.Info("Instantiating Github repository with nanogit")
+
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
+		}
+
+		gitCfg := nanogit.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghCfg.Token,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		if err != nil {
+			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+		}
+
+		return nanogit.NewGithubRepository(apiRepo, nanogitRepo), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame, EventBus } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
@@ -288,6 +289,40 @@ const createTimeDataFrame = (): DataFrame => {
 };
 
 describe('TableNG', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+  let origResizeObserver = global.ResizeObserver;
+  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+    origResizeObserver = global.ResizeObserver;
+    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    // Mock ResizeObserver
+    global.ResizeObserver = class ResizeObserver {
+      constructor(callback: any) {
+        // Store the callback
+        this.callback = callback;
+      }
+      callback: any;
+      observe() {
+        // Do nothing
+      }
+      unobserve() {
+        // Do nothing
+      }
+      disconnect() {
+        // Do nothing
+      }
+    };
+
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    global.ResizeObserver = origResizeObserver;
+    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
+  });
+
   describe('Basic TableNG rendering', () => {
     it('renders a simple table with columns and rows', () => {
       const { container } = render(
@@ -332,7 +367,7 @@ describe('TableNG', () => {
       expect(expandIcons.length).toBeGreaterThan(0);
     });
 
-    it('expands nested data when clicking expand button', () => {
+    it('expands nested data when clicking expand button', async () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
@@ -356,7 +391,7 @@ describe('TableNG', () => {
 
       // Click the expand button
       if (expandButton) {
-        fireEvent.click(expandButton);
+        await user.click(expandButton);
 
         // After expansion, we should have more rows
         const expandedRows = container.querySelectorAll('[role="row"]');
@@ -581,7 +616,7 @@ describe('TableNG', () => {
 
       if (nextButton) {
         // Click to go to the next page
-        fireEvent.click(nextButton);
+        await user.click(nextButton);
 
         // Get all cell content on the second page
         const newCells = container.querySelectorAll('[role="gridcell"]');
@@ -597,7 +632,7 @@ describe('TableNG', () => {
 
         // Check that the pagination summary shows we're on a different page
         // The format appears to be "X - Y of Z rows" where X and Y are the row range
-        expect(container.textContent).toMatch(/\d+ - \d+ of 100 rows/);
+        expect(container).toHaveTextContent(/\d+ - \d+ of 100 rows/);
 
         // Verify that the pagination summary has changed
         const paginationSummary = container.querySelector('.paginationSummary, [class*="paginationSummary"]');
@@ -606,7 +641,7 @@ describe('TableNG', () => {
           expect(summaryText).toContain('of 100 rows');
         } else {
           // If we can't find the pagination summary by class, just check the container text
-          expect(container.textContent).toContain('of 100 rows');
+          expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
     });
@@ -634,7 +669,7 @@ describe('TableNG', () => {
         const sortButton = columnHeader.querySelector('button') || columnHeader;
 
         // Click the sort button
-        fireEvent.click(sortButton);
+        await user.click(sortButton);
 
         // After clicking, the header should have an aria-sort attribute
         const newSortAttribute = columnHeader.getAttribute('aria-sort');
@@ -666,7 +701,7 @@ describe('TableNG', () => {
       }
     });
 
-    it('cycles through ascending, descending, and no sort states', () => {
+    it('cycles through ascending, descending, and no sort states', async () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
@@ -682,23 +717,23 @@ describe('TableNG', () => {
         const sortButton = columnHeader.querySelector('button') || columnHeader;
 
         // Initial state - no sort
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
 
         // First click - should sort ascending
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('ascending');
+        await user.click(sortButton);
+        expect(columnHeader).toHaveAttribute('aria-sort', 'ascending');
 
         // Second click - should sort descending
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('descending');
+        await user.click(sortButton);
+        expect(columnHeader).toHaveAttribute('aria-sort', 'descending');
 
         // Third click - should remove sort
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        await user.click(sortButton);
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
       }
     });
 
-    it('supports multi-column sorting with shift key', () => {
+    it('supports multi-column sorting with shift key', async () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
@@ -761,7 +796,7 @@ describe('TableNG', () => {
       const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
 
       // 1. First sort by Category (ascending)
-      fireEvent.click(categoryColumnButton);
+      await user.click(categoryColumnButton);
 
       // Check data is sorted by Category
       const categoryOnlySortedRows = getCellTextContent();
@@ -796,7 +831,8 @@ describe('TableNG', () => {
       expect(categoryBValues).toContain('4');
 
       // 2. Now add second sort column (Value) with shift key
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.keyboard('{Shift>}');
+      await user.click(valueColumnButton);
 
       // Check data is sorted by Category and then by Value
       const multiSortedRows = getCellTextContent();
@@ -830,7 +866,8 @@ describe('TableNG', () => {
       expect(multiSortedRows[4][2]).toBe('Alice');
 
       // 3. Change Value sort direction to descending
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.keyboard('{Shift>}');
+      await user.click(valueColumnButton);
 
       // Check data is sorted by Category (asc) and then by Value (desc)
       const multiSortedRowsDesc = getCellTextContent();
@@ -864,7 +901,8 @@ describe('TableNG', () => {
       expect(multiSortedRowsDesc[4][2]).toBe('Jane');
 
       // 4. Test removing the secondary sort by clicking a third time
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.keyboard('{Shift>}');
+      await user.click(valueColumnButton);
 
       // The data should still be sorted by Category only
       const singleSortRows = getCellTextContent();
@@ -879,7 +917,7 @@ describe('TableNG', () => {
       expect(singleSortRows[4][0]).toBe('B');
     });
 
-    it('correctly sorts different data types', () => {
+    it('correctly sorts different data types', async () => {
       // Create a data frame with different data types
       const mixedDataFrame = toDataFrame({
         name: 'MixedData',
@@ -918,7 +956,7 @@ describe('TableNG', () => {
 
       // Test string column sorting
       const stringColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
-      fireEvent.click(stringColumnButton);
+      await user.click(stringColumnButton);
 
       // Get cell values after sorting
       let cells = container.querySelectorAll('[role="gridcell"]');
@@ -930,7 +968,7 @@ describe('TableNG', () => {
 
       // Test number column sorting
       const numberColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
-      fireEvent.click(numberColumnButton);
+      await user.click(numberColumnButton);
 
       // Get cell values after sorting
       cells = container.querySelectorAll('[role="gridcell"]');
@@ -1138,11 +1176,16 @@ describe('TableNG', () => {
       // Find resize handle
       const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] .rdg-resizer');
 
+      // TODO: This `if` doesn't even trigger - the test is evergreen.
+      // We should work out a reliable way to actually find and trigger the resize methods
+      // The querySelector doesn't return anything!
       if (resizeHandles.length > 0) {
         // Simulate resize by triggering mousedown, mousemove, mouseup
+        /* eslint-disable testing-library/prefer-user-event */
         fireEvent.mouseDown(resizeHandles[0]);
         fireEvent.mouseMove(resizeHandles[0], { clientX: 250 });
         fireEvent.mouseUp(resizeHandles[0]);
+        /* eslint-enable testing-library/prefer-user-event */
 
         // Check that onColumnResize was called
         expect(onColumnResize).toHaveBeenCalled();
@@ -1202,28 +1245,6 @@ describe('TableNG', () => {
   });
 
   describe('Context menu', () => {
-    beforeEach(() => {
-      // Mock ResizeObserver
-      global.ResizeObserver = class ResizeObserver {
-        constructor(callback: any) {
-          // Store the callback
-          this.callback = callback;
-        }
-        callback: any;
-        observe() {
-          // Do nothing
-        }
-        unobserve() {
-          // Do nothing
-        }
-        disconnect() {
-          // Do nothing
-        }
-      };
-
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-    });
-
     it('should show context menu on right-click', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={400} height={400} />
@@ -1248,7 +1269,7 @@ describe('TableNG', () => {
   });
 
   describe('Cell inspection', () => {
-    it('shows inspect icon when hovering over a cell with inspection enabled', () => {
+    it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),
         fields: createBasicDataFrame().fields.map((field) => ({
@@ -1285,7 +1306,7 @@ describe('TableNG', () => {
 
         if (cellContent) {
           // Trigger mouse enter on the cell content
-          fireEvent.mouseEnter(cellContent);
+          await user.hover(cellContent);
 
           // Look for the inspect icon
           const inspectIcon = container.querySelector('[aria-label="Inspect value"]');
@@ -1491,13 +1512,12 @@ describe('TableNG', () => {
       const dataGrid = screen.getByRole('grid');
 
       // Simulate scrolling
-      act(() => {
-        fireEvent.scroll(dataGrid, {
-          target: {
-            scrollLeft: 100,
-            scrollTop: 50,
-          },
-        });
+
+      fireEvent.scroll(dataGrid, {
+        target: {
+          scrollLeft: 100,
+          scrollTop: 50,
+        },
       });
 
       // Rerender with the same data but different fieldConfig to trigger revId change

@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	//nolint:staticcheck
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,11 +51,6 @@ func config(t *testing.T) *setting.UnifiedAlertingSettings {
 func makeLimits(cfg *setting.UnifiedAlertingSettings) RuleLimits {
 	baseToggles := featuremgmt.WithFeatures()
 	return RuleLimitsFromConfig(cfg, baseToggles)
-}
-
-func allowRecording(lim RuleLimits) *RuleLimits {
-	lim.RecordingRulesAllowed = true
-	return &lim
 }
 
 func validRule() apimodels.PostableExtendedRuleNode {
@@ -447,8 +444,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			},
 		},
 		{
-			name:   "accepts and converts recording rule when toggle is enabled",
-			limits: allowRecording(limits),
+			name: "accepts and converts recording rule",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
@@ -489,8 +485,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			},
 		},
 		{
-			name:   "recording rules ignore fields that only make sense for Alerting rules",
-			limits: allowRecording(limits),
+			name: "recording rules ignore fields that only make sense for Alerting rules",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
@@ -673,22 +668,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			},
 		},
 		{
-			name: "rejects valid recording rules if toggle is disabled",
-			rule: func() *apimodels.PostableExtendedRuleNode {
-				r := validRule()
-				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
-				r.GrafanaManagedAlert.Condition = ""
-				r.GrafanaManagedAlert.NoDataState = ""
-				r.GrafanaManagedAlert.ExecErrState = ""
-				r.GrafanaManagedAlert.NotificationSettings = nil
-				r.For = nil
-				return &r
-			},
-			expErr: "recording rules cannot be created",
-		},
-		{
-			name:   "rejects recording rule with invalid metric name",
-			limits: allowRecording(limits),
+			name: "rejects recording rule with invalid metric name",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "", From: "A"}
@@ -702,8 +682,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			expErr: "must be a valid Prometheus metric name",
 		},
 		{
-			name:   "rejects recording rule with empty from",
-			limits: allowRecording(limits),
+			name: "rejects recording rule with empty from",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "my_metric", From: ""}
@@ -717,8 +696,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			expErr: "cannot be empty",
 		},
 		{
-			name:   "rejects recording rule with from not matching",
-			limits: allowRecording(limits),
+			name: "rejects recording rule with from not matching",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "my_metric", From: "NOTEXIST"}

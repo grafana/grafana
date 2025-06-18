@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ToolbarActionProps } from '../types';
 

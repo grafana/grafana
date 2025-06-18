@@ -1,7 +1,7 @@
 import { UseFieldArrayRemove } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface RemoveButtonProps {
   remove: UseFieldArrayRemove;

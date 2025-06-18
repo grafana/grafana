@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -63,7 +64,7 @@ const ResourceField = ({
     <span data-testid={selectors.components.queryEditor.resourcePicker.select.button}>
       <Modal
         className={styles.modal}
-        title="Select a resource"
+        title={t('components.resource-field.title-select-resource', 'Select a resource')}
         isOpen={pickerIsOpen}
         onDismiss={closePicker}
         // The growing number of rows added to the modal causes a focus
@@ -82,7 +83,11 @@ const ResourceField = ({
           selectionNotice={selectionNotice}
         />
       </Modal>
-      <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
+      <Field
+        label={t('components.resource-field.label-resource', 'Resource')}
+        inlineField={inlineField}
+        labelWidth={labelWidth}
+      >
         <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resources={resources} datasource={datasource} />
         </Button>
@@ -104,7 +109,7 @@ const ResourceLabel = ({ resources, datasource }: ResourceLabelProps<string | Az
   }, [resources]);
 
   if (!resources.length) {
-    return <>Select a resource</>;
+    return <Trans i18nKey="components.resource-label.select-resource">Select a resource</Trans>;
   }
 
   return <FormattedResource resources={resourcesComponents} />;

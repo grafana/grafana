@@ -26,13 +26,14 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: |
+        # shellcheck disable=SC2102,SC2016,SC2125 # this is just a string. we _want_ all the bash features to be disabled.
         extract_error_message='::error::Extraction failed. Make sure that you have no dynamic translation phrases, such as "t(`preferences.theme.{themeID}`, themeName)" and that no translation key is used twice. Search the output for '[warning]' to find the offending file.'
         make i18n-extract || (echo "${extract_error_message}" && false)
     - run: |
         uncommited_error_message="::error::Translation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
         file_diff=$(git diff --dirstat public/locales)
         if [ -n "$file_diff" ]; then
-            echo $file_diff
+            echo "$file_diff"
             echo "${uncommited_error_message}"
             exit 1
         fi

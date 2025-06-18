@@ -21,7 +21,7 @@ import (
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	tracer trace.Tracer, reg prometheus.Registerer, ac types.AccessClient,
 	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles, distributor *resource.Distributor) (resource.ResourceServer, error) {
+	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -42,6 +42,12 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 		}
 		opts.Blob.URL = "file:///" + dir
 	}
+
+	// This is mostly for testing, being able to influence when we paginate
+	// based on the page size during tests.
+	unifiedStorageCfg := cfg.SectionWithEnvOverrides("unified_storage")
+	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
+	opts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
@@ -68,7 +74,6 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	opts.Lifecycle = store
 	opts.Search = searchOptions
 	opts.IndexMetrics = indexMetrics
-	opts.Distributor = distributor
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {

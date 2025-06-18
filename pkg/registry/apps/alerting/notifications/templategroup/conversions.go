@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -17,7 +17,7 @@ func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate,
 	result := &model.TemplateGroupList{}
 	for _, t := range list {
 		item := convertToK8sResource(orgID, t, namespacer)
-		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableFields(item)) {
+		if selector != nil && !selector.Empty() && !selector.Matches(model.TemplateGroupSelectableFields(item)) {
 			continue
 		}
 		result.Items = append(result.Items, *item)
@@ -33,7 +33,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 			Namespace:       namespacer(orgID),
 			ResourceVersion: template.ResourceVersion,
 		},
-		Spec: model.Spec{
+		Spec: model.TemplateGroupSpec{
 			Title:   template.Name,
 			Content: template.Template,
 		},

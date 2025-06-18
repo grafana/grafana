@@ -11,9 +11,9 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
@@ -289,7 +289,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 
 const getImagePath = (id: string, disabled: boolean) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/img/transformations/${folder}/${id}.svg`;
+  return `public/build/img/transformations/${folder}/${id}.svg`;
 };
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {

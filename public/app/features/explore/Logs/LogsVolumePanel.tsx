@@ -12,9 +12,9 @@ import {
   DataFrame,
   TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -46,6 +46,7 @@ export function LogsVolumePanel(props: Props) {
   } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 

@@ -1,6 +1,7 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
+import '@formatjs/intl-durationformat/polyfill';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
@@ -18,6 +19,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { initializeI18n } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -61,7 +63,9 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initializeI18n } from './core/internationalization';
+import { NAMESPACES } from './core/internationalization/constants';
+import { loadTranslations } from './core/internationalization/loadTranslations';
+import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CorrelationsService } from './core/services/CorrelationsService';
@@ -72,7 +76,6 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
-import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -115,19 +118,30 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
-if (process.env.NODE_ENV === 'development') {
-  initDevFeatures();
-}
-
 export class GrafanaApp {
   context!: GrafanaContextType;
 
   async init() {
     try {
+      await preInitTasks();
       // Let iframe container know grafana has started loading
-      parent.postMessage('GrafanaAppInit', '*');
+      window.parent.postMessage('GrafanaAppInit', '*');
+      const regionalFormat = config.featureToggles.localeFormatPreference
+        ? config.regionalFormat
+        : config.bootData.user.language;
 
-      const initI18nPromise = initializeI18n(config.bootData.user.language);
+      const initI18nPromise = initializeI18n(
+        {
+          language: config.bootData.user.language,
+          ns: NAMESPACES,
+          module: loadTranslations,
+        },
+        regionalFormat
+      );
+
+      // This is a placeholder so we can put a 'comment' in the message json files.
+      // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+      // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
@@ -135,7 +149,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.locale);
+      setLocale(config.regionalFormat);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
@@ -268,6 +282,8 @@ export class GrafanaApp {
           app: this,
         })
       );
+
+      await postInitTasks();
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();

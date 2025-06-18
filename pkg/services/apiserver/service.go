@@ -16,7 +16,6 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -27,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -36,7 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	kubeaggregator "github.com/grafana/grafana/pkg/services/apiserver/aggregator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -103,6 +101,7 @@ type service struct {
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
+	aggregatorRunner                  aggregatorrunner.AggregatorRunner
 }
 
 func ProvideService(
@@ -122,6 +121,8 @@ func ProvideService(
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	reg prometheus.Registerer,
+	aggregatorRunner aggregatorrunner.AggregatorRunner,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -137,7 +138,7 @@ func ProvideService(
 		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
-		metrics:                           metrics.ProvideRegisterer(),
+		metrics:                           reg,
 		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
@@ -148,6 +149,7 @@ func ProvideService(
 		unified:                           unified,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
+		aggregatorRunner:                  aggregatorRunner,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -234,7 +236,7 @@ func (s *service) start(ctx context.Context) error {
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
 	// Install schemas
-	for i, b := range builders {
+	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
 		if len(gvs) == 0 {
@@ -245,12 +247,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for j, gv := range pvs {
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
-			}
-
+		for _, gv := range pvs {
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()
 				if auth != nil {
@@ -280,7 +277,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// setup loopback transport for the aggregator server
-	transport := &roundTripperFunc{ready: make(chan struct{})}
+	transport := &grafanaapiserveroptions.RoundTripperFunc{Ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
@@ -328,7 +325,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.metrics,
+		request.GetNamespaceMapper(s.cfg),
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), // NOTE: will be removed and replaced with the dual writer utility
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
@@ -341,27 +340,41 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	delegate := server
-	var aggregatorServer *aggregatorapiserver.APIAggregator
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		aggregatorServer, err = s.createKubeAggregator(serverConfig, server, s.metrics)
+
+	var runningServer *genericapiserver.GenericAPIServer
+	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
+
+	if isKubernetesAggregatorEnabled {
+		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
 		}
-		delegate = aggregatorServer.GenericAPIServer
+		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
+		if aggregatorServer != nil {
+			if !isDataplaneAggregatorEnabled {
+				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+				if err != nil {
+					s.log.Error("aggregator runner failed to run", "error", err)
+					return err
+				}
+			} else {
+				delegate = aggregatorServer
+			}
+		} else {
+			// even though the FT is set to true, enterprise isn't linked
+			isKubernetesAggregatorEnabled = false
+		}
 	}
 
-	var runningServer *genericapiserver.GenericAPIServer
-	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
+	if isDataplaneAggregatorEnabled {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
 		if err != nil {
 			return err
 		}
-	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startKubeAggregator(ctx, transport, aggregatorServer)
-		if err != nil {
-			return err
-		}
-	} else {
+	}
+
+	if !isDataplaneAggregatorEnabled && !isKubernetesAggregatorEnabled {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
@@ -385,15 +398,15 @@ func (s *service) start(ctx context.Context) error {
 
 func (s *service) startCoreServer(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
+	close(transport.Ready)
 
 	prepared := server.PrepareRun()
 	go func() {
@@ -405,7 +418,7 @@ func (s *service) startCoreServer(
 
 func (s *service) startDataplaneAggregator(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
@@ -436,8 +449,8 @@ func (s *service) startDataplaneAggregator(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.Ready)
 
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {
@@ -451,49 +464,10 @@ func (s *service) startDataplaneAggregator(
 	return aggregatorServer.GenericAPIServer, nil
 }
 
-func (s *service) createKubeAggregator(
-	serverConfig *genericapiserver.RecommendedConfig,
-	server *genericapiserver.GenericAPIServer,
-	reg prometheus.Registerer,
-) (*aggregatorapiserver.APIAggregator, error) {
-	namespaceMapper := request.GetNamespaceMapper(s.cfg)
-
-	aggregatorConfig, err := kubeaggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
-	if err != nil {
-		return nil, err
-	}
-
-	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
-}
-
-func (s *service) startKubeAggregator(
-	ctx context.Context,
-	transport *roundTripperFunc,
-	aggregatorServer *aggregatorapiserver.APIAggregator,
-) (*genericapiserver.GenericAPIServer, error) {
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		s.stoppedCh <- prepared.Run(ctx)
-	}()
-
-	return aggregatorServer.GenericAPIServer, nil
-}
-
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	return &clientrest.Config{
-		Transport: &roundTripperFunc{
-			fn: func(req *http.Request) (*http.Response, error) {
+		Transport: &grafanaapiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
 				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
@@ -529,18 +503,6 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
-}
-
-type roundTripperFunc struct {
-	ready chan struct{}
-	fn    func(req *http.Request) (*http.Response, error)
-}
-
-func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	if f.fn == nil {
-		<-f.ready
-	}
-	return f.fn(req)
 }
 
 type pluginContextProvider struct {

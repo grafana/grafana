@@ -32,6 +32,7 @@ export const LogsPanel = ({
   timeZone,
   fieldConfig,
   options: {
+    controlsStorageKey,
     dedupStrategy,
     enableInfiniteScrolling,
     grammar,
@@ -129,6 +130,16 @@ export const LogsPanel = ({
     return 'top';
   }, [data.request?.app, sortOrder]);
 
+  const storageKey = useMemo(() => {
+    if (controlsStorageKey) {
+      return controlsStorageKey;
+    }
+    if (!data.request) {
+      return undefined;
+    }
+    return `${data.request?.dashboardUID}.${id}`;
+  }, [controlsStorageKey, data.request, id]);
+
   if (!logs.length) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -141,6 +152,7 @@ export const LogsPanel = ({
           containerElement={logsContainer}
           dedupStrategy={dedupStrategy}
           displayedFields={[]}
+          enableLogDetails
           grammar={isLogsGrammar(grammar) ? grammar : undefined}
           initialScrollPosition={initialScrollPosition}
           logs={logs}
@@ -150,6 +162,7 @@ export const LogsPanel = ({
           showControls={showControls}
           showTime={showTime}
           sortOrder={sortOrder}
+          logOptionsStorageKey={storageKey}
           syntaxHighlighting={syntaxHighlighting}
           timeRange={data.timeRange}
           timeZone={timeZone}

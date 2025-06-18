@@ -3,11 +3,11 @@ import * as React from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Trans, t } from 'app/core/internationalization';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
@@ -93,17 +93,6 @@ export function ReceiverForm<R extends ChannelValues>({
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    values.items.forEach((item) => {
-      if (item.secureFields) {
-        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
-        Object.keys(item.secureFields).forEach((key) => {
-          if (item.secureFields[key] === true || item.secureFields[key] === false) {
-            delete item.secureFields[key];
-          }
-        });
-      }
-    });
-
     try {
       await onSubmit({
         ...values,
@@ -175,7 +164,7 @@ export function ReceiverForm<R extends ChannelValues>({
           />
         </Field>
         {fields.map((field, index) => {
-          const pathPrefix = `items.${index}.`;
+          const pathPrefix = `items.${index}.` as const;
           if (field.__deleted) {
             return <DeletedSubForm key={field.__id} pathPrefix={pathPrefix} />;
           }
@@ -185,6 +174,7 @@ export function ReceiverForm<R extends ChannelValues>({
               defaultValues={field}
               initialValues={initialItem}
               key={field.__id}
+              integrationIndex={index}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];
                 append({ ...currentValues, __id: String(Math.random()) });
@@ -200,7 +190,6 @@ export function ReceiverForm<R extends ChannelValues>({
               onDelete={() => remove(index)}
               pathPrefix={pathPrefix}
               notifiers={notifiers}
-              secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}

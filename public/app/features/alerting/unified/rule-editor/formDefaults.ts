@@ -34,9 +34,12 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
-export const getDefaultFormValues = (): RuleFormValues => {
+export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
   const type = (() => {
+    if (ruleType === RuleFormType.grafanaRecording) {
+      return RuleFormType.grafanaRecording;
+    }
     if (canCreateGrafanaRules) {
       return RuleFormType.grafana;
     }
@@ -70,7 +73,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
-    editorSettings: getDefaultEditorSettings(),
+    editorSettings: getDefaultEditorSettings(ruleType),
+    targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
 
     // cortex / loki
     namespace: '',
@@ -81,18 +85,17 @@ export const getDefaultFormValues = (): RuleFormValues => {
 };
 
 export const getDefautManualRouting = () => {
-  // first check if feature toggle for simplified routing is enabled
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
-  if (!simplifiedRoutingToggleEnabled) {
-    return false;
-  }
-  //then, check in local storage if the user has enabled simplified routing
+  // check in local storage
   // if it's not set, we'll default to true
   const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
 
-function getDefaultEditorSettings() {
+function getDefaultEditorSettings(ruleType?: RuleFormType) {
+  if (ruleType === RuleFormType.grafanaRecording) {
+    return undefined;
+  }
+
   const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
   if (!editorSettingsEnabled) {
     return undefined;
@@ -113,7 +116,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
     ruleFromQueryParams = JSON.parse(ruleDefinition);
   } catch (err) {
     return {
-      ...getDefaultFormValues(),
+      ...getDefaultFormValues(type),
       queries: getDefaultQueries(),
     };
   }
@@ -121,11 +124,11 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
   return setQueryEditorSettings(
     setInstantOrRange(
       revealHiddenQueries({
-        ...getDefaultFormValues(),
+        ...getDefaultFormValues(type),
         ...ruleFromQueryParams,
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-        type: type || RuleFormType.grafana,
+        type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
         evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )
@@ -134,7 +137,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
   return revealHiddenQueries({
-    ...getDefaultFormValues(),
+    ...getDefaultFormValues(rule.type),
     ...rule,
   });
 }
@@ -145,7 +148,7 @@ export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>)
 
 export function defaultFormValuesForRuleType(ruleType: RuleFormType): RuleFormValues {
   return {
-    ...getDefaultFormValues(),
+    ...getDefaultFormValues(ruleType),
     condition: 'C',
     queries: getDefaultQueries(isGrafanaRecordingRuleByType(ruleType)),
     type: ruleType,

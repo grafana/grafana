@@ -1,6 +1,6 @@
+import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
-import { t } from '../../../../../core/internationalization';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
 interface Props {

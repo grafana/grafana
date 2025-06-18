@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ValuePicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
 

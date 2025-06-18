@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -445,14 +444,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -560,14 +551,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -676,16 +659,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 		},
 	}
 
-	if db.IsTestDBSpanner() {
-		t.Skip("skipping integration test")
-	}
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
 	var orgID int64 = 1
 
 	for _, tc := range testCases {
@@ -774,9 +747,6 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 
 		// Insert dashboards in batches
 		batchSize := 500
-		if db.IsTestDBSpanner() {
-			batchSize = 30 // spanner has a limit of 950 parameters per query
-		}
 		for i := 0; i < len(dashes); i += batchSize {
 			end := i + batchSize
 			if end > len(dashes) {

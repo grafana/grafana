@@ -1,6 +1,8 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
+import React from 'react';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
@@ -12,19 +14,9 @@ import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry'
 import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
-import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { isGrafanaDevMode } from './utils';
 
 jest.mock('./useLoadAppPlugins');
-jest.mock('app/features/plugins/pluginSettings', () => ({
-  getPluginSettings: jest.fn().mockResolvedValue({
-    id: 'my-app-plugin',
-    enabled: true,
-    jsonData: {},
-    type: 'panel',
-    name: 'My App Plugin',
-    module: 'app/plugins/my-app-plugin/module',
-  }),
-}));
 
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
@@ -32,7 +24,6 @@ jest.mock('./utils', () => ({
   // Manually set the dev mode to false
   // (to make sure that by default we are testing a production scneario)
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
-  wrapWithPluginContext: jest.fn().mockImplementation((_, component: React.ReactNode) => component),
 }));
 
 jest.mock('./logs/log', () => {
@@ -45,14 +36,28 @@ jest.mock('./logs/log', () => {
   };
 });
 
+// See: public/app/features/plugins/extensions/utils.tsx for implementation details
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn().mockImplementation(() => ({
+    error: null,
+    loading: false,
+    value: {
+      id: 'my-app-plugin',
+    },
+  })),
+}));
+
 describe('usePluginComponents()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
   const pluginId = 'myorg-extensions-app';
   const extensionPointId = `${pluginId}/extension-point/v1`;
+  const originalBuildInfoEnv = config.buildInfo.env;
 
   beforeEach(() => {
+    config.buildInfo.env = originalBuildInfoEnv;
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
 
@@ -63,8 +68,6 @@ describe('usePluginComponents()', () => {
       addedLinksRegistry: new AddedLinksRegistry(),
       addedFunctionsRegistry: new AddedFunctionsRegistry(),
     };
-
-    jest.mocked(wrapWithPluginContext).mockClear();
 
     pluginMeta = {
       id: pluginId,
@@ -107,6 +110,11 @@ describe('usePluginComponents()', () => {
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should return an empty array if there are no extensions registered for the extension point', () => {
@@ -201,6 +209,128 @@ describe('usePluginComponents()', () => {
       id: '-1921123019',
       type: 'component',
     });
+  });
+
+  it('should pass a read only copy of the props to the components (in dev mode)', async () => {
+    config.buildInfo.env = 'development';
+
+    type Props = {
+      foo: {
+        foo2: {
+          foo3: {
+            foo4: string;
+          };
+        };
+      };
+      override?: boolean;
+    };
+
+    const originalFoo = {
+      foo2: {
+        foo3: {
+          foo4: 'bar',
+        },
+      },
+    };
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
+          component: ({ foo, override = false }: Props) => {
+            // Trying to override the prop
+            if (override) {
+              const foo3 = foo.foo2.foo3;
+              foo3.foo4 = 'baz';
+            }
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    // Check if it returns the components
+    const { result } = renderHook(() => usePluginComponents<Props>({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+
+    const Component = result.current.components[0];
+
+    // Should be possible to render the component if it doesn't want to change the props
+    const rendered = render(<Component foo={originalFoo} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
+    // Check if it throws a TypeError due to trying to change the prop
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<Component foo={originalFoo} override />)).toThrow(TypeError);
+
+    // Check if the original property hasn't been changed
+    expect(originalFoo.foo2.foo3.foo4).toBe('bar');
+  });
+
+  it('should pass a copy of the props to the components (in production mode)', async () => {
+    type Props = {
+      foo: {
+        foo2: {
+          foo3: {
+            foo4: string;
+          };
+        };
+      };
+      override?: boolean;
+    };
+
+    const originalFoo = {
+      foo2: {
+        foo3: {
+          foo4: 'bar',
+        },
+      },
+    };
+
+    registries.addedComponentsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          // @ts-ignore - The register() method is not designed to be called directly like this, and because of that it doesn't have a way to set the type of the Props
+          component: ({ foo, override = false }: Props) => {
+            // Trying to override the prop
+            if (override) {
+              const foo3 = foo.foo2.foo3;
+              foo3.foo4 = 'baz';
+            }
+
+            return <span>Foo</span>;
+          },
+        },
+      ],
+    });
+
+    // Check if it returns the components
+    const { result } = renderHook(() => usePluginComponents<Props>({ extensionPointId }), { wrapper });
+    expect(result.current.components.length).toBe(1);
+
+    const Component = result.current.components[0];
+
+    // Should be possible to render the component if it doesn't want to change the props
+    const rendered = render(<Component foo={originalFoo} />);
+    expect(rendered.getByText('Foo')).toBeVisible();
+
+    // Should also render the component if it wants to change the props
+    expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
+    expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "foo4"`, {
+      stack: expect.any(String),
+    });
+
+    // Check if the original property hasn't been changed
+    expect(originalFoo.foo2.foo3.foo4).toBe('bar');
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {

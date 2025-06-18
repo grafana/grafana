@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Checkbox, Icon, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { FieldNameMeta } from './LogsTableWrap';
 
@@ -50,6 +50,7 @@ export function LogsTableNavField(props: {
   showCount?: boolean;
 }): React.JSX.Element | undefined {
   const theme = useTheme2();
+
   const styles = getStyles(theme);
 
   if (props.labels[props.label]) {

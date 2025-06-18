@@ -171,27 +171,34 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *
 	return isParentFolderChanged, nil
 }
 
-func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
+func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioningSearchResults, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDataByDashboardID")
 	defer span.End()
 
-	var data dashboards.DashboardProvisioning
+	data := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(&data)
-		return err
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard_provisioning.dashboard_id = ?`, dashboardID).
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Find(&data)
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	if data.DashboardID == 0 {
+	if len(data) == 0 {
 		return nil, nil
 	}
-	return &data, err
+
+	return data[0], nil
 }
 
-func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
+func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioningSearchResults, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDataByDashboardUID")
 	defer span.End()
 
-	var provisionedDashboard dashboards.DashboardProvisioning
+	provisionedDashboard := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var dashboard dashboards.Dashboard
 		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
@@ -201,16 +208,22 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 		if !exists {
 			return dashboards.ErrDashboardNotFound
 		}
-		exists, err = sess.Where("dashboard_id = ?", dashboard.ID).Get(&provisionedDashboard)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return dashboards.ErrProvisionedDashboardNotFound
-		}
-		return nil
+
+		return sess.Table(`dashboard`).
+			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
+			Where(`dashboard_provisioning.dashboard_id = ?`, dashboard.ID).
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Find(&provisionedDashboard)
 	})
-	return &provisionedDashboard, err
+	if err != nil {
+		return nil, err
+	}
+
+	if len(provisionedDashboard) == 0 {
+		return nil, dashboards.ErrProvisionedDashboardNotFound
+	}
+
+	return provisionedDashboard[0], nil
 }
 
 func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
@@ -224,15 +237,17 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.Dashboard, error) {
+func (d *dashboardStore) GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*dashboards.DashboardProvisioningSearchResults, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDashboardsByName")
 	defer span.End()
 
-	dashes := []*dashboards.Dashboard{}
+	dashes := []*dashboards.DashboardProvisioningSearchResults{}
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(`dashboard`).
 			Join(`INNER`, `dashboard_provisioning`, `dashboard.id = dashboard_provisioning.dashboard_id`).
-			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).Find(&dashes)
+			Where(`dashboard_provisioning.name = ? AND dashboard.org_id = ?`, name, orgID).
+			Select("dashboard.*, dashboard_provisioning.name, dashboard_provisioning.external_id, dashboard_provisioning.updated as provisioning_updated, dashboard_provisioning.check_sum").
+			Find(&dashes)
 	})
 	if err != nil {
 		return nil, err
@@ -922,7 +937,39 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	return res, nil
+	if len(res) <= 1 {
+		return res, nil
+	}
+
+	// the search query above will return one row per dashboard tag, and dashboards
+	// can have multiple tags. we only want to return one row per dashboard, so dedup
+	// the results by id.
+	// note: we must preserve the order of the results as we dedup, as the query can be sorted
+	seen := make(map[int64]int)
+	uniqueRes := make([]dashboards.DashboardSearchProjection, 0, len(res))
+
+	for _, item := range res {
+		if idx, exists := seen[item.ID]; exists {
+			if item.Term != "" {
+				if uniqueRes[idx].Tags == nil {
+					uniqueRes[idx].Tags = make([]string, 0)
+				}
+				uniqueRes[idx].Tags = append(uniqueRes[idx].Tags, item.Term)
+			}
+			continue
+		}
+
+		if item.Tags == nil {
+			item.Tags = make([]string, 0)
+		}
+		if item.Term != "" {
+			item.Tags = append(item.Tags, item.Term)
+		}
+		seen[item.ID] = len(uniqueRes)
+		uniqueRes = append(uniqueRes, item)
+	}
+
+	return uniqueRes, nil
 }
 
 func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
@@ -1011,21 +1058,6 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 		}
 		return nil
 	})
-}
-
-func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboards")
-	defer span.End()
-
-	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
-		err := session.Find(&dashboards)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
 }
 
 func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {

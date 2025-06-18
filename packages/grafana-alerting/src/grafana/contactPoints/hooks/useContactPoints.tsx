@@ -1,15 +1,11 @@
-import { fetchBaseQuery, TypedUseQueryHookResult } from '@reduxjs/toolkit/query/react';
+import { type TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
-
-import { alertingAPI, ListReceiverApiArg } from '../../api.gen';
-import { EnhancedListReceiverResponse } from '../types';
-
-const { namespace } = config;
+import { type ListReceiverApiArg, alertingAPI } from '../../api/v0alpha1/api.gen';
+import type { EnhancedListReceiverApiResponse } from '../../api/v0alpha1/types';
 
 // this is a workaround for the fact that the generated types are not narrow enough
 type EnhancedHookResult = TypedUseQueryHookResult<
-  EnhancedListReceiverResponse,
+  EnhancedListReceiverApiResponse,
   ListReceiverApiArg,
   ReturnType<typeof fetchBaseQuery>
 >;
@@ -22,8 +18,8 @@ type EnhancedHookResult = TypedUseQueryHookResult<
  *
  * It automatically uses the configured namespace for the query.
  */
-function useListContactPoints() {
-  return alertingAPI.useListReceiverQuery<EnhancedHookResult>({ namespace });
+function useListContactPointsv0alpha1() {
+  return alertingAPI.useListReceiverQuery<EnhancedHookResult>({});
 }
 
-export { useListContactPoints };
+export { useListContactPointsv0alpha1 };

@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { ApiKey } from 'app/types';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabled, onDelete }: Props): JSX.Element => {
   const theme = useTheme2();
+
   const styles = getStyles(theme);
 
   return (
@@ -89,6 +90,7 @@ function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): strin
 
 const TokenRevoked = () => {
   const styles = useStyles2(getStyles);
+
   return (
     <span className={styles.hasExpired}>
       <Trans i18nKey="serviceaccounts.token-revoked.revoked-label">Revoked</Trans>
@@ -113,6 +115,7 @@ interface TokenExpirationProps {
 
 const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   const styles = useStyles2(getStyles);
+
   if (!token.expiration) {
     return (
       <span className={styles.neverExpire}>

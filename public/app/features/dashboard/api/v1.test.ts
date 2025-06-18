@@ -90,13 +90,15 @@ const saveDashboardResponse = {
 };
 
 const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
+const mockPost = jest.fn().mockResolvedValue(saveDashboardResponse);
+const mockPut = jest.fn().mockResolvedValue(saveDashboardResponse);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: mockGet,
-    put: jest.fn().mockResolvedValue(saveDashboardResponse),
-    post: jest.fn().mockResolvedValue(saveDashboardResponse),
+    put: mockPut,
+    post: mockPost,
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -111,6 +113,10 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 }));
 
 describe('v1 dashboard API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should provide folder annotations', async () => {
     mockGet.mockResolvedValueOnce({
       ...mockDashboardDto,
@@ -198,7 +204,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
       it('should provide dashboard URL with app sub url configured', async () => {
@@ -224,7 +230,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
@@ -242,7 +248,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
 
@@ -268,7 +274,7 @@ describe('v1 dashboard API', () => {
         });
 
         expect(result.uid).toBe('adh59cn');
-        expect(result.version).toBe(0);
+        expect(result.version).toBe(1);
         expect(result.url).toBe('/grafana/d/adh59cn/new-dashboard-saved');
       });
     });
@@ -309,6 +315,74 @@ describe('v1 dashboard API', () => {
 
       const api = new K8sDashboardAPI();
       await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
+    });
+  });
+
+  describe('listDeletedDashboards', () => {
+    it('should return list of deleted dashboards', async () => {
+      const mockDeletedDashboards = {
+        items: [
+          {
+            ...mockDashboardDto,
+            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' },
+          },
+          {
+            ...mockDashboardDto,
+            metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' },
+          },
+        ],
+      };
+
+      mockGet.mockResolvedValueOnce(mockDeletedDashboards);
+
+      const api = new K8sDashboardAPI();
+      const result = await api.listDeletedDashboards({ limit: 10 });
+
+      expect(result).toEqual(mockDeletedDashboards);
+      expect(result.items).toHaveLength(2);
+    });
+  });
+
+  describe('restoreDashboard', () => {
+    it('should reset resource version and return created dashboard', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          resourceVersion: '123456',
+        },
+      };
+
+      const api = new K8sDashboardAPI();
+      const result = await api.restoreDashboard(dashboardToRestore);
+
+      expect(dashboardToRestore.metadata.resourceVersion).toBe('');
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/v1beta1/'),
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            resourceVersion: '',
+          }),
+        }),
+        expect.anything()
+      );
+      expect(result).toEqual(saveDashboardResponse);
+    });
+
+    it('should handle dashboard with empty resource version', async () => {
+      const dashboardToRestore = {
+        ...mockDashboardDto,
+        metadata: {
+          ...mockDashboardDto.metadata,
+          resourceVersion: '',
+        },
+      };
+
+      const api = new K8sDashboardAPI();
+      await api.restoreDashboard(dashboardToRestore);
+
+      expect(dashboardToRestore.metadata.resourceVersion).toBe('');
+      expect(mockPost).toHaveBeenCalled();
     });
   });
 });

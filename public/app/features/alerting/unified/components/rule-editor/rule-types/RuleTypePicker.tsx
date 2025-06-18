@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
 

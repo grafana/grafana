@@ -26,3 +26,7 @@ Update organization permissions when you want to enhance or restrict a user's ac
 1. In the Organizations section, click **Change role** for the role you want to change
 1. Select another role.
 1. Click **Save**.
+
+{{< admonition type="note" >}}
+In order for the change to take effect and be reflected within the instance, the account where permissions were altered will need to sign out fully and back in. Role assignment is evaluated during sign in, so if a user has not signed back in after their role was adjusted the instance will continue to reflect their previous role.
+{{< /admonition >}}

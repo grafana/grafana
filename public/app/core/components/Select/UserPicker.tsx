@@ -3,11 +3,10 @@ import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { OrgUser } from 'app/types';
-
-import { t } from '../../internationalization';
 
 export interface Props {
   onSelected: (user: SelectableValue<OrgUser>) => void;
