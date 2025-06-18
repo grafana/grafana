@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
@@ -51,7 +52,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.ProvideService()
 
-	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
+	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true, config.Features{}), reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest())
@@ -86,7 +87,7 @@ type LoaderOpts struct {
 
 func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts LoaderOpts) *loader.Loader {
 	if opts.Discoverer == nil {
-		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode), registry.ProvideService())
+		opts.Discoverer = pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(cfg.DevMode, cfg.Features), registry.ProvideService())
 	}
 
 	if opts.Bootstrapper == nil {

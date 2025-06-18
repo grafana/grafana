@@ -25,17 +25,19 @@ var (
 type Local struct {
 	log        log.Logger
 	production bool
+	features   config.Features
 }
 
-func NewLocalFinder(devMode bool) *Local {
+func NewLocalFinder(devMode bool, features config.Features) *Local {
 	return &Local{
 		production: !devMode,
 		log:        log.New("local.finder"),
+		features:   features,
 	}
 }
 
 func ProvideLocalFinder(cfg *config.PluginManagementCfg) *Local {
-	return NewLocalFinder(cfg.DevMode)
+	return NewLocalFinder(cfg.DevMode, cfg.Features)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -66,7 +68,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	// load plugin.json files and map directory to JSON data
 	foundPlugins := make(map[string]plugins.JSONData)
 	for _, pluginJSONPath := range pluginJSONPaths {
-		plugin, err := l.readPluginJSON(pluginJSONPath)
+		plugin, err := l.readPluginJSON(pluginJSONPath, l.features)
 		if err != nil {
 			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 			continue
@@ -136,7 +138,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	return result, nil
 }
 
-func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
+func (l *Local) readPluginJSON(pluginJSONPath string, features config.Features) (plugins.JSONData, error) {
 	reader, err := l.readFile(pluginJSONPath)
 	defer func() {
 		if reader == nil {
@@ -150,7 +152,7 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
-	plugin, err := plugins.ReadPluginJSON(reader)
+	plugin, err := plugins.ReadPluginJSON(reader, features)
 	if err != nil {
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
