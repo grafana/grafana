@@ -216,16 +216,12 @@ export function getCellColors(
   cellOptions: TableCellOptions,
   displayValue: DisplayValue
 ): CellColors {
-  // Convert RGBA hover color to hex to prevent transparency issues on cell hover
-  const autoCellBackgroundHoverColor = convertRGBAToHex(theme.colors.background.primary, theme.colors.action.hover);
-
-  // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = theme.isDark ? 1 : -0.7;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string = autoCellBackgroundHoverColor;
+  let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;

@@ -49,7 +49,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           settings: {
             placeholder: 'auto',
             min: 20,
-            max: 300,
           },
           shouldApply: () => true,
           defaultValue: defaultTableFieldOptions.width,

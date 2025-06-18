@@ -1,6 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
+import { debounce } from 'lodash';
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { DataGrid, DataGridProps, RenderCellProps, RenderRowProps, Row } from 'react-data-grid';
 
@@ -129,6 +130,14 @@ export function TableNG(props: TableNGProps) {
   );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
+  const debouncedResizeHandler = useMemo(() => {
+    if (!onColumnResize) {
+      return undefined;
+    }
+    return debounce((column, newSize) => {
+      onColumnResize(column.key, Math.floor(newSize));
+    }, 50) satisfies DataGridProps<TableRow, TableSummaryRow>['onColumnResize'];
+  }, [onColumnResize]);
 
   const {
     rows: paginatedRows,
@@ -410,14 +419,7 @@ export function TableNG(props: TableNGProps) {
           });
           setIsContextMenuOpen(true);
         }}
-        onColumnWidthsChange={(updatedColWidths) => {
-          for (const [key, entry] of updatedColWidths) {
-            const fieldIdx = visibleFields.findIndex((f) => getDisplayName(f) === key);
-            if (fieldIdx !== -1 && widths[fieldIdx] !== entry.width) {
-              onColumnResize?.(key, entry.width);
-            }
-          }
-        }}
+        onColumnResize={debouncedResizeHandler}
         renderers={{ renderRow }}
       />
 
@@ -659,12 +661,11 @@ function getCellClasses(
 
 /*
 TODO:
-**** need to check sparkline
-check what happens if we change initialSortBy
 enable pagination disables footer?
 revisit z-index stuff in the styles
 double click on header divider to resize width isn't triggering a resize in the field overrides
 min and max (used for sparklines and gauge) need much better contextual info in the sidebar
+width override does not apply after a manual resize with the handle
 -----
 - Max row height
   - also, disable overflow?
