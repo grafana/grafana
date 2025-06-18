@@ -8,7 +8,7 @@ export function SqlExpressionsBanner() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
         <div className={styles.sqlExpressionsHeading}>
           <Trans i18nKey="dashboard.transformation-picker-ng.sql-expressions-message">SQL Expressions</Trans>
