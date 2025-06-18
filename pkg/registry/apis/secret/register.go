@@ -114,6 +114,11 @@ func RegisterAPIService(
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
 ) (*SecretAPIBuilder, error) {
+	// Don't register the API.
+	if cfg.StackID != "" {
+		return nil, nil
+	}
+
 	ctx, span := tracer.Start(context.Background(), "secret.RegisterAPIService")
 	defer span.End()
 
