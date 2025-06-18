@@ -3,7 +3,7 @@ import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -54,7 +54,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const { selectedAlertmanager } = useAlertmanager();
   const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
-  const { t } = useTranslate();
+
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const formAmRoute = {
@@ -133,7 +133,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       defaultValue={field.operator}
                       control={control}
                       name={`object_matchers.${index}.operator`}
-                      rules={{ required: { value: true, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: true,
+                          message: t('alerting.am-routes-expanded-form.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field

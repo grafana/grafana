@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
@@ -18,7 +18,6 @@ export function FolderSelector() {
   const resetGroup = useCallback(() => {
     setValue('group', '');
   }, [setValue]);
-  const { t } = useTranslate();
 
   const folder = watch('folder');
 
@@ -69,7 +68,10 @@ export function FolderSelector() {
               )}
               name="folder"
               rules={{
-                required: { value: true, message: 'Select a folder' },
+                required: {
+                  value: true,
+                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
+                },
               }}
             />
             <CreateNewFolder onCreate={handleFolderCreation} />

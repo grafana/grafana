@@ -3,12 +3,15 @@ package definitions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
@@ -263,6 +266,7 @@ type (
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
 	ReceiverType              = definition.ReceiverType
+	MergeResult               = definition.MergeResult
 )
 
 const (
@@ -498,6 +502,8 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 	SilenceID string `json:"silenceID,omitempty"`
 }
 
+// GettableSilences gettable silences
+//
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -552,11 +558,15 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 // swagger:model gettableGrafanaSilences
 type GettableGrafanaSilences []*GettableGrafanaSilence
 
+// GettableAlerts gettable alerts
+//
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
 type GettableAlert = amv2.GettableAlert
 
+// AlertGroups alert groups
+//
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
@@ -637,11 +647,124 @@ type DatasourceUIDReference struct {
 	DatasourceUID string
 }
 
+type ExtraConfiguration struct {
+	Identifier         string            `yaml:"identifier" json:"identifier"`
+	MergeMatchers      config.Matchers   `yaml:"merge_matchers" json:"merge_matchers"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+}
+
+func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+	if c.AlertmanagerConfig == "" {
+		return PostableApiAlertingConfig{}, fmt.Errorf("no alertmanager configuration available")
+	}
+
+	var prometheusConfig config.Config
+	if err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &prometheusConfig); err != nil {
+		return PostableApiAlertingConfig{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
+	}
+
+	return fromPrometheusConfig(prometheusConfig), nil
+}
+
+func (c ExtraConfiguration) Validate() error {
+	if c.Identifier == "" {
+		return errors.New("identifier is required")
+	}
+
+	if len(c.MergeMatchers) == 0 {
+		return errors.New("at least one matcher is required")
+	}
+
+	for _, m := range c.MergeMatchers {
+		if m.Type != labels.MatchEqual {
+			return errors.New("only matchers with type equal are supported")
+		}
+	}
+
+	// Alertmanager configuration is validated during YAML unmarshalling.
+	am := config.Config{}
+	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
+	if err != nil {
+		return fmt.Errorf("invalid alertmanager configuration: %w", err)
+	}
+
+	return nil
+}
+
+func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
+	config := PostableApiAlertingConfig{
+		Config: Config{
+			Global:       prometheusConfig.Global,
+			Route:        AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules: prometheusConfig.InhibitRules,
+			Templates:    prometheusConfig.Templates,
+		},
+	}
+
+	for _, receiver := range prometheusConfig.Receivers {
+		config.Receivers = append(config.Receivers, &PostableApiReceiver{
+			Receiver: receiver,
+		})
+	}
+
+	return config
+}
+
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+}
+
+func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
+	if len(c.ExtraConfigs) == 0 {
+		return MergeResult{
+			Config: c.AlertmanagerConfig,
+		}, nil
+	}
+	// support only one config for now
+	mimirCfg := c.ExtraConfigs[0]
+	opts := definition.MergeOpts{
+		DedupSuffix:     mimirCfg.Identifier,
+		SubtreeMatchers: mimirCfg.MergeMatchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+
+	mcfg, err := mimirCfg.GetAlertmanagerConfig()
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
+	}
+
+	return definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+}
+
+// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
+func (c *PostableUserConfig) GetMergedTemplateDefinitions() []alertingTemplates.TemplateDefinition {
+	out := make([]alertingTemplates.TemplateDefinition, 0, len(c.TemplateFiles))
+	for name, tmpl := range c.TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+			Kind:     alertingTemplates.GrafanaKind,
+		})
+	}
+	if len(c.ExtraConfigs) == 0 {
+		return out
+	}
+	// support only one config for now
+	for name, tmpl := range c.ExtraConfigs[0].TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+			Kind:     alertingTemplates.MimirKind,
+		})
+	}
+	return out
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
@@ -653,6 +776,10 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	// validate first
 	if err := c.validate(); err != nil {
 		return err
+	}
+
+	if len(c.ExtraConfigs) > 1 {
+		return errors.New("only one extra config is supported")
 	}
 
 	type intermediate struct {
@@ -744,6 +871,7 @@ type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs            []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type

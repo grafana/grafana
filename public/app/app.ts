@@ -127,7 +127,7 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
       const regionalFormat = config.featureToggles.localeFormatPreference
-        ? config.locale
+        ? config.regionalFormat
         : config.bootData.user.language;
 
       const initI18nPromise = initializeI18n(
@@ -149,7 +149,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      setLocale(config.locale);
+      setLocale(config.regionalFormat);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);

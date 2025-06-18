@@ -1,7 +1,7 @@
 import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextField } from './VariableTextField';
@@ -12,8 +12,6 @@ interface ConstantVariableFormProps {
 }
 
 export function ConstantVariableForm({ onChange, constantValue }: ConstantVariableFormProps) {
-  const { t } = useTranslate();
-
   return (
     <>
       <VariableLegend>

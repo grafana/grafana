@@ -2,7 +2,7 @@ import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
@@ -44,7 +44,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
-  const { t } = useTranslate();
+
   const pageNav = sectionNav.node.parentItem;
 
   const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
@@ -116,8 +116,8 @@ export function GeneralSettingsUnconnected({
   };
 
   const editableOptions = [
-    { label: 'Editable', value: true },
-    { label: 'Read-only', value: false },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.editable', 'Editable'), value: true },
+    { label: t('dashboard.general-settings-unconnected.editable-options.label.readonly', 'Read-only'), value: false },
   ];
 
   return (
@@ -165,16 +165,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
-            <FolderPicker
-              value={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-              initialTitle={dashboard.meta.folderTitle}
-              inputId="dashboard-folder-input"
-              enableCreateNew
-              dashboardId={dashboard.id}
-              skipInitialLoad
-            />
+            <FolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
           </Field>
 
           <Field

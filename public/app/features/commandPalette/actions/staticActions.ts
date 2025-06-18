@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { changeTheme } from 'app/core/services/theme';
@@ -103,7 +103,7 @@ function getGlobalActions(): CommandPaletteAction[] {
   ];
 
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable @grafana/no-untranslated-strings
+    // eslint-disable @grafana/i18n/no-untranslated-strings
     const section = 'Dev tooling';
     const currentState = currentMockApiState();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
@@ -128,7 +128,7 @@ function getGlobalActions(): CommandPaletteAction[] {
         togglePseudoLocale();
       },
     });
-    // eslint-enable @grafana/no-untranslated-strings
+    // eslint-enable @grafana/i18n/no-untranslated-strings
   }
 
   return actions;

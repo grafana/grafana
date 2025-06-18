@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
@@ -21,7 +21,7 @@ export function ScopesDashboardsTreeFolderItem({
   onFolderUpdate,
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
       <button
