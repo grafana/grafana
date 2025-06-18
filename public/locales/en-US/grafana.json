@@ -1066,7 +1066,7 @@
       "content-show-all-errors": "Show all errors"
     },
     "errors": {
-      "failedWith": "{{- config}} failed with {{status}}: {{message}}"
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {

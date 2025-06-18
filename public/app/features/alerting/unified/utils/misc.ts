@@ -318,7 +318,7 @@ export function stringifyErrorLike(error: unknown): string {
 
       const config = getRequestConfigFromError(error);
 
-      return t('alerting.errors.failedWith', '{{- config}} failed with {{status}}: {{message}}', {
+      return t('alerting.errors.failedWith', '{{-config}} failed with {{status}}: {{-message}}', {
         config,
         status,
         message,
