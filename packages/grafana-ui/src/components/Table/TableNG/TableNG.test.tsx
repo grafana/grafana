@@ -732,7 +732,7 @@ describe('TableNG', () => {
       }
     });
 
-    it('supports multi-column sorting with shift key', async () => {
+    it('supports multi-column sorting with cmd or ctrl key', async () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
@@ -830,7 +830,7 @@ describe('TableNG', () => {
       expect(categoryBValues).toContain('4');
 
       // 2. Now add second sort column (Value) with shift key
-      await user.keyboard('{Shift>}');
+      await user.keyboard('{Control>}');
       await user.click(valueColumnButton);
 
       // Check data is sorted by Category and then by Value
@@ -865,7 +865,6 @@ describe('TableNG', () => {
       expect(multiSortedRows[4][2]).toBe('Alice');
 
       // 3. Change Value sort direction to descending
-      await user.keyboard('{Shift>}');
       await user.click(valueColumnButton);
 
       // Check data is sorted by Category (asc) and then by Value (desc)
@@ -900,7 +899,6 @@ describe('TableNG', () => {
       expect(multiSortedRowsDesc[4][2]).toBe('Jane');
 
       // 4. Test removing the secondary sort by clicking a third time
-      await user.keyboard('{Shift>}');
       await user.click(valueColumnButton);
 
       // The data should still be sorted by Category only
@@ -914,6 +912,56 @@ describe('TableNG', () => {
       // Last 2 rows should still be 'B' category
       expect(singleSortRows[3][0]).toBe('B');
       expect(singleSortRows[4][0]).toBe('B');
+
+      // finally release control and prove that we exit multi-sort mode
+      await user.keyboard('{/Control}');
+      await user.click(categoryColumnButton);
+
+      const nonMultiSortCategoryRows = getCellTextContent();
+
+      expect(nonMultiSortCategoryRows[0][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[0][1]).toBe('3');
+      expect(nonMultiSortCategoryRows[0][2]).toBe('Jane');
+
+      expect(nonMultiSortCategoryRows[1][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[1][1]).toBe('4');
+      expect(nonMultiSortCategoryRows[1][2]).toBe('Alice');
+
+      expect(nonMultiSortCategoryRows[2][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[2][1]).toBe('5');
+      expect(nonMultiSortCategoryRows[2][2]).toBe('John');
+
+      expect(nonMultiSortCategoryRows[3][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[3][1]).toBe('1');
+      expect(nonMultiSortCategoryRows[3][2]).toBe('Bob');
+
+      expect(nonMultiSortCategoryRows[4][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[4][1]).toBe('2');
+      expect(nonMultiSortCategoryRows[4][2]).toBe('Charlie');
+
+      await user.click(valueColumnButton);
+
+      const nonMultiSortValueRows = getCellTextContent();
+
+      expect(nonMultiSortValueRows[0][0]).toBe('A');
+      expect(nonMultiSortValueRows[0][1]).toBe('1');
+      expect(nonMultiSortValueRows[0][2]).toBe('Bob');
+
+      expect(nonMultiSortValueRows[1][0]).toBe('A');
+      expect(nonMultiSortValueRows[1][1]).toBe('2');
+      expect(nonMultiSortValueRows[1][2]).toBe('Charlie');
+
+      expect(nonMultiSortValueRows[2][0]).toBe('B');
+      expect(nonMultiSortValueRows[2][1]).toBe('3');
+      expect(nonMultiSortValueRows[2][2]).toBe('Jane');
+
+      expect(nonMultiSortValueRows[3][0]).toBe('B');
+      expect(nonMultiSortValueRows[3][1]).toBe('4');
+      expect(nonMultiSortValueRows[3][2]).toBe('Alice');
+
+      expect(nonMultiSortValueRows[4][0]).toBe('A');
+      expect(nonMultiSortValueRows[4][1]).toBe('5');
+      expect(nonMultiSortValueRows[4][2]).toBe('John');
     });
 
     it('correctly sorts different data types', async () => {
