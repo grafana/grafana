@@ -48,10 +48,12 @@ interface RulesFilerProps {
   onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-  label: alertStateToReadable(value),
-  value,
-}));
+const RuleStateOptions = Object.entries(PromAlertingRuleState)
+  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
+  .map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
 const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);

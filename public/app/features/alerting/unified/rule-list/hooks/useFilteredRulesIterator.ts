@@ -65,7 +65,13 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
     const hasDataSourceFilterActive = Boolean(filterState.dataSourceNames.length);
 
-    const grafanaRulesGenerator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+    const grafanaRulesGenerator = from(
+      grafanaGroupsGenerator(groupLimit, {
+        contactPoint: filterState.contactPoint ?? undefined,
+        health: filterState.ruleHealth ? [filterState.ruleHealth] : [],
+        state: filterState.ruleState ? [filterState.ruleState] : [],
+      })
+    ).pipe(
       withAbort(abortController.signal),
       concatMap((groups) =>
         groups
