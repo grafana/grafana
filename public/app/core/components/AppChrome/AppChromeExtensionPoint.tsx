@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 
 const excludedRoutes: Record<string, boolean> = {
   '/login': true,
@@ -20,7 +21,11 @@ export function AppChromeExtensionPoint(): JSX.Element | null {
     return null;
   }
 
-  return <InternalAppChromeExtensionPoint />;
+  return (
+    <ErrorBoundaryAlert>
+      <InternalAppChromeExtensionPoint />
+    </ErrorBoundaryAlert>
+  );
 }
 
 function InternalAppChromeExtensionPoint(): JSX.Element | null {
