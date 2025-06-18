@@ -412,8 +412,8 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 	return nil
 }
 
-// DeleteAndApplyExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) DeleteAndApplyExtraConfiguration(ctx context.Context, org int64, identifier string) error {
+// DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
+func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
 	modifyFunc := func(configs []definitions.ExtraConfiguration) ([]definitions.ExtraConfiguration, error) {
 		filtered := make([]definitions.ExtraConfiguration, 0, len(configs))
 		for _, ec := range configs {
