@@ -157,10 +157,6 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
     switchLabel: css({
       whiteSpace: 'nowrap',
     }),
-    switchContainer: css({
-      display: 'flex',
-      gap: theme.spacing(1),
-    }),
     switchWrapper: css({
       display: 'flex',
       alignItems: 'center',
@@ -292,26 +288,6 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     pluginStateInfoWrapper: css({
       marginLeft: theme.spacing(0.5),
-    }),
-    compactInline: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      height: theme.spacing(1.5),
-    }),
-    compactTitle: css({
-      fontWeight: theme.typography.fontWeightBold,
-      flexShrink: 0,
-      whiteSpace: 'nowrap',
-    }),
-    compactApplicableInfo: css({
-      flexShrink: 0,
-    }),
-    compactGrid: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-      width: '100%',
     }),
   };
 }
