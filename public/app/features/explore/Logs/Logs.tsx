@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
 import { usePrevious, useUnmount } from 'react-use';
@@ -29,10 +29,11 @@ import {
   DataHoverEvent,
   serializeStateToUrlParam,
   urlUtil,
+  LogLevel,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataTopic } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -54,6 +55,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
+import { getLogLevelFromKey } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -218,6 +220,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
+  const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -699,10 +702,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
         setDedupStrategy(value);
+      } else if (option === 'filterLevels' && Array.isArray(value)) {
+        const logLevels = value.map((level) => getLogLevelFromKey(level));
+        setFilterLevels(logLevels.length > 0 ? logLevels : undefined);
+        const logVolData = logsVolumeData?.data.filter(
+          (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
+        );
+        const grouped = groupBy(logVolData, 'meta.custom.datasourceName');
+        const numberOfLogVolumes = Object.keys(grouped).length;
+        if (logLevels.length > 0 && logsVolumeEnabled && numberOfLogVolumes === 1) {
+          logLevels.forEach((level) => {
+            toggleLegendRef.current?.(level, SeriesVisibilityChangeMode.ToggleSelection);
+          });
+        }
       }
     },
-    [sortOrderChanged]
+    [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
   );
+
+  const onDisplayedSeriesChanged = useCallback((levels: string[] | undefined) => {
+    if (levels === undefined) {
+      setFilterLevels(undefined);
+      return;
+    }
+    setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
+  }, []);
 
   return (
     <>
@@ -734,7 +758,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             timeZone={timeZone}
             splitOpen={splitOpen}
             onLoadLogsVolume={loadLogsVolumeData}
-            onDisplayedSeriesChanged={console.log}
+            onDisplayedSeriesChanged={onDisplayedSeriesChanged}
             eventBus={logsVolumeEventBus}
             onClose={() => onToggleLogsVolumeCollapse(true)}
           />
@@ -1057,6 +1081,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   enableLogDetails={true}
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
+                  filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}

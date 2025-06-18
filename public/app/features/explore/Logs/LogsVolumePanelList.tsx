@@ -36,7 +36,7 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
-  onDisplayedSeriesChanged: (series: string[] | undefined) => void;
+  onDisplayedSeriesChanged: (series: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
   toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
@@ -100,8 +100,9 @@ export const LogsVolumePanelList = ({
 
   const handleHiddenSeriesChanged = useCallback(
     (hiddenSeries: string[]) => {
-      if (!hiddenSeries.length) {
-        onDisplayedSeriesChanged(undefined);
+      // Not supported
+      if (numberOfLogVolumes > 1) {
+        return;
       }
       const allLevels = [
         ...new Set(
@@ -111,9 +112,9 @@ export const LogsVolumePanelList = ({
         ),
       ];
       const displayedLevels = allLevels.filter((level) => !hiddenSeries.includes(level));
-      onDisplayedSeriesChanged(shallowCompare(allLevels, displayedLevels) ? undefined : displayedLevels);
+      onDisplayedSeriesChanged(shallowCompare(allLevels, displayedLevels) ? [] : displayedLevels);
     },
-    [logVolumes, onDisplayedSeriesChanged]
+    [logVolumes, numberOfLogVolumes, onDisplayedSeriesChanged]
   );
 
   if (logsVolumeData?.state === LoadingState.Loading) {
