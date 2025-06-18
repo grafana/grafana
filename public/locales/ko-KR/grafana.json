@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
-      "description-missing-series-evaluations": "하나의 차원에 대해 데이터가 없는 평가 간격이 몇 번 연속 발생해야 경고 상태가 오래된 것으로 간주되고 자동으로 해제되는지 설정합니다. 값을 입력하지 않으면 기본값은 2가 됩니다.",
+      "description-missing-series-evaluations": "",
       "evaluation": "평가",
       "evaluation-paused": "현재 경고 평가가 일시 중지됨",
       "evaluation-paused-description": "이 규칙에 대한 알림이 실행되지 않으며 규칙의 일시 중지 상태가 해제될 때까지 경고 인스턴스가 생성되지 않습니다.",
@@ -363,6 +363,14 @@
       "last-updated-by": "마지막에 업데이트한 사용자",
       "missing-series-resolve": "경고를 해제하는 데 필요한 시리즈 평가 누락 횟수",
       "no-annotations": "주석 없음",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "연락처",
+        "group-by": "그룹화 기준",
+        "group-title": "",
+        "mute-timings": "알림 비활성화 타이밍",
+        "timing-options": ""
+      },
       "pending-period": "보류 기간",
       "rule": "규칙",
       "rule-identifier": "규칙 식별자",
@@ -445,6 +453,15 @@
       "export": "내보내기",
       "silence-notifications": "알림 끄기에 대한 알림",
       "with-modifications": "수정 사항 포함"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -895,6 +912,7 @@
     "copy-to-clipboard": "'{{label}}'을(를) 클립보드로 복사",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "대시보드",
         "dashboard-and-panel": "",
         "evaluation-interval": "평가 간격",
@@ -1504,6 +1522,10 @@
         "no-rules-body": "가져올 규칙이 없습니다. 다른 네임스페이스 또는 규칙 그룹을 선택하세요.",
         "no-rules-body-yaml": "",
         "no-rules-title": "가져올 규칙 없음",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "정보"
+        },
         "plugin-rules-warning": {
           "text": "일부 규칙이 플러그인에 의해 관리되고 있는 것으로 감지되었습니다. 이러한 규칙은 가져오지 않습니다.",
           "title": "일부 규칙은 가져오기에서 제외됩니다"
@@ -4005,6 +4027,9 @@
         "title": "행 옵션"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "속성 제거"
@@ -4494,7 +4519,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "변경 사항",
-      "label-details": "세부 정보"
+      "label-details": "세부 정보",
+      "title": "대시보드 저장",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다.<1></1><2>그래도 이 대시보드를 저장하시겠어요?</2>",
@@ -4568,6 +4596,9 @@
       "tab-warning": {
         "title-not-unique": "이 제목은 고유하지 않습니다"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "추가",
@@ -5102,6 +5133,11 @@
       "body-name-already-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다. 그래도 이 대시보드를 저장하시겠어요?",
       "title-name-already-exists": "이미 존재하는 이름입니다"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5219,7 +5255,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "변경 사항",
-        "label-details": "세부 정보"
+        "label-details": "세부 정보",
+        "title": "대시보드 저장",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7639,6 +7678,14 @@
       "show-details": "로그 세부 정보 숨기기",
       "unpin-from-outline": "로그 고정 해제"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "더 많은 로그를 로딩하는 중 오류 발생",
       "no-more-logs-available": "더 이상 사용할 수 있는 로그가 없습니다.",
@@ -7692,6 +7739,7 @@
       "escape-newlines": "로그 줄에서 잘못된 줄 바꿈 및 탭 시퀀스 수정",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "타임스탬프 숨기기",
       "hide-unique-labels": "고유 라벨 숨기기",
       "newest-first": "최신 로그순으로 정렬 - 클릭하여 오래된 로그순으로 표시",
@@ -7700,6 +7748,7 @@
       "remove-escaping": "이스케이프 제거",
       "scroll-bottom": "맨 아래로 스크롤",
       "scroll-top": "맨 위로 스크롤",
+      "show-search": "",
       "show-timestamps": "타임스탬프 표시",
       "show-unique-labels": "고유 라벨 표시",
       "unwrap-lines": "줄 바꿈 제거",
@@ -10581,6 +10630,11 @@
       "tooltip-disable": "비활성화",
       "tooltip-enable": "활성화"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "끄기"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "열거형 값 추가",
       "generate-enum-values-from-data": "데이터에서 열거형 값 생성"
@@ -10759,6 +10813,9 @@
       "time-in-ascending-order": "시간(오름차순)"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "자동",
+      "field-order-manual": "",
       "first-frame-warning": "필드 정리는 단일 프레임에서만 가능합니다. 먼저 조인 변환을 적용하거나 입력을 필터링하는 것이 좋습니다."
     },
     "partion-by-values-editor": {

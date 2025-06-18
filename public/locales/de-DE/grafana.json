@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Warnstatus",
       "annotations": "Anmerkungen",
-      "description-missing-series-evaluations": "Wie viele aufeinanderfolgende Bewertungsintervalle ohne Daten für eine Dimension vergehen müssen, bevor der Warnstatus als veraltet gilt und automatisch behoben wird. Wenn kein Wert angegeben wird, ist der Standardwert 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Evaluierung",
       "evaluation-paused": "Alarm-Evaluierung derzeit angehalten",
       "evaluation-paused-description": "Benachrichtigungen für diese Regel werden nicht ausgelöst und es werden keine Warninstanzen erstellt, bis die Regel wieder aktiviert wird.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Zuletzt aktualisiert von",
       "missing-series-resolve": "Fehlende Reihenbewertungen zu beheben",
       "no-annotations": "Keine Anmerkungen",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Kontaktpunkt",
+        "group-by": "Gruppiert nach",
+        "group-title": "",
+        "mute-timings": "Stummschaltung",
+        "timing-options": ""
+      },
       "pending-period": "Wartezeit",
       "rule": "Regel",
       "rule-identifier": "Regel-Identifikator",
@@ -449,6 +457,15 @@
       "export": "Exportieren",
       "silence-notifications": "Benachrichtigungen stummschalten",
       "with-modifications": "Mit Änderungen"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "„{{label}}“ in die Zwischenablage kopieren",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "",
         "evaluation-interval": "Evaluierungsintervall",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Es gibt keine Regeln, die importiert werden könnten. Bitte wählen Sie einen anderen Namensraum oder eine andere Regelgruppe.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Keine Regeln zum Importieren",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informationen"
+        },
         "plugin-rules-warning": {
           "text": "Wir haben festgestellt, dass einige Regeln über Plugins verwaltet werden. Diese Regeln werden nicht importiert.",
           "title": "Einige Regeln werden vom Import ausgeschlossen"
@@ -4023,6 +4045,9 @@
         "title": "Zeilenoptionen"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Eigenschaft entfernen"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Änderungen",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Dashboard speichern",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits.<1></1><2>Möchten Sie dieses Dashboard trotzdem speichern?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Dieser Titel ist nicht eindeutig"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Hinzufügen",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits. Möchten Sie dieses Dashboard trotzdem speichern?",
       "title-name-already-exists": "Der Name existiert bereits"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Änderungen",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Dashboard speichern",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Logdetails ausblenden",
       "unpin-from-outline": "Protokoll nicht mehr anheften"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Fehler beim Laden weiterer Logs.",
       "no-more-logs-available": "Keine weiteren Logs verfügbar.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Falsch dargestellte Zeilenumbrüche und Tab-Sequenzen in Log-Zeilen korrigieren",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Zeitstempel ausblenden",
       "hide-unique-labels": "Eindeutige Labels ausblenden",
       "newest-first": "Sortiert nach neuesten Logs zuerst – klicken Sie, um die ältesten zuerst anzuzeigen",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Escaping entfernen",
       "scroll-bottom": "Nach unten scrollen",
       "scroll-top": "Nach oben scrollen",
+      "show-search": "",
       "show-timestamps": "Zeitstempel anzeigen",
       "show-unique-labels": "Eindeutige Labels anzeigen",
       "unwrap-lines": "Zeilenumbruch aufheben",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Deaktivieren",
       "tooltip-enable": "Aktivieren"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Aus"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Aufzählungswert hinzufügen",
       "generate-enum-values-from-data": "Aufzählungswerte aus Daten generieren"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Zeit in aufsteigender Reihenfolge"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Auto",
+      "field-order-manual": "",
       "first-frame-warning": "Felder organisieren funktioniert nur mit einem einzelnen Frame. Überlegen Sie, zunächst eine Join-Transformation anzuwenden oder die Eingabe zu filtern."
     },
     "partion-by-values-editor": {

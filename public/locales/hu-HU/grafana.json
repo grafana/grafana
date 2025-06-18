@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Riasztási állapot",
       "annotations": "Jegyzetek",
-      "description-missing-series-evaluations": "Hány egymást követő értékelési intervallumnak kell eltelnie adatok nélkül egy dimenzió esetében, mielőtt a riasztási állapot elavultnak minősül, és automatikusan megoldott lesz. Ha nincs megadva érték, az alapértelmezett értéke 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Értékelés",
       "evaluation-paused": "A riasztásértékelés jelenleg szüneteltetve van",
       "evaluation-paused-description": "A szabályhoz tartozó értesítések nem indulnak el, és a szabály szüneteltetésének feloldásáig nem jönnek létre riasztáspéldányok.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Legutóbb frissítette:",
       "missing-series-resolve": "Megoldandó hiányzó sorozatértékelések",
       "no-annotations": "Jegyzetek nélkül",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Kapcsolattartási pont",
+        "group-by": "Csoportosítás alapja",
+        "group-title": "",
+        "mute-timings": "Némítási időzítések",
+        "timing-options": ""
+      },
       "pending-period": "Függőben lévő időszak",
       "rule": "Szabály",
       "rule-identifier": "Szabályazonosító",
@@ -449,6 +457,15 @@
       "export": "Exportálás",
       "silence-notifications": "Némítási értesítések",
       "with-modifications": "Módosításokkal"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "„{{label}}” másolása a vágólapra",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Irányítópult",
         "dashboard-and-panel": "",
         "evaluation-interval": "Értékelési intervallum",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Nincsenek importálandó szabályok. Válasszon másik névteret vagy szabálycsoportot.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Nincsenek importálandó szabályok",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Információ"
+        },
         "plugin-rules-warning": {
           "text": "Azt észleltük, hogy bizonyos szabályokat bővítmények kezelnek. Ezek a szabályok nem lesznek importálva.",
           "title": "Bizonyos szabályok ki vannak zárva az importálásból"
@@ -4023,6 +4045,9 @@
         "title": "Sorbeállítások"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Tulajdonság eltávolítása"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Módosítások",
-      "label-details": "Részletek"
+      "label-details": "Részletek",
+      "title": "Irányítópult mentése",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában.<1></1><2>Biztosan menti ezt az irányítópultot?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Ez a cím nem egyedi"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Hozzáadás",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
       "title-name-already-exists": "A név már létezik"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Módosítások",
-        "label-details": "Részletek"
+        "label-details": "Részletek",
+        "title": "Irányítópult mentése",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Napló részleteinek elrejtése",
       "unpin-from-outline": "Naplórögzítés feloldása"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Hiba a további naplók betöltésekor.",
       "no-more-logs-available": "Nincs több rendelkezésre álló napló.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Helytelenül értelmezett újsor- és tabulátorkarakteres szekvenciák javítása a naplósorokban",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Időbélyegek elrejtése",
       "hide-unique-labels": "Egyedi címkék elrejtése",
       "newest-first": "Rendezés a legújabb naplók szerint – kattintson, hogy a legrégebbi naplók jelenjenek meg elsőként",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Módosított értelmezés eltávolítása",
       "scroll-bottom": "Görgetés az aljára",
       "scroll-top": "Görgetés a tetejére",
+      "show-search": "",
       "show-timestamps": "Időbélyegek megjelenítése",
       "show-unique-labels": "Egyedi címkék megjelenítése",
       "unwrap-lines": "Sortörés megszüntetése",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Letiltás",
       "tooltip-enable": "Engedélyezés"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Ki"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Felsorolt érték hozzáadása",
       "generate-enum-values-from-data": "Felsorolt értékek generálása adatokból"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Idő növekvő sorrendben"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automatikus",
+      "field-order-manual": "",
       "first-frame-warning": "A mezők rendszerezése csak egyetlen kerettel működik. Először érdemes lehet egyesítési transzformációt alkalmazni, vagy szűrni a bemenetet."
     },
     "partion-by-values-editor": {

@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Status peringatan",
       "annotations": "Anotasi",
-      "description-missing-series-evaluations": "Berapa banyak interval evaluasi berturut-turut tanpa data harus dilewati dimensi sebelum status peringatan dianggap kedaluwarsa dan diselesaikan secara otomatis. Jika tidak ada nilai yang diberikan, 2 akan diatur sebagai nilai default.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Evaluasi",
       "evaluation-paused": "Evaluasi peringatan saat ini dijeda",
       "evaluation-paused-description": "Pemberitahuan untuk aturan ini tidak akan menyala dan tidak ada instans peringatan yang akan dibuat sampai aturan dibatalkan jedanya.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Terakhir diperbarui oleh",
       "missing-series-resolve": "Rangkaian tidak ada, evaluasi gagal diselesaikan",
       "no-annotations": "Tidak ada anotasi",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Titik kontak",
+        "group-by": "Dikelompokkan berdasarkan",
+        "group-title": "",
+        "mute-timings": "Pengaturan waktu pembisuan",
+        "timing-options": ""
+      },
       "pending-period": "Periode tertunda",
       "rule": "Aturan",
       "rule-identifier": "Pengidentifikasi aturan",
@@ -445,6 +453,15 @@
       "export": "Ekspor",
       "silence-notifications": "Senyapkan pemberitahuan",
       "with-modifications": "Dengan modifikasi"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -895,6 +912,7 @@
     "copy-to-clipboard": "Salin \"{{label}}\" ke papan klip",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Dasbor",
         "dashboard-and-panel": "",
         "evaluation-interval": "Interval evaluasi",
@@ -1504,6 +1522,10 @@
         "no-rules-body": "Tidak ada aturan untuk diimpor. Pilih namespace atau grup aturan lain.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Tidak ada aturan untuk diimpor",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informasi"
+        },
         "plugin-rules-warning": {
           "text": "Kami telah mendeteksi bahwa beberapa aturan dikelola oleh plugin. Aturan ini tidak akan diimpor.",
           "title": "Beberapa aturan dikecualikan dari impor"
@@ -4005,6 +4027,9 @@
         "title": "Opsi baris"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Hapus properti"
@@ -4494,7 +4519,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Perubahan",
-      "label-details": "Detail"
+      "label-details": "Detail",
+      "title": "Simpan dasbor",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada.<1></1><2>Apa Anda masih ingin menyimpan dasbor ini?</2>",
@@ -4568,6 +4596,9 @@
       "tab-warning": {
         "title-not-unique": "Judul ini tidak unik"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Tambahkan",
@@ -5102,6 +5133,11 @@
       "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
       "title-name-already-exists": "Nama sudah ada"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5219,7 +5255,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Perubahan",
-        "label-details": "Detail"
+        "label-details": "Detail",
+        "title": "Simpan dasbor",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7639,6 +7678,14 @@
       "show-details": "Sembunyikan detail log",
       "unpin-from-outline": "Buka sematan log"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Kesalahan saat memuat lebih banyak log.",
       "no-more-logs-available": "Tidak ada lagi log yang tersedia.",
@@ -7692,6 +7739,7 @@
       "escape-newlines": "Perbaiki escape sequence baris baru dan tab yang salah di baris log",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
       "newest-first": "Diurutkan berdasarkan log terbaru lebih dulu - Klik untuk menampilkan yang paling lama lebih dulu",
@@ -7700,6 +7748,7 @@
       "remove-escaping": "Hapus escape",
       "scroll-bottom": "Gulir ke bawah",
       "scroll-top": "Gulir ke atas",
+      "show-search": "",
       "show-timestamps": "Tampilkan stempel waktu",
       "show-unique-labels": "Tampilkan label unik",
       "unwrap-lines": "Batal terapkan wrap pada baris",
@@ -10581,6 +10630,11 @@
       "tooltip-disable": "Nonaktifkan",
       "tooltip-enable": "Aktifkan"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Nonaktif"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Tambah nilai enum",
       "generate-enum-values-from-data": "Buat nilai enum dari data"
@@ -10759,6 +10813,9 @@
       "time-in-ascending-order": "Waktu dalam urutan naik"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Auto",
+      "field-order-manual": "",
       "first-frame-warning": "Penataan bidang hanya berfungsi dengan satu frame. Pertimbangkan untuk menerapkan transformasi gabungan atau memfilter input terlebih dahulu."
     },
     "partion-by-values-editor": {

@@ -1,0 +1,344 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "",
+        "aria-label-lower-limit-parameter": "",
+        "label-min-step": "",
+        "label-series-value-as-timestamp": "",
+        "label-tags": "Теги",
+        "label-text": "",
+        "label-title": "Заголовок",
+        "placeholder-auto": "",
+        "tooltip-either-pattern-example-instance-replaced-label": "",
+        "tooltip-min-step": "",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": ""
+        },
+        "label": {
+          "both": ""
+        },
+        "range-options": {
+          "description": {
+            "query-range": ""
+          },
+          "label": {
+            "instant": "",
+            "range": ""
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "",
+        "description-select-labels": "",
+        "select-labels-to-search-in": ""
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "",
+        "aria-label-limit-results-from-series-endpoint": "",
+        "description-series-limit": "",
+        "label-select-metric": "",
+        "select-a-metric": "",
+        "series-limit": ""
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": ""
+      },
+      "prom-exemplar-field": {
+        "exemplars": "",
+        "tooltip-disable-query": "",
+        "tooltip-enable-query": ""
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "",
+        "aria-label-query-type-field": "",
+        "aria-label-step-field": "",
+        "min-step": "",
+        "query-type": "",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": ""
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "",
+        "aria-label-metric-regex": "",
+        "aria-label-metric-selector": "",
+        "aria-label-prometheus-query": "",
+        "aria-label-query-type": "",
+        "aria-label-series-query": "",
+        "label-classic-query": "",
+        "label-label": "Метка",
+        "label-metric-regex": "",
+        "label-query": "Запрос",
+        "label-query-type": "",
+        "label-series-query": "",
+        "placeholder-classic-query": "",
+        "placeholder-metric-regex": "",
+        "placeholder-prometheus-query": "",
+        "placeholder-select-query-type": "Выбрать тип запроса",
+        "placeholder-series-query": "",
+        "returns-metrics-matching-specified-metric-regex": "",
+        "tooltip-classic-query": "",
+        "tooltip-label": "",
+        "tooltip-metric-regex": "",
+        "tooltip-query": "",
+        "tooltip-query-type": "",
+        "tooltip-series-query": ""
+      },
+      "selector-actions": {
+        "aria-label-selector": "",
+        "aria-label-selector-clear-button": "",
+        "aria-label-use-selector-as-metrics-button": "",
+        "aria-label-use-selector-for-query-button": "",
+        "aria-label-validate-submit-button": "",
+        "clear": "Очистить",
+        "resulting-selector": "",
+        "use-as-rate-query": "",
+        "use-query": "",
+        "validate-selector": ""
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "",
+        "aria-label-values-for": "",
+        "description-search-field-values-across-selected-labels": "",
+        "select-multiple-values-for-your-labels": ""
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "",
+        "title-alerting": "Оповещение",
+        "tooltip-manage-alerts-via-alerting-ui": "Управление правилами оповещения для этого источника данных. Чтобы управлять другими ресурсами Alerting, добавьте обработчик оповещений Alertmanager в качестве источника данных.",
+        "tooltip-allow-as-recording-rules-target": ""
+      },
+      "config-editor": {
+        "browser-access-mode-error": "",
+        "description-advanced-settings": "",
+        "title-advanced-settings": "Дополнительные параметры",
+        "title-error": "Ошибка"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "Вашим методом доступа является <1>Браузер</1>, то есть URL-адрес должен быть доступен из браузера.",
+        "tooltip-http-url": "",
+        "tooltip-server-access-mode": "Вашим методом доступа является <1>Сервер</1>, то есть URL-адрес должен быть доступен из серверной части/сервера Grafana."
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": ""
+      },
+      "exemplar-setting": {
+        "label-data-source": "Источник данных",
+        "label-internal-link": "",
+        "label-label-name": "Название метки",
+        "label-remove-exemplar-link": "",
+        "label-url": "URL",
+        "label-url-label": "",
+        "placeholder-go-to-examplecom": "",
+        "placeholder-httpsexamplecomvalueraw": "",
+        "placeholder-trace-id": "",
+        "title-remove-exemplar-link": "",
+        "tooltip-data-source": "",
+        "tooltip-internal-link": "",
+        "tooltip-label-name": "",
+        "tooltip-url": "",
+        "tooltip-url-label": ""
+      },
+      "exemplars-settings": {
+        "add": "Добавить",
+        "no-exemplars-configurations": "",
+        "title-exemplars": ""
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "",
+        "aria-label-prom-type-type": "",
+        "aria-label-prometheus-type": "",
+        "aria-label-select-http-method": "",
+        "label-cache-level": "",
+        "label-custom-query-parameters": "",
+        "label-default-editor": "",
+        "label-disable-metrics-lookup": "",
+        "label-disable-recording-rules-beta": "",
+        "label-http-method": "",
+        "label-incremental-querying-beta": "",
+        "label-metric-names-suggestion-limit": "",
+        "label-prom-type-version": "",
+        "label-prometheus-type": "",
+        "label-query-overlap-window": "",
+        "label-query-timeout": "",
+        "label-scrape-interval": "",
+        "label-use-series-endpoint": "",
+        "more-info": "",
+        "placeholder-example-maxsourceresolutionmtimeout": "",
+        "title-interval-behaviour": "",
+        "title-other": "",
+        "title-performance": "Производительность",
+        "title-query-editor": "",
+        "tooltip-cache-level": "",
+        "tooltip-custom-query-parameters": "",
+        "tooltip-default-editor": "",
+        "tooltip-disable-metrics-lookup": "",
+        "tooltip-disable-recording-rules-beta": "",
+        "tooltip-http-method": "",
+        "tooltip-incremental-querying-beta": "",
+        "tooltip-metric-names-suggestion-limit": "",
+        "tooltip-prom-type-version": "",
+        "tooltip-prometheus-type": "",
+        "tooltip-query-overlap-window": "",
+        "tooltip-query-timeout": "",
+        "tooltip-scrape-interval": "",
+        "tooltip-use-series-endpoint": ""
+      }
+    },
+    "querybuilder": {
+      "additional-settings": {
+        "content-filter-metric-names-regex-search-using": "",
+        "disable-text-wrap": ""
+      },
+      "feedback-link": {
+        "give-feedback": "Отправить отзыв",
+        "title-give-feedback": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": ""
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "",
+        "placeholder-select-label": "",
+        "placeholder-select-value": "Выбрать значение"
+      },
+      "label-filters": {
+        "label-filters": "",
+        "label-label-filters": "",
+        "tooltip-label-filters": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "",
+          "placeholder-select-metric": "",
+          "tooltip-open-metrics-explorer": ""
+        },
+        "label-metric": "Метрика",
+        "tooltip-metric": ""
+      },
+      "metrics-modal": {
+        "additional-settings": "",
+        "aria-label-additional-settings": "Дополнительные параметры",
+        "aria-label-browse-metrics": "",
+        "currently-selected": "",
+        "metrics-pre-filtered": "",
+        "placeholder-results-per-page": "",
+        "results-per-page": "",
+        "title-metrics-explorer": "",
+        "results-amount_one": "",
+        "results-amount_few": "",
+        "results-amount_many": "",
+        "results-amount_other": ""
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "",
+          "on": "Вкл."
+        },
+        "operator": "Оператор",
+        "tooltip-remove-match": "",
+        "vector-matches": ""
+      },
+      "operation-editor": {
+        "not-found": "",
+        "title-remove": ""
+      },
+      "operation-header": {
+        "placeholder-replace-with": "Заменить на",
+        "title-click-to-view-alternative-operations": "",
+        "title-remove-operation": ""
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "",
+        "title-remove-operation": ""
+      },
+      "operation-list": {
+        "operations": "",
+        "placeholder-search": "Поиск",
+        "title-add-operation": ""
+      },
+      "operation-param-editor": {
+        "title-add": "",
+        "title-remove": ""
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "",
+        "aria-label-select-resolution": "",
+        "label-exemplars": "",
+        "label-format": "Формат",
+        "label-min-step": "",
+        "label-resolution": "",
+        "label-type": "Тип",
+        "placeholder-auto": "",
+        "title-options": "Параметры",
+        "tooltip-min-step": ""
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "",
+        "tooltip-autocomplete-suggestions-limited": ""
+      },
+      "prom-query-editor-selector": {
+        "kick-start-your-query": "Запустить запрос",
+        "label-explain": "",
+        "run-queries": "",
+        "title-parsing-error-switch-builder": ""
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "",
+        "placeholder-select-legend-mode": "",
+        "tooltip-legend": ""
+      },
+      "query-builder-hints": {
+        "hint-details": ""
+      },
+      "query-editor-hints": {
+        "hint-details": ""
+      },
+      "query-pattern": {
+        "apply-query": "",
+        "aria-label-apply-query-starter-button": "",
+        "aria-label-back-button": "",
+        "aria-label-create-new-query-button": "",
+        "aria-label-raw-query": "",
+        "aria-label-use-this-query-button": "",
+        "back": "Назад",
+        "create-new-query": "",
+        "use-this-query": "Использовать запрос"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-kick-start-your-query-modal": "Модальное окно запуска запроса",
+        "aria-label-toggle-query-starter": "",
+        "close": "Закрыть",
+        "description-kick-start-your-query": "",
+        "label-toggle-query-starter": "",
+        "title-kick-start-your-query": "Запустить запрос"
+      },
+      "raw-query": {
+        "aria-label-selector": ""
+      },
+      "results-table": {
+        "content-descriptive-type": "",
+        "description": "Описание",
+        "name": "Имя",
+        "select": "Выбрать",
+        "type": "Тип"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": ""
+        }
+      }
+    }
+  }
+}
