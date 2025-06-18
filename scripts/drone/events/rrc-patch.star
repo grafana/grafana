@@ -3,16 +3,8 @@ This module returns all the pipelines used in the event of pushes to an RRC bran
 """
 
 load(
-    "scripts/drone/pipelines/integration_tests.star",
-    "integration_tests",
-)
-load(
     "scripts/drone/pipelines/lint_frontend.star",
     "lint_frontend_pipeline",
-)
-load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
 )
 load(
     "scripts/drone/pipelines/test_frontend.star",
@@ -46,8 +38,6 @@ def rrc_patch_pipelines():
     pipelines = [
         test_frontend(trigger, ver_mode),
         lint_frontend_pipeline(trigger, ver_mode),
-        test_backend(trigger, ver_mode),
-        integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         rrc_enterprise_downstream_pipeline(trigger = trigger),
     ]
 
@@ -63,6 +53,5 @@ def rrc_enterprise_downstream_pipeline(trigger):
         name = "rrc-trigger-downstream",
         trigger = trigger,
         steps = steps,
-        depends_on = ["rrc-integration-tests"],
         environment = environment,
     )

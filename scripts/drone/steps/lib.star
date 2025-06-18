@@ -568,34 +568,6 @@ def build_plugins_step(ver_mode):
         ],
     }
 
-def test_backend_step():
-    return {
-        "name": "test-backend",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
-            # mime.TypeByExtension function.
-            "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
-        ],
-    }
-
-def test_backend_integration_step():
-    return {
-        "name": "test-backend-integration",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update build-base",
-            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-        ],
-    }
-
 def betterer_frontend_step():
     """Run betterer on frontend code.
 

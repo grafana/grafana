@@ -17,14 +17,6 @@ load(
     "trigger_docs_pr",
 )
 load(
-    "scripts/drone/pipelines/integration_tests.star",
-    "integration_tests",
-)
-load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
-)
-load(
     "scripts/drone/pipelines/verify_drone.star",
     "verify_drone",
 )
@@ -61,39 +53,7 @@ def pr_pipelines():
             ),
             ver_mode,
         ),
-        test_backend(
-            get_pr_trigger(
-                include_paths = [
-                    "Makefile",
-                    "pkg/**",
-                    "packaging/**",
-                    ".drone.yml",
-                    "conf/**",
-                    "go.sum",
-                    "go.mod",
-                    "public/app/plugins/**/plugin.json",
-                    "docs/sources/setup-grafana/configure-grafana/feature-toggles/**",
-                    "devenv/**",
-                    "apps/**",
-                ],
-            ),
-            ver_mode,
-        ),
         build_e2e(trigger, ver_mode),
-        integration_tests(
-            get_pr_trigger(
-                include_paths = [
-                    "pkg/**",
-                    "packaging/**",
-                    ".drone.yml",
-                    "conf/**",
-                    "go.sum",
-                    "go.mod",
-                    "public/app/plugins/**/plugin.json",
-                ],
-            ),
-            prefix = ver_mode,
-        ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         integration_benchmarks(
             prefix = ver_mode,
