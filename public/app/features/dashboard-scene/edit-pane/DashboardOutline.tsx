@@ -109,7 +109,6 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
               <Stack direction="row" gap={0.5} alignItems="center" grow={1}>
                 <span>{instanceName}</span>
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
-                {/* {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>} */}
               </Stack>
               {isCloned && (
                 <span>
