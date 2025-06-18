@@ -1,4 +1,4 @@
-import { sanitizeTextPanelContent, sanitizeUrl, sanitize, validatePath } from './sanitize';
+import { sanitizeTextPanelContent, sanitizeUrl, sanitize, validatePath, PathValidationError } from './sanitize';
 
 describe('sanitizeTextPanelContent', () => {
   it('should allow whitelisted styles in text panel', () => {
@@ -60,23 +60,23 @@ describe('sanitize', () => {
 describe('validatePath', () => {
   describe('path traversal protection', () => {
     it('should block simple path traversal attempts', () => {
-      expect(validatePath('/api/../admin')).toBe('');
-      expect(validatePath('api/../admin')).toBe('');
-      expect(validatePath('../admin')).toBe('');
+      expect(() => validatePath('/api/../admin')).toThrow(PathValidationError);
+      expect(() => validatePath('api/../admin')).toThrow(PathValidationError);
+      expect(() => validatePath('../admin')).toThrow(PathValidationError);
     });
 
     it('should block URL encoded path traversal attempts', () => {
-      expect(validatePath('/api/%2e%2e/admin')).toBe('');
-      expect(validatePath('/api/%252e%252e/admin')).toBe('');
+      expect(() => validatePath('/api/%2e%2e/admin')).toThrow(PathValidationError);
+      expect(() => validatePath('/api/%252e%252e/admin')).toThrow(PathValidationError);
     });
 
     it('should block double encoded traversal attempts', () => {
-      expect(validatePath('/api/%252e%252e/admin')).toBe('');
+      expect(() => validatePath('/api/%252e%252e/admin')).toThrow(PathValidationError);
     });
 
     it('should handle malformed URI encoding gracefully', () => {
-      expect(validatePath('/api/%/admin')).toBe('');
-      expect(validatePath('/api/%2/admin')).toBe('');
+      expect(() => validatePath('/api/%/admin')).toThrow(PathValidationError);
+      expect(() => validatePath('/api/%2/admin')).toThrow(PathValidationError);
     });
   });
 
@@ -117,8 +117,8 @@ describe('validatePath', () => {
     });
 
     it('should block traversal in URL paths while preserving query params', () => {
-      expect(validatePath('https://api.example.com/api/../admin?token=abc')).toBe('');
-      expect(validatePath('http://localhost:3000/api/%2e%2e/secrets?param=value')).toBe('');
+      expect(() => validatePath('https://api.example.com/api/../admin?token=abc')).toThrow(PathValidationError);
+      expect(() => validatePath('http://localhost:3000/api/%2e%2e/secrets?param=value')).toThrow(PathValidationError);
     });
 
     it('should allow legitimate dots in URL paths with query params', () => {
@@ -132,13 +132,13 @@ describe('validatePath', () => {
     });
 
     it('should handle malformed URLs gracefully', () => {
-      expect(validatePath('not-a-url://../admin')).toBe('');
+      expect(() => validatePath('not-a-url://../admin')).toThrow(PathValidationError);
       expect(validatePath('://malformed')).toBe('://malformed'); // No traversal attempt, so it's allowed
     });
 
     it('should handle URLs with different protocols', () => {
       expect(validatePath('ftp://files.example.com/safe/path')).toBe('ftp://files.example.com/safe/path');
-      expect(validatePath('ftp://files.example.com/../secrets')).toBe('');
+      expect(() => validatePath('ftp://files.example.com/../secrets')).toThrow(PathValidationError);
     });
   });
 });
