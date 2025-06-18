@@ -225,10 +225,6 @@ Cell options allow you to control how data is displayed in a table.
 The options are differ based on the cell type that you select and are outlined within the descriptions of each cell type.
 The following table provides short descriptions for each cell type and links to a longer description and the cell type options.
 
-- [Cell type](#cell-type) - Control the default cell display settings.
-- [Wrap text](#wrap-text) - Wrap text in the cell that contains the longest content in your table.
-- [Cell value inspect](#cell-value-inspect) - Enables value inspection from table cells.
-
 #### Cell type
 
 By default, Grafana automatically chooses display settings.
@@ -255,6 +251,15 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 
 ##### Auto
 
+This cell type automatically displays values with sensible defaults applied.
+
+It has the following cell options:
+
+| Option | Description |
+| ------ | ----------- |
+| [Cell type](#cell-type) | Control the default cell display settings. |
+| [Wrap text](#wrap-text) | Wrap text in the cell that contains the longest content in your table. |
+| [Cell value inspect](#cell-value-inspect) | Enables value inspection from table cells. |
 
 ##### Sparkline
 
