@@ -47,6 +47,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
@@ -94,6 +95,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
@@ -140,5 +142,6 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
