@@ -29,6 +29,8 @@ Currently, Grafana Advisor performs regular checks on data sources, plugins, and
 You can suggest new checks and provide feedback through this [form](https://docs.google.com/forms/d/e/1FAIpQLSf8T-xMZauFXZ1uHw09OjZLT_AaiY-cl-hJGwC6Krkj0ThmZQ/viewform).
 {{< /admonition >}}
 
+{{< youtube id="o84EfY-KP-c" >}}
+
 ## Before you begin
 
 To set up Grafana Advisor you need:
