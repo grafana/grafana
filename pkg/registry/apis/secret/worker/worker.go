@@ -135,7 +135,7 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
 	start := time.Now()
-	var keeperType string
+	keeperType := "unknown"
 	defer func() {
 		w.metrics.OutboxMessageProcessingDuration.WithLabelValues(string(message.Type), keeperType).Observe(time.Since(start).Seconds())
 	}()
@@ -175,6 +175,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
+	keeperType = string(keeperCfg.Type())
 
 	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
 	if err != nil {
