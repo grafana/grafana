@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
@@ -176,7 +176,7 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
-    const { t } = useTranslate();
+
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />
@@ -227,15 +227,7 @@ export class GeneralSettingsEditView
               {dashboard.isManagedRepository() ? (
                 <Input readOnly value={meta.folderTitle} />
               ) : (
-                <FolderPicker
-                  value={meta.folderUid}
-                  onChange={model.onFolderChange}
-                  // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                  initialTitle={meta.folderTitle}
-                  inputId="dashboard-folder-input"
-                  enableCreateNew
-                  skipInitialLoad
-                />
+                <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
               )}
             </Field>
 

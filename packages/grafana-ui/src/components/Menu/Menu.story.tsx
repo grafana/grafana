@@ -1,6 +1,6 @@
 import { Meta } from '@storybook/react';
 
-import { GraphContextMenuHeader } from '..';
+import { GraphContextMenuHeader } from '../../graveyard/Graph/GraphContextMenu';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
 

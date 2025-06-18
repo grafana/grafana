@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
@@ -20,13 +21,23 @@ export function LabelSelector() {
 
   return (
     <div className={styles.section}>
-      <Label description="Once label values are selected, only possible label combinations are shown.">
-        2. Select labels to search in
+      <Label
+        description={t(
+          'grafana-prometheus.components.label-selector.description-select-labels',
+          'Once label values are selected, only possible label combinations are shown.'
+        )}
+      >
+        <Trans i18nKey="grafana-prometheus.components.label-selector.select-labels-to-search-in">
+          2. Select labels to search in
+        </Trans>
       </Label>
       <div>
         <Input
           onChange={(e) => setLabelSearchTerm(e.currentTarget.value)}
-          aria-label="Filter expression for label"
+          aria-label={t(
+            'grafana-prometheus.components.label-selector.aria-label-filter-expression-for-label',
+            'Filter expression for label'
+          )}
           value={labelSearchTerm}
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.labelNamesFilter}
         />

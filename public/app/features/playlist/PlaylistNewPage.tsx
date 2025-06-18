@@ -1,17 +1,16 @@
 import { useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
-import { Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist';
+import { Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistForm } from './PlaylistForm';
 import { getDefaultPlaylist } from './utils';
 
 export const PlaylistNewPage = () => {
-  const { t } = useTranslate();
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
 
