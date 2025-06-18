@@ -417,6 +417,21 @@
     },
     {
       "metadata": {
+        "name": "alertingStateHistoryPrometheus",
+        "resourceVersion": "1750261149563",
+        "creationTimestamp": "2025-06-18T15:39:09Z"
+      },
+      "spec": {
+        "description": "Enables the Prometheus state history writer for alert rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-11-18T10:59:00Z"

@@ -1036,4 +1036,9 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
+  /**
+  * Enables the Prometheus state history writer for alert rules.
+  * @default false
+  */
+  alertingStateHistoryPrometheus?: boolean;
 }
