@@ -173,16 +173,10 @@ describe('SeriesApiClient', () => {
   });
 
   describe('queryLabelKeys', () => {
-    it('should throw error if match parameter is not provided', async () => {
-      await expect(client.queryLabelKeys(mockTimeRange)).rejects.toThrow(
-        'Series endpoint always expects at least one matcher'
-      );
-    });
-
-    it('should fetch and process label keys from series', async () => {
+    it('should use MATCH_ALL_LABELS when no matcher is provided', async () => {
       mockRequest.mockResolvedValueOnce([{ __name__: 'metric1', label1: 'value1', label2: 'value2' }]);
 
-      const result = await client.queryLabelKeys(mockTimeRange, '{job="grafana"}');
+      const result = await client.queryLabelKeys(mockTimeRange);
 
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/series',
