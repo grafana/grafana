@@ -237,8 +237,8 @@ describe('DashboardEditFormSharedFields', () => {
     it('should handle undefined props', () => {
       setup({ readOnly: undefined, isGitHub: undefined });
 
-      expect(screen.getByText('Path')).toBeInTheDocument();
-      expect(screen.getByText('Comment')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
     });
   });
 });
