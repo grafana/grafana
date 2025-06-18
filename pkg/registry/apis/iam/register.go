@@ -4,10 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -15,9 +17,14 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
+	dashlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -25,41 +32,36 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
-var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
-
-// This is used just so wire has something unique to return
-type IdentityAccessManagementAPIBuilder struct {
-	store        legacy.LegacyIdentityStore
-	authorizer   authorizer.Authorizer
-	accessClient types.AccessClient
-
-	// non-k8s api route
-	display *user.LegacyDisplayREST
-
-	// Not set for multi-tenant deployment for now
-	sso ssosettings.Service
-}
-
 func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
+	accessClient types.AccessClient,
+	reg prometheus.Registerer,
+	coreRolesStorage CoreRoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:        store,
-		sso:          ssoService,
-		authorizer:   authorizer,
-		accessClient: client,
-		display:      user.NewLegacyDisplayREST(store),
+		store:                store,
+		coreRolesStorage:     coreRolesStorage,
+		sso:                  ssoService,
+		authorizer:           authorizer,
+		legacyAccessClient:   client,
+		accessClient:         accessClient,
+		display:              user.NewLegacyDisplayREST(store),
+		reg:                  reg,
+		enableAuthZResources: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -89,6 +91,10 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	if b.enableAuthZResources {
+		iamv0b.AddToScheme(scheme)
+	}
+
 	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
 
 	// Link this version to the internal representation.
@@ -100,22 +106,22 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.accessClient)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.accessClient)
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
@@ -123,12 +129,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
+	if b.enableAuthZResources {
+		// v0alpha1
+		coreRoleResource := iamv0b.CoreRoleInfo
+		store, err := NewLocalStore(
+			coreRoleResource,
+			apiGroupInfo.Scheme,
+			opts.OptsGetter,
+			b.reg,
+			b.accessClient,
+			b.coreRolesStorage,
+		)
+		if err != nil {
+			return err
+		}
+		storage[coreRoleResource.StoragePath()] = store
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return iamv0.GetOpenAPIDefinitions
+	defs := iamv0.GetOpenAPIDefinitions
+	if b.enableAuthZResources {
+		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			def1 := iamv0.GetOpenAPIDefinitions(ref)
+			def2 := iamv0b.GetOpenAPIDefinitions(ref)
+			for k, v := range def2 {
+				def1[k] = v
+			}
+			return def1
+		}
+	}
+	return defs
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -190,4 +224,28 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
+}
+
+func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,
+	reg prometheus.Registerer, ac types.AccessClient, storageBackend resource.StorageBackend) (grafanarest.Storage, error) {
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      storageBackend,
+		Reg:          reg,
+		AccessClient: ac,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource(), nil)
+	if err != nil {
+		return nil, err
+	}
+	// TODO should we move the direct client to another package?
+	// Or should I use a different client instead?
+	client := dashlegacy.NewDirectResourceClient(server)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, defaultOpts.StorageConfig.Config, nil)
+
+	// optsGetter.RegisterOptions(corerole.GroupResource(), apistore.StorageOptions{})
+	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+	return store, err
 }

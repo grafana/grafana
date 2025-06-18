@@ -61,7 +61,8 @@ func newMapper() mapper {
 			"folders": newResourceTranslation("folders", "uid", true),
 		},
 		"iam.grafana.app": {
-			"teams": newResourceTranslation("teams", "id", false),
+			"teams":     newResourceTranslation("teams", "id", false),
+			"coreroles": newResourceTranslation("roles", "uid", false),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
