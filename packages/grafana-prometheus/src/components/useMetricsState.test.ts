@@ -8,7 +8,7 @@ import { useMetricsState } from './useMetricsState';
 // Mock implementations
 const createMockLanguageProvider = (metrics: string[] = []): PrometheusLanguageProviderInterface =>
   ({
-    metrics,
+    retrieveMetrics: () => metrics,
   }) as unknown as PrometheusLanguageProviderInterface;
 
 const createMockDatasource = (lookupsDisabled = false): PrometheusDatasource =>
