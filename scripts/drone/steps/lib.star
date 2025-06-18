@@ -315,7 +315,7 @@ def store_storybook_step(ver_mode, trigger = None):
     return step
 
 def e2e_tests_artifacts():
-    # Note: This function is kept for backward compatibility but now only handles 
+    # Note: This function is kept for backward compatibility but now only handles
     # artifacts from the remaining E2E tests that haven't been migrated to GitHub Actions
     return {
         "name": "e2e-tests-artifacts-upload",
@@ -971,12 +971,15 @@ def release_canary_npm_packages_step(trigger = None):
 
     return step
 
-def upload_packages_step(ver_mode, trigger = None, depends_on = [
-    # Note: Main E2E tests have been migrated to GitHub Actions
-    # Updated dependencies to only include remaining Drone E2E tests
-    "end-to-end-tests-cloud-plugins-suite-azure",
-    "playwright-plugin-e2e",
-]):
+def upload_packages_step(
+        ver_mode,
+        trigger = None,
+        depends_on = [
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Updated dependencies to only include remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
+        ]):
     """Upload packages to object storage.
 
     Args:
