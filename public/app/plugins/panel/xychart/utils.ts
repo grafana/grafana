@@ -89,12 +89,14 @@ export function prepSeries(
 
       let frameSeries: XYSeries[] = [];
 
-      let onlyNumTimeFields = frame.fields.filter((field) => field.type === FieldType.number || field.type === FieldType.time);
+      let onlyNumTimeFields = frame.fields.filter(
+        (field) => field.type === FieldType.number || field.type === FieldType.time
+      );
 
       // only one of these per frame
       let x = onlyNumTimeFields.find((field) => xMatcher(field, frame, frames));
 
-        // only grabbing number fields (exclude time, string, enum, other)
+      // only grabbing number fields (exclude time, string, enum, other)
       let onlyNumFields = onlyNumTimeFields.filter((field) => field.type === FieldType.number);
 
       let color =
