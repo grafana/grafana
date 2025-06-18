@@ -6,7 +6,7 @@ import { dateTime, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
-import PrometheusLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 import { migrateVariableEditorBackToVariableSupport } from '../migrations/variableMigration';
 import { selectOptionInTest } from '../test/helpers/selectOptionInTest';
 import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
@@ -143,8 +143,8 @@ describe('PromVariableQueryEditor', () => {
           metricsMetadata: {},
           getLabelValues: jest.fn().mockImplementation(() => ['that']),
           fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
-        } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
-        getDebounceTimeInMilliseconds: jest.fn(),
+          queryLabelValues: jest.fn().mockResolvedValue([]),
+        } as Partial<PrometheusLanguageProviderInterface>,
         getTagKeys: jest
           .fn()
           .mockImplementation(() => Promise.resolve([{ text: 'this', value: 'this', label: 'this' }])),

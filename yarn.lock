@@ -2320,10 +2320,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.7.0":
-  version: 9.7.0
-  resolution: "@faker-js/faker@npm:9.7.0"
-  checksum: 10/5167cc179bbf5f140b957f600af24772ca8c6e7e42405c312c25a6b4278b851b84bd8e3065f80e667dd4c35dd5aeb0ed490b0b1872f908d58ffae1cef9a5ef72
+"@faker-js/faker@npm:^9.0.0, @faker-js/faker@npm:^9.8.0":
+  version: 9.8.0
+  resolution: "@faker-js/faker@npm:9.8.0"
+  checksum: 10/d7d7940ba7f2bd0d266d507bb7a33ec5099654da624dc8647d7cfd2e908b75ba06ed7dd0ec3b771a18600a734f420370b3cecd1ee5d4799993b1ee3505f866d8
   languageName: node
   linkType: hard
 
@@ -2954,7 +2954,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
-    "@faker-js/faker": "npm:^9.7.0"
+    "@faker-js/faker": "npm:^9.8.0"
     "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
@@ -2964,16 +2964,22 @@ __metadata:
     "@types/lodash": "npm:^4"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
+    fishery: "npm:^2.3.1"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-redux: "npm:^9.2.0"
+    rimraf: "npm:^6.0.1"
+    rollup: "npm:^4.22.4"
+    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-node-externals: "npm:^8.0.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.7.3"
   peerDependencies:
-    "@grafana/runtime": ^12.0.0-pre
-    "@grafana/ui": ^12.0.0-pre
+    "@grafana/runtime": ">=11.6 <= 12.x"
+    "@grafana/ui": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.8.0
+    msw: ^2.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -3714,8 +3720,8 @@ __metadata:
     prismjs: "npm:1.30.0"
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.34.0"
-    rc-drawer: "npm:7.2.0"
-    rc-picker: "npm:4.9.2"
+    rc-drawer: "npm:7.3.0"
+    rc-picker: "npm:4.11.3"
     rc-slider: "npm:11.1.8"
     rc-tooltip: "npm:6.4.0"
     react: "npm:18.3.1"
@@ -17059,7 +17065,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fishery@npm:^2.2.2":
+"fishery@npm:^2.2.2, fishery@npm:^2.3.1":
   version: 2.3.1
   resolution: "fishery@npm:2.3.1"
   dependencies:
@@ -18268,7 +18274,7 @@ __metadata:
     publint: "npm:^0.3.12"
     rc-slider: "npm:11.1.8"
     rc-tree: "npm:5.13.1"
-    re-resizable: "npm:6.10.3"
+    re-resizable: "npm:6.11.2"
     react: "npm:18.3.1"
     react-diff-viewer-continued: "npm:^3.4.0"
     react-dom: "npm:18.3.1"
@@ -26016,9 +26022,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-drawer@npm:7.2.0":
-  version: 7.2.0
-  resolution: "rc-drawer@npm:7.2.0"
+"rc-drawer@npm:7.3.0":
+  version: 7.3.0
+  resolution: "rc-drawer@npm:7.3.0"
   dependencies:
     "@babel/runtime": "npm:^7.23.9"
     "@rc-component/portal": "npm:^1.1.1"
@@ -26028,7 +26034,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/1c9c7e5a00bd341a996684e5e288e273fee5083c8daf37e61a5ef5db5204df8aeaf48bcb67d89d01cab4d3c484bcf4d73af257a2d8de2dd71a757fa9cabaed3c
+  checksum: 10/99dd1dd51abd21ae1b7b12a1f32a1509fac5d1d9e4719b77e5354cae98fe14fb21dde382c9552cdb21fba07505d3bfbab490b04fb97df709f4efe0b352f129e1
   languageName: node
   linkType: hard
 
@@ -26061,9 +26067,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-picker@npm:4.9.2":
-  version: 4.9.2
-  resolution: "rc-picker@npm:4.9.2"
+"rc-picker@npm:4.11.3":
+  version: 4.11.3
+  resolution: "rc-picker@npm:4.11.3"
   dependencies:
     "@babel/runtime": "npm:^7.24.7"
     "@rc-component/trigger": "npm:^2.0.0"
@@ -26087,7 +26093,7 @@ __metadata:
       optional: true
     moment:
       optional: true
-  checksum: 10/5bf0abec3b0fc778a8b0d64023d395f22692b910ead0e63b1f9b941ee510769c814525733bf9084d504567aa449fa50c4dafb18ae95b8e1a291c857e535aeb28
+  checksum: 10/e1e3236338e2ff0d0fa6fcde568457f7dd6ad13a88d870db8fca1de39f452463c26be71a565c1ee7557a2a109bb4737816b8a729f404169403daec8f8a014fff
   languageName: node
   linkType: hard
 
@@ -26197,13 +26203,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"re-resizable@npm:6.10.3":
-  version: 6.10.3
-  resolution: "re-resizable@npm:6.10.3"
+"re-resizable@npm:6.11.2":
+  version: 6.11.2
+  resolution: "re-resizable@npm:6.11.2"
   peerDependencies:
     react: ^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/23c69efa9a5b5827b7e3873077e2047cda584825f43fea924d6f3ecbee683c959b69461461d93ec1302eafa5603f4e7a2afef35839a31ecf2e9f849940bc0a83
+  checksum: 10/3b814c61b77af294862bd36382b6f2e7f9a90a86f3696fd93780d39d2534c1fcbab68f63b088fc1e1935b1b9dba6c1ab8f61f4f4e6e5d16e86e5805bae40cfb6
   languageName: node
   linkType: hard
 
@@ -26480,11 +26486,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.53.2
-  resolution: "react-hook-form@npm:7.53.2"
+  version: 7.58.1
+  resolution: "react-hook-form@npm:7.58.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10/172589ac5871bd41717e8c6bc4c825d149db88eb02e356a8fef4115615a56b21bf66ad16954575b1d6302ed265b8780f1975a2730d5aa10a53e412b56d9f72ca
+  checksum: 10/94b8af3976f21241adf3ca67d08929c8e66139c45f78632f5e563b83956000c5c30025dfacbe74602670d1f4c13dea5f3d2d8c03344698d193ae0214455196ad
   languageName: node
   linkType: hard
 
@@ -27733,7 +27739,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:6.0.1":
+"rimraf@npm:6.0.1, rimraf@npm:^6.0.1":
   version: 6.0.1
   resolution: "rimraf@npm:6.0.1"
   dependencies:

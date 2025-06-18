@@ -1622,6 +1622,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
+		// Create a config with secrets to check that they will be hided in the response.
 		expectedConfig := apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
@@ -1630,9 +1631,14 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 						"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
 					},
 					AlertmanagerConfig: `route:
-  receiver: default
+  receiver: webhook
 receivers:
-  - name: default`,
+  - name: webhook
+    webhook_configs:
+      - url: "http://localhost/webhook"
+        http_config:
+          bearer_token: "some-token"
+`,
 				},
 			},
 		}
@@ -1645,11 +1651,25 @@ receivers:
 
 		require.Equal(t, http.StatusOK, response.Status())
 
-		expectedResponse := `alertmanager_config: |-
+		expectedResponse := `alertmanager_config:
   route:
-    receiver: default
+    receiver: webhook
+    continue: false
   receivers:
-    - name: default
+    - name: webhook
+      webhook_configs:
+        - url: "<secret>"
+          url_file: ""
+          http_config:
+            authorization:
+              type: "Bearer"
+              credentials: "<secret>"
+            enable_http2: true
+            follow_redirects: true
+          send_resolved: true
+          max_alerts: 0
+          timeout: "0s"
+  templates: []
 template_files:
   test.tmpl: '{{ define "test" }}Hello{{ end }}'`
 

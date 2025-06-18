@@ -6,7 +6,8 @@ import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
-import { escapeForUtf8Support } from './utf8_support';
+import { PrometheusCacheLevel } from './types';
+import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
 type PrometheusLabelsResponse = string[];
@@ -61,27 +62,6 @@ export abstract class BaseResourceClient {
   }
 
   /**
-   * Validates and transforms a matcher string for Prometheus series queries.
-   *
-   * @param match - The matcher string to validate and transform. Can be undefined, a specific matcher, or '{}'.
-   * @returns The validated and potentially transformed matcher string.
-   * @throws Error if the matcher is undefined or empty (null, undefined, or empty string).
-   *
-   * @example
-   * // Returns '{__name__!=""}' for empty matcher
-   * validateAndTransformMatcher('{}')
-   *
-   * // Returns the original matcher for specific matchers
-   * validateAndTransformMatcher('{job="grafana"}')
-   */
-  protected validateAndTransformMatcher(match?: string): string {
-    if (!match) {
-      throw new Error('Series endpoint always expects at least one matcher');
-    }
-    return match === '{}' ? MATCH_ALL_LABELS : match;
-  }
-
-  /**
    * Fetches all time series that match a specific label matcher using **series** endpoint.
    *
    * @param {TimeRange} timeRange - Time range to use for the query
@@ -89,7 +69,7 @@ export abstract class BaseResourceClient {
    * @param {string} limit - Maximum number of series to return
    */
   public querySeries = async (timeRange: TimeRange, match: string, limit: string = DEFAULT_SERIES_LIMIT) => {
-    const effectiveMatch = this.validateAndTransformMatcher(match);
+    const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
     const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': effectiveMatch, limit };
     return await this.requestSeries('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
@@ -97,6 +77,8 @@ export abstract class BaseResourceClient {
 }
 
 export class LabelsApiClient extends BaseResourceClient implements ResourceApiClient {
+  private _cache: ResourceClientsCache = new ResourceClientsCache(this.datasource.cacheLevel);
+
   public histogramMetrics: string[] = [];
   public metrics: string[] = [];
   public labelKeys: string[] = [];
@@ -110,6 +92,7 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
     this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL);
     this.histogramMetrics = processHistogramMetrics(this.metrics);
+    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, this.metrics);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -130,10 +113,16 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     let url = '/api/v1/labels';
     const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
+    const effectiveMatch = match ?? '';
+    const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, limit);
+    if (maybeCachedKeys) {
+      return maybeCachedKeys;
+    }
 
     const res = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
+      this._cache.setLabelKeys(timeRange, effectiveMatch, limit, this.labelKeys);
       return this.labelKeys.slice();
     }
 
@@ -159,13 +148,22 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     const searchParams = { limit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
     const interpolatedName = this.datasource.interpolateString(labelKey);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
+    const effectiveMatch = `${match ?? ''}-${interpolatedAndEscapedName}`;
+    const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
+    if (maybeCachedValues) {
+      return maybeCachedValues;
+    }
+
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    this._cache.setLabelValues(timeRange, effectiveMatch, limit, value ?? []);
     return value ?? [];
   };
 }
 
 export class SeriesApiClient extends BaseResourceClient implements ResourceApiClient {
+  private _cache: ResourceClientsCache = new ResourceClientsCache(this.datasource.cacheLevel);
+
   public histogramMetrics: string[] = [];
   public metrics: string[] = [];
   public labelKeys: string[] = [];
@@ -176,11 +174,13 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
   };
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    const series = await this.querySeries(timeRange, MATCH_ALL_LABELS);
-    const { metrics, labelKeys } = processSeries(series);
+    const series = await this.querySeries(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT);
+    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL);
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
+    this._cache.setLabelValues(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, metrics);
+    this._cache.setLabelKeys(timeRange, MATCH_ALL_LABELS, DEFAULT_SERIES_LIMIT, labelKeys);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
@@ -189,9 +189,15 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const effectiveMatch = this.validateAndTransformMatcher(match);
+    const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
+    const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, limit);
+    if (maybeCachedKeys) {
+      return maybeCachedKeys;
+    }
+
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelKeys } = processSeries(series);
+    this._cache.setLabelKeys(timeRange, effectiveMatch, limit, labelKeys);
     return labelKeys;
   };
 
@@ -201,11 +207,121 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const effectiveMatch = !match || match === EMPTY_MATCHER ? `{${labelKey}!=""}` : match;
+    const utf8SafeLabelKey = utf8Support(labelKey);
+    const effectiveMatch =
+      !match || match === EMPTY_MATCHER
+        ? `{${utf8SafeLabelKey}!=""}`
+        : match.slice(0, match.length - 1).concat(`,${utf8SafeLabelKey}!=""}`);
+    const maybeCachedValues = this._cache.getLabelValues(timeRange, effectiveMatch, limit);
+    if (maybeCachedValues) {
+      return maybeCachedValues;
+    }
+
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
     const { labelValues } = processSeries(series, labelKey);
+    this._cache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
     return labelValues;
   };
+}
+
+class ResourceClientsCache {
+  private readonly MAX_CACHE_ENTRIES = 1000; // Maximum number of cache entries
+  private readonly MAX_CACHE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB max cache size
+
+  private _cache: Record<string, string[]> = {};
+  private _accessTimestamps: Record<string, number> = {};
+
+  constructor(private cacheLevel: PrometheusCacheLevel = PrometheusCacheLevel.High) {}
+
+  public setLabelKeys(timeRange: TimeRange, match: string, limit: string, keys: string[]) {
+    // Check and potentially clean cache before adding new entry
+    this.cleanCacheIfNeeded();
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
+    this._cache[cacheKey] = keys.slice().sort();
+    this._accessTimestamps[cacheKey] = Date.now();
+  }
+
+  public getLabelKeys(timeRange: TimeRange, match: string, limit: string): string[] | undefined {
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'key');
+    const result = this._cache[cacheKey];
+    if (result) {
+      // Update access timestamp on cache hit
+      this._accessTimestamps[cacheKey] = Date.now();
+    }
+    return result;
+  }
+
+  public setLabelValues(timeRange: TimeRange, match: string, limit: string, values: string[]) {
+    // Check and potentially clean cache before adding new entry
+    this.cleanCacheIfNeeded();
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');
+    this._cache[cacheKey] = values.slice().sort();
+    this._accessTimestamps[cacheKey] = Date.now();
+  }
+
+  public getLabelValues(timeRange: TimeRange, match: string, limit: string): string[] | undefined {
+    const cacheKey = this.getCacheKey(timeRange, match, limit, 'value');
+    const result = this._cache[cacheKey];
+    if (result) {
+      // Update access timestamp on cache hit
+      this._accessTimestamps[cacheKey] = Date.now();
+    }
+    return result;
+  }
+
+  private getCacheKey(timeRange: TimeRange, match: string, limit: string, type: 'key' | 'value') {
+    const snappedTimeRange = getRangeSnapInterval(this.cacheLevel, timeRange);
+    return [snappedTimeRange.start, snappedTimeRange.end, limit, match, type].join('|');
+  }
+
+  private cleanCacheIfNeeded() {
+    // Check number of entries
+    const currentEntries = Object.keys(this._cache).length;
+    if (currentEntries >= this.MAX_CACHE_ENTRIES) {
+      // Calculate 20% of current entries, but ensure we remove at least 1 entry
+      const entriesToRemove = Math.max(1, Math.floor(currentEntries - this.MAX_CACHE_ENTRIES + 1));
+      this.removeOldestEntries(entriesToRemove);
+    }
+
+    // Check cache size in bytes
+    const currentSize = this.getCacheSizeInBytes();
+    if (currentSize > this.MAX_CACHE_SIZE_BYTES) {
+      // Calculate 20% of current entries, but ensure we remove at least 1 entry
+      const entriesToRemove = Math.max(1, Math.floor(Object.keys(this._cache).length * 0.2));
+      this.removeOldestEntries(entriesToRemove);
+    }
+  }
+
+  private getCacheSizeInBytes(): number {
+    let size = 0;
+    for (const key in this._cache) {
+      // Calculate size of key
+      size += key.length * 2; // Approximate size of string in bytes (UTF-16)
+
+      // Calculate size of value array
+      const value = this._cache[key];
+      for (const item of value) {
+        size += item.length * 2; // Approximate size of each string in bytes
+      }
+    }
+    return size;
+  }
+
+  private removeOldestEntries(count: number) {
+    // Get all entries sorted by timestamp (oldest first)
+    const entries = Object.entries(this._accessTimestamps).sort(
+      ([, timestamp1], [, timestamp2]) => timestamp1 - timestamp2
+    );
+
+    // Take the oldest 'count' entries
+    const entriesToRemove = entries.slice(0, count);
+
+    // Remove these entries from both cache and timestamps
+    for (const [key] of entriesToRemove) {
+      delete this._cache[key];
+      delete this._accessTimestamps[key];
+    }
+  }
 }
 
 export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
