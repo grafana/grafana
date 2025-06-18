@@ -47,7 +47,6 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
   const children = editableElement.getOutlineChildren?.() ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
-  //const elementCollapsed = editableElement.getCollapsedState?.();
   const outlineRename = useOutlineRename(editableElement);
   const isContainer = editableElement.getOutlineChildren ? true : false;
 
