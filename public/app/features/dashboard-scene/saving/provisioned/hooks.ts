@@ -1,8 +1,15 @@
+import { useState } from 'react';
+
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { DashboardMeta } from 'app/types';
 
-import { getDefaultWorkflow } from './defaults';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { ProvisionedDashboardFormData } from '../shared';
+
+import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
 import { generatePath } from './utils/path';
 import { generateTimestamp } from './utils/timestamp';
 
@@ -54,5 +61,70 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
     isNew: !meta.k8s?.name,
     isGitHub: repository?.type === 'github',
     repository,
+  };
+}
+
+export interface ProvisionedDashboardData {
+  isReady: boolean;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  defaultValues: ProvisionedDashboardFormData | null;
+  repository?: RepositoryView;
+  loadedFromRef?: string;
+  workflowOptions: Array<{ label: string; value: string }>;
+  isNew: boolean;
+  isGitHub: boolean;
+  readOnly: boolean;
+}
+
+/**
+ * Custom hook to fetch and prepare data for a provisioned dashboard update/delete form.
+ * It retrieves default values, repository information, and workflow options based on the current dashboard state.
+ */
+
+export function useProvisionedDashboardData(dashboard: DashboardScene): ProvisionedDashboardData {
+  const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
+  const [params] = useUrlParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const loadedFromRef = params.get('ref') ?? undefined;
+
+  const defaultValuesResult = useDefaultValues({
+    meta,
+    defaultTitle,
+    defaultDescription,
+    loadedFromRef,
+  });
+
+  if (!defaultValuesResult) {
+    return {
+      isReady: false,
+      isLoading,
+      setIsLoading,
+      defaultValues: null,
+      repository: undefined,
+      loadedFromRef,
+      workflowOptions: [],
+      isNew: false,
+      isGitHub: false,
+      readOnly: true,
+    };
+  }
+
+  const { values, isNew, isGitHub, repository } = defaultValuesResult;
+  const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
+
+  const readOnly = !repository?.workflows?.length;
+
+  return {
+    isReady: true,
+    defaultValues: values,
+    repository,
+    loadedFromRef,
+    workflowOptions,
+    isNew,
+    isGitHub,
+    readOnly,
+    isLoading,
+    setIsLoading,
   };
 }

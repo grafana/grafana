@@ -6,6 +6,7 @@ import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { WorkflowOption } from 'app/features/provisioning/types';
 
 import { Diffs } from '../settings/version-history/utils';
 
@@ -21,6 +22,19 @@ export interface DashboardChangeInfo {
   isNew?: boolean;
   hasFolderChanges?: boolean;
   hasMigratedToV2?: boolean;
+}
+export interface ProvisionedDashboardFormData {
+  ref?: string; // Branch or tag in the repository
+  path: string; // Path to the dashboard file in the repository
+  comment?: string; // Commit message for the change
+  repo: string; // Repository name
+  workflow?: WorkflowOption;
+  title: string; // Title of the dashboard
+  description: string;
+  folder: {
+    uid?: string;
+    title?: string;
+  };
 }
 
 export function isVersionMismatchError(error?: Error) {
