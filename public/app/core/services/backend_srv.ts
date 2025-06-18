@@ -15,7 +15,7 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning, validatePath } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -107,21 +107,10 @@ export class BackendSrv implements BackendService {
     return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
-  fetch<T>(rawOptions: BackendSrvRequest): Observable<FetchResponse<T>> {
+  fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
     const id = uuidv4();
     const fetchQueue = this.fetchQueue;
-
-    let url = rawOptions.url;
-    if (rawOptions.validatePath) {
-      try {
-        url = validatePath(rawOptions.url);
-      } catch (error) {
-        return throwError(() => error);
-      }
-    }
-
-    const options = url === rawOptions.url ? rawOptions : { ...rawOptions, url };
 
     return new Observable((observer) => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
@@ -158,7 +147,14 @@ export class BackendSrv implements BackendService {
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
-    const url = parseUrlFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
+
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -306,8 +302,14 @@ export class BackendSrv implements BackendService {
   }
 
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
 
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {
