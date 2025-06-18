@@ -158,6 +158,9 @@ type SearchOptions struct {
 
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
+
+	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
+	RebuildInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -195,6 +198,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	MaxPageSizeBytes int
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -217,6 +222,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		opts.Now = func() int64 {
 			return time.Now().UnixMilli()
 		}
+	}
+
+	if opts.MaxPageSizeBytes <= 0 {
+		// By default, we use 2MB for the page size.
+		opts.MaxPageSizeBytes = 1024 * 1024 * 2
 	}
 
 	// Initialize the blob storage
@@ -247,19 +257,20 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:         opts.Tracer,
-		log:            logger,
-		backend:        opts.Backend,
-		blob:           blobstore,
-		diagnostics:    opts.Diagnostics,
-		access:         opts.AccessClient,
-		writeHooks:     opts.WriteHooks,
-		lifecycle:      opts.Lifecycle,
-		now:            opts.Now,
-		ctx:            ctx,
-		cancel:         cancel,
-		storageMetrics: opts.storageMetrics,
-		indexMetrics:   opts.IndexMetrics,
+		tracer:           opts.Tracer,
+		log:              logger,
+		backend:          opts.Backend,
+		blob:             blobstore,
+		diagnostics:      opts.Diagnostics,
+		access:           opts.AccessClient,
+		writeHooks:       opts.WriteHooks,
+		lifecycle:        opts.Lifecycle,
+		now:              opts.Now,
+		ctx:              ctx,
+		cancel:           cancel,
+		storageMetrics:   opts.storageMetrics,
+		indexMetrics:     opts.IndexMetrics,
+		maxPageSizeBytes: opts.MaxPageSizeBytes,
 	}
 
 	if opts.Search.Resources != nil {
@@ -304,6 +315,8 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	maxPageSizeBytes int
 }
 
 // Init implements ResourceServer.
@@ -788,7 +801,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 50 // default max 50 items in a page
 	}
-	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
+	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
 	rsp := &resourcepb.ListResponse{}
 

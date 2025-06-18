@@ -9,12 +9,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
+	tracer                     trace.Tracer
 	database                   contracts.Database
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -36,6 +40,7 @@ type Config struct {
 
 func NewWorker(
 	config Config,
+	tracer trace.Tracer,
 	database contracts.Database,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -58,6 +63,7 @@ func NewWorker(
 
 	return &Worker{
 		config:                     config,
+		tracer:                     tracer,
 		database:                   database,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -106,7 +112,7 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 
 		for _, message := range messages {
 			messageIDs = append(messageIDs, message.MessageID)
-			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
+
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
@@ -124,6 +130,27 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
+	opts := []trace.SpanStartOption{}
+
+	// If there's no request ID in the message, start a new root span and log an error.
+	ctx, err := tracectx.HexDecodeTraceIntoContext(ctx, message.RequestID)
+	if err != nil {
+		opts = append(opts, trace.WithNewRoot())
+		logging.FromContext(ctx).Error("decoding trace context from message", "err", err.Error(), "message.requestID", message.RequestID)
+	}
+
+	opts = append(opts, trace.WithAttributes(
+		attribute.String("message.requestID", message.RequestID),
+		attribute.String("message.id", message.MessageID),
+		attribute.String("message.type", string(message.Type)),
+		attribute.String("message.namespace", message.Namespace),
+		attribute.String("message.secureValue.name", message.Name),
+		attribute.Int("message.receive.count", message.ReceiveCount),
+	))
+
+	ctx, span := w.tracer.Start(ctx, "Worker.ProcessMessage", opts...)
+	defer span.End()
+
 	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
 		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)

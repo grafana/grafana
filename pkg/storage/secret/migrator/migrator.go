@@ -12,7 +12,7 @@ import (
 )
 
 const (
-  TableNameKeeper            = "secret_keeper"
+	TableNameKeeper            = "secret_keeper"
 	TableNameSecureValue       = "secret_secure_value"
 	TableNameSecureValueOutbox = "secret_secure_value_outbox"
 	TableNameDataKey           = "secret_data_key"
@@ -133,8 +133,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: TableNameSecureValueOutbox,
 		Columns: []*migrator.Column{
-			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false}, // Safer upper limit because we hex-encode traceparent+tracestate to form the request_id.
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},       // Fixed size of a UUID.
 			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
