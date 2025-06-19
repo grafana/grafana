@@ -38,10 +38,6 @@ load(
     "rgm_artifacts_step",
 )
 load(
-    "scripts/drone/utils/images.star",
-    "images",
-)
-load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
