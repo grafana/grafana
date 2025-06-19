@@ -24,11 +24,11 @@ refs:
 
 # Shared Dashboards API
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Create a shared dashboard
 

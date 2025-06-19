@@ -125,9 +125,9 @@ To backup and manage alert rules, you can [provision alerting resources](ref:sha
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By default, new alert rules are Grafana-managed. To switch to **Data source-managed**, follow these instructions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Select a Prometheus-based data source from the drop-down list.
 

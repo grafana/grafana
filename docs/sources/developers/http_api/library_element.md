@@ -441,9 +441,9 @@ Status Codes:
 
 Deletes an existing library element as specified by the UID. This operation cannot be reverted.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot delete a library element that is connected. This operation cannot be reverted.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Example Request**:
 

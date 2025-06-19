@@ -82,9 +82,9 @@ To authenticate with Azure AD, the Keycloak application needs a client ID and cl
    1. Paste the client secret you created in the previous step in the **Client secret** field.
    1. Click Add.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Up to this point, you have created an App Registration in Azure AD, assigned users to the application, created credentials for the application, and configured the application in Keycloak. In the Keycloak Client's section, the client with ID `account` Home URL can be used to test the configuration. This will open a new tab where you can login into the correct Keycloak realm with the Azure AD tenant you just configured.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Repeat this steps, for every Azure AD tenant you want to configure in Keycloak.
 

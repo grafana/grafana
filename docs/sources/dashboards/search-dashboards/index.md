@@ -46,9 +46,9 @@ The search is:
 - _Not_ case sensitive
 - Functional across stored _and_ file based dashboards and folders.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard or folder.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following images show:
 
@@ -64,9 +64,9 @@ Searching by dashboard name inside a folder.
 
 {{< figure src="/media/docs/grafana/dashboards/search-in-folder.png" width="700px" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When you search within a folder, its subfolders are not part of the results returned. You need to be on the **Dashboards** page (or the root level) to search for subfolders by name.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Search dashboards using panel title
 
@@ -120,6 +120,6 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
-{{% /admonition %}}
+{{< /admonition >}}

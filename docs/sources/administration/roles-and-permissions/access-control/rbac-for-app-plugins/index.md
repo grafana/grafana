@@ -36,9 +36,9 @@ refs:
 
 # RBAC for app plugins
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 RBAC can be used to manage access to [app plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#app-plugins).
 Each app plugin grants the basic Viewer, Editor and Admin organization roles a default set of plugin permissions.
