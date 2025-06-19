@@ -28,14 +28,14 @@ func TestDataStore_GetPrefix(t *testing.T) {
 		Name:      "test-name",
 	}
 
-	expected := "/unified/data/test-namespace/test-group/test-resource/test-name/"
+	expected := "test-namespace/test-group/test-resource/test-name/"
 	actual, err := ds.getPrefix(key)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 
 	key.Name = ""
-	expected = "/unified/data/test-namespace/test-group/test-resource/"
+	expected = "test-namespace/test-group/test-resource/"
 	actual, err = ds.getPrefix(key)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
@@ -60,7 +60,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          MetaDataActionCreated,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~created",
+			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~created",
 		}, {
 			name: "updated key",
 			key: DataKey{
@@ -71,7 +71,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          MetaDataActionUpdated,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~updated",
+			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~updated",
 		},
 		{
 			name: "deleted key",
@@ -83,7 +83,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          MetaDataActionDeleted,
 			},
-			expected: "/unified/data/test-namespace/test-group/test-resource/test-name/1934555792099250176~deleted",
+			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~deleted",
 		},
 	}
 
@@ -108,7 +108,7 @@ func TestDataStore_ParseKey(t *testing.T) {
 	}{
 		{
 			name: "valid normal key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + rv.String() + "~created",
+			key:  "test-namespace/test-group/test-resource/test-name/" + rv.String() + "~created",
 			expected: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -120,7 +120,7 @@ func TestDataStore_ParseKey(t *testing.T) {
 		},
 		{
 			name: "valid deleted key",
-			key:  "/unified/data/test-namespace/test-group/test-resource/test-name/" + rv.String() + "~deleted",
+			key:  "test-namespace/test-group/test-resource/test-name/" + rv.String() + "~deleted",
 			expected: DataKey{
 				Namespace:       "test-namespace",
 				Group:           "test-group",
@@ -132,17 +132,17 @@ func TestDataStore_ParseKey(t *testing.T) {
 		},
 		{
 			name:        "invalid key - too short",
-			key:         "/unified/data/test",
+			key:         "test",
 			expectError: true,
 		},
 		{
 			name:        "invalid key - invalid uuid",
-			key:         "/unified/data/test-namespace/test-group/test-resource/test-name/invalid-uuid",
+			key:         "test-namespace/test-group/test-resource/test-name/invalid-uuid",
 			expectError: true,
 		},
 		{
 			name:        "invalid key - too many dashes in uuid part",
-			key:         "/unified/data/test-namespace/test-group/test-resource/test-name/uuid-part-extra-dash",
+			key:         "test-namespace/test-group/test-resource/test-name/uuid-part-extra-dash",
 			expectError: true,
 		},
 	}
@@ -436,7 +436,7 @@ func TestDataStore_Integration(t *testing.T) {
 				Resource:        resourceKey.Resource,
 				Name:            resourceKey.Name,
 				ResourceVersion: version.rv,
-				Action:          MetaDataActionCreated,
+				Action:          MetaDataActionUpdated,
 			}
 
 			err := ds.Save(ctx, dataKey, version.value)
@@ -459,7 +459,7 @@ func TestDataStore_Integration(t *testing.T) {
 			Resource:        resourceKey.Resource,
 			Name:            resourceKey.Name,
 			ResourceVersion: versions[1].rv,
-			Action:          MetaDataActionDeleted,
+			Action:          MetaDataActionUpdated,
 		}
 
 		err := ds.Delete(ctx, deleteKey)

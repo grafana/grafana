@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	prefixEvents          = "/unified/events"
+	eventsSection         = "unified/events"
 	defaultLookbackPeriod = 1 * time.Minute
 	defaultPollInterval   = 100 * time.Millisecond
 	defaultEventCacheSize = 10000
@@ -85,7 +85,7 @@ func parseEvent(value []byte) (Event, error) {
 }
 
 func (n *kvNotifier) getKey(rv int64) string {
-	return fmt.Sprintf("%s/%d", prefixEvents, rv)
+	return fmt.Sprintf("%d", rv)
 }
 
 // markUIDSeen adds a UID to the tracking system, removing the oldest if we exceed maxseenRVs
@@ -122,7 +122,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 	if err != nil {
 		return err
 	}
-	err = n.kv.Save(ctx, n.getKey(event.ResourceVersion), v)
+	err = n.kv.Save(ctx, eventsSection, n.getKey(event.ResourceVersion), v)
 	if err != nil {
 		return err
 	}
@@ -140,12 +140,12 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 				return
 			case <-time.After(n.opts.PollInterval):
 				startKey := n.getKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
-				for k, err := range n.kv.List(ctx, ListOptions{StartKey: startKey, EndKey: PrefixRangeEnd(prefixEvents)}) {
+				for k, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
 					if err != nil {
 						// TODO: Handle error
 						continue
 					}
-					v, err := n.kv.Get(ctx, k)
+					v, err := n.kv.Get(ctx, eventsSection, k)
 					if err != nil {
 						// TODO: Handle error
 						continue

@@ -3,7 +3,9 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"iter"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 )
@@ -34,20 +36,23 @@ type KVObject struct {
 
 type KV interface {
 	// List all keys in the store
-	List(ctx context.Context, opt ListOptions) iter.Seq2[string, error]
+	List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
+
+	// Keys returns all the keys in the store
+	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
 	// Get retrieves keys.
-	Get(ctx context.Context, key string, opts ...GetOptions) (KVObject, error)
+	Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error)
 
 	// Save a new value
-	Save(ctx context.Context, key string, value []byte) error
+	Save(ctx context.Context, section string, key string, value []byte) error
 
 	// Delete a value
-	Delete(ctx context.Context, key string) error
+	Delete(ctx context.Context, section string, key string) error
 
-	// Time return the DB time. This is used to ensure the server and client are not too far apart in time.
-	// Are we within 5 minutes  of the server ?
-	// Time(ctx context.Context) (time.Time, error)
+	// TimeUTC return the DB time in UTC.
+	// This is used to ensure the server and client are not too far apart in time.
+	TimeUTC(ctx context.Context) (time.Time, error)
 }
 
 // Reference implementation of the KV interface using BadgerDB
@@ -62,9 +67,15 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 	}
 }
 
-func (k *badgerKV) Get(ctx context.Context, key string, opts ...GetOptions) (KVObject, error) {
+func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error) {
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
+
+	if section == "" {
+		return KVObject{}, fmt.Errorf("section is required")
+	}
+
+	key = section + "/" + key
 
 	item, err := txn.Get([]byte(key))
 	if err != nil {
@@ -74,19 +85,26 @@ func (k *badgerKV) Get(ctx context.Context, key string, opts ...GetOptions) (KVO
 		return KVObject{}, err
 	}
 	out := KVObject{
-		Key:   string(key),
+		Key:   string(item.Key())[len(section)+1:],
 		Value: []byte{},
 	}
 	item.Value(func(val []byte) error {
-		out.Value = val
+		out.Value = make([]byte, len(val))
+		copy(out.Value, val)
 		return nil
 	})
 	return out, nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, key string, value []byte) error {
+func (k *badgerKV) Save(ctx context.Context, section string, key string, value []byte) error {
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
+
+	key = section + "/" + key
 
 	err := txn.Set([]byte(key), value)
 	if err != nil {
@@ -95,9 +113,15 @@ func (k *badgerKV) Save(ctx context.Context, key string, value []byte) error {
 	return txn.Commit()
 }
 
-func (k *badgerKV) Delete(ctx context.Context, key string) error {
+func (k *badgerKV) Delete(ctx context.Context, section string, key string) error {
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
+
+	key = section + "/" + key
 
 	err := txn.Delete([]byte(key))
 	if err != nil {
@@ -106,23 +130,29 @@ func (k *badgerKV) Delete(ctx context.Context, key string) error {
 	return txn.Commit()
 }
 
-func (k *badgerKV) List(ctx context.Context, opt ListOptions) iter.Seq2[string, error] {
+func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error] {
+	if section == "" {
+		return func(yield func(KVObject, error) bool) {
+			yield(KVObject{}, fmt.Errorf("section is required"))
+		}
+	}
+
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchValues = false
 	opts.PrefetchSize = 100
-	start := opt.StartKey
-	end := opt.EndKey
+	start := section + "/" + opt.StartKey
+	end := section + "/" + opt.EndKey
+	if opt.EndKey == "" {
+		end = PrefixRangeEnd(section + "/")
+	}
 	if opt.Sort == SortOrderDesc {
 		start, end = end, start
 		opts.Reverse = true
 	}
 	isEnd := func(item *badger.Item) bool {
-		if end == "" {
-			return false
-		}
 		if opt.Sort == SortOrderDesc {
 			return string(item.Key()) <= end
 		}
@@ -131,7 +161,7 @@ func (k *badgerKV) List(ctx context.Context, opt ListOptions) iter.Seq2[string, 
 	iter := txn.NewIterator(opts)
 	defer iter.Close()
 	count := int64(0)
-	return func(yield func(string, error) bool) {
+	return func(yield func(KVObject, error) bool) {
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
 			item := iter.Item()
 
@@ -141,10 +171,46 @@ func (k *badgerKV) List(ctx context.Context, opt ListOptions) iter.Seq2[string, 
 			if isEnd(item) {
 				break
 			}
-			yield(string(item.Key()), nil)
+			out := KVObject{
+				Key:   string(item.Key())[len(section)+1:],
+				Value: []byte{},
+			}
+			item.Value(func(val []byte) error {
+				out.Value = make([]byte, len(val))
+				copy(out.Value, val)
+				return nil
+			})
+			if !yield(out, nil) {
+				break
+			}
 			count++
 		}
 	}
+}
+
+func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if section == "" {
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("section is required"))
+			return
+		}
+	}
+
+	return func(yield func(string, error) bool) {
+		for k, err := range k.List(ctx, section, opt) {
+			if err != nil {
+				yield("", err)
+				return
+			}
+			if !yield(k.Key, nil) {
+				return
+			}
+		}
+	}
+}
+
+func (k *badgerKV) TimeUTC(ctx context.Context) (time.Time, error) {
+	return time.Now().UTC(), nil
 }
 
 // PrefixRangeEnd returns the end key for the given prefix

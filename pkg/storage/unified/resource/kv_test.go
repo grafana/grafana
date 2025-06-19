@@ -28,19 +28,19 @@ func TestBadgerKV_Get(t *testing.T) {
 
 	// Setup test data
 	err := db.Update(func(txn *badger.Txn) error {
-		return txn.Set([]byte("key1"), []byte("value1"))
+		return txn.Set([]byte("section/key1"), []byte("value1"))
 	})
 	require.NoError(t, err)
 
 	t.Run("Get existing key", func(t *testing.T) {
-		obj, err := kv.Get(ctx, "key1")
+		obj, err := kv.Get(ctx, "section", "key1")
 		require.NoError(t, err)
 		assert.Equal(t, "key1", obj.Key)
 		assert.Equal(t, []byte("value1"), obj.Value)
 	})
 
 	t.Run("Get non-existent key", func(t *testing.T) {
-		_, err := kv.Get(ctx, "nonexistent")
+		_, err := kv.Get(ctx, "section", "nonexistent")
 		assert.Error(t, err)
 		assert.Equal(t, ErrNotFound, err)
 	})
@@ -54,11 +54,11 @@ func TestBadgerKV_Save(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Save new key", func(t *testing.T) {
-		err := kv.Save(ctx, "key1", []byte("value1"))
+		err := kv.Save(ctx, "section", "key1", []byte("value1"))
 		require.NoError(t, err)
 
 		// Verify the value was saved
-		obj, err := kv.Get(ctx, "key1")
+		obj, err := kv.Get(ctx, "section", "key1")
 		require.NoError(t, err)
 		assert.Equal(t, "key1", obj.Key)
 		assert.Equal(t, []byte("value1"), obj.Value)
@@ -66,15 +66,15 @@ func TestBadgerKV_Save(t *testing.T) {
 
 	t.Run("Save overwrite existing key", func(t *testing.T) {
 		// First save
-		err := kv.Save(ctx, "key1", []byte("oldvalue"))
+		err := kv.Save(ctx, "section", "key1", []byte("oldvalue"))
 		require.NoError(t, err)
 
 		// Overwrite
-		err = kv.Save(ctx, "key1", []byte("newvalue"))
+		err = kv.Save(ctx, "section", "key1", []byte("newvalue"))
 		require.NoError(t, err)
 
 		// Verify the value was updated
-		obj, err := kv.Get(ctx, "key1")
+		obj, err := kv.Get(ctx, "section", "key1")
 		require.NoError(t, err)
 		assert.Equal(t, "key1", obj.Key)
 		assert.Equal(t, []byte("newvalue"), obj.Value)
@@ -90,26 +90,26 @@ func TestBadgerKV_Delete(t *testing.T) {
 
 	t.Run("Delete existing key", func(t *testing.T) {
 		// First create a key
-		err := kv.Save(ctx, "key1", []byte("value1"))
+		err := kv.Save(ctx, "section", "key1", []byte("value1"))
 		require.NoError(t, err)
 
 		// Delete it
-		err = kv.Delete(ctx, "key1")
+		err = kv.Delete(ctx, "section", "key1")
 		require.NoError(t, err)
 
 		// Verify it's gone
-		_, err = kv.Get(ctx, "key1")
+		_, err = kv.Get(ctx, "section", "key1")
 		assert.Error(t, err)
 		assert.Equal(t, ErrNotFound, err)
 	})
 
 	t.Run("Delete non-existent key", func(t *testing.T) {
-		err := kv.Delete(ctx, "nonexistent")
+		err := kv.Delete(ctx, "section", "nonexistent")
 		require.NoError(t, err) // Badger doesn't return error for non-existent keys
 	})
 }
 
-func TestBadgerKV_List(t *testing.T) {
+func TestBadgerKV_List_Keys(t *testing.T) {
 	db := setupTestBadgerDB(t)
 	defer db.Close()
 
@@ -117,29 +117,65 @@ func TestBadgerKV_List(t *testing.T) {
 	ctx := context.Background()
 
 	// Setup test data
-	err := db.Update(func(txn *badger.Txn) error {
-		keys := []string{"a1", "a2", "b1", "b2", "c1"}
-		for _, k := range keys {
-			if err := txn.Set([]byte(k), []byte("value")); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	require.NoError(t, err)
+	keys := []string{"a1", "a2", "b1", "b2", "c1"}
+	for _, k := range keys {
+		kv.Save(ctx, "section", k, []byte("value"+k))
+	}
 
-	t.Run("List all keys", func(t *testing.T) {
+	t.Run("Keys", func(t *testing.T) {
 		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{}) {
+		for k, err := range kv.Keys(ctx, "section", ListOptions{}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
 		assert.Equal(t, []string{"a1", "a2", "b1", "b2", "c1"}, keys)
 	})
 
-	t.Run("List with limit", func(t *testing.T) {
+	t.Run("List", func(t *testing.T) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{}) {
+			require.NoError(t, err)
+			objects = append(objects, obj)
+		}
+		assert.Equal(t, 5, len(objects))
+
+		assert.Equal(t, "a1", objects[0].Key)
+		assert.Equal(t, "valuea1", string(objects[0].Value))
+		assert.Equal(t, "a2", objects[1].Key)
+		assert.Equal(t, "valuea2", string(objects[1].Value))
+		assert.Equal(t, "b1", objects[2].Key)
+		assert.Equal(t, "valueb1", string(objects[2].Value))
+		assert.Equal(t, "b2", objects[3].Key)
+		assert.Equal(t, "valueb2", string(objects[3].Value))
+		assert.Equal(t, "c1", objects[4].Key)
+		assert.Equal(t, "valuec1", string(objects[4].Value))
+	})
+
+	t.Run("Keys with limit", func(t *testing.T) {
 		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{Limit: 2}) {
+		for k, err := range kv.Keys(ctx, "section", ListOptions{Limit: 2}) {
+			require.NoError(t, err)
+			keys = append(keys, k)
+		}
+		assert.Equal(t, []string{"a1", "a2"}, keys)
+	})
+
+	t.Run("List with limit", func(t *testing.T) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{Limit: 2}) {
+			require.NoError(t, err)
+			objects = append(objects, obj)
+		}
+		assert.Equal(t, 2, len(objects))
+		assert.Equal(t, "a1", objects[0].Key)
+		assert.Equal(t, "valuea1", string(objects[0].Value))
+		assert.Equal(t, "a2", objects[1].Key)
+		assert.Equal(t, "valuea2", string(objects[1].Value))
+	})
+
+	t.Run("Keys with range", func(t *testing.T) {
+		var keys []string
+		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: "b"}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -147,8 +183,21 @@ func TestBadgerKV_List(t *testing.T) {
 	})
 
 	t.Run("List with range", func(t *testing.T) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{StartKey: "a", EndKey: "b"}) {
+			require.NoError(t, err)
+			objects = append(objects, obj)
+		}
+		assert.Equal(t, 2, len(objects))
+		assert.Equal(t, "a1", objects[0].Key)
+		assert.Equal(t, "valuea1", string(objects[0].Value))
+		assert.Equal(t, "a2", objects[1].Key)
+		assert.Equal(t, "valuea2", string(objects[1].Value))
+	})
+
+	t.Run("Keys with prefix", func(t *testing.T) {
 		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{StartKey: "a", EndKey: "b"}) {
+		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a")}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -156,30 +205,61 @@ func TestBadgerKV_List(t *testing.T) {
 	})
 
 	t.Run("List with prefix", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a")}) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a")}) {
 			require.NoError(t, err)
-			keys = append(keys, k)
+			objects = append(objects, obj)
 		}
-		assert.Equal(t, []string{"a1", "a2"}, keys)
+		assert.Equal(t, 2, len(objects))
+		assert.Equal(t, "a1", objects[0].Key)
+		assert.Equal(t, []byte("valuea1"), objects[0].Value)
+		assert.Equal(t, "a2", objects[1].Key)
+		assert.Equal(t, []byte("valuea2"), objects[1].Value)
 	})
 
-	t.Run("List in descending order", func(t *testing.T) {
+	t.Run("Keys in descending order", func(t *testing.T) {
 		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{Sort: SortOrderDesc}) {
+		for k, err := range kv.Keys(ctx, "section", ListOptions{Sort: SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
 		assert.Equal(t, []string{"c1", "b2", "b1", "a2", "a1"}, keys)
 	})
 
-	t.Run("List in descending order with prefix", func(t *testing.T) {
+	t.Run("List in descending order", func(t *testing.T) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{Sort: SortOrderDesc}) {
+			require.NoError(t, err)
+			objects = append(objects, obj)
+		}
+		assert.Equal(t, 5, len(objects))
+		assert.Equal(t, "c1", objects[0].Key)
+		assert.Equal(t, "valuec1", string(objects[0].Value))
+		assert.Equal(t, "b2", objects[1].Key)
+		assert.Equal(t, "valueb2", string(objects[1].Value))
+		assert.Equal(t, "b1", objects[2].Key)
+		assert.Equal(t, "valueb1", string(objects[2].Value))
+		assert.Equal(t, "a2", objects[3].Key)
+		assert.Equal(t, "valuea2", string(objects[3].Value))
+		assert.Equal(t, "a1", objects[4].Key)
+		assert.Equal(t, "valuea1", string(objects[4].Value))
+	})
+
+	t.Run("Keys in descending order with prefix", func(t *testing.T) {
 		var keys []string
-		for k, err := range kv.List(ctx, ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a"), Sort: SortOrderDesc}) {
+		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a"), Sort: SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
 		assert.Equal(t, []string{"a2", "a1"}, keys)
+	})
+
+	t.Run("List in descending order with prefix", func(t *testing.T) {
+		var objects []KVObject
+		for obj, err := range kv.List(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a"), Sort: SortOrderDesc}) {
+			require.NoError(t, err)
+			objects = append(objects, obj)
+		}
 	})
 }
 
@@ -202,21 +282,21 @@ func TestBadgerKV_Concurrent(t *testing.T) {
 				value := []byte(fmt.Sprintf("value%d", i))
 
 				// Save
-				err := kv.Save(ctx, key, value)
+				err := kv.Save(ctx, "section", key, value)
 				require.NoError(t, err)
 
 				// Get
-				obj, err := kv.Get(ctx, key)
+				obj, err := kv.Get(ctx, "section", key)
 				require.NoError(t, err)
 				assert.Equal(t, key, obj.Key)
 				assert.Equal(t, value, obj.Value)
 
 				// Delete
-				err = kv.Delete(ctx, key)
+				err = kv.Delete(ctx, "section", key)
 				require.NoError(t, err)
 
 				// Verify deleted
-				_, err = kv.Get(ctx, key)
+				_, err = kv.Get(ctx, "section", key)
 				assert.Error(t, err)
 			}(i)
 		}

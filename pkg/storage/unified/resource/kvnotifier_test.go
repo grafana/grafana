@@ -136,7 +136,7 @@ func TestKVNotifier_getKey(t *testing.T) {
 
 	rv := int64(1934555792099250176)
 	key := notifier.getKey(rv)
-	assert.Equal(t, "/unified/events/1934555792099250176", key)
+	assert.Equal(t, "1934555792099250176", key)
 }
 
 func TestKVNotifier_UIDDeduplication(t *testing.T) {
@@ -208,7 +208,7 @@ func TestKVNotifier_Send(t *testing.T) {
 
 	// Verify the event was saved in KV store
 	key := notifier.getKey(rv)
-	obj, err := notifier.kv.Get(ctx, key)
+	obj, err := notifier.kv.Get(ctx, eventsSection, key)
 	require.NoError(t, err)
 
 	// Parse the stored event

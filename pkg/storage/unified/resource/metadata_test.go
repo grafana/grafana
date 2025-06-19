@@ -43,7 +43,7 @@ func TestMetadataStore_GetKey(t *testing.T) {
 		Action:          MetaDataActionCreated,
 	}
 
-	expectedKey := "/unified/meta/apps/deployments/default/test-deployment/56500267212345678~created"
+	expectedKey := "apps/deployments/default/test-deployment/56500267212345678~created"
 	actualKey := store.getKey(key)
 
 	assert.Equal(t, expectedKey, actualKey)
@@ -53,7 +53,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
 	rv := node.Generate()
-	key := "/unified/meta/apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated)
+	key := "apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated)
 
 	resourceKey, err := store.parseKey(key)
 
@@ -75,11 +75,11 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 	}{
 		{
 			name: "too few parts",
-			key:  "/unified/meta/apps",
+			key:  "apps",
 		},
 		{
 			name: "invalid uuid",
-			key:  "/unified/meta/apps/deployments/default/test-deployment/invalid-uuid",
+			key:  "apps/deployments/default/test-deployment/invalid-uuid",
 		},
 	}
 
@@ -101,13 +101,13 @@ func TestMetadataStore_GetPrefix(t *testing.T) {
 		Name:      "test-deployment",
 	}
 
-	expectedPrefix := "/unified/meta/apps/deployments/default/test-deployment/"
+	expectedPrefix := "apps/deployments/default/test-deployment/"
 	actualPrefix, err := store.getPrefix(key)
 	require.NoError(t, err)
 	assert.Equal(t, expectedPrefix, actualPrefix)
 
 	key.Name = ""
-	expectedPrefix = "/unified/meta/apps/deployments/default/"
+	expectedPrefix = "apps/deployments/default/"
 	actualPrefix, err = store.getPrefix(key)
 	require.NoError(t, err)
 

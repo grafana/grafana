@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	prefixMeta = "/unified/meta"
+	metaSection = "unified/meta"
 )
 
 // Metadata store
@@ -52,15 +52,10 @@ func newMetadataStore(kv KV) *metadataStore {
 }
 
 func (d *metadataStore) getKey(key MetaDataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%s/%d~%s", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action)
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action)
 }
 
 func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
-	if !strings.HasPrefix(key, prefixMeta+"/") {
-		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
-	}
-	key = strings.TrimPrefix(key, prefixMeta+"/")
-
 	parts := strings.Split(key, "/")
 	if len(parts) < 4 {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
@@ -89,16 +84,16 @@ func (d *metadataStore) getPrefix(key ListRequestKey) (string, error) {
 		return "", fmt.Errorf("group and resource are required")
 	}
 	if key.Namespace == "" {
-		return fmt.Sprintf("%s/%s/%s/", prefixMeta, key.Group, key.Resource), nil
+		return fmt.Sprintf("%s/%s/", key.Group, key.Resource), nil
 	}
 	if key.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/%s/", prefixMeta, key.Group, key.Resource, key.Namespace), nil
+		return fmt.Sprintf("%s/%s/%s/", key.Group, key.Resource, key.Namespace), nil
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/%s/", prefixMeta, key.Group, key.Resource, key.Namespace, key.Name), nil
+	return fmt.Sprintf("%s/%s/%s/%s/", key.Group, key.Resource, key.Namespace, key.Name), nil
 }
 
 func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, error) {
-	obj, err := d.kv.Get(ctx, d.getKey(key))
+	obj, err := d.kv.Get(ctx, metaSection, d.getKey(key))
 	if err != nil {
 		return MetaData{}, err
 	}
@@ -171,7 +166,7 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			yield(MetaDataObj{}, err)
 		}
 	}
-	iter := d.kv.List(ctx, ListOptions{
+	iter := d.kv.Keys(ctx, metaSection, ListOptions{
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 	})
@@ -184,7 +179,7 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 		// It parses the key and yields the metadata object if it is not deleted.
 		yieldPath := func(path string, key MetaDataKey) {
 			if key.Action != MetaDataActionDeleted {
-				metaObj, err := d.kv.Get(ctx, path)
+				metaObj, err := d.kv.Get(ctx, metaSection, path)
 				if err != nil {
 					yield(MetaDataObj{}, err)
 					return
@@ -264,7 +259,7 @@ func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Se
 			yield(MetaDataObj{}, err)
 		}
 	}
-	iter := d.kv.List(ctx, ListOptions{
+	iter := d.kv.Keys(ctx, metaSection, ListOptions{
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 	})
@@ -274,7 +269,7 @@ func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Se
 				yield(MetaDataObj{}, err)
 				return
 			}
-			metaObj, err := d.kv.Get(ctx, k)
+			metaObj, err := d.kv.Get(ctx, metaSection, k)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
@@ -302,5 +297,5 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, d.getKey(obj.Key), valueBytes)
+	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), valueBytes)
 }
