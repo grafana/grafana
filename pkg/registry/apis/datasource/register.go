@@ -122,7 +122,7 @@ func NewDataSourceAPIBuilder(
 
 	builder := &DataSourceAPIBuilder{
 		connectionResourceInfo: datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
-		datasourceResourceInfo: datasource.GenericDataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID+"-config"),
+		datasourceResourceInfo: datasource.GenericDataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,

@@ -24,14 +24,30 @@ type GenericDataSource struct {
 	// BasicAuthPassword string `json:"-"`
 }
 
-type DsAccess string // proxy | direct
+// DsAccess represents how the datasource connects to the remote service
+// +enum
+type DsAccess string
+
+const (
+	// The frontend can connect directly to the remote URL
+	// This method is discouraged
+	DsAccessDirect DsAccess = "direct"
+
+	// Connect to the remote datasource through the grafana backend
+	DsAccessProxy DsAccess = "proxy"
+)
+
+func (dsa DsAccess) String() string {
+	return string(dsa)
+}
 
 type GenericDataSourceSpec struct {
-	// The diplay name (NOTE, this used to be the "name")
+	// The diplay name (previously saved as the "name" property)
 	Title string `json:"title"`
 
-	// Direct or proxy?
-	Access DsAccess `json:"access,omitempty"`
+	Access    DsAccess `json:"access,omitempty"`
+	ReadOnly  bool     `json:"readOnly,omitempty"`
+	IsDefault bool     `json:"isDefault,omitempty"`
 
 	// Server URL
 	URL string `json:"url,omitempty"`
@@ -41,8 +57,6 @@ type GenericDataSourceSpec struct {
 	BasicAuth       bool   `json:"basicAuth,omitempty"`
 	BasicAuthUser   string `json:"basicAuthUser,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
-	IsDefault       bool   `json:"isDefault,omitempty"`
-	ReadOnly        bool   `json:"readOnly,omitempty"`
 
 	// Generic unstructured configuration settings
 	JsonData common.Unstructured `json:"jsonData,omitempty"`

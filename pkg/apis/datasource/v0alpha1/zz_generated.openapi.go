@@ -235,7 +235,7 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The diplay name (NOTE, this used to be the \"name\")",
+							Description: "The diplay name (previously saved as the \"name\" property)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -243,9 +243,22 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 					},
 					"access": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Direct or proxy?",
+							Description: "Possible enum values:\n - `\"direct\"` The frontend can connect directly to the remote URL This method is discouraged\n - `\"proxy\"` Connect to the remote datasource through the grafana backend",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"direct", "proxy"},
+						},
+					},
+					"readOnly": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"isDefault": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 					"url": {
@@ -280,18 +293,6 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 						},
 					},
 					"withCredentials": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"isDefault": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"readOnly": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
 							Format: "",
