@@ -77,7 +77,12 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUser identity.Requester, session *db.Session, uid string) (model.LibraryElementWithMeta, error) {
+func (l *LibraryElementService) GetLibraryElement(
+	c context.Context,
+	signedInUser identity.Requester,
+	session *db.Session,
+	uid string,
+) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
 		getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
@@ -91,7 +96,10 @@ func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUse
 		return model.LibraryElementWithMeta{}, model.ErrLibraryElementNotFound
 	}
 	if len(elements) > 1 {
-		return model.LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
+		return model.LibraryElementWithMeta{}, fmt.Errorf(
+			"found %d elements, while expecting at most one",
+			len(elements),
+		)
 	}
 
 	// get the folder title
@@ -111,7 +119,11 @@ func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUse
 }
 
 // createLibraryElement adds a library element.
-func (l *LibraryElementService) createLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) createLibraryElement(
+	c context.Context,
+	signedInUser identity.Requester,
+	cmd model.CreateLibraryElementCommand,
+) (model.LibraryElementDTO, error) {
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -169,9 +181,19 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
+			allowed, err := l.AccessControl.Evaluate(
+				c,
+				signedInUser,
+				ac.EvalPermission(
+					ActionLibraryPanelsCreate,
+					dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+				),
+			)
 			if !allowed {
-				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
+				return fmt.Errorf(
+					"insufficient permissions for creating library panel in folder with UID %s",
+					folderUID,
+				)
 			}
 			if err != nil {
 				return err
@@ -225,7 +247,11 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 }
 
 // deleteLibraryElement deletes a library element.
-func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
+func (l *LibraryElementService) deleteLibraryElement(
+	c context.Context,
+	signedInUser identity.Requester,
+	uid string,
+) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
@@ -251,12 +277,15 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		// A identity may be able to delete a library element but not read all dashboards so we fetch then as the
 		// service user so we can prevent deletion of those connections
 		serviceCtx, serviceIdent := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
-		dashs, err := l.dashboardsService.FindDashboards(serviceCtx, &dashboards.FindPersistedDashboardsQuery{
-			Type:         searchstore.TypeDashboard,
-			OrgId:        serviceIdent.GetOrgID(),
-			DashboardIds: dashboardIDs,
-			SignedInUser: serviceIdent,
-		})
+		dashs, err := l.dashboardsService.FindDashboards(
+			serviceCtx,
+			&dashboards.FindPersistedDashboardsQuery{
+				Type:         searchstore.TypeDashboard,
+				OrgId:        serviceIdent.GetOrgID(),
+				DashboardIds: dashboardIDs,
+				SignedInUser: serviceIdent,
+			},
+		)
 
 		if err != nil {
 			return err
@@ -303,7 +332,15 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 }
 
 // getLibraryElements gets a Library Element where param == value
-func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser identity.Requester, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand) ([]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElements(
+	c context.Context,
+	store db.DB,
+	cfg *setting.Cfg,
+	signedInUser identity.Requester,
+	params []Pair,
+	features featuremgmt.FeatureToggles,
+	cmd model.GetLibraryElementCommand,
+) ([]model.LibraryElementDTO, error) {
 	if len(params) < 1 {
 		return nil, fmt.Errorf("expected at least one parameter pair")
 	}
@@ -343,7 +380,14 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
 		// nolint:staticcheck
-		f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
+		f, err := l.folderService.Get(
+			c,
+			&folder.GetFolderQuery{
+				OrgID:        signedInUser.GetOrgID(),
+				ID:           &libraryElement.FolderID,
+				SignedInUser: signedInUser,
+			},
+		)
 		if err != nil {
 			return []model.LibraryElementDTO{}, err
 		}
@@ -396,29 +440,59 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
-func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
-	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}}, l.features, cmd)
+func (l *LibraryElementService) getLibraryElementByUid(
+	c context.Context,
+	signedInUser identity.Requester,
+	cmd model.GetLibraryElementCommand,
+) (model.LibraryElementDTO, error) {
+	libraryElements, err := l.getLibraryElements(
+		c,
+		l.SQLStore,
+		l.Cfg,
+		signedInUser,
+		[]Pair{{key: "org_id", value: signedInUser.GetOrgID()}, {key: "uid", value: cmd.UID}},
+		l.features,
+		cmd,
+	)
 	if err != nil {
 		return model.LibraryElementDTO{}, err
 	}
 	if len(libraryElements) > 1 {
-		return model.LibraryElementDTO{}, fmt.Errorf("found %d elements, while expecting at most one", len(libraryElements))
+		return model.LibraryElementDTO{}, fmt.Errorf(
+			"found %d elements, while expecting at most one",
+			len(libraryElements),
+		)
 	}
 
 	return libraryElements[0], nil
 }
 
 // getLibraryElementByName gets a Library Element by name.
-func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser identity.Requester, name string) ([]model.LibraryElementDTO, error) {
-	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
+func (l *LibraryElementService) getLibraryElementsByName(
+	c context.Context,
+	signedInUser identity.Requester,
+	name string,
+) ([]model.LibraryElementDTO, error) {
+	return l.getLibraryElements(
+		c,
+		l.SQLStore,
+		l.Cfg,
+		signedInUser,
+		[]Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}},
+		l.features,
 		model.GetLibraryElementCommand{
 			FolderName: dashboards.RootFolderName,
 			Name:       name,
-		})
+		},
+	)
 }
 
 // getAllLibraryElements gets all Library Elements.
-func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
+func (l *LibraryElementService) getAllLibraryElements(
+	c context.Context,
+	signedInUser identity.Requester,
+	query model.SearchLibraryElementsQuery,
+) (model.LibraryElementSearchResult, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	result := model.LibraryElementSearchResult{}
 
@@ -442,11 +516,17 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(
+			l.Cfg,
+			l.features,
+			l.SQLStore.GetDialect(),
+			recursiveQueriesAreSupported,
+		)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
 			writeSearchStringSQL(query, l.SQLStore, &builder)
@@ -459,6 +539,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
@@ -480,7 +561,10 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		retDTOs := make([]model.LibraryElementDTO, 0)
 		// getting all folders a user can see
-		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		fs, err := l.folderService.GetFolders(
+			c,
+			folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser},
+		)
 		if err != nil {
 			return err
 		}
@@ -538,6 +622,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			countBuilder.Write(
+				" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id",
+			)
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
 			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
@@ -549,6 +636,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
@@ -574,8 +662,13 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	return result, err
 }
 
-func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, elementToPatch *model.LibraryElement,
-	fromFolderID int64, toFolderID int64, user identity.Requester) error {
+func (l *LibraryElementService) handleFolderIDPatches(
+	ctx context.Context,
+	elementToPatch *model.LibraryElement,
+	fromFolderID int64,
+	toFolderID int64,
+	user identity.Requester,
+) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -603,7 +696,12 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 }
 
 // patchLibraryElement updates a Library Element.
-func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) patchLibraryElement(
+	c context.Context,
+	signedInUser identity.Requester,
+	cmd model.PatchLibraryElementCommand,
+	uid string,
+) (model.LibraryElementDTO, error) {
 	var dto model.LibraryElementDTO
 	if err := l.requireSupportedElementKind(cmd.Kind); err != nil {
 		return model.LibraryElementDTO{}, err
@@ -713,7 +811,11 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 }
 
 // getConnections gets all connections for a Library Element.
-func (l *LibraryElementService) getConnections(c context.Context, signedInUser identity.Requester, uid string) ([]model.LibraryElementConnectionDTO, error) {
+func (l *LibraryElementService) getConnections(
+	c context.Context,
+	signedInUser identity.Requester,
+	uid string,
+) ([]model.LibraryElementConnectionDTO, error) {
 	connections := make([]model.LibraryElementConnectionDTO, 0)
 	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
 	if err != nil {
@@ -726,17 +828,29 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 			return err
 		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
-		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
+		builder := db.NewSqlBuilder(
+			l.Cfg,
+			l.features,
+			l.SQLStore.GetDialect(),
+			recursiveQueriesAreSupported,
+		)
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
-		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
+		builder.Write(
+			" LEFT JOIN " + l.SQLStore.GetDialect().
+				Quote("user") +
+				" AS u1 ON lec.created_by = u1.id",
+		)
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
 
 		// getting all folders a user can see
-		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		fs, err := l.folderService.GetFolders(
+			c,
+			folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser},
+		)
 		if err != nil {
 			return err
 		}
@@ -752,7 +866,10 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 					continue
 				}
 			}
-			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
+			ds, err := l.dashboardsService.GetDashboardUIDByID(
+				c,
+				&dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID},
+			)
 			if err != nil {
 				if errors.Is(err, dashboards.ErrDashboardNotFound) {
 					continue
@@ -781,7 +898,10 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 }
 
 // getElementsForDashboardID gets all elements for a specific dashboard
-func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getElementsForDashboardID(
+	c context.Context,
+	dashboardID int64,
+) (map[string]model.LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]model.LibraryElementDTO)
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		var libraryElements []model.LibraryElementWithMeta
@@ -841,9 +961,17 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 }
 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
-func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
+func (l *LibraryElementService) connectElementsToDashboardID(
+	c context.Context,
+	signedInUser identity.Requester,
+	elementUIDs []string,
+	dashboardID int64,
+) error {
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
+		_, err := session.Exec(
+			"DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?",
+			dashboardID,
+		)
 		if err != nil {
 			return err
 		}
@@ -884,9 +1012,15 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 }
 
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
-func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Context, dashboardID int64) error {
+func (l *LibraryElementService) disconnectElementsFromDashboardID(
+	c context.Context,
+	dashboardID int64,
+) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
+		_, err := session.Exec(
+			"DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?",
+			dashboardID,
+		)
 		if err != nil {
 			return err
 		}
@@ -895,7 +1029,11 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
-func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
+func (l *LibraryElementService) deleteLibraryElementsInFolderUID(
+	c context.Context,
+	signedInUser identity.Requester,
+	folderUID string,
+) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -920,12 +1058,16 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		var elementIDs []struct {
 			ID int64 `xorm:"id"`
 		}
-		err = session.SQL("SELECT id from library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elementIDs)
+		err = session.SQL("SELECT id from library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).
+			Find(&elementIDs)
 		if err != nil {
 			return err
 		}
 		for _, elementID := range elementIDs {
-			_, err := session.Exec("DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE element_id=?", elementID.ID)
+			_, err := session.Exec(
+				"DELETE FROM "+model.LibraryElementConnectionTableName+" WHERE element_id=?",
+				elementID.ID,
+			)
 			if err != nil {
 				return err
 			}

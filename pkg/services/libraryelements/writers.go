@@ -33,7 +33,11 @@ func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
 	}
 }
 
-func writePerPageSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+func writePerPageSQL(
+	query model.SearchLibraryElementsQuery,
+	sqlStore db.DB,
+	builder *db.SQLBuilder,
+) {
 	if query.PerPage != 0 {
 		offset := query.PerPage * (query.Page - 1)
 		builder.Write(sqlStore.GetDialect().LimitOffset(int64(query.PerPage), int64(offset)))
@@ -58,13 +62,29 @@ func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+func writeSearchStringSQL(
+	query model.SearchLibraryElementsQuery,
+	sqlStore db.DB,
+	builder *db.SQLBuilder,
+) {
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
 		sql, param := sqlStore.GetDialect().LikeOperator("le.name", true, query.SearchString, true)
 		builder.Write(" AND ("+sql, param)
 
-		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
-		builder.Write(" OR "+sql+")", param)
+		sql, param = sqlStore.GetDialect().
+			LikeOperator("le.description", true, query.SearchString, true)
+		builder.Write(" OR "+sql, param)
+
+		// Only search folder names if no explicit folder filter is applied
+		hasFolderFilter := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
+
+		if !hasFolderFilter {
+			sql, param = sqlStore.GetDialect().
+				LikeOperator("f.title", true, query.SearchString, true)
+			builder.Write(" OR "+sql, param)
+		}
+
+		builder.Write(")")
 	}
 }
 
