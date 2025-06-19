@@ -42,12 +42,12 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
     }
 
     if (selectedOption) {
-      const selectedItem = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
-      if (!selectedItem) {
+      const matchedOption = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
+      if (!matchedOption) {
         return;
       }
 
-      props.onChange(selectedItem.contactPoint);
+      props.onChange(matchedOption.contactPoint);
     }
   };
 

@@ -239,7 +239,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             >
               <ContactPointSelector
                 id="contactPointFilter"
-                value={filterState.contactPoint ?? undefined}
+                value={filterState.contactPoint ?? null}
                 width={40}
                 placeholder={t(
                   'alerting.notification-policies-filter.placeholder-search-by-contact-point',
