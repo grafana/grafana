@@ -64,7 +64,18 @@ func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB
 		builder.Write(" AND ("+sql, param)
 
 		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
-		builder.Write(" OR "+sql+")", param)
+		builder.Write(" OR "+sql, param)
+
+		// add folder support
+		// check if we have a folder filter
+		hasFolderFilter := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
+
+		if !hasFolderFilter {
+			sql, param = sqlStore.GetDialect().LikeOperator("f.title", true, query.SearchString, true)
+			builder.Write(" OR "+sql, param)
+		}
+
+		builder.Write(")")
 	}
 }
 
