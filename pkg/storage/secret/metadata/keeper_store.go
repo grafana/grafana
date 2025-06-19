@@ -496,7 +496,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// Check if keeper is the systemwide one.
 	if name == nil {
-		return nil, nil
+		return &secretv0alpha1.SystemKeeperConfig{}, nil
 	}
 
 	start := time.Now()

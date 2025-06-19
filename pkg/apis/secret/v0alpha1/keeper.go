@@ -138,6 +138,13 @@ type CredentialValue struct {
 	ValueFromConfig string `json:"valueFromConfig,omitempty"`
 }
 
+// System Keeper.
+type SystemKeeperConfig struct{}
+
+func (s *SystemKeeperConfig) Type() KeeperType {
+	return "system"
+}
+
 // Remote Keepers.
 type AWSKeeperConfig struct {
 	AWSCredentials `json:",inline"`
