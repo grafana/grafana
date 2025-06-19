@@ -6,16 +6,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,6 +37,7 @@ type WebhookExtraBuilder struct {
 
 func ProvideWebhooks(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
@@ -64,6 +68,7 @@ func ProvideWebhooks(
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
 			return NewWebhookExtra(
+				features,
 				render,
 				webhook,
 				urlProvider,
@@ -80,6 +85,7 @@ func ProvideWebhooks(
 // WebhookExtra implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtra struct {
+	features    featuremgmt.FeatureToggles
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
@@ -91,6 +97,7 @@ type WebhookExtra struct {
 }
 
 func NewWebhookExtra(
+	features featuremgmt.FeatureToggles,
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
@@ -101,6 +108,7 @@ func NewWebhookExtra(
 	workers []jobs.Worker,
 ) *WebhookExtra {
 	return &WebhookExtra{
+		features:    features,
 		render:      render,
 		webhook:     webhook,
 		urlProvider: urlProvider,
@@ -176,10 +184,38 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return gogit.Clone(ctx, e.clonedir, r, opts, e.secrets)
 		}
 
-		basicRepo, err := repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, cloneFn)
+		apiRepo, err := repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, cloneFn)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create github API repository: %w", err)
 		}
+
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		if !e.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
+			logger.Debug("Instantiating Github repository with go-git and Github API")
+			return NewGithubWebhookRepository(apiRepo, webhookURL, e.secrets), nil
+		}
+
+		logger.Info("Instantiating Github repository with nanogit")
+
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
+		}
+
+		gitCfg := nanogit.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghCfg.Token,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		nanogitRepo, err := nanogit.NewGitRepository(ctx, e.secrets, r, gitCfg)
+		if err != nil {
+			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+		}
+
+		basicRepo := nanogit.NewGithubRepository(apiRepo, nanogitRepo)
 
 		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
 	}

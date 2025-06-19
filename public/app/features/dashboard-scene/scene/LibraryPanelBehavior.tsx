@@ -1,5 +1,6 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
@@ -59,8 +60,15 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     );
     titleItems.push(new PanelNotices());
 
+    let title;
+    if (config.featureToggles.preferLibraryPanelTitle) {
+      title = libPanelModel.title ?? vizPanel.state.title;
+    } else {
+      title = vizPanel.state.title ?? libPanelModel.title;
+    }
+
     const vizPanelState: VizPanelState = {
-      title: vizPanel.state.title ?? libPanelModel.title,
+      title,
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,

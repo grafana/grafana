@@ -1,15 +1,15 @@
 import { renderHook } from '@testing-library/react';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 
 import { useMetricsState } from './useMetricsState';
 
 // Mock implementations
-const createMockLanguageProvider = (metrics: string[] = []): PromQlLanguageProvider =>
+const createMockLanguageProvider = (metrics: string[] = []): PrometheusLanguageProviderInterface =>
   ({
-    metrics,
-  }) as unknown as PromQlLanguageProvider;
+    retrieveMetrics: () => metrics,
+  }) as unknown as PrometheusLanguageProviderInterface;
 
 const createMockDatasource = (lookupsDisabled = false): PrometheusDatasource =>
   ({
