@@ -55,7 +55,7 @@ export type ThemeVisualizationColorsInput = {
  */
 export function createVisualizationColors(
   colors: ThemeColors,
-  options: ThemeVisualizationColorsInput
+  options: ThemeVisualizationColorsInput = {}
 ): ThemeVisualizationColors {
   const baseHues = colors.mode === 'light' ? getLightHues() : getDarkHues();
   const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
