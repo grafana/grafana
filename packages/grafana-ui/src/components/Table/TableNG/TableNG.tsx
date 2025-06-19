@@ -56,7 +56,7 @@ import {
   getTextAlign,
   getVisibleFields,
   shouldTextOverflow,
-  getRowBgFn,
+  getApplyToRowBgFn,
   getColumnTypes,
   computeColWidths,
   applySort,
@@ -188,7 +188,7 @@ export function TableNG(props: TableNGProps) {
   // Create a map of column key to text wrap
   const textWraps = useTextWraps(data.fields);
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
-  const rowBg = useMemo(() => getRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
+  const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
     () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
@@ -196,8 +196,8 @@ export function TableNG(props: TableNGProps) {
   );
 
   const renderCell = useMemo(
-    () => renderCellFactory(columnTypes, rowBg, rowHeight, textWraps, theme, visibleFieldsByDisplayName),
-    [columnTypes, rowBg, rowHeight, textWraps, theme, visibleFieldsByDisplayName]
+    () => renderCellFactory(columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName),
+    [columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName]
   );
 
   const commonDataGridProps = useMemo(
@@ -211,6 +211,12 @@ export function TableNG(props: TableNGProps) {
           // draggable: true,
         },
         onCellContextMenu: ({ row, column }, event) => {
+          // in nested tables, it's possible for this event to trigger in a column header
+          // when holding Ctrl for multi-row sort.
+          if (column.key === 'expanded') {
+            return;
+          }
+
           event.preventGridDefault();
           // Do not show the default context menu
           event.preventDefault();
@@ -222,8 +228,10 @@ export function TableNG(props: TableNGProps) {
             top: event.clientY,
             left: event.clientX,
           });
+
           setIsContextMenuOpen(true);
         },
+        onColumnResize: debouncedResizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -240,6 +248,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
+      debouncedResizeHandler,
       enableVirtualization,
       sortColumns,
       rowHeight,
@@ -366,12 +375,16 @@ export function TableNG(props: TableNGProps) {
     }
 
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
-    const nestedData = rows.find((r) => r.data)?.data;
-    if (!nestedData) {
+    const firstNestedData = rows.find((r) => r.data)?.data;
+    if (!firstNestedData) {
       return result;
     }
-    const renderRow = renderRowFactory(nestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const expandedColumns = columnsFromFields(nestedData.fields, computeColWidths(nestedData.fields, availableWidth));
+
+    const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
+    const expandedColumns = columnsFromFields(
+      firstNestedData.fields,
+      computeColWidths(firstNestedData.fields, availableWidth)
+    );
 
     // If we have nested frames, we need to add a column for the row expansion
     result.unshift({
@@ -420,7 +433,6 @@ export function TableNG(props: TableNGProps) {
             columns={expandedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell }}
-            sortColumns={sortColumns}
           />
         );
       },
@@ -480,21 +492,6 @@ export function TableNG(props: TableNGProps) {
               }
             : null
         }
-        onCellContextMenu={({ row, column }, event) => {
-          event.preventGridDefault();
-          // Do not show the default context menu
-          event.preventDefault();
-
-          const cellValue = row[column.key];
-          setContextMenuProps({
-            // rowIdx: rows.indexOf(row),
-            value: String(cellValue ?? ''),
-            top: event.clientY,
-            left: event.clientX,
-          });
-          setIsContextMenuOpen(true);
-        }}
-        onColumnResize={debouncedResizeHandler}
         renderers={{ renderRow, renderCell }}
       />
 
@@ -597,7 +594,7 @@ const renderRowFactory =
 const renderCellFactory =
   (
     columnTypes: Record<string, FieldType>,
-    rowBg: ((rowIdx: number) => CellColors) | undefined,
+    applyToRowBgFn: ((rowIdx: number) => CellColors) | undefined,
     rowHeight: number | ((row: TableRow) => number),
     textWraps: Record<string, boolean>,
     theme: GrafanaTheme2,
@@ -617,8 +614,8 @@ const renderCellFactory =
     const value = props.row[props.column.key];
 
     const colors: CellColors = (() => {
-      if (rowBg) {
-        return rowBg(props.rowIdx);
+      if (applyToRowBgFn) {
+        return applyToRowBgFn(props.rowIdx);
       }
       const displayValue = field.display?.(value);
       if (displayValue && cellOptions) {

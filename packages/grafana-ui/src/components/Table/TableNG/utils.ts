@@ -601,7 +601,7 @@ export function computeColWidths(fields: Field[], availWidth: number) {
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
  */
-export function getRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
   for (const field of fields) {
     const cellOptions = getCellOptions(field);
     const fieldDisplay = field.display;
@@ -630,5 +630,5 @@ export function isCustomCellOptions(options: TableCellOptions): options is Table
  * - getCellLinks: on click
  * - frameCompare, and getComparator return frameCompare
  * - migrateTableDisplayModeToCellOptions: LCD gauge mode
- * - getRowBgFn
+ * - getApplyToRowBgFn
  */

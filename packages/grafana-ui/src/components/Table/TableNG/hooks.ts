@@ -10,7 +10,6 @@ import { TABLE } from './constants';
 import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
 import {
   getDisplayName,
-  getIsNestedTable,
   processNestedTableRows,
   getCellHeightCalculator,
   getFooterItem,

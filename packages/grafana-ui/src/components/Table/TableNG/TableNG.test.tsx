@@ -648,9 +648,6 @@ describe('TableNG', () => {
 
   describe('Sorting', () => {
     it('allows sorting when clicking on column headers', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -660,50 +657,49 @@ describe('TableNG', () => {
       expect(columnHeader).toBeInTheDocument();
 
       // Find the sort button within the first header
-      if (columnHeader) {
-        // Store the initial state of the header
-        const initialSortAttribute = columnHeader.getAttribute('aria-sort');
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
 
-        // Look for a button inside the header
-        const sortButton = columnHeader.querySelector('button') || columnHeader;
+      // Store the initial state of the header
+      const initialSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // Click the sort button
-        await user.click(sortButton);
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
 
-        // After clicking, the header should have an aria-sort attribute
-        const newSortAttribute = columnHeader.getAttribute('aria-sort');
+      // Click the sort button
+      await user.click(sortButton);
 
-        // The sort attribute should have changed
-        expect(newSortAttribute).not.toBe(initialSortAttribute);
+      // After clicking, the header should have an aria-sort attribute
+      const newSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // The sort attribute should be either 'ascending' or 'descending'
-        expect(['ascending', 'descending']).toContain(newSortAttribute);
+      // The sort attribute should have changed
+      expect(newSortAttribute).not.toBe(initialSortAttribute);
 
-        // Also verify the data is sorted by checking cell values
-        const cells = container.querySelectorAll('[role="gridcell"]');
-        const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
+      // The sort attribute should be either 'ascending' or 'descending'
+      expect(['ascending', 'descending']).toContain(newSortAttribute);
 
-        // Get the text content of the first column cells
-        const cellValues = firstColumnCells.map((cell) => cell.textContent);
+      // Also verify the data is sorted by checking cell values
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
 
-        // Verify we have values to check
-        expect(cellValues.length).toBeGreaterThan(0);
+      // Get the text content of the first column cells
+      const cellValues = firstColumnCells.map((cell) => cell.textContent);
 
-        // Verify the values are in sorted order based on the aria-sort attribute
-        const sortedValues = [...cellValues].sort();
+      // Verify we have values to check
+      expect(cellValues.length).toBeGreaterThan(0);
 
-        if (newSortAttribute === 'ascending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
-        } else if (newSortAttribute === 'descending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
-        }
+      // Verify the values are in sorted order based on the aria-sort attribute
+      const sortedValues = [...cellValues].sort();
+
+      if (newSortAttribute === 'ascending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
+      } else if (newSortAttribute === 'descending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
       }
     });
 
     it('cycles through ascending, descending, and no sort states', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -733,9 +729,6 @@ describe('TableNG', () => {
     });
 
     it('supports multi-column sorting with cmd or ctrl key', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={800} height={600} />
       );
@@ -1025,6 +1018,38 @@ describe('TableNG', () => {
       // Verify number values are sorted numerically
       expect(numberValues).toEqual(['1', '2', '3']);
     });
+
+    it('triggers the onSortByChange callback', async () => {
+      const onSortByChange = jest.fn();
+
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onSortByChange={onSortByChange}
+        />
+      );
+
+      // Ensure there are column headers
+      const columnHeader = container.querySelector('[role="columnheader"]');
+      expect(columnHeader).toBeInTheDocument();
+
+      // Find the sort button within the first header
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
+
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+      // Click the sort button
+      await user.click(sortButton);
+
+      // After clicking, the header should have an aria-sort attribute
+      expect(onSortByChange).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Filtering', () => {
@@ -1207,8 +1232,25 @@ describe('TableNG', () => {
   });
 
   describe('Resizing', () => {
-    // TODO figure out why this doesn't work
-    it.skip('calls onColumnResize when column is resized', async () => {
+    beforeEach(() => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      window.HTMLElement.prototype.setPointerCapture = jest.fn();
+      window.HTMLElement.prototype.hasPointerCapture = jest.fn();
+      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
+      window.HTMLElement.prototype.getBoundingClientRect = jest.fn(() => ({
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        x: 0,
+        y: 0,
+        toJSON: jest.fn(() => ''),
+      }));
+    });
+
+    it('calls onColumnResize when column is resized', async () => {
       const onColumnResize = jest.fn();
 
       const { container } = render(
@@ -1229,10 +1271,12 @@ describe('TableNG', () => {
         throw new Error('Resize handle not found');
       }
 
-      // Simulate resize by triggering mousedown, mousemove, mouseup
-      fireEvent.drag(handle, { delta: { x: 250 }, duration: 20 });
+      // simulate a click, then drag, then release.
+      await userEvent.pointer({ keys: '[MouseLeft>]', coords: { x: 0, y: 0 }, target: handle });
+      await userEvent.pointer({ coords: { x: 250, y: 0 }, target: handle });
+      await userEvent.pointer({ keys: '[/MouseLeft]', coords: { x: 250, y: 0 }, target: handle });
 
-      // Check that onColumnResize was called
+      // Check that onColumnResize was called. we need to wait for the debounce.
       await waitFor(
         () => {
           expect(onColumnResize).toHaveBeenCalled();
@@ -1314,6 +1358,10 @@ describe('TableNG', () => {
       // Check for the Inspect value menu item
       const menuItem = await screen.findByText('Inspect value');
       expect(menuItem).toBeInTheDocument();
+
+      // close the menu
+      await userEvent.click(container);
+      expect(menuItem).not.toBeInTheDocument();
     });
   });
 
@@ -1463,6 +1511,8 @@ describe('TableNG', () => {
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
     });
+
+    it.todo("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true");
   });
 
   describe('Row hover functionality for shared crosshair', () => {
@@ -1599,14 +1649,3 @@ describe('TableNG', () => {
     });
   });
 });
-
-/**
- * - context menu
- *   - open and list "inspect value"
- *   - close on window click
- * - onSortByChange handler
- * - nested frame cell key down
- * - onColumnWidthsChange
- * - is inspecting
- * - getCellClasses
- */
