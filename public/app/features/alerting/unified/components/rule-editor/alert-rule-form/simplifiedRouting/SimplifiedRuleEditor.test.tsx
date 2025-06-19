@@ -159,7 +159,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
-  describe.skip('switch modes enabled', () => {
+  describe('switch modes enabled', () => {
     testWithFeatureToggles(['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode']);
 
     it('can create the new grafana-managed rule with default modes', async () => {
