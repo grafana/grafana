@@ -757,8 +757,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
   );
 
-  console.log(filterLevels);
-
   const onDisplayedSeriesChanged = useCallback((levels: string[]) => {
     if (visibilityChangedRef.current) {
       visibilityChangedRef.current = false;
