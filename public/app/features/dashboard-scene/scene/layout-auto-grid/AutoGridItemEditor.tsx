@@ -40,7 +40,7 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
       repeat={variableName}
       onChange={(value?: string) => {
         dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-repeat-variable', 'Change panel repeat variable'),
+          description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: item,
           perform: () => item.setRepeatByVariable(value),
           undo: () => item.setRepeatByVariable(variableName),

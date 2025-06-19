@@ -71,7 +71,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
       value={repeatDirection ?? 'h'}
       onChange={(value) => {
         dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-repeat-direction', 'Change panel repeat direction'),
+          description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
           source: gridItem,
           perform: () => gridItem.setRepeatDirection(value),
           undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
@@ -94,7 +94,7 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
       value={maxPerRow ?? 4}
       onChange={(value) => {
         dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Change max panel repeats per row'),
+          description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
           source: gridItem,
           perform: () => gridItem.setMaxPerRow(value.value),
           undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
@@ -124,7 +124,7 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
     (value?: string) => {
       if (value !== variableName) {
         dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-repeat-variable', 'Change panel repeat variable'),
+          description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: gridItem,
           perform: () => handleStateChange(value),
           undo: () => handleStateChange(variableName),
