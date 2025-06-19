@@ -28,9 +28,9 @@ export async function preloadPlugins(apps: AppPluginConfig[] = []) {
     return;
   }
 
-  markAsPreloaded(apps);
-
   await Promise.all(appPluginsToPreload.map(preload));
+
+  markAsPreloaded(apps);
 }
 
 async function preload(config: AppPluginConfig) {
