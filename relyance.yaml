@@ -1,0 +1,36 @@
+# Relyance Compliance Inspector Configuration
+
+repository: grafana/grafana
+
+# Services and Code Relationship
+# Purpose: Configuration used to visualize the code base and relationships between microservices and code.
+# Note: Directory paths are relative to the repository's root directory. 
+# Note: Need a separate entry for each microservice. See example below.
+services:
+
+
+
+# Example: Services and Code Relationship 
+# Note: Do not use below. It is an example.
+# Note: Directory paths are relative to the repository's root directory
+#- service: paymentservice
+#  source:
+#     - src/payments 
+#     - src/checkout_service
+#- service: catalogservice
+#  source:
+#     - src/catalog 
+
+
+# Source Directories to Exclude
+# Purpose: Configuration is used to exclude directories from analysis such as test directories etc.
+# Note: Directory paths are relative to the repository's root directory
+exclude:
+
+
+
+# Excluding files and directories using patterns (enable lines as needed)
+#exclude_patterns:
+#  - "**/*_mock.*" # example of excluding file with some pattern
+#  - "**/exclude_dir/**" # example of excluding a directory regardless where the directory is
+#  - src/excluded_file.go # example of excluding a specific file
