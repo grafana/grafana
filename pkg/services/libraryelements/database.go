@@ -441,6 +441,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if folderFilter.parseError != nil {
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
+
+	// Get accessible folder UIDs for secure folder name search
+	var accessibleFolderUIDs []string
+	fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+	if err != nil {
+		return model.LibraryElementSearchResult{}, err
+	}
+	// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
+	accessibleFolderUIDs = []string{"general", ""}
+	for _, f := range fs {
+		accessibleFolderUIDs = append(accessibleFolderUIDs, f.UID)
+	}
+
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
@@ -450,7 +463,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
-			writeSearchStringSQL(query, l.SQLStore, &builder)
+			writeSearchStringSQL(query, l.SQLStore, &builder, accessibleFolderUIDs)
 			writeExcludeSQL(query, &builder)
 			writeTypeFilterSQL(typeFilter, &builder)
 			builder.Write(" ")
@@ -463,7 +476,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
-		writeSearchStringSQL(query, l.SQLStore, &builder)
+		writeSearchStringSQL(query, l.SQLStore, &builder, accessibleFolderUIDs)
 		writeExcludeSQL(query, &builder)
 		writeTypeFilterSQL(typeFilter, &builder)
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
@@ -543,7 +556,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
-			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+			writeSearchStringSQL(query, l.SQLStore, &countBuilder, accessibleFolderUIDs)
 			writeExcludeSQL(query, &countBuilder)
 			writeTypeFilterSQL(typeFilter, &countBuilder)
 			countBuilder.Write(" ")
@@ -555,7 +568,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
-		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+		writeSearchStringSQL(query, l.SQLStore, &countBuilder, accessibleFolderUIDs)
 		writeExcludeSQL(query, &countBuilder)
 		writeTypeFilterSQL(typeFilter, &countBuilder)
 		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
