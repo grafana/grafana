@@ -30,7 +30,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     name: 'Pan and zoom',
     description: 'Enable pan and zoom',
     defaultValue: false,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
   });
   builder.addCustomEditor({
     id: 'panZoomHelp',
@@ -44,6 +44,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     name: 'Zoom to content',
     description: 'Automatically zoom to fit content',
     defaultValue: false,
+    showIf: () => config.featureToggles.canvasPanelPanZoom,
   });
 };
 

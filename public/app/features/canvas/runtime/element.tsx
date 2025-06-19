@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
+import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -104,6 +105,149 @@ export class ElementState implements LayerElement {
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
   applyLayoutStylesToDiv(disablePointerEvents?: boolean) {
+    if (config.featureToggles.canvasPanelPanZoom) {
+      this.applyLayoutStylesToDiv2(disablePointerEvents);
+      return;
+    }
+    if (this.isRoot()) {
+      // Root supersedes layout engine and is always 100% width + height of panel
+      return;
+    }
+
+    const { constraint } = this.options;
+    const { vertical, horizontal } = constraint ?? {};
+    const placement: Placement = this.options.placement ?? {};
+
+    const editingEnabled = this.getScene()?.isEditingEnabled;
+
+    const style: React.CSSProperties = {
+      cursor: editingEnabled ? 'grab' : 'auto',
+      pointerEvents: disablePointerEvents ? 'none' : 'auto',
+      position: 'absolute',
+      // Minimum element size is 10x10
+      minWidth: '10px',
+      minHeight: '10px',
+      rotate: `${placement.rotation ?? 0}deg`,
+    };
+
+    const translate = ['0px', '0px'];
+
+    switch (vertical) {
+      case VerticalConstraint.Top:
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        style.top = `${placement.top}px`;
+        style.height = `${placement.height}px`;
+        delete placement.bottom;
+        break;
+      case VerticalConstraint.Bottom:
+        placement.bottom = placement.bottom ?? 0;
+        placement.height = placement.height ?? 100;
+        style.bottom = `${placement.bottom}px`;
+        style.height = `${placement.height}px`;
+        delete placement.top;
+        break;
+      case VerticalConstraint.TopBottom:
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = `${placement.top}px`;
+        style.bottom = `${placement.bottom}px`;
+        delete placement.height;
+        style.height = '';
+        break;
+      case VerticalConstraint.Center:
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        translate[1] = '-50%';
+        style.top = `calc(50% - ${placement.top}px)`;
+        style.height = `${placement.height}px`;
+        delete placement.bottom;
+        break;
+      case VerticalConstraint.Scale:
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = `${placement.top}%`;
+        style.bottom = `${placement.bottom}%`;
+        delete placement.height;
+        style.height = '';
+        break;
+    }
+
+    switch (horizontal) {
+      case HorizontalConstraint.Left:
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        style.left = `${placement.left}px`;
+        style.width = `${placement.width}px`;
+        delete placement.right;
+        break;
+      case HorizontalConstraint.Right:
+        placement.right = placement.right ?? 0;
+        placement.width = placement.width ?? 100;
+        style.right = `${placement.right}px`;
+        style.width = `${placement.width}px`;
+        delete placement.left;
+        break;
+      case HorizontalConstraint.LeftRight:
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = `${placement.left}px`;
+        style.right = `${placement.right}px`;
+        delete placement.width;
+        style.width = '';
+        break;
+      case HorizontalConstraint.Center:
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        translate[0] = '-50%';
+        style.left = `calc(50% - ${placement.left}px)`;
+        style.width = `${placement.width}px`;
+        delete placement.right;
+        break;
+      case HorizontalConstraint.Scale:
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = `${placement.left}%`;
+        style.right = `${placement.right}%`;
+        delete placement.width;
+        style.width = '';
+        break;
+    }
+
+    style.transform = `translate(${translate[0]}, ${translate[1]})`;
+    this.options.placement = placement;
+    this.sizeStyle = style;
+
+    if (this.div) {
+      for (const key in this.sizeStyle) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+        this.div.style[key as any] = (this.sizeStyle as any)[key];
+      }
+
+      // TODO: This is a hack, we should have a better way to handle this
+      const elementType = this.options.type;
+      if (!SVGElements.has(elementType)) {
+        // apply styles to div if it's not an SVG element
+        for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+          this.div.style[key as any] = (this.dataStyle as any)[key];
+        }
+      } else {
+        // ELEMENT IS SVG
+        // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
+        // this is necessary for changing type of element cases;
+        // wrapper div element (this.div) doesn't re-render (has static `key` property),
+        // so we have to clean styles manually;
+        for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+          this.div.style[key as any] = '';
+        }
+      }
+    }
+  }
+
+  /** Use the configured options to update CSS style properties directly on the wrapper div **/
+  applyLayoutStylesToDiv2(disablePointerEvents?: boolean) {
     if (this.isRoot()) {
       // Root supersedes layout engine and is always 100% width + height of panel
       return;
@@ -287,6 +431,148 @@ export class ElementState implements LayerElement {
   }
 
   setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
+    if (config.featureToggles.canvasPanelPanZoom) {
+      this.setPlacementFromConstraint2(elementContainer, parentContainer, transformScale);
+      return;
+    }
+    const { constraint } = this.options;
+    const { vertical, horizontal } = constraint ?? {};
+
+    if (!elementContainer) {
+      elementContainer = this.div && this.div.getBoundingClientRect();
+    }
+    let parentBorderWidth = 0;
+    if (!parentContainer) {
+      parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+      parentBorderWidth = this.parent?.isRoot()
+        ? 0
+        : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
+    }
+
+    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
+    // TODO: Fix behavior for top+bottom, left+right, center, and scale constraints
+    let rotationTopOffset = 0;
+    let rotationLeftOffset = 0;
+    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement?.height) {
+      const rotationDegrees = this.options.placement.rotation;
+      const rotationRadians = (Math.PI / 180) * rotationDegrees;
+      let rotationOffset = rotationRadians;
+
+      switch (true) {
+        case rotationDegrees >= 0 && rotationDegrees < 90:
+          // no-op
+          break;
+        case rotationDegrees >= 90 && rotationDegrees < 180:
+          rotationOffset = Math.PI - rotationRadians;
+          break;
+        case rotationDegrees >= 180 && rotationDegrees < 270:
+          rotationOffset = Math.PI + rotationRadians;
+          break;
+        case rotationDegrees >= 270:
+          rotationOffset = -rotationRadians;
+          break;
+      }
+
+      const calculateDelta = (dimension1: number, dimension2: number) =>
+        (dimension1 / 2) * Math.sin(rotationOffset) + (dimension2 / 2) * (Math.cos(rotationOffset) - 1);
+
+      rotationTopOffset = calculateDelta(this.options.placement.width, this.options.placement.height);
+      rotationLeftOffset = calculateDelta(this.options.placement.height, this.options.placement.width);
+    }
+
+    const relativeTop =
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + rotationTopOffset) /
+          transformScale
+        : 0;
+    const relativeBottom =
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + rotationTopOffset) /
+          transformScale
+        : 0;
+    const relativeLeft =
+      elementContainer && parentContainer
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + rotationLeftOffset) /
+          transformScale
+        : 0;
+    const relativeRight =
+      elementContainer && parentContainer
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + rotationLeftOffset) /
+          transformScale
+        : 0;
+
+    const placement: Placement = {};
+
+    const width = (elementContainer?.width ?? 100) / transformScale;
+    const height = (elementContainer?.height ?? 100) / transformScale;
+
+    switch (vertical) {
+      case VerticalConstraint.Top:
+        placement.top = relativeTop;
+        placement.height = height;
+        break;
+      case VerticalConstraint.Bottom:
+        placement.bottom = relativeBottom;
+        placement.height = height;
+        break;
+      case VerticalConstraint.TopBottom:
+        placement.top = relativeTop;
+        placement.bottom = relativeBottom;
+        break;
+      case VerticalConstraint.Center:
+        const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.top = distanceFromCenter;
+        placement.height = height;
+        break;
+      case VerticalConstraint.Scale:
+        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100 * transformScale;
+        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100 * transformScale;
+        break;
+    }
+
+    switch (horizontal) {
+      case HorizontalConstraint.Left:
+        placement.left = relativeLeft;
+        placement.width = width;
+        break;
+      case HorizontalConstraint.Right:
+        placement.right = relativeRight;
+        placement.width = width;
+        break;
+      case HorizontalConstraint.LeftRight:
+        placement.left = relativeLeft;
+        placement.right = relativeRight;
+        break;
+      case HorizontalConstraint.Center:
+        const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.left = distanceFromCenter;
+        placement.width = width;
+        break;
+      case HorizontalConstraint.Scale:
+        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100 * transformScale;
+        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100 * transformScale;
+        break;
+    }
+
+    if (this.options.placement?.rotation) {
+      placement.rotation = this.options.placement.rotation;
+      placement.width = this.options.placement.width;
+      placement.height = this.options.placement.height;
+    }
+
+    this.options.placement = placement;
+
+    this.applyLayoutStylesToDiv();
+    this.revId++;
+
+    this.getScene()?.save();
+  }
+
+  setPlacementFromConstraint2(elementContainer?: DOMRect, parentContainer?: DOMRect, transformScale = 1) {
     const scene = this.getScene()!;
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
@@ -536,7 +822,6 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
-    // this.migratePlacementToTopLeft(this.options.placement ?? {});
     this.applyLayoutStylesToDiv();
   };
 
@@ -598,14 +883,22 @@ export class ElementState implements LayerElement {
     } else if (dirLR === -1) {
       placement.left! -= deltaX;
       placement.width = event.width;
-      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+      if (config.featureToggles.canvasPanelPanZoom) {
+        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+      } else {
+        style.left = `${placement.left}px`;
+      }
       style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
       placement.top! -= deltaY;
       placement.height = event.height;
-      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+      if (config.featureToggles.canvasPanelPanZoom) {
+        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+      } else {
+        style.top = `${placement.top}px`;
+      }
       style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
       placement.height = event.height;

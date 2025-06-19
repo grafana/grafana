@@ -178,7 +178,6 @@ export const calculateCoordinates = (
   let x2: number;
   let y2: number;
   const targetRect = target.div?.getBoundingClientRect();
-
   if (info.targetName && targetRect) {
     const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
     const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
@@ -192,9 +191,8 @@ export const calculateCoordinates = (
     x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
     y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
   }
-
-  // x2 /= transformScale;
-  // y2 /= transformScale;
+  x2 /= transformScale;
+  y2 /= transformScale;
 
   // TODO look into a better way to avoid division by zero
   if (x2 - x1 === 0) {
@@ -370,31 +368,31 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 export const getParentBoundingClientRect = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
     // const transformRef = scene.transformComponentRef?.current;
-    const transformRef = scene.viewportDiv;
+    // const transformRef = scene.viewportDiv;
     // return transformRef?.instance.contentComponent?.getBoundingClientRect();
-    return transformRef?.getBoundingClientRect();
+    // return transformRef?.getBoundingClientRect();
+    return scene.viewportDiv?.getBoundingClientRect();
   }
 
-  // return scene.div?.getBoundingClientRect();
-  return scene.viewportDiv?.getBoundingClientRect();
+  return scene.div?.getBoundingClientRect();
 };
 
-export const getTransformInstance = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    // return scene.transformComponentRef?.current?.instance;
-    return scene.viewportDiv;
-  }
-  return undefined;
-};
+// export const getTransformInstance = (scene: Scene) => {
+//   if (config.featureToggles.canvasPanelPanZoom) {
+//     // return scene.transformComponentRef?.current?.instance;
+//     return scene.viewportDiv;
+//   }
+//   return undefined;
+// };
 
-export const getParent = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    // return scene.transformComponentRef?.current?.instance.contentComponent;
-    return scene.viewportDiv;
-  }
-  // return scene.div;
-  return scene.viewportDiv;
-};
+// export const getParent = (scene: Scene) => {
+//   if (config.featureToggles.canvasPanelPanZoom) {
+//     // return scene.transformComponentRef?.current?.instance.contentComponent;
+//     return scene.viewportDiv;
+//   }
+//   // return scene.div;
+//   return scene.viewportDiv;
+// };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
   const fields = new Set<Field>();
