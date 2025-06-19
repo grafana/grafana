@@ -20,7 +20,8 @@ function SettingsPage() {
       {Array.from(settingsExtensions.entries()).map(([key, { element }]) => (
         <Route key={key} path={key} element={element} />
       ))}
-      <Route index element={<Navigate replace to="/alerting/admin/alertmanager" />} />
+      {/* Catch both index and any unmatched routes */}
+      <Route path="*" element={<Navigate replace to="/alerting/admin/alertmanager" />} />
     </Routes>
   );
 }
