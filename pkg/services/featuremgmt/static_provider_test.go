@@ -64,16 +64,12 @@ func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
 	_, err = sec.NewKey("ABCD", "true")
 	require.NoError(t, err)
 
-	p, err := ProvideOpenFeatureService(cfg)
+	// Use StaticFlagEvaluator instead of OpenFeatureService for static evaluation
+	staticEvaluator, err := ProvideStaticEvaluator(cfg)
 	require.NoError(t, err)
 
-	_, ok := p.provider.(*inMemoryBulkProvider)
-	if !ok {
-		t.Fatalf("expected inMemoryBulkProvider, got %T", p.provider)
-	}
-
 	ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext("grafana", nil))
-	allFlags, err := p.EvalAllFlagsWithStaticProvider(ctx)
+	allFlags, err := staticEvaluator.EvalAllFlags(ctx)
 	require.NoError(t, err)
 
 	openFeatureEnabledFlags := map[string]bool{}
@@ -86,7 +82,7 @@ func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
 	mgr, err := ProvideManagerService(cfg)
 	require.NoError(t, err)
 
-	// compare enabled feature flags match between OpenFeatureService static provider and Feature Manager
+	// compare enabled feature flags match between StaticFlagEvaluator and Feature Manager
 	enabledFeatureManager := mgr.GetEnabled(ctx)
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }

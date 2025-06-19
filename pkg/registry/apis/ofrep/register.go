@@ -32,23 +32,23 @@ var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
 type APIBuilder struct {
-	providerType string // TODO: is it really needed
-	url          *url.URL
-	openFeature  *featuremgmt.OpenFeatureService
-	logger       log.Logger
+	providerType    string // TODO: is it really needed
+	url             *url.URL
+	staticEvaluator featuremgmt.StaticFlagEvaluator
+	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType string, url *url.URL, openFeature *featuremgmt.OpenFeatureService) *APIBuilder {
+func NewAPIBuilder(providerType string, url *url.URL, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
 	return &APIBuilder{
-		providerType: providerType,
-		url:          url,
-		openFeature:  openFeature,
-		logger:       log.New("grafana-apiserver.feature-flags"),
+		providerType:    providerType,
+		url:             url,
+		staticEvaluator: staticEvaluator,
+		logger:          log.New("grafana-apiserver.feature-flags"),
 	}
 }
 
-func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, openFeature *featuremgmt.OpenFeatureService) *APIBuilder {
-	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, openFeature)
+func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, staticEvaluator)
 	apiregistration.RegisterAPI(b)
 	return b
 }
@@ -163,7 +163,7 @@ func (b *APIBuilder) proxyFlagReq(flagKey string, isAuthedUser bool, w http.Resp
 }
 
 func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	result, err := b.openFeature.EvalFlagWithStaticProvider(r.Context(), flagKey)
+	result, err := b.staticEvaluator.EvalFlag(r.Context(), flagKey)
 	if err != nil {
 		http.Error(w, "failed to evaluate flag", http.StatusInternalServerError)
 		return
@@ -187,7 +187,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	result, err := b.openFeature.EvalAllFlagsWithStaticProvider(r.Context())
+	result, err := b.staticEvaluator.EvalAllFlags(r.Context())
 	if err != nil {
 		http.Error(w, "failed to evaluate flags", http.StatusInternalServerError)
 		return
