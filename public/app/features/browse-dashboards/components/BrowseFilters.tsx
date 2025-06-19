@@ -9,6 +9,7 @@ export function BrowseFilters() {
     <ActionRow
       showStarredFilter
       showLayout
+      showSort
       state={searchState}
       getTagOptions={stateManager.getTagOptions}
       getSortOptions={getGrafanaSearcher().getSortOptions}

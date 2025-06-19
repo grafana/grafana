@@ -26,6 +26,7 @@ interface ActionRowProps {
   showStarredFilter?: boolean;
   showLayout?: boolean;
   sortPlaceholder?: string;
+  showSort?: boolean;
 
   onLayoutChange: (layout: SearchLayout) => void;
   onSortChange: (value?: string) => void;
@@ -55,6 +56,7 @@ export const ActionRow = ({
   state,
   showStarredFilter,
   showLayout,
+  showSort,
   sortPlaceholder,
   onLayoutChange,
   onSortChange,
@@ -124,13 +126,15 @@ export const ActionRow = ({
             value={layout}
           />
         )}
-        <SortPicker
-          onChange={(change) => onSortChange(change?.value)}
-          value={state.sort}
-          getSortOptions={getSortOptions}
-          placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
-          isClearable
-        />
+        {showSort && (
+          <SortPicker
+            onChange={(change) => onSortChange(change?.value)}
+            value={state.sort}
+            getSortOptions={getSortOptions}
+            placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
+            isClearable
+          />
+        )}
       </Stack>
     </Stack>
   );
