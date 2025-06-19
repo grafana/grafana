@@ -18,5 +18,8 @@
       "bbb": true,
       "ccc": 1.234
     }
+  },
+  "secure": {
+    "password": { "input": "XXXX" }
   }
 }

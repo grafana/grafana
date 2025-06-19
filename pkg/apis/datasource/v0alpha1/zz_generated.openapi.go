@@ -20,6 +20,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceList":    schema_pkg_apis_datasource_v0alpha1_GenericDataSourceList(ref),
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec":    schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.HealthCheckResult":        schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.SecureValue":              schema_pkg_apis_datasource_v0alpha1_SecureValue(ref),
 	}
 }
 
@@ -162,9 +163,8 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSource(ref common.ReferenceC
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.SecureValue"),
 									},
 								},
 							},
@@ -175,7 +175,7 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSource(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.GenericDataSourceSpec", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.SecureValue", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -365,5 +365,38 @@ func schema_pkg_apis_datasource_v0alpha1_HealthCheckResult(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+	}
+}
+
+func schema_pkg_apis_datasource_v0alpha1_SecureValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"input": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The input is only valid for writing the value -- it is replaced on read",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name identifier for this secure value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"remove": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value for write, this will remove the secret value",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }

@@ -15,13 +15,18 @@ type GenericDataSource struct {
 	Spec GenericDataSourceSpec `json:"spec"`
 
 	// Secure values placeholder (true for fields that exist)
-	Secure map[string]bool `json:"secure,omitempty"`
+	Secure map[string]SecureValue `json:"secure,omitempty"`
+}
 
-	// // swagger:ignore
-	// Password string `json:"-"`
+type SecureValue struct {
+	// The input is only valid for writing the value -- it is replaced on read
+	Input string `json:"input,omitempty"`
 
-	// // swagger:ignore
-	// BasicAuthPassword string `json:"-"`
+	// The name identifier for this secure value
+	Reference string `json:"ref,omitempty"`
+
+	// Value for write, this will remove the secret value
+	Remove bool `json:"remove,omitempty"`
 }
 
 // DsAccess represents how the datasource connects to the remote service

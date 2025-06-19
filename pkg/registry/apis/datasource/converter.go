@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,6 +16,8 @@ import (
 
 type converter struct {
 	mapper request.NamespaceMapper
+	group  string // the expected group
+	dstype string // the expected pluginId
 }
 
 func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {
@@ -73,9 +76,11 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 	}
 
 	if ds.SecureJsonData != nil {
-		cfg.Secure = make(map[string]bool)
+		cfg.Secure = make(map[string]v0alpha1.SecureValue)
 		for k := range ds.SecureJsonData {
-			cfg.Secure[k] = true
+			cfg.Secure[k] = v0alpha1.SecureValue{
+				Reference: "~", // ????
+			}
 		}
 	}
 
@@ -83,11 +88,15 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 }
 
 func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.AddDataSourceCommand, error) {
+	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
+	}
+
 	cmd := &datasources.AddDataSourceCommand{
 		Name: ds.Spec.Title,
 		UID:  ds.Name,
+		Type: r.dstype,
 
-		Type:            "???", // TODO... group > datasource type????
 		Access:          datasources.DsAccess(ds.Spec.Access),
 		URL:             ds.Spec.URL,
 		Database:        ds.Spec.Database,
@@ -103,21 +112,21 @@ func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.A
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
 
-	if len(ds.Secure) > 0 {
-		cmd.SecureJsonData = map[string]string{
-			"TODO": "values",
-		}
-	}
+	cmd.SecureJsonData = toSecureJsonData(ds)
 
 	return cmd, nil
 }
 
 func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasources.UpdateDataSourceCommand, error) {
+	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
+		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
+	}
+
 	cmd := &datasources.UpdateDataSourceCommand{
 		Name: ds.Spec.Title,
 		UID:  ds.Name,
+		Type: r.dstype,
 
-		Type:            "???", // TODO... group > datasource type????
 		Access:          datasources.DsAccess(ds.Spec.Access),
 		URL:             ds.Spec.URL,
 		Database:        ds.Spec.Database,
@@ -132,8 +141,26 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasource
 	if len(ds.Spec.JsonData.Object) > 0 {
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
+	cmd.SecureJsonData = toSecureJsonData(ds)
 
-	// Update specific things
+	// The only thing differnet from the add command???
 	cmd.Version = int(ds.Generation)
 	return cmd, nil
+}
+
+func toSecureJsonData(ds *v0alpha1.GenericDataSource) map[string]string {
+	if ds == nil || len(ds.Secure) < 1 {
+		return nil
+	}
+
+	secure := map[string]string{}
+	for k, v := range ds.Secure {
+		if v.Input != "" {
+			secure[k] = v.Input
+		}
+		if v.Remove {
+			secure[k] = "" // Weirdly, this is the best we can do with the legacy API :(
+		}
+	}
+	return secure
 }

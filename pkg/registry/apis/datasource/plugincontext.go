@@ -75,12 +75,17 @@ type cachingDatasourceProvider struct {
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
+	group, _ := plugins.GetDatasourceGroupNameFromPluginID(pluginJson.ID)
 	return &scopedDatasourceProvider{
 		plugin:          pluginJson,
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
-		converter:       q.converter,
+		converter: &converter{
+			mapper: q.converter.mapper,
+			dstype: pluginJson.ID,
+			group:  group,
+		},
 	}
 }
 

@@ -16,14 +16,17 @@ import (
 func TestConverter(t *testing.T) {
 	t.Run("resource to command", func(t *testing.T) {
 		obj := &v0alpha1.GenericDataSource{}
-		converter := converter{mapper: types.OrgNamespaceFormatter}
+		converter := converter{
+			mapper: types.OrgNamespaceFormatter,
+			dstype: "test-datasource",
+		}
 		check := []string{
 			"convert-testdata-A",
 		}
 		for _, name := range check {
 			t.Run(name, func(t *testing.T) {
 				fpath := filepath.Join("testdata", name+"-input.json")
-				raw, err := os.ReadFile(fpath)
+				raw, err := os.ReadFile(fpath) // nolint:gosec
 				require.NoError(t, err)
 				err = json.Unmarshal(raw, obj)
 				require.NoError(t, err)
@@ -34,9 +37,9 @@ func TestConverter(t *testing.T) {
 				require.NoError(t, err)
 				out, err := json.MarshalIndent(add, "", "  ")
 				require.NoError(t, err)
-				raw, _ = os.ReadFile(fpath)
+				raw, _ = os.ReadFile(fpath) // nolint:gosec
 				if !assert.JSONEq(t, string(raw), string(out)) {
-					os.WriteFile(fpath, out, 0600)
+					_ = os.WriteFile(fpath, out, 0600)
 				}
 
 				// The update command
@@ -45,9 +48,9 @@ func TestConverter(t *testing.T) {
 				require.NoError(t, err)
 				out, err = json.MarshalIndent(update, "", "  ")
 				require.NoError(t, err)
-				raw, _ = os.ReadFile(fpath)
+				raw, _ = os.ReadFile(fpath) // nolint:gosec
 				if !assert.JSONEq(t, string(raw), string(out)) {
-					os.WriteFile(fpath, out, 0600)
+					_ = os.WriteFile(fpath, out, 0600)
 				}
 			})
 		}
