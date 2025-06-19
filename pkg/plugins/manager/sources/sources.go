@@ -61,7 +61,11 @@ func (s *Service) pluginSettingSources() []plugins.PluginSource {
 
 // corePluginPaths provides a list of the Core plugin file system paths
 func corePluginPaths(staticRootPath string) []string {
-	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
-	return []string{datasourcePaths, panelsPath}
+	decoupledDatasourcePaths := filepath.Join(staticRootPath, "build/plugins/datasource")
+	decoupledPanelsPath := filepath.Join(staticRootPath, "build/plugins/panel")
+
+	nonDecoupledDatasourcePaths := filepath.Join(staticRootPath, "build/bundled-plugins/datasource")
+	nonDecoupledPanelsPath := filepath.Join(staticRootPath, "build/bundled-plugins/panel")
+
+	return []string{decoupledDatasourcePaths, decoupledPanelsPath, nonDecoupledDatasourcePaths, nonDecoupledPanelsPath}
 }

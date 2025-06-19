@@ -25,18 +25,24 @@ func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *S
 }
 
 type PluginInfo struct {
-	pluginJSON plugins.JSONData
-	class      plugins.Class
-	fs         plugins.FS
-	parent     *PluginInfo
+	pluginJSON  plugins.JSONData
+	class       plugins.Class
+	fs          plugins.FS
+	parent      *PluginInfo
+	isDecoupled bool
 }
 
 func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.FS, parent *PluginInfo) PluginInfo {
+	isDecoupled := false
+	if class == plugins.ClassCore && strings.Contains(fs.Base(), "public/build/plugins/") {
+		isDecoupled = true
+	}
 	return PluginInfo{
-		pluginJSON: pluginJSON,
-		class:      class,
-		fs:         fs,
-		parent:     parent,
+		pluginJSON:  pluginJSON,
+		class:       class,
+		fs:          fs,
+		parent:      parent,
+		isDecoupled: isDecoupled,
 	}
 }
 
@@ -48,7 +54,13 @@ func DefaultService(cfg *config.PluginManagementCfg) *Service {
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
 		baseDir := getBaseDir(n.fs.Base())
-		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
+
+		// TODO: this is basically just "remove the parent directory"
+		if n.isDecoupled {
+			return path.Join("public/build/plugins", string(n.pluginJSON.Type), baseDir), nil
+		} else {
+			return path.Join("public/build/bundled-plugins", string(n.pluginJSON.Type), baseDir), nil
+		}
 	}
 	if n.class == plugins.ClassCDN {
 		return n.fs.Base(), nil
@@ -73,8 +85,13 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if filepath.Base(n.fs.Base()) == "dist" {
-			// The core plugin has been built externally, use the module from the dist folder
+		if n.isDecoupled {
+			staticAssetCDNIsConfigured := false // TODO: cfg.GetContentDeliveryURL()
+			if staticAssetCDNIsConfigured {
+				// TODO: serve it from the static assets CDN (not the plugin CDN!)
+			} else {
+				return path.Join("public/build/plugins", string(n.pluginJSON.Type), filepath.Base(n.fs.Base()), "module.js"), nil
+			}
 		} else {
 			baseDir := getBaseDir(n.fs.Base())
 			return path.Join("core:plugin", baseDir), nil
@@ -148,6 +165,7 @@ func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
 func getBaseDir(pluginDir string) string {
 	baseDir := filepath.Base(pluginDir)
 	// Decoupled core plugins will be suffixed with "dist" if they have been built
+	// TODO: ^^ no longer true ^^
 	if baseDir == "dist" {
 		return filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
 	}
