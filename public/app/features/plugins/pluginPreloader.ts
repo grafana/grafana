@@ -19,7 +19,6 @@ export type PluginPreloadResult = {
 
 const preloadedAppPlugins = new Set<string>();
 const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
-const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
 
 export async function preloadPlugins(apps: AppPluginConfig[] = []) {
   const appPluginsToPreload = apps.filter(isNotYetPreloaded);
@@ -29,8 +28,6 @@ export async function preloadPlugins(apps: AppPluginConfig[] = []) {
   }
 
   await Promise.all(appPluginsToPreload.map(preload));
-
-  markAsPreloaded(apps);
 }
 
 async function preload(config: AppPluginConfig) {
@@ -40,6 +37,8 @@ async function preload(config: AppPluginConfig) {
     });
 
     await importAppPlugin(meta);
+
+    preloadedAppPlugins.add(config.id);
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
   }
