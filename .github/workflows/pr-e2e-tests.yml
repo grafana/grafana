@@ -28,7 +28,6 @@ jobs:
           persist-credentials: false
       - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
-          version: "8.0.0"
           verb: run
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
       - run: mv "$(cat out.txt)" grafana.tar.gz
