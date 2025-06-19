@@ -324,7 +324,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				},
 			},
 			Query:  "",
-			Fields: []string{"title", "references"},
+			Fields: []string{"title"},
 			Limit:  10,
 		}, nil)
 		require.NoError(t, err)
@@ -353,7 +353,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					},
 				},
 			},
-			Fields: []string{"title", "references"},
+			Fields: []string{"title"},
 			Limit:  10,
 		}, nil)
 		require.NoError(t, err)

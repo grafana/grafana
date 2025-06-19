@@ -143,7 +143,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Index:              true,
-		Store:              true,
+		Store:              false,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 	})
@@ -153,7 +153,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Index:              true,
-		Store:              true,
+		Store:              false,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 	})
@@ -163,7 +163,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Index:              true,
-		Store:              true,
+		Store:              false,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 	})
@@ -173,7 +173,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Index:              true,
-		Store:              true,
+		Store:              false,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 	})
