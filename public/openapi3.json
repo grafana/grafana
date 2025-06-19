@@ -2982,6 +2982,9 @@
           "notificationSettings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
           "queriedDatasourceUIDs": {
             "items": {
               "type": "string"
@@ -3047,7 +3050,8 @@
       "AlertmanagerUserConfig": {
         "properties": {
           "alertmanager_config": {
-            "$ref": "#/components/schemas/Config"
+            "description": "Configuration for Alertmanager in YAML format.\nin: body",
+            "type": "string"
           },
           "template_files": {
             "additionalProperties": {
@@ -5930,20 +5934,6 @@
           },
           "uid": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "GettableAlertmanagerUserConfig": {
-        "properties": {
-          "alertmanager_config": {
-            "type": "string"
-          },
-          "template_files": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -10124,6 +10114,7 @@
         "type": "object"
       },
       "Route": {
+        "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
         "properties": {
           "active_time_intervals": {
             "items": {
@@ -10165,6 +10156,12 @@
             },
             "type": "array"
           },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
           "receiver": {
             "type": "string"
           },
@@ -10178,7 +10175,6 @@
             "type": "array"
           }
         },
-        "title": "A Route is a node that contains definitions of how to handle alerts.",
         "type": "object"
       },
       "RouteExport": {
@@ -10273,6 +10269,9 @@
           },
           "notificationSettings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
           },
           "query": {
             "type": "string"
