@@ -71,7 +71,7 @@ Permissions assigned to a user within an organization control the extent to whic
 - plugins
 - annotations
 - library panels
-- API keys
+- service accounts
 
 For more information about managing organization users, see [User management](../user-management/manage-org-users/).
 

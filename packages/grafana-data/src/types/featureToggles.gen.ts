@@ -218,6 +218,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Use experimental git library for provisioning
+  */
+  nanoGit?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -262,6 +266,7 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   /**
   * Enables RBAC support for library panels
+  * @default true
   */
   libraryPanelRBAC?: boolean;
   /**
@@ -1002,6 +1007,10 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Registers AuthZ /apis endpoint
+  */
+  kubernetesAuthzApis?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
