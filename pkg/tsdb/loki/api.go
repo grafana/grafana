@@ -15,12 +15,13 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
 )
@@ -29,7 +30,7 @@ type LokiAPI struct {
 	client                    *http.Client
 	url                       string
 	log                       log.Logger
-	tracer                    tracing.Tracer
+	tracer                    trace.Tracer
 	requestStructuredMetadata bool
 }
 
@@ -39,7 +40,7 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer trace.Tracer, requestStructuredMetadata bool) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
