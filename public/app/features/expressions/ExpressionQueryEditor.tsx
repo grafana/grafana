@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { IconButton, InlineField, Select, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { IconButton, InlineField, PopoverContent, Select, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { Math } from './components/Math';
@@ -22,10 +22,16 @@ type NonClassicExpressionType = Exclude<ExpressionQueryType, ExpressionQueryType
 type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, string>>;
 
 // Help text for each expression type - can be expanded with more detailed content
-const getExpressionHelpText = (type: ExpressionQueryType): string => {
+const getExpressionHelpText = (type: ExpressionQueryType): PopoverContent | string => {
   switch (type) {
     case ExpressionQueryType.sql:
-      return 'Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.';
+      return (
+        <Trans i18nKey="expressions.expression-query-editor.helper-text-sql">
+          Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie "A", "B")
+          are available as tables and referenced by query-name. Fields are available as columns, as returned from the
+          data source.
+        </Trans>
+      );
     default:
       return '';
   }
