@@ -33,26 +33,22 @@ type ThemeVizColorShadeName<T extends ThemeVizColorName> =
   | `semi-dark-${T}`
   | `dark-${T}`;
 
+type ThemeVizHueGeneric<T> = T extends ThemeVizColorName
+  ? {
+      name: T;
+      shades: Array<ThemeVizColor<T>>;
+    }
+  : never;
+
 /**
  * @alpha
  */
-export type ThemeVizHueGeneric<T extends ThemeVizColorName> = {
-  name: T;
-  shades: Array<ThemeVizColor<T>>;
-};
+export type ThemeVizHue = ThemeVizHueGeneric<ThemeVizColorName>;
 
 export type ThemeVisualizationColorsInput = {
   hues?: ThemeVizHue[];
   palette?: string[];
 };
-
-type ThemeVizHue =
-  | ThemeVizHueGeneric<'red'>
-  | ThemeVizHueGeneric<'orange'>
-  | ThemeVizHueGeneric<'yellow'>
-  | ThemeVizHueGeneric<'green'>
-  | ThemeVizHueGeneric<'blue'>
-  | ThemeVizHueGeneric<'purple'>;
 
 /**
  * @internal
