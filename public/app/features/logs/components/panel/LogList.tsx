@@ -20,7 +20,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -255,7 +255,7 @@ const LogListComponent = ({
     () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, wrapLogMessage]
   );
-  const styles = getStyles(dimensions, { showTime }, theme);
+  const styles = useStyles2(getStyles, dimensions, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -476,7 +476,7 @@ const LogListComponent = ({
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }, theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
