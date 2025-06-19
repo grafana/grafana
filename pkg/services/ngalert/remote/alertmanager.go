@@ -48,12 +48,14 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 	return nil
 }
 
-// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
-type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+type Crypto interface {
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
+}
 
 type Alertmanager struct {
 	autogenFn         AutogenFn
-	decrypt           DecryptFn
+	crypto            Crypto
 	defaultConfig     string
 	defaultConfigHash string
 	log               log.Logger
@@ -120,7 +122,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -204,7 +206,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		decrypt:           decryptFn,
+		crypto:            crypto,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
