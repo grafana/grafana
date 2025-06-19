@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -76,7 +76,7 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
                   )}
                 />
               ) : (
-                <ContactPointSelector
+                <ExternalAlertmanagerContactPointSelector
                   selectProps={{
                     ...field,
                     onChange: (changeValue) => handleContactPointSelect(changeValue.value?.name, onChange),

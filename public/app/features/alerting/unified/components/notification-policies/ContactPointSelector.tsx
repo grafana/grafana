@@ -18,7 +18,7 @@ type ContactPointSelectorProps = {
   onError?: (error: Error) => void;
 };
 
-export const ContactPointSelector = ({
+export const ExternalAlertmanagerContactPointSelector = ({
   selectProps,
   selectedContactPointName,
   onError = () => {},

@@ -18,7 +18,7 @@ import {
   unquoteIfRequired,
 } from '../../utils/matchers';
 
-import { ContactPointSelector } from './ContactPointSelector';
+import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
 
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
@@ -130,7 +130,7 @@ const NotificationPoliciesFilter = ({
               value={searchParams.get('contactPoint') ?? undefined}
             />
           ) : (
-            <ContactPointSelector
+            <ExternalAlertmanagerContactPointSelector
               selectProps={{
                 id: 'receiver',
                 'aria-label': 'Search by contact point',

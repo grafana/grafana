@@ -66,7 +66,13 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
           rules={{
             validate: () => {
               if (contactPointNotFound) {
-                return `Contact point "${contactPointInForm}" could not be found`;
+                return t(
+                  'alerting.contactPoints.validation.notFound',
+                  `Contact point "{{contactPoint}}" could not be found`,
+                  {
+                    contactPoint: contactPointInForm,
+                  }
+                );
               }
               return true;
             },

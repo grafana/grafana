@@ -910,6 +910,11 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "contactPoints": {
+      "validation": {
+        "notFound": "Contact point \"{{contactPoint}}\" could not be found"
+      }
+    },
     "continue-matching-indicator": {
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
     },
