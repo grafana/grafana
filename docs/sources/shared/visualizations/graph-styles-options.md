@@ -1,7 +1,7 @@
 ---
 title: Graph styles options
 comments: |
-  This file is used in the following visualizations: candlestick, time series.
+  This file is used in the following visualizations: time series.
 ---
 
 <!-- prettier-ignore-start -->
