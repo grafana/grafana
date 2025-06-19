@@ -5,11 +5,48 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
+	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
+
+type iamAuthorizer struct {
+	resourceAuthorizer map[string]authorizer.Authorizer // Map resource to its authorizer
+}
+
+func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient authlib.AccessClient) authorizer.Authorizer {
+	resourceAuthorizer := make(map[string]authorizer.Authorizer)
+
+	// Identity specific resources
+	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
+	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer["display"] = legacyAuthorizer
+
+	// Access specific resources
+	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	resourceAuthorizer[iamv0b.CoreRoleInfo.GetName()] = authorizer
+
+	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
+}
+
+func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	if !attr.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	authz, ok := s.resourceAuthorizer[attr.GetResource()]
+	if !ok {
+		return authorizer.DecisionDeny, "", fmt.Errorf("no authorizer found for resource %s", attr.GetResource())
+	}
+
+	return authz.Authorize(ctx, attr)
+}
 
 func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) authlib.AccessClient {
 	client := accesscontrol.NewLegacyAccessClient(

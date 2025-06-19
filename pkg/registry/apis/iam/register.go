@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -51,15 +50,15 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
-	client := newLegacyAccessClient(ac, store)
-	authorizer := gfauthorizer.NewResourceAuthorizer(client)
+	legacyAccessClient := newLegacyAccessClient(ac, store)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                store,
 		coreRolesStorage:     coreRolesStorage,
 		sso:                  ssoService,
 		authorizer:           authorizer,
-		legacyAccessClient:   client,
+		legacyAccessClient:   legacyAccessClient,
 		accessClient:         accessClient,
 		display:              user.NewLegacyDisplayREST(store),
 		reg:                  reg,
