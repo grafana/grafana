@@ -283,7 +283,14 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
+
+	// Decrypt extra configs
+	if err := am.crypto.DecryptExtraConfigs(ctx, c); err != nil {
+		return fmt.Errorf("unable to decrypt extra configs: %w", err)
+	}
+
 	decryptedCfg, err := am.decryptConfiguration(ctx, c)
+
 	if err != nil {
 		return err
 	}
@@ -319,8 +326,13 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 		return nil, fmt.Errorf("unable to unmarshal original configuration: %w", err)
 	}
 
+	if err := am.mergeExtraConfigs(cfgCopy); err != nil {
+		return nil, fmt.Errorf("unable to merge extra configurations: %w", err)
+	}
+
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.decrypt))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
+
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -329,18 +341,32 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	return cfgCopy, nil
 }
 
-func decrypter(ctx context.Context, decryptFn DecryptFn) models.DecryptFn {
+func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
 			return "", err
 		}
-		decrypted, err := decryptFn(ctx, decoded)
+		decrypted, err := crypto.Decrypt(ctx, decoded)
 		if err != nil {
 			return "", err
 		}
 		return string(decrypted), nil
 	}
+}
+
+// mergeExtraConfigs applies merged configuration if extra configs exist.
+func (am *Alertmanager) mergeExtraConfigs(config *apimodels.PostableUserConfig) error {
+	if len(config.ExtraConfigs) > 0 {
+		mergeResult, err := config.GetMergedAlertmanagerConfig()
+		if err != nil {
+			return fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+		}
+		config.AlertmanagerConfig = mergeResult.Config
+		// Clear ExtraConfigs to avoid re-processing them later
+		config.ExtraConfigs = nil
+	}
+	return nil
 }
 
 func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
@@ -575,7 +601,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.decrypt))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}

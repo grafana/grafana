@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -53,7 +52,8 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
-	payload, err := json.Marshal(&UserGrafanaConfig{
+	// Use MarshalWithSecrets to preserve secret values when sending to remote alertmanager
+	payload, err := MarshalWithSecrets(&UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
 		CreatedAt:                 createdAt,

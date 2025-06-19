@@ -11,12 +11,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -63,29 +66,6 @@ const (
 	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
 	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
 )
-
-// testCrypto is a mock implementation of the Crypto interface for testing
-type testCrypto struct {
-	decryptFn func(ctx context.Context, payload []byte) ([]byte, error)
-}
-
-func (c *testCrypto) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	if c.decryptFn != nil {
-		return c.decryptFn(ctx, payload)
-	}
-	return payload, nil
-}
-
-func (c *testCrypto) DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
-}
-
-// newTestCrypto creates a testCrypto with a decrypt function that mimics secretsService.Decrypt
-func newTestCrypto(secretsService secrets.Service) *testCrypto {
-	return &testCrypto{
-		decryptFn: secretsService.Decrypt,
-	}
-}
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -136,7 +116,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(context.Background(), cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+			am, err := NewAlertmanager(context.Background(), cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -229,7 +209,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, fstore, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -275,14 +255,14 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 2, configSyncs)
 
 	// Changing the "from" address should result in the configuration being updated.
 	cfg.SmtpFrom = "new-address@test.com"
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 3, configSyncs)
@@ -300,14 +280,14 @@ func TestApplyConfig(t *testing.T) {
 		StaticHeaders:  map[string]string{"test": "true"},
 		User:           "Test User",
 	}
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 4, configSyncs)
 	require.Equal(t, am.smtp, configSent.SmtpConfig)
 
 	// Failing to add the auto-generated routes should result in an error.
-	_, err = NewAlertmanager(context.Background(), cfg, fstore, newTestCrypto(secretsService), errAutogenFn, m, tracing.InitializeTracerForTest())
+	_, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), errAutogenFn, m, tracing.InitializeTracerForTest())
 	require.ErrorIs(t, err, errTest)
 	require.Equal(t, 4, configSyncs)
 }
@@ -316,17 +296,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
-	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
-	require.NoError(t, err)
-	testValue := []byte("test")
-	testCryptoInstance := &testCrypto{
-		decryptFn: func(_ context.Context, payload []byte) ([]byte, error) {
-			if string(payload) == string(testValue) {
-				return testValue, nil
-			}
-			return nil, errTest
-		},
-	}
+	testCryptoInstance := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -488,16 +458,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 	const tenantID = "test"
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
-	const testKey = "test-key"
-	const testValue = "test-value"
-	testCryptoForReceivers := &testCrypto{
-		decryptFn: func(_ context.Context, payload []byte) ([]byte, error) {
-			if string(payload) == testValue {
-				return []byte(testValue), nil
-			}
-			return nil, errTest
-		},
-	}
+	testCryptoForReceivers := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 
 	var got apimodels.TestReceiversConfigBodyParams
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -603,44 +564,188 @@ func Test_isDefaultConfiguration(t *testing.T) {
 	}
 }
 
-func TestDecryptConfiguration(t *testing.T) {
-	t.Run("should not modify the original config", func(t *testing.T) {
-		var inputCfg apimodels.PostableUserConfig
-		require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithEncryptedSecret), &inputCfg))
+func TestApplyConfigWithExtraConfigs(t *testing.T) {
+	const tenantID = "test"
 
-		testCryptoForDecrypt := &testCrypto{
-			decryptFn: func(_ context.Context, payload []byte) ([]byte, error) {
-				if string(payload) == testPassword {
-					return []byte(testPassword), nil
-				}
-				return nil, fmt.Errorf("incorrect payload")
+	var configSent client.UserGrafanaConfig
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+		}
+
+		w.Header().Add("content-type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
+	}))
+	defer server.Close()
+
+	var cfg apimodels.PostableUserConfig
+	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfig), &cfg))
+
+	cfg.ExtraConfigs = []apimodels.ExtraConfiguration{
+		{
+			Identifier: "test-external",
+			MergeMatchers: []*labels.Matcher{
+				{
+					Type:  labels.MatchEqual,
+					Name:  "test",
+					Value: "value",
+				},
 			},
-		}
+			TemplateFiles: map[string]string{},
+			AlertmanagerConfig: `global:
+  smtp_smarthost: localhost:587
+  smtp_from: alerts@grafana.com
+route:
+  receiver: extra-receiver
+receivers:
+  - name: extra-receiver
+    email_configs:
+      - to: alerts@grafana.com`,
+		},
+	}
 
-		am := &Alertmanager{
-			crypto: testCryptoForDecrypt,
-		}
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	ctx := context.Background()
 
-		rawDecrypted, _, err := am.decryptConfiguration(context.Background(), &inputCfg)
-		require.NoError(t, err)
+	c := AlertmanagerConfig{
+		OrgID:         1,
+		TenantID:      tenantID,
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
+		PromoteConfig: true,
+	}
 
-		currentJSON, err := json.Marshal(inputCfg)
-		require.NoError(t, err)
-		require.JSONEq(t, testGrafanaConfigWithEncryptedSecret, string(currentJSON), "Original configuration should not be modified")
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store)
+	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.SilencesFilename, ""))
+	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
 
-		var decryptedCfg apimodels.PostableUserConfig
-		require.NoError(t, json.Unmarshal(rawDecrypted, &decryptedCfg))
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
 
-		found := false
-		for _, rcv := range decryptedCfg.AlertmanagerConfig.Receivers {
-			for _, gmr := range rcv.GrafanaManagedReceivers {
-				if gmr.Type == "webhook" && gmr.SecureSettings["password"] == testPassword {
-					found = true
-				}
-			}
-		}
-		require.True(t, found, "Decrypted configuration should contain decrypted password")
+	err = am.SaveAndApplyConfig(ctx, &cfg)
+	require.NoError(t, err)
+
+	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
+	found := slices.ContainsFunc(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers, func(rcv *apimodels.PostableApiReceiver) bool {
+		return strings.Contains(rcv.Name, "extra-receiver")
 	})
+	require.True(t, found)
+}
+
+func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
+	const tenantID = "test"
+
+	var configSent client.UserGrafanaConfig
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+		} else if r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/config") {
+			// If this is a GET method, Grafana requests the current configuration to compare.
+			// Return an empty config to ensure it gets replaced
+			w.Header().Add("content-type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: &apimodels.PostableUserConfig{},
+			}))
+			return
+		}
+
+		w.Header().Add("content-type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
+	}))
+	defer server.Close()
+
+	cfg := apimodels.PostableUserConfig{
+		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+			Config: apimodels.Config{
+				Route: &apimodels.Route{
+					Receiver: "grafana-default-email",
+				},
+			},
+			Receivers: []*apimodels.PostableApiReceiver{
+				{
+					Receiver: config.Receiver{Name: "grafana-default-email"},
+					PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+						GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+							{
+								Name:     "email receiver",
+								Type:     "email",
+								Settings: apimodels.RawMessage(`{"addresses":"<example@email.com>"}`),
+							},
+						},
+					},
+				},
+			},
+		},
+		ExtraConfigs: []apimodels.ExtraConfiguration{
+			{
+				Identifier: "test-external",
+				MergeMatchers: []*labels.Matcher{
+					{
+						Type:  labels.MatchEqual,
+						Name:  "test",
+						Value: "test",
+					},
+				},
+				AlertmanagerConfig: `global:
+  smtp_smarthost: localhost:587
+  smtp_from: alerts@grafana.com
+route:
+  receiver: extra-receiver
+receivers:
+  - name: extra-receiver
+    email_configs:
+      - to: alerts@grafana.com`,
+			},
+		},
+	}
+
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	ctx := context.Background()
+	// Encrypt extra configs since this tests the database path
+	err := tc.EncryptExtraConfigs(ctx, &cfg)
+	require.NoError(t, err)
+
+	c := AlertmanagerConfig{
+		OrgID:         1,
+		TenantID:      tenantID,
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
+		PromoteConfig: true,
+	}
+
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store)
+	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.SilencesFilename, ""))
+	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
+
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+
+	configJSON, err := json.Marshal(cfg)
+	require.NoError(t, err)
+	config := &ngmodels.AlertConfiguration{
+		AlertmanagerConfiguration: string(configJSON),
+	}
+
+	err = am.CompareAndSendConfiguration(ctx, config)
+	require.NoError(t, err)
+
+	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
+	found := slices.ContainsFunc(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers, func(rcv *apimodels.PostableApiReceiver) bool {
+		return strings.Contains(rcv.Name, "extra-receiver")
+	})
+	require.True(t, found)
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
@@ -683,7 +788,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, fstore, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -851,7 +956,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -885,7 +990,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -971,7 +1076,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -1049,7 +1154,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should start with the default config.
@@ -1088,7 +1193,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, newTestCrypto(secretsService), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Valid template
