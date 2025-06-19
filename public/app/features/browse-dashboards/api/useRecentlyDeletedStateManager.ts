@@ -1,3 +1,4 @@
+import { store } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
 import { SearchState } from 'app/features/search/types';
@@ -10,7 +11,7 @@ import { initialState, SearchStateManager } from '../../search/state/SearchState
 // to trigger the skeleton state.
 export class TrashStateManager extends SearchStateManager {
   setStateAndDoSearch(state: Partial<SearchState>) {
-    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
+    const sort = state.sort || this.state.sort || store.get(SEARCH_SELECTED_SORT) || undefined;
 
     const query = state.query ?? this.state.query;
     const tags = state.tag ?? this.state.tag;
