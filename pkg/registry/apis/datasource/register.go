@@ -36,6 +36,7 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo utils.ResourceInfo
+	datasourceResourceInfo utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same pluginid!
@@ -114,13 +115,14 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
 ) (*DataSourceAPIBuilder, error) {
-	ri, err := resourceFromPluginID(plugin.ID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	builder := &DataSourceAPIBuilder{
-		connectionResourceInfo: ri,
+		connectionResourceInfo: datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
+		datasourceResourceInfo: datasource.GenericDataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID+"-config"),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
@@ -130,7 +132,7 @@ func NewDataSourceAPIBuilder(
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(ri.GroupResource().Group)
+		builder.queryTypes, err = getHardcodedQueryTypes(group)
 	}
 	return builder, err
 }
@@ -164,8 +166,11 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasource.DataSourceConnection{},
 		&datasource.DataSourceConnectionList{},
+		&datasource.GenericDataSource{},
+		&datasource.GenericDataSourceList{},
 		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
+
 		// Query handler
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
@@ -195,16 +200,26 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
-	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
-	if err != nil {
-		return utils.ResourceInfo{}, err
-	}
-	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
-}
-
-func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
+
+	ds := b.datasourceResourceInfo
+	legacyStore := &legacyStorage{
+		datasources:  b.datasources,
+		resourceInfo: &ds,
+	}
+	storage[ds.StoragePath()] = legacyStore
+
+	// if false {
+	// 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{

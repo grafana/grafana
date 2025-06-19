@@ -8,14 +8,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/stretchr/testify/require"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestSubQueryConnect(t *testing.T) {
@@ -115,7 +116,19 @@ func (m mockResponder) Object(statusCode int, obj runtime.Object) {
 func (m mockResponder) Error(err error) {
 }
 
+var _ PluginDatasourceProvider = (*mockDatasources)(nil)
+
 type mockDatasources struct {
+}
+
+// GetDataSource implements PluginDatasourceProvider.
+func (m mockDatasources) GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error) {
+	return nil, nil
+}
+
+// ListDataSource implements PluginDatasourceProvider.
+func (m mockDatasources) ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error) {
+	return nil, nil
 }
 
 // Get gets a specific datasource (that the user in context can see)

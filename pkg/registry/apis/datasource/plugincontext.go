@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
@@ -26,6 +23,12 @@ type PluginDatasourceProvider interface {
 
 	// List lists all data sources the user in context can see
 	List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
+
+	// Get a single datasurce
+	GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error)
+
+	// List all datasources
+	ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error)
 
 	// Return settings (decrypted!) for a specific plugin
 	// This will require "query" permission for the user in context
@@ -49,6 +52,9 @@ func ProvideDefaultPluginConfigs(
 		dsService:       dsService,
 		dsCache:         dsCache,
 		contextProvider: contextProvider,
+		converter: &converter{
+			mapper: types.OrgNamespaceFormatter, // TODO -- from cfg!!!
+		},
 	}
 }
 
@@ -56,6 +62,7 @@ type cachingDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
+	converter       *converter
 }
 
 func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSONData) PluginDatasourceProvider {
@@ -64,6 +71,7 @@ func (q *cachingDatasourceProvider) GetDatasourceProvider(pluginJson plugins.JSO
 		dsService:       q.dsService,
 		dsCache:         q.dsCache,
 		contextProvider: q.contextProvider,
+		converter:       q.converter,
 	}
 }
 
@@ -72,6 +80,7 @@ type scopedDatasourceProvider struct {
 	dsService       datasources.DataSourceService
 	dsCache         datasources.CacheService
 	contextProvider *plugincontext.Provider
+	converter       *converter
 }
 
 var (
@@ -80,10 +89,6 @@ var (
 )
 
 func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -92,7 +97,7 @@ func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alph
 	if err != nil {
 		return nil, err
 	}
-	return asConnection(ds, info.Value)
+	return q.converter.asConnection(ds)
 }
 
 func (q *scopedDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
@@ -113,7 +118,7 @@ func (q *scopedDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSour
 		Items: []v0alpha1.DataSourceConnection{},
 	}
 	for _, ds := range dss {
-		v, _ := asConnection(ds, info.Value)
+		v, _ := q.converter.asConnection(ds)
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil
@@ -126,20 +131,40 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
 }
 
-func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {
-	v := &v0alpha1.DataSourceConnection{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         ns,
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-		},
-		Title: ds.Name,
-	}
-	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta, err := utils.MetaAccessor(v)
+// GetDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error) {
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		meta.SetUpdatedTimestamp(&ds.Updated)
+		return nil, err
 	}
-	return v, err
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	if err != nil {
+		return nil, err
+	}
+	return q.converter.asGenericDataSource(ds)
+}
+
+// ListDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	dss, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		OrgID:    info.OrgID,
+		Type:     q.plugin.ID,
+		AliasIDs: q.plugin.AliasIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := &v0alpha1.GenericDataSourceList{
+		Items: []v0alpha1.GenericDataSource{},
+	}
+	for _, ds := range dss {
+		v, _ := q.converter.asGenericDataSource(ds)
+		result.Items = append(result.Items, *v)
+	}
+	return result, nil
 }

@@ -3,6 +3,8 @@ package datasource
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -10,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type QuerierFactoryFunc func(ctx context.Context, ri utils.ResourceInfo, pj plugins.JSONData) (Querier, error)
