@@ -6,6 +6,7 @@ import {
   type AngularMeta,
   type PluginDependencies,
   type PluginExtensions,
+  AppPlugin,
 } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -85,6 +86,10 @@ describe('pluginPreloader', () => {
     clearPreloadedPluginsCache();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('preloadPlugins()', () => {
     it('should return early when no apps are provided', async () => {
       await preloadPlugins([]);
@@ -114,7 +119,7 @@ describe('pluginPreloader', () => {
       });
 
       getPluginSettingsMock.mockResolvedValue(mockPluginMeta);
-      importAppPluginMock.mockResolvedValue({} as any);
+      importAppPluginMock.mockResolvedValue(new AppPlugin());
 
       await preloadPlugins([appConfig]);
 
@@ -151,7 +156,7 @@ describe('pluginPreloader', () => {
       });
 
       getPluginSettingsMock.mockResolvedValueOnce(mockPluginMeta1).mockResolvedValueOnce(mockPluginMeta2);
-      importAppPluginMock.mockResolvedValue({} as any);
+      importAppPluginMock.mockResolvedValue(new AppPlugin());
 
       await preloadPlugins(appConfigs);
 
@@ -183,7 +188,7 @@ describe('pluginPreloader', () => {
       });
 
       getPluginSettingsMock.mockResolvedValue(mockPluginMeta);
-      importAppPluginMock.mockResolvedValue({} as any);
+      importAppPluginMock.mockResolvedValue(new AppPlugin());
 
       await preloadPlugins(appConfigs);
       await preloadPlugins(appConfigs);
@@ -194,6 +199,8 @@ describe('pluginPreloader', () => {
     });
 
     it('should not preload plugins twice, even if the initial has not finished yet', async () => {
+      jest.useFakeTimers();
+
       const appConfigs = [
         createMockAppPluginConfig({
           id: 'plugin-1',
@@ -211,17 +218,21 @@ describe('pluginPreloader', () => {
       getPluginSettingsMock.mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta), 100))
       );
-      importAppPluginMock.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)));
+      importAppPluginMock.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(new AppPlugin()), 100))
+      );
 
-      // We are not awaiting the first call, so the second one kicks off before the first one has finished
       preloadPlugins(appConfigs);
-      await preloadPlugins(appConfigs);
+      preloadPlugins(appConfigs);
+      await jest.runAllTimersAsync();
 
       expect(getPluginSettingsMock).toHaveBeenCalledTimes(1);
       expect(importAppPluginMock).toHaveBeenCalledTimes(1);
     });
 
     it('should not preload plugins twice, even if the upcoming calls have a different set of plugins', async () => {
+      jest.useFakeTimers();
+
       const appConfig1 = createMockAppPluginConfig({
         id: 'plugin-1',
         path: '/path/to/plugin1',
@@ -250,11 +261,12 @@ describe('pluginPreloader', () => {
         .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta1), 100)))
         .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta2), 100)));
       importAppPluginMock
-        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)))
-        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)));
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(new AppPlugin()), 100)))
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(new AppPlugin()), 100)));
 
       preloadPlugins([appConfig1]);
-      await preloadPlugins([appConfig1, appConfig2]);
+      preloadPlugins([appConfig1, appConfig2]);
+      await jest.runAllTimersAsync();
 
       // If there is no cache, these would be called three times
       expect(getPluginSettingsMock).toHaveBeenCalledTimes(2);
