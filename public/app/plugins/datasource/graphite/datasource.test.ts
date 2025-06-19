@@ -462,6 +462,52 @@ describe('graphiteDatasource', () => {
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(aMetricName,sumSeries(aMetricName))'));
     });
 
+    it('should use scoped variables when nesting query references', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['globalValue'] } }]);
+
+      const originalTargetMap = {
+        A: '$metric',
+        B: 'sumSeries(#A)',
+      };
+
+      const scopedVars = {
+        metric: { text: 'scopedValue', value: 'scopedValue' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$metric' }, { target: 'sumSeries(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[1]).toBe('target=' + encodeURIComponent('sumSeries(scopedValue)'));
+    });
+
+    it('should apply scoped variables to nested references with hidden targets', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'server', current: { value: ['global'] } }]);
+
+      const originalTargetMap = {
+        A: '$server.cpu',
+        B: 'avg(#A)',
+      };
+
+      const scopedVars = {
+        server: { text: 'web01', value: 'web01' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$server.cpu', hide: true }, { target: 'avg(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[0]).toBe('target=' + encodeURIComponent('avg(web01.cpu)'));
+    });
+
     it('should fix wrong minute interval parameters', () => {
       const originalTargetMap = {
         A: "summarize(prod.25m.count, '25m', 'sum')",

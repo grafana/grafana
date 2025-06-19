@@ -1029,7 +1029,7 @@ export class GraphiteDatasource
       }
 
       targetValue = targets[target.refId];
-      targetValue = this.templateSrv.replace(targetValue.replace(regex, nestedSeriesRegexReplacer));
+      targetValue = this.templateSrv.replace(targetValue.replace(regex, nestedSeriesRegexReplacer), scopedVars);
       targets[target.refId] = targetValue;
 
       if (!target.hide) {
