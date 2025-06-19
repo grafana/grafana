@@ -3,6 +3,7 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -11,42 +12,50 @@ import (
 )
 
 type OpenFeatureService struct {
-	cfg      *setting.Cfg
 	log      log.Logger
 	provider openfeature.FeatureProvider
 	Client   openfeature.IClient
 }
 
-func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
-	var provider openfeature.FeatureProvider
-	var err error
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		if cfg.OpenFeature.URL == nil {
-			return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
-		}
-
-		provider, err = newGOFFProvider(cfg.OpenFeature.URL.String())
-	} else {
-		provider, err = newStaticProvider(cfg)
+func provider(pType string, u *url.URL, staticFlags map[string]bool) (openfeature.FeatureProvider, error) {
+	if pType != setting.GOFFProviderType {
+		return newStaticProvider(staticFlags)
 	}
 
+	if u.String() == "" {
+		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
+	}
+
+	return newGOFFProvider(u.String())
+}
+
+func NewOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool) (*OpenFeatureService, error) {
+	p, err := provider(pType, u, staticFlags)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create %s feature provider: %w", cfg.OpenFeature.ProviderType, err)
+		return nil, fmt.Errorf("failed to create feature provider: type %s, %w", pType, err)
 	}
 
-	if err := openfeature.SetProviderAndWait(provider); err != nil {
-		return nil, fmt.Errorf("failed to set global %s feature provider: %w", cfg.OpenFeature.ProviderType, err)
+	if err := openfeature.SetProviderAndWait(p); err != nil {
+		return nil, fmt.Errorf("failed to set global feature provider: %s, %w", pType, err)
 	}
-
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
 
 	client := openfeature.NewClient("grafana-openfeature-client")
 	return &OpenFeatureService{
-		cfg:      cfg,
 		log:      log.New("openfeatureservice"),
-		provider: provider,
+		provider: p,
 		Client:   client,
 	}, nil
+}
+
+// used for wiring dependencies in ST grafana
+func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
+	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
+	}
+
+	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
+	return NewOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags)
 }
 
 func (s *OpenFeatureService) EvalFlagWithStaticProvider(ctx context.Context, flagKey string) (openfeature.BooleanEvaluationDetails, error) {

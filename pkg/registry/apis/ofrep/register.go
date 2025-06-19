@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
+	"path"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -27,22 +29,26 @@ var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 
+const ofrepPath = "/ofrep/v1/evaluate/flags"
+
 type APIBuilder struct {
-	cfg         *setting.Cfg
-	openFeature *featuremgmt.OpenFeatureService
-	logger      log.Logger
+	providerType string // TODO: is it really needed
+	url          *url.URL
+	openFeature  *featuremgmt.OpenFeatureService
+	logger       log.Logger
 }
 
-func NewAPIBuilder(cfg *setting.Cfg, openFeature *featuremgmt.OpenFeatureService) *APIBuilder {
+func NewAPIBuilder(providerType string, url *url.URL, openFeature *featuremgmt.OpenFeatureService) *APIBuilder {
 	return &APIBuilder{
-		cfg:         cfg,
-		openFeature: openFeature,
-		logger:      log.New("grafana-apiserver.feature-flags"),
+		providerType: providerType,
+		url:          url,
+		openFeature:  openFeature,
+		logger:       log.New("grafana-apiserver.feature-flags"),
 	}
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, openFeature *featuremgmt.OpenFeatureService) *APIBuilder {
-	b := NewAPIBuilder(cfg, openFeature)
+	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, openFeature)
 	apiregistration.RegisterAPI(b)
 	return b
 }
@@ -76,14 +82,11 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 }
 
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	// TODO: refactor this - before proxying we need to inspect if evalCtx's stackID matches the identity's stackID
-	// Also auth vs non-authed flags need to be handled differently.
-
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				// http://localhost:3000/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags
-				Path: "ofrep/v1/evaluate/flags",
+				Path: "ofrep/v1/evaluate/flags/",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{},
 				},
@@ -122,9 +125,9 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: replace with identity check
+	// TODO: replace with identity check ?
 	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx.IsSignedIn
+	isAuthedUser := ctx != nil && ctx.IsSignedIn
 	publicFlag := isPublicFlag(flagKey)
 
 	if !isAuthedUser && !publicFlag {
@@ -132,7 +135,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if b.cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+	if b.providerType == setting.GOFFProviderType {
 		// TODO: compare stackID in evalCtx and identity
 		b.proxyFlagReq(flagKey, isAuthedUser, w, r)
 		return
@@ -143,7 +146,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *APIBuilder) proxyFlagReq(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	proxy, err := b.newProxy(r.URL.Path)
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -170,10 +173,11 @@ func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.Re
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: replace with identity check
-	isAuthedUser := false
+	// TODO: replace with identity check ?
+	ctx := contexthandler.FromContext(r.Context())
+	isAuthedUser := ctx != nil && ctx.IsSignedIn
 
-	if b.cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+	if b.providerType == setting.GOFFProviderType {
 		// TODO: compare stackID in evalCtx and identity
 		b.proxyAllFlagReq(isAuthedUser, w, r)
 		return
@@ -205,7 +209,7 @@ func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter
 }
 
 func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	proxy, err := b.newProxy(r.URL.Path)
+	proxy, err := b.newProxy(ofrepPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -239,13 +243,13 @@ func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) 
 		return nil, fmt.Errorf("proxy path is required")
 	}
 
-	if b.cfg.OpenFeature.URL == nil {
-		return nil, fmt.Errorf("OpenFeature provider URL is not set")
+	if b.url == nil {
+		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
 	}
 
 	director := func(req *http.Request) {
-		req.URL.Scheme = b.cfg.OpenFeature.URL.Scheme
-		req.URL.Host = b.cfg.OpenFeature.URL.Host
+		req.URL.Scheme = b.url.Scheme
+		req.URL.Host = b.url.Host
 		req.URL.Path = proxyPath
 	}
 
@@ -263,9 +267,7 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 
 // TODO: public can be a property in pkg/services/featuremgmt/registry.go
 var publicFlags = map[string]bool{
-	"correlations":              true,
-	"publicDashboardsScene":     true,
-	"lokiExperimentalStreaming": true,
+	"testflag": true,
 }
 
 func isPublicFlag(flagKey string) bool {
