@@ -72,6 +72,8 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		children := &folders.FolderList{}
 		parentName := ""
+
+		// Hardcoded magic const to get root folders without parent.
 		if name != "general" {
 			parentName = name
 		}
