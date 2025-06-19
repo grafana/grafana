@@ -55,7 +55,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogList, LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
-import { getLogLevelFromKey } from 'app/features/logs/utils';
+import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
@@ -218,7 +218,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
   const flipOrderTimer = useRef<number | undefined>(undefined);
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
-  const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
+  const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
 
@@ -696,33 +696,72 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [logsQueries]
   );
 
+  const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
     (option: keyof LogListControlOptions, value: string | string[] | boolean) => {
       if (option === 'sortOrder' && isLogsSortOrder(value)) {
         sortOrderChanged(value);
       } else if (option === 'dedupStrategy' && isDedupStrategy(value)) {
         setDedupStrategy(value);
-      } else if (option === 'filterLevels' && Array.isArray(value)) {
-        const logLevels = value.map((level) => getLogLevelFromKey(level));
-        setFilterLevels(logLevels.length > 0 ? logLevels : undefined);
-        const logVolData = logsVolumeData?.data.filter(
-          (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
-        );
+      } else if (option === 'filterLevels' && Array.isArray(value) && logsVolumeEnabled) {
+        const logVolData =
+          logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations) ?? [];
         const grouped = groupBy(logVolData, 'meta.custom.datasourceName');
         const numberOfLogVolumes = Object.keys(grouped).length;
-        if (logLevels.length > 0 && logsVolumeEnabled && numberOfLogVolumes === 1) {
-          logLevels.forEach((level) => {
-            toggleLegendRef.current?.(level, SeriesVisibilityChangeMode.ToggleSelection);
-          });
+
+        // Not supported
+        if (numberOfLogVolumes > 1) {
+          return;
         }
+
+        const logsVolumeLevels = [
+          ...new Set(
+            logVolData.map((dataFrame) => {
+              const { level } = getLogLevelInfo(dataFrame, logVolData);
+              return getLogLevelFromKey(level);
+            })
+          ),
+        ];
+
+        setFilterLevels((currentFilterLevels: LogLevel[] | undefined) => {
+          const newLevels = value.map((level) => getLogLevelFromKey(level));
+          const newLogsVolumeLevels = newLevels.filter((level) => logsVolumeLevels.includes(level));
+          const prevLogsVolumeLevels = currentFilterLevels?.filter((level) => logsVolumeLevels.includes(level)) ?? [];
+
+          if (!newLogsVolumeLevels.length) {
+            toggleLegendRef.current?.(undefined, SeriesVisibilityChangeMode.ToggleSelection);
+            return undefined;
+          }
+
+          const addedLevels = newLogsVolumeLevels.filter((newLevel) => !prevLogsVolumeLevels.includes(newLevel));
+          const removedLevels = prevLogsVolumeLevels.filter((prevLevel) => !newLogsVolumeLevels.includes(prevLevel));
+
+          addedLevels.forEach((level) => {
+            visibilityChangedRef.current = true;
+            toggleLegendRef.current?.(
+              level,
+              !prevLogsVolumeLevels.length
+                ? SeriesVisibilityChangeMode.ToggleSelection
+                : SeriesVisibilityChangeMode.AppendToSelection
+            );
+          });
+          removedLevels.forEach((level) => {
+            visibilityChangedRef.current = true;
+            toggleLegendRef.current?.(level, SeriesVisibilityChangeMode.AppendToSelection);
+          });
+
+          return newLevels;
+        });
       }
     },
     [logsVolumeData?.data, logsVolumeEnabled, sortOrderChanged]
   );
 
-  const onDisplayedSeriesChanged = useCallback((levels: string[] | undefined) => {
-    if (levels === undefined) {
-      setFilterLevels(undefined);
+  console.log(filterLevels);
+
+  const onDisplayedSeriesChanged = useCallback((levels: string[]) => {
+    if (visibilityChangedRef.current) {
+      visibilityChangedRef.current = false;
       return;
     }
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
