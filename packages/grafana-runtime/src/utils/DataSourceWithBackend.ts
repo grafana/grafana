@@ -87,6 +87,8 @@ enum PluginRequestHeaders {
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
+  DashboardTitle = 'X-Dashboard-Title', // used by datasources to identify the dashboard title
+  PanelTitle = 'X-Panel-Title', // used by datasources to identify the panel title
 }
 
 /**
@@ -254,6 +256,12 @@ class DataSourceWithBackend<
     }
     if (request.skipQueryCache) {
       headers[PluginRequestHeaders.SkipQueryCache] = 'true';
+    }
+    if (request.dashboardTitle) {
+      headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
+    }
+    if (request.panelName) {
+      headers[PluginRequestHeaders.PanelTitle] = request.panelName;
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
