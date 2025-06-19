@@ -2,7 +2,14 @@ import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  SceneGridRow,
+  SceneObject,
+  SceneVariable,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -75,6 +82,7 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
+  movedObject?: SceneObject;
   source: SceneObject;
   description?: string;
   perform: () => void;
@@ -99,6 +107,16 @@ export interface RemoveElementActionHelperProps {
   undo: () => void;
 }
 
+export interface AddVariableActionHelperProps {
+  addedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
+export interface RemoveVariableActionHelperProps {
+  removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
+
 export interface ChangeTitleActionHelperProps {
   oldTitle: string;
   newTitle: string;
@@ -109,6 +127,13 @@ export interface ChangeDescriptionActionHelperProps {
   oldDescription: string;
   newDescription: string;
   source: DashboardScene;
+}
+
+export interface MoveElementActionHelperProps {
+  movedObject: SceneObject;
+  source: SceneObject;
+  perform: () => void;
+  undo: () => void;
 }
 
 export const dashboardEditActions = {
@@ -159,6 +184,35 @@ export const dashboardEditActions = {
     });
   },
 
+  addVariable({ source, addedObject }: AddVariableActionHelperProps) {
+    const varsBeforeAddition = [...source.state.variables];
+
+    dashboardEditActions.addElement({
+      source,
+      addedObject,
+      perform() {
+        source.setState({ variables: [...varsBeforeAddition, addedObject] });
+      },
+      undo() {
+        source.setState({ variables: [...varsBeforeAddition] });
+      },
+    });
+  },
+  removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
+    const varsBeforeRemoval = [...source.state.variables];
+
+    dashboardEditActions.removeElement({
+      source,
+      removedObject,
+      perform() {
+        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
+      },
+      undo() {
+        source.setState({ variables: varsBeforeRemoval });
+      },
+    });
+  },
+
   changeTitle({ source, oldTitle, newTitle }: ChangeTitleActionHelperProps) {
     dashboardEditActions.edit({
       description: t('dashboard.title.action', 'Change dashboard title'),
@@ -182,6 +236,25 @@ export const dashboardEditActions = {
       undo: () => {
         source.setState({ description: oldDescription });
       },
+    });
+  },
+
+  moveElement(props: MoveElementActionHelperProps) {
+    const { movedObject, source, perform, undo } = props;
+
+    const element = getEditableElementFor(movedObject);
+    if (!element) {
+      throw new Error('Moved object is not an editable element');
+    }
+
+    const typeName = element.getEditableElementInfo().typeName;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
+      movedObject,
+      source,
+      perform,
+      undo,
     });
   },
 };

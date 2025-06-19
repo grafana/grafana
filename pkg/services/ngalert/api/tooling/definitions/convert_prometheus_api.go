@@ -1,9 +1,7 @@
 package definitions
 
 import (
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
 )
 
 // Route for mimirtool
@@ -230,7 +228,7 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       200: GettableAlertmanagerUserConfig
+//       200: AlertmanagerUserConfig
 //       403: ForbiddenError
 
 // Route for `mimirtool alertmanager delete`
@@ -347,33 +345,8 @@ type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
 
 // swagger:model
 type AlertmanagerUserConfig struct {
-	AlertmanagerConfig config.Config     `yaml:"alertmanager_config" json:"alertmanager_config"`
-	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-}
-
-func (c *AlertmanagerUserConfig) UnmarshalYAML(value *yaml.Node) error {
-	// mimirtool sends alertmanager_config as a string
-	type cortexAlertmanagerUserConfig struct {
-		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
-	}
-
-	var tmp cortexAlertmanagerUserConfig
-
-	if err := value.Decode(&tmp); err != nil {
-		return err
-	}
-
-	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
-		return err
-	}
-	c.TemplateFiles = tmp.TemplateFiles
-
-	return nil
-}
-
-// swagger:model
-type GettableAlertmanagerUserConfig struct {
+	// Configuration for Alertmanager in YAML format.
+	// in: body
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 }
