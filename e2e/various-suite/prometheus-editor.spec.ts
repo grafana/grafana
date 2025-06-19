@@ -1,4 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../utils';
 
 import { getResources } from './helpers/prometheus-helpers';
