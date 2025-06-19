@@ -4,17 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
-func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) (authorizer.Authorizer, authlib.AccessClient) {
+func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) authlib.AccessClient {
 	client := accesscontrol.NewLegacyAccessClient(
 		ac,
 		accesscontrol.ResourceAuthorizerOptions{
@@ -69,5 +66,5 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 		},
 	)
 
-	return gfauthorizer.NewResourceAuthorizer(client), client
+	return client
 }
