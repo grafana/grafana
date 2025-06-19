@@ -19,6 +19,11 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
+import { getDebounceTimeInMilliseconds } from '../../../caching';
+import { METRIC_LABEL } from '../../../components/metrics-browser/types';
+import { regexifyLabelValuesQueryString } from '../../parsingUtils';
+import { formatPrometheusLabelFilters } from '../MetricCombobox';
+
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
@@ -27,7 +32,6 @@ import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  getBackendSearchMetrics,
   placeholders,
   promTypes,
   setMetrics,
@@ -45,7 +49,7 @@ import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
 export const MetricsModal = (props: MetricsModalProps) => {
-  const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
+  const { datasource, isOpen, onClose, onChange, query, initialMetrics, timeRange } = props;
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
 
@@ -97,17 +101,25 @@ export const MetricsModal = (props: MetricsModalProps) => {
       debounce(async (metricText: string) => {
         dispatch(setIsLoading(true));
 
-        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
+        const queryString = regexifyLabelValuesQueryString(metricText);
+        const filterArray = query.labels ? formatPrometheusLabelFilters(query.labels) : [];
+        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+
+        const results = await datasource.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+
+        const resultsOptions = results.map((result) => ({
+          value: result,
+        }));
 
         dispatch(
           filterMetricsBackend({
-            metrics: metrics,
-            filteredMetricCount: metrics.length,
+            metrics: resultsOptions,
+            filteredMetricCount: resultsOptions.length,
             isLoading: false,
           })
         );
-      }, datasource.getDebounceTimeInMilliseconds()),
-    [datasource, query]
+      }, getDebounceTimeInMilliseconds(datasource.cacheLevel)),
+    [datasource.cacheLevel, datasource.languageProvider, query.labels, timeRange]
   );
 
   function fuzzyNameDispatch(haystackData: string[][]) {

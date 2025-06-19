@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Estado de alerta",
       "annotations": "Anotações",
-      "description-missing-series-evaluations": "Quantos intervalos de avaliação consecutivos sem dados para uma dimensão devem passar antes que o estado de alerta seja considerado obsoleto e resolvido automaticamente. Se nenhum valor for fornecido, o valor será predefinido para 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Avaliação",
       "evaluation-paused": "Avaliação de alerta atualmente pausada",
       "evaluation-paused-description": "As notificações para esta regra não serão acionadas e não serão criadas instâncias de alerta até que a regra seja retirada da pausa.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Última atualização por",
       "missing-series-resolve": "Avaliações de séries em falta para resolver",
       "no-annotations": "Sem anotações",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Ponto de contacto",
+        "group-by": "Agrupado por",
+        "group-title": "",
+        "mute-timings": "Tempos de silêncio",
+        "timing-options": ""
+      },
       "pending-period": "Período pendente",
       "rule": "Regra",
       "rule-identifier": "Identificador da regra",
@@ -449,6 +457,15 @@
       "export": "Exportar",
       "silence-notifications": "Silenciar notificações",
       "with-modifications": "Com modificações"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -901,6 +918,7 @@
     "copy-to-clipboard": "Copiar a \"{{label}}\" para a área de transferência",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Painel de controlo",
         "dashboard-and-panel": "",
         "evaluation-interval": "Intervalo de avaliação",
@@ -1510,6 +1528,10 @@
         "no-rules-body": "Não existem regras para importar. Selecione um espaço de nome ou grupo de regras diferente.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Sem regras para importar",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informação"
+        },
         "plugin-rules-warning": {
           "text": "Detetámos que algumas regras são geridas por plugins. Estas regras não serão importadas.",
           "title": "Algumas regras estão excluídas da importação"
@@ -4023,6 +4045,9 @@
         "title": "Opções de linha"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remover a propriedade"
@@ -4513,7 +4538,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Alterações",
-      "label-details": "Detalhes"
+      "label-details": "Detalhes",
+      "title": "Guardar o painel de controlo",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada.<1></1><2>Ainda pretende guardar este painel de controlo?</2>",
@@ -4587,6 +4615,9 @@
       "tab-warning": {
         "title-not-unique": "Este título não é único"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Adicionar",
@@ -5122,6 +5153,11 @@
       "body-name-already-exists": "Já existe um painel de controlo com o mesmo nome na pasta selecionada. Ainda pretende guardar este painel de controlo?",
       "title-name-already-exists": "Nome já existente"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5239,7 +5275,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Alterações",
-        "label-details": "Detalhes"
+        "label-details": "Detalhes",
+        "title": "Guardar o painel de controlo",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7665,6 +7704,14 @@
       "show-details": "Ocultar detalhes do registo",
       "unpin-from-outline": "Retirar registo"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Erro ao carregar mais registos.",
       "no-more-logs-available": "Não há mais registos disponíveis.",
@@ -7718,6 +7765,7 @@
       "escape-newlines": "Corrigir sequências de novas linhas e tabulações ignoradas incorretamente nas linhas de registo",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Ocultar registos de hora/data",
       "hide-unique-labels": "Ocultar etiquetas únicas",
       "newest-first": "Ordenado por registos mais recentes primeiro - Clique para mostrar os mais antigos primeiro",
@@ -7726,6 +7774,7 @@
       "remove-escaping": "Remover a opção de ignorar",
       "scroll-bottom": "Rolar para baixo",
       "scroll-top": "Rolar para o topo",
+      "show-search": "",
       "show-timestamps": "Mostrar registos de data e hora",
       "show-unique-labels": "Mostrar etiquetas únicas",
       "unwrap-lines": "Revelar linhas",
@@ -10616,6 +10665,11 @@
       "tooltip-disable": "Desativar",
       "tooltip-enable": "Ativar"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Desligado"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Adicionar valor de enumeração",
       "generate-enum-values-from-data": "Gerar valores de enumeração a partir de dados"
@@ -10794,6 +10848,9 @@
       "time-in-ascending-order": "Tempo em ordem ascendente"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automóvel",
+      "field-order-manual": "",
       "first-frame-warning": "Organizar campos só funciona com um único frame. Considere aplicar uma transformação de junção ou filtrar a entrada primeiro."
     },
     "partion-by-values-editor": {
