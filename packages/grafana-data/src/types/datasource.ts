@@ -307,9 +307,9 @@ abstract class DataSourceApi<
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
-   * Verify adhoc filters applicability based on queries
+   * Verify adhoc filters applicability based on queries and current filters
    */
-  getApplicableFilters?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<MetricFindValue[]>;
+  getApplicableFilters?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<string[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -640,7 +640,6 @@ export interface MetricFindValue {
   value?: string | number;
   group?: string;
   expandable?: boolean;
-  nonApplicable?: boolean;
 }
 
 export interface DataSourceJsonData {

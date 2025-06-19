@@ -501,30 +501,14 @@ export class PrometheusDatasource
     };
   }
 
-  async getApplicableFilters(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+  async getApplicableFilters(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<string[]> {
     if (!options.timeRange) {
       options.timeRange = getDefaultTimeRange();
     }
 
     console.log(options);
 
-    return Promise.resolve([
-      {
-        text: 'namespace',
-        value: 'namespace',
-        nonApplicable: true,
-      },
-      {
-        text: 'container',
-        value: 'container',
-        nonApplicable: true,
-      },
-      {
-        text: 'asserts_env',
-        value: 'asserts_env',
-        nonApplicable: true,
-      },
-    ]);
+    return Promise.resolve(['cluster']);
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
