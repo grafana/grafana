@@ -100,7 +100,7 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 
 // TODO: don't rollback every message when a single error happens
 func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
-	messageIDs := make([]string, 0)
+	messageIDs := make([]int64, 0)
 
 	txErr := w.database.Transaction(ctx, func(ctx context.Context) error {
 		timeoutCtx, cancel := context.WithTimeout(ctx, w.config.ReceiveTimeout)
@@ -141,7 +141,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 	opts = append(opts, trace.WithAttributes(
 		attribute.String("message.requestID", message.RequestID),
-		attribute.String("message.id", message.MessageID),
+		attribute.Int64("message.id", message.MessageID),
 		attribute.String("message.type", string(message.Type)),
 		attribute.String("message.namespace", message.Namespace),
 		attribute.String("message.secureValue.name", message.Name),

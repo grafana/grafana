@@ -241,7 +241,7 @@ func (appendSecureValueOutbox) Validate() error { return nil }
 
 type receiveNSecureValueOutbox struct {
 	sqltemplate.SQLTemplate
-	MessageIDs []string
+	MessageIDs []int64
 }
 
 func (receiveNSecureValueOutbox) Validate() error { return nil }
@@ -255,14 +255,14 @@ func (fetchMessageIDsOutbox) Validate() error { return nil }
 
 type deleteSecureValueOutbox struct {
 	sqltemplate.SQLTemplate
-	MessageID string
+	MessageID int64
 }
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
 
 type incrementReceiveCountOutbox struct {
 	sqltemplate.SQLTemplate
-	MessageIDs []string
+	MessageIDs []int64
 }
 
 func (incrementReceiveCountOutbox) Validate() error { return nil }

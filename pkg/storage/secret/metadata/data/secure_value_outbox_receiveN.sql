@@ -1,6 +1,6 @@
 SELECT
   {{ .Ident "request_id" }},
-  {{ .Ident "uid" }},
+  {{ .Ident "id" }},
   {{ .Ident "message_type" }},
   {{ .Ident "name" }},
   {{ .Ident "namespace" }},
@@ -12,8 +12,8 @@ SELECT
 FROM
   {{ .Ident "secret_secure_value_outbox" }}
 WHERE 
-  {{ .Ident "uid" }} IN ({{ .ArgList .MessageIDs }})
+  {{ .Ident "id" }} IN ({{ .ArgList .MessageIDs }})
 ORDER BY
-  {{ .Ident "created" }} ASC
+  {{ .Ident "id" }} ASC
 {{ .SelectFor "UPDATE SKIP LOCKED" }}
 ;

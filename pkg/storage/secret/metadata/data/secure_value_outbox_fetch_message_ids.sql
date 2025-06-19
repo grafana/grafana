@@ -1,6 +1,6 @@
 SELECT
-  {{ .Ident "uid" }}
+  {{ .Ident "id" }}
 FROM {{ .Ident "secret_secure_value_outbox" }}
-ORDER BY created ASC
+ORDER BY id ASC
 LIMIT {{ .Arg .ReceiveLimit }}
 ;

@@ -1,6 +1,6 @@
 SELECT
   "request_id",
-  "uid",
+  "id",
   "message_type",
   "name",
   "namespace",
@@ -12,7 +12,7 @@ SELECT
 FROM
   "secret_secure_value_outbox"
 WHERE 
-  "uid" IN ('a', 'b', 'c')
+  "id" IN (1, 2, 3)
 ORDER BY
-  "created" ASC
+  "id" ASC
 ;
