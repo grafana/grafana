@@ -66,9 +66,13 @@ describe.skip('Prometheus query editor', () => {
     // check options
     e2e.components.DataSource.Prometheus.queryEditor.legend().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
-    cy.get(`[data-testid="${selectors.components.DataSource.Prometheus.queryEditor.step}"]`).scrollIntoView().should('exist');
+    cy.get(`[data-testid="${selectors.components.DataSource.Prometheus.queryEditor.step}"]`)
+      .scrollIntoView()
+      .should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`[data-testid="${selectors.components.DataSource.Prometheus.queryEditor.step}"]`).scrollIntoView().should('exist');
+    cy.get(`[data-testid="${selectors.components.DataSource.Prometheus.queryEditor.step}"]`)
+      .scrollIntoView()
+      .should('exist');
   });
 
   describe('Code editor', () => {
