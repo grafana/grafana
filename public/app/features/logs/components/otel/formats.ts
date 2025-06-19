@@ -47,8 +47,11 @@ export function getDisplayFormatForLanguage(language: string) {
 }
 
 export function getDefaultOTelDisplayFormat() {
-  return ['severity_text', 'scope_name', 'exception_type', 'exception_message', LOG_LINE_BODY_FIELD_NAME];
+  return ['scope_name', 'thread_name', 'exception_type', 'exception_message', LOG_LINE_BODY_FIELD_NAME];
 }
+
+const OTEL_RESOURCE_ATTRS_REGEX = /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_)/;
+const OTEL_LOG_FIELDS_REGEX = /^(flags|observed_timestamp|scope_name|severity_number|severity_text|span_id|trace_id|detected_level)$/;
 
 export function getOtelFormattedBody(log: LogListModel) {
   if (!log.otelLanguage) {
