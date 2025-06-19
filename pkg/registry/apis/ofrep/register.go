@@ -2,11 +2,14 @@ package ofrep
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,21 +37,25 @@ const ofrepPath = "/ofrep/v1/evaluate/flags"
 type APIBuilder struct {
 	providerType    string // TODO: is it really needed
 	url             *url.URL
+	insecure        bool
+	caFile          string
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType string, url *url.URL, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
 	return &APIBuilder{
 		providerType:    providerType,
 		url:             url,
+		insecure:        insecure,
+		caFile:          caFile,
 		staticEvaluator: staticEvaluator,
 		logger:          log.New("grafana-apiserver.feature-flags"),
 	}
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
-	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, staticEvaluator)
+	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
 	return b
 }
@@ -247,13 +254,29 @@ func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) 
 		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
 	}
 
+	var caRoot *x509.CertPool
+	if b.caFile != "" {
+		var err error
+		caRoot, err = getCARoot(b.caFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	director := func(req *http.Request) {
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
 		req.URL.Path = proxyPath
 	}
 
-	return proxyutil.NewReverseProxy(b.logger, director), nil
+	proxy := proxyutil.NewReverseProxy(b.logger, director)
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: b.insecure,
+			RootCAs:            caRoot,
+		},
+	}
+	return proxy, nil
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
@@ -273,4 +296,14 @@ var publicFlags = map[string]bool{
 func isPublicFlag(flagKey string) bool {
 	_, exists := publicFlags[flagKey]
 	return exists
+}
+
+func getCARoot(caFile string) (*x509.CertPool, error) {
+	caCert, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, err
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	return caCertPool, nil
 }
