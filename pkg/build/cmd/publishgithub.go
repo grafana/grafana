@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v70/github"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
 

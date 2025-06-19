@@ -1,0 +1,32 @@
+docs_dir: docs
+edit_uri: edit/main/docs/
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+nav:
+  - index.md
+  - "Why Dagger?": why-dagger.md
+  - "Guides":
+    - guides/building.md
+    - guides/tracing.md
+  - "Artifact types":
+    - "Overview": artifact-types/index.md
+    - "Tarball": artifact-types/tarball.md
+    - "RPM": artifact-types/rpm.md
+    - "Debian": artifact-types/deb.md
+    - "Windows installer": artifact-types/windows-installer.md
+    - "Docker image": artifact-types/docker-image.md
+    - "ZIP": artifact-types/zip.md
+  - "Meta":
+    - meta/docs.md
+repo_url: https://github.com/grafana/grafana-build
+site_name: Grafana Build
+theme:
+  features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.footer
+  name: material
