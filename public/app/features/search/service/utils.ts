@@ -199,10 +199,6 @@ export function filterSearchResults(
     );
   }
 
-  if (query.sort) {
-    filtered = applySorting(filtered, query.sort);
-  }
-
   // Apply pagination
   if (query.page && query.limit) {
     const startIndex = (query.page - 1) * query.limit;
@@ -213,27 +209,6 @@ export function filterSearchResults(
   }
 
   return filtered;
-}
-
-/**
- * Applies sorting to search results
- */
-function applySorting(results: SearchHit[], sortOption: string): SearchHit[] {
-  const sorted = [...results];
-
-  switch (sortOption) {
-    case 'name_sort':
-      return sorted.sort((a, b) => a.title.localeCompare(b.title));
-    case 'name_sort_desc':
-      return sorted.sort((a, b) => b.title.localeCompare(a.title));
-    case 'created':
-    case 'created_desc':
-    case 'updated':
-    case 'updated_desc':
-      return sorted.sort((a, b) => a.title.localeCompare(b.title));
-    default:
-      return sorted.sort((a, b) => a.title.localeCompare(b.title));
-  }
 }
 
 class DeletedDashboardsCache {
