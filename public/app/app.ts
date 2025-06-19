@@ -65,7 +65,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { NAMESPACES } from './core/internationalization/constants';
+import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -147,8 +147,8 @@ export class GrafanaApp {
       initI18nPromise.then(async ({ language }) => {
         updateConfig({ language });
 
-        // Initialise scenes translations. Must finish before any scenes UI is rendered.
-        return loadPluginResources('grafana', language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
+        // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.
+        return loadPluginResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
       });
 
       setBackendSrv(backendSrv);
