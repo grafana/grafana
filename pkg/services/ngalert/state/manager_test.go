@@ -2058,3 +2058,219 @@ func mergeLabels(a, b data.Labels) data.Labels {
 	}
 	return result
 }
+
+// TestStateManager_HistorianIntegration tests that the state manager properly sends
+// all expected state transitions to the historian backend.
+func TestStateManager_HistorianIntegration(t *testing.T) {
+	baseInterval := 1 * time.Second
+	tN := func(n int) time.Time {
+		return time.Unix(0, 0).UTC().Add(time.Duration(n) * baseInterval)
+	}
+	t1 := tN(1)
+	t2 := tN(2)
+	t3 := tN(3)
+
+	labels1 := data.Labels{"instance": "server1", "job": "webapp"}
+	labels2 := data.Labels{"instance": "server2", "job": "webapp"}
+
+	baseRule := &models.AlertRule{
+		ID:              1,
+		OrgID:           1,
+		Title:           "test rule",
+		UID:             "test-rule-uid",
+		NamespaceUID:    "test-namespace",
+		IntervalSeconds: 10,
+		NoDataState:     models.NoData,
+		ExecErrState:    models.ErrorErrState,
+		For:             0,
+	}
+
+	type transition struct {
+		previousState eval.State
+		currentState  eval.State
+	}
+
+	scenarios := []struct {
+		name                string
+		rule                *models.AlertRule
+		evaluations         map[time.Time][]eval.Result
+		expectedTransitions map[time.Time][]transition
+	}{
+		{
+			name: "1:normal -> 1:alerting -> 1:normal",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Normal},
+				},
+				t2: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Normal},
+				},
+			},
+		},
+		{
+			name: "1:alerting, 2:alerting -> 2:alerting -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t2: {
+					// labels1 is missing from this evaluation
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t3: {
+					// Both labels1 and labels2 are missing
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> {} -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting, EvaluatedAt: t1},
+				},
+				t2: {
+					// labels1 is missing - first missing evaluation
+				},
+				t3: {
+					// labels1 is still missing - second missing evaluation
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> 1:recovering -> 1:normal",
+			rule: &models.AlertRule{
+				ID:              1,
+				OrgID:           1,
+				Title:           "test rule",
+				UID:             "test-rule-uid",
+				NamespaceUID:    "test-namespace",
+				IntervalSeconds: 10,
+				NoDataState:     models.NoData,
+				ExecErrState:    models.ErrorErrState,
+				For:             0,
+				KeepFiringFor:   10,
+			},
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Recovering},
+				},
+				t3: {
+					{previousState: eval.Recovering, currentState: eval.Normal},
+				},
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			historian := &state.FakeHistorian{}
+
+			cfg := state.ManagerCfg{
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clock.NewMock(),
+				Historian:     historian,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.NewNopLogger(),
+			}
+
+			mgr := state.NewManager(cfg, state.NewNoopPersister())
+
+			// Helper function to process one time step and verify historian
+			processTimeStep := func(evalTime time.Time) {
+				results := scenario.evaluations[evalTime]
+				expectedTransitions := scenario.expectedTransitions[evalTime]
+
+				for i := range results {
+					results[i].EvaluatedAt = evalTime
+				}
+
+				// Clear historian state transitions before the evaluation
+				historian.StateTransitions = nil
+
+				mgr.ProcessEvalResults(
+					context.Background(),
+					evalTime,
+					scenario.rule,
+					results,
+					make(data.Labels),
+					nil,
+				)
+
+				// Extract just the data we care about from the actual transitions
+				actualTransitions := make([]transition, len(historian.StateTransitions))
+				for i, t := range historian.StateTransitions {
+					actualTransitions[i] = transition{
+						previousState: t.PreviousState,
+						currentState:  t.State.State,
+					}
+				}
+
+				require.ElementsMatch(t, expectedTransitions, actualTransitions)
+			}
+
+			processTimeStep(t1)
+			processTimeStep(t2)
+			processTimeStep(t3)
+		})
+	}
+}

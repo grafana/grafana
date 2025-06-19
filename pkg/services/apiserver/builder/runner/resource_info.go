@@ -9,7 +9,7 @@ import (
 )
 
 func KindToResourceInfo(kind resource.Kind) utils.ResourceInfo {
-	return utils.NewResourceInfo(
+	r := utils.NewResourceInfo(
 		kind.Group(),
 		kind.Version(),
 		kind.GroupVersionResource().Resource,
@@ -19,4 +19,8 @@ func KindToResourceInfo(kind resource.Kind) utils.ResourceInfo {
 		func() runtime.Object { return kind.ZeroListValue() },
 		utils.TableColumns{}, // TODO: this only supports the default columns
 	)
+	if kind.Scope() == resource.ClusterScope {
+		r = r.WithClusterScope()
+	}
+	return r
 }

@@ -51,6 +51,7 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
   codeModeMetricNamesSuggestionLimit?: number;
@@ -188,3 +189,8 @@ export type RecordingRuleIdentifier = {
   identifier?: string;
   identifierValue?: string;
 };
+
+export const EMPTY_MATCHER = '{}';
+export const MATCH_ALL_LABELS_STR = '__name__!=""';
+export const MATCH_ALL_LABELS = '{__name__!=""}';
+export const METRIC_LABEL = '__name__';
