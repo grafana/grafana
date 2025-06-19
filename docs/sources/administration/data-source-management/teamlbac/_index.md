@@ -29,9 +29,9 @@ LBAC for data sources is currently generally available for `Loki` and in **exper
 | Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)               | ❌                         |
 | Prometheus  | PublicPreview | PublicPreview (requires GEM - Grafana Enterprise Metrics) | ❌                         |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **LBAC for data sources offers:**
 

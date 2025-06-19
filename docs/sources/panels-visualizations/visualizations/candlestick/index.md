@@ -116,9 +116,9 @@ The candlestick visualization attempts to map fields from your data to the appro
 - **Close** - Final (end) value of the given period.
 - **Volume** - Sample count in the given period (for example, number of trades).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The candlestick visualization legend doesn't display these values.
-{{% /admonition %}}
+{{< /admonition >}}
 
 If your data can't be mapped to these dimensions for some reason (for example, because the column names aren't the same), you can map them manually using the **Open**, **High**, **Low**, and **Close** fields under the **Candlestick** options in the panel editor:
 
