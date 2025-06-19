@@ -155,9 +155,8 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
-    await selectContactPoint('Email');
-
-    expect(await screen.findByText('Email')).toBeInTheDocument();
+    await selectContactPoint('lotsa-emails');
+    expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
   });
 
   describe.skip('switch modes enabled', () => {
