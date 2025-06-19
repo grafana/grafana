@@ -451,9 +451,6 @@ func TestLoader_Load(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
-			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
 			},
@@ -508,9 +505,6 @@ func TestLoader_Load(t *testing.T) {
 		src := &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
@@ -570,9 +564,6 @@ func TestLoader_Load(t *testing.T) {
 		src := &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"http://example.com"}
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false

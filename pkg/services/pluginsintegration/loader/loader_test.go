@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -566,9 +565,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, pluginPaths).Discover,
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
 			},
@@ -650,9 +647,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, pluginPaths).Discover,
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{
 					Status: plugins.SignatureStatusValid,
@@ -754,9 +749,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
 					},
-					PluginURIsFunc: func(ctx context.Context) []string {
-						return tt.pluginPaths
-					},
+					DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, tt.pluginPaths).Discover,
 				})
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
@@ -866,9 +859,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return tt.pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, tt.pluginPaths).Discover,
 		})
 		require.NoError(t, err)
 
@@ -933,9 +924,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1021,9 +1010,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "test-app"), filepath.Join(testDataDir(t), "test-app")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "test-app"), filepath.Join(testDataDir(t), "test-app")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1122,9 +1109,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{pluginDir1, pluginDir2}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir1, pluginDir2}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1163,9 +1148,7 @@ func TestLoader_AngularClass(t *testing.T) {
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return tc.class
 				},
-				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-				},
+				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 			}
 			// if angularDetected = true, it means that the detection has run
 			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{
@@ -1188,9 +1171,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
 			return plugins.ClassExternal
 		},
-		PluginURIsFunc: func(ctx context.Context) []string {
-			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-		},
+		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
 	for _, cfgTc := range []struct {
 		name string
@@ -1238,9 +1219,7 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
 			return plugins.ClassExternal
 		},
-		PluginURIsFunc: func(ctx context.Context) []string {
-			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-		},
+		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
 	for _, tc := range []struct {
 		name string
@@ -1369,9 +1348,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "nested-plugins")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "nested-plugins")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1392,9 +1369,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
 				},
-				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{filepath.Join(testDataDir(t), "nested-plugins")}
-				},
+				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "nested-plugins")}).Discover,
 			})
 			require.NoError(t, err)
 
@@ -1571,9 +1546,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "app-with-child")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "app-with-child")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1605,8 +1578,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
-	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false), reg),
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
@@ -1637,8 +1609,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
 	}
 
-	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false), reg),
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
