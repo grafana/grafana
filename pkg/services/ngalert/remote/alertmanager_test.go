@@ -549,15 +549,12 @@ func TestDecryptConfiguration(t *testing.T) {
 			decrypt: decryptFn,
 		}
 
-		rawDecrypted, _, err := am.decryptConfiguration(context.Background(), &inputCfg)
+		decryptedCfg, err := am.decryptConfiguration(context.Background(), &inputCfg)
 		require.NoError(t, err)
 
 		currentJSON, err := json.Marshal(inputCfg)
 		require.NoError(t, err)
 		require.JSONEq(t, testGrafanaConfigWithEncryptedSecret, string(currentJSON), "Original configuration should not be modified")
-
-		var decryptedCfg apimodels.PostableUserConfig
-		require.NoError(t, json.Unmarshal(rawDecrypted, &decryptedCfg))
 
 		found := false
 		for _, rcv := range decryptedCfg.AlertmanagerConfig.Receivers {
