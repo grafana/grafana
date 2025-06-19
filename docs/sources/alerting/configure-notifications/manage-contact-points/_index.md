@@ -133,9 +133,9 @@ On the **Contact Points** tab, you can:
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Contact points are assigned to a [specific Alertmanager](ref:configure-alertmanager) and cannot be used by notification policies in other Alertmanagers.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Supported contact point integrations
 
