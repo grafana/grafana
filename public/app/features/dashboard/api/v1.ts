@@ -124,6 +124,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
+          created: dash.metadata.creationTimestamp,
         },
         dashboard: {
           ...dash.spec,

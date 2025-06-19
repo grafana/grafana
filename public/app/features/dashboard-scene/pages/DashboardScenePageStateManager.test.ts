@@ -223,13 +223,13 @@ describe('DashboardScenePageStateManager v1', () => {
         const loader = new DashboardScenePageStateManager({});
 
         // set cache
-        loader.setSceneCache('fake-dash', new DashboardScene({title: 'Dashboard 1', uid: 'fake-dash', meta: {updated: 1}}, 'v1'));
+        loader.setSceneCache('fake-dash', new DashboardScene({title: 'Dashboard 1', uid: 'fake-dash', meta: {created: '1', version: 0}}, 'v1'));
 
         // should return cached scene
-        expect(loader.transformResponseToScene({meta: {updated: 1}}, {uid: 'fake-dash'}).state.title).toBe('Dashboard 1');
+        expect(loader.transformResponseToScene({meta: {created: '1', version: 0}, dashboard: {title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1}}, {uid: 'fake-dash', route: DashboardRoutes.Normal})?.state.title).toBe('Dashboard 1');
 
         // try loading new scene
-        loader.transformResponseToScene({meta: {updated: 2}, dashboard: {title: 'Dashboard 2'}}, {uid: 'fake-dash'});
+        loader.transformResponseToScene({meta: {created: '2', version: 0}, dashboard: {title: 'Dashboard 2', uid: 'fake-dash', schemaVersion: 1}}, {uid: 'fake-dash', route: DashboardRoutes.Normal});
 
         // should update cache with new scene
         expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
