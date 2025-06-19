@@ -140,5 +140,13 @@ describe('validatePath', () => {
       expect(validatePath('ftp://files.example.com/safe/path')).toBe('ftp://files.example.com/safe/path');
       expect(() => validatePath('ftp://files.example.com/../secrets')).toThrow(PathValidationError);
     });
+
+    it('should handle URLs with backslashes', () => {
+      expect(() => validatePath('https://api.example.com/\\example.com')).toThrow(PathValidationError);
+    });
+
+    it('should handle URLs with backslashes and dots in the path', () => {
+      expect(() => validatePath('https://api.example.com/\\..\\/admin')).toThrow(PathValidationError);
+    });
   });
 });
