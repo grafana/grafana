@@ -39,7 +39,7 @@ type Props = {
   onDisplayedSeriesChanged: (series: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
+  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
 };
 
 export const LogsVolumePanelList = ({

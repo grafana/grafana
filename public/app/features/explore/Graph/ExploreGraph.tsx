@@ -58,7 +58,7 @@ interface Props {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
   vizLegendOverrides?: Partial<VizLegendOptions>;
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
+  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
 }
 
 export function ExploreGraph({
@@ -174,7 +174,14 @@ export function ExploreGraph({
     dataLinkPostProcessor,
   };
 
-  function toggleLegend(name: string, mode: SeriesVisibilityChangeMode) {
+  function toggleLegend(name: string | undefined, mode: SeriesVisibilityChangeMode) {
+    if (!name) {
+      setFieldConfig({
+        ...fieldConfig,
+        overrides: [],
+      });
+      return;
+    }
     setFieldConfig(seriesVisibilityConfigFactory(name, mode, fieldConfig, data));
   }
 
