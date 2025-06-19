@@ -249,13 +249,13 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 			cbWithSpan := func(resp centrifuge.RPCReply, err error) {
 				defer span.End()
-
 				if err != nil {
 					span.SetStatus(codes.Error, err.Error())
 				} else {
 					span.AddEvent("result", trace.WithAttributes(attribute.String("data", string(resp.Data))))
 					span.SetStatus(codes.Ok, "")
 				}
+				cb(resp, err)
 			}
 
 			err := runConcurrentlyIfNeeded(ctx, semaphore, func() {
@@ -278,12 +278,12 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 			cbWithSpan := func(resp centrifuge.SubscribeReply, err error) {
 				defer span.End()
-
 				if err != nil {
 					span.SetStatus(codes.Error, err.Error())
 				} else {
 					span.SetStatus(codes.Ok, "")
 				}
+				cb(resp, err)
 			}
 
 			err := runConcurrentlyIfNeeded(ctx, semaphore, func() {
@@ -313,6 +313,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 				} else {
 					span.SetStatus(codes.Ok, "")
 				}
+				cb(resp, err)
 			}
 
 			err := runConcurrentlyIfNeeded(ctx, semaphore, func() {
