@@ -3180,8 +3180,57 @@
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "barchart": {
+    "config": {
+      "category-thresholds": "Thresholds",
+      "description-color-by-field": "Use the color value for a sibling field to color each bar value.",
+      "description-x-label-max-length": "X-axis labels will be truncated to the length provided",
+      "name-bar-radius": "Bar radius",
+      "name-bar-width": "Bar width",
+      "name-color-by-field": "Color by field",
+      "name-fill-opacity": "Fill opacity",
+      "name-full-highlight": "Highlight full area on hover",
+      "name-gradient-mode": "Gradient mode",
+      "name-group-width": "Group width",
+      "name-line-width": "Line width",
+      "name-orientation": "Orientation",
+      "name-show-thresholds": "Show thresholds",
+      "name-show-values": "Show values",
+      "name-stacking": "Stacking",
+      "name-transform": "Transform",
+      "name-x-axis": "X Axis",
+      "name-x-label-min-spacing": "X-axis labels minimum spacing",
+      "orientation-options": {
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontal",
+        "label-line-vertical": "Vertical"
+      },
+      "placeholder-x-axis": "First string or time field",
+      "rotate-x-labels": "Rotate x-axis tick labels",
+      "show-values-options": {
+        "label-always": "Always",
+        "label-auto": "Auto",
+        "label-never": "Never"
+      },
+      "transform-options": {
+        "description-constant": "The first value will be shown as a constant line",
+        "description-negative-y": "Flip the results to negative values on the y axis",
+        "label-constant": "Constant",
+        "label-negative-y": "Negative Y"
+      },
+      "x-label-max-length": "X-axis tick label max length"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
+      "gaps-options": {
+        "description-large": "Require {{spacing}} spacing",
+        "description-medium": "Require {{spacing}} spacing",
+        "description-none": "Show all tick marks",
+        "description-small": "Require {{spacing}} spacing",
+        "label-large": "Large",
+        "label-medium": "Medium",
+        "label-none": "None",
+        "label-small": "Small"
+      },
       "label-rtl": "RTL"
     }
   },
@@ -4179,6 +4228,7 @@
     "get-field-override-categories": {
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
+      "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
       }
@@ -7000,6 +7050,15 @@
       "stacking": {
         "name-stack-series": "Stack series"
       },
+      "text": {
+        "category-text-size": "Text size",
+        "name-percent-change": "Percent change",
+        "name-title": "Title",
+        "name-value": "Value",
+        "placeholder-percent-change": "Auto",
+        "placeholder-title": "Auto",
+        "placeholder-value": "Auto"
+      },
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
@@ -7183,6 +7242,9 @@
       "description-fields-with-name": "Set properties for a specific field",
       "description-fields-with-type": "Set properties for fields of a specific type (number, string, boolean)",
       "description-fields-with-value": "Set properties for fields with reducer condition",
+      "field-name-picker": {
+        "placeholder": "Select field"
+      },
       "name-field-name-by-regex-matcher": "Fields with name matching regex",
       "name-fields-by-query": "Fields returned by query",
       "name-fields-with-name": "Fields with name",
