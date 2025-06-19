@@ -1,6 +1,8 @@
 import { DataFrameView, IconName } from '@grafana/data';
+import { isResourceList } from 'app/features/apiserver/guards';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardDataDTO } from '../../../types';
@@ -127,10 +129,10 @@ export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>)
     const hit = {
       resource: 'dashboards',
       name: item.metadata.name,
-      title: item.spec.title,
+      title: item.spec?.title,
       location: 'general',
       folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
-      tags: item.spec.tags || [],
+      tags: item.spec?.tags || [],
       field: {},
       url: '',
     };
@@ -161,3 +163,117 @@ export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): Dashbo
     return dashboardHit;
   });
 }
+
+/**
+ * Filters search results based on query parameters
+ * This is used when backend filtering is not available (e.g., for deleted dashboards)
+ */
+export function filterSearchResults(
+  results: SearchHit[],
+  query: {
+    query?: string;
+    tag?: string[];
+    folderUIDs?: string[];
+    dashboardUID?: string[];
+    type?: DashboardSearchItemType;
+    sort?: string;
+    limit?: number;
+    page?: number;
+    starred?: boolean;
+  }
+): SearchHit[] {
+  let filtered = [...results];
+  // Apply text search filter
+  if (query.query && query.query.trim() !== '' && query.query !== '*') {
+    const searchTerm = query.query.toLowerCase();
+    filtered = filtered.filter(
+      (hit) =>
+        hit.title.toLowerCase().includes(searchTerm) || hit.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  // Apply tag filter
+  if (query.tag && query.tag.length > 0) {
+    filtered = filtered.filter((hit) =>
+      query.tag!.every((tagFilter) => hit.tags.some((hitTag) => hitTag.toLowerCase() === tagFilter.toLowerCase()))
+    );
+  }
+
+  if (query.sort) {
+    filtered = applySorting(filtered, query.sort);
+  }
+
+  // Apply pagination
+  if (query.page && query.limit) {
+    const startIndex = (query.page - 1) * query.limit;
+    const endIndex = startIndex + query.limit;
+    filtered = filtered.slice(startIndex, endIndex);
+  } else if (query.limit) {
+    filtered = filtered.slice(0, query.limit);
+  }
+
+  return filtered;
+}
+
+/**
+ * Applies sorting to search results
+ */
+function applySorting(results: SearchHit[], sortOption: string): SearchHit[] {
+  const sorted = [...results];
+
+  switch (sortOption) {
+    case 'name_sort':
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+    case 'name_sort_desc':
+      return sorted.sort((a, b) => b.title.localeCompare(a.title));
+    case 'created':
+    case 'created_desc':
+    case 'updated':
+    case 'updated_desc':
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+    default:
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+  }
+}
+
+class DeletedDashboardsCache {
+  private cache: SearchHit[] | null = null;
+  private promise: Promise<SearchHit[]> | null = null;
+
+  async get(): Promise<SearchHit[]> {
+    if (this.cache !== null) {
+      return this.cache;
+    }
+
+    if (this.promise !== null) {
+      return this.promise;
+    }
+
+    this.promise = this.fetch();
+
+    try {
+      this.cache = await this.promise;
+      return this.cache;
+    } finally {
+      this.promise = null;
+    }
+  }
+
+  clear(): void {
+    this.cache = null;
+    this.promise = null;
+  }
+
+  private async fetch(): Promise<SearchHit[]> {
+    const api = getDashboardAPI();
+    const deletedResponse = await api.listDeletedDashboards({});
+
+    if (isResourceList<DashboardDataDTO>(deletedResponse)) {
+      return resourceToSearchResult(deletedResponse);
+    }
+
+    return [];
+  }
+}
+
+export const deletedDashboardsCache = new DeletedDashboardsCache();
