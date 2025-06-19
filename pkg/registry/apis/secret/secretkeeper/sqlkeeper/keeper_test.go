@@ -163,7 +163,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the encryption manager
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -182,7 +182,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	// Initialize the SQLKeeper
-	sqlKeeper := NewSQLKeeper(tracer, encMgr, encValueStore)
+	sqlKeeper := NewSQLKeeper(tracer, encMgr, encValueStore, nil)
 
 	return sqlKeeper, nil
 }

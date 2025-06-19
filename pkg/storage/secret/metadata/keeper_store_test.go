@@ -340,7 +340,7 @@ func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, tracer, features)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 	return keeperMetadataStorage
 }

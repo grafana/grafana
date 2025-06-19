@@ -13,6 +13,7 @@ const (
 	subsystem = "encryption_manager"
 )
 
+// TODO: Add timing metrics after the encryption module cleanup
 var (
 	opsCounter = metricutil.NewCounterVecStartingAtZero(
 		prometheus.CounterOpts{

@@ -3,8 +3,11 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -14,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 )
 
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
@@ -24,6 +28,7 @@ func ProvideDecryptStorage(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	decryptAuthorizer contracts.DecryptAuthorizer,
+	reg prometheus.Registerer,
 ) (contracts.DecryptStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -40,6 +45,7 @@ func ProvideDecryptStorage(
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		decryptAuthorizer:          decryptAuthorizer,
+		metrics:                    metrics.NewStorageMetrics(reg),
 	}, nil
 }
 
@@ -50,6 +56,7 @@ type decryptStorage struct {
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	decryptAuthorizer          contracts.DecryptAuthorizer
+	metrics                    *metrics.StorageMetrics
 }
 
 // Decrypt decrypts a secure value from the keeper.
@@ -61,6 +68,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	defer span.End()
 
 	var decrypterIdentity string
+	start := time.Now()
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
 	defer func() {
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
@@ -73,6 +81,9 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
 		}
+		success := decryptErr == nil
+		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.DecryptRequestCount.WithLabelValues(strconv.FormatBool(success)).Inc()
 	}()
 
 	// Basic authn check before reading a secure value metadata, it is here on purpose.
