@@ -30,9 +30,7 @@ function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } =
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 }
 
-// exported for testing
-// TODO - this is now used in grafana core (exported by internal) to load translations from packages like scenes
-export async function loadPluginResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
+export async function loadNamespacedResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
     return;
   }
@@ -86,7 +84,7 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
   const language = getResolvedLanguage();
   initTFuncAndTransComponent({ id });
 
-  await loadPluginResources(id, language, loaders);
+  await loadNamespacedResources(id, language, loaders);
 
   return { language };
 }

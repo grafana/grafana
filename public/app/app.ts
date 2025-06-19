@@ -20,7 +20,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
-import { initializeI18n, loadPluginResources } from '@grafana/i18n/internal';
+import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
   locationService,
   registerEchoBackend,
@@ -148,7 +148,7 @@ export class GrafanaApp {
         updateConfig({ language });
 
         // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.
-        return loadPluginResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
+        return loadNamespacedResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
       });
 
       setBackendSrv(backendSrv);
