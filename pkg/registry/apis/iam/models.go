@@ -20,14 +20,16 @@ type CoreRoleStorageBackend interface{ resource.StorageBackend }
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	store      legacy.LegacyIdentityStore
+	// Stores
+	store            legacy.LegacyIdentityStore
+	coreRolesStorage CoreRoleStorageBackend
+
+	// Access Control
 	authorizer authorizer.Authorizer
 	// legacyAccessClient is used for the identity apis, we need to migrate to the access client
 	legacyAccessClient types.AccessClient
 	// accessClient is used for the core role apis
 	accessClient types.AccessClient
-
-	coreRolesStorage CoreRoleStorageBackend
 
 	reg prometheus.Registerer
 
@@ -37,5 +39,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
 
-	enableAuthZResources bool
+	// Toggle for enabling authz management apis
+	enableAuthZApis bool
 }

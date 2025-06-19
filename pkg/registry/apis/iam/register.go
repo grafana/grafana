@@ -54,15 +54,15 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                store,
-		coreRolesStorage:     coreRolesStorage,
-		sso:                  ssoService,
-		authorizer:           authorizer,
-		legacyAccessClient:   legacyAccessClient,
-		accessClient:         accessClient,
-		display:              user.NewLegacyDisplayREST(store),
-		reg:                  reg,
-		enableAuthZResources: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		store:              store,
+		coreRolesStorage:   coreRolesStorage,
+		sso:                ssoService,
+		authorizer:         authorizer,
+		legacyAccessClient: legacyAccessClient,
+		accessClient:       accessClient,
+		display:            user.NewLegacyDisplayREST(store),
+		reg:                reg,
+		enableAuthZApis:    features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -92,7 +92,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	if b.enableAuthZResources {
+	if b.enableAuthZApis {
 		iamv0b.AddToScheme(scheme)
 	}
 
@@ -130,7 +130,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	if b.enableAuthZResources {
+	if b.enableAuthZApis {
 		// v0alpha1
 		store, err := NewLocalStore(iamv0b.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
@@ -145,7 +145,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	defs := iamv0.GetOpenAPIDefinitions
-	if b.enableAuthZResources {
+	if b.enableAuthZApis {
 		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 			def1 := iamv0.GetOpenAPIDefinitions(ref)
 			def2 := iamv0b.GetOpenAPIDefinitions(ref)
