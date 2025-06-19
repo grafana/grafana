@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
-import { IconButton, Drawer, useStyles2, Text } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Drawer, useStyles2, Text } from '@grafana/ui';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 import grotNewsSvg from 'img/grot-news.svg';
 
@@ -16,7 +15,7 @@ interface NewsContainerProps {
 
 export function NewsContainer({ onClose }: NewsContainerProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <Drawer
       title={
@@ -31,15 +30,6 @@ export function NewsContainer({ onClose }: NewsContainerProps) {
           >
             <img src={grotNewsSvg} alt="Grot reading news" />
           </a>
-          <div className={styles.actions}>
-            <IconButton
-              name="times"
-              variant="secondary"
-              onClick={onClose}
-              data-testid={selectors.components.Drawer.General.close}
-              tooltip={t(`news.drawer.close`, 'Close drawer')}
-            />
-          </div>
         </div>
       }
       onClose={onClose}
@@ -57,7 +47,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: `center`,
       justifyContent: `center`,
       gap: theme.spacing(2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     grot: css({
       display: `flex`,
@@ -69,11 +58,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: `75px`,
         height: `75px`,
       },
-    }),
-    actions: css({
-      position: 'absolute',
-      right: theme.spacing(1),
-      top: theme.spacing(2),
     }),
   };
 };

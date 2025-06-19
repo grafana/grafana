@@ -7,7 +7,7 @@ import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   alertingAPIv0alpha1,
 } from '@grafana/alerting/unstable';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -17,7 +17,6 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager }: ContactPointSelectorProps) {
-  const { t } = useTranslate();
   const { control, watch, trigger } = useFormContext<RuleFormValues>();
 
   const selectedContactPointField = `contactPoints.${alertManager}.selectedContactPoint` as const;
@@ -86,7 +85,6 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
   );
 }
 function LinkToContactPoints() {
-  const { t } = useTranslate();
   const hrefToContactPoints = '/alerting/notifications';
   return (
     <TextLink

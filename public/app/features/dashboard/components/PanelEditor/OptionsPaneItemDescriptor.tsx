@@ -16,7 +16,7 @@ export interface OptionsPaneItemInfo {
   value?: any;
   description?: string;
   popularRank?: number;
-  render: () => React.ReactElement;
+  render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement;
   skipField?: boolean;
   showIf?: () => boolean;
   /** Hook for controlling visibility */
@@ -66,7 +66,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   }
 
   if (skipField) {
-    return render();
+    return render(itemDescriptor);
   }
 
   return (
@@ -77,7 +77,7 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
       aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       htmlFor={id}
     >
-      {render()}
+      {render(itemDescriptor)}
     </Field>
   );
 }

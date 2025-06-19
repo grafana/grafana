@@ -30,19 +30,29 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         });
     }
 
-    builder
-      .addBooleanSwitch({
-        path: 'wrapLogMessage',
-        name: 'Wrap lines',
-        description: '',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
+    builder.addBooleanSwitch({
+      path: 'wrapLogMessage',
+      name: 'Wrap lines',
+      description: '',
+      defaultValue: false,
+    });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder.addBooleanSwitch({
+        path: 'syntaxHighlighting',
+        name: 'Enable syntax highlighting',
+        description: 'Use a predefined syntax coloring grammar to highlight relevant parts of the log lines',
+      });
+    } else {
+      builder.addBooleanSwitch({
         path: 'prettifyLogMessage',
-        name: config.featureToggles.newLogsPanel ? 'Enable log message highlighting' : 'Prettify JSON',
+        name: 'Prettify JSON',
         description: '',
         defaultValue: false,
-      })
+      });
+    }
+
+    builder
       .addBooleanSwitch({
         path: 'enableLogDetails',
         name: 'Enable log details',
@@ -54,7 +64,33 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         name: 'Enable infinite scrolling',
         description: 'Experimental. Request more results by scrolling to the bottom of the logs list.',
         defaultValue: false,
-      })
+      });
+
+    if (config.featureToggles.newLogsPanel) {
+      builder
+        .addBooleanSwitch({
+          path: 'showControls',
+          name: 'Show controls',
+          description: 'Display controls to jump to the last or first log line, and filters by log level',
+          defaultValue: false,
+        })
+        .addRadio({
+          path: 'fontSize',
+          name: 'Font size',
+          description: '',
+          settings: {
+            options: [
+              { value: 'default', label: 'Default' },
+              {
+                value: 'small',
+                label: 'Small',
+              },
+            ],
+          },
+        });
+    }
+
+    builder
       .addRadio({
         path: 'dedupStrategy',
         name: 'Deduplication',

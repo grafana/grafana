@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
-      "description-missing-series-evaluations": "How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.",
+      "description-missing-series-evaluations": "The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Last updated by",
       "missing-series-resolve": "Missing series evaluations to resolve",
       "no-annotations": "No annotations",
+      "notification-configuration": {
+        "active-timings": "Active time intervals",
+        "contact-point": "Contact point",
+        "group-by": "Grouped by",
+        "group-title": "Notification configuration",
+        "mute-timings": "Mute timings",
+        "timing-options": "Timings"
+      },
       "pending-period": "Pending period",
       "rule": "Rule",
       "rule-identifier": "Rule identifier",
@@ -449,6 +457,15 @@
       "export": "Export",
       "silence-notifications": "Silence notifications",
       "with-modifications": "With modifications"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "Read more about stale alert instances",
+        "text1": "An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.",
+        "text2": "A stale alert instance is resolved and then evicted.",
+        "text3": "This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty.",
+        "title": "Stale alert instances"
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -899,6 +916,7 @@
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "label": {
+        "contact-point": "Notifications are delivered to",
         "dashboard": "Dashboard",
         "dashboard-and-panel": "Dashboard and panel",
         "evaluation-interval": "Evaluation interval",
@@ -1044,6 +1062,9 @@
     },
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
+    },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1508,6 +1529,10 @@
         "no-rules-body": "There are no rules to import. Please select a different namespace or rule group.",
         "no-rules-body-yaml": "There are no rules to import. Please select a different yaml file.",
         "no-rules-title": "No rules to import",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "Rules managed by integrations or plugins should not be imported to Grafana-managed rules.",
+          "title": "Information"
+        },
         "plugin-rules-warning": {
           "text": "We have detected that some rules are managed by plugins. These rules will not be imported.",
           "title": "Some rules are excluded from import"
@@ -1516,6 +1541,10 @@
         "title": "Confirm import"
       },
       "datasource": {
+        "help-info": {
+          "content": "The dropdown only displays Mimir or Loki data sources that have the ruler API available.",
+          "title": "Data source"
+        },
         "label": "Data source",
         "required-message": "Please select a data source"
       },
@@ -1793,7 +1822,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
-      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when to only send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
@@ -2383,7 +2412,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
-      "loading-more-groups": "Loading more groups...",
+      "loading-more-groups": "Loading more groups…",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -2963,51 +2992,6 @@
       "title-query-result": "Query result"
     }
   },
-  "api-keys": {
-    "api-keys-action-bar": {
-      "placeholder-search-keys": "Search keys"
-    },
-    "api-keys-page-unconnected": {
-      "label-include-expired-keys": "Include expired keys"
-    },
-    "api-keys-table": {
-      "aria-label-delete-api-key": "Delete API key",
-      "content-this-api-key-has-expired": "This API key has expired.",
-      "expires": "Expires",
-      "last-used-at": "Last used at",
-      "migrate-to-service-account": "Migrate to service account",
-      "name": "Name",
-      "role": "Role"
-    },
-    "empty-state": {
-      "message": "No API keys found"
-    },
-    "migrate-to-service-accounts-card": {
-      "body-no-api-keys-found": "No API keys were found. If you reload the browser, this page will not be available anymore.",
-      "body-switch-service-accounts": "API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will continue to work as they were. We encourage you to migrate your API keys to service accounts now. <docsLink />",
-      "docs-link": {
-        "about-migration": "Find out more about the migration here."
-      },
-      "migrate-all-service-accounts": "Migrate all service accounts",
-      "migration-box-desc": {
-        "migrating": "Migrating all API keys will hide the API keys tab."
-      },
-      "modal-title": "Migrate API keys to service accounts",
-      "title-no-api-keys-found": "No API keys found",
-      "title-switch-service-accounts": "Switch from API keys to service accounts"
-    },
-    "migration-summary": {
-      "close": "Close",
-      "failed": "<0>Failed: </0>{{failed}}",
-      "failed-details": "<0>Failed details: </0>{{details}}",
-      "failed-ids": "<0>Failed api key IDs: </0>{{ids}}",
-      "migrated": "<0>Migrated: </0>{{migrated}}",
-      "migration-complete": "Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest assured, all of your API keys are fully functional and operational. Please try again or contact support.",
-      "migration-successful": "Migration Successful!",
-      "title-migration-summary": "Migration summary",
-      "total": "<0>Total: </0>{{total}}"
-    }
-  },
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "top-bar": {
@@ -3285,9 +3269,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3324,6 +3305,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -4063,6 +4047,9 @@
         "title": "Row options"
       }
     },
+    "description": {
+      "action": "Change dashboard description"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -4070,6 +4057,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
@@ -4467,6 +4455,7 @@
       }
     },
     "repeat-row-select2": {
+      "placeholder": "Choose",
       "variable-options": {
         "label": {
           "disable-repeating": "Disable repeating",
@@ -4552,7 +4541,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
-      "label-details": "Details"
+      "label-details": "Details",
+      "title": "Save dashboard",
+      "title-copy": "Save dashboard copy",
+      "title-provisioned": "Provisioned dashboard"
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
@@ -4626,6 +4618,9 @@
       "tab-warning": {
         "title-not-unique": "This title is not unique"
       }
+    },
+    "title": {
+      "action": "Change dashboard title"
     },
     "toolbar": {
       "add": "Add",
@@ -5045,6 +5040,15 @@
         }
       }
     },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Failed to delete dashboard",
+      "cancel-action": "Cancel",
+      "delete-action": "Delete dashboard",
+      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
+      "deleting": "Deleting...",
+      "drawer-title": "Delete Provisioned Dashboard",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "description-label": {
       "description": "Description"
     },
@@ -5054,6 +5058,9 @@
           "edit-link": "Edit link"
         }
       }
+    },
+    "edit-provisioned-dashboard-form": {
+      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5160,6 +5167,11 @@
     "name-already-exists-error": {
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
+    },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": "Proceed to external site?"
+      }
     },
     "on-remove-panel": {
       "text": {
@@ -5278,12 +5290,15 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Changes",
-        "label-details": "Details"
+        "label-details": "Details",
+        "title": "Save dashboard",
+        "title-copy": "Save dashboard copy",
+        "title-provisioned": "Provisioned dashboard"
       }
     },
     "save-dashboard-form": {
       "aria-label-message": "message",
-      "body-dashboard-drastically-changed": "Because you're using new dashboards features only supported on new Grafana dashboard schema format, the dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to save the dashboard as a new copy.",
+      "body-dashboard-drastically-changed": "The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a copy instead. If you’re seeing this message in a production environment, contact Support to have the feature disabled.",
       "cancel-button": {
         "cancel": "Cancel"
       },
@@ -5299,7 +5314,7 @@
       },
       "schema-v2-library-panels-export": "The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards behaviour. It is based on a new schema format, that does not support library panels. This means that when exporting the dashboard to use it in another instance, we will not include library panels. We intend to support them as we progress in the feature <2>life cycle</2>.",
       "schema-v2-library-panels-export-title": "Dashboard Schema V2 does not support exporting library panels to be used in another instance yet",
-      "title-dashboard-drastically-changed": "Dashboard drastically changed"
+      "title-dashboard-drastically-changed": "Dashboard irreversibly changed"
     },
     "save-dashboard-form-common-options": {
       "save-refresh-description-current-refresh-default": "Will make the current refresh the new default",
@@ -5319,24 +5334,25 @@
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     },
+    "save-or-delete-provisioned-dashboard-form": {
+      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "File path inside the repository (.json or .yaml)",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-path": "Path",
+      "label-workflow": "Workflow"
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
-      "api-success": "Dashboard changes saved",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
-      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
-      "description-inside-repository": "File path inside the repository (.json or .yaml)",
       "file-path": "<0>File path:</0> {{filePath}}",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-description": "Description",
-      "label-path": "Path",
       "label-target-folder": "Target folder",
       "label-title": "Title",
-      "label-workflow": "Workflow",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -7704,6 +7720,14 @@
       "show-details": "Hide log details",
       "unpin-from-outline": "Unpin log"
     },
+    "log-list-search": {
+      "close": "Close search",
+      "filter": "Filter matching logs",
+      "info": "Client-side search for strings within the displayed logs. Not to be confused with query filters. Use this component to search for specific strings in your log results.",
+      "input-placeholder": "Search in logs",
+      "next": "Next result",
+      "prev": "Previous result"
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Error loading more logs.",
       "no-more-logs-available": "No more logs available.",
@@ -7755,6 +7779,9 @@
       },
       "enable-highlighting": "Enable highlighting",
       "escape-newlines": "Fix incorrectly escaped newline and tab sequences in log lines",
+      "font-size-default": "Use small font size",
+      "font-size-small": "Use default font size",
+      "hide-search": "Close search",
       "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
@@ -7763,6 +7790,7 @@
       "remove-escaping": "Remove escaping",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
+      "show-search": "Search in logs result",
       "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "unwrap-lines": "Unwrap lines",
@@ -8161,10 +8189,6 @@
       "subtitle": "See recently deleted alert rules",
       "title": "Recently deleted"
     },
-    "api-keys": {
-      "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-      "title": "API keys"
-    },
     "application": {
       "title": "Application"
     },
@@ -8497,9 +8521,6 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
-    "drawer": {
-      "close": "Close drawer"
-    },
     "link-title": "Go to Grafana labs blog",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
@@ -9745,7 +9766,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
@@ -10657,6 +10677,11 @@
       "tooltip-disable": "Disable",
       "tooltip-enable": "Enable"
     },
+    "draggable-sort-order": {
+      "asc": "ASC",
+      "desc": "DESC",
+      "off": "Off"
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
       "generate-enum-values-from-data": "Generate enum values from data"
@@ -10835,6 +10860,9 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "Field order",
+      "field-order-auto": "Auto",
+      "field-order-manual": "Manual",
       "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
     },
     "partion-by-values-editor": {

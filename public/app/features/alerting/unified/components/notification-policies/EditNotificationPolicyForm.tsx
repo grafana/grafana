@@ -4,7 +4,7 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -55,7 +55,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
-  const { t } = useTranslate();
+
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const formAmRoute = {

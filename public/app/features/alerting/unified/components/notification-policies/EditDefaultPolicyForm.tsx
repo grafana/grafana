@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
@@ -37,7 +37,7 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));
-  const { t } = useTranslate();
+
   const defaultValues = amRouteToFormAmRoute(route);
   const {
     handleSubmit,

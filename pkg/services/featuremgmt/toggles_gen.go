@@ -191,6 +191,10 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagNanoGit
+	// Use experimental git library for provisioning
+	FlagNanoGit = "nanoGit"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -410,10 +414,6 @@ const (
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
-
-	// FlagNewFolderPicker
-	// Enables the nested folder picker without having nested folders enabled
-	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
@@ -871,10 +871,6 @@ const (
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 
-	// FlagXrayApplicationSignals
-	// Support Application Signals queries in the X-Ray datasource
-	FlagXrayApplicationSignals = "xrayApplicationSignals"
-
 	// FlagMultiTenantTempCredentials
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
@@ -919,6 +915,10 @@ const (
 	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
 	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 
+	// FlagKubernetesAuthzApis
+	// Registers AuthZ /apis endpoint
+	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -926,4 +926,16 @@ const (
 	// FlagSkipTokenRotationIfRecent
 	// Skip token rotation if it was already rotated less than 5 seconds ago
 	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
+
+	// FlagAlertEnrichment
+	// Enable configuration of alert enrichments in Grafana Cloud.
+	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertingImportAlertmanagerAPI
+	// Enables the API to import Alertmanager configuration
+	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagPreferLibraryPanelTitle
+	// Prefer library panel title over viz panel title.
+	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 )

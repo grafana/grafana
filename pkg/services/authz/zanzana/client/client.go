@@ -30,7 +30,7 @@ func New(cc grpc.ClientConnInterface) (*Client, error) {
 		authzlibclient: authzlibclient,
 		authz:          authzv1.NewAuthzServiceClient(cc),
 		authzext:       authzextv1.NewAuthzExtentionServiceClient(cc),
-		logger:         log.New("zanzana-client"),
+		logger:         log.New("zanzana.client"),
 	}
 
 	return c, nil

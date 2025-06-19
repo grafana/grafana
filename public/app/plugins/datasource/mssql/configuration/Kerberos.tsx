@@ -1,7 +1,7 @@
 import { SyntheticEvent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { FieldSet, Input, Field, TextLink } from '@grafana/ui';
 
@@ -17,7 +17,7 @@ export const UsernameMessage = (
 
 export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
   const { options: settings, onOptionsChange } = props;
-  const { t } = useTranslate();
+
   const jsonData = settings.jsonData;
   const LONG_WIDTH = 40;
 
@@ -140,7 +140,7 @@ export const KerberosConfig = (props: DataSourcePluginOptionsEditorProps<MssqlOp
 
 export const KerberosAdvancedSettings = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
   const { options: settings } = props;
-  const { t } = useTranslate();
+
   const jsonData = settings.jsonData;
   const configFilePath = jsonData?.configFilePath;
   const LONG_WIDTH = 40;

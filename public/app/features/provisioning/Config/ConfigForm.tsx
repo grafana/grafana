@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
@@ -15,7 +15,7 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -27,7 +27,7 @@ import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
-const getOptions = (t: TFunction) => {
+const getOptions = () => {
   const typeOptions = [
     { value: 'github', label: t('provisioning.config-form.option-github', 'GitHub') },
     { value: 'local', label: t('provisioning.config-form.option-local', 'Local') },
@@ -56,12 +56,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
-  const { t } = useTranslate();
+
   const isEdit = Boolean(data?.metadata?.name);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const [typeOptions, targetOptions] = useMemo(() => getOptions(t), [t]);
+  const [typeOptions, targetOptions] = useMemo(() => getOptions(), []);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {

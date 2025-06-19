@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
@@ -16,14 +16,14 @@ export function ActiveTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
     control,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
+
   return (
     <Field
       label={t('alerting.active-timing-fields.am-active-timing-select-label-active-timings', 'Active timings')}
       data-testid="am-active-timing-select"
       description={t(
         'alerting.mute-timing-fields.am-active-timing-select-description-active-timings',
-        'Select a time interval to define when not to send notifications for this alert rule'
+        'Select a time interval to define when to only send notifications for this alert rule'
       )}
       className={styles.muteTimingField}
       invalid={!!errors.contactPoints?.[alertmanager]?.activeTimeIntervals}

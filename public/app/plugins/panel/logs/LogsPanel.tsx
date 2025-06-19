@@ -151,6 +151,8 @@ export const LogsPanel = ({
     logLineMenuCustomItems,
     enableInfiniteScrolling,
     onNewLogsReceived,
+    fontSize,
+    syntaxHighlighting,
     ...options
   },
   id,
@@ -535,6 +537,7 @@ export const LogsPanel = ({
               dedupStrategy={dedupStrategy}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
+              fontSize={fontSize}
               getFieldLinks={getFieldLinks}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
@@ -551,6 +554,10 @@ export const LogsPanel = ({
               onClickFilterOutLabel={
                 isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
               }
+              onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+              onClickFilterOutString={
+                isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+              }
               onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
               onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               onLogLineHover={onLogRowHover}
@@ -562,7 +569,7 @@ export const LogsPanel = ({
               showTime={showTime}
               sortOrder={sortOrder}
               logOptionsStorageKey={storageKey}
-              syntaxHighlighting={prettifyLogMessage}
+              syntaxHighlighting={syntaxHighlighting}
               timeRange={data.timeRange}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
