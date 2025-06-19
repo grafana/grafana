@@ -1,44 +1,10 @@
 {
+  "title": "CloudWatch Multiple Statistics Test Dashboard",
+  "schemaVersion": 33,
   "annotations": {
     "list": [
       {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations \u0026 Alerts",
-        "type": "dashboard"
-      },
-      {
-        "datasource": "Non Default Test Datasource",
-        "enable": true,
-        "name": "Test Annotation by Name",
-        "type": "dashboard"
-      },
-      {
-        "datasource": "non-default-test-ds-uid",
-        "enable": true,
-        "name": "Test Annotation by UID",
-        "type": "dashboard"
-      },
-      {
-        "datasource": "default",
-        "enable": true,
-        "name": "Test Default Annotation",
-        "type": "dashboard"
-      },
-      {
-        "datasource": "non-existing-ds",
-        "enable": true,
-        "name": "Test Non-existing Annotation",
-        "type": "dashboard"
-      },
-      {
-        "name": "CloudWatch Annotation Single Stat",
+        "name": "CloudWatch Annotation Single Statistic",
         "enable": true,
         "iconColor": "red",
         "dimensions": {
@@ -50,9 +16,9 @@
         "statistics": ["Average"]
       },
       {
-        "name": "CloudWatch Annotation Multiple Stats",
+        "name": "CloudWatch Annotation Multiple Statistics",
         "enable": true,
-        "iconColor": "blue", 
+        "iconColor": "blue",
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -60,182 +26,44 @@
         "region": "us-west-2",
         "prefixMatching": false,
         "statistics": ["Maximum", "Minimum", "Sum"]
+      },
+      {
+        "name": "CloudWatch Annotation Empty Statistics",
+        "enable": true,
+        "iconColor": "green",
+        "dimensions": {
+          "LoadBalancer": "my-lb"
+        },
+        "namespace": "AWS/ApplicationELB",
+        "region": "us-west-1",
+        "prefixMatching": false,
+        "statistics": []
+      },
+      {
+        "name": "CloudWatch Annotation Invalid Statistics",
+        "enable": true,
+        "iconColor": "yellow", 
+        "dimensions": {
+          "TableName": "my-table"
+        },
+        "namespace": "AWS/DynamoDB",
+        "region": "us-east-1",
+        "prefixMatching": false,
+        "statistics": ["InvalidStat", "Sum", null, "Average"]
+      },
+      {
+        "name": "Non-CloudWatch Annotation",
+        "enable": true,
+        "iconColor": "purple",
+        "datasource": "prometheus"
       }
     ]
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "links": [],
   "panels": [
     {
-      "type": "graph",
-      "options": {},
-      "title": "No Legend Config",
       "id": 1,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      }
-    },
-    {
-      "options": {
-        "legend": true
-      },
-      "title": "Boolean Legend True",
-      "id": 2, 
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      }
-    },
-    {
-      "options": {
-        "legend": false
-      },
-      "title": "Boolean Legend False",
-      "id": 3,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      }
-    },
-    {
-      "options": {
-        "legend": {
-          "displayMode": "hidden"
-        }
-      },
-      "title": "Hidden DisplayMode",
-      "id": 4,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      }
-    },
-    {
-      "options": {
-        "legend": {
-          "showLegend": false
-        }
-      },
-      "title": "ShowLegend False",
-      "id": 5,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      }
-    },
-    {
-      "options": {
-        "legend": {
-          "displayMode": "table"
-        }
-      },
-      "title": "Visible Legend",
-      "id": 6,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      }
-    },
-    {
-    "datasource": "default",
-      "title": "Mixed Datasources Panel",
-      "id": 7,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "targets": [
-        {
-          "datasource": "non-default-test-ds-uid"
-        },
-        {
-          "datasource": "Non Default Test Datasource"
-        }
-      ]
-    },
-    {
-      "datasource": {
-        "uid": "-- Mixed --"
-      },
-      "title": "Mixed Panel with Mixed Targets",
-      "id": 8,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "targets": [
-        {
-          "datasource": "non-default-test-ds-uid"
-        },
-        {
-          "datasource": "Non Default Test Datasource"
-        }
-      ]
-    },
-    {
-      "datasource": "non-existing-ds",
-      "title": "Non-existing Datasource Panel",
-      "id": 9,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "targets": [
-        {
-          "datasource": "non-existing-ds"
-        }
-      ]
-    },
-    {
       "type": "timeseries",
-      "title": "Timeseries Panel with Hidden Axes",
-      "id": 10,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 40
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "axisPlacement": "hidden"
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "CloudWatch Single Query Multiple Stats",
-      "id": 11,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 40
-      },
+      "title": "CloudWatch Single Query Multiple Statistics",
       "targets": [
         {
           "refId": "A",
@@ -246,21 +74,14 @@
           "region": "us-east-1",
           "metricName": "CPUUtilization",
           "statistics": ["Average", "Maximum", "Minimum"],
-          "period": "300",
-          "alias": "CPU Usage"
+          "period": "300"
         }
       ]
     },
     {
-      "type": "timeseries", 
-      "title": "Mixed CloudWatch and Prometheus Queries",
-      "id": 12,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 48
-      },
+      "id": 2,
+      "type": "timeseries",
+      "title": "CloudWatch Single Query Single Statistic",
       "targets": [
         {
           "refId": "A",
@@ -268,9 +89,43 @@
             "LoadBalancer": "my-load-balancer"
           },
           "namespace": "AWS/ApplicationELB",
-          "region": "us-west-2", 
+          "region": "us-west-2",
           "metricName": "RequestCount",
-          "statistics": ["Sum", "Average"]
+          "statistics": ["Sum"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "CloudWatch Query No Statistics Array",
+      "targets": [
+        {
+          "refId": "A",
+          "dimensions": {
+            "DBInstanceIdentifier": "my-db"
+          },
+          "namespace": "AWS/RDS",
+          "region": "us-east-1",
+          "metricName": "DatabaseConnections",
+          "statistic": "Maximum"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Mixed CloudWatch and Non-CloudWatch Queries",
+      "targets": [
+        {
+          "refId": "A",
+          "dimensions": {
+            "QueueName": "my-queue"
+          },
+          "namespace": "AWS/SQS",
+          "region": "us-east-1",
+          "metricName": "ApproximateNumberOfMessages",
+          "statistics": ["Average", "Maximum"]
         },
         {
           "refId": "B",
@@ -280,96 +135,85 @@
         {
           "refId": "C",
           "dimensions": {
-            "DBInstanceIdentifier": "my-db"
+            "TopicName": "my-topic"
           },
-          "namespace": "AWS/RDS",
-          "region": "us-east-1",
-          "metricName": "DatabaseConnections", 
-          "statistics": ["Maximum"]
+          "namespace": "AWS/SNS",
+          "region": "us-west-1",
+          "metricName": "NumberOfMessagesPublished",
+          "statistics": ["Sum"]
         }
       ]
     },
     {
+      "id": 5,
+      "type": "timeseries",
+      "title": "CloudWatch Query Empty Statistics",
+      "targets": [
+        {
+          "refId": "A",
+          "dimensions": {
+            "BucketName": "my-bucket"
+          },
+          "namespace": "AWS/S3",
+          "region": "us-east-1",
+          "metricName": "BucketSizeBytes",
+          "statistics": []
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "CloudWatch Query Invalid Statistics",
+      "targets": [
+        {
+          "refId": "A",
+          "dimensions": {
+            "FunctionName": "my-function"
+          },
+          "namespace": "AWS/Lambda",
+          "region": "us-west-2",
+          "metricName": "Duration",
+          "statistics": ["InvalidStat", "Average", null, "Maximum", ""]
+        }
+      ]
+    },
+    {
+      "id": 7,
       "type": "row",
       "collapsed": true,
       "title": "Collapsed Row with CloudWatch",
-      "id": 13,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 56
-      },
       "panels": [
         {
+          "id": 8,
           "type": "timeseries",
-          "title": "Nested CloudWatch Panel",
-          "id": 14,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
+          "title": "Nested CloudWatch Query Multiple Statistics",
           "targets": [
             {
               "refId": "A",
               "dimensions": {
-                "QueueName": "my-queue"
+                "StreamName": "my-stream"
               },
-              "namespace": "AWS/SQS",
+              "namespace": "AWS/Kinesis",
               "region": "us-east-1",
-              "metricName": "ApproximateNumberOfMessages",
-              "statistics": ["Average", "Maximum", "Sum"]
+              "metricName": "IncomingRecords",
+              "statistics": ["Sum", "Average", "Maximum"]
             }
           ]
         }
       ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Non-CloudWatch Panel",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cpu_usage",
+          "datasource": "prometheus"
+        }
+      ]
     }
-
-  ],
-  "preload": false,
-  "refresh": true,
-  "schemaVersion": 33,
-  "tags": [],
-  "templating": {
-    "list": [
-      {
-        "type": "query",
-        "datasource": "default",
-        "name": "default_var"
-      },
-      {
-        "type": "query",
-        "datasource": "Non Default Test Datasource",
-        "name": "es_var_by_name"
-      },
-      {
-        "type": "query",
-        "datasource": "non-default-test-ds-uid",
-        "name": "es_var_by_uid"
-      },
-      {
-        "type": "query",
-        "datasource": null,
-        "name": "null_var"
-      },
-      {
-        "type": "query",
-        "datasource": "non-existing-ds",
-        "name": "non_existing_var"
-      }
-    ]
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
-  },
-  "timezone": "utc",
-  "title": "New dashboard",
-  "version": 0,
-  "weekStart": ""
+  ]
 }
