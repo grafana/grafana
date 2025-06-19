@@ -4,25 +4,25 @@ comments: |
   This file is used in the following visualizations: candlestick, time series.
 ---
 
-<!-- prettier-start-ignore -->
+<!-- prettier-ignore-start -->
 
-| Option                                      | Description                                                                                                                                                                                                                           |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Style](#style)                             | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**.                                                                                                                                                |
-| [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line.                                                                                                                                                                                    |
-| Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider.                                                                                                                                        |
-| [Fill opacity](#fill-opacity)               | Set the series area fill color using the **Fill opacity** slider.                                                                                                                                                                     |
-| [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color.                                                                                                                                              |
-| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style.                                                                                                                                                                                         |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph.                                                                                                                                                              |
-| [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected.                                                                                                                                              |
-| [Show points](#show-points)                 | Set whether to show data points to lines or bars.                                                                                                                                                                                     |
-| Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter.                                                                                                                                                                          |
-| [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other.                                                                                                                                                                             |
-| [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point.                                                                                                                                                                                 |
+| Option                                      | Description                                                                                    |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [Style](#style)                             | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. |
+| [Line interpolation](#line-interpolation)   | Choose how the graph interpolates the series line. |
+| Line width                                  | Set the thickness of the series lines or the outline for bars using the **Line width** slider. |
+| Fill opacity                                | Set the series area fill color using the **Fill opacity** slider. |
+| [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color. |
+| [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
+| [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
+| Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
+| [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
+| [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
 | Bar width factor                            | Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space. |
 
-<!-- prettier-end-ignore -->
+<!-- prettier-ignore-end -->
 
 #### Style
 
@@ -43,12 +43,6 @@ Choose how the graph interpolates the series line:
 
 Set the thickness of the series lines or the outline for bars using the **Line width** slider.
 
-#### Fill opacity
-
-Set the series area fill color using the **Fill opacity** slider.
-
-![Fill opacity examples](/static/img/docs/time-series-panel/fill-opacity.png)
-
 #### Gradient mode
 
 Choose a gradient mode to control the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
@@ -64,19 +58,15 @@ Gradient appearance is influenced by the **Fill opacity** setting. The following
 
 ##### Scheme gradient mode
 
-The **Gradient mode** option located under the **Graph styles** section has a mode called **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
+In **Scheme** gradient mode, the line or bar receives a gradient color defined from the selected **Color scheme** option in the visualization's **Standard** options.
 
-###### From thresholds
+The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected:
 
-If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as it crosses the defined thresholds.
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="600px" alt="Color scheme: Green-Yellow-Red" >}}
 
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" alt="Colors scheme: From thresholds" >}}
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as it crosses the defined thresholds:
 
-###### Gradient color schemes
-
-The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected.
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" alt="Color scheme: Green-Yellow-Red" >}}
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="600px" alt="Colors scheme: From thresholds" >}}
 
 #### Line style
 
