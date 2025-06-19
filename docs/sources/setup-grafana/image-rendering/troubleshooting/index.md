@@ -68,7 +68,7 @@ You should _at least_ be using Ubuntu 20.04. Grafana reccomends using Ubuntu 22.
 {{< tabs >}}
 {{< tab-content name="Ubuntu 20.04 dependencies" >}}
 
-On Ubuntu 20.04 the following dependencies are required for the image rendering to function:
+On Ubuntu 20.04, the following dependencies are required for the image rendering to function:
 
 ```bash
 libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
@@ -77,7 +77,7 @@ libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 
 {{< /tab-content >}}
 {{< tab-content name="Ubuntu 22.04 dependencies" >}}
 
-On Ubuntu 22.04 the following dependencies are required for the image rendering to function:
+On Ubuntu 22.04, the following dependencies are required for the image rendering to function:
 
 ```bash
 libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libglib2.0-0 libnss3 libcups2  libdbus-1-3 libxss1 libxrandr2 libgtk-3-0 libasound2 libxcb-dri3-0 libgbm1 libxshmfence1
@@ -88,17 +88,27 @@ libx11-6 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 
 
 **Debian:**
 
-On Debian 9 (Stretch) the following dependencies are required for the image rendering to function.
+You should _at least_ be using Debian 11 (Bullseye). Grafana reccomends using Debian 12 (Bookworm).
 
-```bash
-libx11 libcairo libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libxss libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0 libgbm1 libxshmfence1
-```
-
-On Debian 10 (Buster) the following dependencies are required for the image rendering to function.
+{{< tabs >}}
+{{< tab-content name="Debian 11 dependencies" >}}
+On Debian 11 (Bullseye), the following dependencies are required for the image rendering to function:
 
 ```bash
 libxdamage1 libxext6 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1 libxshmfence1
 ```
+
+{{< /tab-content >}}
+{{< tab-content name="Debian 12 dependencies" >}}
+
+On Debian 12 (Bookworm), the following dependencies are required for the image rendering to function:
+
+```bash
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev libgbm1 libxshmfence1
+```
+
+{{< /tab-content >}}
+{{< /tabs >}}
 
 **Centos:**
 
