@@ -171,10 +171,11 @@ export function filterSearchResults(
   query: {
     query?: string;
     tag?: string[];
+    sort?: string;
   }
 ): SearchHit[] {
   let filtered = results;
-  // Apply text search filter
+
   if (query.query && query.query.trim() !== '' && query.query !== '*') {
     const searchTerm = query.query.toLowerCase();
     filtered = filtered.filter(
@@ -183,7 +184,19 @@ export function filterSearchResults(
     );
   }
 
-  // Apply tag filter
+  if (query.sort) {
+    const collator = new Intl.Collator();
+    filtered = filtered.sort((a, b) => {
+      if (query.sort === 'alpha-asc') {
+        return collator.compare(a.title, b.title);
+      }
+      if (query.sort === 'alpha-desc') {
+        return collator.compare(b.title, a.title);
+      }
+      return 0;
+    });
+  }
+
   if (query.tag && query.tag.length > 0) {
     filtered = filtered.filter((hit) =>
       query.tag!.every((tagFilter) => hit.tags.some((hitTag) => hitTag.toLowerCase() === tagFilter.toLowerCase()))

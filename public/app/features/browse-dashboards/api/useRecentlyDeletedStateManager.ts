@@ -1,4 +1,5 @@
-import { store } from '@grafana/data';
+import { SelectableValue, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
 import { SearchState } from 'app/features/search/types';
@@ -67,6 +68,20 @@ export class TrashStateManager extends SearchStateManager {
       console.error('Failed to get tags from deleted dashboards:', error);
       return [];
     }
+  };
+
+  // Only alphabetical sorting is supported for deleted dashboards
+  getSortOptions = async (): Promise<SelectableValue[]> => {
+    return Promise.resolve([
+      {
+        label: t('browse-dashboards.trash-state-manager.label.alphabetically-az', 'Alphabetically (A–Z)'),
+        value: 'alpha-asc',
+      },
+      {
+        label: t('browse-dashboards.trash-state-manager.label.alphabetically-za', 'Alphabetically (Z–A)'),
+        name: 'alpha-desc',
+      },
+    ]);
   };
 }
 
