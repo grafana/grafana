@@ -2,13 +2,16 @@ package dashboards
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -38,6 +41,20 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		Type:  datasources.DS_TESTDATA,
 		UID:   "test",
 		OrgID: int64(1),
+
+		// These settings are not actually used, but testing that they get saved
+		Database: "testdb",
+		URL:      "http://fake.url",
+		Access:   datasources.DS_ACCESS_PROXY,
+		User:     "example",
+		ReadOnly: true,
+		JsonData: simplejson.NewFromAny(map[string]any{
+			"hello": "world",
+		}),
+		SecureJsonData: map[string]string{
+			"aaa": "AAA",
+			"bbb": "BBB",
+		},
 	})
 	require.Equal(t, "test", ds.UID)
 
@@ -47,81 +64,130 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 		require.JSONEq(t, `[
 			{
-			  "freshness": "Current",
-			  "resources": [
-				{
-				  "resource": "connections",
-				  "responseKind": {
-					"group": "",
-					"kind": "DataSourceConnection",
-					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "shortNames": [
-					"grafana-testdata-datasource-connection"
-				  ],
-				  "singularResource": "connection",
-				  "subresources": [
+				"freshness": "Current",
+				"resources": [
 					{
-					  "responseKind": {
-						"group": "",
-						"kind": "HealthCheckResult",
-						"version": ""
-					  },
-					  "subresource": "health",
-					  "verbs": [
-						"get"
-					  ]
+						"resource": "connections",
+						"responseKind": {
+							"group": "",
+							"kind": "DataSourceConnection",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"shortNames": [
+							"grafana-testdata-datasource-connection"
+						],
+						"singularResource": "connection",
+						"subresources": [
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "HealthCheckResult",
+									"version": ""
+								},
+								"subresource": "health",
+								"verbs": [
+									"get"
+								]
+							},
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "QueryDataResponse",
+									"version": ""
+								},
+								"subresource": "query",
+								"verbs": [
+									"create"
+								]
+							},
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "Status",
+									"version": ""
+								},
+								"subresource": "resource",
+								"verbs": [
+									"create",
+									"delete",
+									"get",
+									"patch",
+									"update"
+								]
+							}
+						],
+						"verbs": [
+							"get",
+							"list"
+						]
 					},
 					{
-					  "responseKind": {
-						"group": "",
-						"kind": "QueryDataResponse",
-						"version": ""
-					  },
-					  "subresource": "query",
-					  "verbs": [
-						"create"
-					  ]
+						"resource": "datasource",
+						"responseKind": {
+							"group": "",
+							"kind": "GenericDataSource",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"singularResource": "datasource",
+						"verbs": [
+							"create",
+							"delete",
+							"deletecollection",
+							"get",
+							"list",
+							"patch",
+							"update"
+						]
 					},
 					{
-					  "responseKind": {
-						"group": "",
-						"kind": "Status",
-						"version": ""
-					  },
-					  "subresource": "resource",
-					  "verbs": [
-						"create",
-						"delete",
-						"get",
-						"patch",
-						"update"
-					  ]
+						"resource": "queryconvert",
+						"responseKind": {
+							"group": "",
+							"kind": "QueryDataRequest",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"singularResource": "queryconvert",
+						"verbs": [
+							"create"
+						]
 					}
-				  ],
-				  "verbs": [
-					"get",
-					"list"
-				  ]
-				},
-				{
-        			"resource": "queryconvert",
-        			"responseKind": {
-          				"group": "",
-          				"kind": "QueryDataRequest",
-          				"version": ""
-        			},
-        			"scope": "Namespaced",
-        			"singularResource": "queryconvert",
-        			"verbs": [
-          				"create"
-        			]
-   				}
-			  ],
-			  "version": "v0alpha1"
+				],
+				"version": "v0alpha1"
 			}
-		  ]`, disco)
+		]`, disco)
+	})
+
+	t.Run("Admin configs", func(t *testing.T) {
+		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
+			Group:    "testdata.datasource.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "datasource",
+		}).Namespace("default")
+		ctx := context.Background()
+
+		list, err := client.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1, "expected a single connection")
+		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+
+		spec, _, _ := unstructured.NestedMap(list.Items[0].Object, "spec")
+		jj, _ := json.MarshalIndent(spec, "", "  ")
+		fmt.Printf("%s\n", string(jj))
+		require.JSONEq(t, `{
+			"access": "proxy",
+			"database": "testdb",
+			"isDefault": true,
+			"jsonData": {
+				"hello": "world"
+			},
+			"readOnly": true,
+			"title": "test",
+			"url": "http://fake.url",
+			"use": "example"
+		}`, string(jj))
 	})
 
 	t.Run("Call subresources", func(t *testing.T) {

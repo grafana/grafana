@@ -1,0 +1,22 @@
+{
+  "name": "grafana-testdata-datasource",
+  "type": "???",
+  "access": "proxy",
+  "url": "http://something/",
+  "user": "",
+  "database": "db",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "withCredentials": false,
+  "isDefault": true,
+  "jsonData": {
+    "aaa": "bbb",
+    "bbb": true,
+    "ccc": 1.234
+  },
+  "secureJsonData": null,
+  "version": 2,
+  "uid": "cejobd88i85j4d",
+  "apiVersion": "",
+  "IsPrunable": false
+}

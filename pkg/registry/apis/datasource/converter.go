@@ -62,6 +62,7 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 			ReadOnly:        ds.ReadOnly,
 		},
 	}
+	cfg.UID = gapiutil.CalculateClusterWideUID(cfg)
 
 	if ds.JsonData != nil {
 		val, ok := ds.JsonData.Interface().(map[string]any)
@@ -83,23 +84,56 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 
 func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.AddDataSourceCommand, error) {
 	cmd := &datasources.AddDataSourceCommand{
-		Name:     ds.Name,
-		Type:     "", // TODO... group > datasource type????
-		Access:   datasources.DsAccess(ds.Spec.Access),
-		URL:      ds.Spec.URL,
-		Database: ds.Spec.Database,
-		// TODO... secrets
+		Name: ds.Spec.Title,
+		UID:  ds.Name,
+
+		Type:            "???", // TODO... group > datasource type????
+		Access:          datasources.DsAccess(ds.Spec.Access),
+		URL:             ds.Spec.URL,
+		Database:        ds.Spec.Database,
+		User:            ds.Spec.User,
+		BasicAuth:       ds.Spec.BasicAuth,
+		BasicAuthUser:   ds.Spec.BasicAuthUser,
+		WithCredentials: ds.Spec.WithCredentials,
+		IsDefault:       ds.Spec.IsDefault,
+		ReadOnly:        ds.Spec.ReadOnly,
 	}
 
 	if len(ds.Spec.JsonData.Object) > 0 {
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
 
+	if len(ds.Secure) > 0 {
+		cmd.SecureJsonData = map[string]string{
+			"TODO": "values",
+		}
+	}
+
 	return cmd, nil
 }
 
 func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasources.UpdateDataSourceCommand, error) {
-	cmd := &datasources.UpdateDataSourceCommand{}
-	// TODO!!!
+	cmd := &datasources.UpdateDataSourceCommand{
+		Name: ds.Spec.Title,
+		UID:  ds.Name,
+
+		Type:            "???", // TODO... group > datasource type????
+		Access:          datasources.DsAccess(ds.Spec.Access),
+		URL:             ds.Spec.URL,
+		Database:        ds.Spec.Database,
+		User:            ds.Spec.User,
+		BasicAuth:       ds.Spec.BasicAuth,
+		BasicAuthUser:   ds.Spec.BasicAuthUser,
+		WithCredentials: ds.Spec.WithCredentials,
+		IsDefault:       ds.Spec.IsDefault,
+		ReadOnly:        ds.Spec.ReadOnly,
+	}
+
+	if len(ds.Spec.JsonData.Object) > 0 {
+		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
+	}
+
+	// Update specific things
+	cmd.Version = int(ds.Generation)
 	return cmd, nil
 }
