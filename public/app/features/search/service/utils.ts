@@ -1,8 +1,6 @@
 import { DataFrameView, IconName } from '@grafana/data';
-import { isResourceList } from 'app/features/apiserver/guards';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardDataDTO } from '../../../types';
@@ -173,16 +171,9 @@ export function filterSearchResults(
   query: {
     query?: string;
     tag?: string[];
-    folderUIDs?: string[];
-    dashboardUID?: string[];
-    type?: DashboardSearchItemType;
-    sort?: string;
-    limit?: number;
-    page?: number;
-    starred?: boolean;
   }
 ): SearchHit[] {
-  let filtered = [...results];
+  let filtered = results;
   // Apply text search filter
   if (query.query && query.query.trim() !== '' && query.query !== '*') {
     const searchTerm = query.query.toLowerCase();
@@ -199,56 +190,5 @@ export function filterSearchResults(
     );
   }
 
-  // Apply pagination
-  if (query.page && query.limit) {
-    const startIndex = (query.page - 1) * query.limit;
-    const endIndex = startIndex + query.limit;
-    filtered = filtered.slice(startIndex, endIndex);
-  } else if (query.limit) {
-    filtered = filtered.slice(0, query.limit);
-  }
-
   return filtered;
 }
-
-class DeletedDashboardsCache {
-  private cache: SearchHit[] | null = null;
-  private promise: Promise<SearchHit[]> | null = null;
-
-  async get(): Promise<SearchHit[]> {
-    if (this.cache !== null) {
-      return this.cache;
-    }
-
-    if (this.promise !== null) {
-      return this.promise;
-    }
-
-    this.promise = this.fetch();
-
-    try {
-      this.cache = await this.promise;
-      return this.cache;
-    } finally {
-      this.promise = null;
-    }
-  }
-
-  clear(): void {
-    this.cache = null;
-    this.promise = null;
-  }
-
-  private async fetch(): Promise<SearchHit[]> {
-    const api = getDashboardAPI();
-    const deletedResponse = await api.listDeletedDashboards({});
-
-    if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-      return resourceToSearchResult(deletedResponse);
-    }
-
-    return [];
-  }
-}
-
-export const deletedDashboardsCache = new DeletedDashboardsCache();

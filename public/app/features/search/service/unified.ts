@@ -7,6 +7,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 
+import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
   DashboardQueryResult,
   GrafanaSearcher,
@@ -15,7 +16,7 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { deletedDashboardsCache, replaceCurrentFolderQuery, filterSearchResults } from './utils';
+import { replaceCurrentFolderQuery, filterSearchResults } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.

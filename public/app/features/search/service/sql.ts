@@ -7,13 +7,9 @@ import { PermissionLevelString } from 'app/types';
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
+import { deletedDashboardsCache } from './deletedDashboardsCache';
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
-import {
-  deletedDashboardsCache,
-  filterSearchResults,
-  replaceCurrentFolderQuery,
-  searchHitsToDashboardSearchHits,
-} from './utils';
+import { filterSearchResults, replaceCurrentFolderQuery, searchHitsToDashboardSearchHits } from './utils';
 
 interface APIQuery {
   query?: string;
