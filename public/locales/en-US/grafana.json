@@ -9949,6 +9949,131 @@
       }
     }
   },
+  "secrets": {
+    "actions": {
+      "create-secret": "Create secret"
+    },
+    "edit-modal": {
+      "form": {
+        "button-create": "Create",
+        "button-update": "Update"
+      },
+      "title": {
+        "create": "Create secret",
+        "edit": "Edit secret {{name}}"
+      }
+    },
+    "empty-state": {
+      "description": "You can use secrets to store private information such as passwords, API keys and other sensitive data.",
+      "title": "You don't have any secrets yet."
+    },
+    "error-state": {
+      "body": "<0>This may be due to poor network conditions or a potential plugin blocking requests. Retry, and if the problem persists, contact support.</0><1><0>Details: {{details}}</0></1>",
+      "details": "<0>Details: {{message}}</0>",
+      "message": "Something went wrong",
+      "retry": "<0>Retry</0>",
+      "unknown-error": "Unknown error"
+    },
+    "form": {
+      "btn-cancel": "Cancel",
+      "decrypters": {
+        "description": "Services able to decrypt secret value",
+        "label": "Decrypters",
+        "placeholder": "Choose decrypter(s)"
+      },
+      "description": {
+        "description": "Short description of the purpose of this secret",
+        "error": {
+          "required": "Description is required",
+          "too-long": "Description must be less than {{maxLength}} characters"
+        },
+        "label": "Description"
+      },
+      "label-name": {
+        "error": {
+          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label name is required",
+          "too-long": "Label name must be less than {{maxLength}} characters",
+          "unique": "Label name must be unique"
+        },
+        "placeholder": "name"
+      },
+      "label-value": {
+        "error": {
+          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "required": "Label value is required",
+          "too-long": "Label value must be less than {{maxLength}} characters"
+        },
+        "placeholder": "value"
+      },
+      "labels": {
+        "actions": {
+          "add": "Add label",
+          "aria-label-remove": "Remove label"
+        },
+        "description": "Labels to categorize the secret",
+        "error": {
+          "too-many": "Maximum number of labels reached (Max: {{maxLabels}})"
+        },
+        "label": "Labels"
+      },
+      "name": {
+        "description": "The name will be used to reference the secret",
+        "error": {
+          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods",
+          "required": "Name is required",
+          "too-long": "Name must be less than {{maxLength}} characters",
+          "unique": "A secret with this name already exists"
+        },
+        "label": "Name"
+      },
+      "value": {
+        "description": "Secret value",
+        "error": {
+          "required": "Value is required"
+        },
+        "label": "Value"
+      }
+    },
+    "item": {
+      "copy-value-aria-label": "Copy \"{{value}}\"",
+      "delete-item-aria-label": "Delete {{name}}",
+      "delete-modal": {
+        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirm-text": "delete",
+        "delete-button": "Delete",
+        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "title": "Delete secret"
+      },
+      "edit-item": "Edit",
+      "edit-item-aria-label": "Edit {{name}}",
+      "label-created": "Created:",
+      "label-decrypters": "Decrypters:",
+      "label-description": "Description:",
+      "label-keeper": "<0>Keeper:</0><1>{{keeper}}</1>",
+      "label-modified": "Modified:",
+      "label-uid": "ID:"
+    },
+    "mutation-error": {
+      "create": "Failed to create secret. Please try again, and if the problem persists, contact support",
+      "title": "Request error",
+      "update": "Failed to update secret. Please try again, and if the problem persists, contact support"
+    },
+    "mutation-success": {
+      "create": "Secret \"{{name}}\" was created successfully",
+      "update": "Secret \"{{name}}\" was updated successfully"
+    },
+    "search-placeholder": "Search secret by name",
+    "search-result": {
+      "clear-filters": "Clear active filter to see all secrets.",
+      "no-results": "No secrets found"
+    },
+    "secret-value-input": {
+      "configured-value": "configured",
+      "reset-button": "<0>Reset</0>"
+    },
+    "sub-title": "Manage secrets for use in Grafana. Find out more in our <2>documentation</2>"
+  },
   "select": {
     "select-menu": {
       "selected-count": "Selected "
