@@ -1,0 +1,32 @@
+name: golangci-lint
+on:
+  push:
+    paths:
+      - pkg/**
+      - .github/workflows/go-lint.yml
+      - go.*
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+      - run: make gen-go
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
+        with:
+          version: v2.0.2
+          args: |
+            --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
+          install-mode: binary
