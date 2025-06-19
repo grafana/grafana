@@ -133,11 +133,8 @@ export class PathValidationError extends Error {
 
 /**
  * Validates a path or URL, protecting against path traversal attacks.
- * If a full URL is provided, only the path portion is checked for traversal attempts.
  * Returns the original input if safe, or throw an error
  */
-// We use a generic type to ensure that only the original path is ever returned from the function
-// and not some other string that might have been decoded.
 export function validatePath<OriginalPath extends string>(path: OriginalPath): OriginalPath {
   try {
     let originalDecoded: string = path; // down-cast to a string to indicate this can't be returned
@@ -154,7 +151,7 @@ export function validatePath<OriginalPath extends string>(path: OriginalPath): O
     originalDecoded = cleaned;
 
     // If the original string contains traversal attempts, block it
-    if (originalDecoded.includes('..')) {
+    if (originalDecoded.includes('..') || originalDecoded.includes('\\/')) {
       throw new PathValidationError();
     }
 
@@ -180,5 +177,4 @@ export const textUtil = {
   sanitizeSVGContent,
   sanitizeTrustedTypes,
   sanitizeTrustedTypesRSS,
-  validatePath,
 };
