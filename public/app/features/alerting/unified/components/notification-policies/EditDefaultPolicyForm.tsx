@@ -68,7 +68,7 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
                   onChange={(contactPoint) => {
                     handleContactPointSelect(contactPoint?.spec.title, onChange);
                   }}
-                  isClearable
+                  isClearable={false}
                   value={value}
                   placeholder={t(
                     'alerting.notification-policies-filter.placeholder-search-by-contact-point',
