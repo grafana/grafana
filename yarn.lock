@@ -2664,7 +2664,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2706,7 +2706,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -2907,7 +2907,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3448,7 +3448,7 @@ __metadata:
     semver: "npm:7.7.2"
     testing-library-selector: "npm:0.3.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -3598,7 +3598,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
   peerDependencies:
     "@grafana/runtime": 10.4.0-pre
   languageName: unknown
@@ -3760,7 +3760,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
     uplot: "npm:1.6.32"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
     uwrap: "npm:0.1.1"
     webpack: "npm:5.97.1"
   peerDependencies:
@@ -18435,7 +18435,7 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.7.3"
     uplot: "npm:1.6.32"
-    uuid: "npm:11.0.5"
+    uuid: "npm:11.1.0"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -31737,12 +31737,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.0.5":
-  version: 11.0.5
-  resolution: "uuid@npm:11.0.5"
+"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.0.2, uuid@npm:^11.0.5":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
   bin:
     uuid: dist/esm/bin/uuid
-  checksum: 10/0594ecdff3051e15d4a2c614b4c72e73af373bde0a5d156512353c01156975295d024ae8d7151846d7bd4d22ccd251b16ed51b4318fa71505fb20ad984102dc1
+  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 
@@ -31752,15 +31752,6 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10/35aa60614811a201ff90f8ca5e9ecb7076a75c3821e17f0f5ff72d44e36c2d35fcbc2ceee9c4ac7317f4cc41895da30e74f3885e30313bee48fda6338f250538
-  languageName: node
-  linkType: hard
-
-"uuid@npm:^11.0.0, uuid@npm:^11.0.2, uuid@npm:^11.0.5":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 
