@@ -464,6 +464,8 @@ require (
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
+require github.com/urfave/cli/v3 v3.3.8
+
 require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go/longrunning v0.6.2 // indirect
