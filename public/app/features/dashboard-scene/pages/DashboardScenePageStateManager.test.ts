@@ -218,6 +218,24 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     describe('caching', () => {
+
+      it('should return cached scene if updated_at matches', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        // set cache
+        loader.setSceneCache('fake-dash', new DashboardScene({title: 'Dashboard 1', uid: 'fake-dash', meta: {updated: 1}}, 'v1'));
+
+        // should return cached scene
+        expect(loader.transformResponseToScene({meta: {updated: 1}}, {uid: 'fake-dash'}).state.title).toBe('Dashboard 1');
+
+        // try loading new scene
+        loader.transformResponseToScene({meta: {updated: 2}, dashboard: {title: 'Dashboard 2'}}, {uid: 'fake-dash'});
+
+        // should update cache with new scene
+        expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
+
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 
