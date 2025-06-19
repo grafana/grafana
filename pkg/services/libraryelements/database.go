@@ -447,6 +447,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
 			writeSearchStringSQL(query, l.SQLStore, &builder)
@@ -459,6 +460,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
@@ -538,6 +540,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
 			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
@@ -549,6 +552,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)
