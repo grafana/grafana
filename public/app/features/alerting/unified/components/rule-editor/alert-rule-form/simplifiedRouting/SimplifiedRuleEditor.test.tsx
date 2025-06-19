@@ -58,6 +58,23 @@ const selectContactPoint = async (user: UserEvent, contactPointName: string) => 
 };
 
 setupMswServer();
+
+// combobox hack
+beforeEach(() => {
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
+
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
+});
+
 describe('Can create a new grafana managed alert using simplified routing', () => {
   beforeEach(() => {
     window.localStorage.clear();
