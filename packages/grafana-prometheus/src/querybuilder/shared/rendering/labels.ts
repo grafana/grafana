@@ -29,3 +29,22 @@ export function renderLabels(labels: QueryBuilderLabelFilter[]): string {
 
   return expr + `}`;
 }
+
+export function renderLabelsWithoutBrackets(labels: QueryBuilderLabelFilter[]): string[] {
+  if (labels.length === 0) {
+    return [];
+  }
+
+  const renderedLabels: string[] = [];
+  for (const filter of labels) {
+    let labelValue = filter.value;
+    const usingRegexOperator = filter.op === '=~' || filter.op === '!~';
+
+    if (config.featureToggles.prometheusSpecialCharsInLabelValues && !usingRegexOperator) {
+      labelValue = prometheusRegularEscape(labelValue);
+    }
+    renderedLabels.push(`${utf8Support(filter.label)}${filter.op}"${labelValue}"`);
+  }
+
+  return renderedLabels;
+}

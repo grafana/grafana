@@ -1065,6 +1065,9 @@
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
     },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
+    },
     "evaluate-every-validation-options": {
       "message": {
         "required": "Required."
@@ -2410,7 +2413,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
-      "loading-more-groups": "Loading more groups...",
+      "loading-more-groups": "Loading more groups…",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -3267,9 +3270,6 @@
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -3306,6 +3306,9 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
@@ -4055,6 +4058,7 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-title": "Change panel title",
@@ -5037,6 +5041,15 @@
         }
       }
     },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Failed to delete dashboard",
+      "cancel-action": "Cancel",
+      "delete-action": "Delete dashboard",
+      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
+      "deleting": "Deleting...",
+      "drawer-title": "Delete Provisioned Dashboard",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "description-label": {
       "description": "Description"
     },
@@ -5046,6 +5059,9 @@
           "edit-link": "Edit link"
         }
       }
+    },
+    "edit-provisioned-dashboard-form": {
+      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5319,24 +5335,25 @@
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     },
+    "save-or-delete-provisioned-dashboard-form": {
+      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "File path inside the repository (.json or .yaml)",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-path": "Path",
+      "label-workflow": "Workflow"
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
-      "api-success": "Dashboard changes saved",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
-      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
-      "description-inside-repository": "File path inside the repository (.json or .yaml)",
       "file-path": "<0>File path:</0> {{filePath}}",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-description": "Description",
-      "label-path": "Path",
       "label-target-folder": "Target folder",
       "label-title": "Title",
-      "label-workflow": "Workflow",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -9750,7 +9767,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
