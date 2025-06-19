@@ -37,11 +37,11 @@ jest.mock('@grafana/runtime', () => ({
 const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
 const getResourceNames = jest.fn().mockResolvedValue([
   {
-    id: 'foobarID',
+    id: '/subscriptions/subID/resourceGroups/resourceGroup/providers/foobarProvider/foobarType/foobar',
     name: 'foobar',
     subscriptionId: 'subID',
     resourceGroup: 'resourceGroup',
-    type: 'foobarType',
+    type: 'foobarProvider/foobarType',
     location: 'london',
   },
 ]);
