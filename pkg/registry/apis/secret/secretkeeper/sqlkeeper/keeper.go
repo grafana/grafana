@@ -36,7 +36,6 @@ func NewSQLKeeper(
 	}
 }
 
-// TODO: parameter cfg is not being used
 func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store", trace.WithAttributes(attribute.String("namespace", namespace)))
 	defer span.End()
