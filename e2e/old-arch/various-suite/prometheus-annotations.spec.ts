@@ -56,7 +56,7 @@ describe('Prometheus annotations', () => {
 
     // check for other parts of the annotations
     // min step
-    cy.get(`#${selectors.components.DataSource.Prometheus.annotations.minStep}`);
+    cy.get(`[data-testid="${selectors.components.DataSource.Prometheus.annotations.minStep}"]`);
 
     // title
     e2e.components.DataSource.Prometheus.annotations.title().scrollIntoView().should('exist');
