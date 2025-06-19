@@ -1515,6 +1515,70 @@ func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int
 	return args.Error(0)
 }
 
+func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
+	const identifier = "test-config"
+	mockAM := &mockAlertmanager{}
+
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == identifier &&
+				len(extraConfig.MergeMatchers) == 2 &&
+				len(extraConfig.TemplateFiles) == 1 &&
+				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
+		})).Return(nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "environment=production,team=backend")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+			TemplateFiles: map[string]string{
+				"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return error when identifier header is missing", func(t *testing.T) {
+		rc := createRequestCtx()
+
+		amCfg := apimodels.AlertmanagerUserConfig{}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "identifier cannot be empty")
+	})
+
+	t.Run("should return error when merge matchers header has invalid format", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "invalid-format")
+
+		amCfg := apimodels.AlertmanagerUserConfig{}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
+	})
+}
+
 func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 	const identifier = "test-config"
 	const orgID = int64(1)
@@ -1558,6 +1622,7 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
+		// Create a config with secrets to check that they will be hided in the response.
 		expectedConfig := apimodels.GettableUserConfig{
 			ExtraConfigs: []apimodels.ExtraConfiguration{
 				{
@@ -1566,9 +1631,14 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 						"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
 					},
 					AlertmanagerConfig: `route:
-  receiver: default
+  receiver: webhook
 receivers:
-  - name: default`,
+  - name: webhook
+    webhook_configs:
+      - url: "http://localhost/webhook"
+        http_config:
+          bearer_token: "some-token"
+`,
 				},
 			},
 		}
@@ -1581,11 +1651,25 @@ receivers:
 
 		require.Equal(t, http.StatusOK, response.Status())
 
-		expectedResponse := `alertmanager_config: |-
+		expectedResponse := `alertmanager_config: |
   route:
-    receiver: default
+      receiver: webhook
+      continue: false
   receivers:
-    - name: default
+      - name: webhook
+        webhook_configs:
+          - send_resolved: true
+            http_config:
+              authorization:
+                  type: Bearer
+                  credentials: <secret>
+              follow_redirects: true
+              enable_http2: true
+            url: <secret>
+            url_file: ""
+            max_alerts: 0
+            timeout: 0s
+  templates: []
 template_files:
   test.tmpl: '{{ define "test" }}Hello{{ end }}'`
 
