@@ -19,16 +19,25 @@ import (
 // limit which namespace/tenant/org we are talking to
 type PluginDatasourceProvider interface {
 	// Get gets a specific datasource (that the user in context can see)
-	Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error)
+	GetConnection(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error)
 
 	// List lists all data sources the user in context can see
-	List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
+	ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
 
 	// Get a single datasurce
 	GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error)
 
 	// List all datasources
 	ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error)
+
+	// Create a data source
+	CreateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error)
+
+	// Update a data source
+	UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error)
+
+	// Delete datasurce
+	Delete(ctx context.Context, uid string) error
 
 	// Return settings (decrypted!) for a specific plugin
 	// This will require "query" permission for the user in context
@@ -88,7 +97,7 @@ var (
 	_ ScopedPluginDatasourceProvider = (*cachingDatasourceProvider)(nil)
 )
 
-func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+func (q *scopedDatasourceProvider) GetConnection(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -100,7 +109,7 @@ func (q *scopedDatasourceProvider) Get(ctx context.Context, uid string) (*v0alph
 	return q.converter.asConnection(ds)
 }
 
-func (q *scopedDatasourceProvider) List(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
+func (q *scopedDatasourceProvider) ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -129,6 +138,53 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 		return nil, fmt.Errorf("missing contextProvider")
 	}
 	return q.contextProvider.GetDataSourceInstanceSettings(ctx, uid)
+}
+
+// CreateDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+	cmd, err := q.converter.toAddCommand(ds)
+	if err != nil {
+		return nil, err
+	}
+	out, err := q.dsService.AddDataSource(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return q.converter.asGenericDataSource(out)
+}
+
+// UpdateDataSource implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+	cmd, err := q.converter.toUpdateCommand(ds)
+	if err != nil {
+		return nil, err
+	}
+	out, err := q.dsService.UpdateDataSource(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return q.converter.asGenericDataSource(out)
+}
+
+// Delete implements PluginDatasourceProvider.
+func (q *scopedDatasourceProvider) Delete(ctx context.Context, uid string) error {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
+	if err != nil {
+		return err
+	}
+	if ds == nil {
+		return fmt.Errorf("not found")
+	}
+	return q.dsService.DeleteDataSource(ctx, &datasources.DeleteDataSourceCommand{
+		ID:    ds.ID,
+		UID:   ds.UID,
+		OrgID: ds.OrgID,
+		Name:  ds.Name,
+	})
 }
 
 // GetDataSource implements PluginDatasourceProvider.

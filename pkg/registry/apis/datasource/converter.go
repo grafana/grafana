@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,6 +24,7 @@ func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceCo
 			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+			Generation:        int64(ds.Version),
 		},
 		Title: ds.Name,
 	}
@@ -45,6 +47,7 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 			Namespace:         r.mapper(ds.OrgID),
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+			Generation:        int64(ds.Version),
 		},
 		Spec: v0alpha1.GenericDataSourceSpec{
 			Title:           ds.Name,
@@ -76,4 +79,27 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 	}
 
 	return cfg, nil
+}
+
+func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.AddDataSourceCommand, error) {
+	cmd := &datasources.AddDataSourceCommand{
+		Name:     ds.Name,
+		Type:     "", // TODO... group > datasource type????
+		Access:   datasources.DsAccess(ds.Spec.Access),
+		URL:      ds.Spec.URL,
+		Database: ds.Spec.Database,
+		// TODO... secrets
+	}
+
+	if len(ds.Spec.JsonData.Object) > 0 {
+		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
+	}
+
+	return cmd, nil
+}
+
+func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasources.UpdateDataSourceCommand, error) {
+	cmd := &datasources.UpdateDataSourceCommand{}
+	// TODO!!!
+	return cmd, nil
 }
