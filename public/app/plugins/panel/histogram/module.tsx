@@ -6,7 +6,7 @@ import {
   PanelPlugin,
   histogramFieldInfo,
 } from '@grafana/data';
-import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
+import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
 import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
@@ -89,6 +89,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
+      const graphFieldOptions = getGraphFieldOptions();
 
       builder
         .addCustomEditor({

@@ -8,7 +8,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
-import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
@@ -68,9 +68,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         .addRadio({
           path: 'gradientMode',
           name: 'Gradient mode',
-          defaultValue: graphFieldOptions.fillGradient[0].value,
+          defaultValue: getGraphFieldOptions().fillGradient[0].value,
           settings: {
-            options: graphFieldOptions.fillGradient,
+            options: getGraphFieldOptions().fillGradient,
           },
         });
 
@@ -103,7 +103,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         category: ['Thresholds'],
         defaultValue: { mode: GraphThresholdsStyleMode.Off },
         settings: {
-          options: graphFieldOptions.thresholdsDisplayModes,
+          options: getGraphFieldOptions().thresholdsDisplayModes,
         },
         editor: ThresholdsStyleEditor,
         override: ThresholdsStyleEditor,
@@ -181,7 +181,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'stacking',
         name: 'Stacking',
         settings: {
-          options: graphFieldOptions.stacking,
+          options: getGraphFieldOptions().stacking,
         },
         defaultValue: defaultOptions.stacking,
       })
