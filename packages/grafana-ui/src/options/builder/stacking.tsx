@@ -65,7 +65,7 @@ export function addStackingConfig(
   builder.addCustomEditor({
     id: 'stacking',
     path: 'stacking',
-    name: 'Stack series',
+    name: t('grafana-ui.builder.stacking.name-stack-series', 'Stack series'),
     category: category,
     defaultValue: defaultConfig,
     editor: StackingEditor,

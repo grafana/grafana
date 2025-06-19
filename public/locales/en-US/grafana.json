@@ -6997,6 +6997,9 @@
           "label-right": "Right"
         }
       },
+      "stacking": {
+        "name-stack-series": "Stack series"
+      },
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
@@ -7173,6 +7176,18 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers-ui": {
+      "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
+      "description-fields-by-query": "Set properties for fields from a specific query",
+      "description-fields-with-name": "Set properties for a specific field",
+      "description-fields-with-type": "Set properties for fields of a specific type (number, string, boolean)",
+      "description-fields-with-value": "Set properties for fields with reducer condition",
+      "name-field-name-by-regex-matcher": "Fields with name matching regex",
+      "name-fields-by-query": "Fields returned by query",
+      "name-fields-with-name": "Fields with name",
+      "name-fields-with-type": "Fields with type",
+      "name-fields-with-value": "Fields with values"
     },
     "menu-item": {
       "keyboard-shortcut-label": "Keyboard shortcut"
