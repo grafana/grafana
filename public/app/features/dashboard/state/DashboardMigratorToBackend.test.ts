@@ -4,7 +4,6 @@ import { DashboardModel } from './DashboardModel';
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 
 describe('Backend / Frontend result comparison', () => {
-  const MIN_VERSION = 34; // Set minimum version for migration tests
   const inputDir = path.join(
     __dirname,
     '..',
@@ -34,11 +33,7 @@ describe('Backend / Frontend result comparison', () => {
     'output'
   );
 
-  const jsonInputs = readdirSync(inputDir).filter((file) => {
-    const parts = file.split('.');
-    const version = parseInt(parts[0], 10);
-    return !isNaN(version) && version >= MIN_VERSION;
-  });
+  const jsonInputs = readdirSync(inputDir);
 
   jsonInputs.forEach((inputFile) => {
     it(`should migrate ${inputFile} correctly`, async () => {
