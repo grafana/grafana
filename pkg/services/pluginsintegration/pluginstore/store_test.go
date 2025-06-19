@@ -15,10 +15,10 @@ import (
 
 func TestStore_ProvideService(t *testing.T) {
 	t.Run("Plugin sources are added in order", func(t *testing.T) {
-		var addedPaths []string
+		var loadedSrcs []plugins.Class
 		l := &fakes.FakeLoader{
 			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				addedPaths = append(addedPaths, src.PluginURIs(ctx)...)
+				loadedSrcs = append(loadedSrcs, src.PluginClass(ctx))
 				return nil, nil
 			},
 		}
@@ -27,18 +27,17 @@ func TestStore_ProvideService(t *testing.T) {
 			return []plugins.PluginSource{
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return "foobar"
-					},
-					PluginURIsFunc: func(ctx context.Context) []string {
-						return []string{"path1"}
+						return "1"
 					},
 				},
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.ClassExternal
+						return "2"
 					},
-					PluginURIsFunc: func(ctx context.Context) []string {
-						return []string{"path2", "path3"}
+				},
+				&fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return "3"
 					},
 				},
 			}
@@ -46,7 +45,7 @@ func TestStore_ProvideService(t *testing.T) {
 
 		_, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
 		require.NoError(t, err)
-		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
+		require.Equal(t, []plugins.Class{"1", "2", "3"}, loadedSrcs)
 	})
 }
 

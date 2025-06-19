@@ -168,7 +168,13 @@ async function getLabelNames(
     return Promise.resolve(dataProvider.getAllLabelNames());
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesLabels(timeRange, selector, otherLabels);
+    const labelNames = await dataProvider.getSeriesLabels(timeRange, selector);
+
+    // Exclude __name__ from output
+    otherLabels.push({ name: '__name__', value: '', op: '!=' });
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name));
+    // names used in the query
+    return labelNames.filter((l) => !usedLabelNames.has(l));
   }
 }
 

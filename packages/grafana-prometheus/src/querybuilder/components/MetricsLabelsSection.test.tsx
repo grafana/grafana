@@ -23,19 +23,13 @@ const createMockDatasource = () => {
     getVariables: jest.fn().mockReturnValue(['$var1', '$var2']),
     interpolateString: jest.fn((str) => str),
     hasLabelsMatchAPISupport: jest.fn().mockReturnValue(true),
-    getDebounceTimeInMilliseconds: jest.fn().mockReturnValue(300),
     lookupsDisabled: false,
     languageProvider: {
-      fetchLabels: jest.fn().mockResolvedValue({}),
-      getLabelKeys: jest.fn().mockReturnValue(['label1', 'label2']),
-      fetchLabelsWithMatch: jest.fn().mockResolvedValue({ label1: [], label2: [] }),
-      fetchSeries: jest.fn().mockResolvedValue([{ label1: 'value1' }]),
-      fetchSeriesValuesWithMatch: jest.fn().mockResolvedValue(['value1', 'value2']),
-      getLabelValues: jest.fn().mockResolvedValue(['value1', 'value2']),
-      getSeries: jest.fn().mockResolvedValue({ __name__: ['metric1', 'metric2'] }),
-      getSeriesValues: jest.fn().mockResolvedValue(['metric1', 'metric2']),
-      loadMetricsMetadata: jest.fn().mockResolvedValue({}),
-      metricsMetadata: { metric1: { type: 'counter', help: 'help text' } },
+      queryLabelKeys: jest.fn().mockResolvedValue(['label1', 'label2']),
+      retrieveLabelKeys: jest.fn().mockReturnValue(['label1', 'label2']),
+      queryLabelValues: jest.fn().mockResolvedValue(['value1', 'value2']),
+      queryMetricsMetadata: jest.fn().mockResolvedValue({ metric1: { type: 'counter', help: 'help text' } }),
+      retrieveMetricsMetadata: jest.fn().mockResolvedValue({ metric1: { type: 'counter', help: 'help text' } }),
     },
   };
   return datasource as unknown as PrometheusDatasource;
@@ -126,7 +120,7 @@ describe('MetricsLabelsSection', () => {
     // Check that LabelFilters was called with correct props
     expect(LabelFilters).toHaveBeenCalledWith(
       expect.objectContaining({
-        debounceDuration: 300,
+        debounceDuration: 350,
         labelsFilters: defaultQuery.labels,
         variableEditor: undefined,
       }),
@@ -212,9 +206,9 @@ describe('MetricsLabelsSection', () => {
     await onGetLabelNamesCallback({});
 
     // Check that fetchLabels was called
-    expect(datasource.languageProvider.fetchLabels).toHaveBeenCalledWith(defaultTimeRange);
+    expect(datasource.languageProvider.queryLabelKeys).toHaveBeenCalledWith(defaultTimeRange);
     // Check that getLabelKeys was called
-    expect(datasource.languageProvider.getLabelKeys).toHaveBeenCalled();
+    expect(datasource.languageProvider.retrieveLabelKeys).toHaveBeenCalled();
   });
 
   it('should handle onGetLabelNames with metric correctly', async () => {
@@ -238,7 +232,7 @@ describe('MetricsLabelsSection', () => {
     await onGetLabelNamesCallback({});
 
     // Check that fetchLabelsWithMatch was called
-    expect(datasource.languageProvider.fetchLabelsWithMatch).toHaveBeenCalled();
+    expect(datasource.languageProvider.queryLabelKeys).toHaveBeenCalled();
   });
 
   it('should handle getLabelValuesAutocompleteSuggestions correctly', async () => {
@@ -262,7 +256,7 @@ describe('MetricsLabelsSection', () => {
     await getLabelValuesCallback('val', 'label1');
 
     // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
-    expect(datasource.languageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+    expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalled();
   });
 
   it('should handle onGetLabelValues with no metric correctly', async () => {
@@ -287,7 +281,7 @@ describe('MetricsLabelsSection', () => {
     await onGetLabelValuesCallback({ label: 'label1' });
 
     // Check that getLabelValues was called
-    expect(datasource.languageProvider.getLabelValues).toHaveBeenCalledWith(defaultTimeRange, 'label1');
+    expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(defaultTimeRange, 'label1');
   });
 
   it('should handle onGetLabelValues with metric correctly', async () => {
@@ -311,7 +305,7 @@ describe('MetricsLabelsSection', () => {
     await onGetLabelValuesCallback({ label: 'label1' });
 
     // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
-    expect(datasource.languageProvider.fetchSeriesValuesWithMatch).toHaveBeenCalled();
+    expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalled();
   });
 
   it('should handle onGetLabelValues with no label correctly', async () => {
@@ -369,7 +363,6 @@ describe('MetricsLabelsSection', () => {
   it('should load metrics metadata if not present', async () => {
     const onChange = jest.fn();
     const datasource = createMockDatasource();
-    datasource.languageProvider.metricsMetadata = undefined;
 
     render(
       <MetricsLabelsSection
@@ -387,6 +380,6 @@ describe('MetricsLabelsSection', () => {
     await onGetMetricsCallback();
 
     // loadMetricsMetadata should be called
-    expect(datasource.languageProvider.loadMetricsMetadata).toHaveBeenCalled();
+    expect(datasource.languageProvider.queryMetricsMetadata).toHaveBeenCalled();
   });
 });

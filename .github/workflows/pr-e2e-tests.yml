@@ -59,6 +59,7 @@ jobs:
       - name: Build E2E test runner
         id: artifact
         run: |
+          set -euo pipefail
           # We want a static binary, so we need to set CGO_ENABLED=0
           CGO_ENABLED=0 go build -o ./e2e-runner ./e2e/
           echo "artifact=e2e-runner-${{github.run_number}}" >> "$GITHUB_OUTPUT"
@@ -127,6 +128,7 @@ jobs:
         env:
           SUITE: ${{ matrix.path }}
         run: |
+          set -euo pipefail
           echo "suite=$(echo "$SUITE" | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         if: success() || failure()
@@ -134,3 +136,66 @@ jobs:
           name: ${{ steps.set-suite-name.outputs.suite }}-${{ github.run_number }}
           path: videos
           retention-days: 1
+
+  run-a11y-test:
+    needs:
+      - build-grafana
+      - build-e2e-runner
+    name: A11y test
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-grafana.outputs.artifact }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-e2e-runner.outputs.artifact }}
+      - name: chmod +x
+        run: chmod +x ./e2e-runner
+      - name: Run PR a11y test
+        if: github.event_name == 'pull_request'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz
+            --flags="--json --config ./.pa11yci-pr.conf.js"
+      - name: Run non-PR a11y test
+        if: github.event_name != 'pull_request'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz
+            --flags="--json --config ./.pa11yci.conf.js"
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-e2e-tests:
+    needs:
+      - run-e2e-tests
+      # a11y test is not listed on purpose: it is not an important E2E test.
+      # It is also totally fine to fail right now.
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All E2E tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

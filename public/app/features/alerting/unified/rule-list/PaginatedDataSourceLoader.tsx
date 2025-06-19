@@ -1,8 +1,7 @@
 import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { Icon, Spinner, Stack, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -117,14 +116,8 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
         {hasMoreGroups && (
           // this div will make the button not stretch
           <div>
-            <LoadMoreButton onClick={fetchMoreGroups} />
+            <LoadMoreButton loading={isLoading} onClick={fetchMoreGroups} />
           </div>
-        )}
-        {isLoading && (
-          <Stack direction="row" gap={2} alignItems="baseline" justifyContent="flex-start">
-            <Spinner inline={true} />
-            <Trans i18nKey="alerting.rule-list.loading-more-groups">Loading more groups...</Trans>
-          </Stack>
         )}
         {hasNoRules && <NoRulesFound />}
       </Stack>
