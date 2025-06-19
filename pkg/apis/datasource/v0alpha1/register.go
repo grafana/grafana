@@ -16,7 +16,7 @@ const (
 )
 
 var GenericDataSourceResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"datasoruce", "datasoruce", "DataSource",
+	"datasource", "datasource", "DataSource",
 	func() runtime.Object { return &GenericDataSource{} },
 	func() runtime.Object { return &GenericDataSourceList{} },
 	utils.TableColumns{

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -203,24 +204,22 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
+	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
 	legacyStore := &legacyStorage{
 		datasources:  b.datasources,
 		resourceInfo: &ds,
 	}
-	storage[ds.StoragePath()] = legacyStore
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+	if err != nil {
+		return err
+	}
 
-	// if false {
-	// 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
+	// Register the "connection" view for a datasource (no access to raw settings)
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
 		datasources:    b.datasources,
@@ -239,7 +238,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register hardcoded query schemas
-	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	err = queryschema.RegisterQueryTypes(b.queryTypes, storage)
 	if err != nil {
 		return err
 	}
