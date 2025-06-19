@@ -50,14 +50,18 @@ export function getDefaultOTelDisplayFormat() {
   return ['scope_name', 'thread_name', 'exception_type', 'exception_message', LOG_LINE_BODY_FIELD_NAME];
 }
 
-const OTEL_RESOURCE_ATTRS_REGEX = /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_)/;
-const OTEL_LOG_FIELDS_REGEX = /^(flags|observed_timestamp|scope_name|severity_number|severity_text|span_id|trace_id|detected_level)$/;
+const OTEL_RESOURCE_ATTRS_REGEX =
+  /^(aws_|cloud_|cloudfoundry_|container_|deployment_|faas_|gcp_|host_|k8s_|os_|process_|service_|telemetry_)/;
+const OTEL_LOG_FIELDS_REGEX =
+  /^(flags|observed_timestamp|scope_name|severity_number|severity_text|span_id|trace_id|detected_level)$/;
 
 export function getOtelFormattedBody(log: LogListModel) {
   if (!log.otelLanguage) {
     return log.raw;
   }
-  const additionalFields = ['timestamp', 'detected_level', 'flags', 'trace_id', 'span_id'];
+  const additionalFields = Object.keys(log.labels).filter(
+    (label) => !OTEL_RESOURCE_ATTRS_REGEX.test(label) && !OTEL_LOG_FIELDS_REGEX.test(label)
+  );
   return (
     log.raw +
     ' ' +
