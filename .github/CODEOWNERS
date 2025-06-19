@@ -68,6 +68,7 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad
+/.air.toml @macabu
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
