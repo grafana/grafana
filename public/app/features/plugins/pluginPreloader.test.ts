@@ -10,7 +10,7 @@ import {
 import type { AppPluginConfig } from '@grafana/runtime';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { preloadPlugins } from './pluginPreloader';
+import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
 import { importAppPlugin } from './plugin_loader';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -29,8 +29,8 @@ jest.mock('./plugin_loader', () => ({
   importAppPlugin: jest.fn(),
 }));
 
-const mockGetPluginSettings = jest.mocked(getPluginSettings);
-const mockImportAppPlugin = jest.mocked(importAppPlugin);
+const getPluginSettingsMock = jest.mocked(getPluginSettings);
+const importAppPluginMock = jest.mocked(importAppPlugin);
 
 const createMockAppPluginConfig = (overrides: Partial<AppPluginConfig> = {}): AppPluginConfig => ({
   id: 'test-plugin',
@@ -82,21 +82,22 @@ describe('pluginPreloader', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+    clearPreloadedPluginsCache();
   });
 
-  describe('preloadPlugins', () => {
+  describe('preloadPlugins()', () => {
     it('should return early when no apps are provided', async () => {
       await preloadPlugins([]);
 
-      expect(mockGetPluginSettings).not.toHaveBeenCalled();
-      expect(mockImportAppPlugin).not.toHaveBeenCalled();
+      expect(getPluginSettingsMock).not.toHaveBeenCalled();
+      expect(importAppPluginMock).not.toHaveBeenCalled();
     });
 
-    it('should return early when empty array is provided', async () => {
+    it('should return early when called with no arguments', async () => {
       await preloadPlugins();
 
-      expect(mockGetPluginSettings).not.toHaveBeenCalled();
-      expect(mockImportAppPlugin).not.toHaveBeenCalled();
+      expect(getPluginSettingsMock).not.toHaveBeenCalled();
+      expect(importAppPluginMock).not.toHaveBeenCalled();
     });
 
     it('should preload a single plugin successfully', async () => {
@@ -112,15 +113,15 @@ describe('pluginPreloader', () => {
         type: PluginType.app,
       });
 
-      mockGetPluginSettings.mockResolvedValue(mockPluginMeta);
-      mockImportAppPlugin.mockResolvedValue({} as any);
+      getPluginSettingsMock.mockResolvedValue(mockPluginMeta);
+      importAppPluginMock.mockResolvedValue({} as any);
 
       await preloadPlugins([appConfig]);
 
-      expect(mockGetPluginSettings).toHaveBeenCalledWith('test-plugin', {
+      expect(getPluginSettingsMock).toHaveBeenCalledWith('test-plugin', {
         showErrorAlert: true,
       });
-      expect(mockImportAppPlugin).toHaveBeenCalledWith(mockPluginMeta);
+      expect(importAppPluginMock).toHaveBeenCalledWith(mockPluginMeta);
     });
 
     it('should preload multiple plugins successfully', async () => {
@@ -149,21 +150,21 @@ describe('pluginPreloader', () => {
         type: PluginType.app,
       });
 
-      mockGetPluginSettings.mockResolvedValueOnce(mockPluginMeta1).mockResolvedValueOnce(mockPluginMeta2);
-      mockImportAppPlugin.mockResolvedValue({} as any);
+      getPluginSettingsMock.mockResolvedValueOnce(mockPluginMeta1).mockResolvedValueOnce(mockPluginMeta2);
+      importAppPluginMock.mockResolvedValue({} as any);
 
       await preloadPlugins(appConfigs);
 
-      expect(mockGetPluginSettings).toHaveBeenCalledTimes(2);
-      expect(mockGetPluginSettings).toHaveBeenNthCalledWith(1, 'plugin-1', {
+      expect(getPluginSettingsMock).toHaveBeenCalledTimes(2);
+      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(1, 'plugin-1', {
         showErrorAlert: true,
       });
-      expect(mockGetPluginSettings).toHaveBeenNthCalledWith(2, 'plugin-2', {
+      expect(getPluginSettingsMock).toHaveBeenNthCalledWith(2, 'plugin-2', {
         showErrorAlert: true,
       });
-      expect(mockImportAppPlugin).toHaveBeenCalledTimes(2);
-      expect(mockImportAppPlugin).toHaveBeenNthCalledWith(1, mockPluginMeta1);
-      expect(mockImportAppPlugin).toHaveBeenNthCalledWith(2, mockPluginMeta2);
+      expect(importAppPluginMock).toHaveBeenCalledTimes(2);
+      expect(importAppPluginMock).toHaveBeenNthCalledWith(1, mockPluginMeta1);
+      expect(importAppPluginMock).toHaveBeenNthCalledWith(2, mockPluginMeta2);
     });
 
     it('should not preload already preloaded plugins', async () => {
@@ -181,14 +182,83 @@ describe('pluginPreloader', () => {
         type: PluginType.app,
       });
 
-      mockGetPluginSettings.mockResolvedValue(mockPluginMeta);
-      mockImportAppPlugin.mockResolvedValue({} as any);
+      getPluginSettingsMock.mockResolvedValue(mockPluginMeta);
+      importAppPluginMock.mockResolvedValue({} as any);
 
       await preloadPlugins(appConfigs);
       await preloadPlugins(appConfigs);
+      await preloadPlugins(appConfigs);
 
-      expect(mockGetPluginSettings).toHaveBeenCalledTimes(1);
-      expect(mockImportAppPlugin).toHaveBeenCalledTimes(1);
+      expect(getPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(importAppPluginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not preload plugins twice, even if the initial has not finished yet', async () => {
+      const appConfigs = [
+        createMockAppPluginConfig({
+          id: 'plugin-1',
+          path: '/path/to/plugin1',
+          version: '1.0.0',
+        }),
+      ];
+
+      const mockPluginMeta = createMockPluginMeta({
+        id: 'plugin-1',
+        name: 'Plugin 1',
+        type: PluginType.app,
+      });
+
+      getPluginSettingsMock.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta), 100))
+      );
+      importAppPluginMock.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)));
+
+      // We are not awaiting the first call, so the second one kicks off before the first one has finished
+      preloadPlugins(appConfigs);
+      await preloadPlugins(appConfigs);
+
+      expect(getPluginSettingsMock).toHaveBeenCalledTimes(1);
+      expect(importAppPluginMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not preload plugins twice, even if the upcoming calls have a different set of plugins', async () => {
+      const appConfig1 = createMockAppPluginConfig({
+        id: 'plugin-1',
+        path: '/path/to/plugin1',
+        version: '1.0.0',
+      });
+
+      const appConfig2 = createMockAppPluginConfig({
+        id: 'plugin-2',
+        path: '/path/to/plugin2',
+        version: '2.0.0',
+      });
+
+      const mockPluginMeta1 = createMockPluginMeta({
+        id: 'plugin-1',
+        name: 'Plugin 1',
+        type: PluginType.app,
+      });
+
+      const mockPluginMeta2 = createMockPluginMeta({
+        id: 'plugin-2',
+        name: 'Plugin 2',
+        type: PluginType.app,
+      });
+
+      getPluginSettingsMock
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta1), 100)))
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockPluginMeta2), 100)));
+      importAppPluginMock
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)))
+        .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve({} as any), 100)));
+
+      preloadPlugins([appConfig1]);
+      await preloadPlugins([appConfig1, appConfig2]);
+
+      // If there is no cache, these would be called three times
+      expect(getPluginSettingsMock).toHaveBeenCalledTimes(2);
+      expect(importAppPluginMock).toHaveBeenCalledTimes(2);
     });
   });
 });
