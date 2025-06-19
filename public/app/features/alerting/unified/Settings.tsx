@@ -1,6 +1,5 @@
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom-v5-compat';
+import { Navigate, Route, Routes } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
@@ -21,32 +20,9 @@ function SettingsPage() {
       {Array.from(settingsExtensions.entries()).map(([key, { element }]) => (
         <Route key={key} path={key} element={element} />
       ))}
-      <Route path="enterprise" element={<EnterprisePlaceholder />} />
       <Route index element={<Navigate replace to="/alerting/admin/alertmanager" />} />
     </Routes>
   );
-}
-
-function EnterprisePlaceholder() {
-  const pageNav = useSettingsPageNav();
-  return (
-    <AlertingPageWrapper pageNav={pageNav} navId="alerting-admin">
-      <Stack direction="column" gap={2}>
-        <Text variant="h4">Enterprise Features</Text>
-        <Text color="secondary">Enterprise alerting features will be displayed here when available.</Text>
-      </Stack>
-    </AlertingPageWrapper>
-  );
-}
-
-const externalPages = new Map<string, React.ReactNode>();
-
-function addSettingsPage(pageNav: NavModelItem, ReactNode: React.ReactNode) {
-  if (!pageNav.id) {
-    console.warn('Unable to add settings page, PageNav must have an id');
-    return;
-  }
-  externalPages.set(pageNav.id, ReactNode);
 }
 
 function AlertmanagerSettingsPage() {
