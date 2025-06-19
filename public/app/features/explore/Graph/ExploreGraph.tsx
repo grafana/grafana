@@ -141,27 +141,27 @@ export function ExploreGraph({
 
   const structureRev = useStructureRev(dataWithConfig);
 
-  const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
   const previousHiddenFrames = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
-    if (onHiddenSeriesChangedRef.current) {
-      const hiddenFrames: string[] = [];
-      dataWithConfig.forEach((frame) => {
-        const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
-        if (allFieldsHidden) {
-          hiddenFrames.push(getFrameDisplayName(frame));
-        }
-      });
-      if (
-        previousHiddenFrames.current === undefined ||
-        !isEqual(sortBy(hiddenFrames), sortBy(previousHiddenFrames.current))
-      ) {
-        previousHiddenFrames.current = hiddenFrames;
-        onHiddenSeriesChangedRef.current(hiddenFrames);
-      }
+    if (!onHiddenSeriesChanged) {
+      return;
     }
-  }, [dataWithConfig]);
+    const hiddenFrames: string[] = [];
+    dataWithConfig.forEach((frame) => {
+      const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
+      if (allFieldsHidden) {
+        hiddenFrames.push(getFrameDisplayName(frame));
+      }
+    });
+    if (
+      previousHiddenFrames.current === undefined ||
+      !isEqual(sortBy(hiddenFrames), sortBy(previousHiddenFrames.current))
+    ) {
+      previousHiddenFrames.current = hiddenFrames;
+      onHiddenSeriesChanged(hiddenFrames);
+    }
+  }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',
