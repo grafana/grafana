@@ -213,19 +213,19 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   plugin.meta = meta;
   plugin.setComponentsFromLegacyExports(pluginExports);
 
-  exposedComponentsRegistry.register({
+  await exposedComponentsRegistry.register({
     pluginId,
     configs: plugin.exposedComponentConfigs || [],
   });
-  addedComponentsRegistry.register({
+  await addedComponentsRegistry.register({
     pluginId,
     configs: plugin.addedComponentConfigs || [],
   });
-  addedLinksRegistry.register({
+  await addedLinksRegistry.register({
     pluginId,
     configs: plugin.addedLinkConfigs || [],
   });
-  addedFunctionsRegistry.register({
+  await addedFunctionsRegistry.register({
     pluginId,
     configs: plugin.addedFunctionConfigs || [],
   });

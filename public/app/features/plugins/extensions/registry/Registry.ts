@@ -10,6 +10,11 @@ export type PluginExtensionConfigs<T> = {
   configs: T[];
 };
 
+// Internal type for tracking registrations
+type PluginExtensionConfigsWithId<T> = PluginExtensionConfigs<T> & {
+  __registrationId: symbol;
+};
+
 export type RegistryType<T> = Record<string | symbol, T>;
 
 // This is the base-class used by the separate specific registries.
@@ -19,7 +24,9 @@ export abstract class Registry<TRegistryValue, TMapType> {
   // (If TRUE `initialState` is ignored.)
   private isReadOnly: boolean;
   // This is the subject that receives extension configs for a loaded plugin.
-  private resultSubject: Subject<PluginExtensionConfigs<TMapType>>;
+  private resultSubject: Subject<PluginExtensionConfigsWithId<TMapType>>;
+  // Subject that emits when a registration completes processing
+  private completionSubject: Subject<symbol>;
   protected logger: ExtensionsLog;
   // This is the subject that we expose.
   // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
@@ -30,7 +37,8 @@ export abstract class Registry<TRegistryValue, TMapType> {
     initialState?: RegistryType<TRegistryValue>;
     log?: ExtensionsLog;
   }) {
-    this.resultSubject = new Subject<PluginExtensionConfigs<TMapType>>();
+    this.resultSubject = new Subject<PluginExtensionConfigsWithId<TMapType>>();
+    this.completionSubject = new Subject<symbol>();
     this.logger = options.log ?? log;
     this.isReadOnly = false;
 
@@ -45,7 +53,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
     this.registrySubject = new ReplaySubject<RegistryType<TRegistryValue>>(1);
     this.resultSubject
       .pipe(
-        scan(this.mapToRegistry.bind(this), options.initialState ?? {}),
+        scan(this.mapToRegistryWithId.bind(this), options.initialState ?? {}),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith(options.initialState ?? {}),
         map((registry) => deepFreeze(registry))
@@ -59,12 +67,39 @@ export abstract class Registry<TRegistryValue, TMapType> {
     item: PluginExtensionConfigs<TMapType>
   ): RegistryType<TRegistryValue>;
 
-  register(result: PluginExtensionConfigs<TMapType>): void {
+  // Wrapper that handles the registration ID and emits completion
+  private mapToRegistryWithId(
+    registry: RegistryType<TRegistryValue>,
+    item: PluginExtensionConfigsWithId<TMapType>
+  ): RegistryType<TRegistryValue> {
+    const { __registrationId, ...cleanItem } = item;
+    const result = this.mapToRegistry(registry, cleanItem as PluginExtensionConfigs<TMapType>);
+
+    // Emit completion for this specific registration
+    this.completionSubject.next(__registrationId);
+
+    return result;
+  }
+
+  register(result: PluginExtensionConfigs<TMapType>): Promise<void> {
     if (this.isReadOnly) {
       throw new Error(MSG_CANNOT_REGISTER_READ_ONLY);
     }
 
-    this.resultSubject.next(result);
+    return new Promise((resolve) => {
+      const registrationId = Symbol();
+
+      // Subscribe to completion events for this specific registration
+      const subscription = this.completionSubject.subscribe((completedId) => {
+        if (completedId === registrationId) {
+          subscription.unsubscribe();
+          resolve();
+        }
+      });
+
+      // Send the registration with its ID
+      this.resultSubject.next({ ...result, __registrationId: registrationId });
+    });
   }
 
   asObservable(): Observable<RegistryType<TRegistryValue>> {
