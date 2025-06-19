@@ -213,7 +213,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
-		_, connectSpan := tracer.Start(client.Context(), "OnConnect")
+		_, connectSpan := tracer.Start(client.Context(), "live.OnConnect")
 		defer connectSpan.End()
 		connectSpan.SetAttributes(
 			attribute.String("user", client.UserID()),
@@ -239,7 +239,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 		// Called when client issues RPC (async request over Live connection).
 		client.OnRPC(func(e centrifuge.RPCEvent, cb centrifuge.RPCCallback) {
-			ctx, span := tracer.Start(client.Context(), "OnRPC")
+			ctx, span := tracer.Start(client.Context(), "live.OnRPC")
 			// We finish span when calling callback, which can be done on a separate goroutine.
 
 			span.SetAttributes(
@@ -268,7 +268,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 		// Called when client subscribes to the channel.
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
-			ctx, span := tracer.Start(client.Context(), "OnSubscribe")
+			ctx, span := tracer.Start(client.Context(), "live.OnSubscribe")
 			// We finish span when calling callback, which can be done on a separate goroutine.
 
 			span.SetAttributes(
@@ -298,7 +298,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// In general, we should prefer writing to the HTTP API, but this
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
-			ctx, span := tracer.Start(client.Context(), "OnPublish")
+			ctx, span := tracer.Start(client.Context(), "live.OnPublish")
 			// We finish span when calling callback, which can be done on a separate goroutine.
 
 			span.SetAttributes(
@@ -325,7 +325,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 		// We don't need to do anything on unsubscribe, but we create tracing span with channel name.
 		client.OnUnsubscribe(func(e centrifuge.UnsubscribeEvent) {
-			_, span := tracer.Start(client.Context(), "OnUnsubscribe")
+			_, span := tracer.Start(client.Context(), "live.OnUnsubscribe")
 			defer span.End()
 
 			span.SetAttributes(
@@ -334,7 +334,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		})
 
 		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
-			_, span := tracer.Start(client.Context(), "OnDisconnect")
+			_, span := tracer.Start(client.Context(), "live.OnDisconnect")
 			defer span.End()
 
 			reason := e.Reason
