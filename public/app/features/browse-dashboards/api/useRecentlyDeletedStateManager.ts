@@ -1,9 +1,11 @@
+import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { SEARCH_SELECTED_SORT } from 'app/features/search/constants';
 import { SearchState } from 'app/features/search/types';
 
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
 
-// Subclass SearchStateMananger to customise the setStateAndDoSearch behaviour.
+// Subclass SearchStateManager to customize the setStateAndDoSearch behavior.
 // We want to clear the search results when the user clears any search input
 // to trigger the skeleton state.
 export class TrashStateManager extends SearchStateManager {
@@ -39,6 +41,32 @@ export class TrashStateManager extends SearchStateManager {
       this.doSearchWithDebounce();
     }
   }
+
+  // Get tags from deleted dashboards cache
+  getTagOptions = async (): Promise<TermCount[]> => {
+    try {
+      const deletedHits = await deletedDashboardsCache.get();
+      const tagCounts = new Map<string, number>();
+
+      deletedHits.forEach((hit) => {
+        hit.tags.forEach((tag) => {
+          if (tag) {
+            tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+          }
+        });
+      });
+
+      const termCounts: TermCount[] = Array.from(tagCounts.entries()).map(([term, count]) => ({
+        term,
+        count,
+      }));
+
+      return termCounts.sort((a, b) => b.count - a.count);
+    } catch (error) {
+      console.error('Failed to get tags from deleted dashboards:', error);
+      return [];
+    }
+  };
 }
 
 let recentlyDeletedStateManager: TrashStateManager;
