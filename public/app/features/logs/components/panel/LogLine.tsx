@@ -17,9 +17,9 @@ import { LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   hasUnderOrOverflow,
-  getLineHeight,
   LogFieldDimension,
   getTruncationLineCount,
+  LogLineVirtualization,
 } from './virtualization';
 
 export interface Props {
@@ -32,6 +32,7 @@ export interface Props {
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
+  virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
 
@@ -45,6 +46,7 @@ export const LogLine = ({
   onOverflow,
   showTime,
   variant,
+  virtualization,
   wrapLogMessage,
 }: Props) => {
   const {
@@ -64,11 +66,11 @@ export const LogLine = ({
   const permalinked = useLogIsPermalinked(log);
 
   useEffect(() => {
-    if (!onOverflow || !logLineRef.current) {
+    if (!onOverflow || !logLineRef.current || !virtualization) {
       return;
     }
     const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
-    const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight, log.collapsed);
+    const actualHeight = hasUnderOrOverflow(virtualization, logLineRef.current, calculatedHeight, log.collapsed);
     if (actualHeight) {
       onOverflow(index, log.uid, actualHeight);
     }
@@ -154,7 +156,11 @@ export const LogLine = ({
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
-          style={collapsed ? { maxHeight: `${getTruncationLineCount() * getLineHeight()}px` } : undefined}
+          style={
+            collapsed && virtualization
+              ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
+              : undefined
+          }
           onClick={handleClick}
         >
           <Log
@@ -311,7 +317,7 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2, virtualization: LogLineVirtualization) => {
   const colors = {
     critical: '#B877D9',
     error: theme.colors.error.text,
@@ -404,7 +410,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({
-      height: getLineHeight(),
+      height: virtualization.getLineHeight(),
       margin: 0,
       padding: theme.spacing(0, 0, 0, 0.5),
     }),
@@ -501,7 +507,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     expandCollapseControlButton: css({
       fontWeight: theme.typography.fontWeightLight,
-      height: getLineHeight(),
+      height: virtualization.getLineHeight(),
       margin: 0,
     }),
   };
