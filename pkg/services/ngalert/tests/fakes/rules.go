@@ -228,6 +228,10 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			}
 		}
 
+		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+			continue
+		}
+
 		ruleList = append(ruleList, r)
 	}
 

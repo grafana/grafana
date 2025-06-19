@@ -78,15 +78,18 @@ export const QueryPatternsModal = (props: Props) => {
   return (
     <Modal
       aria-label={t(
-        'querybuilder.query-patterns-modal.aria-label-kick-start-your-query-modal',
+        'grafana-prometheus.querybuilder.query-patterns-modal.aria-label-kick-start-your-query-modal',
         'Kick start your query modal'
       )}
       isOpen={isOpen}
-      title={t('querybuilder.query-patterns-modal.title-kick-start-your-query', 'Kick start your query')}
+      title={t(
+        'grafana-prometheus.querybuilder.query-patterns-modal.title-kick-start-your-query',
+        'Kick start your query'
+      )}
       onDismiss={onClose}
     >
       <div className={styles.spacing}>
-        <Trans i18nKey="querybuilder.query-patterns-modal.description-kick-start-your-query">
+        <Trans i18nKey="grafana-prometheus.querybuilder.query-patterns-modal.description-kick-start-your-query">
           Kick start your query by selecting one of these queries. You can then continue to complete your query.
         </Trans>
       </div>
@@ -95,14 +98,18 @@ export const QueryPatternsModal = (props: Props) => {
         return (
           <Collapse
             aria-label={t(
-              'querybuilder.query-patterns-modal.aria-label-toggle-query-starter',
+              'grafana-prometheus.querybuilder.query-patterns-modal.aria-label-toggle-query-starter',
               'open and close {{patternType}} query starter card',
               { patternType }
             )}
             key={patternType}
-            label={t('querybuilder.query-patterns-modal.label-toggle-query-starter', '{{patternType}} query starters', {
-              patternType: capitalize(patternType),
-            })}
+            label={t(
+              'grafana-prometheus.querybuilder.query-patterns-modal.label-toggle-query-starter',
+              '{{patternType}} query starters',
+              {
+                patternType: capitalize(patternType),
+              }
+            )}
             isOpen={isOpen}
             collapsible={true}
             onToggle={() => {
@@ -139,13 +146,13 @@ export const QueryPatternsModal = (props: Props) => {
       })}
       <Button
         aria-label={t(
-          'querybuilder.query-patterns-modal.aria-label-close-kick-start-your-query-modal',
+          'grafana-prometheus.querybuilder.query-patterns-modal.aria-label-close-kick-start-your-query-modal',
           'close kick start your query modal'
         )}
         variant="secondary"
         onClick={onClose}
       >
-        <Trans i18nKey="querybuilder.query-patterns-modal.close">Close</Trans>
+        <Trans i18nKey="grafana-prometheus.querybuilder.query-patterns-modal.close">Close</Trans>
       </Button>
     </Modal>
   );
