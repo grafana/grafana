@@ -24,7 +24,7 @@ import {
   SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, Dropdown, FeatureBadge, Menu, Stack, Tab, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, FeatureBadge, Icon, Menu, Stack, Tab, Tooltip, useStyles2 } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -336,28 +336,31 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
 
   const renderMenuItem = useCallback(
     ({ description, label, value }: SelectableValue<ExpressionQueryType>) => {
-      return label === 'SQL' ? (
+      const expressionIconMap = {
+        [ExpressionQueryType.math]: 'calculator-alt',
+        [ExpressionQueryType.reduce]: 'compress-arrows',
+        [ExpressionQueryType.resample]: 'sync',
+        [ExpressionQueryType.classic]: 'cog',
+        [ExpressionQueryType.threshold]: 'sliders-v-alt',
+        [ExpressionQueryType.sql]: 'database',
+      } as const;
+
+      return (
         <Menu.Item
-          className={styles.menuItem}
           component={() => (
             <div className={styles.sqlItem}>
-              <div className={styles.sqlItemLabel}>
+              <div className={styles.leftContent}>
+                <Icon className={styles.icon} name={expressionIconMap[value!]} />
                 {label}
-                <FeatureBadge featureState={FeatureState.privatePreview} />
+                {value === 'sql' && <FeatureBadge featureState={FeatureState.new} />}
               </div>
-              <div className={styles.description}>{description}</div>
+              <Tooltip placement="right" content={description!}>
+                <Icon name="info-circle" className={styles.icon} />
+              </Tooltip>
             </div>
           )}
           key={value}
           label=""
-          onClick={() => model.onAddExpressionOfType(value!)}
-        />
-      ) : (
-        <Menu.Item
-          className={styles.menuItem}
-          description={description}
-          key={value}
-          label={label!}
           onClick={() => model.onAddExpressionOfType(value!)}
         />
       );
@@ -492,15 +495,8 @@ function QueriesTab(props: QueriesTabProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  menuItem: css({
-    fontWeight: theme.typography.fontWeightBold,
-  }),
   sqlItem: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  }),
-  sqlItemLabel: css({
+    width: '100%',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
@@ -509,5 +505,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     ...theme.typography.bodySmall,
     color: theme.colors.text.secondary,
     textAlign: 'start',
+  }),
+  leftContent: css({
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  icon: css({
+    opacity: 0.7,
+    color: theme.colors.text.secondary,
   }),
 });
