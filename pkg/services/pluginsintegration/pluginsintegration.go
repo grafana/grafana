@@ -18,7 +18,6 @@ import (
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -144,8 +143,6 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
-	finder.ProvideLocalFinder,
-	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	ProvideClientWithMiddlewares,
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
