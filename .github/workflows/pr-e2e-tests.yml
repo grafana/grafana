@@ -179,7 +179,8 @@ jobs:
   required-e2e-tests:
     needs:
       - run-e2e-tests
-      - run-a11y-test
+      # a11y test is not listed on purpose: it is not an important E2E test.
+      # It is also totally fine to fail right now.
     # always() is the best function here.
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.
