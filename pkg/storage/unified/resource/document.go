@@ -400,10 +400,6 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Type of manager, which is responsible for managing the resource",
 			},
-			// {
-			// 	Name: SEARCH_FIELD_REFERENCES,
-			// 	Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			// },
 			// TODO: below fields only need to be returned from search, but do not need to be searchable
 			{
 				Name: SEARCH_FIELD_MANAGER_ID,
