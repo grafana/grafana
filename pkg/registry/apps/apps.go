@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/prometheus"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
@@ -38,6 +39,7 @@ func ProvideRegistryServiceSink(
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
 	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
+	prometheusAppProvider *prometheus.PrometheusAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -68,6 +70,11 @@ func ProvideRegistryServiceSink(
 	if alertingNotificationsAppProvider != nil {
 		providers = append(providers, alertingNotificationsAppProvider)
 	}
+
+	if prometheusAppProvider != nil {
+		providers = append(providers, prometheusAppProvider)
+	}
+
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if err != nil {
