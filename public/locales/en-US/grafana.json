@@ -2944,9 +2944,51 @@
     }
   },
   "alertlist": {
+    "category-alert-state-filter": "Alert state filter",
+    "category-filter": "Filter",
+    "category-options": "Options",
+    "descriptino-alerts-linked-to-dashboard": "Only show alerts linked to this dashboard",
+    "description-alert-instance-label": "Filter alert instances using label querying, ex: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
+    "description-alert-name": "Filter for alerts containing this text",
+    "description-datasource": "Filter from alert source",
+    "description-folder": "Filter for alerts in the selected folder (for Grafana-managed alert rules only)",
+    "description-group-by": "Filter alerts using label querying",
+    "description-group-mode": "How alert instances should be grouped",
+    "description-max-items": "Maximum alerts to display",
+    "description-show-inactive-alerts": "Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.",
+    "description-sort-order": "Sort order of alerts and alert instances",
+    "description-view-mode": "Toggle between list view and stat view",
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
       "placeholder-group-by": "Group by"
+    },
+    "group-mode-options": {
+      "label-custom-grouping": "Custom grouping",
+      "label-default-grouping": "Default grouping"
+    },
+    "name-alert-instance-label": "Alert instance label",
+    "name-alert-name": "Alert name",
+    "name-alerts-linked-to-dashboard": "Alerts linked to this dashboard",
+    "name-datasource": "Datasource",
+    "name-error": "Error",
+    "name-firing": "Alerting / Firing",
+    "name-folder": "Folder",
+    "name-group-by": "Group by",
+    "name-group-mode": "Group mode",
+    "name-max-items": "Max items",
+    "name-no-data": "No Data",
+    "name-normal": "Normal",
+    "name-pending": "Pending",
+    "name-recovering": "Recovering",
+    "name-show-inactive-alerts": "Show alerts with 0 instances",
+    "name-sort-order": "Sort order",
+    "name-view-mode": "View mode",
+    "sort-order-options": {
+      "label-alphabetical-asc": "Alphabetical (asc)",
+      "label-alphabetical-desc": "Alphabetical (desc)",
+      "label-importance": "Importance",
+      "label-time-asc": "Time (asc)",
+      "label-time-desc": "Time (desc)"
     },
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
@@ -2960,6 +3002,10 @@
     "unified-alert-list-panel": {
       "body-permission-required": "Sorry, you do not have the required permissions to read alert rules.",
       "title-permission-required": "Permission required"
+    },
+    "view-mode-options": {
+      "label-list": "List",
+      "label-stat": "Stat"
     }
   },
   "annolist": {
