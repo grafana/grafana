@@ -287,9 +287,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         isNew: false,
         version: result.version,
       },
+      overlay: undefined,
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialUrlState = locationService.getLocation();
+
     this._changeTracker.startTrackingChanges();
   }
 
