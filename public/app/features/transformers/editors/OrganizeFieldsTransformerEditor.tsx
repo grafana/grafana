@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
@@ -257,7 +257,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
   return (
     <>
-      <InlineFieldRow>
+      <InlineFieldRow className={styles.fieldOrderRadio}>
         <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field order')}>
           <RadioButtonGroup
             options={[
@@ -326,6 +326,9 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 };
 
 const getDraggableStyles = (theme: GrafanaTheme2) => ({
+  fieldOrderRadio: css({
+    marginBottom: theme.spacing(1),
+  }),
   labelsDraggable: css({
     marginBottom: theme.spacing(3),
   }),
@@ -429,7 +432,7 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
                     'Drag and drop to reorder'
                   )}
                   size="lg"
-                  className={styles.draggable}
+                  className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
                 />
               </span>
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
@@ -466,6 +469,10 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       color: theme.colors.text.maxContrast,
     },
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    pointerEvents: 'none',
   }),
 });
 
