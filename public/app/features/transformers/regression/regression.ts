@@ -113,14 +113,6 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
           return frames;
       }
 
-      /*
-       "model-type-options": {
-        "label": {
-          "linear": "Linear",
-          "polynomial": "Polynomial"
-        }
-      */
-
       let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       if (modelType === ModelType.polynomial) {
         const degreeData = DEGREES.find((deg) => deg.value === degree);
