@@ -276,26 +276,12 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
-	// Add auto-generated routes and decrypt before comparing.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
-		return err
-	}
-	rawDecrypted, configHash, err := am.decryptConfiguration(ctx, c)
-	if err != nil {
-		return err
-	}
-
-	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, configHash) {
-		return nil
-	}
-
-	decrypted, err := notifier.Load(rawDecrypted)
-	if err != nil {
-		return err
-	}
-
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.applyConfig(
+		ctx,
+		c,
+		am.buildAutogenFn(ctx, true),
+		func(configHash [16]byte) bool { return am.shouldSendConfig(ctx, configHash) },
+		func(configHash [16]byte) bool { return am.isDefaultConfiguration(configHash) })
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -375,30 +361,21 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 	return nil
 }
 
+func (am *Alertmanager) buildAutogenFn(ctx context.Context, skipInvalid bool) func(c *apimodels.PostableApiAlertingConfig) error {
+	return func(c *apimodels.PostableApiAlertingConfig) error {
+		return am.autogenFn(ctx, am.log, am.orgID, c, skipInvalid)
+	}
+}
+
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	// Get the hash for the encrypted configuration.
-	rawCfg, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
-
-	// Add auto-generated routes and decrypt before sending.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
-		return err
-	}
-	rawDecrypted, _, err := am.decryptConfiguration(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	decrypted, err := notifier.Load(rawDecrypted)
-	if err != nil {
-		return err
-	}
-
-	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
+	return am.applyConfig(
+		ctx,
+		cfg,
+		am.buildAutogenFn(ctx, false),
+		func([16]byte) bool { return true },
+		func([16]byte) bool { return false },
+	)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
@@ -407,14 +384,46 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
 	}
+	return am.applyConfig(
+		ctx,
+		c,
+		am.buildAutogenFn(ctx, true),
+		func([16]byte) bool { return true },
+		func([16]byte) bool { return true },
+	)
+}
 
-	// Add auto-generated routes and decrypt before sending.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
-		return err
-	}
-	rawDecrypted, _, err := am.decryptConfiguration(ctx, c)
+// applyConfig is a helper function that applies the given configuration to the remote Alertmanager.
+//
+// there are probably better ways to do this, but using strategy helps with code duplication
+// also, this requires some steps being executed in an specific order
+// (e.g. generating hash before autogenFn, patching new secure fields before decrypt, etc..).
+func (am *Alertmanager) applyConfig(
+	ctx context.Context,
+	cfg *apimodels.PostableUserConfig,
+	autogenFn func(*apimodels.PostableApiAlertingConfig) error,
+	shouldSendConfig func([16]byte) bool,
+	isDefault func([16]byte) bool,
+) error {
+	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
+	// Add auto-generated routes and decrypt before sending.
+	if err := autogenFn(&cfg.AlertmanagerConfig); err != nil {
+		return err
+	}
+
+	rawDecrypted, configHash, err := am.decryptConfiguration(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	// Send the configuration only if we need to.
+	if !shouldSendConfig(configHash) {
+		return nil
 	}
 
 	decrypted, err := notifier.Load(rawDecrypted)
@@ -422,13 +431,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return err
 	}
 
-	return am.sendConfiguration(
-		ctx,
-		decrypted,
-		am.defaultConfigHash,
-		time.Now().Unix(),
-		true,
-	)
+	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), isDefault(configHash))
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
