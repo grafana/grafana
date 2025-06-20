@@ -63,6 +63,9 @@ export function shouldDrawYValue(yValue: unknown, mappedNull?: boolean, mappedNa
   if (typeof yValue === 'boolean') {
     return true;
   }
+  if (typeof yValue === 'string') {
+    return true;
+  }
   if (typeof yValue === 'number' && !Number.isNaN(yValue)) {
     return true;
   }
