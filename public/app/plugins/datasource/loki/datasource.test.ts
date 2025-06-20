@@ -1811,7 +1811,6 @@ describe('LokiDatasource', () => {
   });
 
   describe('query', () => {
-    let featureToggleVal = config.featureToggles.lokiSendDashboardPanelNames;
     beforeEach(() => {
       setDashboardSrv({
         getCurrent: () => ({
@@ -1821,10 +1820,6 @@ describe('LokiDatasource', () => {
       } as unknown as DashboardSrv);
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
-      config.featureToggles.lokiSendDashboardPanelNames = true;
-    });
-    afterEach(() => {
-      config.featureToggles.lokiSendDashboardPanelNames = featureToggleVal;
     });
 
     it('adds dashboard headers', async () => {

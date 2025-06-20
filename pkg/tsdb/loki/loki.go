@@ -27,13 +27,12 @@ import (
 )
 
 const (
-	flagLokiLogsDataplane           = "lokiLogsDataplane"
-	flagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
-	flagLokiRunQueriesInParallel    = "lokiRunQueriesInParallel"
-	flagLokiStructuredMetadata      = "lokiStructuredMetadata"
-	flagLogQLScope                  = "logQLScope"
-	flagLokiExperimentalStreaming   = "lokiExperimentalStreaming"
-	fromAlertHeaderName             = "FromAlert"
+	flagLokiLogsDataplane         = "lokiLogsDataplane"
+	flagLokiRunQueriesInParallel  = "lokiRunQueriesInParallel"
+	flagLokiStructuredMetadata    = "lokiStructuredMetadata"
+	flagLogQLScope                = "logQLScope"
+	flagLokiExperimentalStreaming = "lokiExperimentalStreaming"
+	fromAlertHeaderName           = "FromAlert"
 )
 
 type Service struct {

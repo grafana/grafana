@@ -661,10 +661,6 @@ export interface FeatureToggles {
   */
   tableNextGen?: boolean;
   /**
-  * Send dashboard and panel names to Loki when querying
-  */
-  lokiSendDashboardPanelNames?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
