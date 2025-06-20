@@ -208,6 +208,10 @@ func TestIPLoginAttempts(t *testing.T) {
 // TestIPv6AddressSupport verifies that various IPv6 address formats can be stored properly with the new column length, testing various IPv6 address formats that could be encountered.
 // This test validates that the ip_address column length is sufficient for IPv6 addresses
 func TestIntegrationIPv6AddressSupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
