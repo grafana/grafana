@@ -1164,4 +1164,144 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
+	// Folder name search integration tests
+	scenarioWithPanel(t, "When searching by folder name, it should return panels in that folder",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel in ScenarioFolder")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search by folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "ScenarioFolder")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should find panels in the "ScenarioFolder" folder
+			require.Greater(t, len(result.Result.Elements), 0, "Should find panels when searching by folder name")
+
+			// All returned panels should be in the ScenarioFolder
+			for _, element := range result.Result.Elements {
+				require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "All panels should be in ScenarioFolder")
+			}
+		})
+
+	scenarioWithPanel(t, "When searching by folder name that doesn't exist, it should return no results",
+		func(t *testing.T, sc scenarioContext) {
+			// Search by non-existent folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "NonExistentFolder")
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should return no results for non-existent folder
+			require.Equal(t, int64(0), result.Result.TotalCount, "Should return no results for non-existent folder")
+			require.Equal(t, 0, len(result.Result.Elements), "Should return empty elements array")
+		})
+
+	scenarioWithPanel(t, "When searching with folder filter applied, folder name search should be disabled",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Panel for folder filter test")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search with both searchString and folderFilterUIDs
+			// This should NOT search folder names, only panel names/descriptions within the specified folder
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "ScenarioFolder")
+			sc.reqContext.Req.Form.Add("folderFilterUIDs", sc.folder.UID)
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should not find panels by folder name when folder filter is applied
+			// Only panels with "ScenarioFolder" in their name/description should be found
+			for _, element := range result.Result.Elements {
+				nameOrDescriptionMatch := element.Name == "ScenarioFolder" || element.Description == "ScenarioFolder"
+				require.True(t, nameOrDescriptionMatch, "With folder filter, should only match panel name/description, not folder name")
+			}
+		})
+
+	scenarioWithPanel(t, "When searching by partial folder name, it should return panels in matching folders",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel in the existing folder
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Test Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search by partial folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "Scenario")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should find panels in folders with names containing "Scenario"
+			found := false
+			for _, element := range result.Result.Elements {
+				if element.Meta.FolderName == "ScenarioFolder" {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Should find panels in folders matching partial name")
+		})
+
+	scenarioWithPanel(t, "When searching combines panel name and folder name matches, it should return both",
+		func(t *testing.T, sc scenarioContext) {
+			// Create a panel with a specific name
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Marketing Report Panel")
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			// Search for "Marketing" which could match both panel name and folder name
+			err := sc.reqContext.Req.ParseForm()
+			require.NoError(t, err)
+			sc.reqContext.Req.Form.Add("searchString", "Marketing")
+			resp = sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+
+			var result libraryElementsSearch
+			err = json.Unmarshal(resp.Body(), &result)
+			require.NoError(t, err)
+
+			// Should find the panel we just created with "Marketing" in its name
+			found := false
+			for _, element := range result.Result.Elements {
+				if element.Name == "Marketing Report Panel" {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "Should find panel with matching name")
+		})
 }
