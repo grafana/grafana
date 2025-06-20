@@ -238,7 +238,7 @@ func (ng *AlertNG) init() error {
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
 					cfg.PromoteConfig = true
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
+					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -263,7 +263,7 @@ func (ng *AlertNG) init() error {
 
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
+					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -716,8 +716,8 @@ func configureHistorianBackend(
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
-	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
+func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, s secrets.Service, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
+	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), s, autogenFn, m, tracer)
 }
 
 func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
