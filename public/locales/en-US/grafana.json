@@ -10793,6 +10793,14 @@
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
     },
+    "category-cell-options": "Cell options",
+    "category-table": "Table",
+    "category-table-footer": "Table footer",
+    "cell-height-options": {
+      "label-large": "Large",
+      "label-medium": "Medium",
+      "label-small": "Small"
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
@@ -10804,17 +10812,83 @@
       "label-wrap-text": "Wrap text",
       "wrap-text": "Wrap text"
     },
+    "column-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
     "container": {
       "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
     },
+    "description-calculation": "Choose a reducer function / calculation",
+    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
+    "description-column-filter": "Enables/disables field filters in table",
+    "description-count-rows": "Display a single count for all data rows",
+    "description-fields": "Select the fields that should be calculated",
+    "description-min-column-width": "The minimum width for column auto resizing",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
-    }
+    },
+    "name-calculation": "Calculation",
+    "name-cell-height": "Cell height",
+    "name-cell-type": "Cell type",
+    "name-cell-value-inspect": "Cell value inspect",
+    "name-column-alignment": "Column alignment",
+    "name-column-filter": "Column filter",
+    "name-column-width": "Column width",
+    "name-count-rows": "Count rows",
+    "name-enable-paginations": "Enable pagination",
+    "name-fields": "Fields",
+    "name-hide-in-table": "Hide in table",
+    "name-min-column-width": "Minimum column width",
+    "name-show-table-footer": "Show table footer",
+    "name-show-table-header": "Show table header",
+    "placeholder-column-width": "auto",
+    "placeholder-fields": "All Numeric Fields"
+  },
+  "table-new": {
+    "category-cell-options": "Cell options",
+    "category-table": "Table",
+    "category-table-footer": "Table footer",
+    "cell-height-options": {
+      "label-large": "Large",
+      "label-medium": "Medium",
+      "label-small": "Small"
+    },
+    "column-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "description-calculation": "Choose a reducer function / calculation",
+    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
+    "description-column-filter": "Enables/disables field filters in table",
+    "description-count-rows": "Display a single count for all data rows",
+    "description-fields": "Select the fields that should be calculated",
+    "description-min-column-width": "The minimum width for column auto resizing",
+    "name-calculation": "Calculation",
+    "name-cell-height": "Cell height",
+    "name-cell-type": "Cell type",
+    "name-cell-value-inspect": "Cell value inspect",
+    "name-column-alignment": "Column alignment",
+    "name-column-filter": "Column filter",
+    "name-column-width": "Column width",
+    "name-count-rows": "Count rows",
+    "name-enable-pagination": "Enable pagination",
+    "name-fields": "Fields",
+    "name-hide-in-table": "Hide in table",
+    "name-min-column-width": "Minimum column width",
+    "name-show-table-footer": "Show table footer",
+    "name-show-table-header": "Show table header",
+    "placeholder-column-width": "auto",
+    "placeholder-fields": "All Numeric Fields"
   },
   "tag-filter": {
     "clear-button": "Clear tags",
