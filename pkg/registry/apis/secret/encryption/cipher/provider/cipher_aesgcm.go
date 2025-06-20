@@ -23,7 +23,7 @@ type aesGcmCipher struct {
 	randReader io.Reader
 }
 
-func newAesGcmCipher() aesGcmCipher {
+func NewAesGcmCipher() aesGcmCipher {
 	return aesGcmCipher{
 		randReader: rand.Reader,
 	}

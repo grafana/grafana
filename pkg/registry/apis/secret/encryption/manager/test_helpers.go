@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +33,6 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCleanupInterval: time.Nanosecond,
 				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}
