@@ -8944,7 +8944,12 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
+    "category-news": "News",
+    "description-show-image": "Controls if the news item social (og:image) image is shown above text content",
+    "description-url": "Supports RSS and Atom feeds",
     "link-title": "Go to Grafana labs blog",
+    "name-show-image": "Show image",
+    "name-url": "URL",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
       "loading": "Loading...",
