@@ -320,7 +320,6 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 			},
 			Labels: []*resourcepb.Requirement{},
 		},
-		// Query: title,
 		Limit: folderSearchLimit}
 
 	if parentUID != nil {
