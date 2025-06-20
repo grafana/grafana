@@ -91,7 +91,7 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
-export const CELL_RENDERERS: Record<TableCellDisplayMode, TableCellRenderer> = {
+const CELL_RENDERERS: Record<TableCellDisplayMode, TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
   [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
   [TableCellDisplayMode.BasicGauge]: GAUGE_RENDERER,
