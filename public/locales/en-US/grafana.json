@@ -7642,9 +7642,14 @@
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
   "histogram": {
+    "category-histogram": "Histogram",
     "histogram-panel": {
       "no-histogram-found-in-response": "No histogram found in response"
-    }
+    },
+    "name-fill-opacity": "Fill opacity",
+    "name-gradient-mode": "Gradient mode",
+    "name-line-width": "Line width",
+    "name-stacking": "Stacking"
   },
   "inspector": {
     "inspect-data-tab": {
