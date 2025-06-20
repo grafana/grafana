@@ -2,6 +2,7 @@ package loginattemptimpl
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -247,7 +248,7 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 
 	for i, ipAddress := range ipv6Addresses {
 		t.Run("IPv6_Address_"+ipAddress, func(t *testing.T) {
-			username := "testuser" + string(rune(i))
+			username := fmt.Sprintf("testuser%d", i)
 
 			// Verify that the address length is within our new limit of 50 characters
 			assert.LessOrEqual(t, len(ipAddress), 50, "IP address should fit in VARCHAR(50)")
