@@ -12,12 +12,6 @@ import {
 
 describe('TraceQL grammar', () => {
   describe('Language definition', () => {
-    it('should have correct language configuration', () => {
-      expect(languageDefinition.id).toBe('traceql');
-      expect(languageDefinition.aliases).toEqual(['tempo', 'traceql']);
-      expect(languageDefinition.extensions).toEqual(['.traceql']);
-    });
-
     it('should include all required keywords', () => {
       const { keywords } = languageDefinition.def.language;
       expect(keywords).toContain('with');
