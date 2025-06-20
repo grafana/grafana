@@ -211,76 +211,74 @@ describe('StateTimeline uPlot integration', () => {
 
   describe('#shouldDrawYValue', () => {
     describe.each([
-      [true, undefined, true, 'boolean true returns true'],
-      [false, undefined, true, 'boolean false returns true'],
-    ])('boolean values', (yValue, mappings, expected, testName) => {
+      [true, undefined, undefined, true, 'boolean true returns true'],
+      [false, undefined, undefined, true, 'boolean false returns true'],
+    ])('boolean values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      [0, undefined, true, 'zero returns true'],
-      [1, undefined, true, 'positive integer returns true'],
-      [-2.71, undefined, true, 'negative float returns true'],
-      [Number.MAX_VALUE, undefined, true, 'max value returns true'],
-      [Number.MIN_VALUE, undefined, true, 'min value returns true'],
-    ])('finite numbers', (yValue, mappings, expected, testName) => {
+      [0, undefined, undefined, true, 'zero returns true'],
+      [1, undefined, undefined, true, 'positive integer returns true'],
+      [-2.71, undefined, undefined, true, 'negative float returns true'],
+      [Number.MAX_VALUE, undefined, undefined, true, 'max value returns true'],
+      [Number.MIN_VALUE, undefined, undefined, true, 'min value returns true'],
+    ])('finite numeric values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      [Infinity, undefined, true, 'positive infinity returns true'],
-      [-Infinity, undefined, true, 'negative infinity returns true'],
-      [Number.POSITIVE_INFINITY, undefined, true, 'Number.POSITIVE_INFINITY returns true'],
-      [Number.NEGATIVE_INFINITY, undefined, true, 'Number.NEGATIVE_INFINITY returns true'],
-    ])('non-finite numbers', (yValue, mappings, expected, testName) => {
+      [Infinity, undefined, undefined, true, 'positive infinity returns true'],
+      [-Infinity, undefined, undefined, true, 'negative infinity returns true'],
+      [Number.POSITIVE_INFINITY, undefined, undefined, true, 'Number.POSITIVE_INFINITY returns true'],
+      [Number.NEGATIVE_INFINITY, undefined, undefined, true, 'Number.NEGATIVE_INFINITY returns true'],
+    ])('non-finite numeric values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      [null, undefined, false, 'null without mappings returns false'],
-      [null, {}, false, 'null with empty mappings returns false'],
-      [null, { mappedNull: false, mappedNaN: true }, false, 'null with false mappedNull returns false'],
-      [null, { mappedNull: true }, true, 'null with ture mappedNull returns true'],
-    ])('null values', (yValue, mappings, expected, testName) => {
+      [null, undefined, undefined, false, 'null without mappings returns false'],
+      [null, false, true, false, 'null with false mappedNull returns false'],
+      [null, true, undefined, true, 'null with ture mappedNull returns true'],
+    ])('null values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      [NaN, undefined, false, 'NaN without mappings returns false'],
-      [NaN, {}, false, 'NaN with empty mappings returns false'],
-      [NaN, { mappedNull: true, mappedNaN: false }, false, 'NaN with false mappedNaN returns false'],
-      [NaN, { mappedNaN: true }, true, 'NaN with true mappedNaN returns true'],
-    ])('NaN values', (yValue, mappings, expected, testName) => {
+      [NaN, undefined, undefined, false, 'NaN without mappings returns false'],
+      [NaN, true, undefined, false, 'NaN with false mappedNaN returns false'],
+      [NaN, undefined, true, true, 'NaN with true mappedNaN returns true'],
+    ])('NaN values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      ['', undefined, false, 'empty string returns false'],
-      [undefined, undefined, false, 'undefined returns false'],
-    ])('falsy values', (yValue, mappings, expected, testName) => {
+      ['', undefined, undefined, false, 'empty string returns false'],
+      [undefined, undefined, undefined, false, 'undefined returns false'],
+    ])('falsy values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
 
     describe.each([
-      [{}, undefined, true, 'object returns true'],
-      [[], undefined, true, 'array returns true'],
-      [new Date(), undefined, true, 'date returns true'],
-      [BigInt(0), undefined, false, 'bigint zero returns false'],
-    ])('non-scalar values', (yValue, mappings, expected, testName) => {
+      [{}, undefined, undefined, true, 'object returns true'],
+      [[], undefined, undefined, true, 'array returns true'],
+      [new Date(), undefined, undefined, true, 'date returns true'],
+      [BigInt(0), undefined, undefined, false, 'bigint zero returns false'],
+    ])('non-scalar values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappings)).toBe(expected);
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
   });
