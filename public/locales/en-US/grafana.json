@@ -11108,6 +11108,19 @@
       "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
   },
+  "text": {
+    "category-text": "Text",
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-content": "Content",
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers",
+    "name-show-mini-map": "Show mini map"
+  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dashboards",
