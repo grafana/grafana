@@ -123,7 +123,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 						]
 					},
 					{
-						"resource": "datasource",
+						"resource": "datasources",
 						"responseKind": {
 							"group": "",
 							"kind": "GenericDataSource",
