@@ -12164,6 +12164,21 @@
     }
   },
   "xychart": {
+    "category-xychart": "XY Chart",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-style": "Line style",
+    "name-line-width": "Line width",
+    "name-max-point-size": "Max point size",
+    "name-min-point-size": "Min point size",
+    "name-point-shape": "Point shape",
+    "name-point-size": "Point size",
+    "name-point-stroke-width": "Point stroke width",
+    "name-series-mapping": "Series mapping",
+    "name-show": "Show",
+    "point-shape-options": {
+      "label-circle": "Circle",
+      "label-square": "Square"
+    },
     "series-editor": {
       "add-series": "Add series",
       "aria-label-select-series": "Select series {{seriesNum}}",
@@ -12174,7 +12189,18 @@
       "label-y-field": "Y field",
       "placeholder-all-frames": "All frames",
       "placeholder-select-frame": "Select frame",
+      "placeholder-x-field": "First number field in each frame",
+      "placeholder-y-field": "Remaining number fields in each frame",
       "tooltip-delete-series": "Delete series"
+    },
+    "series-mapping-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "show-options": {
+      "label-both": "Both",
+      "label-lines": "Lines",
+      "label-points": "Points"
     }
   }
 }
