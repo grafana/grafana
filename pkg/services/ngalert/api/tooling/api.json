@@ -514,6 +514,9 @@
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "queriedDatasourceUIDs": {
      "items": {
       "type": "string"
@@ -579,7 +582,8 @@
   "AlertmanagerUserConfig": {
    "properties": {
     "alertmanager_config": {
-     "$ref": "#/definitions/Config"
+     "description": "Configuration for Alertmanager in YAML format.\nin: body",
+     "type": "string"
     },
     "template_files": {
      "additionalProperties": {
@@ -1123,6 +1127,26 @@
    },
    "type": "object"
   },
+  "ExtraConfiguration": {
+   "properties": {
+    "alertmanager_config": {
+     "type": "string"
+    },
+    "identifier": {
+     "type": "string"
+    },
+    "merge_matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -1413,20 +1437,6 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
-  },
-  "GettableAlertmanagerUserConfig": {
-   "properties": {
-    "alertmanager_config": {
-     "type": "string"
-    },
-    "template_files": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    }
-   },
-   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1853,6 +1863,12 @@
    "properties": {
     "alertmanager_config": {
      "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
     },
     "template_file_provenances": {
      "additionalProperties": {
@@ -3057,6 +3073,12 @@
     "alertmanager_config": {
      "$ref": "#/definitions/PostableApiAlertingConfig"
     },
+    "extra_config": {
+     "items": {
+      "$ref": "#/definitions/ExtraConfiguration"
+     },
+     "type": "array"
+    },
     "template_files": {
      "additionalProperties": {
       "type": "string"
@@ -3842,6 +3864,9 @@
     },
     "notificationSettings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "query": {
      "type": "string"
