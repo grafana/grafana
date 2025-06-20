@@ -3,29 +3,36 @@ package query
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	frameData "github.com/grafana/grafana-plugin-sdk-go/data"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestQueryRestConnectHandler(t *testing.T) {
 	b := &QueryAPIBuilder{
-		clientSupplier: mockClient{
-			lastCalledWithHeaders: &map[string]string{},
+		clientSupplier: &mockClient{
+			lastCalledWithHeaders: map[string]string{},
 		},
 		tracer: tracing.InitializeTracerForTest(),
 		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
@@ -80,7 +87,7 @@ func TestQueryRestConnectHandler(t *testing.T) {
 		"X-Rule-Type":              "type-1",
 		"X-Rule-Version":           "version-1",
 		"X-Grafana-Org-Id":         "1",
-	}, *b.clientSupplier.(mockClient).lastCalledWithHeaders)
+	}, b.clientSupplier.(*mockClient).lastCalledWithHeaders)
 }
 
 func TestInstantQueryFromAlerting(t *testing.T) {
@@ -137,7 +144,121 @@ func TestInstantQueryFromAlerting(t *testing.T) {
 	require.Equal(t, "Value", result.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
 }
 
+func TestConcurrentQueryMultipleDatasources(t *testing.T) {
+	ctx := context.Background()
+
+	qdreq := query.QueryDataRequest{
+		QueryDataRequest: data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "testds",
+							UID:  "1",
+						},
+					},
+				},
+				{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "B",
+						Datasource: &data.DataSourceRef{
+							Type: "testds",
+							UID:  "2",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	fakeFrame := frameData.NewFrame(
+		"A",
+		frameData.NewField("Time", nil, []time.Time{time.Now()}),
+		frameData.NewField("Value", nil, []int64{42}),
+	)
+	fakeFrame.Meta = &frameData.FrameMeta{TypeVersion: frameData.FrameTypeVersion{0, 1}, Type: "numeric-multi"}
+
+	qdresp := &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			"A": {
+				Frames: frameData.Frames{
+					fakeFrame,
+				},
+			},
+			"B": {
+				Frames: frameData.Frames{
+					fakeFrame,
+				},
+			},
+		},
+	}
+
+	// simulate query middlewares manipulating headers
+	reqHeaders := map[string][]string{
+		"X-Req-Header": {"value1", "value2"},
+	}
+
+	respHeaders := map[string][]string{
+		"X-Resp-Header": {"value1", "value2"},
+	}
+
+	b := &QueryAPIBuilder{
+		clientSupplier: &mockClient{
+			lastCalledWithHeaders: map[string]string{},
+			queryDataResponse:     qdresp,
+			reqHeaders:            reqHeaders,
+			respHeaders:           respHeaders,
+		},
+		tracer: tracing.InitializeTracerForTest(),
+		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
+		log:                  log.New("test"),
+		concurrentQueryLimit: 2,
+	}
+
+	qr := newQueryREST(b)
+	rr := httptest.NewRecorder()
+	mr := mockResponder{writer: rr}
+
+	body, err := json.Marshal(qdreq)
+	require.NoError(t, err)
+	reqBody := runtime.RawExtension{
+		Raw: body,
+	}
+
+	handler, err := qr.Connect(ctx, "name", nil, mr)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest("POST", "some-path", bytes.NewReader(reqBody.Raw))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	reqCtx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Resp: web.NewResponseWriter(http.MethodPost, rr),
+			Req:  req,
+		},
+	}
+	ctx = ctxkey.Set(ctx, reqCtx)
+
+	req = req.WithContext(ctx)
+	handler.ServeHTTP(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+
+	require.ElementsMatch(t, []string{"value1", "value2"}, rr.Result().Header["X-Resp-Header"])
+
+	// qdr, err := builder.executeConcurrentQueries(ctx, request.Requests, clientapi.InstanceConfigurationSettings{})
+	// require.NoError(t, err)
+	// require.NotNil(t, qdr)
+
+	// require.Equal(t, 1, len(qdr.Responses["A"].Frames[0].Fields), "Expected a single field not Time and Value")
+	// require.Equal(t, "Value", qdr.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
+}
+
 type mockResponder struct {
+	writer http.ResponseWriter
 }
 
 // Object writes the provided object to the response. Invoking this method multiple times is undefined.
@@ -149,27 +270,52 @@ func (m mockResponder) Error(err error) {
 }
 
 type mockClient struct {
-	lastCalledWithHeaders *map[string]string
+	mu                    sync.Mutex
+	lastCalledWithHeaders map[string]string
+	queryDataResponse     *backend.QueryDataResponse
+	reqHeaders            map[string][]string
+	respHeaders           map[string][]string
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
-	*m.lastCalledWithHeaders = headers
+func (m *mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.lastCalledWithHeaders = headers
+	return m, nil
+}
 
+func (m *mockClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if m.queryDataResponse != nil {
+		reqCtx := contexthandler.FromContext(ctx)
+		if reqCtx != nil {
+
+			// simulate request header manipulation
+			for k, values := range m.reqHeaders {
+				for _, v := range values {
+					reqCtx.Req.Header.Add(k, v)
+				}
+			}
+
+			// simulate response header manipulation
+			for k, values := range m.respHeaders {
+				for _, v := range values {
+					reqCtx.Resp.Header().Add(k, v)
+				}
+			}
+		}
+		return m.queryDataResponse, nil
+	}
 	return nil, fmt.Errorf("mock error")
 }
 
-func (m mockClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return nil, fmt.Errorf("mock error")
-}
-
-func (m mockClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (m *mockClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return nil
 }
 
-func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (m *mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	return nil, nil
 }
 
-func (m mockClient) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
+func (m *mockClient) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
 	return clientapi.InstanceConfigurationSettings{}, nil
 }
