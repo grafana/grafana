@@ -859,10 +859,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				if err != nil {
 					return err
 				}
-				if obj.GetUpdatedBy() != user.GetUID() {
-					continue
-				}
-				if !trashChecker(iter.Name(), iter.Folder()) {
+
+				if obj.GetUpdatedBy() != user.GetUID() && !trashChecker(iter.Name(), iter.Folder()) {
 					continue
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
