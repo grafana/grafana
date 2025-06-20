@@ -246,11 +246,11 @@ In **Scheme** gradient mode, the line or bar receives a gradient color defined f
 
 The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candle-scheme-grad-1-v12.0.png" max-width="750px" alt="Gradient color scheme" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candle-scheme-grad-1-v12.0.png" max-width="600px" alt="Gradient color scheme" >}}
 
 If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as it crosses the defined thresholds:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candle-scheme-grad-2-v12.0.png" max-width="750px" alt="Gradient color scheme with thresholds" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-candle-scheme-grad-2-v12.0.png" max-width="600px" alt="Gradient color scheme with thresholds" >}}
 
 #### Line style
 
