@@ -33,6 +33,3 @@ export const simpleContactPointsList = ListReceiverApiResponseFactory.build({
 export const simpleContactPointsListScenario = [listReceiverHandler(simpleContactPointsList)];
 
 export const withErrorScenario = [listReceiverHandler(() => new HttpResponse(null, { status: 500 }))];
-
-// the default export will allow us to load this scenario on the front-end using the MSW web worker
-export default simpleContactPointsListScenario;
