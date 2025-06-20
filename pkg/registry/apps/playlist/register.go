@@ -43,6 +43,7 @@ func RegisterApp(
 		CustomConfig: any(&playlistapp.PlaylistConfig{
 			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 		}),
+		AllowedV0Alpha1Resources: []string{playlistv0alpha1.PlaylistKind().Plural()},
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
 	return provider

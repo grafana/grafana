@@ -29,6 +29,10 @@ type AppBuilderConfig struct {
 	OpenAPIDefGetter    common.GetOpenAPIDefinitions
 	ManagedKinds        map[schema.GroupVersion][]resource.Kind
 	CustomConfig        any
+	// Do not set anything here unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1,
+	// to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources []string
 
 	groupVersion schema.GroupVersion
 }
@@ -107,6 +111,11 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		}
 	}
 	return scheme.SetVersionPriority(gv)
+}
+
+// AllowedV0Alpha1Resources returns the list of resources that are allowed to be accessed in v0alpha1
+func (b *appBuilder) AllowedV0Alpha1Resources() []string {
+	return b.config.AllowedV0Alpha1Resources
 }
 
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo

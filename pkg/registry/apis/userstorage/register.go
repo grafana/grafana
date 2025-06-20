@@ -54,6 +54,10 @@ func (b *UserStorageAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *UserStorageAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	resourceInfo := userstorage.UserStorageResourceInfo
 	storage := map[string]rest.Storage{}

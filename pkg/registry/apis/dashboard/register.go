@@ -191,6 +191,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
+func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{dashv0.DashboardKind().Plural()}
+}
+
 // Validate validates dashboard operations for the apiserver
 func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	op := a.GetOperation()
