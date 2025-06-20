@@ -22,6 +22,8 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
+
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
@@ -65,6 +67,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
       loading,
       value: pluginMeta,
     } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }));
 
     if (loading) {
       return null;
@@ -85,7 +88,9 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...readOnlyCopy(props, log)} />
+        <div {...(isSandboxEnabled && { 'data-plugin-sandbox': pluginMeta.id })}>
+          <Component {...readOnlyCopy(props, log)} />
+        </div>
       </PluginContextProvider>
     );
   };
