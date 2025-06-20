@@ -8,17 +8,12 @@ import { SceneTimeRange, SceneVariableSet, TestVariable, VariableValueOption, Pa
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
-import { getCloneKey, joinCloneKeys } from '../../utils/clone';
-import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowItem } from './RowItem';
-import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
