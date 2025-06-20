@@ -17,26 +17,62 @@ export interface ThemeVisualizationColors {
 /**
  * @alpha
  */
-export interface ThemeVizColor {
+export interface ThemeVizColor<T extends ThemeVizColorName> {
   color: string;
-  name: string;
+  name: ThemeVizColorShadeName<T>;
   aliases?: string[];
   primary?: boolean;
 }
 
+type ThemeVizColorName = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
+
+type ThemeVizColorShadeName<T extends ThemeVizColorName> =
+  | `super-light-${T}`
+  | `light-${T}`
+  | T
+  | `semi-dark-${T}`
+  | `dark-${T}`;
+
+type ThemeVizHueGeneric<T> = T extends ThemeVizColorName
+  ? {
+      name: T;
+      shades: Array<ThemeVizColor<T>>;
+    }
+  : never;
+
 /**
  * @alpha
  */
-export interface ThemeVizHue {
-  name: string;
-  shades: ThemeVizColor[];
-}
+export type ThemeVizHue = ThemeVizHueGeneric<ThemeVizColorName>;
+
+export type ThemeVisualizationColorsInput = {
+  hues?: ThemeVizHue[];
+  palette?: string[];
+};
 
 /**
  * @internal
  */
-export function createVisualizationColors(colors: ThemeColors): ThemeVisualizationColors {
-  const hues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+export function createVisualizationColors(
+  colors: ThemeColors,
+  options: ThemeVisualizationColorsInput = {}
+): ThemeVisualizationColors {
+  const baseHues = colors.mode === 'light' ? getLightHues() : getDarkHues();
+  const { palette = getClassicPalette(), hues: hueOverrides = [] } = options;
+
+  const hues = [...baseHues];
+  // override hues with user provided
+  for (const hueOverride of hueOverrides) {
+    const existingHue = hues.find((hue) => hue.name === hueOverride.name);
+    if (existingHue) {
+      for (const shadeOverride of hueOverride.shades) {
+        const existingShade = existingHue.shades.find((shade) => shade.name === shadeOverride.name);
+        if (existingShade) {
+          existingShade.color = shadeOverride.color;
+        }
+      }
+    }
+  }
 
   const byNameIndex: Record<string, string> = {};
 
@@ -82,8 +118,6 @@ export function createVisualizationColors(colors: ThemeColors): ThemeVisualizati
 
     return colorName;
   };
-
-  const palette = getClassicPalette();
 
   return {
     hues,
