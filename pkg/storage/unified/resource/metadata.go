@@ -179,23 +179,24 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 
 		// Yield is a helper function to yield a metadata object from a given path.
 		// It parses the key and yields the metadata object if it is not deleted.
-		yieldPath := func(path string, key MetaDataKey) {
+		yieldPath := func(path string, key MetaDataKey) bool {
 			if key.Action != MetaDataActionDeleted {
 				metaObj, err := d.kv.Get(ctx, metaSection, path)
 				if err != nil {
 					yield(MetaDataObj{}, err)
-					return
+					return false
 				}
 				var meta MetaData
 				if err := json.Unmarshal(metaObj.Value, &meta); err != nil {
 					yield(MetaDataObj{}, err)
-					return
+					return false
 				}
-				yield(MetaDataObj{
+				return yield(MetaDataObj{
 					Key:   key,
 					Value: meta,
 				}, nil)
 			}
+			return true
 		}
 
 		// keyMatches checks if the keys are the same
@@ -238,7 +239,9 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			// If the current key is not the same as the previous key, or if the rv
 			// is greater than the target rv, we need to yield the selected object.
 			if !keyMatches(key, *selectedKey) || key.ResourceVersion > rv {
-				yieldPath(selectedPath, *selectedKey)
+				if !yieldPath(selectedPath, *selectedKey) {
+					return
+				}
 				selectedKey = nil
 				selectedPath = ""
 			}
@@ -248,7 +251,9 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			}
 		}
 		if selectedKey != nil { // Yield the last selected object
-			yieldPath(selectedPath, *selectedKey)
+			if !yieldPath(selectedPath, *selectedKey) {
+				return
+			}
 		}
 	}
 }
@@ -286,10 +291,12 @@ func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Se
 				yield(MetaDataObj{}, err)
 				return
 			}
-			yield(MetaDataObj{
+			if !yield(MetaDataObj{
 				Key:   k,
 				Value: meta,
-			}, nil)
+			}, nil) {
+				return
+			}
 		}
 	}
 }

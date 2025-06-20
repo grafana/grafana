@@ -47,6 +47,9 @@ type KV interface {
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
 
+	// List: list all the data in the store. Maybe. Not sure yet.
+	// List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
+
 	// TimeUTC return the DB time in UTC.
 	// This is used to ensure the server and client are not too far apart in time.
 	TimeUTC(ctx context.Context) (time.Time, error)
@@ -162,7 +165,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 	return func(yield func(string, error) bool) {
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
 			item := iter.Item()
-
 			if opt.Limit > 0 && count >= opt.Limit {
 				break
 			}

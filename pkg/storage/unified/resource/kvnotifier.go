@@ -25,6 +25,7 @@ type kvNotifier struct {
 	seenRVs   map[int64]bool
 	rvHistory []int64
 	rvIndex   int
+	initialRV int64
 }
 
 type EventKey struct {
@@ -50,6 +51,7 @@ type KVNotifierOptions struct {
 	PollInterval   time.Duration // How often to poll for new events
 	BufferSize     int           // How many events to buffer
 	EventCacheSize int           // How many events to cache
+	InitialRV      int64         // The initial resource version to start from
 }
 
 func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
@@ -62,12 +64,16 @@ func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
 	if opts.BufferSize == 0 {
 		opts.BufferSize = defaultBufferSize
 	}
+	if opts.InitialRV == 0 {
+		opts.InitialRV = time.Now().UnixNano()
+	}
 	return &kvNotifier{
 		kv:        kv,
 		opts:      opts,
 		seenRVs:   make(map[int64]bool),
 		rvHistory: make([]int64, defaultEventCacheSize),
 		rvIndex:   0,
+		initialRV: opts.InitialRV,
 	}
 }
 
@@ -144,8 +150,8 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 }
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
-	events := make(chan Event, n.opts.BufferSize)
-	lastRV := time.Now().UnixMilli() * time.Millisecond.Nanoseconds() // TODO: implement lookback to ensure we don't miss any events
+	events := make(chan Event)
+	lastRV := n.initialRV
 	go func() {
 		defer close(events)
 		for {
@@ -154,7 +160,9 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 				return
 			case <-time.After(n.opts.PollInterval):
 				startKey := n.getStartKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
+				fmt.Println("startKey", startKey)
 				for k, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
+					fmt.Println("k", k, "startKey", startKey, "k greater than lastRV")
 					if err != nil {
 						// TODO: Handle error
 						continue
@@ -171,17 +179,18 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 					}
 
 					// Check if we've already seen this UID
-					if n.hasSeenUID(ev.ResourceVersion) {
-						continue // Skip this event as we've already processed it
-					}
+					// if n.hasSeenUID(ev.ResourceVersion) {
+					// 	continue // Skip this event as we've already processed it
+					// }
 
 					// Mark this UID as seen before sending the event
-					n.markUIDSeen(ev.ResourceVersion)
+					// n.markUIDSeen(ev.ResourceVersion)
 
 					if ev.ResourceVersion > lastRV {
 						lastRV = ev.ResourceVersion
 					}
 					// Send the event
+					fmt.Println("sending event", ev.ResourceVersion, "lastRV", lastRV, "name")
 					select {
 					case events <- ev:
 					case <-ctx.Done():
