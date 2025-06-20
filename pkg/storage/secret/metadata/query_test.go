@@ -409,3 +409,69 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 		},
 	})
 }
+
+func TestAuditLogConfigQueries(t *testing.T) {
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir: "testdata",
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlAuditLogConfigCreate: {
+				{
+
+					Name: "only-required-fields",
+					Data: &createAuditLogConfig{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &auditLogConfigDB{
+							GUID:         "abc",
+							Name:         "name",
+							Namespace:    "ns",
+							Annotations:  `{"x":"XXXX"}`,
+							Labels:       `{"a":"AAA", "b", "BBBB"}`,
+							Created:      1234,
+							CreatedBy:    "user:ryan",
+							Updated:      5678,
+							UpdatedBy:    "user:cameron",
+							StdoutEnable: true,
+							FileEnable:   false,
+							LokiEnable:   false,
+						},
+					},
+				},
+				{
+					Name: "all-fields-present",
+					Data: &createAuditLogConfig{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &auditLogConfigDB{
+							GUID:         "abc",
+							Name:         "name",
+							Namespace:    "ns",
+							Annotations:  `{"x":"XXXX"}`,
+							Labels:       `{"a":"AAA", "b", "BBBB"}`,
+							Created:      1234,
+							CreatedBy:    "user:ryan",
+							Updated:      5678,
+							UpdatedBy:    "user:cameron",
+							StdoutEnable: true,
+
+							FileEnable: true,
+							FilePath:   sql.NullString{Valid: true, String: "/var/log/audit.log"},
+
+							LokiEnable:             true,
+							LokiURLSecureValueName: sql.NullString{Valid: true, String: "loki-url"},
+							LokiProtocol:           sql.NullString{Valid: true, String: "https"},
+							LokiTLS:                sql.NullBool{Valid: true, Bool: true},
+						},
+					},
+				},
+			},
+			sqlAuditLogConfigRead: {
+				{
+					Name: "read",
+					Data: &readAuditLogConfig{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
+		},
+	})
+}
