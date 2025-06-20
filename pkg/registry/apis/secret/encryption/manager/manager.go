@@ -45,8 +45,7 @@ type EncryptionManager struct {
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
 
-	mtx          sync.Mutex
-	dataKeyCache *dataKeyCache
+	mtx sync.Mutex
 
 	pOnce     sync.Once
 	providers encryption.ProviderMap
@@ -64,7 +63,6 @@ func ProvideEncryptionManager(
 	usageStats usagestats.Service,
 	thirdPartyKMS encryption.ProviderMap,
 ) (contracts.EncryptionManager, error) {
-	ttl := cfg.SecretsManagement.Encryption.DataKeysCacheTTL
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
 
 	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
@@ -78,7 +76,6 @@ func ProvideEncryptionManager(
 		cfg:               cfg,
 		usageStats:        usageStats,
 		enc:               enc,
-		dataKeyCache:      newMTDataKeyCache(ttl),
 		currentProviderID: currentProviderID,
 		log:               log.New("encryption"),
 	}
@@ -236,10 +233,6 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string
 // dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string) (string, []byte, error) {
-	// 0. Get data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getByLabel(namespace, label); exists && entry.active {
-		return entry.id, entry.dataKey, nil
-	}
 
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
@@ -262,13 +255,10 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 		return "", nil, err
 	}
 
-	// 3. Store the decrypted data key into the in-memory cache.
-	s.cacheDataKey(dataKey, decrypted)
-
 	return dataKey.UID, decrypted, nil
 }
 
-// newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
+// newDataKey creates a new random data key, encrypts it and stores it into the database.
 func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string) (string, []byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.NewDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace),
@@ -388,19 +378,13 @@ func (s *EncryptionManager) GetDecryptedValue(ctx context.Context, namespace str
 	return fallback
 }
 
-// dataKeyById looks up for data key in cache.
-// Otherwise, it fetches it from database and returns it decrypted.
+// dataKeyById looks up for data key in the database and returns it decrypted.
 func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id string) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.GetDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("id", id),
 	))
 	defer span.End()
-
-	// 0. Get decrypted data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getById(namespace, id); exists {
-		return entry.dataKey, nil
-	}
 
 	// 1. Get encrypted data key from database.
 	dataKey, err := s.store.GetDataKey(ctx, namespace, id)
@@ -419,9 +403,6 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	if err != nil {
 		return nil, err
 	}
-
-	// 3. Store the decrypted data key into the in-memory cache.
-	s.cacheDataKey(dataKey, decrypted)
 
 	return decrypted, nil
 }
@@ -443,7 +424,6 @@ func (s *EncryptionManager) RotateDataKeys(ctx context.Context, namespace string
 		return err
 	}
 
-	s.dataKeyCache.flush(namespace)
 	s.log.Info("Data keys rotation finished successfully")
 
 	return nil
@@ -457,7 +437,6 @@ func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace str
 		return err
 	}
 
-	s.dataKeyCache.flush(namespace)
 	s.log.Info("Data keys re-encryption finished successfully")
 
 	return nil
@@ -478,10 +457,6 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 
 	for {
 		select {
-		case <-gc.C:
-			s.log.Debug("Removing expired data keys from cache...")
-			s.dataKeyCache.removeExpired()
-			s.log.Debug("Removing expired data keys from cache finished successfully")
 		case <-gCtx.Done():
 			s.log.Debug("Grafana is shutting down; stopping...")
 			gc.Stop()
@@ -492,53 +467,5 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 
 			return nil
 		}
-	}
-}
-
-// Caching a data key is tricky, because at SecretsService level we cannot guarantee
-// that a newly created data key has actually been persisted, depending on the different
-// use cases that rely on SecretsService encryption and different database engines that
-// we have support for, because the data key creation may have happened within a DB TX,
-// that may fail afterwards.
-//
-// Therefore, if we cache a data key that hasn't been persisted with success (and won't),
-// and later that one is used for a encryption operation (aside from the DB TX that created
-// it), we may end up with data encrypted by a non-persisted data key, which could end up
-// in (unrecoverable) data corruption.
-//
-// So, we cache the data key by id and/or by label, depending on the data key's lifetime,
-// assuming that a data key older than a "caution period" should have been persisted.
-//
-// Look at the comments inline for further details.
-// You can also take a look at the issue below for more context:
-// https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(dataKey *contracts.SecretDataKey, decrypted []byte) {
-	// First, we cache the data key by id, because cache "by id" is
-	// only used by decrypt operations, so no risk of corrupting data.
-	entry := &dataKeyCacheEntry{
-		id:      dataKey.UID,
-		label:   dataKey.Label,
-		dataKey: decrypted,
-		active:  dataKey.Active,
-	}
-
-	s.dataKeyCache.addById(dataKey.Namespace, entry)
-
-	// Then, we cache the data key by label, ONLY if data key's lifetime
-	// is longer than a certain "caution period", because cache "by label"
-	// is used (only) by encrypt operations, and we want to ensure that
-	// no data key is cached for encryption ops before being persisted.
-
-	const cautionPeriod = 10 * time.Minute
-	// We consider a "caution period" of 10m to be long enough for any database
-	// transaction that implied a data key creation to have finished successfully.
-	//
-	// Therefore, we consider that if we fetch a data key from the database,
-	// more than 10m later than its creation, it should have been actually
-	// persisted - i.e. the transaction that created it is no longer running.
-
-	nowMinusCautionPeriod := now().Add(-cautionPeriod)
-	if dataKey.Created.Before(nowMinusCautionPeriod) {
-		s.dataKeyCache.addByLabel(dataKey.Namespace, entry)
 	}
 }

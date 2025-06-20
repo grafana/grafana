@@ -275,10 +275,6 @@ func TestEncryptionService_Run(t *testing.T) {
 		_, err = svc.Decrypt(ctx, namespace, encrypted)
 		require.NoError(t, err)
 
-		// Data encryption key cache should contain one element
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byId, 1)
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel, 1)
-
 		// Twenty minutes later (after caution period + cache ttl)
 		now = func() time.Time { return time.Now().Add(20 * time.Minute) }
 
@@ -287,12 +283,6 @@ func TestEncryptionService_Run(t *testing.T) {
 
 		err = svc.Run(ctx)
 		require.NoError(t, err)
-
-		// Then, once the ticker has been triggered,
-		// the cleanup process should have happened,
-		// therefore the cache should be empty.
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byId, 0)
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel, 0)
 	})
 }
 
@@ -304,7 +294,7 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	namespace := "test-namespace"
 
 	// Encrypt to generate data encryption key
-	ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
+	_, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
 	require.NoError(t, err)
 
 	t.Run("existing key should be re-encrypted", func(t *testing.T) {
@@ -322,25 +312,6 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
 	})
 
-	t.Run("data keys cache should be invalidated", func(t *testing.T) {
-		restoreTimeNowAfterTestExec(t)
-
-		// Ten minutes later (after caution period)
-		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-
-		// Decrypt to ensure data key is cached
-		_, err := svc.Decrypt(ctx, namespace, ciphertext)
-		require.NoError(t, err)
-		require.NotEmpty(t, svc.dataKeyCache.namespacedCaches[namespace].byId)
-		require.NotEmpty(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel)
-
-		err = svc.ReEncryptDataKeys(ctx, namespace)
-		require.NoError(t, err)
-
-		assert.Empty(t, svc.dataKeyCache.namespacedCaches[namespace].byId)
-		assert.Empty(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel)
-	})
 }
 
 func TestEncryptionService_Decrypt(t *testing.T) {
@@ -512,10 +483,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 			toEncrypt := []byte(`data-to-encrypt`)
 			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt)
 			require.NoError(t, err)
-
-			// We simulate an instance restart. So, there's no data in the in-memory cache.
-			encMgr := svc.(*EncryptionManager)
-			encMgr.dataKeyCache.flush(namespace)
 
 			// And then, we MUST still be able to decrypt the previously encrypted data:
 			decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
