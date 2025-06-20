@@ -10,7 +10,7 @@ import (
 
 const (
 	eventsSection         = "unified/events"
-	defaultLookbackPeriod = 1 * time.Minute
+	defaultLookbackPeriod = 10 * time.Second
 	defaultPollInterval   = 100 * time.Millisecond
 	defaultEventCacheSize = 10000
 	defaultBufferSize     = 10000
@@ -27,14 +27,21 @@ type kvNotifier struct {
 	rvIndex   int
 }
 
+type EventKey struct {
+	Namespace       string
+	Group           string
+	Resource        string
+	Name            string
+	ResourceVersion int64
+}
 type Event struct {
 	Namespace       string         `json:"namespace"`
 	Group           string         `json:"group"`
 	Resource        string         `json:"resource"`
 	Name            string         `json:"name"`
+	ResourceVersion int64          `json:"resource_version"`
 	Action          MetaDataAction `json:"action"`
 	Folder          string         `json:"folder"`
-	ResourceVersion int64          `json:"resource_version"`
 	PreviousRV      int64          `json:"previous_rv"`
 }
 
@@ -81,7 +88,10 @@ func parseEvent(value []byte) (Event, error) {
 	return ev, nil
 }
 
-func (n *kvNotifier) getKey(rv int64) string {
+func (n *kvNotifier) getKey(key EventKey) string {
+	return fmt.Sprintf("%d~%s~%s~%s~%s", key.ResourceVersion, key.Namespace, key.Group, key.Resource, key.Name)
+}
+func (n *kvNotifier) getStartKey(rv int64) string {
 	return fmt.Sprintf("%d", rv)
 }
 
@@ -109,6 +119,7 @@ func (n *kvNotifier) markUIDSeen(rv int64) {
 
 // hasSeenUID checks if we've already seen this UID
 func (n *kvNotifier) hasSeenUID(rv int64) bool {
+	// TODO: can we have conflict between multiple rvs ? RVs are not guaranteed to be unique
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	return n.seenRVs[rv]
@@ -119,7 +130,13 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 	if err != nil {
 		return err
 	}
-	err = n.kv.Save(ctx, eventsSection, n.getKey(event.ResourceVersion), v)
+	err = n.kv.Save(ctx, eventsSection, n.getKey(EventKey{
+		Namespace:       event.Namespace,
+		Group:           event.Group,
+		Resource:        event.Resource,
+		Name:            event.Name,
+		ResourceVersion: event.ResourceVersion,
+	}), v)
 	if err != nil {
 		return err
 	}
@@ -128,7 +145,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 	events := make(chan Event, n.opts.BufferSize)
-	lastRV := time.Now().Add(-n.opts.LookbackPeriod).UnixNano()
+	lastRV := time.Now().UnixMilli() * time.Millisecond.Nanoseconds() // TODO: implement lookback to ensure we don't miss any events
 	go func() {
 		defer close(events)
 		for {
@@ -136,7 +153,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 			case <-ctx.Done():
 				return
 			case <-time.After(n.opts.PollInterval):
-				startKey := n.getKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
+				startKey := n.getStartKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
 				for k, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
 					if err != nil {
 						// TODO: Handle error

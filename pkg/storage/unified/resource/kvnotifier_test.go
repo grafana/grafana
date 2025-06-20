@@ -29,7 +29,7 @@ func TestNewKVNotifier(t *testing.T) {
 			name: "default options",
 			opts: KVNotifierOptions{},
 			expected: KVNotifierOptions{
-				LookbackPeriod: defaultLookbackPeriod,
+				LookbackPeriod: time.Duration(0),
 				PollInterval:   defaultPollInterval,
 				BufferSize:     defaultBufferSize,
 			},
@@ -133,10 +133,15 @@ func TestParseEvent(t *testing.T) {
 
 func TestKVNotifier_getKey(t *testing.T) {
 	notifier := setupTestKVNotifier(t, KVNotifierOptions{})
-
 	rv := int64(1934555792099250176)
-	key := notifier.getKey(rv)
-	assert.Equal(t, "1934555792099250176", key)
+	key := notifier.getKey(EventKey{
+		Namespace:       "test-namespace",
+		Group:           "apps",
+		Resource:        "deployments",
+		Name:            "test-deployment",
+		ResourceVersion: rv,
+	})
+	assert.Equal(t, "1934555792099250176~test-namespace~apps~deployments~test-deployment", key)
 }
 
 func TestKVNotifier_UIDDeduplication(t *testing.T) {
@@ -207,7 +212,13 @@ func TestKVNotifier_Send(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the event was saved in KV store
-	key := notifier.getKey(rv)
+	key := notifier.getKey(EventKey{
+		Namespace:       "test-namespace",
+		Group:           "apps",
+		Resource:        "deployments",
+		Name:            "test-deployment",
+		ResourceVersion: rv,
+	})
 	obj, err := notifier.kv.Get(ctx, eventsSection, key)
 	require.NoError(t, err)
 
