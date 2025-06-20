@@ -2,16 +2,13 @@ package setting
 
 import (
 	"regexp"
-	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 )
 
 type EncryptionSettings struct {
-	DataKeysCacheTTL        time.Duration
-	DataKeysCleanupInterval time.Duration
-	Algorithm               string
+	Algorithm string
 }
 
 type SecretsManagerSettings struct {
@@ -31,7 +28,5 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.AvailableProviders = regexp.MustCompile(`\s*,\s*`).Split(secretsMgmt.Key("available_encryption_providers").MustString(""), -1) // parse comma separated list
 
 	encryption := cfg.Raw.Section("secrets_manager.encryption")
-	cfg.SecretsManagement.Encryption.DataKeysCacheTTL = encryption.Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
-	cfg.SecretsManagement.Encryption.DataKeysCleanupInterval = encryption.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.Encryption.Algorithm = encryption.Key("algorithm").MustString(cipher.AesGcm)
 }

@@ -445,9 +445,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					SecretKey:          defaultKey,
 					EncryptionProvider: "secretKey.v1",
 					Encryption: setting.EncryptionSettings{
-						DataKeysCleanupInterval: time.Nanosecond,
-						DataKeysCacheTTL:        5 * time.Minute,
-						Algorithm:               cipher.AesGcm,
+						Algorithm: cipher.AesGcm,
 					},
 				},
 			}
@@ -506,9 +504,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 			SecretKey:          "SdlklWklckeLS",
 			EncryptionProvider: "secretKey.v1",
 			Encryption: setting.EncryptionSettings{
-				DataKeysCleanupInterval: time.Nanosecond,
-				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               cipher.AesGcm,
+				Algorithm: cipher.AesGcm,
 			},
 		},
 	}
