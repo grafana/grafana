@@ -3,14 +3,13 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
 jest.mock('./language_utils', () => ({
   ...jest.requireActual('./language_utils'),
-  processHistogramMetrics: (metrics: string[]) => metrics,
   getPrometheusTime: jest.requireActual('./language_utils').getPrometheusTime,
   getRangeSnapInterval: jest.requireActual('./language_utils').getRangeSnapInterval,
 }));
 
 import { getCacheDurationInMinutes } from './caching';
-import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
+import { DEFAULT_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
@@ -308,7 +307,7 @@ describe('Prometheus Language Provider', () => {
         const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
         const requestSpy = jest.spyOn(languageProvider, 'request');
 
-        fetchSeriesLabels(getMockTimeRange(), '$metric');
+        fetchSeriesLabels(getMockTimeRange(), '$metric', undefined, DEFAULT_SERIES_LIMIT);
 
         verifyRequestParams(requestSpy, '/api/v1/series', {
           end: toPrometheusTimeString,
@@ -861,47 +860,47 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
   describe('populateMatchParamsFromQueries', () => {
     it('should add match params from queries', () => {
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [
         { expr: 'metric1', refId: '1' },
         { expr: 'metric2', refId: '2' },
       ];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('metric1');
-      expect(matches).toContain('metric2');
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe(`__name__=~"metric1|metric2"`);
     });
 
     it('should handle binary queries', () => {
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('binary');
-      expect(matches).toContain('second');
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe(`__name__=~"binary|second"`);
     });
 
     it('should handle undefined queries', () => {
-      const initialParams = new URLSearchParams({ param: 'value' });
-
-      const result = populateMatchParamsFromQueries(initialParams, undefined);
-
-      expect(result.toString()).toBe('param=value');
+      const result = populateMatchParamsFromQueries(undefined);
+      expect(result).toBe('__name__!=""');
     });
 
     it('should handle UTF8 metrics', () => {
-      // Using the mocked isValidLegacyName function from jest.mock setup
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"}', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toContain('__name__=~"utf8.metric"');
+    });
 
-      const result = populateMatchParamsFromQueries(initialParams, queries);
+    it('should handle UTF8 metrics with normal metrics', () => {
+      const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"} + second{}', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toContain('__name__=~"utf8.metric|second"');
+    });
 
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('{"utf8.metric"}');
+    it('should return match-all matcher if there is no expr in queries', () => {
+      const queries: PromQuery[] = [{ expr: '', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
+    });
+
+    it('should return match-all matcher if there is no query', () => {
+      const queries: PromQuery[] = [];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
     });
   });
 });
