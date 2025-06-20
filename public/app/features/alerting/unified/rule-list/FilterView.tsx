@@ -156,16 +156,9 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               return (
                 <GrafanaRuleListItem
                   rule={rule}
-                  // rulerRule={rulerRule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
                 />
-                // <GrafanaRuleLoader
-                //   key={key}
-                //   ruleIdentifier={{ ruleSourceName: 'grafana', uid: rule.uid }}
-                //   groupIdentifier={groupIdentifier}
-                //   namespaceName={ruleWithOrigin.namespaceName}
-                // />
               );
             case 'datasource':
               return <DataSourceRuleLoader key={key} rule={rule} groupIdentifier={groupIdentifier} />;

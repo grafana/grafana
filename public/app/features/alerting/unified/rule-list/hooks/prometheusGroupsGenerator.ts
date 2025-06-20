@@ -82,13 +82,6 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
       // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
       if (hookOptions.populateCache) {
         const cacheAndRulerPreload = response.data.groups.map(async (group) => {
-          // dispatch(
-          //   alertRuleApi.util.prefetch(
-          //     'getGrafanaRulerGroup',
-          //     { folderUid: group.folderUid, groupName: group.name },
-          //     { force: true }
-          //   )
-          // );
           await dispatch(
             prometheusApi.util.upsertQueryData(
               'getGrafanaGroups',
