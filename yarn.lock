@@ -3332,12 +3332,14 @@ __metadata:
     eslint-webpack-plugin: "npm:4.2.0"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     glob: "npm:11.0.1"
+    imports-loader: "npm:^5.0.0"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
     webpack: "npm:5.97.1"
     webpack-bundle-analyzer: "npm:^4.10.2"
+    webpack-virtual-modules: "npm:^0.6.2"
   languageName: unknown
   linkType: soft
 
@@ -19400,6 +19402,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"imports-loader@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "imports-loader@npm:5.0.0"
+  dependencies:
+    source-map-js: "npm:^1.0.2"
+    strip-comments: "npm:^2.0.1"
+  peerDependencies:
+    webpack: ^5.0.0
+  checksum: 10/b507436b7d2c7a6d6d8623b93b5a0fda2d13c48d4d0f310b74b8465c080d9fd07a2f8d0f896e264b4feff59effa9aef736a2b668d7a695cecd8bdc7cb817373e
+  languageName: node
+  linkType: hard
+
 "imurmurhash@npm:^0.1.4":
   version: 0.1.4
   resolution: "imurmurhash@npm:0.1.4"
@@ -29349,7 +29363,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.1, source-map-js@npm:^1.2.1":
+"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.1, source-map-js@npm:^1.0.2, source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10/ff9d8c8bf096d534a5b7707e0382ef827b4dd360a577d3f34d2b9f48e12c9d230b5747974ee7c607f0df65113732711bb701fe9ece3c7edbd43cb2294d707df3
@@ -29961,6 +29975,13 @@ __metadata:
   version: 4.0.0
   resolution: "strip-bom@npm:4.0.0"
   checksum: 10/9dbcfbaf503c57c06af15fe2c8176fb1bf3af5ff65003851a102749f875a6dbe0ab3b30115eccf6e805e9d756830d3e40ec508b62b3f1ddf3761a20ebe29d3f3
+  languageName: node
+  linkType: hard
+
+"strip-comments@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "strip-comments@npm:2.0.1"
+  checksum: 10/43ea36189e4ba543c6ffb0384831e9e23c3b57ede5592c6edcbfc883f489f91d00328fe2670b4e467f61c7886eff68deae3e946f0f092346b2b3cb058b9cfdba
   languageName: node
   linkType: hard
 
@@ -32332,7 +32353,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-virtual-modules@npm:^0.6.0":
+"webpack-virtual-modules@npm:^0.6.0, webpack-virtual-modules@npm:^0.6.2":
   version: 0.6.2
   resolution: "webpack-virtual-modules@npm:0.6.2"
   checksum: 10/d9a0d035f7ec0c7f1055aaf88bfe48b7f96458043916a1b2926d9012fd61de3810a6b768e31a8cd4b3c84a9b6d55824361a9dd20aaf9f5ccfb6f017af216a178
