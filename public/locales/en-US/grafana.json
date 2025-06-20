@@ -5736,6 +5736,20 @@
       }
     }
   },
+  "dashlist": {
+    "category-dashboard-list": "Dashboard list",
+    "name-folder": "Folder",
+    "name-include-current-template-variables": "Include current template variable values",
+    "name-include-current-time-range": "Include current time range",
+    "name-max-items": "Max items",
+    "name-query": "Query",
+    "name-recently-viewed": "Recently viewed",
+    "name-search": "Search",
+    "name-show-folder-names": "Show folder names",
+    "name-show-headings": "Show headings",
+    "name-starred": "Starred",
+    "name-tags": "Tags"
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
