@@ -82,6 +82,37 @@ var KeeperResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var AuditLogConfigResourceInfo = utils.NewResourceInfo(
+	GROUP,
+	VERSION,
+	"auditlogconfigs",
+	"auditlogconfig",
+	"AuditLogConfig",
+	func() runtime.Object { return &AuditLogConfig{} },
+	func() runtime.Object { return &AuditLogConfigList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Stdout Logger Enabled", Type: "bool", Format: "bool", Description: "Whether the stdout logger is enabled"},
+			{Name: "File Logger Enabled", Type: "bool", Format: "bool", Description: "Whether the file logger is enabled"},
+			{Name: "Loki Logger Enabled", Type: "bool", Format: "bool", Description: "Whether the Loki logger is enabled"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			r, ok := obj.(*AuditLogConfig)
+			if ok {
+				return []interface{}{
+					r.Name,
+					r.Spec.StdoutLogger.Enable,
+					r.Spec.FileLogger.Enable,
+					r.Spec.LokiLogger.Enable,
+				}, nil
+			}
+
+			return nil, fmt.Errorf("expected AuditLogConfig but got %T", obj)
+		},
+	},
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
@@ -109,7 +140,8 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 		&SecureValueList{},
 		&Keeper{},
 		&KeeperList{},
-		// &secretV0.SecureValueActivityList{},
+		&AuditLogConfig{},
+		&AuditLogConfigList{},
 	)
 
 	err := scheme.AddFieldLabelConversionFunc(

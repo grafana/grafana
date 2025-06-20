@@ -17,10 +17,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials":        schema_pkg_apis_secret_v0alpha1_AWSCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig":       schema_pkg_apis_secret_v0alpha1_AWSKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfig":        schema_pkg_apis_secret_v0alpha1_AuditLogConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfigList":    schema_pkg_apis_secret_v0alpha1_AuditLogConfigList(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfigSpec":    schema_pkg_apis_secret_v0alpha1_AuditLogConfigSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":      schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig":     schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":       schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":              schema_pkg_apis_secret_v0alpha1_Envelope(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.FileLogger":            schema_pkg_apis_secret_v0alpha1_FileLogger(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":        schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials":  schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref),
@@ -28,10 +32,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":                schema_pkg_apis_secret_v0alpha1_Keeper(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":            schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":            schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLogger":            schema_pkg_apis_secret_v0alpha1_LokiLogger(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLoggerAddress":     schema_pkg_apis_secret_v0alpha1_LokiLoggerAddress(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":           schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueStatus":     schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.StdoutLogger":          schema_pkg_apis_secret_v0alpha1_StdoutLogger(ref),
 	}
 }
 
@@ -100,6 +107,128 @@ func schema_pkg_apis_secret_v0alpha1_AWSKeeperConfig(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue"},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_AuditLogConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfigSpec"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfigSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_AuditLogConfigList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Slice containing all audit log configs.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfig"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AuditLogConfig", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_AuditLogConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"stdout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Logs to standard output.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.StdoutLogger"),
+						},
+					},
+					"file": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Logs to a file.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.FileLogger"),
+						},
+					},
+					"loki": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Logs to Loki.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLogger"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.FileLogger", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLogger", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.StdoutLogger"},
 	}
 }
 
@@ -240,6 +369,37 @@ func schema_pkg_apis_secret_v0alpha1_Envelope(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Description: "Envelope encrytion details.",
 				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_FileLogger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enable enables or disables the file logger.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path to logs folder",
+							Default:     "",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](1024),
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"enable", "path"},
 			},
 		},
 	}
@@ -523,6 +683,94 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_pkg_apis_secret_v0alpha1_LokiLogger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enable enables or disables the Loki logger.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Set the address for writing logs to Loki.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLoggerAddress"),
+						},
+					},
+					"protocol": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Set the communication protocol to use with Loki. Supported values are \"http\" and \"grpc\".\n\nPossible enum values:\n - `\"grpc\"` is the gRPC transport protocol for Loki.\n - `\"http\"` is the HTTP transport protocol for Loki.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"grpc", "http"},
+						},
+					},
+					"tls": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Establishes a secure connection to Loki.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"enable", "url", "protocol"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.LokiLoggerAddress"},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_LokiLoggerAddress(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LokiLoggerAddress is used to specify the address of a Loki instance. It can either be a direct URL or a reference to a secure value that contains the URL",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This is the address of the Loki instance to which logs will be sent. It should not contain the protocol, i.e. \"localhost:9095\" instead of \"http://localhost:9095\". Only available on write path, since this can contain sensitive information.",
+							MinLength:   ptr.To[int64](1),
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"secureValueName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SecureValueName is the name of an existing secure value that contains the Loki URL address with credentials.",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: spec.Extensions{
+					"x-kubernetes-unions": []interface{}{
+						map[string]interface{}{
+							"fields-to-discriminateBy": map[string]interface{}{
+								"secureValueName": "SecureValueName",
+								"value":           "Value",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -724,6 +972,27 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 					},
 				},
 				Required: []string{"phase"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_StdoutLogger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enable enables or disables the stdout logger.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"enable"},
 			},
 		},
 	}

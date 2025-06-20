@@ -49,6 +49,8 @@ type SecretAPIBuilder struct {
 	secureValueService         *service.SecureValueService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
+	auditLogConfigStorage      contracts.AuditLogConfigStorage
+	auditLogService            contracts.AuditLogService
 	secretsOutboxQueue         contracts.OutboxQueue
 	database                   contracts.Database
 	accessClient               claims.AccessClient
@@ -61,6 +63,8 @@ func NewSecretAPIBuilder(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	secureValueService *service.SecureValueService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	auditLogConfigStorage contracts.AuditLogConfigStorage,
+	auditLogService contracts.AuditLogService,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
 	keeperService contracts.KeeperService,
@@ -90,6 +94,8 @@ func NewSecretAPIBuilder(
 		secureValueService:         secureValueService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
+		auditLogConfigStorage:      auditLogConfigStorage,
+		auditLogService:            auditLogService,
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
@@ -105,6 +111,8 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	auditLogConfigStorage contracts.AuditLogConfigStorage,
+	auditLogService contracts.AuditLogService,
 	outboxQueue contracts.OutboxQueue,
 	secureValueService *service.SecureValueService,
 	database contracts.Database,
@@ -144,6 +152,8 @@ func RegisterAPIService(
 		secureValueMetadataStorage,
 		secureValueService,
 		keeperMetadataStorage,
+		auditLogConfigStorage,
+		auditLogService,
 		outboxQueue,
 		database,
 		keeperService,
@@ -198,6 +208,7 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	secureValueResource := secretv0alpha1.SecureValuesResourceInfo
 	keeperResource := secretv0alpha1.KeeperResourceInfo
+	auditLogConfigResource := secretv0alpha1.AuditLogConfigResourceInfo
 
 	// rest.Storage is a generic interface for RESTful storage services.
 	// The constructors need to at least implement this interface, but will most likely implement
@@ -209,6 +220,8 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.tracer, b.keeperMetadataStorage, b.accessClient, keeperResource),
+
+		auditLogConfigResource.StoragePath(): reststorage.NewAuditLogConfigRest(b.tracer, b.database, b.auditLogConfigStorage, b.accessClient, auditLogConfigResource, b.secureValueService),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -601,7 +614,10 @@ spec:
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authsvc.NewResourceAuthorizer(b.accessClient)
+	return &wrapAuthorizer{
+		auditLogService: b.auditLogService,
+		authorizer:      authsvc.NewResourceAuthorizer(b.accessClient),
+	}
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
@@ -666,6 +682,11 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		}
 
 		return nil
+
+	case *secretv0alpha1.AuditLogConfig:
+		// TODO Validate
+		// if stackID != "", only allow Loki logger to be enabled.!!!!!!!
+		return nil
 	}
 
 	return apierrors.NewBadRequest(fmt.Sprintf("unknown spec %T", obj))
@@ -716,13 +737,16 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	// On any mutation to a `SecureValue`, override the `phase` as `Pending` and an empty `message`.
-	if operation == admission.Create || operation == admission.Update {
-		sv, ok := obj.(*secretv0alpha1.SecureValue)
-		if ok && sv != nil {
-			sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
-			sv.Status.Message = ""
-			sv.Status.ExternalID = ""
-		}
+	sv, ok := obj.(*secretv0alpha1.SecureValue)
+	if ok && sv != nil && (operation == admission.Create || operation == admission.Update) {
+		sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
+		sv.Status.Message = ""
+		sv.Status.ExternalID = ""
+	}
+
+	// TODO mutate audit log config to force a name that is the same as the namespace.
+	if typedObj, ok := obj.(*secretv0alpha1.AuditLogConfig); ok {
+		typedObj.Name = typedObj.GetNamespace()
 	}
 
 	return nil

@@ -24,6 +24,7 @@ func ProvideDecryptStorage(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	decryptAuthorizer contracts.DecryptAuthorizer,
+	//auditLogService contracts.AuditLogService,
 ) (contracts.DecryptStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -40,6 +41,7 @@ func ProvideDecryptStorage(
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		decryptAuthorizer:          decryptAuthorizer,
+		//auditLogService:            auditLogService,
 	}, nil
 }
 
@@ -50,6 +52,7 @@ type decryptStorage struct {
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	decryptAuthorizer          contracts.DecryptAuthorizer
+	//auditLogService            contracts.AuditLogService
 }
 
 // Decrypt decrypts a secure value from the keeper.
@@ -65,9 +68,35 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	defer func() {
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
+		// entry := contracts.AuditLogEntry{
+		// 	Namespace:          xkube.Namespace(namespace),
+		// 	ObservedAt:         time.Now(),
+		// 	ActorUID:           decrypterIdentity,
+		// 	Action:             contracts.AuditLogActionTypeDecrypt,
+		// 	TargetResourceKind: "securevalue",
+		// 	TargetResourceName: name,
+		// }
+
 		if decryptErr == nil {
+			// entry.ActionStatus = contracts.AuditLogActionStatusOK
+			// if s.auditLogService != nil {
+			// 	if err := s.auditLogService.Observe(ctx, entry); err != nil {
+			// 		logging.FromContext(ctx).Error("Failed to log audit entry", "error", err)
+			// 	}
+			// }
+
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
 		} else {
+			// entry.ActionStatus = contracts.AuditLogActionStatusError
+			// if errors.Is(decryptErr, contracts.ErrDecryptNotAuthorized) {
+			// 	entry.ActionStatus = contracts.AuditLogActionStatusUnauthorized
+			// }
+			// if s.auditLogService != nil {
+			// 	if err := s.auditLogService.Observe(ctx, entry); err != nil {
+			// 		logging.FromContext(ctx).Error("Failed to log audit entry", "error", err)
+			// 	}
+			// }
+
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
 

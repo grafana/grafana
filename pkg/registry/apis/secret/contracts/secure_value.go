@@ -36,3 +36,7 @@ type SecureValueMetadataStorage interface {
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
 	ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*DecryptSecureValue, error)
 }
+
+type SecureValueService interface {
+	Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error)
+}
