@@ -9074,6 +9074,30 @@
     },
     "title": "Latest from the blog"
   },
+  "node-graph": {
+    "category-edges": "Edges",
+    "category-node-graph": "Node graph",
+    "category-nodes": "Nodes",
+    "layout-algorithm-options": {
+      "description-force": "Use a force-directed layout",
+      "description-grid": "Use a grid layout",
+      "description-layered": "Use a layered layout",
+      "label-force": "Force",
+      "label-grid": "Grid",
+      "label-layered": "Layered"
+    },
+    "name-arc-sections": "Arc sections",
+    "name-layout-algorithm": "Layout algorithm",
+    "name-main-stat-unit": "Main stat unit",
+    "name-secondary-stat-unit": "Secondary stat unit",
+    "name-zoom-mode": "Zoom mode",
+    "zoom-mode-options": {
+      "description-cooperative": "Lets you scroll the page normally",
+      "description-greedy": "Reacts to all zoom gestures",
+      "label-cooperative": "Cooperative",
+      "label-greedy": "Greedy"
+    }
+  },
   "nodeGraph": {
     "arc-options-editor": {
       "add-arc": "Add arc",
