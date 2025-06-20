@@ -15,7 +15,9 @@ import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
 import {
+  countError,
   DURATION_REGEX,
+  durationError,
   MULTIPLE_DURATION_REGEX,
   NON_NEGATIVE_INTEGER_REGEX,
   PROM_CONFIG_LABEL_WIDTH,
@@ -28,6 +30,8 @@ import { PromApplication, PrometheusCacheLevel, PromOptions } from '../types';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
 import { docsTip, overhaulStyles, validateInput } from './shared/utils';
+
+type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -48,17 +52,22 @@ const cacheValueOptions = [
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
 
+type ValidDuration = {
+  timeInterval: string;
+  queryTimeout: string;
+  incrementalQueryOverlapWindow: string;
+};
+
+type ValidCount = {
+  codeModeMetricNamesSuggestionLimit: string;
+};
+
 const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Prometheus, label: PromApplication.Prometheus },
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
   { value: PromApplication.Thanos, label: PromApplication.Thanos },
 ];
-
-type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
-
-const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
-export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
 
 const getOptionsWithDefaults = (options: DataSourceSettings<PromOptions>) => {
   if (options.jsonData.httpMethod) {
@@ -71,27 +80,16 @@ const getOptionsWithDefaults = (options: DataSourceSettings<PromOptions>) => {
 };
 
 export const PromSettings = (props: Props) => {
-  const { onOptionsChange } = props;
-  const optionsWithDefaults = getOptionsWithDefaults(props.options);
-
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
+  const { onOptionsChange } = props;
 
-  type ValidDuration = {
-    timeInterval: string;
-    queryTimeout: string;
-    incrementalQueryOverlapWindow: string;
-  };
-
+  const optionsWithDefaults = getOptionsWithDefaults(props.options);
   const [validDuration, updateValidDuration] = useState<ValidDuration>({
     timeInterval: '',
     queryTimeout: '',
     incrementalQueryOverlapWindow: '',
   });
-
-  type ValidCount = {
-    codeModeMetricNamesSuggestionLimit: string;
-  };
 
   const [validCount, updateValidCount] = useState<ValidCount>({
     codeModeMetricNamesSuggestionLimit: '',

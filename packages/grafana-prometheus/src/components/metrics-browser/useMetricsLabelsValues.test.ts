@@ -2,11 +2,11 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { TimeRange } from '@grafana/data';
 
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
 
 import * as selectorBuilderModule from './selectorBuilder';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 import { useMetricsLabelsValues } from './useMetricsLabelsValues';
 
 // Test utilities to reduce boilerplate

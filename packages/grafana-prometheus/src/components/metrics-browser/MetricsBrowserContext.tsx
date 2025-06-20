@@ -5,8 +5,12 @@ import { TimeRange } from '@grafana/data';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 
 import { buildSelector } from './selectorBuilder';
-import { Metric } from './types';
 import { useMetricsLabelsValues } from './useMetricsLabelsValues';
+
+export interface Metric {
+  name: string;
+  details?: string;
+}
 
 /**
  * Context for the Metrics Browser component
