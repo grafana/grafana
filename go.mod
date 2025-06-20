@@ -576,6 +576,11 @@ require (
 )
 
 require (
+	github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df
+	github.com/grafana/grafana/pkg/build v0.0.0-20250620082852-de59956db4df
+)
+
+require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.0 // indirect
