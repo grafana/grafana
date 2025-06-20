@@ -1,5 +1,5 @@
 import { NavModel, NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
@@ -69,7 +69,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     updatedBy: '',
     id: 1,
     uid: 'loading',
-    title: 'Loading',
+    title: t('folders.get-loading-nav.main.title.loading', 'Loading'),
     url: 'url',
     canSave: true,
     canEdit: true,

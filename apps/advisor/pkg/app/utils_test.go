@@ -322,6 +322,10 @@ func (m *mockCheck) ID() string {
 	return "mock"
 }
 
+func (m *mockCheck) Name() string {
+	return "Mock"
+}
+
 func (m *mockCheck) Items(ctx context.Context) ([]any, error) {
 	return m.items, nil
 }

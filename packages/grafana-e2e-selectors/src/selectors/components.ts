@@ -179,6 +179,9 @@ export const versionedComponents = {
         manageAlerts: {
           '10.4.0': 'prometheus-alerts-manager', // id for switch component
         },
+        allowAsRecordingRulesTarget: {
+          '12.1.0': 'prometheus-recording-rules-target',
+        },
         scrapeInterval: {
           '10.4.0': 'data-testid scrape interval',
         },
@@ -578,6 +581,7 @@ export const versionedComponents = {
     },
 
     measureButton: {
+      '12.1.0': 'data-testid panel-editor-measure-button',
       '9.2.0': 'show measure tools',
     },
 
@@ -604,6 +608,32 @@ export const versionedComponents = {
       },
       variableLabelInput: {
         '12.0.0': 'data-testid variable label input',
+      },
+      AutoGridLayout: {
+        minColumnWidth: {
+          '12.1.0': 'data-testid min column width selector',
+        },
+        customMinColumnWidth: {
+          '12.1.0': 'data-testid custom min column width input',
+        },
+        clearCustomMinColumnWidth: {
+          '12.1.0': 'data-testid clear custom min column width input',
+        },
+        maxColumns: {
+          '12.1.0': 'data-testid max columns selector',
+        },
+        rowHeight: {
+          '12.1.0': 'data-testid row height selector',
+        },
+        customRowHeight: {
+          '12.1.0': 'data-testid custom row height input',
+        },
+        clearCustomRowHeight: {
+          '12.1.0': 'data-testid clear custom row height input',
+        },
+        fillScreen: {
+          '12.1.0': 'data-testid fill screen switch',
+        },
       },
     },
   },
@@ -1139,6 +1169,16 @@ export const versionedComponents = {
     singleLink: {
       '10.3.0': 'data-testid Data link',
       [MIN_GRAFANA_VERSION]: 'Data link',
+    },
+  },
+  DataLinksActionsTooltip: {
+    tooltipWrapper: {
+      '12.1.0': 'data-testid Data links actions tooltip wrapper',
+    },
+  },
+  TablePanel: {
+    autoCell: {
+      '12.1.0': 'data-testid Table panel auto cell',
     },
   },
   CodeEditor: {

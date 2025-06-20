@@ -144,7 +144,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Id:         navtree.NavIDDrilldown,
 			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
 			Icon:       "drilldown",
-			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
 		})
@@ -213,7 +212,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	} else {
 		homePage := s.cfg.HomePage
 
-		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
 		}
 	}
@@ -225,17 +224,19 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	ctx := c.Req.Context()
-	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
-		var children []*navtree.NavLink
-		// setup guide (a submenu item under Home)
-		children = append(children, &navtree.NavLink{
-			Id:         "home-setup-guide",
-			Text:       "Setup guide",
-			Url:        homeUrl + "/setup-guide",
-			SortWeight: navtree.WeightHome,
-		})
-		homeNode.Children = children
+	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
+		ctx := c.Req.Context()
+		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
+			var children []*navtree.NavLink
+			// setup guide (a submenu item under Home)
+			children = append(children, &navtree.NavLink{
+				Id:         "home-setup-guide",
+				Text:       "Getting started guide",
+				Url:        "/a/grafana-setupguide-app/getting-started",
+				SortWeight: navtree.WeightHome,
+			})
+			homeNode.Children = children
+		}
 	}
 	return homeNode
 }
@@ -398,6 +399,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Id:   "dashboards/public",
 				Url:  s.cfg.AppSubURL + "/dashboard/public",
 				Icon: "library-panel",
+			})
+		}
+
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Recently deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "dashboards/recently-deleted",
+				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
 			})
 		}
 	}

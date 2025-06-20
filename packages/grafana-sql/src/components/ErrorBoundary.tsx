@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { Trans } from '@grafana/i18n';
+
 type Props = {
   fallBackComponent?: React.ReactNode;
 };
@@ -16,7 +18,11 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren<Props
 
   render() {
     if (this.state.hasError) {
-      const FallBack = this.props.fallBackComponent || <div>Error</div>;
+      const FallBack = this.props.fallBackComponent || (
+        <div>
+          <Trans i18nKey="grafana-sql.components.error-boundary.fall-back.error">Error</Trans>
+        </div>
+      );
       return FallBack;
     }
 

@@ -26,8 +26,8 @@ import {
   TableSortByFieldState,
 } from '@grafana/schema';
 
-import { TableCellInspectorMode } from '../..';
-import { getTextColorForAlphaBackground } from '../../../utils';
+import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { TableCellInspectorMode } from '../TableCellInspector';
 
 import { TABLE } from './constants';
 import {
@@ -423,7 +423,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
     }
   }
 
-  return links;
+  return links.filter((link) => link.href || link.onClick != null);
 };
 
 /* ----------------------------- Data grid sorting ---------------------------- */

@@ -5,6 +5,7 @@ import {
   SelectableValue,
   StandardEditorProps,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { Field } from '../../components/Forms/Field';
@@ -13,7 +14,6 @@ import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
-import { t } from '../../utils/i18n';
 
 const category = ['Axis'];
 
@@ -179,7 +179,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
       {type === ScaleDistribution.Symlog && (
         <Field label={t('grafana-ui.axis-builder.linear-threshold', 'Linear threshold')} style={{ marginBottom: 0 }}>
           <Input
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="1"
             value={value?.linearThreshold}
             onChange={(v) => {

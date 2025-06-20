@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton } from '@grafana/ui';
 
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
@@ -11,7 +11,6 @@ interface GlobalConfigAlertProps {
 }
 
 export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) => {
-  const { t } = useTranslate();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
 
   return (

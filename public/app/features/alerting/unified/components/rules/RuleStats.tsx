@@ -1,9 +1,9 @@
-import { isUndefined, omitBy, pick, sum } from 'lodash';
+import { isUndefined, omitBy } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
 import { Fragment, useDeferredValue, useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import {
   AlertGroupTotals,
@@ -12,6 +12,8 @@ import {
   CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+import { totalFromStats } from '../../utils/ruleStats';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -80,15 +82,6 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   return stats;
 }
 
-export function totalFromStats(stats: AlertGroupTotals): number {
-  // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should
-  // not be counted because they are already counted by their state
-  const countableStats = pick(stats, ['alerting', 'pending', 'inactive', 'recording', 'recovering']);
-  const total = sum(Object.values(countableStats));
-
-  return total;
-}
-
 export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
   const stats = group.totals;
   const evaluationInterval = group?.interval;
@@ -116,7 +109,6 @@ export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
 export function getComponentsFromStats(
   stats: Partial<Record<AlertInstanceTotalState | 'paused' | 'recording', number>>
 ) {
-  const { t } = useTranslate();
   const statsComponents: React.ReactNode[] = [];
 
   if (stats[AlertInstanceTotalState.Alerting]) {

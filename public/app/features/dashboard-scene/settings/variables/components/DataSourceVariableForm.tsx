@@ -42,7 +42,7 @@ export function DataSourceVariableForm({
   onAllValueChange,
   onAllowCustomValueChange,
 }: DataSourceVariableFormProps) {
-  const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
+  const typeValue = optionTypes.find((o) => o.value === query);
 
   return (
     <>
@@ -60,7 +60,7 @@ export function DataSourceVariableForm({
       <VariableTextField
         defaultValue={regex}
         name="Instance name filter"
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(.*)-.*/"
         onBlur={onRegExBlur}
         description={

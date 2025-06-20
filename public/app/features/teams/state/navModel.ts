@@ -1,4 +1,5 @@
 import { NavModelItem, NavModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
@@ -25,7 +26,7 @@ export function buildNavModel(team: Team): NavModelItem {
   const navModel: NavModelItem = {
     img: team.avatarUrl,
     id: 'team-' + team.uid,
-    subTitle: 'Manage members and settings',
+    subTitle: t('teams.build-nav-model.nav-model.subTitle.manage-members-and-settings', 'Manage members and settings'),
     url: `org/teams/edit/${team.uid}`,
     text: team.name,
     children: [
@@ -35,7 +36,7 @@ export function buildNavModel(team: Team): NavModelItem {
         active: false,
         icon: 'sliders-v-alt',
         id: `team-settings-${team.uid}`,
-        text: 'Settings',
+        text: t('teams.build-nav-model.nav-model.text.settings', 'Settings'),
         url: `org/teams/edit/${team.uid}/settings`,
       },
     ],
@@ -52,7 +53,7 @@ export function buildNavModel(team: Team): NavModelItem {
       active: false,
       icon: 'users-alt',
       id: `team-members-${team.uid}`,
-      text: 'Members',
+      text: t('teams.build-nav-model.text.members', 'Members'),
       url: `org/teams/edit/${team.uid}/members`,
     });
   }
@@ -61,7 +62,7 @@ export function buildNavModel(team: Team): NavModelItem {
     active: false,
     icon: 'sync',
     id: `team-groupsync-${team.uid}`,
-    text: 'External group sync',
+    text: t('teams.build-nav-model.team-group-sync.text.external-group-sync', 'External group sync'),
     url: `org/teams/edit/${team.uid}/groupsync`,
   };
 

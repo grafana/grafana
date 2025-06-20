@@ -72,9 +72,9 @@ refs:
 
 # Manage RBAC roles
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
@@ -255,9 +255,9 @@ roles:
 
 The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role](ref:api-rbac-create-a-new-custom-role).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
 
@@ -314,9 +314,9 @@ If the default basic role definitions do not meet your requirements, you can cha
 
 - Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions](ref:rbac-fixed-basic-role-definitions-basic-role-assignments).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot modify the `No Basic Role` permissions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To change permissions from a basic role:**
 
@@ -371,10 +371,10 @@ roles:
         scope: 'folder:*'
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
 Make sure to **increment** the role version for the changes to be accounted for.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API](ref:api-rbac-update-a-role) for more details.
 

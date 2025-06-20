@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
@@ -44,6 +44,7 @@ export function GrafanaGroupLoader({
     {
       folderUid: groupIdentifier.namespace.uid,
       groupName: groupIdentifier.groupName,
+      limitAlerts: 0,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );
@@ -58,7 +59,6 @@ export function GrafanaGroupLoader({
 
     return matchRules(promRules, rulerRules);
   }, [promResponse, rulerResponse]);
-  const { t } = useTranslate();
 
   const isLoading = isPromResponseLoading || isRulerGroupLoading;
   if (isLoading) {
@@ -98,6 +98,7 @@ export function GrafanaGroupLoader({
               groupIdentifier={groupIdentifier}
               namespaceName={namespaceName}
               operation={RuleOperation.Creating}
+              showLocation={false}
             />
           );
         }
@@ -109,6 +110,8 @@ export function GrafanaGroupLoader({
             rulerRule={rulerRule}
             groupIdentifier={groupIdentifier}
             namespaceName={namespaceName}
+            // we don't show the location again for rules, it's redundant because they are shown in a folder > group hierarchy
+            showLocation={false}
           />
         );
       })}
@@ -121,6 +124,7 @@ export function GrafanaGroupLoader({
           rulesSource={GrafanaRulesSource}
           application="grafana"
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
     </>

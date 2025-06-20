@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 
 import { Grid } from './Grid';
