@@ -312,12 +312,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      "references.kind",
-						Operator: "=",
-						Values:   []string{"LibraryPanel"},
-					},
-					{
-						Key:      "references.name",
+						Key:      "reference.LibraryPanel",
 						Operator: "=",
 						Values:   []string{"lib-panel-1"},
 					},
@@ -336,28 +331,5 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		row := resp.Results.Rows[0]
 		require.Equal(t, "dash1", row.Key.Name)
 		require.Equal(t, "Dashboard with Library Panel 1", string(row.Cells[0])) // title field
-
-		// Search for dashboards with any LibraryPanel reference
-		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: ns.Namespace,
-					Group:     ns.Group,
-					Resource:  ns.Resource,
-				},
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      "references.kind",
-						Operator: "=",
-						Values:   []string{"LibraryPanel"},
-					},
-				},
-			},
-			Fields: []string{"title"},
-			Limit:  10,
-		}, nil)
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, int64(2), resp.TotalHits) // Both dash1 and dash2 should have LibraryPanel references
 	})
 }

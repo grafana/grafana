@@ -137,48 +137,9 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeInAll:       false,
 	})
 
-	referencesMapper := bleve.NewDocumentStaticMapping()
-	referencesMapper.AddFieldMappingsAt("name", &mapping.FieldMapping{
-		Name:               "name",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Index:              true,
-		Store:              false,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-	})
-
-	referencesMapper.AddFieldMappingsAt("kind", &mapping.FieldMapping{
-		Name:               "kind",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Index:              true,
-		Store:              false,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-	})
-
-	referencesMapper.AddFieldMappingsAt("relation", &mapping.FieldMapping{
-		Name:               "relation",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Index:              true,
-		Store:              false,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-	})
-
-	referencesMapper.AddFieldMappingsAt("group", &mapping.FieldMapping{
-		Name:               "group",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Index:              true,
-		Store:              false,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-	})
-
-	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_REFERENCES, referencesMapper)
+	referenceMapper := bleve.NewDocumentMapping()
+	referenceMapper.DefaultAnalyzer = keyword.Name
+	mapper.AddSubDocumentMapping("reference", referenceMapper)
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
