@@ -52,7 +52,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     };
   });
 
-  test.only('Renders a log line', () => {
+  test('Renders a log line', () => {
     render(
       <LogListContextProvider {...contextProps}>
         <LogLine {...defaultProps} />
