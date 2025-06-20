@@ -3,10 +3,12 @@ package loginattemptimpl
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -216,8 +218,18 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
 	cfg.BruteForceLoginProtectionMaxAttempts = 5
-	db := db.InitTestDB(t)
-	service := ProvideService(db, cfg, nil)
+
+	// Use controlled time like other tests to avoid timestamp conversion issues
+	testTime := time.Date(2023, 10, 22, 8, 0, 0, 0, time.UTC)
+	store := &xormStore{
+		db:  db.InitTestDB(t),
+		now: func() time.Time { return testTime },
+	}
+	service := &Service{
+		store:  store,
+		cfg:    cfg,
+		logger: log.New("test.login_attempt"),
+	}
 
 	// Test various IPv6 address formats that should be supported
 	ipv6Addresses := []string{
@@ -245,7 +257,10 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 			assert.NoError(t, err, "Should be able to add login attempt with IPv6 address: %s", ipAddress)
 
 			// Verify that the login attempt was stored correctly
-			count, err := service.store.GetIPLoginAttemptCount(ctx, GetIPLoginAttemptCountQuery{IPAddress: ipAddress})
+			count, err := store.GetIPLoginAttemptCount(ctx, GetIPLoginAttemptCountQuery{
+				IPAddress: ipAddress,
+				Since:     testTime.Add(-time.Minute * 5),
+			})
 			assert.NoError(t, err, "Should be able to query login attempts for IPv6 address: %s", ipAddress)
 			assert.Equal(t, int64(1), count, "Should have 1 login attempt for IPv6 address: %s", ipAddress)
 
