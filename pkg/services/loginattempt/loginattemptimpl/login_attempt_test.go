@@ -205,6 +205,54 @@ func TestIPLoginAttempts(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+// TestIPv6AddressSupport verifies that various IPv6 address formats can be stored properly with the new column length, testing various IPv6 address formats that could be encountered.
+// This test validates that the ip_address column length is sufficient for IPv6 addresses
+func TestIntegrationIPv6AddressSupport(t *testing.T) {
+	ctx := context.Background()
+	cfg := setting.NewCfg()
+	cfg.DisableBruteForceLoginProtection = false
+	cfg.BruteForceLoginProtectionMaxAttempts = 5
+	db := db.InitTestDB(t)
+	service := ProvideService(db, cfg, nil)
+
+	// Test various IPv6 address formats that should be supported
+	ipv6Addresses := []string{
+		"::1",           // loopback (3 chars)
+		"2001:db8::1",   // shortened (12 chars)
+		"[::1]",         // bracketed loopback (5 chars)
+		"[2001:db8::1]", // bracketed shortened (14 chars)
+		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",   // full IPv6 (39 chars)
+		"[2001:0db8:85a3:0000:0000:8a2e:0370:7334]", // bracketed full IPv6 (41 chars)
+		"2001:db8:85a3:8d3:1319:8a2e:370:7348",      // mixed case (34 chars)
+		"[2001:db8:85a3:8d3:1319:8a2e:370:7348]",    // bracketed mixed (36 chars)
+		"aaaa:79c0:647:bd00:4c59:2f13:3da6:aaaa",    // from the GitHub issue (35 chars)
+		"[aaaa:79c0:647:bd00:4c59:2f13:3da6:aaaa]",  // bracketed from issue (37 chars)
+	}
+
+	for i, ipAddress := range ipv6Addresses {
+		t.Run("IPv6_Address_"+ipAddress, func(t *testing.T) {
+			username := "testuser" + string(rune(i))
+
+			// Verify that the address length is within our new limit of 50 characters
+			assert.LessOrEqual(t, len(ipAddress), 50, "IP address should fit in VARCHAR(50)")
+
+			// Test that we can add login attempts with this IPv6 address
+			err := service.Add(ctx, username, ipAddress)
+			assert.NoError(t, err, "Should be able to add login attempt with IPv6 address: %s", ipAddress)
+
+			// Verify that the login attempt was stored correctly
+			count, err := service.store.GetIPLoginAttemptCount(ctx, GetIPLoginAttemptCountQuery{IPAddress: ipAddress})
+			assert.NoError(t, err, "Should be able to query login attempts for IPv6 address: %s", ipAddress)
+			assert.Equal(t, int64(1), count, "Should have 1 login attempt for IPv6 address: %s", ipAddress)
+
+			// Test IP-based validation
+			ok, err := service.ValidateIPAddress(ctx, ipAddress)
+			assert.NoError(t, err, "Should be able to validate IPv6 address: %s", ipAddress)
+			assert.True(t, ok, "IPv6 address should be valid: %s", ipAddress)
+		})
+	}
+}
+
 var _ store = new(fakeStore)
 
 type fakeStore struct {
@@ -229,6 +277,6 @@ func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command DeleteOld
 	return f.ExpectedDeletedRows, f.ExpectedErr
 }
 
-func (f fakeStore) DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error {
+func (f fakeStore) DeleteLoginAttempts(ctx context.Context, command DeleteLoginAttemptsCommand) error {
 	return f.ExpectedErr
 }

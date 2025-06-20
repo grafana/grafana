@@ -39,4 +39,20 @@ func addLoginAttemptMigrations(mg *Migrator) {
 		"username":   "username",
 		"ip_address": "ip_address",
 	})
+
+	// Increase ip_address column length to support IPv6 addresses
+	mg.AddMigration("increase login_attempt.ip_address column length for IPv6 support", NewRawSQLMigration("").
+		Postgres("ALTER TABLE login_attempt ALTER COLUMN ip_address TYPE VARCHAR(50);").
+		Mysql("ALTER TABLE login_attempt MODIFY ip_address VARCHAR(50);").
+		SQLite(`CREATE TABLE login_attempt_temp (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username VARCHAR(190) NOT NULL,
+			ip_address VARCHAR(50) NOT NULL,
+			created INTEGER DEFAULT 0 NOT NULL
+		);
+		INSERT INTO login_attempt_temp(id, username, ip_address, created)
+		SELECT id, username, ip_address, created FROM login_attempt;
+		DROP TABLE login_attempt;
+		ALTER TABLE login_attempt_temp RENAME TO login_attempt;
+		CREATE INDEX IDX_login_attempt_username ON login_attempt(username);`))
 }
