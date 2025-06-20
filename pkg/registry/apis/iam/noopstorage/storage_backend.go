@@ -12,7 +12,7 @@ import (
 var (
 	_ resource.StorageBackend = &StorageBackendImpl{}
 
-	noopStorageErr = errors.New("Unavailable functionality.")
+	noopStorageErr = errors.New("Unavailable functionality")
 )
 
 type StorageBackendImpl struct{}
