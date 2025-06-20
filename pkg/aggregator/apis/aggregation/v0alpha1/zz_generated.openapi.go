@@ -63,6 +63,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneService(ref common.Ref
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{

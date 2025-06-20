@@ -53,6 +53,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalName(ref common.ReferenceCallback)
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{

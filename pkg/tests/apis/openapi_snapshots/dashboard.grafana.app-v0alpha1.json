@@ -1732,6 +1732,7 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel": {
         "type": "object",
         "required": [
+          "metadata",
           "spec"
         ],
         "properties": {
@@ -1744,7 +1745,6 @@
             "type": "string"
           },
           "metadata": {
-            "description": "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "default": {},
             "allOf": [
               {
