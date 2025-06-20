@@ -175,21 +175,13 @@ jobs:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
           retention-days: 1
-      - name: Upload artifacts
-        uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
-        with:
-          bucket: grafana-prerelease
-          artifact: artifacts-${{ matrix.name }}
-          run-id: ${{ github.run_id }}
-          path: ${{ steps.build.outputs.dist-dir }}
-          environment: prod
-          parent: false
-      - name: Upload artifacts list
-        uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
-        with:
-          bucket: grafana-prerelease
-          artifact: artifacts-${{ matrix.name }}
-          run-id: ${{ github.run_id }}
-          path: ${{ steps.build.outputs.file }}
-          environment: prod
-          parent: false
+  publish:
+    name: Upload artifacts
+    uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
+    with:
+      bucket: grafana-prerelease
+      artifact: artifacts-*
+      run-id: ${{ github.run_id }}
+      path: dist
+      environment: prod
+      parent: false
