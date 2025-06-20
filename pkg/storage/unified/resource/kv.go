@@ -50,9 +50,9 @@ type KV interface {
 	// List: list all the data in the store. Maybe. Not sure yet.
 	// List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
 
-	// TimeUTC return the DB time in UTC.
+	// UnixTimestamp returns the current time in seconds since Epoch.
 	// This is used to ensure the server and client are not too far apart in time.
-	TimeUTC(ctx context.Context) (time.Time, error)
+	UnixTimestamp(ctx context.Context) (int64, error)
 }
 
 // Reference implementation of the KV interface using BadgerDB
@@ -179,8 +179,8 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 	}
 }
 
-func (k *badgerKV) TimeUTC(ctx context.Context) (time.Time, error) {
-	return time.Now().UTC(), nil
+func (k *badgerKV) UnixTimestamp(ctx context.Context) (int64, error) {
+	return time.Now().Unix(), nil
 }
 
 // PrefixRangeEnd returns the end key for the given prefix

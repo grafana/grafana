@@ -177,8 +177,8 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			Key:   metaObj.Key,
 			Value: metaObj.Value,
 		})
-		// Only fetch the first limit items.
-		if len(keys) >= int(req.Limit) {
+		// Only fetch the first limit items + 1 to get the next token.
+		if len(keys) >= int(req.Limit+1) {
 			break
 		}
 	}
