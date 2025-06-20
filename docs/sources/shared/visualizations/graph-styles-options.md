@@ -39,10 +39,6 @@ Choose how the graph interpolates the series line:
 - **Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.
 - **Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.
 
-#### Line width
-
-Set the thickness of the series lines or the outline for bars using the **Line width** slider.
-
 #### Gradient mode
 
 Choose a gradient mode to control the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme).
