@@ -15,7 +15,7 @@ import (
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
 
-func TestLargeDashboardSupport(t *testing.T) {
+func TestLargeDashboardSupportV1(t *testing.T) {
 	devdash := "../../../../devenv/dev-dashboards/all-panels.json"
 
 	// nolint:gosec
