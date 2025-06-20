@@ -420,10 +420,8 @@ func (am *Alertmanager) applyConfig(
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
-	receivers := notifier.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
-	for _, recv := range receivers {
-		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.secretsService.GetDecryptedValue)
-		if err != nil {
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.secretsService.GetDecryptedValue); err != nil {
 			return err
 		}
 	}
