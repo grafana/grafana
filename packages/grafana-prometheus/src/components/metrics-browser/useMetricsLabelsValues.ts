@@ -3,11 +3,10 @@ import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, METRIC_LABEL } from '../../types';
 
 import { Metric } from './MetricsBrowserContext';
-import { LAST_USED_LABELS_KEY } from './constants';
 import { buildSelector } from './selectorBuilder';
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PrometheusLanguageProviderInterface) => {

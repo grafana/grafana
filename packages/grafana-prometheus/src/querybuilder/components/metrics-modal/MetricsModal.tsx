@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 
 import { getDebounceTimeInMilliseconds } from '../../../caching';
-import { METRIC_LABEL } from '../../../types';
+import { METRIC_LABEL } from '../../../constants';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
 import { formatPrometheusLabelFilters } from '../MetricCombobox';
 

@@ -6,8 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
+import { METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
-import { METRIC_LABEL } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';

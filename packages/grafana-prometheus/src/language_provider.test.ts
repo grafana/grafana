@@ -9,6 +9,7 @@ jest.mock('./language_utils', () => ({
 
 import { getCacheDurationInMinutes } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
+import { DEFAULT_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
@@ -19,7 +20,7 @@ import {
   populateMatchParamsFromQueries,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
-import { DEFAULT_SERIES_LIMIT, PrometheusCacheLevel, PromQuery } from './types';
+import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();
 const timeRangeDurationSeconds = 1;

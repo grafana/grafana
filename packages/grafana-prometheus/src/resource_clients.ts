@@ -2,11 +2,12 @@ import { TimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { getDefaultCacheHeaders } from './caching';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL } from './constants';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL, PrometheusCacheLevel } from './types';
+import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;

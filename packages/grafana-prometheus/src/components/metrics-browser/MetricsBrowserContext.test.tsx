@@ -4,12 +4,11 @@ import { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
+import { LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { getMockTimeRange } from '../../test/__mocks__/datasource';
-import { METRIC_LABEL } from '../../types';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
-import { LAST_USED_LABELS_KEY } from './constants';
 
 const setupLocalStorageMock = () => {
   let store: Record<string, string> = {};
