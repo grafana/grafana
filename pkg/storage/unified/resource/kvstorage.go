@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"sort"
 	"strings"
 	"time"
 
@@ -138,12 +139,13 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
-	resourceVersion := req.ResourceVersion
+	// Parse continue token if provided
 	offset := int64(0)
+	resourceVersion := req.ResourceVersion
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
 		offset = token.StartOffset
 		resourceVersion = token.ResourceVersion
@@ -268,9 +270,241 @@ func (i *kvListIterator) Value() []byte {
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
 func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
-	// In a real implementation, this would iterate over the history of the resource.
-	// For now, we simply return an error.
-	return 0, nil
+	if req.Options == nil || req.Options.Key == nil {
+		return 0, fmt.Errorf("missing options or key in ListRequest")
+	}
+	key := req.Options.Key
+	if key.Group == "" {
+		return 0, fmt.Errorf("group is required")
+	}
+	if key.Resource == "" {
+		return 0, fmt.Errorf("resource is required")
+	}
+	if key.Namespace == "" {
+		return 0, fmt.Errorf("namespace is required")
+	}
+	if key.Name == "" {
+		return 0, fmt.Errorf("name is required")
+	}
+
+	// Parse continue token if provided
+	lastSeenRV := int64(0)
+	sortAscending := req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
+	if req.NextPageToken != "" {
+		token, err := GetContinueToken(req.NextPageToken)
+		if err != nil {
+			return 0, fmt.Errorf("invalid continue token: %w", err)
+		}
+		lastSeenRV = token.ResourceVersion
+		sortAscending = token.SortAscending
+	}
+
+	// Generate a new resource version for the list
+	listRV := k.snowflake.Generate().Int64()
+
+	// Collect all history entries
+	var historyEntries []DataObj
+	for obj, err := range k.dataStore.List(ctx, ListRequestKey{
+		Namespace: req.Options.Key.Namespace,
+		Group:     req.Options.Key.Group,
+		Resource:  req.Options.Key.Resource,
+		Name:      req.Options.Key.Name,
+	}) {
+		if err != nil {
+			return 0, err
+		}
+		historyEntries = append(historyEntries, obj)
+	}
+
+	// Apply filtering based on version match
+	versionMatch := req.GetVersionMatchV2()
+
+	if versionMatch == resourcepb.ResourceVersionMatchV2_Exact {
+		if req.ResourceVersion <= 0 {
+			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
+		}
+		var exactEntries []DataObj
+		for _, entry := range historyEntries {
+			if entry.Key.ResourceVersion == req.ResourceVersion {
+				exactEntries = append(exactEntries, entry)
+			}
+		}
+		historyEntries = exactEntries
+	} else if versionMatch == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+		if req.ResourceVersion > 0 {
+			var filteredEntries []DataObj
+			for _, entry := range historyEntries {
+				if entry.Key.ResourceVersion >= req.ResourceVersion {
+					filteredEntries = append(filteredEntries, entry)
+				}
+			}
+			historyEntries = filteredEntries
+		}
+	} else {
+		if req.ResourceVersion > 0 {
+			var filteredEntries []DataObj
+			for _, entry := range historyEntries {
+				if entry.Key.ResourceVersion <= req.ResourceVersion {
+					filteredEntries = append(filteredEntries, entry)
+				}
+			}
+			historyEntries = filteredEntries
+		}
+	}
+
+	// Apply "live" history logic: ignore events before the last delete
+	useLatestDeletionAsMinRV := req.ResourceVersion == 0 && req.Source != resourcepb.ListRequest_TRASH && versionMatch != resourcepb.ResourceVersionMatchV2_Exact
+	if useLatestDeletionAsMinRV {
+		latestDeleteRV := int64(0)
+		for _, entry := range historyEntries {
+			if entry.Key.Action == MetaDataActionDeleted && entry.Key.ResourceVersion > latestDeleteRV {
+				latestDeleteRV = entry.Key.ResourceVersion
+			}
+		}
+		if latestDeleteRV > 0 {
+			var liveEntries []DataObj
+			for _, entry := range historyEntries {
+				if entry.Key.ResourceVersion > latestDeleteRV {
+					liveEntries = append(liveEntries, entry)
+				}
+			}
+			historyEntries = liveEntries
+		}
+	}
+
+	// Sort the entries
+	if sortAscending {
+		sort.Slice(historyEntries, func(i, j int) bool {
+			return historyEntries[i].Key.ResourceVersion < historyEntries[j].Key.ResourceVersion
+		})
+	} else {
+		sort.Slice(historyEntries, func(i, j int) bool {
+			return historyEntries[i].Key.ResourceVersion > historyEntries[j].Key.ResourceVersion
+		})
+	}
+
+	// Pagination: filter out items up to and including lastSeenRV
+	var pagedEntries []DataObj
+	for _, entry := range historyEntries {
+		if lastSeenRV == 0 {
+			pagedEntries = append(pagedEntries, entry)
+		} else if sortAscending && entry.Key.ResourceVersion > lastSeenRV {
+			pagedEntries = append(pagedEntries, entry)
+		} else if !sortAscending && entry.Key.ResourceVersion < lastSeenRV {
+			pagedEntries = append(pagedEntries, entry)
+		}
+	}
+
+	// Apply limit
+	hasMore := false
+	if req.Limit > 0 && len(pagedEntries) > int(req.Limit) {
+		hasMore = true
+		pagedEntries = pagedEntries[:req.Limit]
+	}
+
+	iter := kvHistoryIterator{
+		entries:       pagedEntries,
+		currentIndex:  -1,
+		ctx:           ctx,
+		listRV:        listRV,
+		sortAscending: sortAscending,
+		hasMore:       hasMore,
+	}
+
+	err := fn(&iter)
+	if err != nil {
+		return 0, err
+	}
+
+	return listRV, nil
+}
+
+// kvHistoryIterator implements ListIterator for KV storage history
+type kvHistoryIterator struct {
+	ctx           context.Context
+	entries       []DataObj
+	currentIndex  int
+	listRV        int64
+	sortAscending bool
+	hasMore       bool
+
+	// current
+	rv    int64
+	err   error
+	value []byte
+}
+
+func (i *kvHistoryIterator) Next() bool {
+	i.currentIndex++
+
+	if i.currentIndex >= len(i.entries) {
+		return false
+	}
+
+	entry := i.entries[i.currentIndex]
+	i.rv = entry.Key.ResourceVersion
+	i.value = entry.Value
+	i.err = nil
+
+	return true
+}
+
+func (i *kvHistoryIterator) Error() error {
+	return i.err
+}
+
+func (i *kvHistoryIterator) ContinueToken() string {
+	if !i.hasMore {
+		return ""
+	}
+	// Use the resource version from the last item in the current page
+	var lastRV int64
+	if len(i.entries) > 0 {
+		lastRV = i.entries[len(i.entries)-1].Key.ResourceVersion
+	} else {
+		// Fallback to current RV if no entries
+		lastRV = i.rv
+	}
+	token := ContinueToken{
+		StartOffset:     i.rv,
+		ResourceVersion: lastRV,
+		SortAscending:   i.sortAscending,
+	}
+	tokenStr := token.String()
+	return tokenStr
+}
+
+// HasMore returns true if there are more items after the current position
+func (i *kvHistoryIterator) HasMore() bool {
+	return i.currentIndex < len(i.entries)-1
+}
+
+func (i *kvHistoryIterator) ResourceVersion() int64 {
+	return i.rv
+}
+
+func (i *kvHistoryIterator) Namespace() string {
+	if i.currentIndex >= 0 && i.currentIndex < len(i.entries) {
+		return i.entries[i.currentIndex].Key.Namespace
+	}
+	return ""
+}
+
+func (i *kvHistoryIterator) Name() string {
+	if i.currentIndex >= 0 && i.currentIndex < len(i.entries) {
+		return i.entries[i.currentIndex].Key.Name
+	}
+	return ""
+}
+
+func (i *kvHistoryIterator) Folder() string {
+	// DataObj doesn't contain folder information, so we return empty string
+	// In a real implementation, we might need to get this from metadata
+	return ""
+}
+
+func (i *kvHistoryIterator) Value() []byte {
+	return i.value
 }
 
 // WatchWriteEvents returns a channel that receives write events.

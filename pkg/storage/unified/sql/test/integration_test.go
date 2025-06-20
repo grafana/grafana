@@ -70,7 +70,7 @@ func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
 			// unitest.TestHappyPath:                 true,
 			// unitest.TestWatchWriteEvents:          true,
 			// unitest.TestList:                      true,
-			unitest.TestListHistory:               true,
+			// unitest.TestListHistory:               true,
 			unitest.TestListHistoryErrorReporting: true,
 			unitest.TestBlobSupport:               true,
 			unitest.TestCreateNewResource:         true,
