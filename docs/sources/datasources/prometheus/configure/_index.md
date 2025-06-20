@@ -297,9 +297,9 @@ Add the following setting in the **[auth]** section of the .ini configuration fi
 azure_auth_enabled = true
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Recording rules (beta)
 
