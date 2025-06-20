@@ -147,6 +147,7 @@ jobs:
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
