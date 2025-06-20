@@ -520,6 +520,9 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
+/**
+ * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
+ */
 const renderRowFactory =
   (
     fields: Field[],
@@ -564,6 +567,9 @@ const renderRowFactory =
     return <Row key={key} {...props} {...handlers} />;
   };
 
+/**
+ * passed to the top-level `renderCell` prop on DataGrid. This applies all per-cell styles.
+ */
 const renderCellFactory =
   (
     columnTypes: Record<string, FieldType>,

@@ -630,5 +630,4 @@ export function isCustomCellOptions(options: TableCellOptions): options is Table
  * - getCellLinks: on click
  * - frameCompare, and getComparator return frameCompare
  * - migrateTableDisplayModeToCellOptions: LCD gauge mode
- * - getApplyToRowBgFn
  */

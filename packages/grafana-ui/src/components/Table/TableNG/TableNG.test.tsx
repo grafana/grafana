@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
 
@@ -1510,9 +1510,46 @@ describe('TableNG', () => {
 
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
+
+      // doesn't accidentally applyToRow
+      const otherCell = cells[1];
+      expect(window.getComputedStyle(otherCell).color).not.toBe('rgb(255, 0, 0)');
     });
 
-    it.todo("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true");
+    it.only("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
+      // Create a frame with color background cells and applyToRow set to true
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      // Add color to the display values
+      const originalDisplay = frame.fields[0].display;
+      const expectedColor = '#ff0000'; // Red color
+      frame.fields[0].display = (value: unknown) => {
+        const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
+        return {
+          ...displayValue,
+          color: expectedColor,
+        };
+      };
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      // Find rows in the table
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      for (const cell of cells) {
+        const cellStyle = window.getComputedStyle(cell);
+        // Ensure each cell has the same background color
+        expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
+      }
+    });
   });
 
   describe('Row hover functionality for shared crosshair', () => {
