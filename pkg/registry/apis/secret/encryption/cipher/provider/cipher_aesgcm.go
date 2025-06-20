@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
-const gcmSaltLength = 8
+const (
+	gcmSaltLength = 8
+	AesGcm        = "aes-gcm"
+)
 
 var (
 	_ cipher.Encrypter = (*aesGcmCipher)(nil)

@@ -19,7 +19,6 @@ import (
 
 const (
 	encryptionAlgorithmDelimiter = '*'
-	encyptionAlgorithm           = "aes-gcm"
 )
 
 // Service must not be used for cipher.
@@ -31,8 +30,9 @@ type Service struct {
 	cfg          *setting.Cfg
 	usageMetrics usagestats.Service
 
-	cipher   cipher.Encrypter
-	decipher cipher.Decrypter
+	cipher    cipher.Encrypter
+	decipher  cipher.Decrypter
+	algorithm string
 }
 
 func NewEncryptionService(
@@ -50,8 +50,9 @@ func NewEncryptionService(
 
 		// Use the AES-GCM cipher for encryption and decryption.
 		// This is the only cipher supported by the secrets management system.
-		cipher:   provider.NewAesGcmCipher(),
-		decipher: provider.NewAesGcmCipher(),
+		cipher:    provider.NewAesGcmCipher(),
+		decipher:  provider.NewAesGcmCipher(),
+		algorithm: provider.AesGcm,
 
 		usageMetrics: usageMetrics,
 		cfg:          cfg,
@@ -65,7 +66,7 @@ func NewEncryptionService(
 func (s *Service) registerUsageMetrics() {
 	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 		return map[string]any{
-			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, encyptionAlgorithm): 1,
+			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, s.algorithm): 1,
 		}, nil
 	})
 }
@@ -130,13 +131,13 @@ func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([
 		}
 	}()
 
-	span.SetAttributes(attribute.String("cipher.algorithm", encyptionAlgorithm))
+	span.SetAttributes(attribute.String("cipher.algorithm", s.algorithm))
 
 	var encrypted []byte
 	encrypted, err = s.cipher.Encrypt(ctx, payload, secret)
 
-	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len([]byte(encyptionAlgorithm)))+2)
-	base64.RawStdEncoding.Encode(prefix[1:], []byte(encyptionAlgorithm))
+	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len([]byte(s.algorithm)))+2)
+	base64.RawStdEncoding.Encode(prefix[1:], []byte(s.algorithm))
 	prefix[0] = encryptionAlgorithmDelimiter
 	prefix[len(prefix)-1] = encryptionAlgorithmDelimiter
 
