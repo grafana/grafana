@@ -351,6 +351,12 @@ func logMergeResult(l log.Logger, m apimodels.MergeResult) {
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, skipInvalid bool) (bool, error) {
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		if err := PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn); err != nil {
+			return false, err
+		}
+	}
+
 	err := am.crypto.DecryptExtraConfigs(ctx, cfg)
 	if err != nil {
 		return false, fmt.Errorf("failed to decrypt external configurations: %w", err)
@@ -384,12 +390,6 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
-	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
-		if err = PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn); err != nil {
-			return false, err
-		}
-	}
-
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
 		RoutingTree:       amConfig.Route.AsAMRoute(),
@@ -397,7 +397,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		MuteTimeIntervals: amConfig.MuteTimeIntervals,
 		TimeIntervals:     amConfig.TimeIntervals,
 		Templates:         templates,
-		Receivers:         PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		Receivers:         PostableApiAlertingConfigToApiReceivers(amConfig),
 		DispatcherLimits:  &nilLimits{},
 		Raw:               rawConfig,
 		Hash:              configHash,
