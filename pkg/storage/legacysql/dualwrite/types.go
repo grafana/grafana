@@ -16,14 +16,14 @@ type StorageStatus struct {
 	WriteUnified bool   `json:"write_unified"`
 
 	// Unified is the primary source (legacy may be secondary)
-	ReadUnified bool `json:"read_unified" xorm:"read_unified"`
+	ReadUnified bool `json:"read_unified"`
 
 	// Timestamp when a migration finished
 	Migrated int64 `json:"migrated" `
 
 	// Timestamp when a migration *started* this should be cleared when finished
 	// While migrating all write commands will be unavailable
-	Migrating int64 `json:"migrating" xorm:"migrating"`
+	Migrating int64 `json:"migrating"`
 
 	// When false, the behavior will not change at runtime
 	Runtime bool `json:"runtime"`
