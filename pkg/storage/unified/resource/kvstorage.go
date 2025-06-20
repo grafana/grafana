@@ -74,10 +74,9 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Name:            event.Key.Name,
 			ResourceVersion: rv,
 			Action:          action,
+			Folder:          event.Object.GetFolder(),
 		},
-		Value: MetaData{
-			Folder: event.Object.GetFolder(),
-		},
+		Value: MetaData{},
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
@@ -130,7 +129,7 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Key:             req.Key,
 		ResourceVersion: meta.Key.ResourceVersion,
 		Value:           data,
-		Folder:          meta.Value.Folder,
+		Folder:          meta.Key.Folder,
 	}
 }
 
@@ -260,7 +259,7 @@ func (i *kvListIterator) Name() string {
 }
 
 func (i *kvListIterator) Folder() string {
-	return i.keys[i.currentIndex].Value.Folder
+	return i.keys[i.currentIndex].Key.Folder
 }
 
 func (i *kvListIterator) Value() []byte {

@@ -35,9 +35,6 @@ type KVObject struct {
 }
 
 type KV interface {
-	// List all keys in the store
-	List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
-
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
@@ -130,10 +127,11 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 	return txn.Commit()
 }
 
-func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error] {
+func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	if section == "" {
-		return func(yield func(KVObject, error) bool) {
-			yield(KVObject{}, fmt.Errorf("section is required"))
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("section is required"))
+			return
 		}
 	}
 
@@ -161,7 +159,7 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 	iter := txn.NewIterator(opts)
 	defer iter.Close()
 	count := int64(0)
-	return func(yield func(KVObject, error) bool) {
+	return func(yield func(string, error) bool) {
 		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
 			item := iter.Item()
 
@@ -171,40 +169,10 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 			if isEnd(item) {
 				break
 			}
-			out := KVObject{
-				Key:   string(item.Key())[len(section)+1:],
-				Value: []byte{},
-			}
-			item.Value(func(val []byte) error {
-				out.Value = make([]byte, len(val))
-				copy(out.Value, val)
-				return nil
-			})
-			if !yield(out, nil) {
+			if !yield(string(item.Key())[len(section)+1:], nil) {
 				break
 			}
 			count++
-		}
-	}
-}
-
-func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
-	if section == "" {
-		return func(yield func(string, error) bool) {
-			yield("", fmt.Errorf("section is required"))
-			return
-		}
-	}
-
-	return func(yield func(string, error) bool) {
-		for k, err := range k.List(ctx, section, opt) {
-			if err != nil {
-				yield("", err)
-				return
-			}
-			if !yield(k.Key, nil) {
-				return
-			}
 		}
 	}
 }

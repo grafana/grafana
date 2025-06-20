@@ -35,6 +35,7 @@ func TestMetadataStore_GetKey(t *testing.T) {
 
 	rv := int64(56500267212345678)
 	key := MetaDataKey{
+		Folder:          "test-folder",
 		Group:           "apps",
 		Resource:        "deployments",
 		Namespace:       "default",
@@ -43,7 +44,7 @@ func TestMetadataStore_GetKey(t *testing.T) {
 		Action:          MetaDataActionCreated,
 	}
 
-	expectedKey := "apps/deployments/default/test-deployment/56500267212345678~created"
+	expectedKey := "apps/deployments/default/test-deployment/56500267212345678~created~test-folder"
 	actualKey := store.getKey(key)
 
 	assert.Equal(t, expectedKey, actualKey)
@@ -53,7 +54,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
 	rv := node.Generate()
-	key := "apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated)
+	key := "apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated) + "~test-folder"
 
 	resourceKey, err := store.parseKey(key)
 
@@ -64,6 +65,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	assert.Equal(t, "test-deployment", resourceKey.Name)
 	assert.Equal(t, rv.Int64(), resourceKey.ResourceVersion)
 	assert.Equal(t, MetaDataActionCreated, resourceKey.Action)
+	assert.Equal(t, "test-folder", resourceKey.Folder)
 }
 
 func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
@@ -131,9 +133,7 @@ func TestMetadataStore_Save(t *testing.T) {
 		Action:          MetaDataActionCreated,
 	}
 
-	metadata := MetaData{
-		Folder: "test-folder",
-	}
+	metadata := MetaData{}
 
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -155,9 +155,7 @@ func TestMetadataStore_Get(t *testing.T) {
 		Action:          MetaDataActionCreated,
 	}
 
-	metadata := MetaData{
-		Folder: "test-folder",
-	}
+	metadata := MetaData{}
 
 	// Save first
 	err := store.Save(ctx, MetaDataObj{
@@ -207,9 +205,9 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	rv3 := node.Generate().Int64()
 
 	// Save multiple versions (uid3 should be latest)
-	metadata1 := MetaData{Folder: "folder1"}
-	metadata2 := MetaData{Folder: "folder2"}
-	metadata3 := MetaData{Folder: "folder3"}
+	metadata1 := MetaData{}
+	metadata2 := MetaData{}
+	metadata3 := MetaData{}
 
 	key.ResourceVersion = rv1
 	key.Action = MetaDataActionCreated
@@ -261,9 +259,7 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 		Action:          MetaDataActionDeleted,
 	}
 
-	metadata := MetaData{
-		Folder: "test-folder",
-	}
+	metadata := MetaData{}
 
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
@@ -376,8 +372,8 @@ func TestMetadataStore_ListAll(t *testing.T) {
 		Action:          MetaDataActionCreated,
 	}
 
-	metadata1 := MetaData{Folder: "folder1"}
-	metadata2 := MetaData{Folder: "folder2"}
+	metadata1 := MetaData{}
+	metadata2 := MetaData{}
 
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key1,
@@ -429,8 +425,8 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	rv1 := node.Generate().Int64()
 	rv2 := node.Generate().Int64()
 
-	metadata1 := MetaData{Folder: "folder1"}
-	metadata2 := MetaData{Folder: "folder2"}
+	metadata1 := MetaData{}
+	metadata2 := MetaData{}
 
 	key.ResourceVersion = rv1
 	key.Action = MetaDataActionCreated

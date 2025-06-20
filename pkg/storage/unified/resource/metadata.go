@@ -16,7 +16,7 @@ const (
 
 // Metadata store
 type MetaData struct {
-	Folder string `json:"folder"`
+	// For now empty
 }
 
 type MetaDataAction string
@@ -33,6 +33,7 @@ type MetaDataKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
+	Folder          string
 	Action          MetaDataAction
 }
 
@@ -52,7 +53,7 @@ func newMetadataStore(kv KV) *metadataStore {
 }
 
 func (d *metadataStore) getKey(key MetaDataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action)
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action, key.Folder)
 }
 
 func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
@@ -61,11 +62,11 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 
-	rvActionParts := strings.Split(parts[4], "~")
-	if len(rvActionParts) != 2 {
+	rvActionFolderParts := strings.Split(parts[4], "~")
+	if len(rvActionFolderParts) != 3 {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
-	rv, err := strconv.ParseInt(rvActionParts[0], 10, 64)
+	rv, err := strconv.ParseInt(rvActionFolderParts[0], 10, 64)
 	if err != nil {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
@@ -75,7 +76,8 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 		Resource:        parts[1],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          MetaDataAction(rvActionParts[1]),
+		Action:          MetaDataAction(rvActionFolderParts[1]),
+		Folder:          rvActionFolderParts[2],
 	}, nil
 }
 

@@ -46,9 +46,6 @@ type KVNotifierOptions struct {
 }
 
 func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
-	if opts.LookbackPeriod == 0 {
-		opts.LookbackPeriod = defaultLookbackPeriod
-	}
 	if opts.PollInterval == 0 {
 		opts.PollInterval = defaultPollInterval
 	}
@@ -131,7 +128,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 	events := make(chan Event, n.opts.BufferSize)
-	lastRV := time.Now().Add(-n.opts.LookbackPeriod).UnixMilli()
+	lastRV := time.Now().Add(-n.opts.LookbackPeriod).UnixNano()
 	go func() {
 		defer close(events)
 		for {
