@@ -53,9 +53,11 @@ jobs:
         with:
           environment: ${{ inputs.environment }}
       - name: Coalesce artifacts
+        env:
+          PATH: ${{ inputs.path }}
         run: |
           mkdir out
-          rsync -r artifact/*/* out
+          rsync -r "artifact/*/${PATH}" out
           ls -al out
       - name: Upload artifacts
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0

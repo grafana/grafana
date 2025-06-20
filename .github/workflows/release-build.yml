@@ -175,7 +175,7 @@ jobs:
           name: artifacts-${{ matrix.name }}
           path: ${{ steps.build.outputs.dist-dir }}
           retention-days: 1
-  publish:
+  publish-artifacts:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
     permissions:
@@ -187,6 +187,22 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
+      bucket_path: ${{ needs.setup.outputs.version }}
       path: dist
+      environment: prod
+      parent: false
+  publish-artifacts:
+    name: Upload artifacts
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-list-*
+      run-id: ${{ github.run_id }}
+      bucket_path: ${{ needs.setup.outputs.version }}
       environment: prod
       parent: false
