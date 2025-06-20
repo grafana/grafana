@@ -1516,7 +1516,7 @@ describe('TableNG', () => {
       expect(window.getComputedStyle(otherCell).color).not.toBe('rgb(255, 0, 0)');
     });
 
-    it.only("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
+    it("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
       // Create a frame with color background cells and applyToRow set to true
       const frame = createBasicDataFrame();
       frame.fields[0].config.custom = {
