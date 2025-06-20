@@ -6767,6 +6767,25 @@
     "discard-button": "Discard unsaved changes",
     "title": "Leave page?"
   },
+  "gauge": {
+    "category-gauge": "Gauge",
+    "description-min-height": "Minimum row height (horizontal orientation)",
+    "description-min-width": "Minimum column width (vertical orientation)",
+    "description-neutral": "Leave empty to use Min as neutral point",
+    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
+    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
+    "gauge-size-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "name-gauge-size": "Gauge size",
+    "name-min-height": "Min height",
+    "name-min-width": "Min width",
+    "name-neutral": "Neutral",
+    "name-show-threshold-labels": "Show threshold labels",
+    "name-show-threshold-markers": "Show threshold markers",
+    "placeholder-neutral": "auto"
+  },
   "gen-ai": {
     "apply-suggestion": "Apply",
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
