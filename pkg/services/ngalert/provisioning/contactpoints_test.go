@@ -426,6 +426,9 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["api_token"] = "test-token"
 		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
 	}
 
 	configs := notify.AllKnownConfigsForTesting
