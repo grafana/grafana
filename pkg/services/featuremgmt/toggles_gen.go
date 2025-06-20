@@ -191,6 +191,10 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagNanoGit
+	// Use experimental git library for provisioning
+	FlagNanoGit = "nanoGit"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -591,10 +595,6 @@ const (
 	// Allows access to the new react-data-grid based table component.
 	FlagTableNextGen = "tableNextGen"
 
-	// FlagLokiSendDashboardPanelNames
-	// Send dashboard and panel names to Loki when querying
-	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
-
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
@@ -867,10 +867,6 @@ const (
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"
 
-	// FlagXrayApplicationSignals
-	// Support Application Signals queries in the X-Ray datasource
-	FlagXrayApplicationSignals = "xrayApplicationSignals"
-
 	// FlagMultiTenantTempCredentials
 	// use multi-tenant path for awsTempCredentials
 	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
@@ -915,6 +911,10 @@ const (
 	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
 	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 
+	// FlagKubernetesAuthzApis
+	// Registers AuthZ /apis endpoint
+	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -930,4 +930,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagPreferLibraryPanelTitle
+	// Prefer library panel title over viz panel title.
+	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
 )

@@ -218,6 +218,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Use experimental git library for provisioning
+  */
+  nanoGit?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -262,6 +266,7 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   /**
   * Enables RBAC support for library panels
+  * @default true
   */
   libraryPanelRBAC?: boolean;
   /**
@@ -656,10 +661,6 @@ export interface FeatureToggles {
   */
   tableNextGen?: boolean;
   /**
-  * Send dashboard and panel names to Loki when querying
-  */
-  lokiSendDashboardPanelNames?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -830,6 +831,7 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+  * @default true
   */
   teamHttpHeadersMimir?: boolean;
   /**
@@ -954,10 +956,6 @@ export interface FeatureToggles {
   */
   alertingRuleRecoverDeleted?: boolean;
   /**
-  * Support Application Signals queries in the X-Ray datasource
-  */
-  xrayApplicationSignals?: boolean;
-  /**
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
@@ -1006,6 +1004,10 @@ export interface FeatureToggles {
   */
   extensionsReadOnlyProxy?: boolean;
   /**
+  * Registers AuthZ /apis endpoint
+  */
+  kubernetesAuthzApis?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1025,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
 }

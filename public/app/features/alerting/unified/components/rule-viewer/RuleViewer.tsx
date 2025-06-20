@@ -59,6 +59,7 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
+import { ContactPointLink } from './ContactPointLink';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
@@ -92,6 +93,7 @@ const RuleViewer = () => {
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+  const { returnTo } = useReturnTo('/alerting/list');
   const { annotations, promRule, rulerRule } = rule;
 
   const hasError = isErrorHealth(promRule?.health);
@@ -118,7 +120,7 @@ const RuleViewer = () => {
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
-          returnToHref="/alerting/list"
+          returnToHref={returnTo}
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
@@ -180,7 +182,7 @@ const RuleViewer = () => {
 };
 
 const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
-  const { labels, annotations, group } = rule;
+  const { labels, annotations, group, rulerRule } = rule;
   const metadata: PageInfoItem[] = [];
 
   const runbookUrl = annotations[Annotation.runbookURL];
@@ -193,6 +195,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   const interval = group.interval;
   const styles = useStyles2(getStyles);
+
+  // if the alert rule uses simplified routing, we'll show a link to the contact point
+  if (rulerRuleType.grafana.alertingRule(rulerRule)) {
+    const contactPointName = rulerRule.grafana_alert.notification_settings?.receiver;
+
+    if (contactPointName) {
+      metadata.push({
+        label: t('alerting.create-metadata.label.contact-point', 'Notifications are delivered to'),
+        value: <ContactPointLink name={contactPointName} variant="bodySmall" />,
+      });
+    }
+  }
 
   if (runbookUrl) {
     /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
@@ -490,12 +504,6 @@ export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
 };
 
 const getStyles = () => ({
-  title: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  }),
   url: css({
     wordBreak: 'break-all',
   }),
