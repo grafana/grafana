@@ -526,7 +526,7 @@ export class PrometheusDatasource
 
     const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
 
-    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match, '0');
+    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match);
 
     // filter out already used labels
     return labelKeys
@@ -557,7 +557,7 @@ export class PrometheusDatasource
 
     const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
 
-    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match, '0')).map((v) => ({
+    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match)).map((v) => ({
       value: v,
       text: v,
     }));
