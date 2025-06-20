@@ -190,7 +190,9 @@ export type RecordingRuleIdentifier = {
   identifierValue?: string;
 };
 
-export const EMPTY_MATCHER = '{}';
+export const EMPTY_SELECTOR = '{}';
+export const DEFAULT_SERIES_LIMIT = '40000';
+export const REMOVE_SERIES_LIMIT = 'none';
 export const MATCH_ALL_LABELS_STR = '__name__!=""';
 export const MATCH_ALL_LABELS = '{__name__!=""}';
 export const METRIC_LABEL = '__name__';

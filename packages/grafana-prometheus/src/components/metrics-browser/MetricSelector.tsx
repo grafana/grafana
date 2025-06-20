@@ -6,8 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
 import { useMetricsBrowser } from './MetricsBrowserContext';
+import { LIST_ITEM_SIZE } from './constants';
 import { getStylesMetricSelector } from './styles';
-import { LIST_ITEM_SIZE } from './types';
 
 export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);

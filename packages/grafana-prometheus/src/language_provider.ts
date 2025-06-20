@@ -17,7 +17,6 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -30,7 +29,13 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
-import { MATCH_ALL_LABELS_STR, PromMetricsMetadata, PromQuery } from './types';
+import {
+  DEFAULT_SERIES_LIMIT,
+  MATCH_ALL_LABELS_STR,
+  PromMetricsMetadata,
+  PromQuery,
+  REMOVE_SERIES_LIMIT,
+} from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -383,7 +388,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(timeRange, name, withLimit);
     } else {
-      return this.fetchSeriesLabels(timeRange, name, withName, REMOVE_SERIES_LIMIT);
+      return this.fetchSeriesLabels(timeRange, name, withName);
     }
   };
 
@@ -402,7 +407,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     let urlParams = {
       ...range,
       'match[]': interpolatedName,
-      ...(withLimit !== 'none' ? { limit: withLimit ?? DEFAULT_SERIES_LIMIT } : {}),
+      ...(withLimit ? { limit: withLimit ?? DEFAULT_SERIES_LIMIT } : {}),
     };
 
     const data = await this.request(API_V1.SERIES, urlParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
