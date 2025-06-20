@@ -7509,6 +7509,82 @@
       "title": "Graph"
     }
   },
+  "heatmap": {
+    "calculate-from-data-options": {
+      "label-no": "No",
+      "label-yes": "Yes"
+    },
+    "category-cell-display": "Cell display",
+    "category-colors": "Colors",
+    "category-exemplars": "Exemplars",
+    "category-heatmap": "Heatmap",
+    "category-legend": "Legend",
+    "category-tooltip": "Tooltip",
+    "category-y-axis": "Y Axis",
+    "mode-options": {
+      "label-opacity": "Opacity",
+      "label-scheme": "Scheme"
+    },
+    "name-axis-label": "Axis label",
+    "name-axis-width": "Axis width",
+    "name-calculate-from-data": "Calculate from data",
+    "name-cell-gap": "Cell gap",
+    "name-color": "Color",
+    "name-decimals": "Decimals",
+    "name-end-color-at-value": "End color scale at value",
+    "name-exponent": "Exponent",
+    "name-hide-cells-gt": "Hide cells with values >=",
+    "name-hide-cells-lt": "Hide cells with values <=",
+    "name-max-height": "Max height",
+    "name-max-value": "Max value",
+    "name-max-width": "Max width",
+    "name-min-value": "Min value",
+    "name-mode": "Mode",
+    "name-placement": "Placement",
+    "name-reverse": "Reverse",
+    "name-scale": "Scale",
+    "name-scheme": "Scheme",
+    "name-show-color-scale": "Show color scale",
+    "name-show-histogram": "Show histogram (Y axis)",
+    "name-show-legend": "Show legend",
+    "name-start-color-from-value": "Start color scale from value",
+    "name-steps": "Steps",
+    "name-tick-alignment": "Tick alignment",
+    "name-tooltip-mode": "Tooltip mode",
+    "name-unit": "Unit",
+    "name-value-name": "Value name",
+    "name-y-axis-scale": "Y axis scale",
+    "placeholder-axis-label": "Auto",
+    "placeholder-axis-width": "Auto",
+    "placeholder-decimals": "Auto",
+    "placeholder-end-color-at-value": "Auto (max)",
+    "placeholder-hide-cells-gt": "None",
+    "placeholder-hide-cells-lt": "None",
+    "placeholder-max-value": "Auto",
+    "placeholder-min-value": "Auto",
+    "placeholder-start-color-from-value": "Auto (min)",
+    "placeholder-value-name": "Value",
+    "placement-options": {
+      "label-hidden": "Hidden",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "scale-options": {
+      "label-exponential": "Exponential",
+      "label-linear": "Linear"
+    },
+    "tick-alignment-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom (GE)",
+      "label-middle": "Middle",
+      "label-top": "Top (LE)"
+    },
+    "tooltip-mode-options": {
+      "label-all": "All",
+      "label-hidden": "Hidden",
+      "label-single": "Single"
+    }
+  },
   "help-modal": {
     "column-headers": {
       "description": "Description",
@@ -11185,6 +11261,24 @@
   },
   "transformers": {
     "axis-editor": {
+      "log-mode-options": {
+        "description": {
+          "split-the-buckets-based-on-size": "Split the buckets based on size"
+        },
+        "label": {
+          "split": "Split"
+        }
+      },
+      "mode-options": {
+        "description": {
+          "split-the-buckets-based-on-count": "Split the buckets based on count",
+          "split-the-buckets-based-on-size": "Split the buckets based on size"
+        },
+        "label": {
+          "count": "Count",
+          "size": "Size"
+        }
+      },
       "placeholder-auto": "Auto"
     },
     "basic-matcher-editor": {
@@ -11199,6 +11293,13 @@
       "label-alias": "Alias",
       "label-mode": "Mode",
       "label-replace-all-fields": "Replace all fields"
+    },
+    "calculate-heatmap": {
+      "add-heatmap-calculation-options": {
+        "name-x-bucket": "X Bucket",
+        "name-y-bucket": "Y Bucket",
+        "name-y-bucket-scale": "Y Bucket scale"
+      }
     },
     "concatenate-transformer-editor": {
       "label-label": "Label",
