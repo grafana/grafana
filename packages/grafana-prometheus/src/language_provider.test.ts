@@ -861,47 +861,47 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
   describe('populateMatchParamsFromQueries', () => {
     it('should add match params from queries', () => {
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [
         { expr: 'metric1', refId: '1' },
         { expr: 'metric2', refId: '2' },
       ];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('metric1');
-      expect(matches).toContain('metric2');
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe(`__name__=~"metric1|metric2"`);
     });
 
     it('should handle binary queries', () => {
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
-
-      const result = populateMatchParamsFromQueries(initialParams, queries);
-
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('binary');
-      expect(matches).toContain('second');
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe(`__name__=~"binary|second"`);
     });
 
     it('should handle undefined queries', () => {
-      const initialParams = new URLSearchParams({ param: 'value' });
-
-      const result = populateMatchParamsFromQueries(initialParams, undefined);
-
-      expect(result.toString()).toBe('param=value');
+      const result = populateMatchParamsFromQueries(undefined);
+      expect(result).toBe('__name__!=""');
     });
 
     it('should handle UTF8 metrics', () => {
-      // Using the mocked isValidLegacyName function from jest.mock setup
-      const initialParams = new URLSearchParams();
       const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"}', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toContain('__name__=~"utf8.metric"');
+    });
 
-      const result = populateMatchParamsFromQueries(initialParams, queries);
+    it('should handle UTF8 metrics with normal metrics', () => {
+      const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"} + second{}', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toContain('__name__=~"utf8.metric|second"');
+    });
 
-      const matches = Array.from(result.getAll('match[]'));
-      expect(matches).toContain('{"utf8.metric"}');
+    it('should return match-all matcher if there is no expr in queries', () => {
+      const queries: PromQuery[] = [{ expr: '', refId: '1' }];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
+    });
+
+    it('should return match-all matcher if there is no query', () => {
+      const queries: PromQuery[] = [];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__!=""');
     });
   });
 });

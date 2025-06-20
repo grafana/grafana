@@ -37,11 +37,11 @@ For example, a team might run its own Alertmanager to manage notifications from 
 
 This setup avoids duplicating Alertmanager configurations for better maintenance.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To send all Grafana-managed alerts to an Alertmanager, add it as a data source and enable it to receive all alerts. With this setup, you can configure multiple Alertmanagers to receive all alerts.
 
 For setup instructions, refer to [Configure Alertmanagers](ref:configure-alertmanagers).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Configure an Alertmanager for a contact point
 

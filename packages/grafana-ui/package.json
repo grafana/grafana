@@ -101,8 +101,8 @@
     "ol": "7.4.0",
     "prismjs": "1.30.0",
     "rc-cascader": "3.34.0",
-    "rc-drawer": "7.2.0",
-    "rc-picker": "4.9.2",
+    "rc-drawer": "7.3.0",
+    "rc-picker": "4.11.3",
     "rc-slider": "11.1.8",
     "rc-tooltip": "6.4.0",
     "react-calendar": "^5.1.0",
@@ -129,7 +129,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
     "uplot": "1.6.32",
-    "uuid": "11.0.5",
+    "uuid": "11.1.0",
     "uwrap": "0.1.1"
   },
   "devDependencies": {
