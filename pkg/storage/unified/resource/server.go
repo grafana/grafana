@@ -845,22 +845,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}
 			// Trash is only accessible to admins or the user who deleted the object
 			if req.Source == resourcepb.ListRequest_TRASH {
-				user, ok := claims.AuthInfoFrom(ctx)
-				if !ok || user == nil {
-					return apierrors.NewUnauthorized("no user found in context")
-				}
-
-				partial := &metav1.PartialObjectMetadata{}
-				err := json.Unmarshal(iter.Value(), partial)
-				if err != nil {
-					return err
-				}
-				obj, err := utils.MetaAccessor(partial)
-				if err != nil {
-					return err
-				}
-
-				if obj.GetUpdatedBy() != user.GetUID() && !trashChecker(iter.Name(), iter.Folder()) {
+				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
 					continue
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
@@ -904,6 +889,28 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+// isTrashItemAuthorized checks if the user has access to the trash item.
+func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return false
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(iter.Value(), partial)
+	if err != nil {
+		return false
+	}
+
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		return false
+	}
+
+	// Trash is only accessible to admins or the user who deleted the object
+	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
 func (s *server) initWatcher() error {
