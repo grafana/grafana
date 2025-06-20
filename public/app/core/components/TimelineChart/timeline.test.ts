@@ -280,15 +280,8 @@ describe('StateTimeline uPlot integration', () => {
       }
     );
 
-    describe.each([
-      [{}, undefined, undefined, true, 'object returns true'],
-      [[], undefined, undefined, true, 'array returns true'],
-      [new Date(), undefined, undefined, true, 'date returns true'],
-      [BigInt(0), undefined, undefined, false, 'bigint zero returns false'],
-    ])('non-scalar values', (yValue, mappedNull, mappedNaN, expected, testName) => {
-      it(testName, () => {
-        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
-      });
+    describe('non-supported values', () => {
+      it.todo(`TODO: this helper currently returns true for many non-supported truthy values, but should not`);
     });
   });
 });
