@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
@@ -5,6 +7,8 @@ import { RadioButtonGroup, Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
+
+import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
@@ -65,7 +69,14 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
     <RadioButtonGroup
       options={directionOptions}
       value={repeatDirection ?? 'h'}
-      onChange={(value) => gridItem.setRepeatDirection(value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
+          source: gridItem,
+          perform: () => gridItem.setRepeatDirection(value),
+          undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
+        });
+      }}
     />
   );
 }
@@ -81,7 +92,14 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
     <Select
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
-      onChange={(value) => gridItem.setMaxPerRow(value.value)}
+      onChange={(value) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
+          source: gridItem,
+          perform: () => gridItem.setMaxPerRow(value.value),
+          undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
+        });
+      }}
     />
   );
 }
@@ -89,22 +107,32 @@ function MaxPerRowOption({ gridItem }: OptionComponentProps) {
 function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }) {
   const { variableName, width } = gridItem.useState();
 
-  return (
-    <RepeatRowSelect2
-      id={id}
-      sceneContext={gridItem}
-      repeat={variableName}
-      onChange={(value?: string) => {
-        if (value !== variableName) {
-          gridItem.setRepeatByVariable(value);
-          gridItem.handleVariableName();
+  const handleStateChange = useCallback(
+    (value?: string) => {
+      gridItem.setRepeatByVariable(value);
+      gridItem.handleVariableName();
 
-          if (width !== 24) {
-            gridItem.setState({ width: 24 });
-            sceneGraph.getAncestor(gridItem, SceneGridLayout).forceRender();
-          }
-        }
-      }}
-    />
+      if (width !== 24) {
+        gridItem.setState({ width: 24 });
+        sceneGraph.getAncestor(gridItem, SceneGridLayout).forceRender();
+      }
+    },
+    [gridItem, width]
   );
+
+  const handleChange = useCallback(
+    (value?: string) => {
+      if (value !== variableName) {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
+          source: gridItem,
+          perform: () => handleStateChange(value),
+          undo: () => handleStateChange(variableName),
+        });
+      }
+    },
+    [gridItem, handleStateChange, variableName]
+  );
+
+  return <RepeatRowSelect2 id={id} sceneContext={gridItem} repeat={variableName} onChange={handleChange} />;
 }

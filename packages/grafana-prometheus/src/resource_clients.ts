@@ -2,12 +2,12 @@ import { TimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { getDefaultCacheHeaders } from './caching';
-import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS, METRIC_LABEL } from './constants';
 import { PrometheusDatasource } from './datasource';
 import { removeQuotesIfExist } from './language_provider';
 import { getRangeSnapInterval, processHistogramMetrics } from './language_utils';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
-import { EMPTY_MATCHER, MATCH_ALL_LABELS, METRIC_LABEL, PrometheusCacheLevel } from './types';
+import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
@@ -66,7 +66,7 @@ export abstract class BaseResourceClient {
    * @param {string} limit - Maximum number of series to return
    */
   public querySeries = async (timeRange: TimeRange, match: string, limit: string = DEFAULT_SERIES_LIMIT) => {
-    const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
+    const effectiveMatch = !match || match === EMPTY_SELECTOR ? MATCH_ALL_LABELS : match;
     const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': effectiveMatch, limit };
     return await this.requestSeries('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
@@ -186,7 +186,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const effectiveMatch = !match || match === EMPTY_MATCHER ? MATCH_ALL_LABELS : match;
+    const effectiveMatch = !match || match === EMPTY_SELECTOR ? MATCH_ALL_LABELS : match;
     const maybeCachedKeys = this._cache.getLabelKeys(timeRange, effectiveMatch, limit);
     if (maybeCachedKeys) {
       return maybeCachedKeys;
@@ -204,17 +204,16 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const utf8SafeLabelKey = utf8Support(labelKey);
     let effectiveMatch = '';
-    if (!match || match === EMPTY_MATCHER) {
+    if (!match || match === EMPTY_SELECTOR) {
       // Just and empty matcher {} or no matcher
-      effectiveMatch = `{${utf8SafeLabelKey}!=""}`;
+      effectiveMatch = `{${utf8Support(removeQuotesIfExist(labelKey))}!=""}`;
     } else {
       const {
         query: { metric, labels },
       } = buildVisualQueryFromString(match);
       labels.push({
-        label: utf8SafeLabelKey,
+        label: removeQuotesIfExist(labelKey),
         op: '!=',
         value: '',
       });
@@ -229,7 +228,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
-    const { labelValues } = processSeries(series, labelKey);
+    const { labelValues } = processSeries(series, removeQuotesIfExist(labelKey));
     this._cache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
     return labelValues;
   };
