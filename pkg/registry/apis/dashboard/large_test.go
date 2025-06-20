@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -24,7 +24,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 
 	dash := &dashv1.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
 		},
@@ -59,7 +59,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 
 	// Now make it big again
 	rehydratedDash := &dashv1.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
 		},
@@ -81,7 +81,7 @@ func TestLargeDashboardSupportV2(t *testing.T) {
 
 	// Create a v2 dashboard with structured spec
 	originalV2Dash := &dashv2.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-v2",
 			Namespace: "test",
 		},
@@ -213,7 +213,7 @@ func TestLargeDashboardSupportV2(t *testing.T) {
 
 	// Now test RebuildSpec - this is the key test for v2!
 	rehydratedDash := &dashv2.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-v2-rehydrated",
 			Namespace: "test",
 		},
@@ -289,7 +289,7 @@ func TestLargeDashboardSupportCrossVersion(t *testing.T) {
 
 	// Create a v0 dashboard with complex data
 	originalV0Dash := &dashv0.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-cross-version",
 			Namespace: "test",
 		},
@@ -393,7 +393,7 @@ func TestLargeDashboardSupportCrossVersion(t *testing.T) {
 
 	// Now the interesting part: try to rebuild the v0 blob into a v2 dashboard
 	targetV2Dash := &dashv2.Dashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-cross-version-v2",
 			Namespace: "test",
 		},
