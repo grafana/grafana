@@ -1,0 +1,59 @@
+name: Publish artifacts to bucket
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: Local path (from the root of the artifact) to upload
+        type: string
+        required: false
+        default: "."
+      bucket:
+        description: Name of the GCS bucket
+        type: string
+        required: true
+      bucket-path:
+        description: Path in the GCS bucket
+        type: string
+        required: false
+        default: "."
+      environment:
+        description: "'prod' or 'dev'"
+        type: string
+        required: false
+        default: dev
+      artifact:
+        description: Name of the GitHub artifact to upload
+        type: string
+        required: true
+      parent:
+        type: boolean
+        required: false
+        default: false
+      run-id:
+        type: string
+        required: true
+jobs:
+  publish:
+    runs-on: github-hosted-ubuntu-x64-small
+    name: Publish
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.artifact }}
+          run-id: ${{ inputs.run-id }}
+          path: ./artifact
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        with:
+          environment: ${{ inputs.environment }}
+      - name: Upload artifacts
+        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        with:
+          bucket: ${{ inputs.bucket }}
+          environment: ${{ inputs.environment }}
+          parent: ${{ inputs.parent }}
+          path: artifact/${{ inputs.path }}
+          bucket_path: ${{ inputs.bucket-path }}
