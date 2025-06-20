@@ -82,7 +82,7 @@
         "placeholder-select-query-type": "Select query type",
         "placeholder-series-query": "Series Query",
         "returns-metrics-matching-specified-metric-regex": "Returns a list of metrics matching the specified metric regex.",
-        "tooltip-classic-query": "The original implemetation of the Prometheus variable query editor. Enter a string with the correct query type and parameters as described in these docs. For example, {{exampleQuery}}.",
+        "tooltip-classic-query": "The original implementation of the Prometheus variable query editor. Enter a string with the correct query type and parameters as described in these docs. For example, {{exampleQuery}}.",
         "tooltip-label": "Returns a list of label values for the label name in all metrics unless the metric is specified.",
         "tooltip-metric-regex": "Returns a list of label names, optionally filtering by specified metric regex.",
         "tooltip-query": "Returns a list of Prometheus query results for the query. This can include Prometheus functions, i.e.{{exampleQuery}}.",
@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "Manage alerts via Alerting UI",
         "label-allow-as-recording-rules-target": "Allow as recording rules target",
+        "label-manage-alerts-via-alerting-ui": "Manage alerts via Alerting UI",
         "title-alerting": "Alerting",
-        "tooltip-manage-alerts-via-alerting-ui": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
-        "tooltip-allow-as-recording-rules-target": "Allow this data source to be selected as a target for writing recording rules."
+        "tooltip-allow-as-recording-rules-target": "Allow this data source to be selected as a target for writing recording rules.",
+        "tooltip-manage-alerts-via-alerting-ui": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source."
       },
       "config-editor": {
         "browser-access-mode-error": "Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.",

@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -272,7 +273,17 @@ type (
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
 	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
+
+	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
+
+var (
+	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
+)
+
+func errInvalidExtraConfiguration(err error) error {
+	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
+}
 
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
@@ -654,17 +665,45 @@ type ExtraConfiguration struct {
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 
-func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
 	if c.AlertmanagerConfig == "" {
-		return PostableApiAlertingConfig{}, fmt.Errorf("no alertmanager configuration available")
+		return config.Config{}, fmt.Errorf("no alertmanager configuration available")
 	}
 
 	var prometheusConfig config.Config
 	if err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &prometheusConfig); err != nil {
-		return PostableApiAlertingConfig{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
+		return config.Config{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
+	}
+
+	return prometheusConfig, nil
+}
+
+func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return PostableApiAlertingConfig{}, err
 	}
 
 	return fromPrometheusConfig(prometheusConfig), nil
+}
+
+// GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
+// with secrets masked and global settings removed for mimirtool compatibility.
+func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return "", err
+	}
+
+	// Remove global settings as they are not used in Grafana
+	prometheusConfig.Global = nil
+
+	configYAML, err := yaml.Marshal(prometheusConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)
+	}
+
+	return string(configYAML), nil
 }
 
 func (c ExtraConfiguration) Validate() error {
@@ -673,12 +712,12 @@ func (c ExtraConfiguration) Validate() error {
 	}
 
 	if len(c.MergeMatchers) == 0 {
-		return errors.New("at least one matcher is required")
+		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
 	}
 
 	for _, m := range c.MergeMatchers {
 		if m.Type != labels.MatchEqual {
-			return errors.New("only matchers with type equal are supported")
+			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
 		}
 	}
 
@@ -686,7 +725,7 @@ func (c ExtraConfiguration) Validate() error {
 	am := config.Config{}
 	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
 	if err != nil {
-		return fmt.Errorf("invalid alertmanager configuration: %w", err)
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
 	}
 
 	return nil

@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { getCacheDurationInMinutes } from './caching';
 import { SUGGESTIONS_LIMIT, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
 
@@ -464,16 +465,15 @@ export function getRangeSnapInterval(
   }
   // Otherwise round down to the nearest nth minute for the start time
   const startTime = getPrometheusTime(range.from, false);
-  // const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
-  const startTimeQuantizedSeconds = incrRoundDn(startTime, getClientCacheDurationInMinutes(cacheLevel) * 60);
+  const startTimeQuantizedSeconds = incrRoundDn(startTime, getCacheDurationInMinutes(cacheLevel) * 60);
 
   // And round up to the nearest nth minute for the end time
   const endTime = getPrometheusTime(range.to, true);
-  const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+  const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getCacheDurationInMinutes(cacheLevel)) * 60;
 
   // If the interval was too short, we could have rounded both start and end to the same time, if so let's add one step to the end
   if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
-    const endTimePlusOneStep = endTimeQuantizedSeconds + getClientCacheDurationInMinutes(cacheLevel) * 60;
+    const endTimePlusOneStep = endTimeQuantizedSeconds + getCacheDurationInMinutes(cacheLevel) * 60;
     return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
   }
 
@@ -481,17 +481,6 @@ export function getRangeSnapInterval(
   const end = endTimeQuantizedSeconds.toString();
 
   return { start, end };
-}
-
-export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
-  switch (cacheLevel) {
-    case PrometheusCacheLevel.Medium:
-      return 10;
-    case PrometheusCacheLevel.High:
-      return 60;
-    default:
-      return 1;
-  }
 }
 
 export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {

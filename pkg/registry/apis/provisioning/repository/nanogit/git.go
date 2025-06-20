@@ -161,7 +161,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("spec", t, "token").String(),
 				Detail: detail,
-			}}}, nil
+			}},
+		}, nil
 	}
 
 	if ok, err := r.client.RepoExists(ctx); err != nil || !ok {
@@ -177,7 +178,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("spec", t, "url").String(),
 				Detail: detail,
-			}}}, nil
+			}},
+		}, nil
 	}
 
 	// Test basic connectivity by getting the branch reference
@@ -192,7 +194,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", t, "branch").String(),
 					Detail: detail,
-				}}}, nil
+				}},
+			}, nil
 		}
 
 		detail = fmt.Sprintf("failed to check if branch exists: %v", err)
@@ -204,7 +207,8 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Type:   metav1.CauseTypeFieldValueInvalid,
 				Field:  field.NewPath("spec", t, "branch").String(),
 				Detail: detail,
-			}}}, nil
+			}},
+		}, nil
 	}
 
 	return &provisioning.TestResults{

@@ -595,10 +595,6 @@ const (
 	// Allows access to the new react-data-grid based table component.
 	FlagTableNextGen = "tableNextGen"
 
-	// FlagLokiSendDashboardPanelNames
-	// Send dashboard and panel names to Loki when querying
-	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
-
 	// FlagAlertingPrometheusRulesPrimary
 	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"

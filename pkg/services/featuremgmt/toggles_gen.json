@@ -2127,7 +2127,8 @@
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-22T19:30:43Z"
+        "creationTimestamp": "2024-08-22T19:30:43Z",
+        "deletionTimestamp": "2025-06-19T13:40:02Z"
       },
       "spec": {
         "description": "Send dashboard and panel names to Loki when querying",
