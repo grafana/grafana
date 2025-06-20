@@ -72,8 +72,8 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp     remoteClient.SmtpConfig
-	sService secrets.Service
+	smtp           remoteClient.SmtpConfig
+	secretsService secrets.Service
 }
 
 type AlertmanagerConfig struct {
@@ -121,7 +121,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, sService secrets.Service, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, secretsService secrets.Service, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		decrypt:           sService.Decrypt,
+		decrypt:           secretsService.Decrypt,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
@@ -222,7 +222,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
 		smtpFrom: cfg.SmtpFrom,
 
-		sService: sService,
+		secretsService: secretsService,
 	}, nil
 }
 
@@ -417,7 +417,7 @@ func (am *Alertmanager) applyConfig(
 
 	receivers := notifier.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
 	for _, recv := range receivers {
-		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
+		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.secretsService.GetDecryptedValue)
 		if err != nil {
 			return err
 		}
