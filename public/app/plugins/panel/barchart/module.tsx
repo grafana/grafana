@@ -151,7 +151,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: t('barchart.config.rotate-x-labels', 'Rotate x-axis tick labels'),
+        name: t('barchart.config.name-rotate-x-labels', 'Rotate x-axis tick labels'),
         defaultValue: defaultOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -163,13 +163,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: t('barchart.config.x-label-max-length', 'X-axis tick label max length'),
+        name: t('barchart.config.name-x-label-max-length', 'X-axis tick label max length'),
         description: t(
           'barchart.config.description-x-label-max-length',
           'X-axis labels will be truncated to the length provided'
         ),
         settings: {
-          placeholder: 'None',
+          placeholder: t('barchart.config.placeholder-x-label-max-length', 'None'),
           min: 0,
         },
         showIf: (opts) => opts.xTickLabelRotation !== 0,

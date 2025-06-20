@@ -3193,11 +3193,13 @@
       "name-group-width": "Group width",
       "name-line-width": "Line width",
       "name-orientation": "Orientation",
+      "name-rotate-x-labels": "Rotate x-axis tick labels",
       "name-show-thresholds": "Show thresholds",
       "name-show-values": "Show values",
       "name-stacking": "Stacking",
       "name-transform": "Transform",
       "name-x-axis": "X Axis",
+      "name-x-label-max-length": "X-axis tick label max length",
       "name-x-label-min-spacing": "X-axis labels minimum spacing",
       "orientation-options": {
         "label-auto": "Auto",
@@ -3205,7 +3207,7 @@
         "label-line-vertical": "Vertical"
       },
       "placeholder-x-axis": "First string or time field",
-      "rotate-x-labels": "Rotate x-axis tick labels",
+      "placeholder-x-label-max-length": "None",
       "show-values-options": {
         "label-always": "Always",
         "label-auto": "Auto",
@@ -3216,8 +3218,7 @@
         "description-negative-y": "Flip the results to negative values on the y axis",
         "label-constant": "Constant",
         "label-negative-y": "Negative Y"
-      },
-      "x-label-max-length": "X-axis tick label max length"
+      }
     },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
@@ -10624,6 +10625,80 @@
   },
   "sort-picker": {
     "select-aria-label": "Sort"
+  },
+  "stat": {
+    "add-orientation-option": {
+      "description-orientation": "Layout orientation",
+      "name-orientation": "Orientation",
+      "orientation-options": {
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontal",
+        "label-vertical": "Vertical"
+      }
+    },
+    "add-standard-data-reduce-options": {
+      "category-value-options": "Value options",
+      "description-calculation": "Choose a reducer function / calculation",
+      "description-fields": "Select the fields that should be included in the panel",
+      "description-limit": "Max number of rows to display",
+      "description-show": "Calculate a single value per column or series or show each row",
+      "fields-options": {
+        "label-all-fields": "All Fields",
+        "label-numeric-fields": "Numeric Fields"
+      },
+      "name-calculation": "Calculation",
+      "name-fields": "Fields",
+      "name-limit": "Limit",
+      "name-show": "Show",
+      "show-options": {
+        "label-all-values": "All values",
+        "label-calculate": "Calculate"
+      }
+    },
+    "category-stat-styles": "Stat styles",
+    "color-mode-options": {
+      "label-background-gradient": "Background Gradient",
+      "label-background-solid": "Background Solid",
+      "label-none": "None",
+      "label-value": "Value"
+    },
+    "description-graph-mode": "Stat panel graph / sparkline mode",
+    "description-text-mode": "Control if name and value is displayed or just name",
+    "graph-mode": {
+      "options": {
+        "label-area": "Area",
+        "label-none": "None"
+      }
+    },
+    "name-color-modcolor-mode-options": {
+      "label": "Color mode"
+    },
+    "name-graph-mode": "Graph mode",
+    "name-show-percent-change": "Show percent change",
+    "name-text-alignment": "Text alignment",
+    "name-text-mode": "Text mode",
+    "name-wide-layout": "Wide layout",
+    "percent-change-color-mode": "Percent change color mode",
+    "percent-change-color-mode-options": {
+      "label-inverted": "Inverted",
+      "label-same-as-value": "Same as Value",
+      "label-standard": "Standard"
+    },
+    "text-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
+    },
+    "wide-layout-options": {
+      "label-off": "Off",
+      "label-on": "On"
+    }
   },
   "status-history": {
     "status-history-panel": {
