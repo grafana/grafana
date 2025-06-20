@@ -28,7 +28,7 @@ const defaultProps = {
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
-      getLabelKeys: () => [],
+      // getLabelKeys: () => [],
       retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource,

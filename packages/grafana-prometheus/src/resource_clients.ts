@@ -204,17 +204,16 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     match?: string,
     limit: string = DEFAULT_SERIES_LIMIT
   ): Promise<string[]> => {
-    const utf8SafeLabelKey = utf8Support(labelKey);
     let effectiveMatch = '';
     if (!match || match === EMPTY_SELECTOR) {
       // Just and empty matcher {} or no matcher
-      effectiveMatch = `{${utf8SafeLabelKey}!=""}`;
+      effectiveMatch = `{${utf8Support(removeQuotesIfExist(labelKey))}!=""}`;
     } else {
       const {
         query: { metric, labels },
       } = buildVisualQueryFromString(match);
       labels.push({
-        label: utf8SafeLabelKey,
+        label: removeQuotesIfExist(labelKey),
         op: '!=',
         value: '',
       });
@@ -229,7 +228,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, limit);
-    const { labelValues } = processSeries(series, labelKey);
+    const { labelValues } = processSeries(series, removeQuotesIfExist(labelKey));
     this._cache.setLabelValues(timeRange, effectiveMatch, limit, labelValues);
     return labelValues;
   };

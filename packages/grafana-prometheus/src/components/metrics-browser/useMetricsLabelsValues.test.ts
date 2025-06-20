@@ -549,7 +549,6 @@ describe('useMetricsLabelsValues', () => {
 
   describe('testing with invalid values or special characters', () => {
     it('should handle metric names with special characters', async () => {
-      // Mock fetchSeriesValuesWithMatch to return metrics with special characters
       (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === METRIC_LABEL) {
@@ -576,7 +575,6 @@ describe('useMetricsLabelsValues', () => {
     });
 
     it('should handle label values with special characters', async () => {
-      // Mock fetchSeriesValuesWithMatch to return label values with special characters
       (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === 'job') {
