@@ -2,9 +2,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
 

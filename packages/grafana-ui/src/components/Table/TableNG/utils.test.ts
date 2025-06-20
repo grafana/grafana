@@ -10,12 +10,9 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
-import {
-  BarGaugeDisplayMode,
-  TableCellBackgroundDisplayMode,
-  TableCellDisplayMode,
-  TableCellHeight,
-} from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
+
+import { TableCellDisplayMode } from '../types';
 
 import { TABLE } from './constants';
 import {

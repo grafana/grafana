@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
+import { TableCellDisplayMode } from '../types';
 
 import { TABLE } from './constants';
 import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';

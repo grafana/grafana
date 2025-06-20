@@ -1,9 +1,8 @@
 import { ReactNode } from 'react';
 
 import { Field, FieldType, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TableCellOptions, TableCustomCellOptions } from '../../types';
+import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
 import { TableCellRendererProps } from '../types';
 
 import { ActionsCell } from './ActionsCell';
@@ -94,12 +93,9 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
-const CELL_RENDERERS: Record<TableCellDisplayMode, TableCellRenderer> = {
+const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
   [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
-  [TableCellDisplayMode.BasicGauge]: GAUGE_RENDERER,
-  [TableCellDisplayMode.GradientGauge]: GAUGE_RENDERER,
-  [TableCellDisplayMode.LcdGauge]: GAUGE_RENDERER,
   [TableCellDisplayMode.JSONView]: JSON_RENDERER,
   [TableCellDisplayMode.Image]: IMAGE_RENDERER,
   [TableCellDisplayMode.DataLinks]: DATA_LINKS_RENDERER,
@@ -107,7 +103,6 @@ const CELL_RENDERERS: Record<TableCellDisplayMode, TableCellRenderer> = {
   [TableCellDisplayMode.Custom]: CUSTOM_RENDERER,
   [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
-  [TableCellDisplayMode.ColorBackgroundSolid]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
 };
 

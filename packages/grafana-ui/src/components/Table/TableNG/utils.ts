@@ -16,14 +16,13 @@ import {
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
-import { TableCellOptions, TableCustomCellOptions } from '../types';
+import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
 import {

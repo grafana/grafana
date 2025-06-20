@@ -4,11 +4,10 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
-import { TableCellOptions } from '../../types';
+import { TableCellOptions, TableCellDisplayMode } from '../../types';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';

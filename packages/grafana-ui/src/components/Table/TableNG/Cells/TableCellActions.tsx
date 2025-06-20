@@ -1,14 +1,12 @@
-import { css, cx } from '@emotion/css';
 import { WKT } from 'ol/format';
 import { Geometry } from 'ol/geom';
 
-import { FieldType, GrafanaTheme2 } from '@grafana/data';
+import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
+import { TableCellDisplayMode } from '../../types';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
 
 export function TableCellActions(props: TableCellActionsProps) {
