@@ -4391,6 +4391,7 @@
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
+      "repeated-item": "Repeat",
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
