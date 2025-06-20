@@ -11,6 +11,7 @@ import {
   fieldMatchers,
   getFieldDisplayName,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 export enum ModelType {
   linear = 'linear',
@@ -26,6 +27,13 @@ export interface RegressionTransformerOptions {
 }
 
 export const DEFAULTS = { predictionCount: 100, modelType: ModelType.linear, degree: 2 };
+
+export const DEGREES = [
+  { label: () => t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
+  { label: () => t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
+  { label: () => t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
+  { label: () => t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
+];
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
@@ -105,8 +113,22 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
           return frames;
       }
 
+      /*
+       "model-type-options": {
+        "label": {
+          "linear": "Linear",
+          "polynomial": "Polynomial"
+        }
+      */
+
+      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
+      if (modelType === ModelType.polynomial) {
+        const degreeData = DEGREES.find((deg) => deg.value === degree);
+        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
+      }
+
       const newFrame: DataFrame = {
-        name: `${modelType} regression`,
+        name: `${frameName}`,
         length: predictionPoints.length,
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
