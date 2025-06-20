@@ -31,7 +31,6 @@ import {
   setBackendSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
