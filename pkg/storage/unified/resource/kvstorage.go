@@ -32,9 +32,7 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 		kv:        kv,
 		dataStore: newDataStore(kv),
 		metaStore: newMetadataStore(kv),
-		notifier: newKVNotifier(kv, KVNotifierOptions{
-			InitialRV: s.Generate().Int64(), // We start from a random RV to avoid any potential conflicts
-		}), // TODO: make this configurable
+		notifier:  newKVNotifier(kv, KVNotifierOptions{}),
 		snowflake: s,
 	}
 }

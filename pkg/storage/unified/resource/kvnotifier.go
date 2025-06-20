@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -25,7 +27,6 @@ type kvNotifier struct {
 	seenRVs   map[int64]bool
 	rvHistory []int64
 	rvIndex   int
-	initialRV int64
 }
 
 type EventKey struct {
@@ -51,7 +52,6 @@ type KVNotifierOptions struct {
 	PollInterval   time.Duration // How often to poll for new events
 	BufferSize     int           // How many events to buffer
 	EventCacheSize int           // How many events to cache
-	InitialRV      int64         // The initial resource version to start from
 }
 
 func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
@@ -64,16 +64,13 @@ func newKVNotifier(kv KV, opts KVNotifierOptions) *kvNotifier {
 	if opts.BufferSize == 0 {
 		opts.BufferSize = defaultBufferSize
 	}
-	if opts.InitialRV == 0 {
-		opts.InitialRV = time.Now().UnixNano()
-	}
+
 	return &kvNotifier{
 		kv:        kv,
 		opts:      opts,
 		seenRVs:   make(map[int64]bool),
 		rvHistory: make([]int64, defaultEventCacheSize),
 		rvIndex:   0,
-		initialRV: opts.InitialRV,
 	}
 }
 
@@ -97,6 +94,29 @@ func parseEvent(value []byte) (Event, error) {
 func (n *kvNotifier) getKey(key EventKey) string {
 	return fmt.Sprintf("%d~%s~%s~%s~%s", key.ResourceVersion, key.Namespace, key.Group, key.Resource, key.Name)
 }
+
+// parseKey parses a key string back into an EventKey struct
+// Key format is: "rv~namespace~group~resource~name"
+func (n *kvNotifier) parseKey(key string) (EventKey, error) {
+	parts := strings.Split(key, "~")
+	if len(parts) != 5 {
+		return EventKey{}, fmt.Errorf("invalid key format: expected 5 parts, got %d", len(parts))
+	}
+
+	rv, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return EventKey{}, fmt.Errorf("invalid resource version: %w", err)
+	}
+
+	return EventKey{
+		ResourceVersion: rv,
+		Namespace:       parts[1],
+		Group:           parts[2],
+		Resource:        parts[3],
+		Name:            parts[4],
+	}, nil
+}
+
 func (n *kvNotifier) getStartKey(rv int64) string {
 	return fmt.Sprintf("%d", rv)
 }
@@ -131,6 +151,31 @@ func (n *kvNotifier) hasSeenUID(rv int64) bool {
 	return n.seenRVs[rv]
 }
 
+// getLastResourceVersion efficiently fetches the highest resource version from the events store
+func (n *kvNotifier) getLastResourceVersion(ctx context.Context) int64 {
+	lastRV := int64(0)
+
+	// Use ListOptions with SortOrderDesc and Limit=1 to get only the highest resource version
+	opts := ListOptions{
+		Sort:  SortOrderDesc,
+		Limit: 1,
+	}
+
+	for k, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		if err != nil {
+			continue
+		}
+		// Parse the key to extract the resource version
+		if eventKey, err := n.parseKey(k); err == nil && eventKey.ResourceVersion > lastRV {
+			lastRV = eventKey.ResourceVersion
+		}
+		// Since we're using Limit=1, we only need to process the first (highest) key
+		break
+	}
+
+	return lastRV
+}
+
 func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 	v, err := event.getValue()
 	if err != nil {
@@ -151,7 +196,10 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 
 func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 	events := make(chan Event)
-	lastRV := n.initialRV
+
+	// Find the current highest resource version to start watching from
+	lastRV := n.getLastResourceVersion(ctx) + 1
+
 	go func() {
 		defer close(events)
 		for {
@@ -160,9 +208,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 				return
 			case <-time.After(n.opts.PollInterval):
 				startKey := n.getStartKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
-				fmt.Println("startKey", startKey)
 				for k, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
-					fmt.Println("k", k, "startKey", startKey, "k greater than lastRV")
 					if err != nil {
 						// TODO: Handle error
 						continue
@@ -190,7 +236,6 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 						lastRV = ev.ResourceVersion
 					}
 					// Send the event
-					fmt.Println("sending event", ev.ResourceVersion, "lastRV", lastRV, "name")
 					select {
 					case events <- ev:
 					case <-ctx.Done():

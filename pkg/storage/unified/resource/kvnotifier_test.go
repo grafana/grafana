@@ -144,6 +144,112 @@ func TestKVNotifier_getKey(t *testing.T) {
 	assert.Equal(t, "1934555792099250176~test-namespace~apps~deployments~test-deployment", key)
 }
 
+func TestKVNotifier_parseKey(t *testing.T) {
+	notifier := setupTestKVNotifier(t, KVNotifierOptions{})
+
+	tests := []struct {
+		name        string
+		key         string
+		expectError bool
+		expected    EventKey
+	}{
+		{
+			name: "valid key",
+			key:  "1934555792099250176~test-namespace~apps~deployments~test-deployment",
+			expected: EventKey{
+				ResourceVersion: 1934555792099250176,
+				Namespace:       "test-namespace",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "test-deployment",
+			},
+		},
+		{
+			name: "key with empty parts",
+			key:  "1000~~apps~deployments~test-deployment",
+			expected: EventKey{
+				ResourceVersion: 1000,
+				Namespace:       "",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "test-deployment",
+			},
+		},
+		{
+			name: "key with special characters",
+			key:  "2000~test-namespace~apps~deployments~test-deployment-with-dashes",
+			expected: EventKey{
+				ResourceVersion: 2000,
+				Namespace:       "test-namespace",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "test-deployment-with-dashes",
+			},
+		},
+		{
+			name:        "invalid key - too few parts",
+			key:         "1000~test-namespace~apps~deployments",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - too many parts",
+			key:         "1000~test-namespace~apps~deployments~test-deployment~extra",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - non-numeric resource version",
+			key:         "invalid~test-namespace~apps~deployments~test-deployment",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - empty string",
+			key:         "",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - no delimiters",
+			key:         "justonepart",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			eventKey, err := notifier.parseKey(tt.key)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Equal(t, EventKey{}, eventKey)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, eventKey)
+			}
+		})
+	}
+}
+
+func TestKVNotifier_parseKey_RoundTrip(t *testing.T) {
+	notifier := setupTestKVNotifier(t, KVNotifierOptions{})
+
+	originalEventKey := EventKey{
+		ResourceVersion: 1934555792099250176,
+		Namespace:       "test-namespace",
+		Group:           "apps",
+		Resource:        "deployments",
+		Name:            "test-deployment",
+	}
+
+	// Convert EventKey to string
+	keyString := notifier.getKey(originalEventKey)
+
+	// Parse string back to EventKey
+	parsedEventKey, err := notifier.parseKey(keyString)
+	require.NoError(t, err)
+
+	// Verify round trip works correctly
+	assert.Equal(t, originalEventKey, parsedEventKey)
+}
+
 func TestKVNotifier_UIDDeduplication(t *testing.T) {
 	notifier := setupTestKVNotifier(t, KVNotifierOptions{})
 
@@ -190,6 +296,162 @@ func TestKVNotifier_UIDDeduplication_MaxCapacity(t *testing.T) {
 	// The last maxSeenUIDs UIDs should still be present
 	for i := 10; i < len(rvs); i++ {
 		assert.True(t, notifier.hasSeenUID(rvs[i]), "UID %d should still be present", i)
+	}
+}
+
+func TestKVNotifier_getLastResourceVersion(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name           string
+		events         []Event
+		expectedLastRV int64
+	}{
+		{
+			name:           "no events - returns 0",
+			events:         []Event{},
+			expectedLastRV: 0,
+		},
+		{
+			name: "single event - returns event RV",
+			events: []Event{
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment",
+					ResourceVersion: 2000,
+					Action:          "created",
+				},
+			},
+			expectedLastRV: 2000,
+		},
+		{
+			name: "multiple events - returns highest RV",
+			events: []Event{
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment-1",
+					ResourceVersion: 2000,
+					Action:          "created",
+				},
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment-2",
+					ResourceVersion: 3000,
+					Action:          "created",
+				},
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment-3",
+					ResourceVersion: 1500,
+					Action:          "created",
+				},
+			},
+			expectedLastRV: 3000,
+		},
+		{
+			name: "multiple events with different RVs - returns highest RV",
+			events: []Event{
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment-1",
+					ResourceVersion: 2000,
+					Action:          "created",
+				},
+				{
+					Namespace:       "test-namespace",
+					Group:           "apps",
+					Resource:        "deployments",
+					Name:            "test-deployment-2",
+					ResourceVersion: 3000,
+					Action:          "created",
+				},
+			},
+			expectedLastRV: 3000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			notifier := setupTestKVNotifier(t, KVNotifierOptions{})
+
+			// Send all events
+			for _, event := range tt.events {
+				err := notifier.Send(ctx, event)
+				require.NoError(t, err)
+			}
+
+			// Get the last resource version
+			lastRV := notifier.getLastResourceVersion(ctx)
+			assert.Equal(t, tt.expectedLastRV, lastRV)
+		})
+	}
+}
+
+func TestKVNotifier_getLastResourceVersion_WithErrors(t *testing.T) {
+	ctx := context.Background()
+
+	notifier := setupTestKVNotifier(t, KVNotifierOptions{})
+
+	// Test with malformed keys in the store
+	// This simulates a scenario where there might be corrupted data
+	malformedKey := "invalid-key-format"
+	malformedValue := []byte(`{"test": "data"}`)
+
+	err := notifier.kv.Save(ctx, eventsSection, malformedKey, malformedValue)
+	require.NoError(t, err)
+
+	// The function should handle malformed keys gracefully and return 0
+	lastRV := notifier.getLastResourceVersion(ctx)
+	assert.Equal(t, int64(0), lastRV)
+}
+
+func TestKVNotifier_Notify_WithNoEvents(t *testing.T) {
+	notifier := setupTestKVNotifier(t, KVNotifierOptions{
+		PollInterval: 5 * time.Millisecond,
+		BufferSize:   10,
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Verify that getLastResourceVersion returns 0 when no events exist
+	lastRV := notifier.getLastResourceVersion(ctx)
+	assert.Equal(t, int64(0), lastRV)
+
+	// Start notification listener
+	events, err := notifier.Notify(ctx)
+	require.NoError(t, err)
+
+	// Send an event
+	event := Event{
+		Namespace:       "test-namespace",
+		Group:           "apps",
+		Resource:        "deployments",
+		Name:            "test-deployment",
+		ResourceVersion: 6000,
+		Action:          "created",
+	}
+
+	err = notifier.Send(ctx, event)
+	require.NoError(t, err)
+
+	// Wait for the event to be received
+	select {
+	case receivedEvent := <-events:
+		require.NotNil(t, receivedEvent)
+		assert.Equal(t, event.ResourceVersion, receivedEvent.ResourceVersion)
+		assert.Equal(t, event, receivedEvent)
+	case <-time.After(1 * time.Second):
+		t.Fatal("timeout waiting for event")
 	}
 }
 
