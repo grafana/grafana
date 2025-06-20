@@ -24,6 +24,7 @@ export interface Props {
   onDismiss: () => void;
 }
 
+// TODO: Remove this
 /**
  * @description
  * Drawer component for deleting a git provisioned dashboard.

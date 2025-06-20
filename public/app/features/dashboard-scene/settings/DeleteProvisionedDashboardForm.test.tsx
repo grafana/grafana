@@ -10,6 +10,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
 
+// TODO: remove this
 // Mock the hooks and dependencies
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
