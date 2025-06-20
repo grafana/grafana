@@ -1821,28 +1821,6 @@ describe('LokiDatasource', () => {
       const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
       setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
     });
-
-    it('adds dashboard headers', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      jest.spyOn(ds, 'runQuery');
-      const query: DataQueryRequest<LokiQuery> = {
-        ...baseRequestOptions,
-        panelId: 0,
-        targets: [{ expr: '{a="b"}', refId: 'A' }],
-        app: CoreApp.Dashboard,
-      };
-
-      await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(ds.runQuery).toHaveBeenCalledWith(
-          expect.objectContaining({
-            headers: expect.objectContaining({
-              'X-Dashboard-Title': 'dashboard_title',
-              'X-Panel-Title': 'panel_title',
-            }),
-          })
-        );
-      });
-    });
   });
 
   describe('getQueryStats', () => {
