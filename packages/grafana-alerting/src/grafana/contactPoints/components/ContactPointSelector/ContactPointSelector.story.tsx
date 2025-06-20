@@ -25,9 +25,6 @@ export default meta;
 type Story = StoryObj<typeof ContactPointSelector>;
 
 export const Basic: Story = {
-  args: {
-    onChange: () => {},
-  },
   parameters: {
     msw: {
       handlers: simpleContactPointsListScenario,
@@ -36,9 +33,6 @@ export const Basic: Story = {
 };
 
 export const WithError: Story = {
-  args: {
-    onChange: () => {},
-  },
   parameters: {
     msw: {
       handlers: withErrorScenario,
