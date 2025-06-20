@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type stateStore interface {
@@ -71,7 +72,8 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp remoteClient.SmtpConfig
+	smtp     remoteClient.SmtpConfig
+	sService secrets.Service
 }
 
 type AlertmanagerConfig struct {
@@ -119,7 +121,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer, sService secrets.Service) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -219,6 +221,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
 		smtpFrom: cfg.SmtpFrom,
+
+		sService: sService,
 	}, nil
 }
 
@@ -274,6 +278,12 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
 	if err != nil {
 		return err
+	}
+
+	for _, receiver := range c.AlertmanagerConfig.Receivers {
+		if err = notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
+			return err
+		}
 	}
 
 	// Add auto-generated routes and decrypt before comparing.
@@ -377,6 +387,12 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
+			return err
+		}
+	}
+
 	// Get the hash for the encrypted configuration.
 	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
@@ -406,6 +422,12 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	c, err := notifier.Load([]byte(am.defaultConfig))
 	if err != nil {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	for _, receiver := range c.AlertmanagerConfig.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
+			return err
+		}
 	}
 
 	// Add auto-generated routes and decrypt before sending.
@@ -583,6 +605,12 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	fn := func(payload []byte) ([]byte, error) {
 		return am.decrypt(ctx, payload)
+	}
+
+	for _, receiver := range c.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
+			return nil, 0, err
+		}
 	}
 
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
