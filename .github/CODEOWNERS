@@ -514,8 +514,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-search-navigate-organise
 /public/app/features/inspector/ @grafana/dashboards-squad
-/public/app/features/invites/ @grafana/sharing-squad
-/public/app/features/library-panels/ @grafana/sharing-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
@@ -685,6 +683,8 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
+/public/app/features/library-panels/ @grafana/sharing-squad
+/public/app/features/invites/ @grafana/sharing-squad
 
 # Grafana Enterprise: Public Dashboards & Image Renderer
 /pkg/api/render.go @grafana/grafana-operator-experience-squad
