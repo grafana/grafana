@@ -12,7 +12,7 @@ import (
 var (
 	_ resource.StorageBackend = &StorageBackendImpl{}
 
-	noopStorageErr = errors.New("unavailable functionality")
+	errNoopStorage = errors.New("unavailable functionality")
 )
 
 type StorageBackendImpl struct{}
@@ -23,24 +23,24 @@ func ProvideStorageBackend() *StorageBackendImpl {
 
 // GetResourceStats implements resource.StorageBackend.
 func (c *StorageBackendImpl) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
-	return []resource.ResourceStats{}, noopStorageErr
+	return []resource.ResourceStats{}, errNoopStorage
 }
 
 // ListHistory implements resource.StorageBackend.
 func (c *StorageBackendImpl) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, noopStorageErr
+	return 0, errNoopStorage
 }
 
 // ListIterator implements resource.StorageBackend.
 func (c *StorageBackendImpl) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, noopStorageErr
+	return 0, errNoopStorage
 }
 
 // ReadResource implements resource.StorageBackend.
 func (c *StorageBackendImpl) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	return &resource.BackendReadResponse{
 		Key:   req.GetKey(),
-		Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: noopStorageErr.Error()},
+		Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: errNoopStorage.Error()},
 	}
 }
 
@@ -52,5 +52,5 @@ func (c *StorageBackendImpl) WatchWriteEvents(ctx context.Context) (<-chan *reso
 
 // WriteEvent implements resource.StorageBackend.
 func (c *StorageBackendImpl) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
-	return 0, noopStorageErr
+	return 0, errNoopStorage
 }
