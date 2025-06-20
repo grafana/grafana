@@ -443,13 +443,13 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	}
 
 	// Get accessible folder UIDs for secure folder name search
-	var accessibleFolderUIDs []string
 	fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
 	if err != nil {
 		return model.LibraryElementSearchResult{}, err
 	}
 	// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-	accessibleFolderUIDs = []string{"general", ""}
+	accessibleFolderUIDs := make([]string, 0, len(fs)+2)
+	accessibleFolderUIDs = append(accessibleFolderUIDs, "general", "")
 	for _, f := range fs {
 		accessibleFolderUIDs = append(accessibleFolderUIDs, f.UID)
 	}
