@@ -280,6 +280,14 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
+	receivers := notifier.PostableApiAlertingConfigToApiReceivers(c.AlertmanagerConfig)
+	for _, recv := range receivers {
+		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Add auto-generated routes and decrypt before comparing.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
@@ -381,6 +389,14 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	receivers := notifier.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
+	for _, recv := range receivers {
+		err := notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Get the hash for the encrypted configuration.
 	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
@@ -410,6 +426,14 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	c, err := notifier.Load([]byte(am.defaultConfig))
 	if err != nil {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	receivers := notifier.PostableApiAlertingConfigToApiReceivers(c.AlertmanagerConfig)
+	for _, recv := range receivers {
+		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Add auto-generated routes and decrypt before sending.
