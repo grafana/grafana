@@ -2,7 +2,7 @@ import { Observable, of, lastValueFrom } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
-import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, EventBusExtended, PathValidationError } from '@grafana/data';
 import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
@@ -742,6 +742,144 @@ describe('backendSrv', () => {
         expect(catchedError.type).toEqual(DataQueryErrorType.Cancelled);
         expect(catchedError.statusText).toEqual('Request was aborted');
         expect(unsubscribe).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
+
+  describe('validatePath functionality', () => {
+    describe('when validatePath is enabled in options', () => {
+      it.each(['get', 'post', 'put', 'patch', 'delete'] as const)(
+        'should sanitize malicious paths in $method requests',
+        async (method) => {
+          const { backendSrv } = getTestContext();
+          const maliciousUrl = '/api/users/%2e%2e/admin';
+
+          const promise =
+            method === 'get'
+              ? backendSrv[method](maliciousUrl, undefined, undefined, { validatePath: true })
+              : backendSrv[method](maliciousUrl, undefined, { validatePath: true });
+
+          await expect(promise).rejects.toThrow(PathValidationError);
+          await expect(promise).rejects.toThrow('Invalid request path');
+        }
+      );
+
+      it('should preserve safe paths when sanitizing', async () => {
+        const { backendSrv } = getTestContext();
+        const safeUrl = '/api/users/123';
+
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { validatePath: true });
+
+        await expect(promise).resolves.toBeDefined();
+      });
+
+      it('should sanitise paths when calling .request', async () => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/users/%2e%2e/admin';
+
+        const promise = backendSrv.request({ url: maliciousUrl, method: 'GET', validatePath: true });
+
+        await expect(promise).rejects.toThrow(PathValidationError);
+      });
+
+      it('should sanitise paths when calling .fetch', (done) => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/users/%2e%2e/admin';
+
+        const observable = backendSrv.fetch({ url: maliciousUrl, method: 'GET', validatePath: true });
+
+        observable.subscribe({
+          next: () => {
+            throw new Error('Should not succeed');
+          },
+          error: (err) => {
+            expect(err).toBeInstanceOf(PathValidationError);
+            expect(err.message).toBe('Invalid request path');
+            done();
+          },
+        });
+      });
+    });
+
+    describe('when validatePath is disabled or not provided', () => {
+      it('should not sanitize paths when validatePath is false', async () => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/../admin/secrets';
+
+        const promise = backendSrv.get(maliciousUrl, undefined, undefined, { validatePath: false });
+
+        await expect(promise).resolves.toBeDefined();
+      });
+
+      it('should not sanitize paths when validatePath is not provided', async () => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/../admin/secrets';
+
+        const promise = backendSrv.get(maliciousUrl);
+
+        await expect(promise).resolves.toBeDefined();
+      });
+
+      it('should preserve paths when only other options are provided', async () => {
+        const { backendSrv } = getTestContext();
+        const maliciousUrl = '/api/../admin/secrets';
+
+        const promise = backendSrv.delete(maliciousUrl, undefined, { showErrorAlert: false });
+
+        await expect(promise).resolves.toBeDefined();
+      });
+    });
+
+    describe('with complex validatePath scenarios', () => {
+      it('should handle URL encoded traversal attacks', async () => {
+        const { backendSrv } = getTestContext();
+        const encodedUrl = '/api/%252e%252e/admin';
+
+        const promise = backendSrv.get(encodedUrl, undefined, undefined, { validatePath: true });
+
+        await expect(promise).rejects.toThrow(PathValidationError);
+      });
+
+      it('should preserve paths with legitimate dots and query parameters', async () => {
+        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const safeUrl = '/api/file.json?version=1.2.3&format=compact';
+
+        const promise = backendSrv.get(safeUrl, undefined, undefined, { validatePath: true });
+
+        await expect(promise).resolves.toBeDefined();
+        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/file.json?version=1.2.3&format=compact', // legitimate dots and query params should be preserved
+            method: 'GET',
+            validatePath: true,
+          })
+        );
+      });
+
+      it('should work with other options combined', async () => {
+        const { backendSrv, parseRequestOptionsMock } = getTestContext();
+        const safeUrl = '/api/dashboard/save';
+
+        const promise = backendSrv.post(
+          safeUrl,
+          { dashboard: 'data' },
+          {
+            validatePath: true,
+            showErrorAlert: false,
+            showSuccessAlert: true,
+          }
+        );
+
+        await expect(promise).resolves.toBeDefined();
+        expect(parseRequestOptionsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            url: '/api/dashboard/save',
+            method: 'POST',
+            validatePath: true,
+            showErrorAlert: false,
+            showSuccessAlert: true,
+          })
+        );
       });
     });
   });

@@ -43,7 +43,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
-      .get(url)
+      .get(url, undefined, undefined, { validatePath: true })
       .then(this.executeScript.bind(this))
       .then(
         (result: any) => {
