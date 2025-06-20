@@ -491,6 +491,50 @@ describe('SeriesApiClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should be able make the right request with utf8 label keys and matchers', async () => {
+      mockRequest.mockResolvedValue([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      await client.queryLabelValues(mockTimeRange, '"label with space"', '{"label with space"="space"}');
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{"label with space"="space","label with space"!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should be able to return the right utf8 label key value', async () => {
+      mockRequest.mockResolvedValue([
+        {
+          __name__: 'a.utf8.metric 🤘',
+          a_legacy_label: 'legacy',
+          'label with space': 'space',
+        },
+      ]);
+
+      const response = await client.queryLabelValues(
+        mockTimeRange,
+        '"label with space"',
+        '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘"}'
+      );
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘","label with space"!=""}',
+        }),
+        expect.any(Object)
+      );
+      expect(response).toEqual(['space']);
+    });
   });
 
   describe('SeriesCache', () => {

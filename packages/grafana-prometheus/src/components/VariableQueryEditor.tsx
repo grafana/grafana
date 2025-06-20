@@ -499,10 +499,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
                 <Trans
                   i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-classic-query"
                   values={{
-                    exampleQuery: 'label_values(label, metric)',
+                    exampleQuery: 'label_values(metric, label)',
                   }}
                 >
-                  The original implemetation of the Prometheus variable query editor. Enter a string with the correct
+                  The original implementation of the Prometheus variable query editor. Enter a string with the correct
                   query type and parameters as described in these docs. For example, {'{{exampleQuery}}'}.
                 </Trans>
               </div>
