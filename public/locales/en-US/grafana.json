@@ -10776,6 +10776,28 @@
       "label-on": "On"
     }
   },
+  "state-timeline": {
+    "align-values-options": {
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "category-state-timeline": "State timeline",
+    "name-align-values": "Align values",
+    "name-connect-null-values": "Connect null values",
+    "name-disconnect-values": "Disconnect values",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-width": "Line width",
+    "name-merge-equal-consecutive-values": "Merge equal consecutive values",
+    "name-page-size": "Page size (enable pagination)",
+    "name-row-height": "Row height",
+    "name-show-values": "Show values",
+    "show-values-options": {
+      "label-always": "Always",
+      "label-auto": "Auto",
+      "label-never": "Never"
+    }
+  },
   "status-history": {
     "status-history-panel": {
       "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
