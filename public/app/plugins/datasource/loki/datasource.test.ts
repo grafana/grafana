@@ -1810,19 +1810,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('query', () => {
-    beforeEach(() => {
-      setDashboardSrv({
-        getCurrent: () => ({
-          title: 'dashboard_title',
-          panels: [{ title: 'panel_title', id: 0 }],
-        }),
-      } as unknown as DashboardSrv);
-      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
-      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
-    });
-  });
-
   describe('getQueryStats', () => {
     let ds: LokiDatasource;
     let query: LokiQuery;
