@@ -1025,4 +1025,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables new API for folders
+  * @default false
+  */
+  foldersNewApi?: boolean;
 }

@@ -1393,6 +1393,22 @@
     },
     {
       "metadata": {
+        "name": "foldersNewApi",
+        "resourceVersion": "1750425724072",
+        "creationTimestamp": "2025-06-20T13:22:04Z"
+      },
+      "spec": {
+        "description": "Enables new API for folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "formatString",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-10-13T18:17:12Z"

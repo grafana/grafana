@@ -930,4 +930,8 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagFoldersNewApi
+	// Enables new API for folders
+	FlagFoldersNewApi = "foldersNewApi"
 )
