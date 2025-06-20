@@ -16,9 +16,9 @@ weight: 500
 
 # Settings updates at runtime
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This functionality is deprecated and will be removed in a future release. For configuring SAML authentication, please use the new [SSO settings API](../../../developers/http_api/sso-settings/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 By updating settings at runtime, you can update Grafana settings without needing to restart the Grafana server.
 

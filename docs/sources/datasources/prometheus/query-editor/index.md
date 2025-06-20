@@ -120,18 +120,18 @@ The **Type** setting sets the query type. These include:
 
 For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana modifies the request dates for queries to align them with the dynamically calculated step.
 This ensures a consistent display of metrics data and Prometheus requires this for caching results. But, aligning the range with the step can result in a small gap of data at the right edge of a graph or change the start date of the range. For example, a 15s step aligns the range to Unix time divisible by 15s and a 1w minstep aligns the range to the start of the week on a Thursday.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Exemplars
 
 Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 There is no option to add exemplars with an **Instant** query type.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Inspector
 
@@ -243,9 +243,9 @@ You can then select one or more labels shown in Step 2.
 Select one or more values in Step 3 for each label to tighten your query scope.
 In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you do not remember a metric name, you can also select a few labels to narrow down the list, then find relevant label values.
-{{% /admonition %}}
+{{< /admonition >}}
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
 The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.
