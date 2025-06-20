@@ -415,6 +415,14 @@ func (am *Alertmanager) applyConfig(
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
+	receivers := notifier.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
+	for _, recv := range receivers {
+		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Add auto-generated routes and decrypt before sending.
 	if err := autogenFn(&cfg.AlertmanagerConfig); err != nil {
 		return err
