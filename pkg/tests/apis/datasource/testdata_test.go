@@ -164,7 +164,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "testdata.datasource.grafana.app",
 			Version:  "v0alpha1",
-			Resource: "datasource",
+			Resource: "datasources",
 		}).Namespace("default")
 		ctx := context.Background()
 
