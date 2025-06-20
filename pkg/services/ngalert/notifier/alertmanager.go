@@ -411,7 +411,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	return true, nil
 }
 
-func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+func PatchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
 	for _, integration := range api.Integrations {
 		switch integration.Type {
 		case "dingding":
