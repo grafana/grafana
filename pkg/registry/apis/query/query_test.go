@@ -246,15 +246,7 @@ func TestConcurrentQueryMultipleDatasources(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	require.Equal(t, http.StatusOK, rr.Code)
-
 	require.ElementsMatch(t, []string{"value1", "value2"}, rr.Result().Header["X-Resp-Header"])
-
-	// qdr, err := builder.executeConcurrentQueries(ctx, request.Requests, clientapi.InstanceConfigurationSettings{})
-	// require.NoError(t, err)
-	// require.NotNil(t, qdr)
-
-	// require.Equal(t, 1, len(qdr.Responses["A"].Frames[0].Fields), "Expected a single field not Time and Value")
-	// require.Equal(t, "Value", qdr.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
 }
 
 type mockResponder struct {
@@ -288,7 +280,6 @@ func (m *mockClient) QueryData(ctx context.Context, req data.QueryDataRequest) (
 	if m.queryDataResponse != nil {
 		reqCtx := contexthandler.FromContext(ctx)
 		if reqCtx != nil {
-
 			// simulate request header manipulation
 			for k, values := range m.reqHeaders {
 				for _, v := range values {
