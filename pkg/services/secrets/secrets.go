@@ -14,7 +14,7 @@ import (
 // the secrets every time the encryption key has been rotated. Please add your database
 // secrets to the migrator slice available in ./migrator/migrator.go.
 //
-//go:generate mockery --name Service --structname MockService --outpkg fakes --filename mock_service.go --output ./fakes/
+//go:generate mockery --with-expecter --name Service --structname MockService --outpkg fakes --filename mock_service.go --output ./fakes/
 type Service interface {
 	// Encrypt MUST NOT be used within database transactions, it may cause database locks.
 	// For those specific use cases where the encryption operation cannot be moved outside
