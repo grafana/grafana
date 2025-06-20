@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -44,12 +45,8 @@ import (
 )
 
 var (
-	testPasswordBase64   = base64.StdEncoding.EncodeToString([]byte(testPassword))
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
 	errTest              = errors.New("test")
-
-	// Valid Grafana Alertmanager configuration with secret in base64.
-	testGrafanaConfigWithEncryptedSecret = fmt.Sprintf(`{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"%s"}}]}]}}`, testPasswordBase64)
 )
 
 const (
@@ -57,7 +54,7 @@ const (
 
 	// Valid Grafana Alertmanager configurations.
 	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
-	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test","password":"test"}}]}]}}`
 	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@email.com>"}}],"name":"grafana-default-email"}]}}`
 
 	// Valid Alertmanager state base64 encoded.
@@ -167,9 +164,14 @@ func TestApplyConfig(t *testing.T) {
 	var c apimodels.PostableUserConfig
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	err := notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+	encryptedReceivers, err := legacy_storage.EncryptedReceivers(c.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
 	})
+	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
 
 	// The encrypted configuration should be different than the one we will send.
@@ -289,15 +291,7 @@ func TestApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
-	require.NoError(t, err)
-	testValue := []byte("test")
-	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
-		if string(payload) == string(testValue) {
-			return testValue, nil
-		}
-		return nil, errTest
-	}
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -333,62 +327,90 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		return nil
 	}
 
+	// Create a config with correctly encrypted and encoded secrets.
+	var inputCfg apimodels.PostableUserConfig
+	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
+	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
+	})
+	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
+	require.NoError(t, err)
+	testGrafanaConfigWithEncryptedSecret, err := json.Marshal(inputCfg)
+	require.NoError(t, err)
+
+	// Created a config with invalid base64 encoding in the secret.
+	inputCfg.AlertmanagerConfig.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings["password"] = "!"
+	testGrafanaConfigWithBadEncoding, err := json.Marshal(inputCfg)
+	require.NoError(t, err)
+
+	// Create a config with a valid base64 encoding but an invalid encryption.
+	inputCfg.AlertmanagerConfig.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings["password"] = base64.StdEncoding.EncodeToString([]byte("test"))
+	testGrafanaConfigWithBadEncryption, err := json.Marshal(inputCfg)
+	require.NoError(t, err)
+
+	cfgWithDecryptedSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	require.NoError(t, err)
+
 	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
 
 	tests := []struct {
-		name      string
-		config    string
-		autogenFn AutogenFn
-		expCfg    *client.UserGrafanaConfig
-		expErr    string
+		name           string
+		config         string
+		autogenFn      AutogenFn
+		expCfg         *client.UserGrafanaConfig
+		expErrContains []string
 	}{
 		{
 			"invalid config",
 			"{}",
 			NoopAutogenFn,
 			nil,
-			"unable to parse Alertmanager configuration: no route provided in config",
+			[]string{"no route provided in config"},
 		},
 		{
 			"invalid base-64 in key",
-			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
+			string(testGrafanaConfigWithBadEncoding),
 			NoopAutogenFn,
 			nil,
-			`unable to decrypt settings on receiver "WH" (uid: "dde6ntuob69dtf"): failed to decode value for key 'password': illegal base64 data at input byte 0`,
+			[]string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "illegal base64 data at input byte 0"},
 		},
 		{
 			"decrypt error",
-			testGrafanaConfigWithSecret,
+			string(testGrafanaConfigWithBadEncryption),
 			NoopAutogenFn,
 			nil,
-			fmt.Sprintf(`unable to decrypt settings on receiver "WH" (uid: "dde6ntuob69dtf"): failed to decrypt value for key 'password': %s`, errTest.Error()),
+			[]string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "unable to compute salt"},
 		},
 		{
 			"error from autogen function",
-			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			string(testGrafanaConfigWithEncryptedSecret),
 			errAutogenFn,
 			nil,
-			errTest.Error(),
+			[]string{errTest.Error()},
 		},
 		{
 			"no error",
-			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			string(testGrafanaConfigWithEncryptedSecret),
 			NoopAutogenFn,
 			&client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: cfgWithSecret,
+				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
 			},
-			"",
+			nil,
 		},
 		{
 			"no error, with auto-generated routes",
-			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			string(testGrafanaConfigWithEncryptedSecret),
 			testAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
 			},
-			"",
+			nil,
 		},
 	}
 
@@ -398,7 +420,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			am, err := NewAlertmanager(ctx,
 				cfg,
 				fstore,
-				decryptFn,
+				secretsService.Decrypt,
 				NoopAutogenFn,
 				m,
 				tracing.InitializeTracerForTest(),
@@ -413,29 +435,23 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				AlertmanagerConfiguration: test.config,
 			}
 			err = am.CompareAndSendConfiguration(ctx, &cfg)
-			if test.expErr == "" {
+			if len(test.expErrContains) == 0 {
 				require.NoError(tt, err)
 				rawCfg, err := json.Marshal(test.expCfg)
 				require.NoError(tt, err)
 				require.JSONEq(tt, string(rawCfg), got)
 				return
 			}
-			require.Equal(tt, test.expErr, err.Error())
+			for _, expErr := range test.expErrContains {
+				require.ErrorContains(tt, err, expErr)
+			}
 		})
 	}
 }
 
 func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 	const tenantID = "test"
-	const testKey = "test-key"
-	const testValue = "test-value"
-	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
-		if string(payload) == testValue {
-			return []byte(testValue), nil
-		}
-		return nil, errTest
-	}
-
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	var got apimodels.TestReceiversConfigBodyParams
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
@@ -459,33 +475,40 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 	am, err := NewAlertmanager(context.Background(),
 		cfg,
 		fstore,
-		decryptFn,
+		secretsService.Decrypt,
 		NoopAutogenFn,
 		m,
 		tracing.InitializeTracerForTest(),
 	)
-
 	require.NoError(t, err)
+
+	var inputCfg apimodels.PostableUserConfig
+	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &inputCfg))
+	encryptedReceivers, err := legacy_storage.EncryptedReceivers(inputCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+		encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
+	})
+	inputCfg.AlertmanagerConfig.Receivers = encryptedReceivers
+	require.NoError(t, err)
+
 	params := apimodels.TestReceiversConfigBodyParams{
-		Alert: &apimodels.TestReceiversConfigAlertParams{},
-		Receivers: []*definition.PostableApiReceiver{
-			{
-				PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
-						{
-							SecureSettings: map[string]string{
-								testKey: base64.StdEncoding.EncodeToString([]byte(testValue)),
-							},
-						},
-					},
-				},
-			},
-		},
+		Alert:     &apimodels.TestReceiversConfigAlertParams{},
+		Receivers: inputCfg.AlertmanagerConfig.Receivers,
 	}
 
 	_, _, err = am.TestReceivers(context.Background(), params)
 	require.NoError(t, err)
-	require.Equal(t, map[string]string{testKey: testValue}, got.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings)
+
+	expectedSettings, err := json.Marshal(map[string]any{
+		"url":      "http://localhost:8080",
+		"username": "test",
+		"password": testPassword,
+	})
+	require.NoError(t, err)
+	require.EqualValues(t, expectedSettings, got.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].Settings)
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
@@ -531,44 +554,6 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			require.Equal(tt, test.expected, am.isDefaultConfiguration(md5.Sum(raw)))
 		})
 	}
-}
-
-func TestDecryptConfiguration(t *testing.T) {
-	t.Run("should not modify the original config", func(t *testing.T) {
-		var inputCfg apimodels.PostableUserConfig
-		require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithEncryptedSecret), &inputCfg))
-
-		decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
-			if string(payload) == testPassword {
-				return []byte(testPassword), nil
-			}
-			return nil, fmt.Errorf("incorrect payload")
-		}
-
-		am := &Alertmanager{
-			decrypt: decryptFn,
-		}
-
-		rawDecrypted, _, err := am.decryptConfiguration(context.Background(), &inputCfg)
-		require.NoError(t, err)
-
-		currentJSON, err := json.Marshal(inputCfg)
-		require.NoError(t, err)
-		require.JSONEq(t, testGrafanaConfigWithEncryptedSecret, string(currentJSON), "Original configuration should not be modified")
-
-		var decryptedCfg apimodels.PostableUserConfig
-		require.NoError(t, json.Unmarshal(rawDecrypted, &decryptedCfg))
-
-		found := false
-		for _, rcv := range decryptedCfg.AlertmanagerConfig.Receivers {
-			for _, gmr := range rcv.GrafanaManagedReceivers {
-				if gmr.Type == "webhook" && gmr.SecureSettings["password"] == testPassword {
-					found = true
-				}
-			}
-		}
-		require.True(t, found, "Decrypted configuration should contain decrypted password")
-	})
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
@@ -684,9 +669,14 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	{
 		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 		require.NoError(t, err)
-		err = notifier.EncryptReceiverConfigs(postableCfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+		encryptedReceivers, err := legacy_storage.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, func(payload string) (string, error) {
+			encrypted, err := secretsService.Encrypt(context.Background(), []byte(payload), secrets.WithoutScope())
+			if err != nil {
+				return "", err
+			}
+			return base64.StdEncoding.EncodeToString(encrypted), nil
 		})
+		postableCfg.AlertmanagerConfig.Receivers = encryptedReceivers
 		require.NoError(t, err)
 
 		// The encrypted configuration should be different than the one we will send.
@@ -697,6 +687,11 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Call `SaveAndApplyConfig` with the encrypted configuration.
 		require.NoError(t, err)
 		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
+
+		// Check that the original configuration is not modified (decrypted).
+		currentJSON, err := json.Marshal(postableCfg)
+		require.NoError(t, err)
+		require.JSONEq(t, string(encryptedConfig), string(currentJSON), "Original configuration should not be modified")
 
 		// Check that the configuration was uploaded to the remote Alertmanager.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
