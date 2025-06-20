@@ -4,14 +4,39 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
 	GROUP   = "*.datasource.grafana.app"
 	VERSION = "v0alpha1"
+)
+
+var GenericDataSourceResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"datasources", "datasource", "DataSource",
+	func() runtime.Object { return &GenericDataSource{} },
+	func() runtime.Object { return &GenericDataSourceList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Title"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*GenericDataSource)
+			if !ok {
+				return nil, fmt.Errorf("expected connection")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
 )
 
 var GenericConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
