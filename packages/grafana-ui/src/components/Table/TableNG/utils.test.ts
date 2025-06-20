@@ -559,7 +559,44 @@ describe('TableNG utils', () => {
       });
     });
 
-    it.todo('should recursively build column types when nested fields are present');
+    it('should recursively build column types when nested fields are present', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          {
+            type: FieldType.nestedFrames,
+            name: 'nestedCol',
+            config: {},
+            values: [
+              [
+                createDataFrame({
+                  fields: [
+                    { name: 'time', values: [1, 2] },
+                    { name: 'value', values: [10, 20] },
+                  ],
+                }),
+              ],
+              [
+                createDataFrame({
+                  fields: [
+                    { name: 'time', values: [3, 4] },
+                    { name: 'value', values: [30, 40] },
+                  ],
+                }),
+              ],
+            ],
+          },
+        ],
+        length: 0,
+        name: 'test',
+      };
+
+      expect(getColumnTypes(frame.fields)).toEqual({
+        stringCol: FieldType.string,
+        time: FieldType.time,
+        value: FieldType.number,
+      });
+    });
   });
 
   describe('getIsNestedTable', () => {
@@ -936,6 +973,11 @@ describe('TableNG utils', () => {
       expect(extractPixelValue(null as any)).toBe(0);
       expect(extractPixelValue(undefined as any)).toBe(0);
     });
+  });
+
+  describe('getCellHeightCalculator', () => {
+    it.todo('returns a cell height calculator');
+    it.todo('returns a minimum height of the default row height');
   });
 
   describe('getDefaultRowHeight', () => {

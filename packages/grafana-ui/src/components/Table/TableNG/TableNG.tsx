@@ -14,18 +14,8 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import {
-  DataHoverClearEvent,
-  DataHoverEvent,
-  Field,
-  FieldType,
-  GrafanaTheme2,
-  isDataFrame,
-  isTimeSeriesFrame,
-  ReducerID,
-} from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -37,17 +27,11 @@ import { CellColors } from '../types';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
-import {
-  CELL_RENDERERS,
-  GEO_RENDERER,
-  JSON_RENDERER,
-  SPARKLINE_RENDERER,
-  TableCellNG,
-  TableNGCellRenderer,
-} from './Cells/TableCellNG';
+import { TableCellActions } from './Cells/TableCellActions';
+import { getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import { useFilteredRows, useFooterCalcs, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, TableCellNGProps } from './types';
+import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
   frameToRecords,
   getDefaultRowHeight,
@@ -100,13 +84,7 @@ export function TableNG(props: TableNGProps) {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const [contextMenuProps, setContextMenuProps] = useState<{
-    rowIdx?: number;
-    value: string;
-    mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
-    top?: number;
-    left?: number;
-  } | null>(null);
+  const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -268,34 +246,22 @@ export function TableNG(props: TableNGProps) {
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
         const cellOptions = getCellOptions(field);
-
-        const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
-
-        let renderFieldCell: TableNGCellRenderer = CELL_RENDERERS[cellType];
-
-        // Handle auto cell type detection
-        if (cellType === TableCellDisplayMode.Auto) {
-          if (field.type === FieldType.geo) {
-            renderFieldCell = GEO_RENDERER;
-          }
-          if (field.type === FieldType.frame) {
-            const firstValue = field.values[0];
-            if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-              renderFieldCell = SPARKLINE_RENDERER;
-            } else {
-              renderFieldCell = JSON_RENDERER;
-            }
-          }
-          if (field.type === FieldType.other) {
-            renderFieldCell = JSON_RENDERER;
-          }
-        }
+        const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = Boolean(field.config.custom?.inspect);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-
+        const showActions = cellInspect || showFilters;
         const width = w[i];
         const frame = data;
+
+        // helps us avoid string cx and emotion per-cell
+        const cellActionClassName = showActions
+          ? cx(
+              'table-cell-actions',
+              styles.cellActions,
+              justifyContent === 'flex-end' ? styles.cellActionsEnd : styles.cellActionsStart
+            )
+          : undefined;
 
         return {
           field,
@@ -312,30 +278,37 @@ export function TableNG(props: TableNGProps) {
             const rowIdx = props.row.__index;
             const value = props.row[displayName];
 
-            const p: Omit<TableCellNGProps, 'children'> = {
-              actions,
-              cellOptions,
-              displayName,
-              field,
-              frame,
-              height,
-              justifyContent,
-              onCellFilterAdded,
-              rowIdx,
-              setContextMenuProps,
-              setIsInspecting,
-              theme,
-              value,
-              width,
-
-              cellInspect,
-              showFilters,
-            };
-
             return (
-              <TableCellNG key={displayName} {...p}>
-                {renderFieldCell(p)}
-              </TableCellNG>
+              <>
+                {renderFieldCell({
+                  actions,
+                  cellOptions,
+                  frame,
+                  field,
+                  height,
+                  justifyContent,
+                  rowIdx,
+                  theme,
+                  value,
+                  width,
+                  cellInspect,
+                  showFilters,
+                })}
+                {showActions && (
+                  <TableCellActions
+                    field={field}
+                    value={value}
+                    cellOptions={cellOptions}
+                    displayName={displayName}
+                    cellInspect={cellInspect}
+                    showFilters={showFilters}
+                    className={cellActionClassName}
+                    setIsInspecting={setIsInspecting}
+                    setContextMenuProps={setContextMenuProps}
+                    onCellFilterAdded={onCellFilterAdded}
+                  />
+                )}
+              </>
             );
           },
           renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
@@ -685,6 +658,23 @@ const getGridStyles = (
     '&[aria-selected=true]': {
       outline: 'none',
     },
+  }),
+  cellActions: css({
+    display: 'none',
+    position: 'absolute',
+    top: 0,
+    margin: 'auto',
+    height: '100%',
+    color: theme.colors.text.primary,
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+    padding: theme.spacing.x0_5,
+    paddingInlineStart: theme.spacing.x1,
+  }),
+  cellActionsEnd: css({
+    left: 0,
+  }),
+  cellActionsStart: css({
+    right: 0,
   }),
   headerRow: css({
     paddingBlockStart: 0,

@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { ReactNode, SyntheticEvent } from 'react';
+import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -149,27 +149,42 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export interface TableCellNGProps {
+export interface TableCellRendererProps {
   actions?: ActionModel[];
-  cellOptions: TableCellOptions;
-  displayName: string;
-  field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setIsInspecting: (isInspecting: boolean) => void;
-  theme: GrafanaTheme2;
+  frame: DataFrame;
   timeRange?: TimeRange;
   value: TableCellValue;
-  onCellFilterAdded?: TableFilterActionCallback;
-  children: ReactNode;
-  width: number;
   height: number;
-  frame: DataFrame;
-
   // flags that are static per column
+  field: Field;
+  cellOptions: TableCellOptions;
+  width: number;
+  theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
+  justifyContent: Property.JustifyContent;
+}
+
+export type ContextMenuProps = {
+  rowIdx?: number;
+  value: string;
+  mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  top?: number;
+  left?: number;
+};
+
+export interface TableCellActionsProps {
+  field: Field;
+  value: TableCellValue;
+  cellOptions: TableCellOptions;
+  displayName: string;
+  cellInspect: boolean;
+  showFilters: boolean;
+  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
+  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  className?: string;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */

@@ -1,0 +1,84 @@
+import { css, cx } from '@emotion/css';
+import { WKT } from 'ol/format';
+import { Geometry } from 'ol/geom';
+
+import { FieldType, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { TableCellDisplayMode } from '@grafana/schema';
+
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { IconButton } from '../../../IconButton/IconButton';
+import { TableCellInspectorMode } from '../../TableCellInspector';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
+
+export function TableCellActions(props: TableCellActionsProps) {
+  const {
+    field,
+    value,
+    cellOptions,
+    displayName,
+    setIsInspecting,
+    setContextMenuProps,
+    onCellFilterAdded,
+    className,
+    cellInspect,
+    showFilters,
+  } = props;
+
+  return (
+    <div className={className}>
+      {cellInspect && (
+        <IconButton
+          name="eye"
+          aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+          onClick={() => {
+            let inspectValue = value;
+            let mode = TableCellInspectorMode.text;
+
+            if (field.type === FieldType.geo && value instanceof Geometry) {
+              inspectValue = new WKT().writeGeometry(value, {
+                featureProjection: 'EPSG:3857',
+                dataProjection: 'EPSG:4326',
+              });
+              mode = TableCellInspectorMode.code;
+            } else if ('cellType' in cellOptions && cellOptions.cellType === TableCellDisplayMode.JSONView) {
+              mode = TableCellInspectorMode.code;
+            }
+
+            setContextMenuProps({
+              value: String(inspectValue ?? ''),
+              mode,
+            });
+            setIsInspecting(true);
+          }}
+        />
+      )}
+      {showFilters && (
+        <>
+          <IconButton
+            name={'search-plus'}
+            aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
+            onClick={() => {
+              onCellFilterAdded?.({
+                key: displayName,
+                operator: FILTER_FOR_OPERATOR,
+                value: String(value ?? ''),
+              });
+            }}
+          />
+          <IconButton
+            name={'search-minus'}
+            aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
+            onClick={() => {
+              onCellFilterAdded?.({
+                key: displayName,
+                operator: FILTER_OUT_OPERATOR,
+                value: String(value ?? ''),
+              });
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
