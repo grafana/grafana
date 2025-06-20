@@ -51,6 +51,8 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
+type clock func() time.Time
+
 type Alertmanager struct {
 	autogenFn         AutogenFn
 	decrypt           DecryptFn
@@ -74,6 +76,8 @@ type Alertmanager struct {
 
 	smtp           remoteClient.SmtpConfig
 	secretsService secrets.Service
+
+	clock clock
 }
 
 type AlertmanagerConfig struct {
@@ -223,6 +227,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		smtpFrom: cfg.SmtpFrom,
 
 		secretsService: secretsService,
+		clock:          func() time.Time { return time.Now() },
 	}, nil
 }
 
@@ -342,7 +347,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 		return err
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
-	am.lastConfigSync = time.Now()
+	am.lastConfigSync = am.clock()
 	return nil
 }
 
@@ -443,7 +448,7 @@ func (am *Alertmanager) applyConfig(
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), isDefault(configHash))
+	return am.sendConfiguration(ctx, decrypted, hash, am.clock().Unix(), isDefault(configHash))
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
