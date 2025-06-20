@@ -105,7 +105,7 @@ type IndexableDocument struct {
 	// Someday this will likely be part of https://github.com/grafana/gamma
 	References ResourceReferences `json:"references,omitempty"`
 
-	// internal sort field for references ( don't set this directly )
+	// internal field for mapping references to kind ( don't set this directly )
 	Reference map[string][]string `json:"reference,omitempty"` // map of kind to list of names
 
 	// When the resource is managed by an upstream repository
