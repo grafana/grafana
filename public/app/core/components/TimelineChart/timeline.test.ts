@@ -263,13 +263,22 @@ describe('StateTimeline uPlot integration', () => {
     });
 
     describe.each([
-      ['', undefined, undefined, false, 'empty string returns false'],
-      [undefined, undefined, undefined, false, 'undefined returns false'],
-    ])('falsy values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      ['', undefined, undefined, true, 'empty string returns true'],
+      ['to be or not to be', undefined, undefined, true, 'non-empty string returns true'],
+    ])('string values', (yValue, mappedNull, mappedNaN, expected, testName) => {
       it(testName, () => {
         expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
       });
     });
+
+    describe.each([[undefined, undefined, undefined, false, 'undefined returns false']])(
+      'falsy values',
+      (yValue, mappedNull, mappedNaN, expected, testName) => {
+        it(testName, () => {
+          expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+        });
+      }
+    );
 
     describe.each([
       [{}, undefined, undefined, true, 'object returns true'],
