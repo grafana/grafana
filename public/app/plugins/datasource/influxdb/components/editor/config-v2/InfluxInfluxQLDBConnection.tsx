@@ -1,4 +1,9 @@
-import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data';
+import {
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceOption,
+  onUpdateDatasourceSecureJsonDataOption,
+  updateDatasourcePluginResetOption,
+} from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
 import {
@@ -9,7 +14,7 @@ import {
 import { Props } from './types';
 
 export const InfluxInfluxQLDBConnection = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options } = props;
 
   return (
     <>
@@ -19,16 +24,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             id="database"
             placeholder="mydb"
             value={options.jsonData.dbName}
-            onChange={(event) => {
-              onOptionsChange({
-                ...options,
-                database: '',
-                jsonData: {
-                  ...options.jsonData,
-                  dbName: event.currentTarget.value,
-                },
-              });
-            }}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField}
           />
         </InlineField>
@@ -39,7 +35,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             id="user"
             placeholder="myuser"
             value={options.user || ''}
-            onChange={(e) => onOptionsChange({ ...options, user: e.currentTarget.value })}
+            onChange={onUpdateDatasourceOption(props, 'user')}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField}
           />
         </InlineField>
