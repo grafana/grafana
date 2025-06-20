@@ -3,14 +3,13 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
 jest.mock('./language_utils', () => ({
   ...jest.requireActual('./language_utils'),
-  processHistogramMetrics: (metrics: string[]) => metrics,
   getPrometheusTime: jest.requireActual('./language_utils').getPrometheusTime,
   getRangeSnapInterval: jest.requireActual('./language_utils').getRangeSnapInterval,
 }));
 
 import { getCacheDurationInMinutes } from './caching';
-import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
+import { DEFAULT_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
@@ -308,7 +307,7 @@ describe('Prometheus Language Provider', () => {
         const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
         const requestSpy = jest.spyOn(languageProvider, 'request');
 
-        fetchSeriesLabels(getMockTimeRange(), '$metric');
+        fetchSeriesLabels(getMockTimeRange(), '$metric', undefined, DEFAULT_SERIES_LIMIT);
 
         verifyRequestParams(requestSpy, '/api/v1/series', {
           end: toPrometheusTimeString,

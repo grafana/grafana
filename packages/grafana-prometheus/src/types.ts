@@ -189,8 +189,3 @@ export type RecordingRuleIdentifier = {
   identifier?: string;
   identifierValue?: string;
 };
-
-export const EMPTY_MATCHER = '{}';
-export const MATCH_ALL_LABELS_STR = '__name__!=""';
-export const MATCH_ALL_LABELS = '{__name__!=""}';
-export const METRIC_LABEL = '__name__';
