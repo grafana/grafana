@@ -189,9 +189,9 @@ Panel data source query options include:
   If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
   You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
 
-  {{% admonition type="note" %}}
+  {{< admonition type="note" >}}
   The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 - **Interval:** Sets a time span that you can use when aggregating or grouping data points by time.
 

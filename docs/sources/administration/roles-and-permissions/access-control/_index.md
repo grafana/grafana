@@ -102,9 +102,9 @@ refs:
 
 # Role-based access control (RBAC)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
@@ -151,9 +151,9 @@ Each basic role is comprised of a number of _permissions_. For example, the view
 - `Action: annotations:write, Scope: annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
 - `Action: annotations:delete, Scope: annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can't have a Grafana user without a basic role assigned. The `None` role contains no permissions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Basic role modification
 
@@ -165,9 +165,9 @@ For example, if you modify Viewer basic role and grant additional permission, Ed
 For more information about the permissions associated with each basic role, refer to [Basic role definitions](ref:rbac-role-definitions-basic-role-assignments).
 To interact with the API and view or modify basic roles permissions, refer to [the table](ref:rbac-basic-role-uid-mapping) that maps basic role names to the associated UID.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
-{{% /admonition %}}
+{{< /admonition >}}
 
 For Cloud customers, contact Support to reset roles.
 

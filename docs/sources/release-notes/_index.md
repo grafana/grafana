@@ -13,13 +13,13 @@ weight: 10000
 Here you can find detailed release notes that list everything included in past releases,
 as well as notices about deprecations, breaking changes, and changes related to plugin development.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 As of Grafana v9.2 we no longer publish release notes, which are redundant with other release lists that we publish:
 
 - For details about new features, deprecations, and breaking changes in new Grafana releases, see [What's New in Grafana](../whatsnew/).
 - For lists of changes to Grafana, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 - [Release notes for 9.1.7](release-notes-9-1-7/)
 - [Release notes for 9.1.6](release-notes-9-1-6/)

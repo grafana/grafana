@@ -120,9 +120,9 @@ That makes it much easier for the developers to replicate and solve your issue.
 
 ## Use a custom version of TestData
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is experimental and requires Grafana version 10.3.0 or later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 If you want to use a version of TestData different from the one shipped with Grafana, follow these steps:
 

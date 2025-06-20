@@ -217,7 +217,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
 
    <!-- INTERACTIVE ignore START -->
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
    {{% / admonition %}}
    <!-- INTERACTIVE ignore END -->

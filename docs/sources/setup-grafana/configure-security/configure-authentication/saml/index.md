@@ -307,9 +307,9 @@ Grafana supports user authentication through Okta, which is useful when you want
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
-     {{% admonition type="note" %}}
+     {{< admonition type="note" >}}
      If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
-     {{% /admonition %}}
+     {{< /admonition >}}
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
      | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
@@ -404,9 +404,9 @@ Additionally, Grafana did not support IdP sessions and could not include the `Se
 
 Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 These improvements are available in public preview behind the `improvedExternalSessionHandlingSAML` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/)
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Assertion mapping
 
@@ -480,7 +480,7 @@ auto_login = true
 
 To use SAML Team sync, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration#assertion_attribute_groups) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Grafana requires the SAML groups attribute to be configured with distinct `AttributeValue` elements for each group. Do not include multiple groups within a single `AttributeValue` delimited by a comma or any other character. Failure to do so will prevent correct group parsing. Example:
 
 ```xml
@@ -490,11 +490,11 @@ Grafana requires the SAML groups attribute to be configured with distinct `Attri
 </saml2:Attribute>
 ```
 
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Given the following partial SAML assertion:
 

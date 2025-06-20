@@ -82,14 +82,14 @@ refs:
 
 Prometheus is an open source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. Grafana provides native support for Prometheus. If you are just getting started with Prometheus, see [What is Prometheus?](ref:intro-to-prometheus).
 
-{{% admonition type="tip" %}}
+{{< admonition type="tip" >}}
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](ref:get-started-prometheus).
 
 If you’re ready to start visualizing your metrics, check out our Prometheus Learning Journeys:
 
 - [Connect to a Prometheus data source in Grafana Cloud](https://www.grafana.com/docs/learning-journeys/prometheus/) to visualize your metrics directly from where they are stored.
 - [Send metrics to Grafana Cloud using Prometheus remote write](https://www.grafana.com/docs/learning-journeys/prom-remote-write/) to explore Grafana Cloud without making significant changes to your existing configuration.
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
@@ -117,9 +117,9 @@ For more information on how to query other Prometheus-compatible projects from G
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Once you have provisioned a data source you cannot edit it.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provisioning example
 
@@ -183,17 +183,17 @@ Add the following setting in the **[auth]** section :
 azure_auth_enabled = true
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Azure authentication settings do not enable `Forward OAuth identity`. Both use the same HTTP authorization headers. Azure settings will get overwritten by the Oauth token.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Exemplars
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
 

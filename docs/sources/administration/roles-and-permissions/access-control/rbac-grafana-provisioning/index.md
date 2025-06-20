@@ -51,9 +51,9 @@ refs:
 
 # Provisioning RBAC with Grafana
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can create, change or remove [Custom roles](ref:manage-rbac-roles-create-custom-roles-using-provisioning) and create or remove [basic role assignments](ref:assign-rbac-roles-assign-a-fixed-role-to-a-basic-role-using-provisioning), by adding one or more YAML configuration files in the `provisioning/access-control/` directory.
 

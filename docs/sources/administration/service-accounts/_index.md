@@ -78,11 +78,11 @@ A common use case for creating a service account is to perform operations on aut
 
 In [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also use service accounts in combination with [role-based access control](ref:rbac) to grant very specific permissions to applications that interact with Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
 Service accounts can't be used for instance-wide operations, such as global user management and organization management. For these tasks, you need to use a user with [Grafana server administrator permissions](ref:roles-and-permissions).
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< vimeo 742056367 >}}
 
@@ -168,9 +168,9 @@ You can assign organization roles to a service account using the Grafana UI or v
 
 In [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), you can also [assign RBAC roles](ref:rbac-assign-rbac-roles) to grant very specific permissions to applications that interact with Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Since Grafana 10.2.0, the `No Basic Role` is available for organization users or service accounts. This role has no permissions. Permissions can be granted with RBAC.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Before you begin
 
@@ -237,10 +237,10 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 
 #### Example
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The following command output is shortened to show only the relevant content.
 Authorize your request with the token whose permissions you want to check.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```bash
 curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq

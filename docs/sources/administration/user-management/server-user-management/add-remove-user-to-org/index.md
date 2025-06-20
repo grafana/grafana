@@ -42,9 +42,9 @@ You are required to specify an Admin role for each organization. The first user 
 
 The next time the user signs in, they will be able to navigate to their new organization using the Switch Organizations option in the user profile menu.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have [organization administrator](../../../roles-and-permissions/#organization-roles) permissions and _not_ [server administrator](../../../roles-and-permissions/#grafana-server-administrators) permissions, you can still [invite a user to join an organization](../../manage-org-users/#invite-a-user-to-join-an-organization).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Remove a user from an organization
 

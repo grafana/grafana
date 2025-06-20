@@ -157,7 +157,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
 
 {{< youtube id="JwF6FgeotaU" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied.
 {{< /admonition >}}
 

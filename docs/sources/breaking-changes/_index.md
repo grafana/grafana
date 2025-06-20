@@ -23,11 +23,11 @@ For our purposes, a breaking change is any change that requires users or operato
 - Changes that affect some plugins or functions of Grafana
 - Migrations that can’t be rolled back
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 To learn what's available in a Grafana release, refer to the [What's new ](../whatsnew/) page for each version. For the steps we recommend when you upgrade, check out the [Upgrade guide](../upgrade-guide/) for each version.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to any of the following breaking changes guides:
 

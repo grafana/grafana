@@ -68,9 +68,9 @@ These queries by default return results in term order (which can then be sorted 
 To produce a list of terms sorted by doc count (a top-N values list), add an `orderBy` property of "doc_count".
 This automatically selects a descending sort.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To use an ascending sort (`asc`) with doc_count (a bottom-N list), set `order: "asc"`. However, Elasticsearch [discourages this](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) because sorting by ascending doc count can return inaccurate results.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To keep terms in the doc count order, set the variable's Sort dropdown to **Disabled**.
 You can alternatively use other sorting criteria, such as **Alphabetical**, to re-sort them.

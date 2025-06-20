@@ -24,13 +24,13 @@ An alert event is displayed each time an alert instance changes its state over a
 
 ## View from the History page
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana Enterprise and OSS users:
 The feature is available starting with Grafana 11.2.
 To try out the new alert history page, enable the `alertingCentralAlertHistory` feature toggle and configure [Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
 Users can only see the history and transitions of alert rules they have access to (RBAC).
-{{% /admonition %}}
+{{< /admonition >}}
 
 To access the History view, complete the following steps.
 
@@ -44,9 +44,9 @@ To access the History view, complete the following steps.
 3. Filter by current state and previous state by selecting a state from the drop-down or by clicking the states from the list of events.
    Zoom in by dragging on the chart or use the time picker.
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    If you exceed the 5000 alerts limit, you may see data missing from the chart. To see complete results, narrow the time frame.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
 4. Under the chart, there is a list of events. Each event represents a state change on an alert instance. Expand a row to see the number of transitions for the alert instance, a state graph, and the value in the transition.
 5. Click the alert rule name to jump to the History tab in the Alert Rule view.
@@ -59,9 +59,9 @@ Use the State history view to get insight into how your individual alert instanc
 
 View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Open source users must [configure alert state history](/docs/grafana/latest/alerting/set-up/configure-alert-state-history/) in order to be able to access the view.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To access the State history view, complete the following steps.
 

@@ -36,9 +36,9 @@ For example, if you're monitoring the health status of different services, you c
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-status-history-v11.6.png" max-width="800px" alt="A status history panel showing the health status of different sensors" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 A status history is similar to a [state timeline](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/), but has different [configuration options](#status-history-options). Unlike state timelines, status histories don't merge consecutive values.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Use a status history when you need to:
 

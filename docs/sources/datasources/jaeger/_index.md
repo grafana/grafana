@@ -109,9 +109,9 @@ You can also configure settings specific to the Jaeger data source. These option
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The **Trace to logs** setting configures the [trace to logs feature](ref:explore-trace-integration) that is available when you integrate Grafana with Jaeger.
 

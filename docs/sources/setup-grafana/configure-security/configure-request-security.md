@@ -18,13 +18,13 @@ Request security allows you to limit requests from the Grafana server by targeti
 
 This can be used to limit access to internal systems that the server Grafana runs on can access but that users of Grafana should not be able to access. This feature does not affect traffic from the Grafana users browser.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Although request security works with backend plugins, you can create a backend plugin that bypasses this security.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## IP and hostname blocking
 

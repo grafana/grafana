@@ -32,9 +32,9 @@ Alert notifications can include images, but rendering many images at the same ti
 
 ## Install Grafana Image Renderer plugin
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
 
@@ -66,9 +66,9 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 ### Security
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is available in Image Renderer v3.6.1 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode.
 
@@ -104,9 +104,9 @@ You can instruct how headless browser instances are created by configuring a ren
 
 Default mode will create a new browser instance on each request. When handling multiple concurrent requests, this mode increases memory usage as it will launch multiple browsers at the same time. If you want to set a maximum number of browser to open, you'll need to use the [clustered mode](#clustered).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```bash
 RENDERING_MODE=default
@@ -177,9 +177,9 @@ To achieve better performance, monitor the machine on which your service is runn
 
 ### Other available settings
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### HTTP host
 
@@ -215,9 +215,9 @@ HTTP_PORT=0
 
 #### HTTP protocol
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 HTTPS protocol is supported in the image renderer v3.11.0 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
@@ -370,9 +370,9 @@ RENDERING_DUMPIO=true
 If you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
 installed on your system, then you can use this instead of the pre-packaged version of Chromium.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](/grafana/plugins/grafana-image-renderer).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You need to make sure that the Chrome/Chromium executable is available for the Grafana/image rendering service process.
 

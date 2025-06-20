@@ -71,9 +71,9 @@ Some functions like aliasByNode support an optional second argument. To add an a
 
 To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Some functions take a second argument that may be a function that returns a series. If you are adding a second argument that is a function, it is suggested to use a series reference from a second query instead of the function itself. The query editor does not currently support parsing of a second argument that is a function when switching between the query editor and the code editor.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Sort labels
 
@@ -91,10 +91,10 @@ Grafana consolidates all Graphite metrics so that Graphite doesn't return more d
 By default, Grafana consolidates data points using the `avg` function.
 To control how Graphite consolidates metrics, use the Graphite `consolidateBy()` function.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
 Depending on your consolidation function, only one or two can be correct at the same time.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Combine time series
 
@@ -109,10 +109,10 @@ To select data, use the `seriesByTag` function, which takes tag expressions (`=`
 
 The Grafana query builder does this for you automatically when you select a tag.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
 To help reduce the results, start by filtering on a particular name or namespace.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Nest queries
 

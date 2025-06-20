@@ -67,9 +67,9 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
 
 ## Assume a role
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Assume a role is required for the Grafana Assume Role.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can specify an IAM role to assume in the **Assume Role ARN** field.
 
@@ -87,9 +87,9 @@ To disable this feature in open source Grafana or Grafana Enterprise, refer to t
 
 ### Use an external ID
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot use an external ID for the Grafana Assume Role authentication provider.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To assume a role in another account that was created with an external ID, specify the external ID in the **External ID** field.
 
@@ -128,9 +128,9 @@ For more information on why and how to use service endpoints, refer to the [AWS 
 
 Create a file at `~/.aws/credentials`, the `HOME` path for the user running the `grafana-server` service.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you think you have the credentials file in the right location, but it's not working, try moving your `.aws` file to `/usr/share/grafana/` and grant your credentials file at most 0644 permissions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Credentials file example
 
@@ -159,13 +159,13 @@ securityContext:
 
 ## Use Grafana Assume Role
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana Assume Role is currently in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud.
 
 It's currently only available for Amazon CloudWatch.
 
 To gain early access to this feature, contact Customer Support and ask for the `awsDatasourcesTempCredentials` feature toggle to be enabled on your account.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The Grafana Assume Role authentication provider lets you authenticate with AWS without having to create and maintain long term AWS users or rotate their access and secret keys. Instead, you can create an IAM role that has permissions to access CloudWatch and a trust relationship with Grafana's AWS account. Grafana's AWS account then makes an STS request to AWS to create temporary credentials to access your AWS data. It makes this STS request by passing along an `externalID` that's unique per Cloud account, to ensure that Grafana Cloud users can only access their own AWS data. For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 

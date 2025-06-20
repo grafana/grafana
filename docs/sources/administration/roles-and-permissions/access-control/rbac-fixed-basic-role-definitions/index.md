@@ -46,9 +46,9 @@ refs:
 
 # RBAC role definitions
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following tables list permissions associated with basic and fixed roles. This does not include basic role assignments added by plugins or apps.
 

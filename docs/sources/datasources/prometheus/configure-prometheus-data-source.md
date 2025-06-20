@@ -92,11 +92,11 @@ You should use the IP address of the Prometheus container, or the hostname if yo
 
 There are several authentication methods you can choose in the Authentication section.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/). You must add TLS settings to your Prometheus configuration file **prior** to setting these options in Grafana.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 - **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
 
@@ -130,11 +130,11 @@ Following are additional configuration options.
 
 - **Manage alerts via Alerting UI** - Toggle to enable [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle](../../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the Grafana configuration file.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Interval behavior
 

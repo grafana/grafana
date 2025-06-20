@@ -94,13 +94,13 @@ can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When using OpenTSDB 2.4 with alerting, queries are executed with the parameter `arrays=true`. This causes OpenTSDB to return data points as an array of arrays instead of a map of key-value pairs. Grafana then converts this data into the appropriate data frame format.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Auto complete suggestions
 

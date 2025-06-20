@@ -203,9 +203,9 @@ Content-Type: application/json
 
 `PUT /api/admin/settings`
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Grafana Enterprise v8.0+.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
 

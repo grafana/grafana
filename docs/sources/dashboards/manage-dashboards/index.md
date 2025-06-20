@@ -86,9 +86,9 @@ When you nest folders, you can do so up to four levels deep.
 
 When you save a dashboard, you can optionally select a folder to save the dashboard in.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To edit the name of a folder:**
 
