@@ -1,15 +1,12 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { Alert, Box, Stack, TextLink } from '@grafana/ui';
-
-import { InfluxOptions } from '../../../types';
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
 
 import { DatabaseConnectionSection } from './DatabaseConnectionSection';
 import { LeftSideBar } from './LeftSideBar';
 import { UrlAndAuthenticationSection } from './UrlAndAuthenticationSection';
 import { trackInfluxDBConfigV2FeedbackButtonClicked } from './tracking';
+import { Props } from './types';
 
 export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Props) => {
   return (

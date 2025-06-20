@@ -1,18 +1,11 @@
-import {
-  DataSourcePluginOptionsEditorProps,
-  onUpdateDatasourceSecureJsonDataOption,
-  updateDatasourcePluginResetOption,
-} from '@grafana/data';
+import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
-
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import {
   trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2SQLDBDetailsTokenInputField,
 } from './tracking';
-
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
+import { Props } from './types';
 
 export const InfluxSQLDBConnection = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -23,6 +16,8 @@ export const InfluxSQLDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField label="Database" labelWidth={30} grow>
           <Input
+            id="database"
+            placeholder="mydb"
             value={options.jsonData.dbName}
             onChange={(event) => {
               onOptionsChange({
@@ -40,6 +35,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField labelWidth={30} label="Token" grow>
           <SecretInput
+            id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
             onBlur={() => {
               onOptionsChange({

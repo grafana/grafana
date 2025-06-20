@@ -1,15 +1,13 @@
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { Box, CollapsableSection, Alert, Space, Text } from '@grafana/ui';
 
-import { InfluxOptions, InfluxVersion } from '../../../types';
+import { InfluxVersion } from '../../../types';
 
 import { AdvancedDbConnectionSettings } from './AdvancedDBConnectionSettings';
 import { InfluxFluxDBConnection } from './InfluxFluxDBConnection';
 import { InfluxInfluxQLDBConnection } from './InfluxInfluxQLDBConnection';
 import { InfluxSQLDBConnection } from './InfluxSQLDBConnection';
 import { CONFIG_SECTION_HEADERS } from './constants';
-
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
+import { Props } from './types';
 
 export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) => (
   <>
