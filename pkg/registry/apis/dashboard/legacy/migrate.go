@@ -121,7 +121,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			"collection", settings.Collection,
 		)
 	} else {
-		a.log.Debug("bulk grpc request metadata (no metadata found)",
+		a.log.Debug("bulk grpc request, no metadata found",
 			"collection", settings.Collection,
 		)
 	}
