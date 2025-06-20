@@ -93,7 +93,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
-		iamv0b.AddToScheme(scheme)
+		if err := iamv0b.AddToScheme(scheme); err != nil {
+			return err
+		}
 	}
 
 	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
