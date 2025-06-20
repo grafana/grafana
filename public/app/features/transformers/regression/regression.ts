@@ -124,7 +124,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
       let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       if (modelType === ModelType.polynomial) {
         const degreeData = DEGREES.find((deg) => deg.value === degree);
-        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
+        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       }
 
       const newFrame: DataFrame = {

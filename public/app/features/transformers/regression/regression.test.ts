@@ -122,7 +122,7 @@ describe('Regression transformation', () => {
     expect(result[1].fields[1].values[3]).toBeCloseTo(1.86, 1);
     expect(result[1].fields[1].values[4]).toBeCloseTo(1.2, 1);
     expect(result[1].fields[1].values[5]).toBeCloseTo(-0.1, 1);
-    expect(result[1].name).toBe('Quadratic Polynomial regression');
+    expect(result[1].name).toBe('Quadratic polynomial regression');
   });
 
   it('should have the last x point be equal to the last x point of the data', () => {
@@ -152,7 +152,7 @@ describe('Regression transformation', () => {
     expect(result[1].fields[0].values[4]).toBeCloseTo(1.76, 1);
     expect(result[1].fields[0].values[8]).toBeCloseTo(3.55, 1);
     expect(result[1].fields[0].values[9]).toBe(4);
-    expect(result[1].name).toBe('Quadratic Polynomial regression');
+    expect(result[1].name).toBe('Quadratic polynomial regression');
   });
 
   it('should filter NaNs', () => {
