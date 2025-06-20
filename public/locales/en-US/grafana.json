@@ -9064,6 +9064,28 @@
     "select-no-options": "No panel types found",
     "select-placeholder": "Filter by type"
   },
+  "piechart": {
+    "category-legend": "Legend",
+    "category-pie-chart": "Pie chart",
+    "description-labels": "Select the labels to be displayed in the pie chart",
+    "description-pie-chart-type": "How the pie chart should be rendered",
+    "labels-options": {
+      "label-name": "Name",
+      "label-percent": "Percent",
+      "label-value": "Value"
+    },
+    "legend-values-options": {
+      "label-percent": "Percent",
+      "label-value": "Value"
+    },
+    "name-labels": "Labels",
+    "name-legend-values": "Legend values",
+    "name-pie-chart-type": "Pie chart type",
+    "pie-chart-type-options": {
+      "label-donut": "Donut",
+      "label-pie": "Pie"
+    }
+  },
   "playlist": {
     "playlist-new-page": {
       "page-nav": {
