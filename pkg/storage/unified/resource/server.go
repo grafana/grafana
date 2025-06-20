@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -813,6 +812,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		Namespace: key.Namespace,
 		Verb:      utils.VerbGet,
 	})
+	var trashChecker claims.ItemChecker // only for trash
+	if req.Source == resourcepb.ListRequest_TRASH {
+		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Verb:      utils.VerbSetPermissions, // Basically Admin
+		})
+		if err != nil {
+			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
 	if err != nil {
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -839,10 +850,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 					return apierrors.NewUnauthorized("no user found in context")
 				}
 
-				if !slices.Contains(user.GetGroups(), "admin") {
-					continue
-				}
-				//
 				partial := &metav1.PartialObjectMetadata{}
 				err := json.Unmarshal(iter.Value(), partial)
 				if err != nil {
@@ -853,6 +860,9 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 					return err
 				}
 				if obj.GetUpdatedBy() != user.GetUID() {
+					continue
+				}
+				if !trashChecker(iter.Name(), iter.Folder()) {
 					continue
 				}
 			} else if !checker(iter.Name(), iter.Folder()) {
