@@ -10875,6 +10875,18 @@
     }
   },
   "status-history": {
+    "category-status-history": "Status history",
+    "name-column-width": "Column width",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-width": "Line width",
+    "name-page-size": "Page size (enable pagination)",
+    "name-row-height": "Row height",
+    "name-show-values": "Show values",
+    "show-values-options": {
+      "label-always": "Always",
+      "label-auto": "Auto",
+      "label-never": "Never"
+    },
     "status-history-panel": {
       "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
       "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
