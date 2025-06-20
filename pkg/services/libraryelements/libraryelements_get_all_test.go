@@ -1186,12 +1186,20 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 
-			// Should find panels in the "ScenarioFolder" folder
-			require.Greater(t, len(result.Result.Elements), 0, "Should find panels when searching by folder name")
-
-			// All returned panels should be in the ScenarioFolder
+			// Verify folder search finds both panels
+			require.Equal(t, int64(2), result.Result.TotalCount)
+			require.Equal(t, 2, len(result.Result.Elements))
+			require.Equal(t, 1, result.Result.Page)
+			require.Equal(t, 100, result.Result.PerPage)
 			for _, element := range result.Result.Elements {
+				require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+				require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
 				require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "All panels should be in ScenarioFolder")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.Equal(t, "text", element.Type, "Should be text panel")
+				require.NotEmpty(t, element.UID, "Should have a UID")
+				require.NotEmpty(t, element.Name, "Should have a name")
+				require.Equal(t, int64(0), element.Meta.ConnectedDashboards, "Should have no connected dashboards")
 			}
 		})
 
@@ -1208,8 +1216,18 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 
-			// Should return no results for non-existent folder
-			require.Equal(t, int64(0), result.Result.TotalCount, "Should return no results for non-existent folder")
+			// Verify no results for non-existent folder
+			expected := libraryElementsSearch{
+				Result: libraryElementsSearchResult{
+					TotalCount: 0,
+					Elements:   []libraryElement{},
+					Page:       1,
+					PerPage:    100,
+				},
+			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 			require.Equal(t, 0, len(result.Result.Elements), "Should return empty elements array")
 		})
 
@@ -1235,12 +1253,21 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 
-			// Should not find panels by folder name when folder filter is applied
-			// Only panels with "ScenarioFolder" in their name/description should be found
-			for _, element := range result.Result.Elements {
-				nameOrDescriptionMatch := element.Name == "ScenarioFolder" || element.Description == "ScenarioFolder"
-				require.True(t, nameOrDescriptionMatch, "With folder filter, should only match panel name/description, not folder name")
+			// Folder name search disabled when folder filter applied
+			expected := libraryElementsSearch{
+				Result: libraryElementsSearchResult{
+					TotalCount: 0,
+					Elements:   []libraryElement{},
+					Page:       1,
+					PerPage:    100,
+				},
 			}
+			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			require.Equal(t, int64(0), result.Result.TotalCount, "Should not find panels by folder name when folder filter is applied")
+			require.Equal(t, 0, len(result.Result.Elements), "Should return empty elements array")
 		})
 
 	scenarioWithPanel(t, "When searching by partial folder name, it should return panels in matching folders",
@@ -1263,15 +1290,21 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 
-			// Should find panels in folders with names containing "Scenario"
-			found := false
+			// Verify partial folder name matching
+			require.Equal(t, int64(2), result.Result.TotalCount, "Should find exactly 2 panels by partial folder name")
+			require.Equal(t, 2, len(result.Result.Elements), "Should return 2 elements")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
 			for _, element := range result.Result.Elements {
-				if element.Meta.FolderName == "ScenarioFolder" {
-					found = true
-					break
-				}
+				require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+				require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
+				require.Contains(t, element.Meta.FolderName, "Scenario", "Folder name should contain 'Scenario'")
+				require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "Should be in ScenarioFolder")
+				require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+				require.NotEmpty(t, element.UID, "Should have a UID")
+				require.NotEmpty(t, element.Name, "Should have a name")
 			}
-			require.True(t, found, "Should find panels in folders matching partial name")
 		})
 
 	scenarioWithPanel(t, "When searching combines panel name and folder name matches, it should return both",
@@ -1294,14 +1327,20 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 
-			// Should find the panel we just created with "Marketing" in its name
-			found := false
-			for _, element := range result.Result.Elements {
-				if element.Name == "Marketing Report Panel" {
-					found = true
-					break
-				}
-			}
-			require.True(t, found, "Should find panel with matching name")
+			// Verify panel name matching
+			require.Equal(t, int64(1), result.Result.TotalCount, "Should find exactly 1 panel with 'Marketing' in name")
+			require.Equal(t, 1, len(result.Result.Elements), "Should return 1 element")
+			require.Equal(t, 1, result.Result.Page, "Should be on page 1")
+			require.Equal(t, 100, result.Result.PerPage, "Should have perPage 100")
+
+			element := result.Result.Elements[0]
+			require.Equal(t, "Marketing Report Panel", element.Name, "Should find panel with correct name")
+			require.Equal(t, int64(1), element.OrgID, "Should be in org 1")
+			require.Equal(t, sc.folder.UID, element.FolderUID, "Should have correct folder UID")
+			require.Equal(t, "ScenarioFolder", element.Meta.FolderName, "Should be in ScenarioFolder")
+			require.Equal(t, int64(model.PanelElement), element.Kind, "Should be a panel element")
+			require.Equal(t, "text", element.Type, "Should be text panel")
+			require.NotEmpty(t, element.UID, "Should have a UID")
+			require.Equal(t, int64(0), element.Meta.ConnectedDashboards, "Should have no connected dashboards")
 		})
 }
