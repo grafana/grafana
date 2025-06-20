@@ -178,6 +178,8 @@ jobs:
   publish:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
+    permissions:
+      id-token: write
     needs:
       - setup
       - build
