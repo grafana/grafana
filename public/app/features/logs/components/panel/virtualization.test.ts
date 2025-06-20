@@ -26,7 +26,6 @@ describe('Virtualization', () => {
     showDuplicates: false,
     hasLogsWithErrors: false,
     hasSampledLogs: false,
-    fontSize: 'default',
   };
 
   beforeEach(() => {

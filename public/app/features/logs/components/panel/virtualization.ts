@@ -15,18 +15,21 @@ export const DEFAULT_LINE_HEIGHT = 22;
 
 export class LogLineVirtualization {
   private ctx: CanvasRenderingContext2D | null = null;
-  private gridSize = 8;
-  private paddingBottom = 8 * 0.75;
-  private lineHeight = DEFAULT_LINE_HEIGHT;
+  private gridSize;
+  private paddingBottom;
+  private lineHeight;
   private measurementMode: 'canvas' | 'dom' = 'canvas';
   private textWidthMap: Map<number, number>;
   private logLineSizesMap: Map<string, number>;
   private spanElement = document.createElement('span');
+  readonly fontSize: LogListFontSize;
 
   constructor(theme: GrafanaTheme2, fontSize: LogListFontSize) {
-    let fontSizePx = theme.typography.fontSize;
+    this.fontSize = fontSize;
 
+    let fontSizePx;
     if (fontSize === 'default') {
+      fontSizePx = theme.typography.fontSize;
       this.lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
     } else {
       fontSizePx =
@@ -223,19 +226,18 @@ export class LogLineVirtualization {
     this.logLineSizesMap = new Map<string, number>();
   };
 
-  storeLogLineSize = (id: string, container: HTMLDivElement, height: number, fontSize: LogListFontSize) => {
-    const key = `${id}_${getLogContainerWidth(container)}_${fontSize}`;
+  storeLogLineSize = (id: string, container: HTMLDivElement, height: number) => {
+    const key = `${id}_${getLogContainerWidth(container)}_${this.fontSize}`;
     this.logLineSizesMap.set(key, height);
   };
 
-  retrieveLogLineSize = (id: string, container: HTMLDivElement, fontSize: LogListFontSize) => {
-    const key = `${id}_${getLogContainerWidth(container)}_${fontSize}`;
+  retrieveLogLineSize = (id: string, container: HTMLDivElement) => {
+    const key = `${id}_${getLogContainerWidth(container)}_${this.fontSize}`;
     return this.logLineSizesMap.get(key);
   };
 }
 
 export interface DisplayOptions {
-  fontSize: LogListFontSize;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   showDuplicates: boolean;
@@ -248,7 +250,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { fontSize, hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -264,7 +266,7 @@ export function getLogLineSize(
     return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
   }
 
-  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container, fontSize);
+  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
     return storedSize;
   }

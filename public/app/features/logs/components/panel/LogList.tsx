@@ -322,7 +322,7 @@ const LogListComponent = ({
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
       if (height !== undefined) {
-        virtualization.storeLogLineSize(id, widthContainer, height, fontSize);
+        virtualization.storeLogLineSize(id, widthContainer, height);
       }
       if (index === overflowIndexRef.current) {
         return;
@@ -330,7 +330,7 @@ const LogListComponent = ({
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
       debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [debouncedResetAfterIndex, fontSize, virtualization, widthContainer]
+    [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
   const handleScrollPosition = useCallback(() => {
@@ -436,7 +436,6 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
-                fontSize,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
