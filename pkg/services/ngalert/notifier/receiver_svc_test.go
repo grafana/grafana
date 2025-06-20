@@ -728,7 +728,7 @@ func TestReceiverService_Update(t *testing.T) {
 				result, err := revision.CreateReceiver(tc.existing)
 				require.NoError(t, err)
 
-				created, err := PostableApiReceiverToReceiver(result, tc.existing.Provenance)
+				created, err := legacy_storage.PostableApiReceiverToReceiver(result, tc.existing.Provenance)
 				require.NoError(t, err)
 				err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
 				require.NoError(t, err)
