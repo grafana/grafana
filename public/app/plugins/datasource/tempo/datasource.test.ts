@@ -784,7 +784,7 @@ describe('Tempo service graph view', () => {
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\\\\\path',
+      'test\\\\path',
     ]);
   });
 
