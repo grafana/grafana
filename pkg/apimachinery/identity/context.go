@@ -125,6 +125,7 @@ var serviceIdentityTokenPermissions = getTokenPermissions(
 	"dashboard.grafana.app",
 	"secret.grafana.app",
 	"query.grafana.app",
+	"iam.grafana.app",
 )
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

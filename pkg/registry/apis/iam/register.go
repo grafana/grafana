@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,9 +16,11 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/corerole"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -25,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -34,32 +38,49 @@ var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	store        legacy.LegacyIdentityStore
-	authorizer   authorizer.Authorizer
+	store      legacy.LegacyIdentityStore
+	authorizer authorizer.Authorizer
+	// legacyAccessClient is used for the identity apis, we need to migrate to the access client
+	legacyAccessClient types.AccessClient
+	// accessClient is used for the core role apis
 	accessClient types.AccessClient
+
+	dbProvider legacysql.LegacyDatabaseProvider
+
+	reg prometheus.Registerer
 
 	// non-k8s api route
 	display *user.LegacyDisplayREST
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
+
+	enableAuthZResources bool
 }
 
 func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
+	accessClient types.AccessClient,
+	reg prometheus.Registerer,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	dbProvider := legacysql.NewDatabaseProvider(sql)
+	store := legacy.NewLegacySQLStores(dbProvider)
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:        store,
-		sso:          ssoService,
-		authorizer:   authorizer,
-		accessClient: client,
-		display:      user.NewLegacyDisplayREST(store),
+		store:                store,
+		dbProvider:           dbProvider,
+		sso:                  ssoService,
+		authorizer:           authorizer,
+		legacyAccessClient:   client,
+		accessClient:         accessClient,
+		display:              user.NewLegacyDisplayREST(store),
+		reg:                  reg,
+		enableAuthZResources: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -89,6 +110,10 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	if b.enableAuthZResources {
+		iamv0b.AddToScheme(scheme)
+	}
+
 	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
 
 	// Link this version to the internal representation.
@@ -100,22 +125,22 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.accessClient)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.accessClient)
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
@@ -123,12 +148,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
+	if b.enableAuthZResources {
+		// v0alpha1
+		coreRoleResource := iamv0b.CoreRoleInfo
+		store, err := corerole.NewStore(
+			coreRoleResource,
+			apiGroupInfo.Scheme,
+			opts.OptsGetter,
+			b.reg,
+			b.accessClient,
+			b.dbProvider,
+		)
+		if err != nil {
+			return err
+		}
+		storage[coreRoleResource.StoragePath()] = store
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return iamv0.GetOpenAPIDefinitions
+	defs := iamv0.GetOpenAPIDefinitions
+	if b.enableAuthZResources {
+		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			def1 := iamv0.GetOpenAPIDefinitions(ref)
+			def2 := iamv0b.GetOpenAPIDefinitions(ref)
+			for k, v := range def2 {
+				def1[k] = v
+			}
+			return def1
+		}
+	}
+	return defs
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
