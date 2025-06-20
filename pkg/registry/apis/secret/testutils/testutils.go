@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -98,7 +97,6 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			Encryption: setting.EncryptionSettings{
 				DataKeysCleanupInterval: time.Nanosecond,
 				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               cipher.AesGcm,
 			},
 		},
 	}
