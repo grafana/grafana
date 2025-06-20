@@ -1,20 +1,16 @@
 import {
-  DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
-
 import {
   trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField,
   trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
   trackInfluxDBConfigV2FluxDBDetailsTokenInputField,
 } from './tracking';
-
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
+import { Props } from './types';
 
 export const InfluxFluxDBConnection = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -25,6 +21,8 @@ export const InfluxFluxDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField label="Organization" labelWidth={30} grow>
           <Input
+            id="organization"
+            placeholder="my-org"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
             value={jsonData.organization || ''}
@@ -34,9 +32,10 @@ export const InfluxFluxDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField labelWidth={30} label="Default Bucket" grow>
           <Input
+            id="default-bucket"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
-            placeholder="default bucket"
+            placeholder="my-bucket"
             value={jsonData.defaultBucket || ''}
           />
         </InlineField>
@@ -44,6 +43,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField labelWidth={30} label="Token" grow>
           <SecretInput
+            id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
             onBlur={() => {
               onOptionsChange({

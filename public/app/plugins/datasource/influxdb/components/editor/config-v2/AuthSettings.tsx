@@ -1,7 +1,11 @@
 import { cx } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import {
+  onUpdateDatasourceOption,
+  onUpdateDatasourceSecureJsonDataOption,
+  updateDatasourcePluginResetOption,
+} from '@grafana/data';
 import { AuthMethod, convertLegacyAuthProps } from '@grafana/plugin-ui';
 import {
   Box,
@@ -18,159 +22,180 @@ import {
   Text,
 } from '@grafana/ui';
 
-import { InfluxOptions } from '../../../types';
-
 import { AUTH_RADIO_BUTTON_OPTIONS, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
 import {
   trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
   trackInfluxDBConfigV2AuthSettingsToggleClicked,
 } from './tracking';
+import { Props } from './types';
 
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
+type AuthOptionState = {
+  basicAuth: boolean;
+  tlsClientAuth: boolean;
+  caCert: boolean;
+  skipTLS: boolean;
+  oAuthForward: boolean;
+  withCredentials: boolean;
+};
 
-export const AuthSettings = ({ options, onOptionsChange }: Props) => {
+export const AuthSettings = (props: Props) => {
+  const { options, onOptionsChange } = props;
   const styles = useStyles2(getInlineLabelStyles);
 
-  const authProps = convertLegacyAuthProps({
-    config: options,
-    onChange: onOptionsChange,
-  });
+  /**
+   * Derived props from legacy helpers
+   */
+  const authProps = useMemo(
+    () =>
+      convertLegacyAuthProps({
+        config: options,
+        onChange: onOptionsChange,
+      }),
+    [options, onOptionsChange]
+  );
 
+  /**
+   * Selected authentication method. Fallback to the most common if the selected one is missing.
+   */
   const isAuthMethod = (v: unknown): v is AuthMethod =>
     v === AuthMethod.NoAuth || v === AuthMethod.BasicAuth || v === AuthMethod.OAuthForward;
 
-  const selectedMethod = isAuthMethod(authProps.selectedMethod)
-    ? authProps.selectedMethod
-    : isAuthMethod(authProps.mostCommonMethod)
-      ? authProps.mostCommonMethod
-      : undefined;
+  const selectedMethod = useMemo<AuthMethod | undefined>(() => {
+    if (isAuthMethod(authProps.selectedMethod)) {
+      return authProps.selectedMethod;
+    }
+    return isAuthMethod(authProps.mostCommonMethod) ? authProps.mostCommonMethod : undefined;
+  }, [authProps.selectedMethod, authProps.mostCommonMethod]);
 
-  const [authOptions, setAuthOptions] = useState({
-    basicAuth: authProps.selectedMethod === AuthMethod.BasicAuth,
+  /**
+   * Local UI state
+   */
+  const [authOptions, setAuthOptions] = useState<AuthOptionState>({
+    basicAuth: selectedMethod === AuthMethod.BasicAuth,
     tlsClientAuth: authProps.TLS?.TLSClientAuth.enabled ?? false,
     caCert: authProps.TLS?.selfSignedCertificate.enabled ?? false,
     skipTLS: authProps.TLS?.skipTLSVerification.enabled ?? false,
-    oAuthForward: authProps.selectedMethod === AuthMethod.OAuthForward,
+    oAuthForward: selectedMethod === AuthMethod.OAuthForward,
     withCredentials: options.withCredentials ?? false,
   });
 
-  const [authenticationSettingsIsOpen, setAuthenticationSettingsIsOpen] = useState(() =>
+  /**
+   * Expand/collapse top–level section
+   */
+  const [authenticationSettingsIsOpen, setAuthenticationSettingsIsOpen] = useState(
     Object.values(authOptions).some(Boolean)
   );
 
+  const toggleOpen = useCallback(() => {
+    setAuthenticationSettingsIsOpen((prev) => {
+      trackInfluxDBConfigV2AuthSettingsToggleClicked();
+      return !prev;
+    });
+  }, []);
+
+  const handleAuthMethodChange = useCallback(
+    (option: AuthMethod) => {
+      authProps.onAuthMethodSelect(option);
+      setAuthOptions((prev) => ({
+        ...prev,
+        basicAuth: option === AuthMethod.BasicAuth,
+        oAuthForward: option === AuthMethod.OAuthForward,
+      }));
+      trackInfluxDBConfigV2AuthSettingsAuthMethodSelected({ authMethod: option });
+    },
+    [authProps]
+  );
+
+  /**
+   * Wraps the toggle of an auth option, updates the local state and calls the onToggle callback
+   * provided by the legacy `authProps` provided by `@grafana/plugin-ui`.
+   */
+  const toggleOption = useCallback((key: keyof AuthOptionState, onToggle: (value: boolean) => void) => {
+    setAuthOptions((prev) => {
+      const nextValue = !prev[key];
+      const next = { ...prev, [key]: nextValue } as AuthOptionState;
+      onToggle(nextValue);
+      return next;
+    });
+  }, []);
+
   return (
     <>
+      {/* Header toggle */}
       <Box display="flex" alignItems="center">
         <InlineField label={<div className={cx(styles.label)}>Auth and TLS/SSL Settings</div>} labelWidth={35}>
           <InlineSwitch
+            data-testid="influxdb-v2-config-auth-settings-toggle"
             value={authenticationSettingsIsOpen}
-            onChange={() => setAuthenticationSettingsIsOpen(!authenticationSettingsIsOpen)}
-            onBlur={trackInfluxDBConfigV2AuthSettingsToggleClicked}
+            onChange={toggleOpen}
           />
         </InlineField>
       </Box>
+
+      {/* Collapsible settings body */}
       {authenticationSettingsIsOpen && (
-        <div style={{ paddingLeft: '10px' }}>
+        <Box paddingLeft={1}>
           <Space v={2} />
-          <Field label={<Text element="h5">Authentication Method</Text>} noMargin>
-            <div style={{ width: '50%', display: 'flex', marginTop: '20px' }}>
+
+          {/* Authentication Method */}
+          <Field label={<Text element="h5">Authentication Method</Text>}>
+            <Box width="50%" display="flex" marginTop={1}>
               <RadioButtonGroup
                 options={AUTH_RADIO_BUTTON_OPTIONS}
                 value={selectedMethod}
-                onChange={(option: AuthMethod) => {
-                  authProps.onAuthMethodSelect(option);
-                  setAuthOptions({
-                    ...authOptions,
-                    basicAuth: option === AuthMethod.BasicAuth,
-                    oAuthForward: option === AuthMethod.OAuthForward,
-                  });
-                  trackInfluxDBConfigV2AuthSettingsAuthMethodSelected({ authMethod: option });
-                }}
+                onChange={handleAuthMethodChange}
               />
-            </div>
+            </Box>
           </Field>
-          <Field noMargin>
+
+          {/* Basic Auth settings */}
+          {authOptions.basicAuth && (
             <>
-              {authOptions.basicAuth && (
-                <>
-                  <Space v={1} />
-                  <Box display="flex" direction="column">
-                    <Box width="60%">
-                      <InlineField label="User" labelWidth={14} grow>
-                        <Input
-                          placeholder="User"
-                          onChange={(e) => onOptionsChange({ ...options, basicAuthUser: e.currentTarget.value })}
-                          value={options.basicAuthUser || ''}
-                        />
-                      </InlineField>
-                    </Box>
-                    <Box width="60%">
-                      <InlineField label="Password" labelWidth={14} grow>
-                        <SecretInput
-                          placeholder="Password"
-                          isConfigured={options.secureJsonFields.basicAuthPassword || false}
-                          onChange={(e) =>
-                            onOptionsChange({
-                              ...options,
-                              secureJsonData: {
-                                ...options.secureJsonData,
-                                basicAuthPassword: e.currentTarget.value,
-                              },
-                            })
-                          }
-                          onReset={() => {
-                            onOptionsChange({
-                              ...options,
-                              secureJsonData: {
-                                ...options.secureJsonData,
-                                basicAuthPassword: '',
-                              },
-                              secureJsonFields: {
-                                ...options.secureJsonFields,
-                                basicAuthPassword: false,
-                              },
-                            });
-                          }}
-                          onBlur={() => {
-                            onOptionsChange({
-                              ...options,
-                              secureJsonFields: {
-                                ...options.secureJsonFields,
-                                basicAuthPassword: true,
-                              },
-                            });
-                          }}
-                        />
-                      </InlineField>
-                    </Box>
-                  </Box>
-                </>
-              )}
+              <Space v={1} />
+              <Box display="flex" direction="column" width="60%" marginBottom={2}>
+                <InlineField label="User" labelWidth={14} grow>
+                  <Input
+                    placeholder="User"
+                    onChange={onUpdateDatasourceOption(props, 'basicAuthUser')}
+                    value={options.basicAuthUser || ''}
+                  />
+                </InlineField>
+                <InlineField label="Password" labelWidth={14} grow>
+                  <SecretInput
+                    placeholder="Password"
+                    isConfigured={options.secureJsonFields.basicAuthPassword || false}
+                    onChange={onUpdateDatasourceSecureJsonDataOption(props, 'basicAuthPassword')}
+                    onReset={() => updateDatasourcePluginResetOption(props, 'basicAuthPassword')}
+                    value={options.secureJsonData?.basicAuthPassword || ''}
+                  />
+                </InlineField>
+              </Box>
             </>
-          </Field>
-          <Field noMargin>
+          )}
+
+          {/* TLS Client Auth */}
+          <Field>
             <>
               <Text element="h5">TLS Settings</Text>
               <Space v={3} />
-              <Box display="flex" alignItems="center">
+              <Box
+                display="flex"
+                alignItems="center"
+                data-testid="influxdb-v2-config-auth-settings-tls-client-auth-toggle"
+              >
                 <Label style={{ width: '125px' }}>TLS Client Auth</Label>
                 <RadioButtonGroup
                   options={RADIO_BUTTON_OPTIONS}
                   value={authOptions.tlsClientAuth}
-                  onChange={() => {
-                    setAuthOptions({
-                      ...authOptions,
-                      tlsClientAuth: !authOptions.tlsClientAuth,
-                    });
-                    authProps.TLS!.TLSClientAuth.onToggle(!authProps.TLS!.TLSClientAuth.enabled);
-                  }}
+                  onChange={() => toggleOption('tlsClientAuth', authProps.TLS!.TLSClientAuth.onToggle)}
                   size="sm"
                 />
               </Box>
+
               {authOptions.tlsClientAuth && (
                 <>
                   <Space v={3} />
-                  <InlineField label="ServerName" labelWidth={14} grow>
+                  <InlineField label="Server Name" labelWidth={14} grow>
                     <Input
                       placeholder="domain.example.com"
                       onChange={(e) => authProps.TLS?.TLSClientAuth.onServerNameChange(e.currentTarget.value)}
@@ -195,17 +220,16 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
               )}
             </>
           </Field>
-          <Field noMargin>
+
+          {/* CA Cert */}
+          <Field>
             <>
-              <Box display="flex" alignItems="center">
+              <Box display="flex" alignItems="center" data-testid="influxdb-v2-config-auth-settings-ca-cert-toggle">
                 <Label style={{ width: '125px' }}>CA Cert</Label>
                 <RadioButtonGroup
                   options={RADIO_BUTTON_OPTIONS}
                   value={authOptions.caCert}
-                  onChange={() => {
-                    setAuthOptions({ ...authOptions, caCert: !authOptions.caCert });
-                    authProps.TLS!.selfSignedCertificate.onToggle(!authProps.TLS!.selfSignedCertificate.enabled);
-                  }}
+                  onChange={() => toggleOption('caCert', authProps.TLS!.selfSignedCertificate.onToggle)}
                   size="sm"
                 />
               </Box>
@@ -223,17 +247,17 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
               )}
             </>
           </Field>
+
+          {/* Skip TLS verify */}
           <Box display="flex" alignItems="center">
             <Label style={{ width: '125px' }}>Skip TLS Verify</Label>
             <InlineSwitch
+              data-testid="influxdb-v2-config-auth-settings-skip-tls-verify"
               value={authOptions.skipTLS}
-              onChange={() => {
-                setAuthOptions({ ...authOptions, skipTLS: !authOptions.skipTLS });
-                authProps.TLS!.skipTLSVerification.onToggle(!authProps.TLS!.skipTLSVerification.enabled);
-              }}
+              onChange={() => toggleOption('skipTLS', authProps.TLS!.skipTLSVerification.onToggle)}
             />
           </Box>
-        </div>
+        </Box>
       )}
     </>
   );

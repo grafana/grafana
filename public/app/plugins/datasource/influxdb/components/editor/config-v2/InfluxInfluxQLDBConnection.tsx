@@ -1,19 +1,12 @@
-import {
-  DataSourcePluginOptionsEditorProps,
-  onUpdateDatasourceSecureJsonDataOption,
-  updateDatasourcePluginResetOption,
-} from '@grafana/data';
+import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
-
-import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import {
   trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField,
   trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField,
 } from './tracking';
-
-export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions, InfluxSecureJsonData>;
+import { Props } from './types';
 
 export const InfluxInfluxQLDBConnection = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -23,6 +16,8 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField label="Database" labelWidth={30} grow>
           <Input
+            id="database"
+            placeholder="mydb"
             value={options.jsonData.dbName}
             onChange={(event) => {
               onOptionsChange({
@@ -41,6 +36,8 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField label="User" labelWidth={30} grow>
           <Input
+            id="user"
+            placeholder="myuser"
             value={options.user || ''}
             onChange={(e) => onOptionsChange({ ...options, user: e.currentTarget.value })}
             onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField}
@@ -50,6 +47,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
       <InlineFieldRow>
         <InlineField label="Password" labelWidth={30} grow>
           <SecretInput
+            id="password"
             isConfigured={Boolean(options.secureJsonFields && options.secureJsonFields.password)}
             value={options.secureJsonData?.password || ''}
             onReset={() => updateDatasourcePluginResetOption(props, 'password')}

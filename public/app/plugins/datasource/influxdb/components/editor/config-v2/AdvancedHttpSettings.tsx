@@ -36,6 +36,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
       <Box display="flex" alignItems="center">
         <InlineField label={<div className={cx(styles.label)}>Advanced HTTP Settings</div>} labelWidth={40}>
           <InlineSwitch
+            data-testid="influxdb-v2-config-advanced-http-settings-toggle"
             value={advancedHttpSettingsIsOpen}
             onChange={() => setAdvancedHttpSettingsIsOpen(!advancedHttpSettingsIsOpen)}
             onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked}
