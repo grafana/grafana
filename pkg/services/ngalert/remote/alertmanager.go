@@ -607,6 +607,12 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		return am.decrypt(ctx, payload)
 	}
 
+	for _, receiver := range c.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
+			return nil, 0, err
+		}
+	}
+
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
