@@ -244,8 +244,14 @@ class DataSourceWithBackend<
 
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
+      if (request.dashboardTitle) {
+        headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
+      }
       if (request.panelId) {
         headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
+      }
+      if (request.panelName) {
+        headers[PluginRequestHeaders.PanelTitle] = request.panelName;
       }
     }
     if (request.panelPluginId) {
@@ -256,12 +262,6 @@ class DataSourceWithBackend<
     }
     if (request.skipQueryCache) {
       headers[PluginRequestHeaders.SkipQueryCache] = 'true';
-    }
-    if (request.dashboardTitle) {
-      headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
-    }
-    if (request.panelName) {
-      headers[PluginRequestHeaders.PanelTitle] = request.panelName;
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
