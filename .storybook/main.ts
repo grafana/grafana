@@ -2,28 +2,7 @@ import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import { copyAssetsSync } from './copyAssets';
 
-// Internal stories should only be visible during development
-const coreComponentsGlobs: StorybookConfig['stories'] = [
-  '../src/Intro.mdx',
-  process.env.NODE_ENV === 'production'
-    ? '../src/components/**/!(*.internal).story.tsx'
-    : '../src/components/**/*.story.tsx',
-];
-
-const alertingComponentsGlobs: StorybookConfig['stories'] = [
-  {
-    titlePrefix: 'Alerting',
-    directory: '../../grafana-alerting/src',
-    files: '**/*.mdx',
-  },
-  {
-    titlePrefix: 'Alerting',
-    directory: '../../grafana-alerting/src',
-    files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
-  },
-];
-
-const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs];
+const stories = [...packageStories('grafana-ui'), ...packageStories('grafana-alerting', 'Alerting')];
 
 // Copy the assets required by storybook before starting the storybook server.
 copyAssetsSync();
@@ -37,7 +16,7 @@ const mainConfig: StorybookConfig = {
         backgrounds: false,
       },
     },
-    getAbsolutePath('@storybook/addon-a11y'),
+    '@storybook/addon-a11y',
     {
       name: '@storybook/preset-scss',
       options: {
@@ -57,11 +36,11 @@ const mainConfig: StorybookConfig = {
         },
       },
     },
-    getAbsolutePath('@storybook/addon-storysource'),
-    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
+    '@storybook/addon-storysource',
+    '@storybook/addon-webpack5-compiler-swc',
   ],
   framework: {
-    name: getAbsolutePath('@storybook/react-webpack5'),
+    name: '@storybook/react-webpack5',
     options: {
       fastRefresh: true,
       builder: {
@@ -92,6 +71,8 @@ const mainConfig: StorybookConfig = {
     },
   }),
   webpackFinal: async (config) => {
+    config.target = 'web';
+
     // expose jquery as a global so jquery plugins don't break at runtime.
     config.module?.rules?.push({
       test: require.resolve('jquery'),
@@ -106,6 +87,17 @@ const mainConfig: StorybookConfig = {
 };
 module.exports = mainConfig;
 
-function getAbsolutePath(value: string): any {
-  return dirname(require.resolve(join(value, 'package.json')));
+function packageStories(name: string, prefix?: string) {
+  return [
+    {
+      titlePrefix: prefix,
+      directory: `../packages/${name}/src`,
+      files: 'Intro.mdx',
+    },
+    {
+      titlePrefix: prefix,
+      directory: `../packages/${name}/src`,
+      files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
+    },
+  ];
 }

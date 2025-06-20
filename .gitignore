@@ -152,7 +152,6 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
-/packages/grafana-ui/.storybook/static
 /packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
@@ -161,6 +160,9 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /packages/**/package.tgz
 ## CI places the packages in a different location
 /npm-artifacts
+
+# Storybook static assets
+.storybook/static
 
 # Ignore frontend build manifest
 manifest.json

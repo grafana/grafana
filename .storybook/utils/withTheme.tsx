@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { getThemeById, GrafanaTheme2, ThemeContext } from '@grafana/data';
 
-import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
+import { GlobalStyles } from '../../packages/grafana-ui/src/themes/GlobalStyles/GlobalStyles';
 
 type SassThemeChangeHandler = (theme: GrafanaTheme2) => void;
 interface ThemeableStoryProps {

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "outDir": "compiled",
+    "jsx": "react-jsx",
+    "baseUrl": "./",
+    "isolatedModules": true,
+    "allowJs": true,
+    "rootDirs": ["."]
+  },
+  "extends": "@grafana/tsconfig/base.json",
+  // override for storybook which uses ts-node to compile main.ts / preview.ts files.
+  "ts-node": {
+    "compilerOptions": {
+      "isolatedModules": false,
+      "resolveJsonModule": true,
+      "module": "NodeNext"
+    }
+  }
+}
