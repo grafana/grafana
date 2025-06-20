@@ -5,7 +5,7 @@ go 1.24.4
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/grafana-app-sdk v0.39.0
-	github.com/grafana/grafana-plugin-sdk-go v0.277.0
+	github.com/grafana/grafana-plugin-sdk-go v0.277.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.33.1
@@ -19,7 +19,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
-	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476 // indirect
+	github.com/chromedp/cdproto v0.0.0-20250429231605-6ed5b53462d4 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
