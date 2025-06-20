@@ -178,6 +178,9 @@ jobs:
   publish:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
+    needs:
+      - setup
+      - build
     with:
       bucket: grafana-prerelease
       artifact: artifacts-*
