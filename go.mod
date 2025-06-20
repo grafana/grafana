@@ -575,7 +575,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df
+require github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df // @grafana/identity-access-team
 
 require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
