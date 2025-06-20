@@ -43,7 +43,62 @@ describe('RowItemRepeater', () => {
         expect(screen.queryByText('Row C')).toBeInTheDocument();
       });
 
+      expect(rowToRepeat.state.key).toBe('row-1-clone-0');
       expect(rowToRepeat.state.repeatedRows!.length).toBe(2);
+      expect(rowToRepeat.state.repeatedRows![0].state.key).toBe('row-1-clone-1');
+    });
+
+    it('Should update repeats when variable value changes', async () => {
+      const { repeatByVariable, rowToRepeat } = renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        repeatByVariable.changeValueTo(['C', 'D']);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row A')).not.toBeInTheDocument();
+        expect(screen.queryByText('Row D')).toBeInTheDocument();
+      });
+
+      expect(rowToRepeat.state.repeatedRows!.length).toBe(1);
+    });
+
+    it('Should skip update repeats when variable values the same', async () => {
+      const { repeatByVariable, rowToRepeat } = renderScene({ variableQueryTime: 0 });
+      let stateUpdates = 0;
+
+      rowToRepeat.subscribeToState((s) => stateUpdates++);
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        repeatByVariable.changeValueTo(['A1', 'B1', 'C1']);
+      });
+
+      expect(stateUpdates).toBe(1);
+    });
+
+    it('Should handle removing repeats', async () => {
+      const { rowToRepeat } = renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        rowToRepeat.onChangeRepeat(undefined);
+      });
+
+      expect(screen.queryByText('Row C')).not.toBeInTheDocument();
+      expect(rowToRepeat.state.$variables).toBe(undefined);
+      expect(rowToRepeat.state.repeatedRows).toBe(undefined);
+      expect(rowToRepeat.state.repeatByVariable).toBe(undefined);
     });
   });
 });
@@ -82,28 +137,27 @@ function renderScene(
   ];
 
   const layout = new RowsLayoutManager({ rows });
+  const repeatByVariable = new TestVariable({
+    name: 'server',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    refresh: options.variableRefresh,
+    optionsToReturn: variableOptions ?? [
+      { label: 'A', value: 'A1' },
+      { label: 'B', value: 'B1' },
+      { label: 'C', value: 'C1' },
+    ],
+    ...variableStateOverrides,
+  });
 
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     $variables: new SceneVariableSet({
-      variables: [
-        new TestVariable({
-          name: 'server',
-          query: 'A.*',
-          value: ALL_VARIABLE_VALUE,
-          text: ALL_VARIABLE_TEXT,
-          isMulti: true,
-          includeAll: true,
-          delayMs: options.variableQueryTime,
-          refresh: options.variableRefresh,
-          optionsToReturn: variableOptions ?? [
-            { label: 'A', value: 'A1' },
-            { label: 'B', value: 'B1' },
-            { label: 'C', value: 'C1' },
-          ],
-          ...variableStateOverrides,
-        }),
-      ],
+      variables: [repeatByVariable],
     }),
     body: layout,
   });
@@ -112,27 +166,5 @@ function renderScene(
 
   render(<scene.Component model={scene} />);
 
-  return { scene, layout, rows, rowToRepeat };
-}
-
-function getRowLayout(row: RowItem): DefaultGridLayoutManager {
-  const layout = row.getLayout();
-
-  if (!(layout instanceof DefaultGridLayoutManager)) {
-    throw new Error('Invalid layout');
-  }
-
-  return layout;
-}
-
-function getRowChildren(row: RowItem): DashboardGridItem[] {
-  const layout = getRowLayout(row);
-
-  const filteredChildren = layout.state.grid.state.children.filter((child) => child instanceof DashboardGridItem);
-
-  if (filteredChildren.length !== layout.state.grid.state.children.length) {
-    throw new Error('Invalid layout');
-  }
-
-  return filteredChildren;
+  return { scene, layout, rows, rowToRepeat, repeatByVariable };
 }
