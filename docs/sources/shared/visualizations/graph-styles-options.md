@@ -28,7 +28,7 @@ comments: |
 
 Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. Choose from the following:
 
-![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
+![Graph style examples](/media/docs/grafana/panels-visualizations/screenshot-time-style-v12.0.png)
 
 #### Line interpolation
 
@@ -38,6 +38,8 @@ Choose how the graph interpolates the series line:
 - **Smooth** - Points are joined by curved lines that smooths transitions between points.
 - **Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.
 - **Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.
+
+![Line interpolation examples](/media/docs/grafana/panels-visualizations/screenshot-time-interpolation-v12.0.png)
 
 #### Gradient mode
 
@@ -50,7 +52,7 @@ Choose a gradient mode to control the gradient fill, which is based on the serie
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image shows the **Fill opacity** set to 50.
 
-![Gradient mode examples](/static/img/docs/time-series-panel/gradient-modes-v9.png)
+![Gradient mode examples](/media/docs/grafana/panels-visualizations/screenshot-time-gradient-v12.0.png)
 
 ##### Scheme gradient mode
 
@@ -72,7 +74,7 @@ Choose a solid, dashed, or dotted line style:
 - **Dash** - Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing is 10, 10 by default.
 - **Dots** - Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing is 0, 10 by default.
 
-![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-line-style-v12.0.png" max-width="550px" alt="Line style examples" >}}
 
 {{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 

@@ -75,7 +75,7 @@ refs:
 
 Time series visualizations are the default way to show the variations of a set of data values over time. Each data point is matched to a timestamp and this _time series_ is displayed as a graph. The visualization can render series as lines, points, or bars and it's versatile enough to display almost any type of [time-series data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/).
 
-{{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" alt="Time series" >}}
+{{< figure src="screenshot-time-series-v12.0.png" max-width="750px" alt="Time series visualization" >}}
 
 {{< admonition type="note" >}}
 You can migrate from the legacy Graph visualization to the time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
@@ -187,7 +187,7 @@ The **Graph styles > Fill below to** [override property](#field-overrides) fills
 
 The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
-{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" alt="Fill below to example" >}}
+{{< figure src="screenshot-fill-below-to-v12.0.png" max-width="600px" alt="Fill below to example" >}}
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
