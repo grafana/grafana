@@ -88,9 +88,7 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
-      let body = this.collapsed ? this.raw.substring(0, getTruncationLength(null)) : this.raw;
-      // Turn it into a single-line log entry for the list
-      this._body = body.replace(/(\r\n|\n|\r)/g, '');
+      this._body = this.collapsed ? this.raw.substring(0, getTruncationLength(null)) : this.raw;
     }
     return this._body;
   }

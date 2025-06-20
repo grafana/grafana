@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types/store';
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
@@ -57,13 +57,27 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
   );
 }
 
+interface GrafanaPromApiFilter {
+  state?: PromAlertingRuleState[];
+  health?: RuleHealth[];
+  contactPoint?: string;
+}
+
+interface GrafanaFetchGroupsOptions extends FetchGroupsOptions {
+  filter?: GrafanaPromApiFilter;
+}
+
 export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
   const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: FetchGroupsOptions) => {
-      const response = await getGrafanaGroups({ ...fetchOptions, limitAlerts: hookOptions.limitAlerts }).unwrap();
+    async (fetchOptions: GrafanaFetchGroupsOptions) => {
+      const response = await getGrafanaGroups({
+        ...fetchOptions,
+        limitAlerts: hookOptions.limitAlerts,
+        ...fetchOptions.filter,
+      }).unwrap();
 
       // This is not mandatory to preload ruler rules, but it improves the UX
       // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
@@ -94,8 +108,11 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
   );
 
   return useCallback(
-    async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
+    async function* (groupLimit: number, filter?: GrafanaPromApiFilter) {
+      yield* genericGroupsGenerator(
+        (fetchOptions) => getGroupsAndProvideCache({ ...fetchOptions, filter }),
+        groupLimit
+      );
     },
     [getGroupsAndProvideCache]
   );
