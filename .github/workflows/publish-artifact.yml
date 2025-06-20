@@ -12,11 +12,6 @@ on:
         description: (From actinos/download-artifact) Name of the GitHub artifact to upload (Ignored if `pattern` is set)
         type: string
         required: false
-      path:
-        description: Local path (from the root of the artifact) to upload
-        type: string
-        required: false
-        default: "."
       bucket:
         description: Name of the GCS bucket
         type: string
@@ -53,11 +48,9 @@ jobs:
         with:
           environment: ${{ inputs.environment }}
       - name: Coalesce artifacts
-        env:
-          ARTIFACT_PATH: ${{ inputs.path }}
         run: |
           mkdir out
-          rsync -r "artifact/*/${ARTIFACT_PATH}" out
+          find ./artifact -type f -exec cp {} out/ \;
           ls -al out
       - name: Upload artifacts
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0

@@ -189,7 +189,6 @@ jobs:
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}
-      path: dist
       environment: prod
   publish-artifact-lists:
     name: Upload artifacts
