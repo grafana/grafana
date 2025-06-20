@@ -73,6 +73,11 @@ jobs:
       id-token: write
     name: Dispatch grafana-enterprise build
     steps:
+      - name: Log in to GCS
+        id: login-to-gcs
+        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        with:
+          environment: prod
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -91,9 +96,10 @@ jobs:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
           BUILD_ID: ${{ github.run_number }}
+          BUCKET: ${{ steps.login-to-gcs.outputs.bucket }}
         with:
           script: |
-            const {REF, VERSION, BUILD_ID} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -103,6 +109,7 @@ jobs:
                 inputs: {
                   "version": VERSION,
                   "build-id": BUILD_ID,
+                  "bucket": BUCKET,
                 }
             })
 
@@ -114,6 +121,7 @@ jobs:
       id-token: write
     name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
     strategy:
+      fail-fast: false
       matrix:
         # The artifacts in these lists are grouped by their os+arch because the
         # build process can reuse the binaries for each artifact.
@@ -157,23 +165,31 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: true
           build-id: ${{ github.run_number }}
-      - name: Log in to GCS
-        id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          environment: prod
+          name: artifacts-list-${{ matrix.name }}
+          path: ${{ steps.build.outputs.file }}
+          retention-days: 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: artifacts-${{ matrix.name }}
+          path: ${{ steps.build.outputs.dist-dir }}
+          retention-days: 1
       - name: Upload artifacts
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
         with:
-          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
+          bucket: grafana-prerelease
+          artifact: artifacts-${{ matrix.name }}
+          run-id: ${{ github.run_id }}
+          path: ${{ steps.build.outputs.dist-dir }}
           environment: prod
           parent: false
-          path: ${{ steps.build.outputs.dist-dir }}
-          bucket_path: ${{ needs.setup.outputs.version }}
-      - name: Upload manifest
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+      - name: Upload artifacts list
+        uses: grafana/grafana/.github/workflows/publish-prerelease@km/prerelease-builds-gha
         with:
-          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
-          environment: prod
+          bucket: grafana-prerelease
+          artifact: artifacts-${{ matrix.name }}
+          run-id: ${{ github.run_id }}
           path: ${{ steps.build.outputs.file }}
-          bucket_path: ${{ needs.setup.outputs.version }}
+          environment: prod
+          parent: false
