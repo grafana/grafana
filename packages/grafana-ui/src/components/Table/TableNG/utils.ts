@@ -7,7 +7,6 @@ import {
   FieldType,
   Field,
   formattedValueToString,
-  reduceField,
   GrafanaTheme2,
   DisplayValue,
   LinkModel,
@@ -170,7 +169,7 @@ export function getAlignmentFactor(
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display!(field.values[i]);
+      const nextDisplayValue = field.display?.(field.values[i]) ?? field.values[i];
       if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
         alignmentFactor.text = displayValue.text;
       }
@@ -184,46 +183,6 @@ export function getAlignmentFactor(
 
     return alignmentFactor;
   }
-}
-
-/* ------------------------------ Footer calculations ------------------------------ */
-/**
- * @internal
- * Returns the footer item for a field based on the provided rows and footer calculation options.
- */
-export function getFooterItem(rows: TableRow[], field: Field, options?: TableFooterCalc): string {
-  if (options === undefined) {
-    return '';
-  }
-
-  if (field.type !== FieldType.number) {
-    return '';
-  }
-
-  // Check if reducer array exists and has at least one element
-  if (!options.reducer?.length) {
-    return '';
-  }
-
-  // If fields array is specified, only show footer for fields included in that array
-  if (options.fields && options.fields.length > 0) {
-    if (!options.fields.includes(getDisplayName(field))) {
-      return '';
-    }
-  }
-
-  const calc = options.reducer[0];
-  const value = reduceField({
-    field: {
-      ...field,
-      values: rows.map((row) => row[getDisplayName(field)]),
-    },
-    reducers: options.reducer,
-  })[calc];
-
-  const formattedValue = formattedValueToString(field.display!(value));
-
-  return formattedValue;
 }
 
 /* ------------------------- Cell color calculation ------------------------- */

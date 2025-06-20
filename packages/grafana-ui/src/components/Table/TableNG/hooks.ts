@@ -1,21 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode } from '../types';
 
 import { TABLE } from './constants';
 import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
-import {
-  getDisplayName,
-  processNestedTableRows,
-  getCellHeightCalculator,
-  getFooterItem,
-  applySort,
-  getCellOptions,
-} from './utils';
+import { getDisplayName, processNestedTableRows, getCellHeightCalculator, applySort, getCellOptions } from './utils';
 
 // Helper function to get displayed value
 const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
@@ -252,21 +245,51 @@ export function useFooterCalcs(
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
-    if (!enabled) {
+    const footerReducers = footerOptions?.reducer;
+
+    if (!enabled || !footerOptions || !Array.isArray(footerReducers) || !footerReducers.length) {
       return [];
     }
+
     return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
+
       if (isCountRowsSet) {
         return index === 0 ? `${rows.length}` : '';
       }
+
       if (index === 0) {
-        const footerCalcReducer = footerOptions?.reducer?.[0];
+        const footerCalcReducer = footerReducers[0];
         return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
-      return getFooterItem(rows, field, footerOptions);
+
+      if (field.type !== FieldType.number) {
+        return '';
+      }
+
+      // if field.display is undefined, don't throw
+      const displayFn = field.display;
+      if (!displayFn) {
+        return '';
+      }
+
+      // If fields array is specified, only show footer for fields included in that array
+      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
+        return '';
+      }
+
+      const calc = footerReducers[0];
+      const value = reduceField({
+        field: {
+          ...field,
+          values: rows.map((row) => row[getDisplayName(field)]),
+        },
+        reducers: footerReducers,
+      })[calc];
+
+      return formattedValueToString(displayFn(value));
     });
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
