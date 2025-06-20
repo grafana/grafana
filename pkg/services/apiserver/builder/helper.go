@@ -402,24 +402,25 @@ func InstallAPIs(
 			if len(g.PrioritizedVersions) < 1 {
 				continue
 			}
-		}
 
-		// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
-		if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-			if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
-				for name := range resources {
-					if !allowRegisteringResource(schema.GroupVersion{Group: group, Version: "v0alpha1"}, name) {
-						delete(resources, name)
+			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
+					for name := range resources {
+						if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
+							delete(resources, name)
+						}
+					}
+					if len(resources) == 0 {
+						delete(g.VersionedResourcesStorageMap, "v0alpha1")
 					}
 				}
-				if len(resources) == 0 {
-					delete(g.VersionedResourcesStorageMap, "v0alpha1")
-				}
 			}
-			// skip installing the group if there are no resources left
-			if len(g.VersionedResourcesStorageMap) == 0 {
-				continue
-			}
+		}
+
+		// skip installing the group if there are no resources left after filtering
+		if len(g.VersionedResourcesStorageMap) == 0 {
+			continue
 		}
 
 		err := server.InstallAPIGroup(&g)
@@ -452,4 +453,17 @@ func AddPostStartHooks(
 		}
 	}
 	return nil
+}
+
+func allowRegisteringResourceByInfo(allowedResources []string, name string) bool {
+	// trim any subresources from the name
+	name = strings.Split(name, "/")[0]
+
+	for _, allowedResource := range allowedResources {
+		if allowedResource == name || allowedResource == AllResourcesAllowed {
+			return true
+		}
+	}
+
+	return false
 }
