@@ -56,7 +56,6 @@ describe('Prometheus annotations', () => {
     // check for other parts of the annotations
     // min step
     e2e.components.DataSource.Prometheus.annotations.minStep().should('exist');
-    
 
     // title
     e2e.components.DataSource.Prometheus.annotations.title().scrollIntoView().should('exist');

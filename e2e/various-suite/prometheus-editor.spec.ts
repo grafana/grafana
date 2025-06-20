@@ -68,7 +68,6 @@ describe.skip('Prometheus query editor', () => {
     e2e.components.DataSource.Prometheus.queryEditor.step().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.exemplars().scrollIntoView().should('exist');
-
   });
 
   describe('Code editor', () => {
