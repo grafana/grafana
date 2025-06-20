@@ -3235,6 +3235,41 @@
       "label-rtl": "RTL"
     }
   },
+  "bargauge": {
+    "bar-size-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "category-bar-gauge": "Bar gauge",
+    "description-max-height": "Maximum row height (horizontal orientation)",
+    "description-min-height": "Minimum row height (horizontal orientation)",
+    "description-min-width": "Minimum column width (vertical orientation)",
+    "description-show-unfilled-area": "When enabled renders the unfilled region as gray",
+    "display-mode-options": {
+      "label-basic": "Basic",
+      "label-gradient": "Gradient",
+      "label-retro": "Retro LCD"
+    },
+    "name-bar-size": "Bar size",
+    "name-display-mode": "Display mode",
+    "name-max-height": "Max height",
+    "name-min-height": "Min height",
+    "name-min-width": "Min width",
+    "name-name-placement": "Name placement",
+    "name-placement-options": {
+      "label-auto": "Auto",
+      "label-hidden": "Hidden",
+      "label-left": "Left",
+      "label-top": "Top"
+    },
+    "name-show-unfilled-area": "Show unfilled area",
+    "name-value-display": "Value display",
+    "value-display-options": {
+      "label-hidden": "Hidden",
+      "label-text-color": "Text color",
+      "label-value-color": "Value color"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "It looks like you haven’t created any bookmarks yet",

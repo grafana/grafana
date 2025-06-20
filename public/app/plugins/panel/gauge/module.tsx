@@ -25,21 +25,22 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
     },
   })
   .setPanelOptions((builder) => {
+    const category = [t('gauge.category-gauge', 'Gauge')];
     addStandardDataReduceOptions(builder);
-    addOrientationOption(builder, [t('gauge.category-gauge', 'Gauge')]);
+    addOrientationOption(builder, category);
     builder
       .addBooleanSwitch({
         path: 'showThresholdLabels',
         name: t('gauge.name-show-threshold-labels', 'Show threshold labels'),
         description: t('gauge.description-show-threshold-labels', 'Render the threshold values around the gauge bar'),
-        category: [t('gauge.category-gauge', 'Gauge')],
+        category,
         defaultValue: defaultOptions.showThresholdLabels,
       })
       .addBooleanSwitch({
         path: 'showThresholdMarkers',
         name: t('gauge.name-show-threshold-markers', 'Show threshold markers'),
         description: t('gauge.description-show-threshold-markers', 'Renders the thresholds as an outer bar'),
-        category: [t('gauge.category-gauge', 'Gauge')],
+        category,
         defaultValue: defaultOptions.showThresholdMarkers,
       })
       .addRadio({
@@ -51,7 +52,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
             { value: BarGaugeSizing.Manual, label: t('gauge.gauge-size-options.label-manual', 'Manual') },
           ],
         },
-        category: [t('gauge.category-gauge', 'Gauge')],
+        category,
         defaultValue: defaultOptions.sizing,
         showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
       })
@@ -65,7 +66,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
           max: 600,
           step: 1,
         },
-        category: [t('gauge.category-gauge', 'Gauge')],
+        category,
         showIf: (options: Options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
@@ -74,7 +75,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         name: t('gauge.name-min-height', 'Min height'),
         description: t('gauge.description-min-height', 'Minimum row height (horizontal orientation)'),
         defaultValue: defaultOptions.minVizHeight,
-        category: [t('gauge.category-gauge', 'Gauge')],
+        category,
         settings: {
           min: 0,
           max: 600,
