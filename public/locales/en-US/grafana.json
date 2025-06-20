@@ -11485,6 +11485,17 @@
     }
   },
   "traces": {
+    "category-span-filters": "Span filters",
+    "name-critical-path-only": "Show critical path only",
+    "name-find-in-trace": "Find in trace",
+    "name-max-duration": "Max duration",
+    "name-min-duration": "Min duration",
+    "name-service-name": "Service name",
+    "name-service-name-operator": "Service name operator",
+    "name-show-matches-only": "Show matches only",
+    "name-span-name": "Span name",
+    "name-span-name-operator": "Span name operator",
+    "name-tags": "Tags",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }

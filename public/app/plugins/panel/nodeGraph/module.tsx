@@ -14,6 +14,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
     const category = [t('node-graph.category-node-graph', 'Node graph')];
     builder.addSelect({
       name: t('node-graph.name-zoom-mode', 'Zoom mode'),
+      category,
       path: 'zoomMode',
       defaultValue: 'cooperative',
       settings: {
@@ -33,6 +34,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
     });
     builder.addSelect({
       name: t('node-graph.name-layout-algorithm', 'Layout algorithm'),
+      category,
       path: 'layoutAlgorithm',
       defaultValue: LayoutAlgorithm.Layered,
       settings: {
