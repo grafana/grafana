@@ -22,6 +22,13 @@ export const CONFIG_SECTION_HEADERS = [
   { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
 ];
 
+export const CONFIG_SECTION_HEADERS_WITH_PDC = [
+  { label: 'URL and authentication', id: 'url', isOpen: true },
+  { label: 'Database settings', id: 'tls', isOpen: true },
+  { label: 'Private data source connect', id: 'pdc', isOpen: true },
+  { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
+];
+
 export const HTTP_MODES: ComboboxOption[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
