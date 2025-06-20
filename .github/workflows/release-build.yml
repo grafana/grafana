@@ -185,7 +185,7 @@ jobs:
       - build
     with:
       bucket: grafana-prerelease
-      artifact: artifacts-*
+      pattern: artifacts-*
       run-id: ${{ github.run_id }}
       path: dist
       environment: prod
