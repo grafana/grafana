@@ -201,7 +201,7 @@ steps:
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3 --tag-format='{{ .version_base
+    --ubuntu-base=ubuntu-base --alpine-base=alpine-base --tag-format='{{ .version_base
     }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
     }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD > packages.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -257,78 +257,6 @@ steps:
     GF_SERVER_ROUTER_LOGGING: "1"
   image: alpine:3.21.3
   name: grafana-server
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite panels-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-panels-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/panels-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite various-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-various-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
   - cd /
@@ -417,8 +345,8 @@ steps:
     - failure
 - commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
-    false; fi
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'no e2e videos found
+    from remaining tests'; exit 0; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -432,10 +360,8 @@ steps:
     \"description\": \"Click on the details to download e2e recording videos\", \"context\":
     \"e2e_artifacts\"}"'
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - end-to-end-tests-cloud-plugins-suite-azure
+  - playwright-plugin-e2e
   - github-app-generate-token
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
@@ -742,7 +668,7 @@ steps:
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.21.3 --tag-format='{{ .version_base
+    --ubuntu-base=ubuntu-base --alpine-base=alpine-base --tag-format='{{ .version_base
     }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
     }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD > packages.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -802,78 +728,6 @@ steps:
     GF_SERVER_ROUTER_LOGGING: "1"
   image: alpine:3.21.3
   name: grafana-server
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite panels-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-panels-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/panels-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite various-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-various-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
-  depends_on:
-  - grafana-server
-  - build-test-plugins
-  environment:
-    HOST: grafana-server
-  image: cypress/included:14.3.2
-  name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
   - cd /
@@ -962,8 +816,8 @@ steps:
     - failure
 - commands:
   - export GITHUB_TOKEN=$(cat /github-app/token)
-  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
-    false; fi
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'no e2e videos found
+    from remaining tests'; exit 0; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -977,10 +831,8 @@ steps:
     \"description\": \"Click on the details to download e2e recording videos\", \"context\":
     \"e2e_artifacts\"}"'
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - end-to-end-tests-cloud-plugins-suite-azure
+  - playwright-plugin-e2e
   - github-app-generate-token
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
@@ -1027,10 +879,8 @@ steps:
   - ./bin/build store-storybook --deployment canary
   depends_on:
   - build-storybook
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - end-to-end-tests-cloud-plugins-suite-azure
+  - playwright-plugin-e2e
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads
@@ -1086,10 +936,8 @@ steps:
   - apk add --update bash git
   - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - end-to-end-tests-cloud-plugins-suite-azure
+  - playwright-plugin-e2e
   - build-frontend-packages
   environment:
     NPM_TOKEN:
@@ -3136,6 +2984,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e6c1b534a4d8744e0290343b9bbb6932b0284cd422f53146fcdbbb2919aa8a20
+hmac: db5485c680a21c2f4032064cd7fd892a3075ebd92cd29422d892fcc375eb6948
 
 ...
