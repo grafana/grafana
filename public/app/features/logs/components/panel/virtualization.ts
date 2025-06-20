@@ -11,11 +11,13 @@ export const LOG_LIST_MIN_WIDTH = 35 * 8;
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;
 
+export const DEFAULT_LINE_HEIGHT = 22;
+
 export class LogLineVirtualization {
   private ctx: CanvasRenderingContext2D | null = null;
   private gridSize = 8;
   private paddingBottom = 8 * 0.75;
-  private lineHeight = 22;
+  private lineHeight = DEFAULT_LINE_HEIGHT;
   private measurementMode: 'canvas' | 'dom' = 'canvas';
   private textWidthMap: Map<number, number>;
   private logLineSizesMap: Map<string, number>;
@@ -257,7 +259,7 @@ export function getLogLineSize(
     return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
-  logs[index].updateCollapsedState(virtualization, displayedFields, container);
+  logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
     return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
   }

@@ -171,15 +171,16 @@ export interface PreProcessOptions {
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
   timeZone: string;
+  virtualization?: LogLineVirtualization;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone }: PreProcessOptions,
+  { escape, getFieldLinks, order, timeZone, virtualization }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization }));
 };
 
 interface PreProcessLogOptions {

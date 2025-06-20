@@ -18,8 +18,8 @@ import {
   FIELD_GAP_MULTIPLIER,
   hasUnderOrOverflow,
   LogFieldDimension,
-  getTruncationLineCount,
   LogLineVirtualization,
+  DEFAULT_LINE_HEIGHT,
 } from './virtualization';
 
 export interface Props {
@@ -317,7 +317,7 @@ export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
-export const getStyles = (theme: GrafanaTheme2, virtualization: LogLineVirtualization) => {
+export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtualization) => {
   const colors = {
     critical: '#B877D9',
     error: theme.colors.error.text,
@@ -410,7 +410,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization: LogLineVirtualiz
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
     }),
     menuIcon: css({
-      height: virtualization.getLineHeight(),
+      height: virtualization?.getLineHeight() ?? DEFAULT_LINE_HEIGHT,
       margin: 0,
       padding: theme.spacing(0, 0, 0, 0.5),
     }),
@@ -507,7 +507,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization: LogLineVirtualiz
     }),
     expandCollapseControlButton: css({
       fontWeight: theme.typography.fontWeightLight,
-      height: virtualization.getLineHeight(),
+      height: virtualization?.getLineHeight() ?? DEFAULT_LINE_HEIGHT,
       margin: 0,
     }),
   };

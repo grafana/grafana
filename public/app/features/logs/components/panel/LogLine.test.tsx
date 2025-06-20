@@ -12,13 +12,13 @@ import { LogListContextProvider } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
 import { defaultProps } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
-import { getTruncationLength } from './virtualization';
+import { LogLineVirtualization } from './virtualization';
 
 jest.mock('./LogListContext');
-jest.mock('./virtualization');
 
 const theme = createTheme();
-const styles = getStyles(theme);
+const virtualization = new LogLineVirtualization(theme, 'default');
+const styles = getStyles(theme, virtualization);
 const contextProps = {
   ...defaultProps,
   app: CoreApp.Unknown,
@@ -34,7 +34,10 @@ const fontSizes: LogListFontSize[] = ['default', 'small'];
 describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   let log: LogListModel, defaultProps: Props;
   beforeEach(() => {
-    log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
+    log = createLogLine(
+      { labels: { place: 'luna' }, entry: `log message 1` },
+      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+    );
     contextProps.logs = [log];
     contextProps.fontSize = fontSize;
     defaultProps = {
@@ -49,7 +52,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     };
   });
 
-  test('Renders a log line', () => {
+  test.only('Renders a log line', () => {
     render(
       <LogListContextProvider {...contextProps}>
         <LogLine {...defaultProps} />
@@ -219,8 +222,12 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
 
   describe('Collapsible log lines', () => {
     beforeEach(() => {
-      log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` });
-      jest.mocked(getTruncationLength).mockReturnValue(5);
+      const virtualization = new LogLineVirtualization(theme, 'default');
+      jest.spyOn(virtualization, 'getTruncationLength').mockReturnValue(5);
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: `log message 1` },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+      );
     });
 
     test('Logs are not collapsed by default', () => {
