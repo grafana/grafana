@@ -1,3 +1,4 @@
+import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
 import {
   Box,
   CollapsableSection,
@@ -30,7 +31,9 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
   return product?.queryLanguages?.map(({ name }) => ({ value: name })) ?? [];
 };
 
-export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props) => {
+export const UrlAndAuthenticationSection = (props: Props) => {
+  const { options, onOptionsChange } = props;
+
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
 
@@ -42,21 +45,15 @@ export const UrlAndAuthenticationSection = ({ options, onOptionsChange }: Props)
   const onProductChange = ({ value }: ComboboxOption) =>
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });
 
-  const onQueryLanguageChange = ({ value }: ComboboxOption) => {
+  const onQueryLanguageChange = (option: ComboboxOption) => {
+    const { value } = option;
+
     if (isInfluxVersion(value)) {
-      onOptionsChange({
-        ...options,
-        jsonData: { ...options.jsonData, version: value },
-      });
+      onUpdateDatasourceJsonDataOptionSelect(props, 'version')(option);
     }
   };
 
-  const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onOptionsChange({
-      ...options,
-      url: event.currentTarget.value,
-    });
-  };
+  const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
 
   return (
     <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`}>

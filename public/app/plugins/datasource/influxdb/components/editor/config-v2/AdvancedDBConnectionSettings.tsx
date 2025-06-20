@@ -1,7 +1,11 @@
 import { cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { onUpdateDatasourceJsonDataOptionSelect } from '@grafana/data';
+import {
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceJsonDataOptionChecked,
+  onUpdateDatasourceJsonDataOptionSelect,
+} from '@grafana/data';
 import { InlineFieldRow, InlineField, Combobox, InlineSwitch, Input, Space, useStyles2 } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
@@ -16,7 +20,7 @@ import {
 import { Props } from './types';
 
 export const AdvancedDbConnectionSettings = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options } = props;
   const styles = useStyles2(getInlineLabelStyles);
 
   const [advancedDbConnectionSettingsIsOpen, setAdvancedDbConnectionSettingsIsOpen] = useState(
@@ -64,15 +68,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 <InlineSwitch
                   data-testid="influxdb-v2-config-insecure-switch"
                   value={options.jsonData.insecureGrpc ?? false}
-                  onChange={(event) => {
-                    onOptionsChange({
-                      ...options,
-                      jsonData: {
-                        ...options.jsonData,
-                        insecureGrpc: event.currentTarget.checked,
-                      },
-                    });
-                  }}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'insecureGrpc')}
                   onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked}
                 />
               </InlineField>
@@ -88,19 +84,11 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
               >
                 <Input
                   className="width-15"
+                  data-testid="influxdb-v2-config-time-interval"
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked}
+                  onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
                   placeholder="10s"
                   value={options.jsonData.timeInterval || ''}
-                  onChange={(e) =>
-                    onOptionsChange({
-                      ...options,
-                      jsonData: {
-                        ...options.jsonData,
-                        timeInterval: e.currentTarget.value,
-                      },
-                    })
-                  }
-                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked}
-                  data-testid="influxdb-v2-config-time-interval"
                 />
               </InlineField>
             </InlineFieldRow>

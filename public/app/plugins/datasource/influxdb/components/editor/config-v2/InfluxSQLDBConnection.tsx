@@ -1,4 +1,8 @@
-import { onUpdateDatasourceSecureJsonDataOption, updateDatasourcePluginResetOption } from '@grafana/data';
+import {
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceSecureJsonDataOption,
+  updateDatasourcePluginResetOption,
+} from '@grafana/data';
 import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
 
 import {
@@ -8,7 +12,7 @@ import {
 import { Props } from './types';
 
 export const InfluxSQLDBConnection = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options } = props;
   const { secureJsonData, secureJsonFields } = options;
 
   return (
@@ -19,15 +23,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
             id="database"
             placeholder="mydb"
             value={options.jsonData.dbName}
-            onChange={(event) => {
-              onOptionsChange({
-                ...options,
-                jsonData: {
-                  ...options.jsonData,
-                  dbName: event.currentTarget.value,
-                },
-              });
-            }}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
             onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
           />
         </InlineField>
@@ -37,16 +33,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={() => {
-              onOptionsChange({
-                ...options,
-                secureJsonFields: {
-                  ...options.secureJsonFields,
-                  token: true,
-                },
-              });
-              trackInfluxDBConfigV2SQLDBDetailsTokenInputField();
-            }}
+            onBlur={trackInfluxDBConfigV2SQLDBDetailsTokenInputField}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}

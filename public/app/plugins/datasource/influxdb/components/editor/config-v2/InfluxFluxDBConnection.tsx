@@ -13,8 +13,9 @@ import {
 import { Props } from './types';
 
 export const InfluxFluxDBConnection = (props: Props) => {
-  const { options, onOptionsChange } = props;
-  const { jsonData, secureJsonData, secureJsonFields } = options;
+  const {
+    options: { jsonData, secureJsonData, secureJsonFields },
+  } = props;
 
   return (
     <>
@@ -45,16 +46,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={() => {
-              onOptionsChange({
-                ...options,
-                secureJsonFields: {
-                  ...secureJsonFields,
-                  token: true,
-                },
-              });
-              trackInfluxDBConfigV2FluxDBDetailsTokenInputField();
-            }}
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsTokenInputField}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}
