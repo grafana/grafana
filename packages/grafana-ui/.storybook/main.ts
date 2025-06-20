@@ -3,18 +3,24 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 import { copyAssetsSync } from './copyAssets';
 
 // Internal stories should only be visible during development
-const coreComponentsGlobs = [
+const coreComponentsGlobs: StorybookConfig['stories'] = [
   '../src/Intro.mdx',
   process.env.NODE_ENV === 'production'
     ? '../src/components/**/!(*.internal).story.tsx'
     : '../src/components/**/*.story.tsx',
 ];
 
-const alertingComponentsGlobs = [
-  '../../grafana-alerting/src/Intro.mdx',
-  process.env.NODE_ENV === 'production'
-    ? '../../grafana-alerting/src/**/!(*.internal).story.tsx'
-    : '../../grafana-alerting/src/**/*.story.tsx',
+const alertingComponentsGlobs: StorybookConfig['stories'] = [
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: '**/*.mdx',
+  },
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
+  },
 ];
 
 const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs];
