@@ -81,9 +81,15 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 		return nil, fmt.Errorf("folder delete not supported")
 	}
 
-	file, err := r.repo.Read(ctx, opts.Path, opts.Ref)
+	// Read the file from the default branch as it won't exist in the possibly new branch
+	file, err := r.repo.Read(ctx, opts.Path, "")
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
+	}
+
+	// HACK: manual set to the provided branch so that the parser can possible read the file
+	if opts.Ref != "" {
+		file.Ref = opts.Ref
 	}
 
 	// TODO: document in API specification

@@ -129,13 +129,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 
-      datasource.languageProvider
-        .fetchLabelsWithMatch(timeRange, expr)
-        .then((labelsIndex: Record<string, string[]>) => {
-          const labelNames = Object.keys(labelsIndex);
-          const names = labelNames.map((value) => ({ label: value, value: value }));
-          setLabels(names, variables);
-        });
+      datasource.languageProvider.queryLabelKeys(timeRange, expr).then((labelNames: string[]) => {
+        const names = labelNames.map((value) => ({ label: value, value: value }));
+        setLabels(names, variables);
+      });
     }
   }, [datasource, qryType, metric, range]);
 
@@ -502,10 +499,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
                 <Trans
                   i18nKey="grafana-prometheus.components.prom-variable-query-editor.tooltip-classic-query"
                   values={{
-                    exampleQuery: 'label_values(label, metric)',
+                    exampleQuery: 'label_values(metric, label)',
                   }}
                 >
-                  The original implemetation of the Prometheus variable query editor. Enter a string with the correct
+                  The original implementation of the Prometheus variable query editor. Enter a string with the correct
                   query type and parameters as described in these docs. For example, {'{{exampleQuery}}'}.
                 </Trans>
               </div>

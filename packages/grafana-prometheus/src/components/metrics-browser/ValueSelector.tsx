@@ -5,9 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
+import { LIST_ITEM_SIZE } from '../../constants';
+
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesValueSelector } from './styles';
-import { LIST_ITEM_SIZE } from './types';
 
 export function ValueSelector() {
   const styles = useStyles2(getStylesValueSelector);
