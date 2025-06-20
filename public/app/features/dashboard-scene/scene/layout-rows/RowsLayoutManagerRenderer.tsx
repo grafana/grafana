@@ -79,7 +79,7 @@ function RowWrapper({ row, manager }: { row: RowItem; manager: RowsLayoutManager
   if (repeatByVariable) {
     const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
 
-    if (variable && variable instanceof MultiValueVariable) {
+    if (variable instanceof MultiValueVariable) {
       return <RowItemRepeater row={row} key={row.state.key!} manager={manager} variable={variable} />;
     }
   }

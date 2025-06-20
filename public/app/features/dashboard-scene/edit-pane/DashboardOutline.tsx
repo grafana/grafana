@@ -47,7 +47,6 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
   const children = editableElement.getOutlineChildren?.() ?? [];
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
-  //const elementCollapsed = editableElement.getCollapsedState?.();
   const outlineRename = useOutlineRename(editableElement);
   const isContainer = editableElement.getOutlineChildren ? true : false;
 
@@ -109,7 +108,6 @@ function DashboardOutlineNode({ sceneObject, editPane, depth }: DashboardOutline
               <Stack direction="row" gap={0.5} alignItems="center" grow={1}>
                 <span>{instanceName}</span>
                 {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
-                {/* {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>} */}
               </Stack>
               {isCloned && (
                 <span>
