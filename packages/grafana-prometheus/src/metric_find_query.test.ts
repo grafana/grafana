@@ -214,11 +214,7 @@ describe('PrometheusMetricFindQuery', () => {
       const query = new PrometheusMetricFindQuery(datasource, 'label_values(metric,instance.test)');
       await query.process(timeRange);
 
-      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
-        timeRange,
-        'U__instance_2e_test',
-        'metric'
-      );
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(timeRange, 'instance.test', 'metric');
     });
 
     it('should handle UTF-8 metric names in label_values query', async () => {

@@ -28,8 +28,6 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
     getQueryHints: jest.fn(() => []),
     languageProvider: {
       start: () => Promise.resolve([]),
-      syntax: () => {},
-      getLabelKeys: () => [],
       retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource;
