@@ -508,6 +508,48 @@ describe('graphiteDatasource', () => {
       expect(results[0]).toBe('target=' + encodeURIComponent('avg(web01.cpu)'));
     });
 
+    it('should not recursively replace queries that reference themselves', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'sumSeries(carbon.test.test-host.cpuUsage, #A)' }],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent('sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))')
+      );
+    });
+
+    it('should not recursively replace queries that reference themselves, but will replace nested references', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+        B: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [
+            {
+              target: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+            },
+            {
+              target: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+            },
+          ],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent(
+            'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+          )
+      );
+    });
+
     it('should fix wrong minute interval parameters', () => {
       const originalTargetMap = {
         A: "summarize(prod.25m.count, '25m', 'sum')",
