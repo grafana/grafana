@@ -280,10 +280,8 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
-	receivers := notifier.PostableApiAlertingConfigToApiReceivers(c.AlertmanagerConfig)
-	for _, recv := range receivers {
-		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
-		if err != nil {
+	for _, receiver := range c.AlertmanagerConfig.Receivers {
+		if err = notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
 			return err
 		}
 	}
@@ -389,10 +387,8 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	receivers := notifier.PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig)
-	for _, recv := range receivers {
-		err := notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
-		if err != nil {
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
 			return err
 		}
 	}
@@ -428,10 +424,8 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
 	}
 
-	receivers := notifier.PostableApiAlertingConfigToApiReceivers(c.AlertmanagerConfig)
-	for _, recv := range receivers {
-		err = notifier.PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue)
-		if err != nil {
+	for _, receiver := range c.AlertmanagerConfig.Receivers {
+		if err := notifier.PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.sService.GetDecryptedValue); err != nil {
 			return err
 		}
 	}

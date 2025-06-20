@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/alerting/definition"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
@@ -383,10 +384,8 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		return false, nil
 	}
 
-	receivers := PostableApiAlertingConfigToApiReceivers(amConfig)
-	for _, recv := range receivers {
-		err = PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-		if err != nil {
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		if err = PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn); err != nil {
 			return false, err
 		}
 	}
@@ -398,7 +397,7 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 		MuteTimeIntervals: amConfig.MuteTimeIntervals,
 		TimeIntervals:     amConfig.TimeIntervals,
 		Templates:         templates,
-		Receivers:         receivers,
+		Receivers:         PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		DispatcherLimits:  &nilLimits{},
 		Raw:               rawConfig,
 		Hash:              configHash,
@@ -411,8 +410,8 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	return true, nil
 }
 
-func PatchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
-	for _, integration := range api.Integrations {
+func PatchNewSecureFields(ctx context.Context, receiver *definition.PostableApiReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+	for _, integration := range receiver.GrafanaManagedReceivers {
 		switch integration.Type {
 		case "dingding":
 			err := patchSettingsFromSecureSettings(ctx, integration, "url", decode, decrypt)
@@ -421,10 +420,11 @@ func PatchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, 
 			}
 		}
 	}
+
 	return nil
 }
 
-func patchSettingsFromSecureSettings(ctx context.Context, integration *alertingNotify.GrafanaIntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+func patchSettingsFromSecureSettings(ctx context.Context, integration *definition.PostableGrafanaReceiver, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
 	if _, ok := integration.SecureSettings[key]; !ok {
 		return nil
 	}

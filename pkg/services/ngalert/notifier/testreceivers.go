@@ -11,6 +11,12 @@ import (
 )
 
 func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	for _, receiver := range c.Receivers {
+		if err := PatchNewSecureFields(ctx, receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn); err != nil {
+			return nil, 0, err
+		}
+	}
+
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
@@ -29,10 +35,6 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 				Integrations: integrations,
 			},
-		}
-		err := PatchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-		if err != nil {
-			return nil, 0, err
 		}
 		receivers = append(receivers, recv)
 	}
