@@ -24,7 +24,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	dashlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
@@ -235,12 +234,10 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 	if err != nil {
 		return nil, err
 	}
-	// TODO should we move the direct client to another package?
-	// Or should I use a different client instead?
-	client := dashlegacy.NewDirectResourceClient(server)
+
+	client := resource.NewLocalResourceClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, defaultOpts.StorageConfig.Config, nil)
 
-	// optsGetter.RegisterOptions(corerole.GroupResource(), apistore.StorageOptions{})
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	return store, err
 }
