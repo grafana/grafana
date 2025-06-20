@@ -3017,6 +3017,32 @@
     },
     "annotation-list-item": {
       "tooltip-created-by": "Created by:<1></1> {{email}}"
+    },
+    "category-annotation-query": "Annotation query",
+    "category-display": "Display",
+    "category-link-behaviour": "Link behavior",
+    "description-tags": "Match annotation tags",
+    "link-target-options": {
+      "label-dashboard": "Dashboard",
+      "label-panel": "Panel"
+    },
+    "name-limit": "Limit",
+    "name-link-target": "Link target",
+    "name-query-filter": "Query filter",
+    "name-show-tags": "Show tags",
+    "name-show-time": "Show time",
+    "name-show-user": "Show user",
+    "name-tags": "Tags",
+    "name-time-after": "Time after",
+    "name-time-before": "Time before",
+    "name-time-range": "Time range",
+    "query-filter-options": {
+      "label-all-dashboards": "All dashboards",
+      "label-this-dashboard": "This dashboard"
+    },
+    "time-range-options": {
+      "label-none": "None",
+      "label-this-dashboard": "This dashboard"
     }
   },
   "annotations": {
