@@ -188,7 +188,7 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
-      bucket_path: ${{ needs.setup.outputs.version }}
+      bucket-path: ${{ needs.setup.outputs.version }}
       path: dist
       environment: prod
       parent: false
@@ -204,6 +204,6 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-list-*
       run-id: ${{ github.run_id }}
-      bucket_path: ${{ needs.setup.outputs.version }}
+      bucket-path: ${{ needs.setup.outputs.version }}
       environment: prod
       parent: false
