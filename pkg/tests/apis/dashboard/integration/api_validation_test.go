@@ -62,7 +62,7 @@ func TestIntegrationValidation(t *testing.T) {
 	}
 
 	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -396,17 +396,10 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
-			// Try to update with the second copy (should fail with version conflict for mode 0, 4 and 5, but not for mode 1, 2 and 3)
-			updatedDash2, err := updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
-			if ctx.DualWriterMode == rest.Mode1 || ctx.DualWriterMode == rest.Mode2 || ctx.DualWriterMode == rest.Mode3 {
-				require.NoError(t, err)
-				require.NotNil(t, updatedDash2)
-				meta, _ := utils.MetaAccessor(updatedDash2)
-				require.Equal(t, "Updated by second user", meta.FindTitle(""), "Dashboard title should be updated")
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
-			}
+			// Try to update with the second copy. Should fail with version conflict.
+			_, err = updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
