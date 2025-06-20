@@ -3469,6 +3469,43 @@
     },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
+  "candlestick": {
+    "additional-fields-options": {
+      "label-ignore": "Ignore",
+      "label-include": "Include"
+    },
+    "candle-style-options": {
+      "label-candles": "Candles",
+      "label-ohlc-bars": "OHLC Bars"
+    },
+    "category-candlestick": "Candlestick",
+    "color-strategy-options": {
+      "label-since-open": "Since Open",
+      "label-since-prior-close": "Since Prior Close"
+    },
+    "description-additional-fields": "Use standard timeseries options to configure any fields not mapped above",
+    "description-close": "Value at the end of the period",
+    "description-high": "Maximum value within the period",
+    "description-low": "Minimum value within the period",
+    "description-open": "Value at the start of the period",
+    "description-volume": "Sample count within the period",
+    "mode-options": {
+      "label-both": "Both",
+      "label-candles": "Candles",
+      "label-volume": "Volume"
+    },
+    "name-additional-fields": "Additional fields",
+    "name-candle-style": "Candle style",
+    "name-close": "Close",
+    "name-color-strategy": "Color strategy",
+    "name-down-color": "Down color",
+    "name-high": "High",
+    "name-low": "Low",
+    "name-mode": "Mode",
+    "name-open": "Open",
+    "name-up-color": "Up color",
+    "name-volume": "Volume"
+  },
   "canvas": {
     "apieditor": {
       "label-endpoint": "Endpoint",
@@ -8114,6 +8151,20 @@
     }
   },
   "logs": {
+    "category-logs": "Logs",
+    "deduplication-options": {
+      "label-exact": "Exact",
+      "label-none": "None",
+      "label-numbers": "Numbers",
+      "label-signature": "Signature"
+    },
+    "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "font-size-options": {
+      "label-default": "Default",
+      "label-small": "Small"
+    },
     "get-dataframe-fields": {
       "vars": {
         "text": {
@@ -8257,6 +8308,22 @@
         "common-labels": "Common labels:"
       }
     },
+    "name-common-labels": "Common labels",
+    "name-deduplication": "Deduplication",
+    "name-enable-infinite-scrolling": "Enable infinite scrolling",
+    "name-enable-log-details": "Enable log details",
+    "name-enable-syntax-highlighting": "Enable syntax highlighting",
+    "name-font-size": "Font size",
+    "name-order": "Order",
+    "name-prettify-json": "Prettify JSON",
+    "name-show-controls": "Show controls",
+    "name-time": "Time",
+    "name-unique-labels": "Unique labels",
+    "name-wrap-lines": "Wrap lines",
+    "order-options": {
+      "label-newest-first": "Newest first",
+      "label-oldest-first": "Oldest first"
+    },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "End of the selected time range."
     },
@@ -8286,6 +8353,30 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
+    }
+  },
+  "logs-new": {
+    "category-logs": "Logs",
+    "deduplication-options": {
+      "label-exact": "Exact",
+      "label-none": "None",
+      "label-numbers": "Numbers",
+      "label-signature": "Signature"
+    },
+    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "name-deduplication": "Deduplication",
+    "name-enable-log-details": "Enable log details",
+    "name-infinite-scrolling": "Enable infinite scrolling",
+    "name-order": "Order",
+    "name-show-controls": "Show controls",
+    "name-syntax-highlighting": "Enable syntax highlighting",
+    "name-time": "Time",
+    "name-wrap-lines": "Wrap lines",
+    "order-options": {
+      "label-newest-first": "Newest first",
+      "label-oldest-first": "Oldest first"
     }
   },
   "manage-dashbaords": {
