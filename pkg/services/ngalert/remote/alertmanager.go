@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type stateStore interface {
@@ -71,7 +72,8 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp remoteClient.SmtpConfig
+	smtp     remoteClient.SmtpConfig
+	sService secrets.Service
 }
 
 type AlertmanagerConfig struct {
@@ -119,7 +121,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, sService secrets.Service, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -203,7 +205,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		decrypt:           decryptFn,
+		decrypt:           sService.Decrypt,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
@@ -219,6 +221,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
 		smtpFrom: cfg.SmtpFrom,
+
+		sService: sService,
 	}, nil
 }
 
