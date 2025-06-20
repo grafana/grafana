@@ -340,6 +340,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
+	now := time.Now()
 
 	tests := []struct {
 		name      string
@@ -382,6 +383,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			NoopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithSecret,
+				Hash:                      "d3da3e13b87b5fde7063a883761745de",
+				CreatedAt:                 now.Unix(),
 			},
 			"",
 		},
@@ -391,6 +394,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			testAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
+				Hash:                      "d3da3e13b87b5fde7063a883761745de",
+				CreatedAt:                 now.Unix(),
 			},
 			"",
 		},
@@ -407,6 +412,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				m,
 				tracing.InitializeTracerForTest(),
 			)
+			// override clock to avoid flakiness
+			am.clock = func() time.Time { return now }
+
 			require.NoError(t, err)
 
 			// Adding the autogenFn after creating the Alertmanager
