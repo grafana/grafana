@@ -895,9 +895,8 @@ func TestStagedGitRepository_Remove(t *testing.T) {
 		stagedRepo := createTestStagedRepositoryWithWriter(mockWriter, repository.CloneOptions{})
 
 		err := stagedRepo.Remove(context.Background())
-
 		require.NoError(t, err)
-		// No mock calls expected since Remove is a no-op
+		require.Equal(t, 1, mockWriter.CleanupCallCount())
 	})
 }
 
