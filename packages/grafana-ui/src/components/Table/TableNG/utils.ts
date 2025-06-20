@@ -130,22 +130,18 @@ export function getTextAlign(field?: Field): Property.JustifyContent {
   return 'flex-start';
 }
 
-const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 
 /**
  * @internal
- * Returns the cell options for a field, migrating from old displayMode if necessary.
+ * Returns the cell options for a field, migrating from legacy displayMode if necessary.
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
     return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
   }
 
-  if (!field.config.custom?.cellOptions) {
-    return defaultCellOptions;
-  }
-
-  return field.config.custom.cellOptions;
+  return field.config.custom?.cellOptions ?? DEFAULT_CELL_OPTIONS;
 }
 
 /**
@@ -206,7 +202,7 @@ export function getFooterItem(rows: TableRow[], field: Field, options?: TableFoo
   }
 
   // Check if reducer array exists and has at least one element
-  if (!options.reducer || !options.reducer.length) {
+  if (!options.reducer?.length) {
     return '';
   }
 
@@ -308,7 +304,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
     if (links[i].onClick) {
       const origOnClick = links[i].onClick;
 
-      links[i].onClick = (event) => {
+      links[i].onClick = (event: MouseEvent) => {
         // Allow opening in new tab
         if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
           event.preventDefault();
@@ -412,7 +408,7 @@ const numCompare: Comparator = (a, b) => {
   return Number(a) - Number(b);
 };
 const frameCompare: Comparator = (a, b) => {
-  // @ts-ignore The values are DataFrameWithValue
+  // @ts-ignore The compared vals are DataFrameWithValue. the value is the rendered stat (first, last, etc.)
   return (a?.value ?? 0) - (b?.value ?? 0);
 };
 
@@ -435,6 +431,27 @@ export function getComparator(sortColumnType: FieldType): Comparator {
   }
 }
 
+type TableCellGaugeDisplayModes =
+  | TableCellDisplayMode.BasicGauge
+  | TableCellDisplayMode.GradientGauge
+  | TableCellDisplayMode.LcdGauge;
+const TABLE_CELL_GAUGE_DISPLAY_MODES_TO_DISPLAY_MODES: Record<TableCellGaugeDisplayModes, BarGaugeDisplayMode> = {
+  [TableCellDisplayMode.BasicGauge]: BarGaugeDisplayMode.Basic,
+  [TableCellDisplayMode.GradientGauge]: BarGaugeDisplayMode.Gradient,
+  [TableCellDisplayMode.LcdGauge]: BarGaugeDisplayMode.Lcd,
+};
+
+type TableCellColorBackgroundDisplayModes =
+  | TableCellDisplayMode.ColorBackground
+  | TableCellDisplayMode.ColorBackgroundSolid;
+const TABLE_CELL_COLOR_BACKGROUND_DISPLAY_MODES_TO_DISPLAY_MODES: Record<
+  TableCellColorBackgroundDisplayModes,
+  TableCellBackgroundDisplayMode
+> = {
+  [TableCellDisplayMode.ColorBackground]: TableCellBackgroundDisplayMode.Gradient,
+  [TableCellDisplayMode.ColorBackgroundSolid]: TableCellBackgroundDisplayMode.Basic,
+};
+
 /* ---------------------------- Miscellaneous ---------------------------- */
 /**
  * Migrates table cell display mode to new object format.
@@ -446,39 +463,28 @@ export function getComparator(sortColumnType: FieldType): Comparator {
 export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
   switch (displayMode) {
     // In the case of the gauge we move to a different option
-    case 'basic':
-    case 'gradient-gauge':
-    case 'lcd-gauge':
-      let gaugeMode = BarGaugeDisplayMode.Basic;
-
-      if (displayMode === 'gradient-gauge') {
-        gaugeMode = BarGaugeDisplayMode.Gradient;
-      } else if (displayMode === 'lcd-gauge') {
-        gaugeMode = BarGaugeDisplayMode.Lcd;
-      }
-
+    case TableCellDisplayMode.BasicGauge:
+    case TableCellDisplayMode.GradientGauge:
+    case TableCellDisplayMode.LcdGauge:
       return {
         type: TableCellDisplayMode.Gauge,
-        mode: gaugeMode,
+        mode: TABLE_CELL_GAUGE_DISPLAY_MODES_TO_DISPLAY_MODES[displayMode],
       };
     // Also true in the case of the color background
-    case 'color-background':
-    case 'color-background-solid':
-      let mode = TableCellBackgroundDisplayMode.Basic;
-
-      // Set the new mode field, somewhat confusingly the
-      // color-background mode is for gradient display
-      if (displayMode === 'color-background') {
-        mode = TableCellBackgroundDisplayMode.Gradient;
-      }
-
+    case TableCellDisplayMode.ColorBackground:
+    case TableCellDisplayMode.ColorBackgroundSolid:
       return {
         type: TableCellDisplayMode.ColorBackground,
-        mode: mode,
+        mode: TABLE_CELL_COLOR_BACKGROUND_DISPLAY_MODES_TO_DISPLAY_MODES[displayMode],
+      };
+    // catching a nonsense case: `displayMode`: 'custom' should pre-date the CustomCell.
+    // if it doesn't, we need to just nope out and return an auto cell.
+    case TableCellDisplayMode.Custom:
+      return {
+        type: TableCellDisplayMode.Auto,
       };
     default:
       return {
-        // @ts-ignore
         type: displayMode,
       };
   }
@@ -553,11 +559,7 @@ export function getColumnTypes(fields: Field[]): ColumnTypes {
   return fields.reduce<ColumnTypes>((acc, field) => {
     switch (field.type) {
       case FieldType.nestedFrames:
-        const nestedFields: Field[] = field.values[0]?.[0]?.fields ?? [];
-        if (!nestedFields) {
-          return acc;
-        }
-        return { ...acc, ...getColumnTypes(nestedFields) };
+        return { ...acc, ...getColumnTypes(field.values[0]?.[0]?.fields ?? []) };
       default:
         return { ...acc, [getDisplayName(field)]: field.type };
     }
@@ -614,20 +616,3 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
     }
   }
 }
-
-/**
- * @internal
- * Type guard for custom cell options fields.
- */
-export function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
-  return options.type === TableCellDisplayMode.Custom;
-}
-
-/**
- * - getCellHeightCalculator
- * - getAlignmentFactor:  alignmentFactor.text = displayValue.text;
- * - getFooterItem: If fields array is specified, only show footer for fields included in that array
- * - getCellLinks: on click
- * - frameCompare, and getComparator return frameCompare
- * - migrateTableDisplayModeToCellOptions: LCD gauge mode
- */

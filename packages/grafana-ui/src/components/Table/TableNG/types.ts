@@ -109,7 +109,7 @@ export interface TableSortByFieldState {
 
 export interface TableFooterCalc {
   show: boolean;
-  reducer?: string[]; // Make this optional
+  reducer?: string[];
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;

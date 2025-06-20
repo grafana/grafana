@@ -2,6 +2,7 @@ import {
   createDataFrame,
   createTheme,
   DataFrame,
+  DataFrameWithValue,
   DisplayValue,
   Field,
   FieldType,
@@ -130,6 +131,15 @@ describe('TableNG utils', () => {
       const result = getFooterItem(rows, numericField, {
         show: true,
         reducer: undefined,
+      });
+      expect(result).toBe('');
+    });
+
+    it('should return empty string if fields array doesnt include this field', () => {
+      const result = getFooterItem(rows, numericField, {
+        show: true,
+        reducer: ['sum'],
+        fields: ['Field2'],
       });
       expect(result).toBe('');
     });
@@ -523,6 +533,8 @@ describe('TableNG utils', () => {
         })
       );
     });
+
+    it.todo('alignmentFactor.text = displayValue.text;');
   });
 
   describe('getColumnTypes', () => {
@@ -597,6 +609,26 @@ describe('TableNG utils', () => {
         value: FieldType.number,
       });
     });
+
+    it('does not throw if nestedFrames has no values', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          {
+            type: FieldType.nestedFrames,
+            name: 'nestedCol',
+            config: {},
+            values: [],
+          },
+        ],
+        length: 0,
+        name: 'test',
+      };
+
+      expect(getColumnTypes(frame.fields)).toEqual({
+        stringCol: FieldType.string,
+      });
+    });
   });
 
   describe('getIsNestedTable', () => {
@@ -662,6 +694,29 @@ describe('TableNG utils', () => {
       expect(comparator(false, true)).toBeLessThan(0);
       expect(comparator(true, false)).toBeGreaterThan(0);
       expect(comparator(true, true)).toBe(0);
+    });
+
+    it('should compare frame values', () => {
+      const comparator = getComparator(FieldType.frame);
+
+      // simulate using `first`.
+      const frame1: DataFrameWithValue = {
+        value: 1,
+        ...createDataFrame({ fields: [{ name: 'a', values: [1, 2, 3, 4] }] }),
+      };
+      const frame2: DataFrameWithValue = {
+        value: 4,
+        ...createDataFrame({ fields: [{ name: 'a', values: [4, 3, 2, 1] }] }),
+      };
+      const frame3: DataFrameWithValue = {
+        value: 4,
+        ...createDataFrame({ fields: [{ name: 'a', values: [4, 5, 6, 7] }] }),
+      };
+
+      expect(comparator(frame1, frame2)).toBeLessThan(0);
+      expect(comparator(frame2, frame1)).toBeGreaterThan(0);
+      expect(comparator(frame2, frame2)).toBe(0);
+      expect(comparator(frame2, frame3)).toBe(0); // equivalent start values
     });
   });
 
@@ -921,6 +976,81 @@ describe('TableNG utils', () => {
       expect(links?.find((link) => link.onClick !== undefined)).toBeDefined();
       expect(links?.find((link) => link.href === 'http://example.com/full')).toBeDefined();
     });
+
+    it('should bind the onClick handlers', () => {
+      const onClickHandler = jest.fn();
+      // Create links with different valid configurations
+      const mockLinks: LinkModel[] = [
+        // Internal link with onClick handler
+        {
+          title: 'Internal Link',
+          href: '', // Empty href for internal links
+          onClick: onClickHandler,
+          target: '_self',
+          origin: { datasourceUid: 'test' },
+        },
+      ];
+
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: () => mockLinks,
+      };
+
+      const links = getCellLinks(field, 0);
+
+      const link = links?.[0];
+      const event = new MouseEvent('click', { bubbles: true });
+      jest.spyOn(event, 'preventDefault');
+
+      link?.onClick?.(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(onClickHandler).toHaveBeenCalledWith(event, { field, rowIndex: 0 });
+    });
+
+    it.each([
+      { keyName: 'metaKey', eventOverride: { metaKey: true } },
+      { keyName: 'ctrlKey', eventOverride: { ctrlKey: true } },
+      { keyName: 'shiftKey', eventOverride: { shiftKey: true } },
+    ])(
+      'should allow open a link in a new tab when $keyName clicked instead of using the handler',
+      ({ eventOverride }) => {
+        const onClickHandler = jest.fn();
+        // Create links with different valid configurations
+        const mockLinks: LinkModel[] = [
+          // Internal link with onClick handler
+          {
+            title: 'Internal Link',
+            href: '', // Empty href for internal links
+            onClick: onClickHandler,
+            target: '_self',
+            origin: { datasourceUid: 'test' },
+          },
+        ];
+
+        const field: Field = {
+          name: 'test',
+          type: FieldType.string,
+          config: {},
+          values: ['value1'],
+          getLinks: () => mockLinks,
+        };
+
+        const links = getCellLinks(field, 0);
+
+        const link = links?.[0];
+        const event = new MouseEvent('click', { bubbles: true, ...eventOverride });
+        jest.spyOn(event, 'preventDefault');
+
+        link?.onClick?.(event);
+
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(onClickHandler).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe('extractPixelValue', () => {

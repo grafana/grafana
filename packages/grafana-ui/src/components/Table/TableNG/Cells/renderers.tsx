@@ -3,9 +3,8 @@ import { ReactNode } from 'react';
 import { Field, FieldType, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TableCellOptions } from '../../types';
+import { TableCellOptions, TableCustomCellOptions } from '../../types';
 import { TableCellRendererProps } from '../types';
-import { isCustomCellOptions } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
@@ -83,9 +82,13 @@ const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={
 
 const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
 
+function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
+  return options.type === TableCellDisplayMode.Custom;
+}
+
 const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   if (!isCustomCellOptions(props.cellOptions) || !props.cellOptions.cellComponent) {
-    return null; // nonsensical case, but better to typeguard it.
+    return null; // nonsensical case, but better to typeguard it than throw.
   }
   const CustomCellComponent = props.cellOptions.cellComponent;
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
