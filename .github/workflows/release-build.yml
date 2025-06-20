@@ -192,7 +192,7 @@ jobs:
       path: dist
       environment: prod
       parent: false
-  publish-artifacts:
+  publish-artifact-lists:
     name: Upload artifacts
     uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
     permissions:
