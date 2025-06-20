@@ -51,12 +51,12 @@ Set the series area fill color using the **Fill opacity** slider.
 
 #### Gradient mode
 
-Choose a gradient mode to control the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme).
+Choose a gradient mode to control the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme).
 
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.
 - **Hue** - A subtle gradient that's based on the hue of the series color.
-- **Scheme** - A color gradient defined by your [Color scheme](ref:color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
+- **Scheme** - A color gradient defined by your [Color scheme](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image shows the **Fill opacity** set to 50.
 
@@ -92,7 +92,7 @@ Choose a solid, dashed, or dotted line style:
 
 {{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-To change the color, use the standard [color scheme](ref:color-scheme) field option.
+To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme) field option.
 
 #### Show points
 
@@ -112,7 +112,7 @@ Set whether Grafana stacks or displays series on top of each other. Be cautious 
 
 ##### Stack series in groups
 
-The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides](ref:configure-field-overrides).
+The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/).
 
 1. Edit the panel and click **Overrides**.
 1. Create a field override for the **Stack series** option.
