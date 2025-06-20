@@ -2,7 +2,7 @@ import { clone } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { cacheFieldDisplayNames, getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
@@ -89,8 +89,15 @@ const indexOfField = (fieldName: string, indexByName: Record<string, number>) =>
 const compare = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true }).compare;
 
 /** @internal */
-export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) =>
-  fields.slice().sort((fieldA, fieldB) => {
+export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Field[]) => {
+  const firstTimeField = fields.find((f) => f.type === FieldType.time);
+  return fields.slice().sort((fieldA, fieldB) => {
+    if (fieldA === firstTimeField) {
+      return -1;
+    }
+    if (fieldB === firstTimeField) {
+      return 1;
+    }
     for (let i = 0; i < orderBy.length; i++) {
       let { type, name = '', desc = false } = orderBy[i];
 
@@ -103,6 +110,6 @@ export const createFieldsOrdererAuto = (orderBy: OrderByItem[]) => (fields: Fiel
         return res;
       }
     }
-
     return 0;
   });
+};
