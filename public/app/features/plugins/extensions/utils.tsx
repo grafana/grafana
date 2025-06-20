@@ -397,7 +397,7 @@ export function createAddedLinkConfig<T extends object>(
 
 function assertLinkConfig<T extends object>(
   config: PluginExtensionAddedLinkConfig<T>
-): asserts config is PluginExtensionAddedLinkConfig {}
+): asserts config is PluginExtensionAddedLinkConfig { }
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
@@ -619,7 +619,8 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
-        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) ||
+        app.extensions.addedFunctions.some((fn) => fn.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
