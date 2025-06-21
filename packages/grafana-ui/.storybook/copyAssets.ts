@@ -45,6 +45,11 @@ export function copyAssetsSync() {
       to: './static/public/lib',
     },
     ...iconPaths,
+    // copy over the MSW mock service worker so we can mock requests in Storybook
+    {
+      from: '../../../public/mockServiceWorker.js',
+      to: './static/mockServiceWorker.js',
+    },
   ];
 
   const staticDir = resolve(__dirname, 'static', 'public');
