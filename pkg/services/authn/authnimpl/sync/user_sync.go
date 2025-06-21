@@ -84,37 +84,35 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
-		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
-		userService:               userService,
-		authInfoService:           authInfoService,
-		userProtectionService:     userProtectionService,
-		quotaService:              quotaService,
-		log:                       log.New("user.sync"),
-		tracer:                    tracer,
-		features:                  features,
-		lastSeenSF:                &singleflight.Group{},
+		allowNonProvisionedUsers: scimSection.Key("allow_non_provisioned_users").MustBool(false),
+		userService:              userService,
+		authInfoService:          authInfoService,
+		userProtectionService:    userProtectionService,
+		quotaService:             quotaService,
+		log:                      log.New("user.sync"),
+		tracer:                   tracer,
+		features:                 features,
+		lastSeenSF:               &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	allowNonProvisionedUsers  bool
-	isUserProvisioningEnabled bool
-	userService               user.Service
-	authInfoService           login.AuthInfoService
-	userProtectionService     login.UserProtectionService
-	quotaService              quota.Service
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	features                  featuremgmt.FeatureToggles
-	lastSeenSF                *singleflight.Group
+	allowNonProvisionedUsers bool
+	userService              user.Service
+	authInfoService          login.AuthInfoService
+	userProtectionService    login.UserProtectionService
+	quotaService             quota.Service
+	log                      log.Logger
+	tracer                   tracing.Tracer
+	features                 featuremgmt.FeatureToggles
+	lastSeenSF               *singleflight.Group
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
-func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIdentity *authn.Identity, _ *authn.Request) error {
-	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID)
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
+	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 
-	if !currentIdentity.ClientParams.SyncUser {
+	if !id.ClientParams.SyncUser {
 		log.Debug("Skipping user provisioning validation, syncUser is disabled")
 		return nil
 	}
@@ -123,8 +121,47 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
 	defer span.End()
 
-	if s.skipProvisioningValidation(ctx, currentIdentity) {
-		log.Debug("Skipping user provisioning validation")
+	// Default isUserProvisioningEnabled to false. It will be set by metadata if provided and valid.
+	isUserProvisioningEnabled := false
+	configSource := "hook_default_false"
+	allowNonProvisionedUsers := s.allowNonProvisionedUsers
+
+	const metaKeyEffectiveSCIMUserSyncEnabled = "scim_effective_user_sync_enabled"
+	if r != nil {
+		metadataStr := r.GetMeta(metaKeyEffectiveSCIMUserSyncEnabled)
+		if metadataStr != "" {
+			log.Debug("Found effective SCIM user_sync_enabled setting in request meta", "key", metaKeyEffectiveSCIMUserSyncEnabled, "value", metadataStr)
+			parsedValue, parseErr := strconv.ParseBool(metadataStr)
+			if parseErr == nil {
+				isUserProvisioningEnabled = parsedValue
+				configSource = "metadata_provided"
+				log.Debug("Applied effective SCIM setting for user_sync_enabled from metadata", "value", isUserProvisioningEnabled)
+			} else {
+				log.Warn("Failed to parse effective SCIM setting for user_sync_enabled from request meta, defaulting to false for this request.", "value", metadataStr, "error", parseErr)
+				configSource = "metadata_parse_error_default_false"
+			}
+		} else {
+			log.Debug("Metadata key for effective SCIM user_sync_enabled not found, defaulting to false for this request.", "key", metaKeyEffectiveSCIMUserSyncEnabled)
+			configSource = "metadata_missing_default_false"
+		}
+	}
+
+	// Skip validation if user provisioning is disabled
+	if !isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation", "source", configSource)
+		return nil
+	}
+
+	// Skip validation if non-provisioned users are allowed
+	// allowNonProvisionedUsers remains based on static config as per investigation
+	if allowNonProvisionedUsers {
+		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation", "userProvisioningEnabledSource", configSource)
+		return nil
+	}
+
+	// Skip validation if the auth module is GrafanaComAuthModule
+	if id.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
 		return nil
 	}
 
@@ -132,7 +169,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
 
 	// Retrieve user and authinfo from database
-	usr, authInfo, err := s.getUser(ctx, currentIdentity)
+	usr, authInfo, err := s.getUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return nil
@@ -146,8 +183,14 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
 	}
 
+	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
-		if authInfo.ExternalUID == "" || authInfo.ExternalUID != currentIdentity.ExternalUID {
+		// Allow non-SAML requests for SAML-provisioned users to proceed if incoming ExternalUID is empty (e.g. session access).
+		if authInfo.AuthModule == login.SAMLAuthModule && id.AuthenticatedBy != login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
+			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
+			return nil
+		}
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
 			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
@@ -158,27 +201,6 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	// Reject non-provisioned users
 	log.Error("Failed to access user, user is not provisioned")
 	return errUserNotProvisioned.Errorf("user is not provisioned")
-}
-
-func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
-	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID, "id", currentIdentity.ID)
-
-	if !s.isUserProvisioningEnabled {
-		log.Debug("User provisioning is disabled, skipping validation")
-		return true
-	}
-
-	if s.allowNonProvisionedUsers {
-		log.Debug("Non-provisioned users are allowed, skipping validation")
-		return true
-	}
-
-	if currentIdentity.AuthenticatedBy == login.GrafanaComAuthModule {
-		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
-		return true
-	}
-
-	return false
 }
 
 // SyncUserHook syncs a user with the database
