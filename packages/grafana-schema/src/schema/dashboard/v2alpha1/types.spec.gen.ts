@@ -610,19 +610,16 @@ export const defaultElementReference = (): ElementReference => ({
 });
 
 export interface RepeatOptions {
-	mode: "variable";
+	mode: unknown;
 	value: string;
 	direction?: "h" | "v";
 	maxPerRow?: number;
 }
 
 export const defaultRepeatOptions = (): RepeatOptions => ({
-	mode: RepeatMode,
+	mode: "unknown",
 	value: "",
 });
-
-// other repeat modes will be added in the future: label, frame
-export const RepeatMode = "variable";
 
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
@@ -747,12 +744,12 @@ export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRende
 });
 
 export interface RowRepeatOptions {
-	mode: "variable";
+	mode: unknown;
 	value: string;
 }
 
 export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "unknown",
 	value: "",
 });
 
@@ -805,12 +802,12 @@ export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 });
 
 export interface AutoGridRepeatOptions {
-	mode: "variable";
+	mode: unknown;
 	value: string;
 }
 
 export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "unknown",
 	value: "",
 });
 
@@ -854,12 +851,12 @@ export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 });
 
 export interface TabRepeatOptions {
-	mode: "variable";
+	mode: unknown;
 	value: string;
 }
 
 export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "unknown",
 	value: "",
 });
 
@@ -1327,7 +1324,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
-	origin?: "dashboard";
+	origin?: unknown;
 	// @deprecated
 	condition?: string;
 }
@@ -1337,9 +1334,6 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	operator: "",
 	value: "",
 });
-
-// Determine the origin of the adhoc variable filter
-export const FilterOrigin = "dashboard";
 
 // Define the MetricFindValue type
 export interface MetricFindValue {

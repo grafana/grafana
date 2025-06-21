@@ -5,6 +5,7 @@ package v2alpha1
 import (
 	json "encoding/json"
 	errors "errors"
+	fmt "fmt"
 )
 
 // +k8s:openapi-gen=true
@@ -755,7 +756,7 @@ func NewDashboardElementReference() *DashboardElementReference {
 
 // +k8s:openapi-gen=true
 type DashboardRepeatOptions struct {
-	Mode      string                           `json:"mode"`
+	Mode      unknown                          `json:"mode"`
 	Value     string                           `json:"value"`
 	Direction *DashboardRepeatOptionsDirection `json:"direction,omitempty"`
 	MaxPerRow *int64                           `json:"maxPerRow,omitempty"`
@@ -765,10 +766,6 @@ type DashboardRepeatOptions struct {
 func NewDashboardRepeatOptions() *DashboardRepeatOptions {
 	return &DashboardRepeatOptions{}
 }
-
-// other repeat modes will be added in the future: label, frame
-// +k8s:openapi-gen=true
-const DashboardRepeatMode = "variable"
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutKind struct {
@@ -932,8 +929,8 @@ func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRe
 
 // +k8s:openapi-gen=true
 type DashboardRowRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  unknown `json:"mode"`
+	Value string  `json:"value"`
 }
 
 // NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
@@ -1005,8 +1002,8 @@ func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
 
 // +k8s:openapi-gen=true
 type DashboardAutoGridRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  unknown `json:"mode"`
+	Value string  `json:"value"`
 }
 
 // NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
@@ -1071,8 +1068,8 @@ func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 
 // +k8s:openapi-gen=true
 type DashboardTabRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  unknown `json:"mode"`
+	Value string  `json:"value"`
 }
 
 // NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
@@ -1680,7 +1677,7 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
-	Origin      string   `json:"origin,omitempty"`
+	Origin      unknown  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
@@ -1689,10 +1686,6 @@ type DashboardAdHocFilterWithLabels struct {
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 	return &DashboardAdHocFilterWithLabels{}
 }
-
-// Determine the origin of the adhoc variable filter
-// +k8s:openapi-gen=true
-const DashboardFilterOrigin = "dashboard"
 
 // Define the MetricFindValue type
 // +k8s:openapi-gen=true
