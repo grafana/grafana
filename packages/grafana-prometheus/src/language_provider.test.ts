@@ -761,16 +761,16 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const datasourceWithoutLabelsAPI = {
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => false,
+        metadataRequest: jest.fn(), // Mock to ensure it's not called
       } as unknown as PrometheusDatasource;
       
       const provider = new PrometheusLanguageProvider(datasourceWithoutLabelsAPI);
-      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
       
       await provider.initializeResourceClient();
       
       expect(provider['_resourceClient']).toBeDefined();
       expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
-      expect(startSpy).toHaveBeenCalled();
+      expect(datasourceWithoutLabelsAPI.metadataRequest).not.toHaveBeenCalled();
     });
 
     it('should use LabelsApiClient when labels API test call succeeds', async () => {
@@ -781,13 +781,11 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       } as unknown as PrometheusDatasource;
       
       const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI);
-      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
       
       await provider.initializeResourceClient();
       
       expect(datasourceWithLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
       expect(provider['_resourceClient']!.constructor.name).toBe('LabelsApiClient');
-      expect(startSpy).toHaveBeenCalled();
     });
 
     it('should fallback to SeriesApiClient when labels API test call fails', async () => {
@@ -799,14 +797,12 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const provider = new PrometheusLanguageProvider(datasourceWithFailingLabelsAPI);
-      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
       
       await provider.initializeResourceClient();
       
       expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
       expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
       expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available. Using series endpoint.');
-      expect(startSpy).toHaveBeenCalled();
       
       consoleSpy.mockRestore();
     });

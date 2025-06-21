@@ -18,7 +18,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS_STR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
@@ -522,6 +522,7 @@ export interface PrometheusLanguageProviderInterface
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
 
+  initializeResourceClient: () => Promise<void>;
   queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
   queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
@@ -547,7 +548,6 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
 
   constructor(datasource: PrometheusDatasource) {
     super(datasource);
-    this.initializeResourceClient();
   }
 
   /**
@@ -557,24 +557,28 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * - Tests actual API availability with /api/v1/labels?limit=1 call
    * - If labels API works: Uses LabelsApiClient for efficient label-based queries
    * - If labels API fails: Falls back to SeriesApiClient for backward compatibility
+   *
+   * @returns The type of client that was initialized
    */
-  public initializeResourceClient = async () => {
-    this._resourceClient = new SeriesApiClient(this.request, this.datasource);
-
-    // Check if the datasource claims to support labels API
-    if (!this.datasource.hasLabelsMatchAPISupport()) {
-      this.start();
+  public initializeResourceClient = async (): Promise<void> => {
+    if (this._resourceClient) {
       return;
     }
 
+    this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      // If there is no support for labels api just use Series API Client
+      return;
+    }
+
+    // At this point we know data source has support for labels API
     // Try to make a test call to verify labels API actually works
     try {
       await this.datasource.metadataRequest(API_V1.LABELS, { limit: 1 }, { showErrorAlert: false });
       this._resourceClient = new LabelsApiClient(this.request, this.datasource);
     } catch (err) {
       console.log('Labels endpoint is not available. Using series endpoint.');
-    } finally {
-      this.start();
     }
   };
 
@@ -587,7 +591,10 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
       return [];
     }
 
-    await Promise.all([this._resourceClient?.start(timeRange), this.queryMetricsMetadata()]);
+    // Ensure resource client is initialized before proceeding
+    await this.initializeResourceClient();
+
+    await Promise.all([this._resourceClient!.start(timeRange), this.queryMetricsMetadata()]);
     await this._backwardCompatibleStart();
     this._isInitialized = true;
     return [];
@@ -642,7 +649,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of histogram metric names
    */
   public retrieveHistogramMetrics = (): string[] => {
-    return this._resourceClient?.histogramMetrics ?? [];
+    if (!this._resourceClient) {
+      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
+      return [];
+    }
+    return this._resourceClient.histogramMetrics ?? [];
   };
 
   /**
@@ -652,7 +663,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of all metric names
    */
   public retrieveMetrics = (): string[] => {
-    return this._resourceClient?.metrics ?? [];
+    if (!this._resourceClient) {
+      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
+      return [];
+    }
+    return this._resourceClient.metrics ?? [];
   };
 
   /**
@@ -662,7 +677,11 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of label key names
    */
   public retrieveLabelKeys = (): string[] => {
-    return this._resourceClient?.labelKeys ?? [];
+    if (!this._resourceClient) {
+      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
+      return [];
+    }
+    return this._resourceClient.labelKeys ?? [];
   };
 
   /**
@@ -694,7 +713,10 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return (await this._resourceClient?.queryLabelKeys(timeRange, match, limit)) ?? [];
+    if (!this._resourceClient) {
+      await this.initializeResourceClient();
+    }
+    return (await this._resourceClient!.queryLabelKeys(timeRange, match, limit)) ?? [];
   };
 
   /**
@@ -728,7 +750,10 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return (await this._resourceClient?.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
+    if (!this._resourceClient) {
+      await this.initializeResourceClient();
+    }
+    return (await this._resourceClient!.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
   };
 }
 
