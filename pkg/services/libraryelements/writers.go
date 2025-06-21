@@ -58,13 +58,30 @@ func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder, accessibleFolderUIDs []string) {
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
 		sql, param := sqlStore.GetDialect().LikeOperator("le.name", true, query.SearchString, true)
 		builder.Write(" AND ("+sql, param)
 
 		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
-		builder.Write(" OR "+sql+")", param)
+		builder.Write(" OR "+sql, param)
+
+		// add folder support - only search folders the user can access
+		hasFolderFilter := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
+
+		if !hasFolderFilter && len(accessibleFolderUIDs) > 0 {
+			sql, param = sqlStore.GetDialect().LikeOperator("f.title", true, query.SearchString, true)
+			// Add folder UID restriction to only search accessible folders
+			folderUIDsSQL := "?" + strings.Repeat(",?", len(accessibleFolderUIDs)-1)
+			params := make([]any, 0, len(accessibleFolderUIDs)+1)
+			params = append(params, param)
+			for _, folderUID := range accessibleFolderUIDs {
+				params = append(params, folderUID)
+			}
+			builder.Write(" OR ("+sql+" AND f.uid IN ("+folderUIDsSQL+"))", params...)
+		}
+
+		builder.Write(")")
 	}
 }
 
