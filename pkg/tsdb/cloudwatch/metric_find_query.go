@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -35,20 +36,17 @@ func parseMultiSelectValue(input string) []string {
 		}
 		return trimmedValues
 	}
-
 	return []string{trimmedInput}
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
-
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
 	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	for _, reservation := range instances.Reservations {
 		for _, instance := range reservation.Instances {
@@ -57,7 +55,6 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCt
 			}
 		}
 	}
-
 	return result, nil
 }
 
@@ -65,13 +62,11 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
-
 	filterMap := map[string]any{}
 	err := json.Unmarshal([]byte(filterJson), &filterMap)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
 	}
-
 	var filters []*ec2.Filter
 	for k, v := range filterMap {
 		if vv, ok := v.([]any); ok {
@@ -87,12 +82,10 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 			})
 		}
 	}
-
 	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	dupCheck := make(map[string]bool)
 	for _, reservation := range instances.Reservations {
@@ -107,16 +100,13 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 			if _, exists := dupCheck[data]; exists {
 				continue
 			}
-
 			dupCheck[data] = true
 			result = append(result, suggestData{Text: data, Value: data, Label: data})
 		}
 	}
-
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Text < result[j].Text
 	})
-
 	return result, nil
 }
 
@@ -125,7 +115,6 @@ func getInstanceAttributeValue(attributeName string, instance *ec2.Instance) (va
 	for _, tag := range instance.Tags {
 		tags[*tag.Key] = *tag.Value
 	}
-
 	var data string
 	if strings.Index(attributeName, "Tags.") == 0 {
 		tagName := attributeName[5:]
@@ -148,7 +137,6 @@ func getInstanceAttributeValue(attributeName string, instance *ec2.Instance) (va
 				return "", false, errors.New("invalid attribute path")
 			}
 		}
-
 		if v.Kind() == reflect.Ptr && v.IsNil() {
 			return "", false, nil
 		}
@@ -164,7 +152,6 @@ func getInstanceAttributeValue(attributeName string, instance *ec2.Instance) (va
 			return "", false, errors.New("cannot parse attribute")
 		}
 	}
-
 	return data, true, nil
 }
 
@@ -172,13 +159,11 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
-
 	tagsMap := map[string]any{}
 	err := json.Unmarshal([]byte(tagsJson), &tagsMap)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
 	}
-
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range tagsMap {
 		if vv, ok := v.([]any); ok {
@@ -194,21 +179,17 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 			})
 		}
 	}
-
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
-
 	resources, err := e.resourceGroupsGetResources(ctx, pluginCtx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	for _, resource := range resources.ResourceTagMappingList {
 		data := *resource.ResourceARN
 		result = append(result, suggestData{Text: data, Value: data, Label: data})
 	}
-
 	return result, nil
 }
 
@@ -217,12 +198,10 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
-
 	client, err := e.getEC2Client(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
-
 	var resp ec2.DescribeInstancesOutput
 	if err := client.DescribeInstancesPagesWithContext(ctx, params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 		resp.Reservations = append(resp.Reservations, page.Reservations...)
@@ -230,51 +209,41 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx
 	}); err != nil {
 		return nil, fmt.Errorf("failed to call ec2:DescribeInstances, %w", err)
 	}
-
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
-	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter, resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
-
 	client, err := e.getRGTAClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
-
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	if err := client.GetResourcesPagesWithContext(ctx, params,
-		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
-			return !lastPage
-		}); err != nil {
+	if err := client.GetResourcesPagesWithContext(ctx, params, func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+		resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
+		return !lastPage
+	}); err != nil {
 		return nil, fmt.Errorf("failed to call tag:GetResources, %w", err)
 	}
-
 	return &resp, nil
 }
 
-// legacy route, will be removed once GovCloud supports Cross Account Observability
 func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	limit := parameters.Get("limit")
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
-
 	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
-
 	logGroupLimit := defaultLogGroupLimit
 	intLimit, err := strconv.ParseInt(limit, 10, 64)
 	if err == nil && intLimit > 0 {
 		logGroupLimit = intLimit
 	}
-
 	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
 	if len(logGroupNamePrefix) > 0 {
 		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
@@ -289,6 +258,58 @@ func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx b
 		logGroupName := *logGroup.LogGroupName
 		result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
 	}
+	return result, nil
+}
+
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+	region := parameters.Get("region")
+	namespace := parameters.Get("namespace")
+	metricName := parameters.Get("metricName")
+	dimensionKey := parameters.Get("dimensionKey")
+	applicationId := parameters.Get("applicationId") // Optional filter for ApplicationId
+
+	client, err := e.getCWClient(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get CloudWatch client: %w", err)
+	}
+
+	input := &cloudwatch.ListMetricsInput{
+		Namespace:  aws.String(namespace),
+		MetricName: aws.String(metricName),
+	}
+	if applicationId != "" {
+		input.Dimensions = []*cloudwatch.DimensionFilter{
+			{
+				Name:  aws.String("ApplicationId"),
+				Value: aws.String(applicationId),
+			},
+		}
+	}
+
+	var result []suggestData
+	seen := make(map[string]bool)
+	err = client.ListMetricsPagesWithContext(ctx, input, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+		for _, metric := range page.Metrics {
+			for _, dim := range metric.Dimensions {
+				if *dim.Name == dimensionKey && !seen[*dim.Value] {
+					seen[*dim.Value] = true
+					result = append(result, suggestData{
+						Text:  *dim.Value,
+						Value: *dim.Value,
+						Label: *dim.Value,
+					})
+				}
+			}
+		}
+		return !lastPage
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list metrics: %w", err)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
 
 	return result, nil
 }
