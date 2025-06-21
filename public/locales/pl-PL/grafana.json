@@ -352,7 +352,7 @@
     "alert": {
       "alert-state": "Stan alertu",
       "annotations": "Komentarze",
-      "description-missing-series-evaluations": "Ile kolejnych odstępów czasu oceny bez danych dla wymiaru musi upłynąć, zanim alert zostanie uznany za przestarzały i automatycznie rozwiązany. Jeśli nie zostanie podana żadna wartość, używana będzie wartość domyślna wynosząca 2.",
+      "description-missing-series-evaluations": "",
       "evaluation": "Ocena",
       "evaluation-paused": "Ocena alertu została wstrzymana",
       "evaluation-paused-description": "Dopóki reguła nie zostanie wznowiona, jej powiadomienia nie będą uruchamiane i nie zostaną utworzone żadne alerty.",
@@ -363,6 +363,14 @@
       "last-updated-by": "Ostatnio zaktualizowane przez",
       "missing-series-resolve": "Brak ocen serii do rozwiązania",
       "no-annotations": "Brak komentarzy",
+      "notification-configuration": {
+        "active-timings": "",
+        "contact-point": "Punkt kontaktowy",
+        "group-by": "Grupowanie wg:",
+        "group-title": "",
+        "mute-timings": "Harmonogramy wyciszenia",
+        "timing-options": ""
+      },
       "pending-period": "Okres oczekiwania",
       "rule": "Reguła",
       "rule-identifier": "Identyfikator reguły",
@@ -457,6 +465,15 @@
       "export": "Eksport",
       "silence-notifications": "Powiadomienia o wyciszeniu",
       "with-modifications": "Ze zmianami"
+    },
+    "alert-missing-evaluations-to-stale": {
+      "help-info": {
+        "link-text": "",
+        "text1": "",
+        "text2": "",
+        "text3": "",
+        "title": ""
+      }
     },
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
@@ -913,6 +930,7 @@
     "copy-to-clipboard": "Kopiuj „{{label}}” do schowka",
     "create-metadata": {
       "label": {
+        "contact-point": "",
         "dashboard": "Pulpit",
         "dashboard-and-panel": "",
         "evaluation-interval": "Interwał oceny",
@@ -1522,6 +1540,10 @@
         "no-rules-body": "Brak reguł do zaimportowania. Wybierz inną przestrzeń nazw lub grupę reguł.",
         "no-rules-body-yaml": "",
         "no-rules-title": "Brak reguł do zaimportowania",
+        "not-using-rules-managed-by-integrations-or-plugins": {
+          "text": "",
+          "title": "Informacje"
+        },
         "plugin-rules-warning": {
           "text": "Wykryliśmy, że niektóre reguły są zarządzane przez wtyczki. Reguły te nie zostaną zaimportowane.",
           "title": "Niektóre reguły są wykluczone z importu"
@@ -4059,6 +4081,9 @@
         "title": "Opcje wiersza"
       }
     },
+    "description": {
+      "action": ""
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Usuń właściwość"
@@ -4551,7 +4576,10 @@
     },
     "save-dashboard-drawer": {
       "label-changes": "Zmiany",
-      "label-details": "Szczegóły"
+      "label-details": "Szczegóły",
+      "title": "Zapisz pulpit",
+      "title-copy": "",
+      "title-provisioned": ""
     },
     "save-dashboard-error-proxy": {
       "body-name-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie.<1></1><2>Czy nadal chcesz zapisać ten pulpit?</2>",
@@ -4625,6 +4653,9 @@
       "tab-warning": {
         "title-not-unique": "Ten tytuł nie jest unikalny"
       }
+    },
+    "title": {
+      "action": ""
     },
     "toolbar": {
       "add": "Dodaj",
@@ -5162,6 +5193,11 @@
       "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
       "title-name-already-exists": "Nazwa już istnieje"
     },
+    "on-open-snapshot-original-dashboard": {
+      "title": {
+        "proceed-to-external-site": ""
+      }
+    },
     "on-remove-panel": {
       "text": {
         "remove-panel": ""
@@ -5279,7 +5315,10 @@
     "save-dashboard-drawer": {
       "tabs": {
         "label-changes": "Zmiany",
-        "label-details": "Szczegóły"
+        "label-details": "Szczegóły",
+        "title": "Zapisz pulpit",
+        "title-copy": "",
+        "title-provisioned": ""
       }
     },
     "save-dashboard-form": {
@@ -7717,6 +7756,14 @@
       "show-details": "Ukryj szczegóły dziennika",
       "unpin-from-outline": "Odepnij log"
     },
+    "log-list-search": {
+      "close": "",
+      "filter": "",
+      "info": "",
+      "input-placeholder": "",
+      "next": "",
+      "prev": ""
+    },
     "log-row-context-modal": {
       "error-loading-log-more-logs": "Błąd podczas wczytywania większej liczby wpisów.",
       "no-more-logs-available": "Nie ma więcej dostępnych logów.",
@@ -7770,6 +7817,7 @@
       "escape-newlines": "Napraw nieprawidłowe sekwencje znaków nowego wiersza i tabulacji we wpisach logów",
       "font-size-default": "",
       "font-size-small": "",
+      "hide-search": "",
       "hide-timestamps": "Ukryj znaczniki czasu",
       "hide-unique-labels": "Ukryj unikalne etykiety",
       "newest-first": "Sortowanie od najnowszych wpisów dziennika – kliknij, aby wyświetlić najpierw najstarsze",
@@ -7778,6 +7826,7 @@
       "remove-escaping": "Usuń znaki unikowe",
       "scroll-bottom": "Przewiń w dół",
       "scroll-top": "Przewiń w górę",
+      "show-search": "",
       "show-timestamps": "Pokaż znaczniki czasu",
       "show-unique-labels": "Pokaż unikalne etykiety",
       "unwrap-lines": "Nie zawijaj wierszy",
@@ -10686,6 +10735,11 @@
       "tooltip-disable": "Wyłącz",
       "tooltip-enable": "Włącz"
     },
+    "draggable-sort-order": {
+      "asc": "",
+      "desc": "",
+      "off": "Wył."
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Dodaj wartość enum",
       "generate-enum-values-from-data": "Wygeneruj wartości enum z danych"
@@ -10864,6 +10918,9 @@
       "time-in-ascending-order": "Czas w porządku rosnącym"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "",
+      "field-order-auto": "Automatycznie",
+      "field-order-manual": "",
       "first-frame-warning": "Organizowanie pól działa tylko w przypadku pojedynczej ramki. Rozważ najpierw zastosowanie transformacji połączenia lub odfiltrowanie danych wejściowych."
     },
     "partion-by-values-editor": {

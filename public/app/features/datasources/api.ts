@@ -74,6 +74,7 @@ export const updateDataSource = (dataSource: DataSourceSettings) => {
   return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
     showErrorAlert: false,
     showSuccessAlert: false,
+    validatePath: true,
   });
 };
 
