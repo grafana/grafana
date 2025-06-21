@@ -16,7 +16,7 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
-import { DEFAULTS, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { DEFAULTS, DEGREES, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
 
 const fieldNamePickerSettings = {
   editor: FieldNamePicker,
@@ -141,12 +141,12 @@ export const RegressionTransformerEditor = ({
         >
           <Select<number>
             value={options.degree ?? DEFAULTS.degree}
-            options={[
-              { label: t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
-              { label: t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
-              { label: t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
-              { label: t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
-            ]}
+            options={DEGREES.map((deg) => {
+              return {
+                label: deg.label(),
+                value: deg.value,
+              };
+            })}
             onChange={(v) => {
               onChange({ ...options, degree: v.value });
             }}
