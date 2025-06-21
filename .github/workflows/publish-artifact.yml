@@ -50,7 +50,7 @@ jobs:
       - name: Coalesce artifacts
         run: |
           mkdir out
-          find ./artifact -type f -exec cp {} out/ \;
+          find ./artifact -mindepth 2 -maxdepth 2 -exec cp {} out/ \;
           ls -al out
       - name: Upload artifacts
         uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
