@@ -541,44 +541,55 @@ export interface PrometheusLanguageProviderInterface
  * @see SeriesApiClient For legacy Prometheus versions using the series API
  */
 export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
+  public _isInitialized = false;
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient?: ResourceApiClient;
 
   constructor(datasource: PrometheusDatasource) {
     super(datasource);
+    this.initializeResourceClient();
   }
 
   /**
-   * Lazily initializes and returns the appropriate resource client based on Prometheus version.
+   * Initializes the resource client.
    *
    * The client selection logic:
-   * - For Prometheus v2.6+ with labels API: Uses LabelsApiClient for efficient label-based queries
-   * - For older versions: Falls back to SeriesApiClient for backward compatibility
-   *
-   * The client instance is cached after first initialization to avoid repeated creation.
-   *
-   * @returns {ResourceApiClient} An instance of either LabelsApiClient or SeriesApiClient
+   * - Tests actual API availability with /api/v1/labels?limit=1 call
+   * - If labels API works: Uses LabelsApiClient for efficient label-based queries
+   * - If labels API fails: Falls back to SeriesApiClient for backward compatibility
    */
-  private get resourceClient(): ResourceApiClient {
-    if (!this._resourceClient) {
-      this._resourceClient = this.datasource.hasLabelsMatchAPISupport()
-        ? new LabelsApiClient(this.request, this.datasource)
-        : new SeriesApiClient(this.request, this.datasource);
+  public initializeResourceClient = async () => {
+    this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+
+    // Check if the datasource claims to support labels API
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      this.start();
     }
 
-    return this._resourceClient;
-  }
+    // Try to make a test call to verify labels API actually works
+    try {
+      await this.datasource.metadataRequest(API_V1.LABELS, { limit: 1 }, { showErrorAlert: false });
+      this._resourceClient = new LabelsApiClient(this.request, this.datasource);
+    } catch (err) {
+      console.log('Labels endpoint is not available. Using series endpoint.');
+    } finally {
+      this.start();
+    }
+  };
 
   /**
    * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
    * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
    */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
-    if (this.datasource.lookupsDisabled) {
+    if (this.datasource.lookupsDisabled || this._isInitialized) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
-    return this._backwardCompatibleStart();
+
+    await Promise.all([this._resourceClient?.start(timeRange), this.queryMetricsMetadata()]);
+    await this._backwardCompatibleStart();
+    this._isInitialized = true;
+    return [];
   };
 
   /**
@@ -630,7 +641,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of histogram metric names
    */
   public retrieveHistogramMetrics = (): string[] => {
-    return this.resourceClient?.histogramMetrics;
+    return this._resourceClient?.histogramMetrics ?? [];
   };
 
   /**
@@ -640,7 +651,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of all metric names
    */
   public retrieveMetrics = (): string[] => {
-    return this.resourceClient?.metrics;
+    return this._resourceClient?.metrics ?? [];
   };
 
   /**
@@ -650,7 +661,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of label key names
    */
   public retrieveLabelKeys = (): string[] => {
-    return this.resourceClient?.labelKeys;
+    return this._resourceClient?.labelKeys ?? [];
   };
 
   /**
@@ -682,7 +693,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+    return (await this._resourceClient?.queryLabelKeys(timeRange, match, limit)) ?? [];
   };
 
   /**
@@ -716,7 +727,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    return (await this._resourceClient?.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
   };
 }
 

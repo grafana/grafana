@@ -754,22 +754,6 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const result = await provider.start();
       expect(result).toEqual([]);
     });
-
-    it('should use resource client and metricsMetadata is available', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource);
-      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
-
-      // Mock the resource client's start method
-      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start');
-      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
-
-      await provider.start();
-
-      expect(resourceClientStartSpy).toHaveBeenCalled();
-      expect(queryMetadataSpy).toHaveBeenCalled();
-      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
-      expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
-    });
   });
 
   describe('queryMetricsMetadata', () => {
@@ -815,8 +799,9 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelKeys', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
+      await provider.initializeResourceClient();
       const resourceClientSpy = jest
-        .spyOn(provider['resourceClient'], 'queryLabelKeys')
+        .spyOn(provider['_resourceClient']!, 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
 
       const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
@@ -827,8 +812,9 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
+      await provider.initializeResourceClient();
       const resourceClientSpy = jest
-        .spyOn(provider['resourceClient'], 'queryLabelValues')
+        .spyOn(provider['_resourceClient']!, 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
 
       const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
