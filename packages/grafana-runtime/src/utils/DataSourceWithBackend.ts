@@ -179,6 +179,7 @@ class DataSourceWithBackend<
       if (datasource.uid?.length) {
         dsUIDs.add(datasource.uid);
       }
+
       return {
         ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
         datasource,
