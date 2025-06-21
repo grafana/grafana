@@ -565,20 +565,27 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
       return;
     }
 
-    this._resourceClient = new SeriesApiClient(this.request, this.datasource);
-
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       // If there is no support for labels api just use Series API Client
+      this._resourceClient = new SeriesApiClient(this.request, this.datasource);
       return;
     }
 
     // At this point we know data source has support for labels API
+    // Assume labels API works and set LabelsApiClient
+    this._resourceClient = new LabelsApiClient(this.request, this.datasource);
+    
     // Try to make a test call to verify labels API actually works
     try {
       await this.datasource.metadataRequest(API_V1.LABELS, { limit: 1 }, { showErrorAlert: false });
-      this._resourceClient = new LabelsApiClient(this.request, this.datasource);
-    } catch (err) {
-      console.log('Labels endpoint is not available. Using series endpoint.');
+    } catch (err: any) {
+      // Only fallback to series API for 404 errors (endpoint not implemented)
+      if (err?.status === 404 || err?.response?.status === 404) {
+        console.log('Labels endpoint is not available (404). Using series endpoint.');
+        this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+      } else {
+        console.log('Labels endpoint test failed but not 404. Using labels client anyway.', err?.message);
+      }
     }
   };
 

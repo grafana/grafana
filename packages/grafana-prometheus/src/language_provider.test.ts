@@ -792,7 +792,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const datasourceWithFailingLabelsAPI = {
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => true,
-        metadataRequest: jest.fn().mockRejectedValue(new Error('404 Not Found')),
+        metadataRequest: jest.fn().mockRejectedValue({ status: 404, message: '404 Not Found' }),
       } as unknown as PrometheusDatasource;
       
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
@@ -802,7 +802,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       
       expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
       expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
-      expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available. Using series endpoint.');
+      expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available (404). Using series endpoint.');
       
       consoleSpy.mockRestore();
     });
