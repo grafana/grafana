@@ -763,11 +763,11 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         hasLabelsMatchAPISupport: () => false,
         metadataRequest: jest.fn(), // Mock to ensure it's not called
       } as unknown as PrometheusDatasource;
-      
+
       const provider = new PrometheusLanguageProvider(datasourceWithoutLabelsAPI);
-      
+
       await provider.initializeResourceClient();
-      
+
       expect(provider['_resourceClient']).toBeDefined();
       expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
       expect(datasourceWithoutLabelsAPI.metadataRequest).not.toHaveBeenCalled();
@@ -779,12 +779,16 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         hasLabelsMatchAPISupport: () => true,
         metadataRequest: jest.fn().mockResolvedValue({ data: { data: [] } }),
       } as unknown as PrometheusDatasource;
-      
+
       const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI);
-      
+
       await provider.initializeResourceClient();
-      
-      expect(datasourceWithLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
+
+      expect(datasourceWithLabelsAPI.metadataRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        { limit: 1 },
+        { showErrorAlert: false }
+      );
       expect(provider['_resourceClient']!.constructor.name).toBe('LabelsApiClient');
     });
 
@@ -794,16 +798,19 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         hasLabelsMatchAPISupport: () => true,
         metadataRequest: jest.fn().mockRejectedValue({ status: 404, message: '404 Not Found' }),
       } as unknown as PrometheusDatasource;
-      
+
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const provider = new PrometheusLanguageProvider(datasourceWithFailingLabelsAPI);
-      
+
       await provider.initializeResourceClient();
-      
-      expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
+
+      expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        { limit: 1 },
+        { showErrorAlert: false }
+      );
       expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
       expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available (404). Using series endpoint.');
-      
       consoleSpy.mockRestore();
     });
   });

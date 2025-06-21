@@ -551,7 +551,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   }
 
   /**
-   * Initializes the resource client.
+   * Lazily initializes and returns the appropriate resource client based on Prometheus version.
    *
    * The client selection logic:
    * - Tests actual API availability with /api/v1/labels?limit=1 call
@@ -574,17 +574,17 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     // At this point we know data source has support for labels API
     // Assume labels API works and set LabelsApiClient
     this._resourceClient = new LabelsApiClient(this.request, this.datasource);
-    
+
     // Try to make a test call to verify labels API actually works
     try {
       await this.datasource.metadataRequest(API_V1.LABELS, { limit: 1 }, { showErrorAlert: false });
-    } catch (err: any) {
+    } catch (err) {
       // Only fallback to series API for 404 errors (endpoint not implemented)
-      if (err?.status === 404 || err?.response?.status === 404) {
+      if (is404Error(err)) {
         console.log('Labels endpoint is not available (404). Using series endpoint.');
         this._resourceClient = new SeriesApiClient(this.request, this.datasource);
       } else {
-        console.log('Labels endpoint test failed but not 404. Using labels client anyway.', err?.message);
+        console.log('Labels endpoint test failed but not 404. Using labels client anyway.');
       }
     }
   };
@@ -864,4 +864,8 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
   }, []);
 
   return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
+};
+
+export const is404Error = (err: unknown) => {
+  return typeof err === 'object' && err !== null && 'status' in err && err.status === 404;
 };
