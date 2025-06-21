@@ -1,4 +1,4 @@
-import { defaultsDeep } from 'lodash';
+import { defaultsDeep } from 'es-toolkit/compat';
 
 import { EventBus } from '../events/types';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';

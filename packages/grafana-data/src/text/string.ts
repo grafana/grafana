@@ -1,4 +1,4 @@
-import { camelCase } from 'lodash';
+import { camelCase } from 'es-toolkit/compat';
 
 const specialChars = ['(', '[', '{', '}', ']', ')', '\\', '|', '*', '+', '-', '.', '?', '<', '>', '#', '&', '^', '$'];
 const specialMatcher = '([\\' + specialChars.join('\\') + '])';

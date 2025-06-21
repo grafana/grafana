@@ -1,4 +1,4 @@
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';

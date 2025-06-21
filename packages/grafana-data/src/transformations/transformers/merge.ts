@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit } from 'es-toolkit/compat';
 import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe/MutableDataFrame';

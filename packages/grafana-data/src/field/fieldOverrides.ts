@@ -1,4 +1,4 @@
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+import { isNumber, set, unset, get, cloneDeep } from 'es-toolkit/compat';
 import { useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 

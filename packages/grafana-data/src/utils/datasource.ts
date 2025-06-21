@@ -1,4 +1,4 @@
-import { isString } from 'lodash';
+import { isString } from 'es-toolkit/compat';
 
 import { DataSourceRef } from '@grafana/schema';
 

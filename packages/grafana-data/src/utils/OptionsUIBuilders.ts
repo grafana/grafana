@@ -1,4 +1,4 @@
-import { set, cloneDeep } from 'lodash';
+import { set, cloneDeep } from 'es-toolkit/compat';
 
 import {
   FieldNamePickerConfigSettings,

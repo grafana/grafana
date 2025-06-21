@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { set } from 'es-toolkit/compat';
 import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';

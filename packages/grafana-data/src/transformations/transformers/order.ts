@@ -1,4 +1,4 @@
-import { clone } from 'lodash';
+import { clone } from 'es-toolkit/compat';
 import { map } from 'rxjs/operators';
 
 import { cacheFieldDisplayNames, getFieldDisplayName } from '../../field/fieldState';

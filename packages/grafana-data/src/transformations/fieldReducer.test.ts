@@ -1,4 +1,4 @@
-import { difference } from 'lodash';
+import { difference } from 'es-toolkit/compat';
 
 import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { NullValueMode } from '../types/data';

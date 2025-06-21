@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'es-toolkit/compat';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';

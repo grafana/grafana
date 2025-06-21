@@ -1,4 +1,4 @@
-import { isString } from 'lodash';
+import { isString } from 'es-toolkit/compat';
 
 import { QueryResultMeta } from '../types/data';
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
