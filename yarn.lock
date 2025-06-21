@@ -3498,10 +3498,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.20.1":
-  version: 6.20.2
-  resolution: "@grafana/scenes-react@npm:6.20.2"
+  version: 6.22.0
+  resolution: "@grafana/scenes-react@npm:6.22.0"
   dependencies:
-    "@grafana/scenes": "npm:6.20.2"
+    "@grafana/scenes": "npm:6.22.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3513,17 +3513,18 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/43bd83d0f265c1e8ac867d0d26d1e970bf9b7d87ff78abd263c51cb2c4af73d536642cbf50d75aa9e1c1af16e9802f1684cc50dfe9f43a8129687ed4831e0706
+  checksum: 10/34db7d82003141bcaa2a91e242b63a8df5c3b2a4ff111ac3236fa109d0ac8d891301a4bf71d6d16709b4d64a957182ae250969098a14e64a6ab0e73bf1e367aa
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.20.2, @grafana/scenes@npm:^6.20.1":
-  version: 6.20.2
-  resolution: "@grafana/scenes@npm:6.20.2"
+"@grafana/scenes@npm:6.22.0, @grafana/scenes@npm:^6.20.1":
+  version: 6.22.0
+  resolution: "@grafana/scenes@npm:6.22.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
     "@tanstack/react-virtual": "npm:^3.9.0"
+    i18next-parser: "npm:9.3.0"
     react-grid-layout: "npm:1.3.4"
     react-use: "npm:17.5.0"
     react-virtualized-auto-sizer: "npm:1.0.24"
@@ -3531,13 +3532,14 @@ __metadata:
   peerDependencies:
     "@grafana/data": ">=10.4"
     "@grafana/e2e-selectors": ">=10.4"
+    "@grafana/i18n": "*"
     "@grafana/runtime": ">=10.4"
     "@grafana/schema": ">=10.4"
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/b71416a84773dbe684e348bdb71c8daa507b6e3d84225bc632d191389e8fbd6c7524b1098750bc07d886596786ec47107259966ef9303d603de04012a0ef4d37
+  checksum: 10/114e768544dcc12bc1fc97bead85e3b3c5529adba6d784a5cd6de8f224047c331710dba493fba317b95498c2b407948f0d73592f2950c1029c6533118d1af89d
   languageName: node
   linkType: hard
 
