@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
@@ -153,7 +154,8 @@ func TestToListRequest(t *testing.T) {
 			},
 			opts: storage.ListOptions{
 				Predicate: storage.SelectionPredicate{
-					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "test-name"}),
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "true"}),
+					Field: fields.SelectorFromSet(fields.Set{"metadata.name": "test-name"}),
 				},
 			},
 			want: &resourcepb.ListRequest{
