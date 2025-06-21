@@ -21,8 +21,19 @@ refs:
 
 # Reporting settings
 
-You can configure organization-wide report settings and branding options in **Dashboards > Reporting > Settings**.
-Settings are applied to all the reports for the current organization.
+You can configure organization-wide report settings and branding options in **Dashboards > Reporting**.
+These settings are applied to all the reports for the current organization.
+
+To access the settings, go to **Dashboards > Reporting** and click the **Report settings** button.
+This opens the **Report template settings** drawer, where you can make changes.
+
+{{< admonition type="note" >}}
+
+The redesigned reporting feature, including the report settings drawer, is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. To use this feature, enable the `newShareReportDrawer` feature toggle in your Grafana configuration file or, for Grafana Cloud, contact Support.
+
+{{< /admonition >}}
+
+You can also navigate these settings from the **Schedule report** drawer that opens when you create a report directly from a dashboard.
 
 ## Attachment settings
 
