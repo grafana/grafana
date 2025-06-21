@@ -560,7 +560,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns The type of client that was initialized
    */
-  public initializeResourceClient = async (): Promise<void> => {
+  initializeResourceClient = async (): Promise<void> => {
     if (this._resourceClient) {
       return;
     }
@@ -599,6 +599,29 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     this._isInitialized = true;
     return [];
   };
+
+  /**
+   * Ensures resource client is available for synchronous operations.
+   * Logs warning if not initialized.
+   */
+  private _ensureResourceClient(): ResourceApiClient | null {
+    if (!this._resourceClient) {
+      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
+      return null;
+    }
+    return this._resourceClient;
+  }
+
+  /**
+   * Ensures resource client is available for asynchronous operations.
+   * Auto-initializes if needed.
+   */
+  private async _ensureResourceClientAsync(): Promise<ResourceApiClient> {
+    if (!this._resourceClient) {
+      await this.initializeResourceClient();
+    }
+    return this._resourceClient!;
+  }
 
   /**
    * This private method exists to make sure the old class will be functional until we remove it.
@@ -649,11 +672,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of histogram metric names
    */
   public retrieveHistogramMetrics = (): string[] => {
-    if (!this._resourceClient) {
-      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
-      return [];
-    }
-    return this._resourceClient.histogramMetrics ?? [];
+    const client = this._ensureResourceClient();
+    return client?.histogramMetrics ?? [];
   };
 
   /**
@@ -663,11 +683,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of all metric names
    */
   public retrieveMetrics = (): string[] => {
-    if (!this._resourceClient) {
-      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
-      return [];
-    }
-    return this._resourceClient.metrics ?? [];
+    const client = this._ensureResourceClient();
+    return client?.metrics ?? [];
   };
 
   /**
@@ -677,11 +694,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of label key names
    */
   public retrieveLabelKeys = (): string[] => {
-    if (!this._resourceClient) {
-      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
-      return [];
-    }
-    return this._resourceClient.labelKeys ?? [];
+    const client = this._ensureResourceClient();
+    return client?.labelKeys ?? [];
   };
 
   /**
@@ -713,10 +727,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    if (!this._resourceClient) {
-      await this.initializeResourceClient();
-    }
-    return (await this._resourceClient!.queryLabelKeys(timeRange, match, limit)) ?? [];
+    const client = await this._ensureResourceClientAsync();
+    return (await client.queryLabelKeys(timeRange, match, limit)) ?? [];
   };
 
   /**
@@ -750,10 +762,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    if (!this._resourceClient) {
-      await this.initializeResourceClient();
-    }
-    return (await this._resourceClient!.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
+    const client = await this._ensureResourceClientAsync();
+    return (await client.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
   };
 }
 
