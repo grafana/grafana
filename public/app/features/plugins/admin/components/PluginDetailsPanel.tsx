@@ -36,7 +36,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const customLinks = plugin.details?.links?.filter((link) => {
     const customLinksFiltered = ![
-      plugin.url,
+      plugin.details?.repositoryUrl,
       plugin.details?.licenseUrl,
       plugin.details?.documentationUrl,
       plugin.details?.raiseAnIssueUrl,
@@ -47,7 +47,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
     return customLinksFiltered;
   });
   const shouldRenderLinks =
-    plugin.url ||
+    plugin.details?.repositoryUrl ||
     plugin.details?.licenseUrl ||
     plugin.details?.documentationUrl ||
     plugin.details?.raiseAnIssueUrl ||
@@ -105,9 +105,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
               <Stack direction="column" gap={2}>
-                {plugin.url && (
+                {plugin.details?.repositoryUrl && (
                   <LinkButton
-                    href={plugin.url}
+                    href={plugin.details?.repositoryUrl}
                     variant="secondary"
                     fill="solid"
                     icon="code-branch"
