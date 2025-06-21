@@ -51,7 +51,7 @@ export function MetricSelector() {
         </Label>
         <div>
           <Input
-            onChange={(e) => setSeriesLimit(e.currentTarget.value.trim())}
+            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'

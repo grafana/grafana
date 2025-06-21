@@ -24,8 +24,8 @@ interface MetricsBrowserContextType {
   setStatus: (status: string) => void;
 
   // Series limit settings
-  seriesLimit: string;
-  setSeriesLimit: (limit: string) => void;
+  seriesLimit: number;
+  setSeriesLimit: (limit: number) => void;
 
   // Callback when selector changes
   onChange: (selector: string) => void;
