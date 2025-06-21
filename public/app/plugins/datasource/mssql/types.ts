@@ -16,6 +16,7 @@ export enum MSSQLEncryptOptions {
   disable = 'disable',
   false = 'false',
   true = 'true',
+  strict = 'strict',
 }
 export interface MssqlOptions extends SQLOptions {
   authenticationType?: MSSQLAuthenticationType;
@@ -30,6 +31,7 @@ export interface MssqlOptions extends SQLOptions {
   configFilePath?: string;
   UDPConnectionLimit?: number;
   enableDNSLookupKDC?: string;
+  serverSpn?: string;
 }
 
 export interface MssqlSecureOptions {
