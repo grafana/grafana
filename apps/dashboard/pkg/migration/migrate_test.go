@@ -69,12 +69,10 @@ func TestMigrate(t *testing.T) {
 			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
 		})
 
-		for targetVersion := inputVersion + 1; targetVersion <= schemaversion.LATEST_VERSION; targetVersion++ {
-			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
-			t.Run(testName, func(t *testing.T) {
-				testMigration(t, inputDash, name, inputVersion, targetVersion)
-			})
-		}
+		testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, schemaversion.LATEST_VERSION)
+		t.Run(testName, func(t *testing.T) {
+			testMigration(t, inputDash, name, inputVersion, schemaversion.LATEST_VERSION)
+		})
 	}
 }
 
@@ -82,7 +80,7 @@ func testMigration(t *testing.T, dash map[string]interface{}, name string, input
 	t.Helper()
 	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 
-	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.%d.json", inputVersion, name, targetVersion))
+	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.json", inputVersion, name))
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 

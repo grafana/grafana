@@ -1,6 +1,4 @@
 {
-  "title": "TimeSeriesTable Transformation Test Dashboard",
-  "schemaVersion": 39,
   "panels": [
     {
       "title": "Panel with TimeSeriesTable Transformation",
@@ -8,13 +6,18 @@
         {
           "id": "timeSeriesTable",
           "options": {
-            "refIdToStat": {
-              "A": "mean",
-              "B": "max"
+            "A": {
+              "stat": "mean"
+            },
+            "B": {
+              "stat": "max"
             }
           }
         }
       ]
     }
-  ]
+  ],
+  "refresh": "",
+  "schemaVersion": 41,
+  "title": "TimeSeriesTable Transformation Test Dashboard"
 }
