@@ -1,6 +1,6 @@
 import { clamp } from 'lodash';
 
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -8,7 +8,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -34,6 +34,27 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
+
+function getValidDefaultTargetDatasourceUid(): string | undefined {
+  const configuredDefaultUid = config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID;
+
+  if (!configuredDefaultUid) {
+    return undefined;
+  }
+
+  try {
+    const datasource = getDataSourceSrv().getInstanceSettings(configuredDefaultUid);
+    if (datasource && isValidRecordingRulesTarget(datasource)) {
+      return configuredDefaultUid;
+    }
+  } catch (error) {
+    // If datasource doesn't exist or can't be retrieved,
+    // just return undefined
+  }
+
+  return undefined;
+}
+
 export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
   const type = (() => {
@@ -74,7 +95,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(ruleType),
-    targetDatasourceUid: config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID,
+    targetDatasourceUid: getValidDefaultTargetDatasourceUid(),
 
     // cortex / loki
     namespace: '',
