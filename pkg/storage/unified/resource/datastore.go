@@ -41,21 +41,20 @@ type DataKey struct {
 	Action          MetaDataAction
 }
 
-func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
+func (d *dataStore) getPrefix(key ListRequestKey) string {
 	if key.Namespace == "" {
-		// return "", fmt.Errorf("namespace is required") ???
-		return "", nil
+		return ""
 	}
 	if key.Group == "" {
-		return fmt.Sprintf("%s/", key.Namespace), nil
+		return fmt.Sprintf("%s/", key.Namespace)
 	}
 	if key.Resource == "" {
-		return fmt.Sprintf("%s/%s/", key.Namespace, key.Group), nil
+		return fmt.Sprintf("%s/%s/", key.Namespace, key.Group)
 	}
 	if key.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/", key.Namespace, key.Group, key.Resource), nil
+		return fmt.Sprintf("%s/%s/%s/", key.Namespace, key.Group, key.Resource)
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/", key.Namespace, key.Group, key.Resource, key.Name), nil
+	return fmt.Sprintf("%s/%s/%s/%s/", key.Namespace, key.Group, key.Resource, key.Name)
 }
 
 func (d *dataStore) getKey(key DataKey) string {
@@ -85,13 +84,17 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 	}, nil
 }
 
+func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[string, error] {
+	prefix := d.getPrefix(key)
+	return d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	})
+}
+
+// TODO: deprecate this
 func (d *dataStore) List(ctx context.Context, key ListRequestKey) iter.Seq2[DataObj, error] {
-	prefix, err := d.getPrefix(key)
-	if err != nil {
-		return func(yield func(DataObj, error) bool) {
-			yield(DataObj{}, err)
-		}
-	}
+	prefix := d.getPrefix(key)
 	iter := d.kv.Keys(ctx, dataSection, ListOptions{
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),

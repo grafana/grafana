@@ -29,15 +29,13 @@ func TestDataStore_GetPrefix(t *testing.T) {
 	}
 
 	expected := "test-namespace/test-group/test-resource/test-name/"
-	actual, err := ds.getPrefix(key)
+	actual := ds.getPrefix(key)
 
-	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 
 	key.Name = ""
 	expected = "test-namespace/test-group/test-resource/"
-	actual, err = ds.getPrefix(key)
-	assert.NoError(t, err)
+	actual = ds.getPrefix(key)
 	assert.Equal(t, expected, actual)
 
 }
@@ -487,5 +485,188 @@ func TestDataStore_Integration(t *testing.T) {
 		assert.True(t, remainingUUIDs[versions[0].rv])
 		assert.False(t, remainingUUIDs[versions[1].rv]) // deleted
 		assert.True(t, remainingUUIDs[versions[2].rv])
+	})
+}
+
+func TestDataStore_Keys(t *testing.T) {
+	ds := setupTestDataStore(t)
+	ctx := context.Background()
+
+	resourceKey := ListRequestKey{
+		Namespace: "test-namespace",
+		Group:     "test-group",
+		Resource:  "test-resource",
+		Name:      "test-name",
+	}
+
+	// Create test data
+	rv1 := node.Generate()
+	rv2 := node.Generate()
+	rv3 := node.Generate()
+	testValue1 := []byte("test-value-1")
+	testValue2 := []byte("test-value-2")
+	testValue3 := []byte("test-value-3")
+
+	dataKey1 := DataKey{
+		Namespace:       resourceKey.Namespace,
+		Group:           resourceKey.Group,
+		Resource:        resourceKey.Resource,
+		Name:            resourceKey.Name,
+		ResourceVersion: rv1.Int64(),
+		Action:          MetaDataActionCreated,
+	}
+
+	dataKey2 := DataKey{
+		Namespace:       resourceKey.Namespace,
+		Group:           resourceKey.Group,
+		Resource:        resourceKey.Resource,
+		Name:            resourceKey.Name,
+		ResourceVersion: rv2.Int64(),
+		Action:          MetaDataActionUpdated,
+	}
+
+	dataKey3 := DataKey{
+		Namespace:       resourceKey.Namespace,
+		Group:           resourceKey.Group,
+		Resource:        resourceKey.Resource,
+		Name:            resourceKey.Name,
+		ResourceVersion: rv3.Int64(),
+		Action:          MetaDataActionDeleted,
+	}
+
+	t.Run("keys with multiple entries", func(t *testing.T) {
+		// Save test data
+		err := ds.Save(ctx, dataKey1, testValue1)
+		require.NoError(t, err)
+
+		err = ds.Save(ctx, dataKey2, testValue2)
+		require.NoError(t, err)
+
+		err = ds.Save(ctx, dataKey3, testValue3)
+		require.NoError(t, err)
+
+		// Get keys
+		var keys []string
+		for key, err := range ds.Keys(ctx, resourceKey) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+
+		// Verify results
+		require.Len(t, keys, 3)
+
+		// Verify all keys are present
+		expectedKeys := []string{
+			ds.getKey(dataKey1),
+			ds.getKey(dataKey2),
+			ds.getKey(dataKey3),
+		}
+
+		for _, expectedKey := range expectedKeys {
+			assert.Contains(t, keys, expectedKey)
+		}
+	})
+
+	t.Run("keys with empty result", func(t *testing.T) {
+		emptyResourceKey := ListRequestKey{
+			Namespace: "empty-namespace",
+			Group:     "empty-group",
+			Resource:  "empty-resource",
+			Name:      "empty-name",
+		}
+
+		var keys []string
+		for key, err := range ds.Keys(ctx, emptyResourceKey) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+
+		assert.Len(t, keys, 0)
+	})
+
+	t.Run("keys with partial prefix matching", func(t *testing.T) {
+		// Create keys with different names but same namespace/group/resource
+		partialKey := ListRequestKey{
+			Namespace: resourceKey.Namespace,
+			Group:     resourceKey.Group,
+			Resource:  resourceKey.Resource,
+			// Name is empty, so it should match all names
+		}
+
+		rv4 := node.Generate()
+		dataKey4 := DataKey{
+			Namespace:       resourceKey.Namespace,
+			Group:           resourceKey.Group,
+			Resource:        resourceKey.Resource,
+			Name:            "different-name",
+			ResourceVersion: rv4.Int64(),
+			Action:          MetaDataActionCreated,
+		}
+
+		err := ds.Save(ctx, dataKey4, []byte("different-value"))
+		require.NoError(t, err)
+
+		var keys []string
+		for key, err := range ds.Keys(ctx, partialKey) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+
+		// Should include all keys with matching namespace/group/resource
+		require.Len(t, keys, 4) // 3 from previous test + 1 new one
+
+		// Verify the new key is included
+		assert.Contains(t, keys, ds.getKey(dataKey4))
+	})
+
+	t.Run("keys with namespace only prefix", func(t *testing.T) {
+		// Create keys with different groups but same namespace
+		namespaceOnlyKey := ListRequestKey{
+			Namespace: resourceKey.Namespace,
+			// Group, Resource, Name are empty
+		}
+
+		rv5 := node.Generate()
+		dataKey5 := DataKey{
+			Namespace:       resourceKey.Namespace,
+			Group:           "different-group",
+			Resource:        "different-resource",
+			Name:            "different-name",
+			ResourceVersion: rv5.Int64(),
+			Action:          MetaDataActionCreated,
+		}
+
+		err := ds.Save(ctx, dataKey5, []byte("namespace-only-value"))
+		require.NoError(t, err)
+
+		var keys []string
+		for key, err := range ds.Keys(ctx, namespaceOnlyKey) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+
+		// Should include all keys with matching namespace
+		require.Len(t, keys, 5) // 4 from previous tests + 1 new one
+
+		// Verify the new key is included
+		assert.Contains(t, keys, ds.getKey(dataKey5))
+	})
+
+	t.Run("keys with empty namespace", func(t *testing.T) {
+		// Group, Resource, Name are empty but will be ignored
+		emptyNamespaceKey := ListRequestKey{
+			Namespace: "",
+			Group:     "test-group",
+			Resource:  "test-resource",
+			Name:      "test-name",
+		}
+
+		var keys []string
+		for key, err := range ds.Keys(ctx, emptyNamespaceKey) {
+			require.NoError(t, err)
+			keys = append(keys, key)
+		}
+
+		require.Len(t, keys, 5)
 	})
 }
