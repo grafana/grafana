@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
@@ -338,6 +340,12 @@ func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResp
 	return rsp
 }
 
+// includes the query data response and also any header manipulations on the response request
+type reqResponse struct {
+	qdr     *backend.QueryDataResponse
+	headers http.Header
+}
+
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*backend.QueryDataResponse, error) {
 	ctx, span := b.tracer.Start(ctx, "Query.executeConcurrentQueries")
@@ -345,7 +353,8 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
-	rchan := make(chan *backend.QueryDataResponse, len(requests))
+
+	rchan := make(chan *reqResponse, len(requests))
 
 	// Create panic recovery function for loop below
 	recoveryFn := func(req datasourceRequest) {
@@ -360,7 +369,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
 			}
 			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
-			rchan <- buildErrorResponse(err, req)
+			rchan <- &reqResponse{buildErrorResponse(err, req), http.Header{}}
 		}
 	}
 
@@ -370,11 +379,18 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 		g.Go(func() error {
 			defer recoveryFn(req)
 
-			dqr, err := b.handleQuerySingleDatasource(ctx, req, instanceConfig)
+			// create a thread-safe request context allowing concurrent header manipulations
+			ctxCopy := contexthandler.CopyWithReqContext(ctx)
+
+			dqr, err := b.handleQuerySingleDatasource(ctxCopy, req, instanceConfig)
 			if err == nil {
-				rchan <- dqr
+				reqCtx, header := contexthandler.FromContext(ctxCopy), http.Header{}
+				if reqCtx != nil {
+					header = reqCtx.Resp.Header()
+				}
+				rchan <- &reqResponse{dqr, header}
 			} else {
-				rchan <- buildErrorResponse(err, req)
+				rchan <- &reqResponse{buildErrorResponse(err, req), http.Header{}}
 			}
 			return nil
 		})
@@ -386,10 +402,22 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 	close(rchan)
 
 	// Merge the results from each response
+	reqCtx := contexthandler.FromContext(ctx)
 	resp := backend.NewQueryDataResponse()
 	for result := range rchan {
-		for refId, dataResponse := range result.Responses {
+		for refId, dataResponse := range result.qdr.Responses {
 			resp.Responses[refId] = dataResponse
+		}
+
+		// Merge headers into original context
+		if reqCtx != nil {
+			for header, values := range result.headers {
+				for _, v := range values {
+					if !slices.Contains(reqCtx.Resp.Header().Values(header), v) {
+						reqCtx.Resp.Header().Add(header, v)
+					}
+				}
+			}
 		}
 	}
 
