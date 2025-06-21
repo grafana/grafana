@@ -133,7 +133,15 @@ export const Expression: FC<ExpressionProps> = ({
           );
 
         case ExpressionQueryType.sql:
-          return <SqlExpr onChange={(query) => onChangeQuery(query)} query={query} refIds={availableRefIds} alerting />;
+          return (
+            <SqlExpr
+              onChange={(query) => onChangeQuery(query)}
+              query={query}
+              refIds={availableRefIds}
+              alerting
+              queries={[]}
+            />
+          );
 
         default:
           return (
