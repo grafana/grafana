@@ -70,7 +70,7 @@
     "marked": "15.0.12",
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
-    "moment-timezone": "0.5.47",
+    "moment-timezone": "0.6.0",
     "ol": "7.4.0",
     "papaparse": "5.5.3",
     "react-use": "17.6.0",
