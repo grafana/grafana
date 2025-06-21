@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TableCellDisplayMode } from '@grafana/schema';
+
+import { TableCellDisplayMode } from '../../types';
 
 import AutoCell from './AutoCell';
 
