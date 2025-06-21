@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Box, Stack, TextLink } from '@grafana/ui';
+import { Text, Box, Icon, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -12,6 +14,7 @@ export interface Props {
 }
 
 export function EnterpriseAuthFeaturesCard({ page }: Props) {
+  const styles = useStyles2(getStyles);
   const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
   const helpFlags = contextSrv.user.helpFlags1;
   const HELP_FLAG_ENTERPRISE_AUTH = 0x0004;
@@ -32,26 +35,64 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
   }
 
   return (
-    <Box paddingTop={4}>
-      <Alert
-        severity="info"
-        title={t('admin.enterprise-auth-features-card.title', 'Did you know?')}
-        onRemove={onDismiss}
-      >
-        <Stack direction="row" alignItems="center">
+    <Box
+      padding={3}
+      borderColor="weak"
+      borderStyle={'solid'}
+      borderRadius="default"
+      backgroundColor="secondary"
+      display={'flex'}
+      direction="column"
+      gap={2}
+    >
+      <Stack direction="row" alignItems="center" justifyContent={'space-between'}>
+        <div className={styles.cloudBadge}>
+          <Icon name="cloud" />
+          Cloud & Enterprise
+        </div>
+        <Button
+          variant="secondary"
+          fill="text"
+          icon="times"
+          onClick={onDismiss}
+          aria-label={t('admin.enterprise-auth-features-card.dismiss', 'Dismiss')}
+        />
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <Text variant="h4">Enterprise authentication</Text>
+        <Text variant="body" color="secondary">
           <Trans i18nKey="admin.enterprise-auth-features-card.text">
-            Sync users and teams using SCIM, sync teams from LDAP, or authenticate using SAML in Grafana Cloud and
-            Enterprise. Learn more about{' '}
-            <TextLink
-              href={`https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-${page}`}
-              external
-              color="link"
-            >
-              Enterprise authentication.
-            </TextLink>
+            You can sync users and teams with <strong>SCIM</strong>, authenticate using <strong>SAML</strong> and sync
+            teams with <strong>LDAP</strong>.
           </Trans>
-        </Stack>
-      </Alert>
+        </Text>
+      </Stack>
+      <div>
+        <LinkButton
+          href={`https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-${page}`}
+          icon="external-link-alt"
+          variant="secondary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn more.
+        </LinkButton>
+      </div>
     </Box>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    cloudBadge: css({
+      display: 'flex',
+      alignItems: 'center',
+      background: theme.colors.gradients.brandHorizontal,
+      color: theme.colors.primary.contrastText,
+      padding: theme.spacing(0.5, 1),
+      borderRadius: theme.shape.radius.pill,
+      fontSize: theme.typography.bodySmall.fontSize,
+      gap: theme.spacing(1),
+    }),
+  };
 }
