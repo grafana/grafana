@@ -577,7 +577,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);
     return this._backwardCompatibleStart();
   };
 

@@ -771,6 +771,26 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
       expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
     });
+
+    it('should call queryMetricsMetadata with datasource seriesLimit during start', async () => {
+      const customSeriesLimit = 5000;
+      const datasourceWithCustomLimit = {
+        ...defaultDatasource,
+        seriesLimit: customSeriesLimit,
+      } as PrometheusDatasource;
+
+      const provider = new PrometheusLanguageProvider(datasourceWithCustomLimit);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+
+      // Mock the resource client's start method
+      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start').mockResolvedValue();
+      const queryMetricsMetadataSpy = jest.spyOn(provider, 'queryMetricsMetadata').mockResolvedValue(mockMetadata);
+
+      await provider.start();
+
+      expect(resourceClientStartSpy).toHaveBeenCalled();
+      expect(queryMetricsMetadataSpy).toHaveBeenCalledWith(customSeriesLimit);
+    });
   });
 
   describe('queryMetricsMetadata', () => {
