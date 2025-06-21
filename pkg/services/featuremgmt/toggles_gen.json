@@ -1450,12 +1450,15 @@
     {
       "metadata": {
         "name": "grafanaAdvisor",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-01-20T10:08:00Z"
+        "resourceVersion": "1750155856840",
+        "creationTimestamp": "2025-01-20T10:08:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 10:24:16.840675 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Advisor app",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -1778,6 +1781,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzApis",
+        "resourceVersion": "1747897123910",
+        "creationTimestamp": "2025-05-22T06:58:43Z"
+      },
+      "spec": {
+        "description": "Registers AuthZ /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2025-02-18T23:11:26Z"
@@ -1847,14 +1864,18 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-11T23:30:50Z"
+        "resourceVersion": "1750162291839",
+        "creationTimestamp": "2023-10-11T23:30:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 12:11:31.83962 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables RBAC support for library panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "expression": "true"
       }
     },
     {
@@ -2106,7 +2127,8 @@
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-22T19:30:43Z"
+        "creationTimestamp": "2024-08-22T19:30:43Z",
+        "deletionTimestamp": "2025-06-19T13:40:02Z"
       },
       "spec": {
         "description": "Send dashboard and panel names to Loki when querying",
@@ -2231,6 +2253,19 @@
     },
     {
       "metadata": {
+        "name": "nanoGit",
+        "resourceVersion": "1750087021356",
+        "creationTimestamp": "2025-06-16T15:17:01Z"
+      },
+      "spec": {
+        "description": "Use experimental git library for provisioning",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "nestedFolders",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2022-10-26T14:15:14Z"
@@ -2326,12 +2361,15 @@
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-17T19:05:46Z"
+        "resourceVersion": "1750056712608",
+        "creationTimestamp": "2025-02-17T19:05:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-16 06:51:52.608239 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
@@ -2602,6 +2640,22 @@
         "description": "Enables SRI checks for plugin assets",
         "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "preferLibraryPanelTitle",
+        "resourceVersion": "1750152018442",
+        "creationTimestamp": "2025-06-17T08:53:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-17 09:20:18.442539 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Prefer library panel title over viz panel title.",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -3185,14 +3239,18 @@
     {
       "metadata": {
         "name": "teamHttpHeadersMimir",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-01-13T10:42:47Z"
+        "resourceVersion": "1749732225616",
+        "creationTimestamp": "2025-01-13T10:42:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-12 12:43:45.616224 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -3465,7 +3523,8 @@
       "metadata": {
         "name": "xrayApplicationSignals",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-01T14:42:02Z"
+        "creationTimestamp": "2025-04-01T14:42:02Z",
+        "deletionTimestamp": "2025-06-11T11:57:58Z"
       },
       "spec": {
         "description": "Support Application Signals queries in the X-Ray datasource",

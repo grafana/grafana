@@ -62,7 +62,7 @@ func TestIntegrationValidation(t *testing.T) {
 	}
 
 	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -396,17 +396,10 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
-			// Try to update with the second copy (should fail with version conflict for mode 0, 4 and 5, but not for mode 1, 2 and 3)
-			updatedDash2, err := updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
-			if ctx.DualWriterMode == rest.Mode1 || ctx.DualWriterMode == rest.Mode2 || ctx.DualWriterMode == rest.Mode3 {
-				require.NoError(t, err)
-				require.NotNil(t, updatedDash2)
-				meta, _ := utils.MetaAccessor(updatedDash2)
-				require.Equal(t, "Updated by second user", meta.FindTitle(""), "Dashboard title should be updated")
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
-			}
+			// Try to update with the second copy. Should fail with version conflict.
+			_, err = updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
@@ -2399,4 +2392,91 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		}
 	})
+}
+
+// TODO: this only works on mode0-3 right now. In modes 4/5, we need to start returning the connections endpoint
+// from retrieving the panel count from search / indexing the dashboard library panels
+func TestDashboardWithLibraryPanel(t *testing.T) {
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					"unifiedStorageSearch",
+					"kubernetesClientDashboardsFolders",
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+
+			// create the library element first
+			libraryElement := map[string]interface{}{
+				"kind": 1,
+				"name": "Test Library Panel",
+				"model": map[string]interface{}{
+					"type":  "timeseries",
+					"title": "Test Library Panel",
+				},
+			}
+			libraryElementURL := "/api/library-elements"
+			libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
+			require.NoError(t, err)
+			require.NotNil(t, libraryElementData)
+			data := libraryElementData["result"].(map[string]interface{})
+			uid := data["uid"].(string)
+			require.NotEmpty(t, uid)
+
+			// then reference the library element in the dashboard
+			dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
+			dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
+				map[string]interface{}{
+					"id":    1,
+					"title": "Library Panel",
+					"type":  "library-panel-ref",
+					"libraryPanel": map[string]interface{}{
+						"uid":  uid,
+						"name": "Test Library Panel",
+					},
+				},
+			}
+
+			createdDash, err := adminClient.Resource.Create(context.Background(), dashboard, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, createdDash)
+
+			// should have created a library panel connection
+			connectionsURL := fmt.Sprintf("/api/library-elements/%s/connections", uid)
+			connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
+			require.NoError(t, err)
+			require.NotNil(t, connectionsData)
+			connections := connectionsData["result"].([]interface{})
+			require.Len(t, connections, 1)
+		})
+	}
+}
+
+func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        user,
+		Method:      http.MethodPost,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to post: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, nil
 }

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorList, EditorRow } from '@grafana/plugin-ui';
-import { HorizontalGroup, Select } from '@grafana/ui';
+import { Select, Stack } from '@grafana/ui';
 
 import { labelsToGroupedOptions, stringArrayToFilters } from '../functions';
 
@@ -80,7 +80,7 @@ export const LabelFilter = ({ labels = {}, filters: filterArray, onChange: _onCh
     const { options, valueOptions } = getOptions(item);
 
     return (
-      <HorizontalGroup spacing="xs" width="auto">
+      <Stack gap={1} width="auto">
         <Select
           aria-label="Filter label key"
           formatCreateLabel={(v) => `Use label key: ${v}`}
@@ -104,7 +104,7 @@ export const LabelFilter = ({ labels = {}, filters: filterArray, onChange: _onCh
           onChange={({ value = '' }) => onChangeItem({ key, operator, value, condition })}
         />
         <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDeleteItem} type="button" />
-      </HorizontalGroup>
+      </Stack>
     );
   };
 

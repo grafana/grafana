@@ -37,7 +37,7 @@ export const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => {
   return (
     <div>
       <h2>
-        <Trans i18nKey="components.prom-cheat-sheet.prom-ql-cheat-sheet">PromQL Cheat Sheet</Trans>
+        <Trans i18nKey="grafana-prometheus.components.prom-cheat-sheet.prom-ql-cheat-sheet">PromQL Cheat Sheet</Trans>
       </h2>
       {CHEAT_SHEET_ITEMS.map((item, index) => (
         <div className={styles.cheatSheetItem} key={index}>

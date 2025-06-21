@@ -167,9 +167,14 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	if len(permissions) > 0 {
 		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
 		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		fetchPermissionsParams.K8s = make([]string, 0, len(permissions))
+
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else if strings.Contains(permissions[i], "grafana.app") {
+				// Check for pattern <resource>.grafana.app/<resource>:<action>
+				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {
 				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
 			}
