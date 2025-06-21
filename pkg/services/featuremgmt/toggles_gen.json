@@ -3238,6 +3238,18 @@
     },
     {
       "metadata": {
+        "name": "tabularNumbers",
+        "resourceVersion": "1750421320919",
+        "creationTimestamp": "2025-06-20T12:08:40Z"
+      },
+      "spec": {
+        "description": "Use fixed-width numbers globally in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1749732225616",
         "creationTimestamp": "2025-01-13T10:42:47Z",

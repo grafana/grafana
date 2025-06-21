@@ -231,3 +231,4 @@ skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,fal
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
+tabularNumbers,experimental,@grafana/grafana-frontend-platform,false,false,false
