@@ -150,6 +150,77 @@ receivers:
 	})
 }
 
+func TestMultiOrgAlertmanager_SaveAndApplyAlertmanagerConfiguration(t *testing.T) {
+	orgID := int64(1)
+	ctx := context.Background()
+
+	t.Run("SaveAndApplyAlertmanagerConfiguration preserves existing extra configs", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		extraConfig := definitions.ExtraConfiguration{
+			Identifier:    "test-extra-config",
+			MergeMatchers: amconfig.Matchers{&labels.Matcher{Type: labels.MatchEqual, Name: "env", Value: "test"}},
+			TemplateFiles: map[string]string{"test.tmpl": "{{ define \"test\" }}Test{{ end }}"},
+			AlertmanagerConfig: `route:
+  receiver: extra-receiver
+receivers:
+  - name: extra-receiver`,
+		}
+
+		err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, extraConfig)
+		require.NoError(t, err)
+
+		// Verify extra config was saved
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, extraConfig.Identifier, gettableConfig.ExtraConfigs[0].Identifier)
+
+		// Apply a new main configuration
+		newMainConfig := definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "main-receiver",
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: amconfig.Receiver{
+							Name: "main-receiver",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									Name:     "main-receiver",
+									Type:     "email",
+									Settings: definitions.RawMessage(`{"addresses": "me@grafana.com"}`),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		err = mam.SaveAndApplyAlertmanagerConfiguration(ctx, orgID, newMainConfig)
+		require.NoError(t, err)
+
+		// Verify that the extra config is still present after applying the new main config
+		updatedConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, updatedConfig.ExtraConfigs, 1)
+		require.Equal(t, extraConfig.Identifier, updatedConfig.ExtraConfigs[0].Identifier)
+		require.Equal(t, extraConfig.TemplateFiles, updatedConfig.ExtraConfigs[0].TemplateFiles)
+
+		// Verify the main config was updated
+		require.Equal(t, "main-receiver", updatedConfig.AlertmanagerConfig.Route.Receiver)
+		require.Len(t, updatedConfig.AlertmanagerConfig.Receivers, 1)
+		require.Equal(t, "main-receiver", updatedConfig.AlertmanagerConfig.Receivers[0].Name)
+	})
+}
+
 func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
 	orgID := int64(1)
 

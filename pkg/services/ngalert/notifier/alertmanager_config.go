@@ -286,6 +286,12 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
+// SaveAndApplyAlertmanagerConfiguration saves and applies the Alertmanager configuration for a given org.
+//
+// Each Alertmanager configuration can have a list of ExtraConfigurations, which are additional upstream configurations
+// imported via the import API, for example with mimirtool. This method keeps the existing ExtraConfigs
+// from the previous configuration, if they exist. If you need to change the ExtraConfigs, use the
+// specific methods for that.
 func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// We cannot add this validation to PostableUserConfig as that struct is used for both
 	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
@@ -303,6 +309,16 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 		}
 	}
 	cleanPermissionsErr := err
+
+	if previousConfig != nil {
+		// If there is a previous configuration, we need to copy its extra configs to the new one.
+		var previousConfigData definitions.GettableUserConfig
+		previousConfigData, err = moa.gettableUserConfigFromAMConfigString(ctx, org, previousConfig.AlertmanagerConfiguration)
+		if err != nil {
+			return fmt.Errorf("failed to get previous configuration: %w", err)
+		}
+		config.ExtraConfigs = previousConfigData.ExtraConfigs
+	}
 
 	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
