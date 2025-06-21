@@ -625,6 +625,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -641,6 +642,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
