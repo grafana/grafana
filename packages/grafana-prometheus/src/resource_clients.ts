@@ -11,7 +11,6 @@ import { PrometheusCacheLevel } from './types';
 import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 type PrometheusSeriesResponse = Array<{ [key: string]: string }>;
-type PrometheusLabelsResponse = string[];
 
 export interface ResourceApiClient {
   metrics: string[];
@@ -48,24 +47,6 @@ export abstract class BaseResourceClient {
     return limit || this.seriesLimit;
   }
 
-  protected async requestLabels(
-    url: string,
-    params?: Record<string, unknown>,
-    options?: Partial<BackendSrvRequest>
-  ): Promise<PrometheusLabelsResponse> {
-    const response = await this.request(url, params, options);
-    return Array.isArray(response) ? response : [];
-  }
-
-  protected async requestSeries(
-    url: string,
-    params?: Record<string, unknown>,
-    options?: Partial<BackendSrvRequest>
-  ): Promise<PrometheusSeriesResponse> {
-    const response = await this.request(url, params, options);
-    return Array.isArray(response) ? response : [];
-  }
-
   /**
    * Fetches all time series that match a specific label matcher using **series** endpoint.
    *
@@ -77,7 +58,12 @@ export abstract class BaseResourceClient {
     const effectiveMatch = !match || match === EMPTY_SELECTOR ? MATCH_ALL_LABELS : match;
     const timeParams = this.datasource.getTimeRangeParams(timeRange);
     const searchParams = { ...timeParams, 'match[]': effectiveMatch, limit };
-    return await this.requestSeries('/api/v1/series', searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    const response = await this.request(
+      '/api/v1/series',
+      searchParams,
+      getDefaultCacheHeaders(this.datasource.cacheLevel)
+    );
+    return Array.isArray(response) ? response : [];
   };
 }
 
@@ -111,7 +97,6 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
    * @returns {Promise<string[]>} Array of label keys sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    let url = '/api/v1/labels';
     const timeParams = getRangeSnapInterval(this.datasource.cacheLevel, timeRange);
     const effectiveLimit = this.getEffectiveLimit(limit);
     const searchParams = { limit: effectiveLimit, ...timeParams, ...(match ? { 'match[]': match } : {}) };
@@ -121,7 +106,8 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
       return maybeCachedKeys;
     }
 
-    const res = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    let url = '/api/v1/labels';
+    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
       this._cache.setLabelKeys(timeRange, effectiveMatch, effectiveLimit, this.labelKeys);
@@ -158,9 +144,13 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
-    const value = await this.requestLabels(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
-    this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, value ?? []);
-    return value ?? [];
+    const res = await this.request(url, searchParams, getDefaultCacheHeaders(this.datasource.cacheLevel));
+    if (Array.isArray(res)) {
+      this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, res ?? []);
+      return res;
+    }
+
+    return [];
   };
 }
 
