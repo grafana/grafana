@@ -127,10 +127,10 @@ export function resourceToSearchResult(resource: ResourceList<DashboardDataDTO>)
     const hit = {
       resource: 'dashboards',
       name: item.metadata.name,
-      title: item.spec.title,
+      title: item.spec?.title,
       location: 'general',
       folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
-      tags: item.spec.tags || [],
+      tags: item.spec?.tags || [],
       field: {},
       url: '',
     };
@@ -160,4 +160,48 @@ export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): Dashbo
 
     return dashboardHit;
   });
+}
+
+/**
+ * Filters search results based on query parameters
+ * This is used when backend filtering is not available (e.g., for deleted dashboards)
+ */
+export function filterSearchResults(
+  results: SearchHit[],
+  query: {
+    query?: string;
+    tag?: string[];
+    sort?: string;
+  }
+): SearchHit[] {
+  let filtered = results;
+
+  if (query.query && query.query.trim() !== '' && query.query !== '*') {
+    const searchTerm = query.query.toLowerCase();
+    filtered = filtered.filter(
+      (hit) =>
+        hit.title.toLowerCase().includes(searchTerm) || hit.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (query.sort) {
+    const collator = new Intl.Collator();
+    filtered = filtered.sort((a, b) => {
+      if (query.sort === 'alpha-asc') {
+        return collator.compare(a.title, b.title);
+      }
+      if (query.sort === 'alpha-desc') {
+        return collator.compare(b.title, a.title);
+      }
+      return 0;
+    });
+  }
+
+  if (query.tag && query.tag.length > 0) {
+    filtered = filtered.filter((hit) =>
+      query.tag!.every((tagFilter) => hit.tags.some((hitTag) => hitTag.toLowerCase() === tagFilter.toLowerCase()))
+    );
+  }
+
+  return filtered;
 }
