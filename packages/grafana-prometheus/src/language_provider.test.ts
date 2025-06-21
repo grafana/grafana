@@ -756,6 +756,62 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     });
   });
 
+  describe('initializeResourceClient', () => {
+    it('should use SeriesApiClient when labels match API is not supported', async () => {
+      const datasourceWithoutLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => false,
+      } as unknown as PrometheusDatasource;
+      
+      const provider = new PrometheusLanguageProvider(datasourceWithoutLabelsAPI);
+      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
+      
+      await provider.initializeResourceClient();
+      
+      expect(provider['_resourceClient']).toBeDefined();
+      expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
+      expect(startSpy).toHaveBeenCalled();
+    });
+
+    it('should use LabelsApiClient when labels API test call succeeds', async () => {
+      const datasourceWithLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+        metadataRequest: jest.fn().mockResolvedValue({ data: { data: [] } }),
+      } as unknown as PrometheusDatasource;
+      
+      const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI);
+      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
+      
+      await provider.initializeResourceClient();
+      
+      expect(datasourceWithLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
+      expect(provider['_resourceClient']!.constructor.name).toBe('LabelsApiClient');
+      expect(startSpy).toHaveBeenCalled();
+    });
+
+    it('should fallback to SeriesApiClient when labels API test call fails', async () => {
+      const datasourceWithFailingLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+        metadataRequest: jest.fn().mockRejectedValue(new Error('404 Not Found')),
+      } as unknown as PrometheusDatasource;
+      
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const provider = new PrometheusLanguageProvider(datasourceWithFailingLabelsAPI);
+      const startSpy = jest.spyOn(provider, 'start').mockResolvedValue([]);
+      
+      await provider.initializeResourceClient();
+      
+      expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith('/api/v1/labels', { limit: 1 }, { showErrorAlert: false });
+      expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
+      expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available. Using series endpoint.');
+      expect(startSpy).toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('queryMetricsMetadata', () => {
     it('should fetch and store metadata', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);

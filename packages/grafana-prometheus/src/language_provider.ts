@@ -564,6 +564,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     // Check if the datasource claims to support labels API
     if (!this.datasource.hasLabelsMatchAPISupport()) {
       this.start();
+      return;
     }
 
     // Try to make a test call to verify labels API actually works
