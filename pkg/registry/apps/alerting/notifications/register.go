@@ -68,7 +68,7 @@ func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
 }
 
 func getLegacyStorage(namespacer request.NamespaceMapper, ng *ngalert.AlertNG) runner.LegacyStorageGetter {
-	return func(gvr schema.GroupVersionResource) grafanarest.Storage {
+	return func(gvr schema.GroupVersionResource, opts builder.APIGroupOptions) grafanarest.Storage {
 		if gvr == receiver.ResourceInfo.GroupVersionResource() {
 			return receiver.NewStorage(ng.Api.ReceiverService, namespacer, ng.Api.ReceiverService)
 		} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
