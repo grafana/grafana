@@ -40,7 +40,7 @@
     ],
     "schema_version": 38
   },
-  "reference": [
+  "references": [
     {
       "relation": "depends-on",
       "group": "my-custom-plugin",
