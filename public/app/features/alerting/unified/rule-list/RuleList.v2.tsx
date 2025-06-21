@@ -20,14 +20,14 @@ function RuleList() {
   const { viewMode, handleViewChange } = useListViewMode();
 
   return (
-    <>
+    <Stack direction="column">
       <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
       {viewMode === 'list' ? (
         <FilterView filterState={filterState} />
       ) : (
         <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
       )}
-    </>
+    </Stack>
   );
 }
 

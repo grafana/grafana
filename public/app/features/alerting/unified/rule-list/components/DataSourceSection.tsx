@@ -74,6 +74,8 @@ export const DataSourceSection = ({
                   </Text>
                 )}
 
+                <Spacer />
+
                 {Boolean(error) && (
                   <Toggletip
                     title={t('alerting.rule-list.ds-error.title', 'Cannot load rules for this datasource')}
@@ -85,7 +87,6 @@ export const DataSourceSection = ({
                   </Toggletip>
                 )}
 
-                <Spacer />
                 {configureLink && (
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
