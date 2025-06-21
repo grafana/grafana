@@ -1051,21 +1051,9 @@ func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
 func (c *GettableApiAlertingConfig) validate() error {
 	receivers := make(map[string]struct{}, len(c.Receivers))
 
-	var hasGrafReceivers, hasAMReceivers bool
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-		switch r.Type() {
-		case GrafanaReceiverType:
-			hasGrafReceivers = true
-		case AlertmanagerReceiverType:
-			hasAMReceivers = true
-		default:
-			continue
-		}
-	}
-
-	if hasGrafReceivers && hasAMReceivers {
-		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
+	// Populate the receivers map with defined receiver names
+	for _, receiver := range c.Receivers {
+		receivers[receiver.Name] = struct{}{}
 	}
 
 	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
