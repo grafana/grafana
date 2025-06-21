@@ -35,7 +35,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return 'Transformations';
+    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {

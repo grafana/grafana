@@ -185,7 +185,10 @@ export const SeriesEditor = ({
                     field.type === FieldType.number &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-x-field', 'First number field in each frame')
+                      : undefined,
                 },
               }}
             />
@@ -220,7 +223,10 @@ export const SeriesEditor = ({
                     field.type === FieldType.number &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'Remaining number fields in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-y-field', 'Remaining number fields in each frame')
+                      : undefined,
                 },
               }}
             />

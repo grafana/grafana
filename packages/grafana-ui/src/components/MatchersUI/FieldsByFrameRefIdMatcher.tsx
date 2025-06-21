@@ -8,6 +8,7 @@ import {
   SelectableValue,
   toOption,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { MultiSelect, Select } from '../Select/Select';
 
@@ -218,16 +219,19 @@ function getFramesDescription(frames: DataFrame[]): string {
  * Registry item for UI to configure "fields by frame refId"-matcher.
  * @public
  */
-export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
+export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
   component: (props: MatcherUIProps<string>) => {
     return <RefIDPicker value={props.options} data={props.data} onChange={props.onChange} />;
   },
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
-  name: 'Fields returned by query',
-  description: 'Set properties for fields from a specific query',
+  name: t('grafana-ui.matchers-ui.name-fields-by-query', 'Fields returned by query'),
+  description: t(
+    'grafana-ui.matchers-ui.description-fields-by-query',
+    'Set properties for fields from a specific query'
+  ),
   optionsToLabel: (options) => options,
-};
+});
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
 function escapeRegExp(string: string) {

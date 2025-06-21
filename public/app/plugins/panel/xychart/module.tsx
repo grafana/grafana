@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { SeriesEditor } from './SeriesEditor';
@@ -12,15 +13,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
   .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
+    const category = [t('xychart.category-xychart', 'XY Chart')];
     builder
       .addRadio({
         path: 'mapping',
-        name: 'Series mapping',
+        name: t('xychart.name-series-mapping', 'Series mapping'),
+        category,
         defaultValue: 'auto',
         settings: {
           options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'manual', label: 'Manual' },
+            { value: 'auto', label: t('xychart.series-mapping-options.label-auto', 'Auto') },
+            { value: 'manual', label: t('xychart.series-mapping-options.label-manual', 'Manual') },
           ],
         },
       })
@@ -28,6 +31,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         id: 'series',
         path: 'series',
         name: '',
+        category,
         editor: SeriesEditor,
         defaultValue: [{}],
       });
