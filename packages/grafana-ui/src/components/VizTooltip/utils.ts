@@ -93,8 +93,7 @@ export const getContentItems = (
       field === xField ||
       field.type === FieldType.time ||
       !fieldFilter(field) ||
-      field.config.custom?.hideFrom?.tooltip ||
-      field.config.custom?.hideFrom?.viz
+      field.config.custom?.hideFrom?.tooltip
     ) {
       continue;
     }
