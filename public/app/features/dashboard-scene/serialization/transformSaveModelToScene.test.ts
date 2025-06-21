@@ -33,7 +33,6 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -845,10 +844,7 @@ describe('transformSaveModelToScene', () => {
 
       const row2 = layout.state.rows[1];
 
-      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowItemRepeaterBehavior);
-
-      const repeatBehavior = row2.state.$behaviors?.[0] as RowItemRepeaterBehavior;
-      expect(repeatBehavior.state.variableName).toBe('server');
+      expect(row2.state.repeatByVariable).toBe('server');
 
       const lastRow = layout.state.rows[layout.state.rows.length - 1];
       expect(lastRow.state.title).toBe('Row at the bottom - not repeated - saved collapsed ');
