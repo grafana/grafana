@@ -8,7 +8,9 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { FieldDef, getAllFields } from '../logParser';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
-import { getTruncationLength } from './virtualization';
+import { LogLineVirtualization } from './virtualization';
+
+const TRUNCATION_DEFAULT_LENGTH = 50000;
 
 export class LogListModel implements LogRowModel {
   collapsed: boolean | undefined = undefined;
@@ -44,11 +46,13 @@ export class LogListModel implements LogRowModel {
   private _highlightedBody: string | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
+  private _virtualization?: LogLineVirtualization;
 
-  constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone }: PreProcessLogOptions) {
+  constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone, virtualization }: PreProcessLogOptions) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
     this.dataFrame = log.dataFrame;
+    this.datasourceUid = log.datasourceUid;
     this.duplicates = log.duplicates;
     this.entry = log.entry;
     this.entryFieldIndex = log.entryFieldIndex;
@@ -68,7 +72,6 @@ export class LogListModel implements LogRowModel {
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
     this.uniqueLabels = log.uniqueLabels;
-    this.datasourceUid = log.datasourceUid;
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
@@ -78,6 +81,7 @@ export class LogListModel implements LogRowModel {
       timeZone,
       defaultWithMS: true,
     });
+    this._virtualization = virtualization;
 
     let raw = log.raw;
     if (escape && log.hasUnescapedContent) {
@@ -88,7 +92,9 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
-      this._body = this.collapsed ? this.raw.substring(0, getTruncationLength(null)) : this.raw;
+      this._body = this.collapsed
+        ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
+        : this.raw;
     }
     return this._body;
   }
@@ -136,7 +142,10 @@ export class LogListModel implements LogRowModel {
       displayedFields.length > 0
         ? displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length
         : this.raw.length;
-    const collapsed = lineLength >= getTruncationLength(container) ? true : undefined;
+    const collapsed =
+      lineLength >= (this._virtualization?.getTruncationLength(container) ?? TRUNCATION_DEFAULT_LENGTH)
+        ? true
+        : undefined;
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
     }
@@ -162,15 +171,16 @@ export interface PreProcessOptions {
   getFieldLinks?: GetFieldLinksFn;
   order: LogsSortOrder;
   timeZone: string;
+  virtualization?: LogLineVirtualization;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone }: PreProcessOptions,
+  { escape, getFieldLinks, order, timeZone, virtualization }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone }));
+  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization }));
 };
 
 interface PreProcessLogOptions {
@@ -178,6 +188,7 @@ interface PreProcessLogOptions {
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
   timeZone: string;
+  virtualization?: LogLineVirtualization;
 }
 const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
   return new LogListModel(log, options);

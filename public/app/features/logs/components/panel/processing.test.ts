@@ -5,7 +5,7 @@ import { createLogLine, createLogRow } from '../__mocks__/logRow';
 
 import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
-import { getTruncationLength, init } from './virtualization';
+import { LogLineVirtualization } from './virtualization';
 
 describe('preProcessLogs', () => {
   let logFmtLog: LogRowModel, nginxLog: LogRowModel, jsonLog: LogRowModel;
@@ -168,13 +168,16 @@ describe('preProcessLogs', () => {
   });
 
   describe.each(fontSizes)('Collapsible log lines', (fontSize: LogListFontSize) => {
-    let longLog: LogListModel, entry: string, container: HTMLDivElement;
+    let longLog: LogListModel, entry: string, container: HTMLDivElement, virtualization: LogLineVirtualization;
     beforeEach(() => {
-      init(createTheme(), fontSize);
+      virtualization = new LogLineVirtualization(createTheme(), fontSize);
       container = document.createElement('div');
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(200);
-      entry = new Array(2 * getTruncationLength(null)).fill('e').join('');
-      longLog = createLogLine({ entry, labels: { field: 'value' } });
+      entry = new Array(2 * virtualization.getTruncationLength(null)).fill('e').join('');
+      longLog = createLogLine(
+        { entry, labels: { field: 'value' } },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+      );
     });
 
     test('Long lines that are not truncated are not modified', () => {
