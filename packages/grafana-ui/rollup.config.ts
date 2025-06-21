@@ -1,3 +1,4 @@
+import url from '@rollup/plugin-url';
 import { createRequire } from 'node:module';
 import copy from 'rollup-plugin-copy';
 import svg from 'rollup-plugin-svg-import';
@@ -13,29 +14,29 @@ const iconSrcPaths = icons.map((iconSubPath) => {
   return `../../public/img/icons/${iconSubPath}.svg`;
 });
 
+const corePlugins = [
+  ...plugins,
+  url({
+    include: ['**/*.woff2'],
+    limit: 0,
+    fileName: '[name].[hash][extname]',
+  }),
+  svg({ stringify: true }),
+  copy({
+    targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
+    flatten: false,
+  }),
+];
+
 export default [
   {
     input: entryPoint,
-    plugins: [
-      ...plugins,
-      svg({ stringify: true }),
-      copy({
-        targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
-        flatten: false,
-      }),
-    ],
+    plugins: corePlugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
   },
   {
     input: 'src/unstable.ts',
-    plugins: [
-      ...plugins,
-      svg({ stringify: true }),
-      copy({
-        targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
-        flatten: false,
-      }),
-    ],
+    plugins: corePlugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
   },
 ];
