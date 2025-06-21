@@ -11,6 +11,7 @@ import { contextSrv } from 'app/core/core';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
+import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -118,6 +119,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
+      <EnterpriseAuthFeaturesCard page="users" />
     </Page.Contents>
   );
 };

@@ -1,0 +1,57 @@
+import { useState } from 'react';
+
+import { GrafanaEdition } from '@grafana/data/internal';
+import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Alert, Box, Stack, TextLink } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+export interface Props {
+  page?: 'teams' | 'users';
+}
+
+export function EnterpriseAuthFeaturesCard({ page }: Props) {
+  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
+  const helpFlags = contextSrv.user.helpFlags1;
+  const HELP_FLAG_ENTERPRISE_AUTH = 0x0004;
+  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & HELP_FLAG_ENTERPRISE_AUTH));
+
+  const onDismiss = () => {
+    backendSrv
+      .put(`/api/user/helpflags/${HELP_FLAG_ENTERPRISE_AUTH}`, undefined, { showSuccessAlert: false })
+      .then((res) => {
+        contextSrv.user.helpFlags1 = res.helpFlags1;
+        setDismissed(true);
+      });
+  };
+
+  // This card is only visible in oss
+  if (!isOpenSource || isDismissed) {
+    return null;
+  }
+
+  return (
+    <Box paddingTop={4}>
+      <Alert
+        severity="info"
+        title={t('admin.enterprise-auth-features-card.title', 'Did you know?')}
+        onRemove={onDismiss}
+      >
+        <Stack direction="row" alignItems="center">
+          <Trans i18nKey="admin.enterprise-auth-features-card.text">
+            Sync users and teams using SCIM, sync teams from LDAP, or authenticate using SAML in Grafana Cloud and
+            Enterprise. Learn more about{' '}
+            <TextLink
+              href={`https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-${page}`}
+              external
+              color="link"
+            >
+              Enterprise authentication.
+            </TextLink>
+          </Trans>
+        </Stack>
+      </Alert>
+    </Box>
+  );
+}
