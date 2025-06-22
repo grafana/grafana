@@ -41,7 +41,7 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-export function AddToDashboardForm<TOptions = undefined>({
+export function AddToDashboardForm<TOptions extends string | undefined = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -90,8 +90,14 @@ export function AddToDashboardForm<TOptions = undefined>({
       saveTarget: data.saveTarget,
       queries: panel.targets,
     });
-
-    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
+    // simple type assertion to make TS happy
+    const error = addToDashboard({
+      dashboardUid,
+      panel,
+      openInNewTab,
+      timeRange,
+      options,
+    });
     if (error) {
       setSubmissionError(error);
       return;
