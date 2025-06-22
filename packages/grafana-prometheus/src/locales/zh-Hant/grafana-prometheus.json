@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "",
         "label-allow-as-recording-rules-target": "",
+        "label-manage-alerts-via-alerting-ui": "",
         "title-alerting": "警報",
-        "tooltip-manage-alerts-via-alerting-ui": "管理此資料來源的警報規則。若要管理其他警報資源，請新增 Alertmanager 資料來源。",
-        "tooltip-allow-as-recording-rules-target": ""
+        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-manage-alerts-via-alerting-ui": "管理此資料來源的警報規則。若要管理其他警報資源，請新增 Alertmanager 資料來源。"
       },
       "config-editor": {
         "browser-access-mode-error": "",
@@ -171,6 +171,7 @@
         "label-query-timeout": "",
         "label-scrape-interval": "",
         "label-use-series-endpoint": "",
+        "label-series-limit": "",
         "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "",
         "title-interval-behaviour": "",
@@ -190,7 +191,8 @@
         "tooltip-query-overlap-window": "",
         "tooltip-query-timeout": "",
         "tooltip-scrape-interval": "",
-        "tooltip-use-series-endpoint": ""
+        "tooltip-use-series-endpoint": "",
+        "tooltip-series-limit": ""
       }
     },
     "querybuilder": {
