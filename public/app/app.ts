@@ -42,6 +42,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setAddToDashboardService,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -113,6 +114,7 @@ import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { AddToDashboardService } from './core/services/AddToDashboardService';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -168,6 +170,8 @@ export class GrafanaApp {
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
+      // set the singleton that exposes the add to dashboard component
+      setAddToDashboardService(new AddToDashboardService());
 
       initAuthConfig();
 
