@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
 import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { trimFileName } from '../../utils/file';
-import { t, Trans } from '../../utils/i18n';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 

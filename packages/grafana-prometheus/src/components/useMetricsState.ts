@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
   if (metricsLookupDisabled) {
@@ -21,7 +21,7 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasM
 
 export function useMetricsState(
   datasource: PrometheusDatasource,
-  languageProvider: PromQlLanguageProvider,
+  languageProvider: PrometheusLanguageProviderInterface,
   syntaxLoaded: boolean
 ) {
   return useMemo(() => {

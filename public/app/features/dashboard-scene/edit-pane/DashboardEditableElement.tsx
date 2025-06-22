@@ -1,7 +1,6 @@
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useRef } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,6 +9,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
 import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
+
+import { dashboardEditActions, undoRedoWasClicked } from './shared';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -80,17 +81,63 @@ export class DashboardEditableElement implements EditableDashboardElement {
 export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { title } = dashboard.useState();
 
-  return <Input id={id} value={title} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  // We want to save the unchanged value for the 'undo' action
+  const valueBeforeEdit = useRef('');
+
+  return (
+    <Input
+      id={id}
+      value={title}
+      onChange={(e) => {
+        dashboard.setState({ title: e.currentTarget.value });
+      }}
+      onFocus={(e) => {
+        valueBeforeEdit.current = e.currentTarget.value;
+      }}
+      onBlur={(e) => {
+        const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = titleUnchanged || undoRedoWasClicked(e);
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeTitle({
+          source: dashboard,
+          oldTitle: valueBeforeEdit.current,
+          newTitle: e.currentTarget.value,
+        });
+      }}
+    />
+  );
 }
 
 export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { description } = dashboard.useState();
+
+  // We want to save the unchanged value for the 'undo' action
+  const valueBeforeEdit = useRef('');
 
   return (
     <TextArea
       id={id}
       value={description}
       onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
+      onFocus={(e) => {
+        valueBeforeEdit.current = e.currentTarget.value;
+      }}
+      onBlur={(e) => {
+        const descriptionUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = descriptionUnchanged || undoRedoWasClicked(e);
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeDescription({
+          source: dashboard,
+          oldDescription: valueBeforeEdit.current,
+          newDescription: e.currentTarget.value,
+        });
+      }}
     />
   );
 }

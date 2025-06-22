@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import { ActionModel, Field, ActionVariableInput } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
-import { Button, ButtonProps } from '../Button';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { Button, ButtonProps } from '../Button/Button';
 import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 
 import { VariablesInputModal } from './VariablesInputModal';

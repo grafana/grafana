@@ -885,7 +885,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
@@ -895,16 +895,6 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t3,
-				},
-				{
-					Labels:             labels["system + rule + no-data"],
-					ResultFingerprint:  noDataLabels.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(t2, eval.NoData),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -1013,10 +1003,9 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			// TODO(@moustafab): figure out why this test doesn't fail as is
 			desc:                "classic condition, execution Error as Error (alerting -> query error -> alerting)",
 			alertRule:           baseRuleWith(m.WithErrorExecAs(models.ErrorErrState)),
-			expectedAnnotations: 2,
+			expectedAnnotations: 3,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
@@ -1040,21 +1029,6 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t3,
 					LastSentAt:         &t1,
 					Annotations: map[string]string{
-						"annotation": "test",
-					},
-				},
-				{
-					Labels:             data.Labels{"system": "owned", "label": "test", "ref_id": "A", "datasource_uid": "datasource_uid_1"},
-					ResultFingerprint:  data.Labels{}.Fingerprint(),
-					State:              eval.Error,
-					LatestResult:       newEvaluation(t2, eval.Error),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
-					Error:              expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error")),
-					Annotations: map[string]string{
-						"Error":      "[sse.dataQueryError] failed to execute query [A]: this is an error",
 						"annotation": "test",
 					},
 				},
@@ -2083,4 +2057,220 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		result[k] = v
 	}
 	return result
+}
+
+// TestStateManager_HistorianIntegration tests that the state manager properly sends
+// all expected state transitions to the historian backend.
+func TestStateManager_HistorianIntegration(t *testing.T) {
+	baseInterval := 1 * time.Second
+	tN := func(n int) time.Time {
+		return time.Unix(0, 0).UTC().Add(time.Duration(n) * baseInterval)
+	}
+	t1 := tN(1)
+	t2 := tN(2)
+	t3 := tN(3)
+
+	labels1 := data.Labels{"instance": "server1", "job": "webapp"}
+	labels2 := data.Labels{"instance": "server2", "job": "webapp"}
+
+	baseRule := &models.AlertRule{
+		ID:              1,
+		OrgID:           1,
+		Title:           "test rule",
+		UID:             "test-rule-uid",
+		NamespaceUID:    "test-namespace",
+		IntervalSeconds: 10,
+		NoDataState:     models.NoData,
+		ExecErrState:    models.ErrorErrState,
+		For:             0,
+	}
+
+	type transition struct {
+		previousState eval.State
+		currentState  eval.State
+	}
+
+	scenarios := []struct {
+		name                string
+		rule                *models.AlertRule
+		evaluations         map[time.Time][]eval.Result
+		expectedTransitions map[time.Time][]transition
+	}{
+		{
+			name: "1:normal -> 1:alerting -> 1:normal",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Normal},
+				},
+				t2: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Normal},
+				},
+			},
+		},
+		{
+			name: "1:alerting, 2:alerting -> 2:alerting -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t2: {
+					// labels1 is missing from this evaluation
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t3: {
+					// Both labels1 and labels2 are missing
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> {} -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting, EvaluatedAt: t1},
+				},
+				t2: {
+					// labels1 is missing - first missing evaluation
+				},
+				t3: {
+					// labels1 is still missing - second missing evaluation
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> 1:recovering -> 1:normal",
+			rule: &models.AlertRule{
+				ID:              1,
+				OrgID:           1,
+				Title:           "test rule",
+				UID:             "test-rule-uid",
+				NamespaceUID:    "test-namespace",
+				IntervalSeconds: 10,
+				NoDataState:     models.NoData,
+				ExecErrState:    models.ErrorErrState,
+				For:             0,
+				KeepFiringFor:   10,
+			},
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Recovering},
+				},
+				t3: {
+					{previousState: eval.Recovering, currentState: eval.Normal},
+				},
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			historian := &state.FakeHistorian{}
+
+			cfg := state.ManagerCfg{
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clock.NewMock(),
+				Historian:     historian,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.NewNopLogger(),
+			}
+
+			mgr := state.NewManager(cfg, state.NewNoopPersister())
+
+			// Helper function to process one time step and verify historian
+			processTimeStep := func(evalTime time.Time) {
+				results := scenario.evaluations[evalTime]
+				expectedTransitions := scenario.expectedTransitions[evalTime]
+
+				for i := range results {
+					results[i].EvaluatedAt = evalTime
+				}
+
+				// Clear historian state transitions before the evaluation
+				historian.StateTransitions = nil
+
+				mgr.ProcessEvalResults(
+					context.Background(),
+					evalTime,
+					scenario.rule,
+					results,
+					make(data.Labels),
+					nil,
+				)
+
+				// Extract just the data we care about from the actual transitions
+				actualTransitions := make([]transition, len(historian.StateTransitions))
+				for i, t := range historian.StateTransitions {
+					actualTransitions[i] = transition{
+						previousState: t.PreviousState,
+						currentState:  t.State.State,
+					}
+				}
+
+				require.ElementsMatch(t, expectedTransitions, actualTransitions)
+			}
+
+			processTimeStep(t1)
+			processTimeStep(t2)
+			processTimeStep(t3)
+		})
+	}
 }

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 
 import { PlaylistMode } from './types';
 
@@ -20,7 +20,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
-  const { t } = useTranslate();
+
   const modes: Array<SelectableValue<PlaylistMode>> = [
     { label: t('playlist.start-modal.modes.label.normal', 'Normal'), value: false },
     { label: t('playlist.start-modal.modes.label.kiosk', 'Kiosk'), value: true },

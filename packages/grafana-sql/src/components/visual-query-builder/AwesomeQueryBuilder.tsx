@@ -17,6 +17,7 @@ import { isString } from 'lodash';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 
 const buttonLabels = {
@@ -68,7 +69,7 @@ export const widgets: Widgets = {
         return (
           <Select
             id={props.id}
-            aria-label="Macros value selector"
+            aria-label={t('grafana-sql.components.widgets.aria-label-macros-value-selector', 'Macros value selector')}
             menuShouldPortal
             options={macros.map(toOption)}
             value={props?.value}
@@ -124,7 +125,7 @@ export const settings: Settings = {
     return (
       <Select
         id={conjProps?.id}
-        aria-label="Conjunction"
+        aria-label={t('grafana-sql.components.settings.aria-label-conjunction', 'Conjunction')}
         data-testid={selectors.components.SQLQueryEditor.filterConjunction}
         menuShouldPortal
         options={conjProps?.conjunctionOptions ? Object.keys(conjProps?.conjunctionOptions).map(toOption) : undefined}
@@ -140,7 +141,7 @@ export const settings: Settings = {
       <Select
         id={fieldProps?.id}
         width={25}
-        aria-label="Field"
+        aria-label={t('grafana-sql.components.settings.aria-label-field', 'Field')}
         data-testid={selectors.components.SQLQueryEditor.filterField}
         menuShouldPortal
         options={fieldProps?.items.map((f) => {
@@ -164,7 +165,9 @@ export const settings: Settings = {
     return (
       <Button
         type="button"
-        title={`${buttonProps?.label} filter`}
+        title={t('grafana-sql.components.settings.title-button-filter', '{{ buttonLabel }} filter', {
+          buttonLabel: buttonProps?.label,
+        })}
         onClick={buttonProps?.onClick}
         variant="secondary"
         size="md"
@@ -177,7 +180,7 @@ export const settings: Settings = {
     return (
       <Select
         options={operatorProps?.items.map((op) => ({ label: op.label, value: op.key }))}
-        aria-label="Operator"
+        aria-label={t('grafana-sql.components.settings.aria-label-operator', 'Operator')}
         data-testid={selectors.components.SQLQueryEditor.filterOperator}
         menuShouldPortal
         value={operatorProps?.selectedKey}
@@ -301,7 +304,7 @@ function getCustomOperators(config: BasicConfig) {
       sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {
-      label: 'Macros',
+      label: t('grafana-sql.components.get-custom-operators.custom-operators.label.macros', 'Macros'),
       sqlFormatOp: (field: string, _operator: string, value: string | string[] | ImmutableList<string>) => {
         if (value === TIME_FILTER) {
           return `$__timeFilter(${field})`;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Collapse, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -15,7 +15,6 @@ export interface ResourcePickerProps<T> {
 
 const AdvancedMulti = ({ resources, onChange, renderAdvanced }: ResourcePickerProps<string | AzureMonitorResource>) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!resources.length && JSON.stringify(resources).includes('$'));
-  const { t } = useTranslate();
 
   return (
     <div data-testid={selectors.components.queryEditor.resourcePicker.advanced.collapse}>

@@ -4,7 +4,7 @@ import { ReactNode, useState } from 'react';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -27,7 +27,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { t } = useTranslate();
+
   const onEditQuery = (event: React.SyntheticEvent) => {
     setIsEditing(true);
   };

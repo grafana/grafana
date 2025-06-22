@@ -3,11 +3,12 @@ import { useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 
+import { getDebounceTimeInMilliseconds } from '../../caching';
 import { PrometheusDatasource } from '../../datasource';
-import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
-import { promQueryModeller } from '../PromQueryModeller';
+import { PromMetricsMetadata } from '../../types';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -68,6 +69,7 @@ export function MetricsLabelsSection({
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
@@ -91,6 +93,7 @@ export function MetricsLabelsSection({
     const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
     labelsToConsider.push(forLabel);
     if (query.metric) {
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     }
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -173,6 +176,7 @@ export function MetricsLabelsSection({
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
 
     const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
@@ -207,7 +211,7 @@ export function MetricsLabelsSection({
         variableEditor={variableEditor}
       />
       <LabelFilters
-        debounceDuration={datasource.getDebounceTimeInMilliseconds()}
+        debounceDuration={getDebounceTimeInMilliseconds(datasource.cacheLevel)}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
         labelsFilters={query.labels}
         onChange={onChangeLabels}
@@ -253,4 +257,12 @@ async function getMetrics(
     value: m,
     description: getMetadataString(m, datasource.languageProvider.metricsMetadata!),
   }));
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
