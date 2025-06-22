@@ -226,11 +226,13 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
 	// use batches to make sure we don't load too much data at once.
 	const batchSize = 50
-	labelSelector := utils.LabelKeyGetHistory + "=" + dashboardUID
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	var continueToken string
 	for {
 		out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 			LabelSelector: labelSelector,
+			FieldSelector: fieldSelector,
 			Limit:         int64(batchSize),
 			Continue:      continueToken,
 		})
@@ -260,8 +262,11 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 }
 
 func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: utils.LabelKeyGetHistory + "=" + dashboardUID,
+		LabelSelector: labelSelector,
+		FieldSelector: fieldSelector,
 		Limit:         limit,
 		Continue:      continueToken,
 	})
