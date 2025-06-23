@@ -7,9 +7,9 @@ import { t } from '@grafana/i18n';
 import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LogDetails } from '../LogDetails';
 import { getLogRowStyles } from '../getLogRowStyles';
 
+import { LogDetails } from './LogDetails';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
