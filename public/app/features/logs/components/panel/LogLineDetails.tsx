@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { ControlledCollapse, getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogDetails } from './LogDetails';
@@ -68,7 +68,7 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
             aria-label={t('logs.log-details.close', 'Close log details')}
             onClick={closeDetails}
           />
-          <table width="100%">
+          <table width="100%" style={{ display: 'none' }}>
             <tbody>
               <LogDetails
                 getRows={getRows}
@@ -89,12 +89,36 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
               />
             </tbody>
           </table>
+          <LogDetailsComponent styles={styles} />
         </div>
       </div>
     </Resizable>
   );
 };
 
+const LogDetailsComponent = ({ styles }: { styles: LogLineDetailsStyles }) => {
+  return (
+    <div className={styles.componentWrapper}>
+      <ControlledCollapse label={t('logs.log-line-details.log-line-section', 'Log line')} collapsible>
+        <p>Log line</p>
+      </ControlledCollapse>
+      <ControlledCollapse
+        label={t('logs.log-line-details.structured-metadata-section', 'Structured metadata')}
+        collapsible
+      >
+        <p>Log line</p>
+      </ControlledCollapse>
+      <ControlledCollapse label={t('logs.log-line-details.structured-metadata-section', 'Parsed fields')} collapsible>
+        <p>Log line</p>
+      </ControlledCollapse>
+      <ControlledCollapse label={t('logs.log-line-details.structured-metadata-section', 'Indexed labels')} collapsible>
+        <p>Log line</p>
+      </ControlledCollapse>
+    </div>
+  );
+};
+
+export type LogLineDetailsStyles = ReturnType<typeof getStyles>;
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
@@ -109,5 +133,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     top: theme.spacing(1),
     right: theme.spacing(1.5),
+  }),
+  componentWrapper: css({
+    padding: theme.spacing(0, 1, 1, 1),
   }),
 });

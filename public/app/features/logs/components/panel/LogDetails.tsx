@@ -243,6 +243,7 @@ export const LogDetails = ({
                     row={row}
                     app={app}
                     disableActions={false}
+                    styles={styles}
                   />
                 );
               })}
@@ -264,6 +265,7 @@ export const LogDetails = ({
                     row={row}
                     app={app}
                     disableActions={true}
+                    styles={styles}
                   />
                 );
               })}
