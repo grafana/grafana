@@ -486,6 +486,920 @@ describe('prepareTimelineLegendItems', () => {
 
     expect(result).toHaveLength(1);
   });
+
+  it('should format legend items correctly with only no legend values in list mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultNone = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        valueOptions: [],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } satisfies VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemNone = resultNone!.find((item) => item.label.includes('Low'))!;
+    const mediumItemNone = resultNone!.find((item) => item.label.includes('Medium'))!;
+    const highItemNone = resultNone!.find((item) => item.label.includes('High'))!;
+
+    expect(resultNone).toBeDefined();
+    expect(resultNone!.length).toBe(3);
+    expect(lowItemNone.label).toBe('Low');
+    expect(mediumItemNone.label).toBe('Medium');
+    expect(highItemNone.label).toBe('High');
+  });
+  it('should format legend items correctly with all legend values in list mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        valueOptions: ['duration', 'percentage', 'occurrences'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItem = result!.find((item) => item.label.includes('Low'))!;
+    const mediumItem = result!.find((item) => item.label.includes('Medium'))!;
+    const highItem = result!.find((item) => item.label.includes('High'))!;
+
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(3);
+    expect(lowItem.label).toBe('Low (1h 45m, 58.33%, 3 times)');
+    expect(mediumItem.label).toBe('Medium (30m, 16.67%, 1 time)');
+    expect(highItem.label).toBe('High (45m, 25.00%, 2 times)');
+  });
+  it('should format legend items correctly with only duration values in list mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultDuration = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        valueOptions: ['duration'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+    const lowItemDuration = resultDuration!.find((item) => item.label.includes('Low'))!;
+    const mediumItemDuration = resultDuration!.find((item) => item.label.includes('Medium'))!;
+    const highItemDuration = resultDuration!.find((item) => item.label.includes('High'))!;
+
+    expect(resultDuration).toBeDefined();
+    expect(resultDuration!.length).toBe(3);
+    expect(lowItemDuration.label).toBe('Low (1h 45m)');
+    expect(mediumItemDuration.label).toBe('Medium (30m)');
+    expect(highItemDuration.label).toBe('High (45m)');
+  });
+  it('should format legend items correctly with only percentage values in list mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultPercentage = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        valueOptions: ['percentage'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemPercentage = resultPercentage!.find((item) => item.label.includes('Low'))!;
+    const mediumItemPercentage = resultPercentage!.find((item) => item.label.includes('Medium'))!;
+    const highItemPercentage = resultPercentage!.find((item) => item.label.includes('High'))!;
+
+    expect(resultPercentage).toBeDefined();
+    expect(resultPercentage!.length).toBe(3);
+    expect(lowItemPercentage.label).toBe('Low (58.33%)');
+    expect(mediumItemPercentage.label).toBe('Medium (16.67%)');
+    expect(highItemPercentage.label).toBe('High (25.00%)');
+  });
+  it('should format legend items correctly with only occurrences values in list mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultOccurrences = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        valueOptions: ['occurrences'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemOccurrences = resultOccurrences!.find((item) => item.label.includes('Low'))!;
+    const mediumItemOccurrences = resultOccurrences!.find((item) => item.label.includes('Medium'))!;
+    const highItemOccurrences = resultOccurrences!.find((item) => item.label.includes('High'))!;
+
+    expect(resultOccurrences).toBeDefined();
+    expect(resultOccurrences!.length).toBe(3);
+    expect(lowItemOccurrences.label).toBe('Low (3 times)');
+    expect(mediumItemOccurrences.label).toBe('Medium (1 time)');
+    expect(highItemOccurrences.label).toBe('High (2 times)');
+  });
+
+  it('should format legend items correctly with no legend values in table mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultNone = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: [],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemNone = resultNone!.find((item) => item.label.includes('Low'))!;
+    const mediumItemNone = resultNone!.find((item) => item.label.includes('Medium'))!;
+    const highItemNone = resultNone!.find((item) => item.label.includes('High'))!;
+
+    expect(resultNone).toBeDefined();
+    expect(resultNone!.length).toBe(3);
+    expect(lowItemNone.label).toBe('Low');
+    expect(mediumItemNone.label).toBe('Medium');
+    expect(highItemNone.label).toBe('High');
+    expect(lowItemNone.getDisplayValues?.()).toEqual([]);
+    expect(mediumItemNone.getDisplayValues?.()).toEqual([]);
+    expect(highItemNone.getDisplayValues?.()).toEqual([]);
+  });
+  it('should format legend items correctly with all legend values in table mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: ['duration', 'percentage', 'occurrences'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItem = result!.find((item) => item.label === 'Low')!;
+    const mediumItem = result!.find((item) => item.label === 'Medium')!;
+    const highItem = result!.find((item) => item.label === 'High')!;
+
+    expect(result).toBeDefined();
+    expect(result!.length).toBe(3);
+    expect(lowItem.label).toBe('Low');
+    expect(mediumItem.label).toBe('Medium');
+    expect(highItem.label).toBe('High');
+
+    expect(lowItem.getDisplayValues?.()).toEqual([
+      { text: '1h 45m', numeric: 6300000, title: 'Duration' },
+      { text: '58.33%', numeric: 58.333333333333336, title: 'Percentage' },
+      { text: '3', numeric: 3, title: 'Occurrences' },
+    ]);
+    expect(mediumItem.getDisplayValues?.()).toEqual([
+      { text: '30m', numeric: 1800000, title: 'Duration' },
+      { text: '16.67%', numeric: 16.666666666666664, title: 'Percentage' },
+      { text: '1', numeric: 1, title: 'Occurrences' },
+    ]);
+    expect(highItem.getDisplayValues?.()).toEqual([
+      { text: '45m', numeric: 2700000, title: 'Duration' },
+      { text: '25.00%', numeric: 25, title: 'Percentage' },
+      { text: '2', numeric: 2, title: 'Occurrences' },
+    ]);
+  });
+  it('should format legend items correctly with duration values in table mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultDuration = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: ['duration'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemDuration = resultDuration!.find((item) => item.label === 'Low')!;
+    const mediumItemDuration = resultDuration!.find((item) => item.label === 'Medium')!;
+    const highItemDuration = resultDuration!.find((item) => item.label === 'High')!;
+
+    expect(resultDuration).toBeDefined();
+    expect(resultDuration!.length).toBe(3);
+    expect(lowItemDuration.label).toBe('Low');
+    expect(mediumItemDuration.label).toBe('Medium');
+    expect(highItemDuration.label).toBe('High');
+
+    expect(lowItemDuration.getDisplayValues?.()).toEqual([{ text: '1h 45m', numeric: 6300000, title: 'Duration' }]);
+    expect(mediumItemDuration.getDisplayValues?.()).toEqual([{ text: '30m', numeric: 1800000, title: 'Duration' }]);
+    expect(highItemDuration.getDisplayValues?.()).toEqual([{ text: '45m', numeric: 2700000, title: 'Duration' }]);
+  });
+  it('should format legend items correctly with percentage values in table mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultPercentage = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: ['percentage'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemPercentage = resultPercentage!.find((item) => item.label === 'Low')!;
+    const mediumItemPercentage = resultPercentage!.find((item) => item.label === 'Medium')!;
+    const highItemPercentage = resultPercentage!.find((item) => item.label === 'High')!;
+
+    expect(resultPercentage).toBeDefined();
+    expect(resultPercentage!.length).toBe(3);
+    expect(lowItemPercentage.label).toBe('Low');
+    expect(mediumItemPercentage.label).toBe('Medium');
+    expect(highItemPercentage.label).toBe('High');
+
+    expect(lowItemPercentage.getDisplayValues?.()).toEqual([
+      { text: '58.33%', numeric: 58.333333333333336, title: 'Percentage' },
+    ]);
+    expect(mediumItemPercentage.getDisplayValues?.()).toEqual([
+      { text: '16.67%', numeric: 16.666666666666664, title: 'Percentage' },
+    ]);
+    expect(highItemPercentage.getDisplayValues?.()).toEqual([{ text: '25.00%', numeric: 25, title: 'Percentage' }]);
+  });
+  it('should format legend items correctly with occurrences values in table mode', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const frames = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1749614400000, 1749615300000, 1749616200000, 1749617100000, 1749618000000, 1749618900000, 1749619800000,
+              1749620700000, 1749621600000, 1749622500000, 1749623400000, 1749624300000,
+            ],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: undefined,
+              numeric: NaN,
+            }),
+          },
+          {
+            name: 'state',
+            values: ['Low', 'Low', 'Low', 'Low', 'Medium', 'Medium', 'Low', 'Low', 'High', 'High', 'Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : value === 'Medium' ? 'yellow' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const resultOccurrences = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: ['occurrences'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    const lowItemOccurrences = resultOccurrences!.find((item) => item.label === 'Low')!;
+    const mediumItemOccurrences = resultOccurrences!.find((item) => item.label === 'Medium')!;
+    const highItemOccurrences = resultOccurrences!.find((item) => item.label === 'High')!;
+
+    expect(resultOccurrences).toBeDefined();
+    expect(resultOccurrences!.length).toBe(3);
+    expect(lowItemOccurrences.label).toBe('Low');
+    expect(mediumItemOccurrences.label).toBe('Medium');
+    expect(highItemOccurrences.label).toBe('High');
+
+    expect(lowItemOccurrences.getDisplayValues?.()).toEqual([{ text: '3', numeric: 3, title: 'Occurrences' }]);
+    expect(mediumItemOccurrences.getDisplayValues?.()).toEqual([{ text: '1', numeric: 1, title: 'Occurrences' }]);
+    expect(highItemOccurrences.getDisplayValues?.()).toEqual([{ text: '2', numeric: 2, title: 'Occurrences' }]);
+  });
+
+  it('should format legend labels correctly for multiple series', () => {
+    const timeRange: TimeRange = {
+      from: dateTime(1749614400000),
+      to: dateTime(1749625200000),
+      raw: {
+        from: dateTime(1749614400000),
+        to: dateTime(1749625200000),
+      },
+    };
+
+    const multipleSeriesFrames = [
+      {
+        refId: 'A',
+        name: 'Service A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1749614400000, 1749615300000],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+          },
+          {
+            name: 'state',
+            values: ['Low', 'High'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Low' ? 'green' : 'red',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+      {
+        refId: 'B',
+        name: 'Service B',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1749614400000, 1749615300000],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+          },
+          {
+            name: 'state',
+            values: ['Up', 'Down'],
+            config: {
+              custom: {
+                hideFrom: {
+                  legend: false,
+                },
+              },
+            },
+            display: (value: string) => ({
+              text: value,
+              color: value === 'Up' ? 'blue' : 'orange',
+              numeric: NaN,
+            }),
+          },
+        ],
+      },
+    ] as unknown as DataFrame[];
+
+    const multipleSeriesResult = prepareTimelineLegendItems(
+      multipleSeriesFrames,
+      {
+        displayMode: LegendDisplayMode.Table,
+        valueOptions: ['duration', 'percentage', 'occurrences'],
+        calcs: [],
+        placement: 'bottom',
+        showLegend: true,
+      } as VizLegendOptions,
+      theme,
+      timeRange
+    );
+
+    expect(multipleSeriesResult).toBeDefined();
+    expect(multipleSeriesResult!.length).toBe(4);
+
+    const lowItem = multipleSeriesResult!.find((item) => item.label === 'Service A: Low')!;
+    const upItem = multipleSeriesResult!.find((item) => item.label === 'Service B: Up')!;
+    const highItem = multipleSeriesResult!.find((item) => item.label === 'Service A: High')!;
+    const downItem = multipleSeriesResult!.find((item) => item.label === 'Service B: Down')!;
+
+    expect(lowItem).toBeDefined();
+    expect(upItem).toBeDefined();
+    expect(highItem).toBeDefined();
+    expect(downItem).toBeDefined();
+  });
 });
 
 describe('duration', () => {

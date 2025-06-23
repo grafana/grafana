@@ -599,16 +599,228 @@ export function getValueMappingItems(mappings: ValueMapping[], theme: GrafanaThe
   return items;
 }
 
+interface StateDurationInfo {
+  duration: number;
+  percentage: number;
+  occurrences: number;
+}
+
+function calculateStateDurations(
+  fields: Field[],
+  timeRange: TimeRange,
+  frame: DataFrame,
+  frames: DataFrame[]
+): Map<string, StateDurationInfo> {
+  const durations = new Map<string, StateDurationInfo>();
+
+  if (fields.length < 2) {
+    return durations;
+  }
+
+  const timeValues = fields[0].values;
+  const rangeEnd = timeRange.to.valueOf();
+  const rangeStart = timeRange.from.valueOf();
+  const totalTimeRange = rangeEnd - rangeStart;
+
+  for (let i = 1; i < fields.length; i++) {
+    const field = fields[i];
+    const values = field.values;
+    let lastState: string | null = null;
+
+    const seriesDurations = new Map<string, StateDurationInfo>();
+
+    for (let j = 0; j < values.length; j++) {
+      const value = values[j];
+      if (value == null) {
+        continue;
+      }
+
+      const state = field.display!(value).text;
+      const startTime = timeValues[j];
+      const endTime = timeValues[j + 1] || rangeEnd;
+
+      if (startTime != null && endTime != null) {
+        const currentInfo = seriesDurations.get(state) || { duration: 0, percentage: 0, occurrences: 0 };
+
+        const duration = endTime - startTime;
+        currentInfo.duration += duration;
+        currentInfo.percentage = (currentInfo.duration / totalTimeRange) * 100;
+
+        if (lastState !== state) {
+          currentInfo.occurrences++;
+        }
+
+        seriesDurations.set(state, currentInfo);
+        lastState = state;
+      }
+    }
+
+    // Use the same series name logic as in the main function
+    const seriesName =
+      frames.length > 1
+        ? frame.name || frame.refId || getFieldDisplayName(field, frame)
+        : getFieldDisplayName(field, frame);
+    seriesDurations.forEach((info, state) => {
+      durations.set(`${seriesName}:${state}`, info);
+    });
+  }
+
+  return durations;
+}
+
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
   options: VizLegendOptions,
-  theme: GrafanaTheme2
+  theme: GrafanaTheme2,
+  timeRange?: TimeRange
 ): VizLegendItem[] | undefined {
-  if (!frames || options.showLegend === false) {
+  if (!frames?.length || options.showLegend === false) {
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), theme);
+  const seriesGroups = new Map<string, Field[]>();
+  const allFrameFields: Field[] = [];
+  let totalNonTimeFieldCount = 0;
+
+  // Process all frames, not just the first one
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      if (field.type === FieldType.time) {
+        return;
+      }
+      if (field.config.custom?.hideFrom?.legend) {
+        return;
+      }
+
+      allFrameFields.push(field);
+      totalNonTimeFieldCount++;
+
+      // For multiple frames, use frame name; for single frame, use field name
+      const seriesName =
+        frames.length > 1
+          ? frame.name || frame.refId || getFieldDisplayName(field, frame)
+          : getFieldDisplayName(field, frame);
+      if (!seriesGroups.has(seriesName)) {
+        seriesGroups.set(seriesName, []);
+      }
+      seriesGroups.get(seriesName)!.push(field);
+    });
+  });
+
+  const allLegendItems: VizLegendItem[] = [];
+  // For duration calculation, we need to process each frame separately
+  const allDurations = new Map<string, StateDurationInfo>();
+  if (timeRange) {
+    frames.forEach((frame) => {
+      const frameDurations = calculateStateDurations(frame.fields, timeRange, frame, frames);
+      frameDurations.forEach((info, key) => {
+        allDurations.set(key, info);
+      });
+    });
+  }
+  const durations = allDurations.size > 0 ? allDurations : undefined;
+  // Multiple series if we have multiple frames OR multiple distinct series names
+  const multipleSeries = frames.length > 1 || seriesGroups.size > 1;
+
+  seriesGroups.forEach((fields, seriesName) => {
+    const stateColors = new Map<string, string>();
+    fields.forEach((field) => {
+      field.values.forEach((v) => {
+        const state = field.display!(v);
+        if (state.color) {
+          stateColors.set(state.text, state.color);
+        }
+      });
+    });
+
+    stateColors.forEach((color, stateLabel) => {
+      if (stateLabel.length > 0) {
+        let label = multipleSeries ? `${seriesName}: ${stateLabel}` : stateLabel;
+
+        if (durations) {
+          const info = durations.get(`${seriesName}:${stateLabel}`);
+          if (info && info.duration > 0) {
+            const valueOptions = options.valueOptions || ['duration', 'percentage', 'occurrences'];
+            let formattedValues: string[] = [];
+
+            if (valueOptions.includes('duration')) {
+              formattedValues.push(fmtDuration(info.duration));
+            }
+
+            if (valueOptions.includes('percentage')) {
+              formattedValues.push(`${info.percentage.toFixed(2)}%`);
+            }
+
+            if (valueOptions.includes('occurrences')) {
+              formattedValues.push(
+                options.displayMode === 'table'
+                  ? info.occurrences.toString()
+                  : `${info.occurrences} ${info.occurrences === 1 ? 'time' : 'times'}`
+              );
+            }
+
+            if (options.displayMode !== 'table' && formattedValues.length > 0) {
+              const valuesStr = `(${formattedValues.join(', ')})`;
+              label = multipleSeries ? `${label} ${valuesStr}` : `${stateLabel} ${valuesStr}`;
+            }
+
+            const displayValues: Array<{ numeric: number; text: string; title?: string }> = [];
+
+            if (options.displayMode === 'table') {
+              if (valueOptions.includes('duration')) {
+                displayValues.push({
+                  numeric: info.duration,
+                  text: fmtDuration(info.duration),
+                  title: 'Duration',
+                });
+              }
+
+              if (valueOptions.includes('percentage')) {
+                displayValues.push({
+                  numeric: info.percentage,
+                  text: `${info.percentage.toFixed(2)}%`,
+                  title: 'Percentage',
+                });
+              }
+
+              if (valueOptions.includes('occurrences')) {
+                displayValues.push({
+                  numeric: info.occurrences,
+                  text:
+                    options.displayMode === 'table'
+                      ? info.occurrences.toString()
+                      : `${info.occurrences} ${info.occurrences === 1 ? 'time' : 'times'}`,
+                  title: 'Occurrences',
+                });
+              }
+            }
+
+            allLegendItems.push({
+              label: label,
+              color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+              yAxis: 1,
+              getDisplayValues:
+                options.displayMode === 'table'
+                  ? () => displayValues
+                  : displayValues.length
+                    ? () => displayValues
+                    : undefined,
+            });
+          } else {
+            return; // Skip states with no duration in the current time range
+          }
+        } else {
+          allLegendItems.push({
+            label: label,
+            color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+            yAxis: 1,
+          });
+        }
+      }
+    });
+  });
+
+  return allLegendItems.length > 0 ? allLegendItems : undefined;
 }
 
 export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
@@ -658,17 +870,17 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   return items;
 }
 
-function allNonTimeFields(frames: DataFrame[]): Field[] {
-  const fields: Field[] = [];
-  for (const frame of frames) {
-    for (const field of frame.fields) {
-      if (field.type !== FieldType.time) {
-        fields.push(field);
-      }
-    }
-  }
-  return fields;
-}
+// function allNonTimeFields(frames: DataFrame[]): Field[] {
+//   const fields: Field[] = [];
+//   for (const frame of frames) {
+//     for (const field of frame.fields) {
+//       if (field.type !== FieldType.time) {
+//         fields.push(field);
+//       }
+//     }
+//   }
+//   return fields;
+// }
 
 export function findNextStateIndex(field: Field, datapointIdx: number) {
   let end;
