@@ -1,0 +1,22 @@
+# Pa11y accessability tests
+
+We use pa11y to run some automated simple accessability tests. They're ran with dagger to help orchestrate starting server + tests in a reproducable manner.
+
+To run the tests locally:
+
+1. Install dagger locally https://docs.dagger.io/install/
+2. Grab the grafana.tar.gz artifact by either
+   1. Downloading it from the Github Action artifact from your PR
+   1. Build it locally with:
+      ```sh
+      cd ../ # move up to the parent directory of your grafana checkout
+      dagger run go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
+      cat out.txt # Will output the path to the grafana.tar.gz 
+      ```
+3. Run the dagger pipeline with:
+   ```sh
+   dagger -v run go run ./pkg/build/a11y --package=(full path to .tar.gz) --config=./.pa11yci-pr.conf.js
+   ```
+4. If they fail and youy want to see the full output
+   1. Run the dagger command with `dagger -vE [...]`
+   2. At the end, arrow up to the exec pa11y-ci segment and hit Enter

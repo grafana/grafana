@@ -6,10 +6,14 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/urfave/cli/v3"
+)
+
+var (
+	grafanaHost = "grafana"
+	grafanaPort = 3001
 )
 
 func main() {
@@ -49,8 +53,10 @@ func NewApp() *cli.Command {
 				TakesFile: true,
 			},
 			&cli.StringFlag{
-				Name:  "flags",
-				Usage: "Flags to pass through to the e2e runner",
+				Name:      "config",
+				Usage:     "Path to the pa11y config file to use",
+				Validator: mustBeFile("config", true),
+				TakesFile: true,
 			},
 		},
 		Action: run,
@@ -61,26 +67,27 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	grafanaDir := cmd.String("grafana-dir")
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
-	runnerFlags := cmd.String("flags")
+	pa11yConfigPath := cmd.String("config")
 
 	d, err := dagger.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Dagger: %w", err)
 	}
 
-	yarnCache := d.CacheVolume("yarn")
-
-	//nolint:gosec
-	nvmrcContents, err := os.ReadFile(filepath.Join(grafanaDir, ".nvmrc"))
-	if err != nil {
-		return fmt.Errorf("failed to read .nvmrc file: %w", err)
-	}
-	nodeVersion := string(nvmrcContents)
-
-	grafana := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
-		Exclude: []string{"node_modules", "*.tar.gz"},
+	// Explicitly only the files used by the grafana-server service
+	hostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
+		Include: []string{
+			"./devenv",
+			"./e2e/test-plugins", // Directory is included so provisioning works, but they're not actually build
+			"./scripts/grafana-server/custom.ini",
+			"./scripts/grafana-server/start-server",
+			"./scripts/grafana-server/kill-server",
+			"./scripts/grafana-server/variables",
+		},
 	})
+
 	targz := d.Host().File(targzPath)
+	pa11yConfig := d.Host().File(pa11yConfigPath)
 
 	var license *dagger.File
 	if licensePath != "" {
@@ -88,26 +95,21 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		GrafanaDir:   grafana,
+		HostSrc:      hostSrc,
 		GrafanaTarGz: targz,
 		License:      license,
-		YarnCache:    yarnCache,
-		NodeVersion:  nodeVersion,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
 	}
 
-	c := RunTest(d, svc, grafana, yarnCache, nodeVersion, runnerFlags)
+	c := RunTest(d, svc, pa11yConfig)
 	c, err = c.Sync(ctx)
-	if err != nil {
+	code, codeErr := c.ExitCode(ctx)
+	if err != nil || codeErr != nil {
 		return fmt.Errorf("failed to run a11y test suite: %w", err)
 	}
 
-	code, err := c.ExitCode(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get exit code of a11y test suite: %w", err)
-	}
 	if code != 0 {
 		return fmt.Errorf("a11y tests failed with exit code %d", code)
 	}

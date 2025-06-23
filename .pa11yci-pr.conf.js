@@ -12,7 +12,7 @@ var dashboardSettings = [
     threshold: 0,
   },
   {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=templating',
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables',
     wait: 500,
     rootElement: '.main-view',
     threshold: 0,
@@ -57,6 +57,7 @@ var config = {
     // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
     // on why we're ignoring singleValue/react-select-*-placeholder elements
     hideElements: '#updateVersion, [class*="-singleValue"], [id^="react-select-"][id$="-placeholder"]',
+    reporters: ['cli', ['json', { fileName: './pa11y-ci-results.json' }]],
   },
 
   urls: [
@@ -153,9 +154,14 @@ var config = {
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
   const PORT_SERVER = process.env.PORT || '3001';
-  for (var idx = 0; idx < urls.length; idx++) {
-    urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
-  }
+
+  urls = urls.map((test, index) => {
+    return {
+      ...test,
+      url: test.url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`),
+      screenCapture: `./screenshots/screenshot-${index}.png`,
+    };
+  });
 
   return {
     defaults: defaults,

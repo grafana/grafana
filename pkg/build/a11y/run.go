@@ -8,18 +8,21 @@ import (
 
 func RunTest(
 	d *dagger.Client,
-	svc *dagger.Service,
-	src *dagger.Directory, cache *dagger.CacheVolume,
-	nodeVersion, runnerFlags string) *dagger.Container {
-	command := fmt.Sprintf(
-		"./e2e-runner a11y --start-grafana=false"+
-			" --grafana-host grafana --grafana-port 3001 %s", runnerFlags)
+	grafanaService *dagger.Service,
+	pa11yConfig *dagger.File,
+) *dagger.Container {
 
-	return GrafanaFrontend(d, cache, nodeVersion, src).
-		WithExec([]string{"/bin/sh", "-c", "apt-get update && apt-get install -y git curl"}).
-		WithExec([]string{"curl", "-LO", "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"}).
-		WithExec([]string{"apt-get", "install", "-y", "./google-chrome-stable_current_amd64.deb"}).
+	// docker-puppeteer container already has Chrome and Pa11y installed in it
+	pa11yContainer := d.Container().From("grafana/docker-puppeteer:1.1.0").
 		WithWorkdir("/src").
-		WithServiceBinding("grafana", svc).
-		WithExec([]string{"/bin/bash", "-c", command}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny})
+		WithExec([]string{"mkdir", "-p", "./screenshots"}). // not yet exported
+		WithEnvVariable("HOST", grafanaHost).
+		WithEnvVariable("PORT", fmt.Sprint(grafanaPort)).
+		WithServiceBinding(grafanaHost, grafanaService).
+		WithMountedFile("pa11yci-config.js", pa11yConfig).
+		WithExec([]string{"pa11y-ci", "--config", "pa11yci-config.js"}, dagger.ContainerWithExecOpts{
+			Expect: dagger.ReturnTypeAny, // allow this to fail here so we can handle non-zero exit codes at the caller
+		})
+
+	return pa11yContainer
 }
