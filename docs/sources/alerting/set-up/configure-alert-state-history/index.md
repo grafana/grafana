@@ -77,7 +77,7 @@ You can also configure a Prometheus instance to store alert state changes for yo
 Instead, Grafana Alerting writes alert state data to the `GRAFANA_ALERTS` metric-similar to how Prometheus Alerting writes to the `ALERTS` metric.
 
 ```
-ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
+GRAFANA_ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
 ```
 
 The following steps describe a basic configuration:
