@@ -541,7 +541,6 @@ export const PMM_NAV_POSTGRE: NavModelItem = {
   url: `${config.appSubUrl}/d/postgresql-instance-overview/postgresql-instances-overview`,
   sortWeight: WEIGHTS.dashboards,
   hideFromTabs: true,
-
   children: [
     {
       id: 'postgre-overwiew',
@@ -555,6 +554,36 @@ export const PMM_NAV_POSTGRE: NavModelItem = {
       text: 'Summary',
       icon: 'percona-nav-summary',
       url: `${config.appSubUrl}/d/postgresql-instance-summary/postgresql-instance-summary`,
+      hideFromTabs: true,
+    },
+    {
+      id: 'postgre-ha',
+      text: 'High availability',
+      icon: 'percona-cluster',
+      hideFromTabs: true,
+      showChildren: true,
+      url: `${config.appSubUrl}/d/postgresql-replication-overview`,
+      children: [
+        {
+          id: 'postgre-replication',
+          text: 'Replication',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/postgresql-replication-overview/postgresql-replication-overview`,
+          hideFromTabs: true,
+        },
+        {
+          id: 'postgre-patroni',
+          text: 'Patroni',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/postgresql-patroni-details/postgresql-patroni-details`,
+          hideFromTabs: true,
+        },
+      ],
+    },
+    {
+      id: 'postgre-top-queries',
+      text: 'Top queries',
+      url: `${config.appSubUrl}/d/postgresql-top-queries/postgresql-top-queries`,
       hideFromTabs: true,
     },
   ],
