@@ -155,6 +155,23 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
+
+    builder.addMultiSelect({
+      path: 'legend.valueOptions',
+      name: 'Legend values',
+      description: 'Select values to show in the legend',
+      category: ['Legend'],
+      settings: {
+        options: [
+          { value: ['duration'], label: 'Duration' },
+          { value: ['percentage'], label: 'Percentage' },
+          { value: ['occurrences'], label: 'Occurrences' },
+        ],
+      },
+      defaultValue: ['duration', 'percentage', 'occurrences'],
+      showIf: (c) => c.legend.showLegend !== false,
+    });
+
     commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(
