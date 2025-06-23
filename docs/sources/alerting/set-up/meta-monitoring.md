@@ -48,7 +48,7 @@ You need a Prometheus-compatible server to collect and store these metrics.
 If you have configured [Prometheus for alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/), Grafana writes alert state changes to the `ALERTS` metric:
 
 ```
-ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
+GRAFANA_ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
 ```
 
 This `ALERTS` metric is compatible with the `ALERTS` metric used by Prometheus Alerting and includes two additional labels:
