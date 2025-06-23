@@ -77,7 +77,6 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
                 getRows={getRows}
                 row={showDetails[0]}
                 showDuplicates={false}
-                styles={logRowsStyles}
                 wrapLogMessage={wrapLogMessage}
                 onPinLine={onPinLine}
                 getFieldLinks={getFieldLinks}
