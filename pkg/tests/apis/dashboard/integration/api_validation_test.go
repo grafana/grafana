@@ -438,6 +438,31 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
+
+		t.Run("dashboard version history available, even for UIDs ending in hyphen", func(t *testing.T) {
+			dashboardUID := "test-dashboard-"
+			dash, err := createDashboard(t, adminClient, "Dashboard with uid ending in hyphen", nil, &dashboardUID)
+			require.NoError(t, err)
+
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated dashboard with uid ending in hyphen", nil)
+			require.NoError(t, err)
+			require.NotNil(t, updatedDash)
+
+			labelSelector := utils.LabelKeyGetHistory + "=true"
+			fieldSelector := "metadata.name=" + dashboardUID
+			versions, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+				LabelSelector: labelSelector,
+				FieldSelector: fieldSelector,
+				Limit:         10,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, versions)
+			// one from initial save, one from update
+			require.Equal(t, len(versions.Items), 2)
+
+			err = adminClient.Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("Dashboard provisioning validations", func(t *testing.T) {
