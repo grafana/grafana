@@ -112,7 +112,7 @@ The following steps describe a basic configuration:
 You can then use **Grafana Explore** to query the alert state metric. For details, refer to [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/).
 
 ```promQL
-ALERTS{alertstate='firing'}
+GRAFANA_ALERTS{alertstate='firing'}
 ```
 
 ## Configure Loki and Prometheus for alert state
