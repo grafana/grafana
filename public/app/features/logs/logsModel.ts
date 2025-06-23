@@ -104,16 +104,6 @@ export function dedupLogRows(rows: LogRowModel[], strategy?: LogsDedupStrategy):
   }, []);
 }
 
-export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<string>): LogRowModel[] {
-  if (hiddenLogLevels.size === 0) {
-    return logRows;
-  }
-
-  return logRows.filter((row: LogRowModel) => {
-    return !hiddenLogLevels.has(row.logLevel);
-  });
-}
-
 interface Series {
   lastTs: number | null;
   datapoints: Array<[number, number]>;
