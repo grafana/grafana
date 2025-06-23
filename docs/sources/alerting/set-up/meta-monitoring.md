@@ -51,7 +51,7 @@ If you have configured [Prometheus for alert state history](/docs/grafana/<GRAFA
 GRAFANA_ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
 ```
 
-This `ALERTS` metric is compatible with the `ALERTS` metric used by Prometheus Alerting and includes two additional labels:
+This `GRAFANA_ALERTS` metric is compatible with the `ALERTS` metric used by Prometheus Alerting and includes two additional labels:
 
 1. A new `grafana_rule_uid` label for the UID of the Grafana rule.
 2. A new `grafana_alertstate` label for the Grafana alert state, which differs slightly from the equivalent Prometheus state included in the `alertstate` label.
