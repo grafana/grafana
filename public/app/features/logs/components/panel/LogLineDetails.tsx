@@ -4,10 +4,8 @@ import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
-
-import { getLogRowStyles } from '../getLogRowStyles';
 
 import { LogDetails } from './LogDetails';
 import { useLogListContext } from './LogListContext';
@@ -39,7 +37,6 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
     wrapLogMessage,
   } = useLogListContext();
   const getRows = useCallback(() => logs, [logs]);
-  const logRowsStyles = getLogRowStyles(useTheme2());
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);

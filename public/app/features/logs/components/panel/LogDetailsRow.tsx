@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { PureComponent, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { CoreApp, DataFrame, Field, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
