@@ -182,10 +182,11 @@ export const SeriesEditor = ({
                   filter: (field) =>
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                    field.type === FieldType.number &&
+                    (field.type === FieldType.number || field.type === FieldType.time) &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto ? 'First number or time field in each frame' : undefined,
                 },
               }}
             />
