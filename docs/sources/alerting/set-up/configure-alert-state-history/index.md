@@ -103,7 +103,7 @@ The following steps describe a basic configuration:
    # Target data source UID for writing alert state changes.
    prometheus_target_datasource_uid = <DATA_SOURCE_UID>
 
-   # (Optional) Metric name for the alert state metric. Default is "ALERTS".
+   # (Optional) Metric name for the alert state metric. Default is "GRAFANA_ALERTS".
    # prometheus_metric_name = ALERTS
    # (Optional)  Timeout for writing alert state data to the target data source. Default is 10s.
    # prometheus_write_timeout = 10s
