@@ -70,7 +70,7 @@ You can then query this metric like any other Prometheus metric:
 {{< code >}}
 
 ```firing-alerts
-ALERTS{grafana_alertstate="alerting"}
+GRAFANA_ALERTS{grafana_alertstate="alerting"}
 ```
 
 ```recovering-alerts
