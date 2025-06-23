@@ -7,12 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -274,9 +276,44 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
-	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	libraryPanelUID := web.Params(c.Req)[":uid"]
+
+	// make sure the library element exists
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, model.GetLibraryElementCommand{
+		UID: libraryPanelUID,
+	})
 	if err != nil {
-		return l.toLibraryElementError(err, "Failed to get connections")
+		return l.toLibraryElementError(err, "Failed to get library element")
+	}
+
+	// now get all dashboards connected to this library element
+	dashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), libraryPanelUID, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return l.toLibraryElementError(err, "Failed to get dashboards")
+	}
+
+	connections := make([]model.LibraryElementConnectionDTO, 0)
+	for _, dashboard := range dashboards {
+		// skip checks if the user is an admin, or if the dashboard is in the general folder
+		if !c.SignedInUser.HasRole(org.RoleAdmin) && dashboard.FolderUID != "" && dashboard.FolderUID != "general" {
+			if err := l.requireViewPermissionsOnFolderUID(c.Req.Context(), c.SignedInUser, dashboard.FolderUID); err != nil {
+				continue
+			}
+		}
+
+		connections = append(connections, model.LibraryElementConnectionDTO{
+			//ID:            dashboard.ID, // TODO ???
+			Kind:          int64(model.PanelElement),
+			ElementID:     element.ID,
+			ConnectionID:  dashboard.ID, // nolint:staticcheck
+			ConnectionUID: dashboard.UID,
+			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        element.Meta.CreatedBy.Id,
+				Name:      element.Meta.CreatedBy.Name,
+				AvatarUrl: element.Meta.CreatedBy.AvatarUrl,
+			},
+			Created: element.Meta.Created,
+		})
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})

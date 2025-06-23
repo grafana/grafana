@@ -263,4 +263,5 @@ const (
 	PanelElement LibraryElementKind = iota + 1
 )
 
+const LibraryElementTableName = "library_element"
 const LibraryElementConnectionTableName = "library_element_connection"
