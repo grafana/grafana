@@ -43,7 +43,7 @@ To meta monitor Grafana-managed alerts, you can collect two types of metrics in 
 
 You need a Prometheus-compatible server to collect and store these metrics.
 
-### `ALERTS` metric
+### `GRAFANA_ALERTS` metric
 
 If you have configured [Prometheus for alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/), Grafana writes alert state changes to the `ALERTS` metric:
 
