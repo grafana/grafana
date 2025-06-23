@@ -78,7 +78,7 @@ GRAFANA_ALERTS{grafana_alertstate="recovering"}
 ```
 
 ```critical-alerts-in-pending
-ALERTS{grafana_alertstate="pending", severity="critical"}
+GRAFANA_ALERTS{grafana_alertstate="pending", severity="critical"}
 ```
 
     {{< /code >}}
