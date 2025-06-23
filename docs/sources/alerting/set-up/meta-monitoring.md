@@ -37,7 +37,7 @@ You can use meta-monitoring metrics to understand the health of your alerting sy
 
 To meta monitor Grafana-managed alerts, you can collect two types of metrics in a Prometheus instance:
 
-- **State history metric (`ALERTS`)** — Exported by Grafana Alerting as part of alert state history.
+- **State history metric (`GRAFANA_ALERTS`)** — Exported by Grafana Alerting as part of alert state history.
 
 - **Scraped metrics** — Exported by Grafana’s `/metrics` endpoint to monitor alerting activity and performance.
 
