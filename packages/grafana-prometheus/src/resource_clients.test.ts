@@ -1,5 +1,6 @@
 import { dateTime, TimeRange } from '@grafana/data';
 
+import { DEFAULT_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import { BaseResourceClient, LabelsApiClient, processSeries, SeriesApiClient } from './resource_clients';
 import { PrometheusCacheLevel } from './types';
@@ -32,6 +33,7 @@ describe('LabelsApiClient', () => {
     jest.clearAllMocks();
     client = new LabelsApiClient(mockRequest, {
       cacheLevel: PrometheusCacheLevel.Low,
+      seriesLimit: DEFAULT_SERIES_LIMIT,
       getAdjustedInterval: mockGetAdjustedInterval,
       getTimeRangeParams: mockGetTimeRangeParams,
       interpolateString: mockInterpolateString,
@@ -70,7 +72,7 @@ describe('LabelsApiClient', () => {
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/labels',
         {
-          limit: '40000',
+          limit: 40000,
           start: expect.any(String),
           end: expect.any(String),
         },
@@ -87,7 +89,7 @@ describe('LabelsApiClient', () => {
         '/api/v1/labels',
         {
           'match[]': '{job="grafana"}',
-          limit: '40000',
+          limit: 40000,
           start: expect.any(String),
           end: expect.any(String),
         },
@@ -109,7 +111,7 @@ describe('LabelsApiClient', () => {
         {
           start: expect.any(String),
           end: expect.any(String),
-          limit: '40000',
+          limit: 40000,
         },
         defaultCacheHeaders
       );
@@ -126,7 +128,7 @@ describe('LabelsApiClient', () => {
         {
           start: expect.any(String),
           end: expect.any(String),
-          limit: '40000',
+          limit: 40000,
         },
         defaultCacheHeaders
       );
@@ -491,6 +493,50 @@ describe('SeriesApiClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should be able make the right request with utf8 label keys and matchers', async () => {
+      mockRequest.mockResolvedValue([
+        { __name__: 'metric1', job: 'grafana' },
+        { __name__: 'metric2', job: 'prometheus' },
+      ]);
+
+      await client.queryLabelValues(mockTimeRange, '"label with space"', '{"label with space"="space"}');
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{"label with space"="space","label with space"!=""}',
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should be able to return the right utf8 label key value', async () => {
+      mockRequest.mockResolvedValue([
+        {
+          __name__: 'a.utf8.metric 🤘',
+          a_legacy_label: 'legacy',
+          'label with space': 'space',
+        },
+      ]);
+
+      const response = await client.queryLabelValues(
+        mockTimeRange,
+        '"label with space"',
+        '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘"}'
+      );
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+      expect(mockRequest).toHaveBeenCalledWith(
+        '/api/v1/series',
+        expect.objectContaining({
+          'match[]': '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘","label with space"!=""}',
+        }),
+        expect.any(Object)
+      );
+      expect(response).toEqual(['space']);
+    });
   });
 
   describe('SeriesCache', () => {
@@ -782,6 +828,7 @@ describe('BaseResourceClient', () => {
   const mockGetTimeRangeParams = jest.fn();
   const mockDatasource = {
     cacheLevel: PrometheusCacheLevel.Low,
+    seriesLimit: DEFAULT_SERIES_LIMIT,
     getTimeRangeParams: mockGetTimeRangeParams,
   } as unknown as PrometheusDatasource;
 
@@ -815,7 +862,7 @@ describe('BaseResourceClient', () => {
     it('should make request with correct parameters', async () => {
       mockRequest.mockResolvedValueOnce([{ __name__: 'metric1' }]);
 
-      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}', DEFAULT_SERIES_LIMIT);
 
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -823,7 +870,7 @@ describe('BaseResourceClient', () => {
           start: '1681300260',
           end: '1681300320',
           'match[]': '{job="grafana"}',
-          limit: '40000',
+          limit: 40000,
         },
         { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
       );
@@ -833,7 +880,7 @@ describe('BaseResourceClient', () => {
     it('should use custom limit when provided', async () => {
       mockRequest.mockResolvedValueOnce([]);
 
-      await client.querySeries(mockTimeRange, '{job="grafana"}', '1000');
+      await client.querySeries(mockTimeRange, '{job="grafana"}', 1000);
 
       expect(mockRequest).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -841,7 +888,7 @@ describe('BaseResourceClient', () => {
           start: '1681300260',
           end: '1681300320',
           'match[]': '{job="grafana"}',
-          limit: '1000',
+          limit: 1000,
         },
         { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
       );
@@ -850,7 +897,7 @@ describe('BaseResourceClient', () => {
     it('should handle empty response', async () => {
       mockRequest.mockResolvedValueOnce(null);
 
-      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}', DEFAULT_SERIES_LIMIT);
 
       expect(result).toEqual([]);
     });
@@ -858,7 +905,7 @@ describe('BaseResourceClient', () => {
     it('should handle non-array response', async () => {
       mockRequest.mockResolvedValueOnce({ error: 'invalid response' });
 
-      const result = await client.querySeries(mockTimeRange, '{job="grafana"}');
+      const result = await client.querySeries(mockTimeRange, '{job="grafana"}', DEFAULT_SERIES_LIMIT);
 
       expect(result).toEqual([]);
     });

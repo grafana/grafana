@@ -176,10 +176,10 @@ You can define and configure the data source in YAML files as part of Grafana's 
 For more information about provisioning, and for available configuration options, refer
 to [Provision Grafana](ref:provision-grafana).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
 Grafana recommends using the `dbName` field in `jsonData`. There is no need to change existing provisioning settings.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provisioning examples
 
