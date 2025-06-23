@@ -403,16 +403,16 @@ export class DefaultGridLayoutManager
   public getOutlineChildren(): SceneObject[] {
     const children: SceneObject[] = [];
 
-    this.state.grid.forEachChild((child) => {
+    for (const child of this.state.grid.state.children) {
       // Flatten repeated grid items
       if (child instanceof DashboardGridItem) {
         if (child.state.repeatedPanels) {
           children.push(...child.state.repeatedPanels);
+        } else {
+          children.push(child.state.body);
         }
-      } else {
-        children.push(child);
       }
-    });
+    }
 
     return children;
   }
