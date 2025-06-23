@@ -70,7 +70,7 @@ The following steps describe a basic configuration:
 
 If everything is set up correctly, you can access the [History view and History page](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) to view and filter alert state history. You can also use **Grafana Explore** to query the Loki instance, see [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/) for details.
 
-## Configure Prometheus for alert state (ALERTS metric)
+## Configure Prometheus for alert state (GRAFANA_ALERTS metric)
 
 You can also configure a Prometheus instance to store alert state changes for your Grafana-managed alert rules. However, this setup does not enable the **Grafana Alerting History views**, as Loki does.
 
