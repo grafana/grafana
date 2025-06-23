@@ -1,10 +1,11 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import {
   CoreApp,
   DataFrame,
   DataFrameType,
+  GrafanaTheme2,
   IconName,
   LinkModel,
   LogRowModel,
@@ -114,6 +115,7 @@ export const LogDetails = ({
 }: Props) => {
   const links = useAttributesExtensionLinks(row);
   const levelStyles = useStyles2(getLogLevelStyles, row.logLevel);
+  const logDetailsStyles = useStyles2(getStyles);
   const labels = row.labels ? row.labels : {};
   const labelsAvailable = Object.keys(labels).length > 0;
   const fieldsAndLinks = getAllFields(row, getFieldLinks);
@@ -166,6 +168,7 @@ export const LogDetails = ({
                     app={app}
                     displayedFields={displayedFields}
                     disableActions={false}
+                    styles={logDetailsStyles}
                   />
                 </>
               )}
@@ -294,4 +297,16 @@ export const LogDetails = ({
       </td>
     </tr>
   );
+};
+
+export type LogDetailsStyles = ReturnType<typeof getStyles>;
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    bodyButtonRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(0.5),
+      marginLeft: theme.spacing(0.5),
+    }),
+  };
 };
