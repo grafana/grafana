@@ -18,7 +18,6 @@ import { PopoverContent, useStyles2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
-import { getLogLevelStyles, LogRowStyles } from '../getLogRowStyles';
 import { getAllFields, createLogLineLinks } from '../logParser';
 
 import { LogDetailsBody } from './LogDetailsBody';
@@ -32,7 +31,6 @@ export interface Props {
   className?: string;
   hasError?: boolean;
   app?: CoreApp;
-  styles: LogRowStyles;
 
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
@@ -44,7 +42,6 @@ export interface Props {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
-  mode?: 'inline' | 'sidebar';
   links?: Record<string, LinkModel[]>;
 }
 
@@ -96,11 +93,9 @@ const useAttributesExtensionLinks = (row: LogRowModel) => {
 export const LogDetails = ({
   app,
   row,
-  hasError,
   onClickFilterOutLabel,
   onClickFilterLabel,
   getRows,
-  showDuplicates,
   className,
   onClickShowField,
   onClickHideField,
@@ -108,14 +103,11 @@ export const LogDetails = ({
   getFieldLinks,
   wrapLogMessage,
   onPinLine,
-  styles,
   pinLineButtonTooltipTitle,
-  mode = 'inline',
   isFilterLabelActive,
 }: Props) => {
   const links = useAttributesExtensionLinks(row);
-  const levelStyles = useStyles2(getLogLevelStyles, row.logLevel);
-  const logDetailsStyles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
   const labels = row.labels ? row.labels : {};
   const labelsAvailable = Object.keys(labels).length > 0;
   const fieldsAndLinks = getAllFields(row, getFieldLinks);
@@ -135,19 +127,10 @@ export const LogDetails = ({
         fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
   const fieldsAvailable = fields && fields.length > 0;
 
-  // If logs with error, we are not showing the level color
-  const levelClassName = hasError
-    ? ''
-    : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
-
   return (
     <tr className={cx(className, styles.logDetails)}>
-      {showDuplicates && <td />}
-      {mode === 'inline' && (
-        <td className={levelClassName} aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')} />
-      )}
       <td colSpan={4}>
-        <div className={mode === 'inline' ? styles.logDetailsContainer : styles.logDetailsSidebarContainer}>
+        <div className={styles.logDetailsSidebarContainer}>
           <table className={styles.logDetailsTable}>
             <tbody>
               {displayedFields && displayedFields.length > 0 && (
@@ -168,7 +151,7 @@ export const LogDetails = ({
                     app={app}
                     displayedFields={displayedFields}
                     disableActions={false}
-                    styles={logDetailsStyles}
+                    styles={styles}
                   />
                 </>
               )}
@@ -302,6 +285,38 @@ export const LogDetails = ({
 export type LogDetailsStyles = ReturnType<typeof getStyles>;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    // LogDetails
+    logDetails: css({
+      label: 'logDetailsDefaultCursor',
+      cursor: 'default',
+
+      '&:hover': {
+        backgroundColor: theme.colors.background.primary,
+      },
+    }),
+    logDetailsSidebarContainer: css({
+      label: 'logs-row-details-table',
+      border: `1px solid ${theme.colors.border.medium}`,
+      padding: theme.spacing(0, 1, 1),
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(0, 1, 0, 1),
+      cursor: 'default',
+    }),
+    logDetailsTable: css({
+      label: 'logs-row-details-table',
+      lineHeight: '18px',
+      width: '100%',
+      'td:last-child': {
+        width: '100%',
+      },
+    }),
+    logDetailsHeading: css({
+      label: 'logs-row-details__heading',
+      fontWeight: theme.typography.fontWeightBold,
+      padding: theme.spacing(1, 0, 0.5),
+    }),
+
+    // LogDetailsBody
     bodyButtonRow: css({
       display: 'flex',
       flexDirection: 'row',

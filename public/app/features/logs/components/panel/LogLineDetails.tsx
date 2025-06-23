@@ -75,7 +75,6 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
             <tbody>
               <LogDetails
                 getRows={getRows}
-                mode="sidebar"
                 row={showDetails[0]}
                 showDuplicates={false}
                 styles={logRowsStyles}
