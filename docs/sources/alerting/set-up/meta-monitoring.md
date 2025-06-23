@@ -74,7 +74,7 @@ GRAFANA_ALERTS{grafana_alertstate="alerting"}
 ```
 
 ```recovering-alerts
-ALERTS{grafana_alertstate="recovering"}
+GRAFANA_ALERTS{grafana_alertstate="recovering"}
 ```
 
 ```critical-alerts-in-pending
