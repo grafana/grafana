@@ -129,7 +129,7 @@ export const LogDetails = ({
 
   return (
     <tr className={cx(className, styles.logDetails)}>
-      <td colSpan={4}>
+      <td>
         <div className={styles.logDetailsSidebarContainer}>
           <table className={styles.logDetailsTable}>
             <tbody>
@@ -137,9 +137,8 @@ export const LogDetails = ({
                 <>
                   <tr>
                     <td
-                      colSpan={100}
                       className={styles.logDetailsHeading}
-                      aria-label={t('logs.un-themed-log-details.aria-label-fields', 'Fields')}
+                      aria-label={t('logs.un-themed-log-details.aria-label-line', 'Log line')}
                     >
                       <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
                     </td>

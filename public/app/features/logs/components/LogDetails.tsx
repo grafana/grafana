@@ -161,7 +161,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       <td
                         colSpan={100}
                         className={styles.logDetailsHeading}
-                        aria-label={t('logs.un-themed-log-details.aria-label-fields', 'Fields')}
+                        aria-label={t('logs.un-themed-log-details.aria-label-line', 'Log line')}
                       >
                         <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
                       </td>
