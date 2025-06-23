@@ -1,6 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import memoizeOne from 'memoize-one';
 import { PureComponent, useEffect, useState } from 'react';
 import * as React from 'react';
 
@@ -8,7 +7,6 @@ import {
   CoreApp,
   DataFrame,
   Field,
-  GrafanaTheme2,
   IconName,
   LinkModel,
   LogLabelStatsModel,
@@ -21,21 +19,20 @@ import {
   DataLinkButton,
   IconButton,
   PopoverContent,
-  Themeable2,
   Tooltip,
-  withTheme2,
 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { getLabelTypeFromRow } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
-import { getLogRowStyles } from '../getLogRowStyles';
+
+import { LogDetailsStyles } from './LogDetails';
 
 interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;
 }
 
-export interface Props extends Themeable2 {
+export interface Props {
   parsedValues: string[];
   parsedKeys: string[];
   disableActions: boolean;
@@ -53,6 +50,7 @@ export interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel, allowUnPin?: boolean) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
+  styles: LogDetailsStyles;
 }
 
 interface State {
@@ -61,79 +59,7 @@ interface State {
   fieldStats: LogLabelStatsModel[] | null;
 }
 
-const getStyles = memoizeOne((theme: GrafanaTheme2) => {
-  return {
-    labelType: css({
-      border: `solid 1px ${theme.colors.text.secondary}`,
-      color: theme.colors.text.secondary,
-      borderRadius: theme.shape.radius.circle,
-      fontSize: theme.spacing(1),
-      lineHeight: theme.spacing(1.25),
-      height: theme.spacing(1.5),
-      width: theme.spacing(1.5),
-      display: 'flex',
-      justifyContent: 'center',
-      verticalAlign: 'middle',
-      marginLeft: theme.spacing(1),
-    }),
-    wordBreakAll: css({
-      label: 'wordBreakAll',
-      wordBreak: 'break-all',
-    }),
-    copyButton: css({
-      '& > button': {
-        color: theme.colors.text.secondary,
-        padding: 0,
-        justifyContent: 'center',
-        borderRadius: theme.shape.radius.circle,
-        height: theme.spacing(theme.components.height.sm),
-        width: theme.spacing(theme.components.height.sm),
-        svg: {
-          margin: 0,
-        },
-
-        'span > div': {
-          top: '-5px',
-          '& button': {
-            color: theme.colors.success.main,
-          },
-        },
-      },
-    }),
-    adjoiningLinkButton: css({
-      marginLeft: theme.spacing(1),
-    }),
-    wrapLine: css({
-      label: 'wrapLine',
-      whiteSpace: 'pre-wrap',
-    }),
-    logDetailsStats: css({
-      padding: `0 ${theme.spacing(1)}`,
-    }),
-    logDetailsValue: css({
-      display: 'flex',
-      alignItems: 'center',
-      lineHeight: '22px',
-
-      '.log-details-value-copy': {
-        visibility: 'hidden',
-      },
-      '&:hover': {
-        '.log-details-value-copy': {
-          visibility: 'visible',
-        },
-      },
-    }),
-    buttonRow: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(0.5),
-      marginLeft: theme.spacing(0.5),
-    }),
-  };
-});
-
-class UnThemedLogDetailsRow extends PureComponent<Props, State> {
+export class LogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
@@ -279,7 +205,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
   render() {
     const {
-      theme,
       parsedKeys,
       parsedValues,
       isLabel,
@@ -293,10 +218,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       app,
       onPinLine,
       pinLineButtonTooltipTitle,
+      styles,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
-    const styles = getStyles(theme);
-    const rowStyles = getLogRowStyles(theme);
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
@@ -327,8 +251,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={rowStyles.logDetailsValue}>
-          <td className={rowStyles.logsDetailsIcon}>
+        <tr className={styles.logDetailsValue}>
+          <td className={styles.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
@@ -368,9 +292,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
           <td>{labelType && <LabelTypeBadge type={labelType} styles={styles} />}</td>
           {/* Key - value columns */}
-          <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
+          <td className={styles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
-            <div className={styles.logDetailsValue}>
+            <div className={styles.logDetailsRowValue}>
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
               {singleVal && this.generateClipboardButton(parsedValues[0])}
               <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
@@ -462,5 +386,3 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
-export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
-LogDetailsRow.displayName = 'LogDetailsRow';

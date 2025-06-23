@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { PopoverContent, useStyles2 } from '@grafana/ui';
+import { PopoverContent, styleMixins, useStyles2 } from '@grafana/ui';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -188,6 +188,7 @@ export const LogDetails = ({
                       disableActions={false}
                       isFilterLabelActive={isFilterLabelActive}
                       links={links?.[key]}
+                      styles={styles}
                     />
                   );
                 })}
@@ -209,6 +210,7 @@ export const LogDetails = ({
                     app={app}
                     disableActions={false}
                     isFilterLabelActive={isFilterLabelActive}
+                    styles={styles}
                   />
                 );
               })}
@@ -284,6 +286,7 @@ export const LogDetails = ({
 
 export type LogDetailsStyles = ReturnType<typeof getStyles>;
 const getStyles = (theme: GrafanaTheme2) => {
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   return {
     // LogDetails
     logDetails: css({
@@ -322,6 +325,99 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       gap: theme.spacing(0.5),
       marginLeft: theme.spacing(0.5),
+    }),
+
+    // LogDetailsRow
+    labelType: css({
+      border: `solid 1px ${theme.colors.text.secondary}`,
+      color: theme.colors.text.secondary,
+      borderRadius: theme.shape.radius.circle,
+      fontSize: theme.spacing(1),
+      lineHeight: theme.spacing(1.25),
+      height: theme.spacing(1.5),
+      width: theme.spacing(1.5),
+      display: 'flex',
+      justifyContent: 'center',
+      verticalAlign: 'middle',
+      marginLeft: theme.spacing(1),
+    }),
+    wordBreakAll: css({
+      label: 'wordBreakAll',
+      wordBreak: 'break-all',
+    }),
+    copyButton: css({
+      '& > button': {
+        color: theme.colors.text.secondary,
+        padding: 0,
+        justifyContent: 'center',
+        borderRadius: theme.shape.radius.circle,
+        height: theme.spacing(theme.components.height.sm),
+        width: theme.spacing(theme.components.height.sm),
+        svg: {
+          margin: 0,
+        },
+
+        'span > div': {
+          top: '-5px',
+          '& button': {
+            color: theme.colors.success.main,
+          },
+        },
+      },
+    }),
+    adjoiningLinkButton: css({
+      marginLeft: theme.spacing(1),
+    }),
+    wrapLine: css({
+      label: 'wrapLine',
+      whiteSpace: 'pre-wrap',
+    }),
+    logDetailsStats: css({
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    logDetailsRowValue: css({
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: '22px',
+
+      '.log-details-value-copy': {
+        visibility: 'hidden',
+      },
+      '&:hover': {
+        '.log-details-value-copy': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    buttonRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(0.5),
+      marginLeft: theme.spacing(0.5),
+    }),
+    logDetailsValue: css({
+      label: 'logs-row-details__row',
+      position: 'relative',
+      verticalAlign: 'middle',
+      cursor: 'default',
+
+      '&:hover': {
+        backgroundColor: hoverBgColor,
+      },
+    }),
+    logsDetailsIcon: css({
+      label: 'logs-row-details__icon',
+      position: 'relative',
+      color: theme.v1.palette.gray3,
+      paddingTop: '1px',
+      paddingBottom: '1px',
+      paddingRight: theme.spacing(0.75),
+    }),
+    logDetailsLabel: css({
+      label: 'logs-row-details__label',
+      maxWidth: '30em',
+      padding: theme.spacing(0, 1),
+      overflowWrap: 'break-word',
     }),
   };
 };
