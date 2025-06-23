@@ -74,7 +74,7 @@ If everything is set up correctly, you can access the [History view and History 
 
 You can also configure a Prometheus instance to store alert state changes for your Grafana-managed alert rules. However, this setup does not enable the **Grafana Alerting History views**, as Loki does.
 
-Instead, Grafana Alerting writes alert state data to the `ALERTS` metric—similar to how Prometheus Alerting works.
+Instead, Grafana Alerting writes alert state data to the `GRAFANA_ALERTS` metric-similar to how Prometheus Alerting writes to the `ALERTS` metric.
 
 ```
 ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
