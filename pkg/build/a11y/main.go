@@ -58,6 +58,11 @@ func NewApp() *cli.Command {
 				Validator: mustBeFile("config", true),
 				TakesFile: true,
 			},
+			&cli.StringFlag{
+				Name:      "results",
+				Usage:     "Path to the pa11y results file to export",
+				TakesFile: true,
+			},
 		},
 		Action: run,
 	}
@@ -68,6 +73,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
 	pa11yConfigPath := cmd.String("config")
+	pa11yResultsPath := cmd.String("results")
 
 	d, err := dagger.Connect(ctx)
 	if err != nil {
@@ -103,11 +109,19 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
 	}
 
-	c := RunTest(d, svc, pa11yConfig)
-	c, err = c.Sync(ctx)
+	c, runErr := RunTest(ctx, d, svc, pa11yConfig, pa11yResultsPath)
+	if runErr != nil {
+		return fmt.Errorf("failed to run a11y test suite: %w", runErr)
+	}
+
+	c, syncErr := c.Sync(ctx)
+	if syncErr != nil {
+		return fmt.Errorf("failed to sync a11y test suite: %w", syncErr)
+	}
+
 	code, codeErr := c.ExitCode(ctx)
-	if err != nil || codeErr != nil {
-		return fmt.Errorf("failed to run a11y test suite: %w", err)
+	if codeErr != nil {
+		return fmt.Errorf("failed to get exit code of a11y test suite: %w", codeErr)
 	}
 
 	if code != 0 {

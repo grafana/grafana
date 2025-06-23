@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"dagger.io/dagger"
 )
 
 func RunTest(
+	ctx context.Context,
 	d *dagger.Client,
 	grafanaService *dagger.Service,
 	pa11yConfig *dagger.File,
-) *dagger.Container {
+	pa11yResultsPath string,
+) (*dagger.Container, error) {
 
 	// docker-puppeteer container already has Chrome and Pa11y installed in it
 	pa11yContainer := d.Container().From("grafana/docker-puppeteer:1.1.0").
@@ -24,5 +27,12 @@ func RunTest(
 			Expect: dagger.ReturnTypeAny, // allow this to fail here so we can handle non-zero exit codes at the caller
 		})
 
-	return pa11yContainer
+	if pa11yResultsPath != "" {
+		_, err := pa11yContainer.File("/src/pa11y-ci-results.json").Export(ctx, pa11yResultsPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get pa11y results: %w", err)
+		}
+	}
+
+	return pa11yContainer, nil
 }
