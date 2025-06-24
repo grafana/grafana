@@ -39,4 +39,9 @@ func addLoginAttemptMigrations(mg *Migrator) {
 		"username":   "username",
 		"ip_address": "ip_address",
 	})
+
+	// Increase ip_address column length to support IPv6 addresses
+	mg.AddMigration("increase login_attempt.ip_address column length for IPv6 support", NewRawSQLMigration("").
+		Postgres("ALTER TABLE login_attempt ALTER COLUMN ip_address TYPE VARCHAR(50);").
+		Mysql("ALTER TABLE login_attempt MODIFY ip_address VARCHAR(50);"))
 }
