@@ -2,7 +2,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 
 import { e2e } from '../utils';
 
-describe('Panels smokescreen', { defaultCommandTimeout: 90000 }, () => {
+describe('Panels smokescreen', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
   });
@@ -13,6 +13,8 @@ describe('Panels smokescreen', { defaultCommandTimeout: 90000 }, () => {
 
   it('Tests each panel type in the panel edit view to ensure no crash', () => {
     e2e.flows.addDashboard();
+
+    e2e.pages.Dashboard.DashNav.shareButton().should('be.visible');
 
     e2e.flows.addPanel({
       dataSourceName: 'gdev-testdata',
