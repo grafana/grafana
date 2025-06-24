@@ -23,7 +23,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
         <InlineField label="Organization" labelWidth={30} grow>
           <Input
             id="organization"
-            placeholder="my-org"
+            placeholder="myorg"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
             value={jsonData.organization || ''}
@@ -36,7 +36,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
             id="default-bucket"
             onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
-            placeholder="my-bucket"
+            placeholder="mybucket"
             value={jsonData.defaultBucket || ''}
           />
         </InlineField>
