@@ -3296,6 +3296,9 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "no-value": {
+      "default-message": "No data in response"
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
       "gaps-options": {
@@ -9494,6 +9497,15 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "Data is missing a number field",
+        "string": "Data is missing a string field",
+        "time": "Data is missing a time field",
+        "unknown": "Cannot visualize data"
+      },
+      "no-value": {
+        "default": "No data"
+      },
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
@@ -11592,6 +11604,15 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "No graphable fields",
+      "time": "Data does not have a time field"
+    },
+    "no-value": {
+      "default": "No data in response"
     }
   },
   "timeseries": {

@@ -14,6 +14,7 @@ import {
   outerJoinDataFrames,
 } from '@grafana/data';
 import { decoupleHideFromState } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -57,7 +58,12 @@ export function prepSeries(
   colorFieldName?: string
 ): BarSeries {
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return { series: [], _rest: [], warn: 'No data in response' };
+    // TODO this should be localized
+    return {
+      series: [],
+      _rest: [],
+      warn: fieldConfig.defaults.noValue ?? t('barchart.no-value.default-message', 'No data in response'),
+    };
   }
 
   cacheFieldDisplayNames(frames);

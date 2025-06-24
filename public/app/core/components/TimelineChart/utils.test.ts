@@ -62,6 +62,21 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('No graphable fields');
   });
 
+  it('errors with no frame', () => {
+    const info = prepareTimelineFields(undefined, true, timeRange, theme);
+    expect(info.warn).toEqual('No data in response');
+  });
+
+  it('errors with empty frame', () => {
+    const info = prepareTimelineFields([], true, timeRange, theme);
+    expect(info.warn).toEqual('No data in response');
+  });
+
+  it('supports override text when no data is present', () => {
+    const info = prepareTimelineFields(undefined, true, timeRange, theme, "Well, that's awkward!");
+    expect(info.warn).toEqual("Well, that's awkward!");
+  });
+
   it('will merge duplicate values', () => {
     const frames = [
       toDataFrame({

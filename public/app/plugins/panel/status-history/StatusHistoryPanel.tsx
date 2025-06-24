@@ -38,6 +38,7 @@ export const StatusHistoryPanel = ({
   options,
   width,
   height,
+  fieldConfig,
   replaceVariables,
   onChangeTimeRange,
 }: TimelinePanelProps) => {
@@ -51,8 +52,8 @@ export const StatusHistoryPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme, fieldConfig.defaults.noValue),
+    [data.series, timeRange, theme, fieldConfig.defaults.noValue]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
