@@ -8,6 +8,7 @@ import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 interface DashboardEditFormSharedFieldsProps {
+  resourceType: 'dashboard' | 'folder';
   workflowOptions: Array<{ label: string; value: string }>;
   isNew?: boolean;
   readOnly?: boolean;
@@ -16,7 +17,7 @@ interface DashboardEditFormSharedFieldsProps {
 }
 
 export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType }) => {
     const {
       control,
       register,
@@ -29,12 +30,19 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
         <Field
           noMargin
           label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-path', 'Path')}
-          description={t(
-            'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
-            'File path inside the repository (.json or .yaml)'
-          )}
+          description={
+            resourceType === 'dashboard'
+              ? t(
+                  'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
+                  'File path inside the repository (.json or .yaml)'
+                )
+              : t(
+                  'dashboard-scene.save-or-delete-provisioned-folder-form.description-inside-repository-folder',
+                  'Folder path inside the repository'
+                )
+          }
         >
-          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} disabled={!isNew} />
+          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
         </Field>
 
         {/* Comment */}

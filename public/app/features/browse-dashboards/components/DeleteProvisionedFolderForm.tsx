@@ -124,6 +124,7 @@ function FormContent({
           </Box>
 
           <DashboardEditFormSharedFields
+            resourceType="folder"
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}

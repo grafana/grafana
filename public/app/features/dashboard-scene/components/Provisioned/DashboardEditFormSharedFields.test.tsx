@@ -65,7 +65,7 @@ function setup(options: SetupOptions = {}) {
     user,
     ...render(
       <FormWrapper>
-        <DashboardEditFormSharedFields {...componentProps} />
+        <DashboardEditFormSharedFields {...componentProps} resourceType="dashboard" />
       </FormWrapper>
     ),
   };
