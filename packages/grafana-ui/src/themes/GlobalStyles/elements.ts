@@ -2,6 +2,7 @@ import { css } from '@emotion/react';
 
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
+import { getFeatureToggle } from '../../utils/featureToggle';
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: boolean) {
@@ -61,6 +62,7 @@ export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: 
       fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
       ...bodyOverflow,
+      fontVariantNumeric: getFeatureToggle('tabularNumbers') ? 'tabular-nums' : 'initial',
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),
