@@ -106,14 +106,17 @@ css({
     // should use unset or initial to remove border radius
     {
       code: `css({ borderRadius: 0 })`,
+      output: `css({ borderRadius: 'unset' })`,
       errors: [noZeroValueError],
     },
     {
       code: `css({ borderRadius: '0px' })`,
+      output: `css({ borderRadius: 'unset' })`,
       errors: [noZeroValueError],
     },
     {
       code: `css({ borderRadius: "0%" })`,
+      output: `css({ borderRadius: 'unset' })`,
       errors: [noZeroValueError],
     },
   ],
