@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -312,7 +313,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				},
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      "reference.LibraryPanel",
+						Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"lib-panel-1"},
 					},

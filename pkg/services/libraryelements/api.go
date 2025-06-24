@@ -2,6 +2,8 @@ package libraryelements
 
 import (
 	"errors"
+	"fmt"
+	"hash/fnv"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -287,26 +289,43 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 	}
 
 	// now get all dashboards connected to this library element
-	dashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), libraryPanelUID, c.SignedInUser.GetOrgID())
+	dashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), libraryPanelUID, c.GetOrgID())
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get dashboards")
+	}
+
+	ids, err := l.getConnectionIDs(c.Req.Context(), c.SignedInUser, libraryPanelUID)
+	if err != nil {
+		return l.toLibraryElementError(err, "Failed to get connection ids")
 	}
 
 	connections := make([]model.LibraryElementConnectionDTO, 0)
 	for _, dashboard := range dashboards {
 		// skip checks if the user is an admin, or if the dashboard is in the general folder
-		if !c.SignedInUser.HasRole(org.RoleAdmin) && dashboard.FolderUID != "" && dashboard.FolderUID != "general" {
+		if !c.HasRole(org.RoleAdmin) && dashboard.FolderUID != "" && dashboard.FolderUID != "general" {
 			if err := l.requireViewPermissionsOnFolderUID(c.Req.Context(), c.SignedInUser, dashboard.FolderUID); err != nil {
 				continue
 			}
 		}
 
+		// best effort to get a connection id, once in unified storage, connections are not an individual resource and therefore do not have an id
+		connectionID, ok := ids[getConnectionKey(element.ID, dashboard.ID)] // nolint:staticcheck
+		if !ok {
+			// if we cannot get an ID from the db, instead do a best effort to return something that will be consistent and somewhat unique for the connection.
+			// note: the connection ID cannot be used to get, update, or delete a connection, so this is solely to keep the api returning the same fields for now,
+			// while we deprecate the endpoint.
+			hash := fnv.New64a()
+			hash.Write([]byte(fmt.Sprintf("%d:%s:%d:%d", element.ID, dashboard.UID, c.GetOrgID(), element.Meta.Created.Unix())))
+			connectionID = int64(hash.Sum64())
+		}
+
 		connections = append(connections, model.LibraryElementConnectionDTO{
-			//ID:            dashboard.ID, // TODO ???
+			ID:            connectionID,
 			Kind:          int64(model.PanelElement),
 			ElementID:     element.ID,
 			ConnectionID:  dashboard.ID, // nolint:staticcheck
 			ConnectionUID: dashboard.UID,
+			// returns the creation information of the library element, not the connection
 			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.Meta.CreatedBy.Id,
 				Name:      element.Meta.CreatedBy.Name,

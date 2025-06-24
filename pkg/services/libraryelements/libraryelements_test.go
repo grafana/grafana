@@ -230,7 +230,7 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 				},
 			}
 
-			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Library Panel")
+			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Library Panel") // nolint:staticcheck
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			libraryElement := validateAndUnMarshalResponse(t, resp)

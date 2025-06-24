@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -2990,7 +2991,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		return len(req.Options.Fields) == 1 &&
-			req.Options.Fields[0].Key == "reference.LibraryPanel" &&
+			req.Options.Fields[0].Key == search.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 
@@ -3016,7 +3017,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		result, exists := resultMap[uid]
 		require.True(t, exists, "Expected dashboard %s not found", uid)
 		require.Equal(t, expected.folderUID, result.FolderUID, "Folder UID mismatch for %s", uid)
-		require.Equal(t, expected.id, result.ID, "ID mismatch for %s", uid)
+		require.Equal(t, expected.id, result.ID, "ID mismatch for %s", uid) // nolint:staticcheck
 	}
 
 	k8sCliMock.AssertExpectations(t)

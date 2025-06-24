@@ -60,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
@@ -486,12 +487,13 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      "reference.LibraryPanel",
+						Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: string(selection.Equals),
 						Values:   []string{libraryPanelUID},
 					},
 				},
 			},
+			Limit: listAllDashboardsLimit,
 		})
 		if err != nil {
 			return nil, err

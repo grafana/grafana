@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -552,7 +553,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      "reference.LibraryPanel",
+						Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"test-library-panel"},
 					},
@@ -594,7 +595,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 				Key: dashboardKey,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      "reference.LibraryPanel",
+						Key:      search.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 						Operator: "=",
 						Values:   []string{"panel1", "panel2"},
 					},

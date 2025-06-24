@@ -712,6 +712,39 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 	return dto, err
 }
 
+// getConnectionIDs returns a map[string]int64 with the key as elementID:connectionUID and the value as connectionID
+func (l *LibraryElementService) getConnectionIDs(c context.Context, signedInUser identity.Requester, uid string) (map[string]int64, error) {
+	connections := map[string]int64{}
+	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		var libraryElementConnections []model.LibraryElementConnectionWithMeta
+		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
+		builder.Write("SELECT lec.id, lec.element_id, lec.connection_id")
+		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec ")
+		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON le.id = element_id")
+		builder.Write(" WHERE le.org_id=? AND le.uid=?", signedInUser.GetOrgID(), uid)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
+			return err
+		}
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
+		for _, connection := range libraryElementConnections {
+			connections[getConnectionKey(connection.ElementID, connection.ConnectionID)] = connection.ID
+		}
+
+		return nil
+	})
+
+	return connections, err
+}
+
+func getConnectionKey(elementID int64, connectionID int64) string {
+	return fmt.Sprintf("%d:%d", elementID, connectionID)
+}
+
 // getElementsForDashboardID gets all elements for a specific dashboard
 func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]model.LibraryElementDTO)
