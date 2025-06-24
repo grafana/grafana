@@ -229,6 +229,9 @@ export const versionedComponents = {
         codeModeMetricNamesSuggestionLimit: {
           '11.1.0': 'data-testid code mode metric names suggestion limit',
         },
+        seriesLimit: {
+          '12.0.2': 'data-testid maximum series limit',
+        },
       },
       queryEditor: {
         explain: {
