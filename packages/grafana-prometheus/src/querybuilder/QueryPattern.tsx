@@ -7,8 +7,8 @@ import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import promqlGrammar from '../promql';
 
-import { promQueryModeller } from './PromQueryModeller';
 import { RawQuery } from './shared/RawQuery';
+import { promQueryModeller } from './shared/modeller_instance';
 import { PromQueryPattern } from './types';
 
 type Props = {
@@ -32,10 +32,15 @@ export const QueryPattern = (props: Props) => {
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery
-          aria-label={t('querybuilder.query-pattern.aria-label-raw-query', '{{patternName}} raw query', {
-            patternName: pattern.name,
-          })}
+          aria-label={t(
+            'grafana-prometheus.querybuilder.query-pattern.aria-label-raw-query',
+            '{{patternName}} raw query',
+            {
+              patternName: pattern.name,
+            }
+          )}
           query={promQueryModeller.renderQuery({
+            metric: '',
             labels: [],
             operations: pattern.operations,
             binaryQueries: pattern.binaryQueries,
@@ -48,7 +53,10 @@ export const QueryPattern = (props: Props) => {
         {selectedPatternName !== pattern.name ? (
           <Button
             size="sm"
-            aria-label={t('querybuilder.query-pattern.aria-label-use-this-query-button', 'use this query button')}
+            aria-label={t(
+              'grafana-prometheus.querybuilder.query-pattern.aria-label-use-this-query-button',
+              'use this query button'
+            )}
             onClick={() => {
               if (hasPreviousQuery) {
                 // If user has previous query, we need to confirm that they want to apply this query pattern
@@ -58,7 +66,7 @@ export const QueryPattern = (props: Props) => {
               }
             }}
           >
-            <Trans i18nKey="querybuilder.query-pattern.use-this-query">Use this query</Trans>
+            <Trans i18nKey="grafana-prometheus.querybuilder.query-pattern.use-this-query">Use this query</Trans>
           </Button>
         ) : (
           <>
@@ -71,36 +79,36 @@ export const QueryPattern = (props: Props) => {
             </div>
             <Button
               size="sm"
-              aria-label={t('querybuilder.query-pattern.aria-label-back-button', 'back button')}
+              aria-label={t('grafana-prometheus.querybuilder.query-pattern.aria-label-back-button', 'back button')}
               fill="outline"
               onClick={() => setSelectedPatternName(null)}
             >
-              <Trans i18nKey="querybuilder.query-pattern.back">Back</Trans>
+              <Trans i18nKey="grafana-prometheus.querybuilder.query-pattern.back">Back</Trans>
             </Button>
             <Button
               size="sm"
               aria-label={t(
-                'querybuilder.query-pattern.aria-label-apply-query-starter-button',
+                'grafana-prometheus.querybuilder.query-pattern.aria-label-apply-query-starter-button',
                 'apply query starter button'
               )}
               onClick={() => {
                 onPatternSelect(pattern);
               }}
             >
-              <Trans i18nKey="querybuilder.query-pattern.apply-query">Apply query</Trans>
+              <Trans i18nKey="grafana-prometheus.querybuilder.query-pattern.apply-query">Apply query</Trans>
             </Button>
             {hasNewQueryOption && (
               <Button
                 size="sm"
                 aria-label={t(
-                  'querybuilder.query-pattern.aria-label-create-new-query-button',
+                  'grafana-prometheus.querybuilder.query-pattern.aria-label-create-new-query-button',
                   'create new query button'
                 )}
                 onClick={() => {
                   onPatternSelect(pattern, true);
                 }}
               >
-                <Trans i18nKey="querybuilder.query-pattern.create-new-query">Create new query</Trans>
+                <Trans i18nKey="grafana-prometheus.querybuilder.query-pattern.create-new-query">Create new query</Trans>
               </Button>
             )}
           </>
