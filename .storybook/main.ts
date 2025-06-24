@@ -1,8 +1,9 @@
-import path, { dirname, join } from 'node:path';
+import path from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
+
 import { copyAssetsSync } from './copyAssets';
 
-const stories = [...packageStories('grafana-ui'), ...packageStories('grafana-alerting', 'Alerting')];
+const stories = [...findStories('grafana-ui'), ...findStories('grafana-alerting', 'Alerting')];
 
 // Copy the assets required by storybook before starting the storybook server.
 copyAssetsSync();
@@ -52,6 +53,11 @@ const mainConfig: StorybookConfig = {
   staticDirs: ['static'],
   typescript: {
     check: true,
+    checkOptions: {
+      typescript: {
+        memoryLimit: 4096,
+      },
+    },
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
       tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
@@ -87,7 +93,7 @@ const mainConfig: StorybookConfig = {
 };
 module.exports = mainConfig;
 
-function packageStories(name: string, prefix?: string) {
+function findStories(name: string, prefix?: string) {
   return [
     {
       titlePrefix: prefix,

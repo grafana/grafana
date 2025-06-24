@@ -3689,7 +3689,6 @@ __metadata:
     downshift: "npm:^9.0.6"
     esbuild: "npm:0.25.0"
     expose-loader: "npm:5.0.0"
-    fs-extra: "npm:^11.2.0"
     hoist-non-react-statics: "npm:3.3.2"
     i18next: "npm:^24.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
