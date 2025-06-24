@@ -10,6 +10,22 @@ import (
 
 const SecretAuditLogServiceIdentity = "secret-audit-log"
 
+type AuditLogSinkType string
+
+const (
+	AuditLogSinkTypeStdout AuditLogSinkType = "stdout"
+	AuditLogSinkTypeFile   AuditLogSinkType = "file"
+	AuditLogSinkTypeLoki   AuditLogSinkType = "loki"
+)
+
+type AuditLogSinks map[AuditLogSinkType]struct{}
+
+var AvailableAuditLogSinks = AuditLogSinks{
+	AuditLogSinkTypeStdout: {},
+	AuditLogSinkTypeFile:   {},
+	AuditLogSinkTypeLoki:   {},
+}
+
 type AuditLogActionStatus string
 
 const (
@@ -64,6 +80,14 @@ func (e AuditLogEntry) Loki() (encoded []byte, observedAt time.Time, err error) 
 	return encoded, e.ObservedAt, nil
 }
 
-type AuditLogService interface {
-	Observe(ctx context.Context, entry AuditLogEntry) error
+type AuditLogProcessor interface {
+	Process(ctx context.Context, entry AuditLogEntry) error
+}
+
+type AuditLogPublisher interface {
+	Publish(ctx context.Context, entry AuditLogEntry) error
+}
+
+type AuditLogConsumer interface {
+	Consume(ctx context.Context) error
 }

@@ -398,8 +398,28 @@ func schema_pkg_apis_secret_v0alpha1_FileLogger(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
+					"max_file_size_mb": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxFileSizeMB is the maximum size in MB of the audit log file before it gets rotated. Defaults to 256MB.",
+							Default:     0,
+							Minimum:     ptr.To[float64](256),
+							Maximum:     ptr.To[float64](8192),
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"max_files": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxFiles is the maximum number of old audit log files to retain. Defaults to 5.",
+							Default:     0,
+							Minimum:     ptr.To[float64](1),
+							Maximum:     ptr.To[float64](1024),
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
 				},
-				Required: []string{"enable", "path"},
+				Required: []string{"enable", "path", "max_file_size_mb", "max_files"},
 			},
 		},
 	}

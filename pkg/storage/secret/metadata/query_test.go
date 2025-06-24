@@ -5,8 +5,9 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	"k8s.io/utils/ptr"
+
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
 func TestKeeperQueries(t *testing.T) {
@@ -452,8 +453,10 @@ func TestAuditLogConfigQueries(t *testing.T) {
 							UpdatedBy:    "user:cameron",
 							StdoutEnable: true,
 
-							FileEnable: true,
-							FilePath:   sql.NullString{Valid: true, String: "/var/log/audit.log"},
+							FileEnable:        true,
+							FilePath:          sql.NullString{Valid: true, String: "/var/log/audit.log"},
+							FileMaxFileSizeMB: sql.NullInt32{Valid: true, Int32: 256},
+							FileMaxFiles:      sql.NullInt32{Valid: true, Int32: 5},
 
 							LokiEnable:             true,
 							LokiURLSecureValueName: sql.NullString{Valid: true, String: "loki-url"},
@@ -467,6 +470,15 @@ func TestAuditLogConfigQueries(t *testing.T) {
 				{
 					Name: "read",
 					Data: &readAuditLogConfig{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlAuditLogConfigDelete: {
+				{
+					Name: "delete",
+					Data: &deleteAuditLogConfig{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
 					},

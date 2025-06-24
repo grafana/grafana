@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 type auditLogConfigDB struct {
@@ -28,8 +29,10 @@ type auditLogConfigDB struct {
 	// Spec
 	StdoutEnable bool
 
-	FileEnable bool
-	FilePath   sql.NullString
+	FileEnable        bool
+	FilePath          sql.NullString
+	FileMaxFileSizeMB sql.NullInt32
+	FileMaxFiles      sql.NullInt32
 
 	LokiEnable             bool
 	LokiURLSecureValueName sql.NullString
@@ -65,8 +68,10 @@ func (kp *auditLogConfigDB) toKubernetes() (*secretv0alpha1.AuditLogConfig, erro
 
 	if kp.FileEnable {
 		resource.Spec.FileLogger = &secretv0alpha1.FileLogger{
-			Enable: kp.FileEnable,
-			Path:   kp.FilePath.String,
+			Enable:        kp.FileEnable,
+			Path:          kp.FilePath.String,
+			MaxFileSizeMB: kp.FileMaxFileSizeMB.Int32,
+			MaxFiles:      kp.FileMaxFiles.Int32,
 		}
 	}
 
@@ -172,11 +177,23 @@ func toAuditLogConfigRow(cfg *secretv0alpha1.AuditLogConfig) (*auditLogConfigDB,
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var filePath sql.NullString
+	var (
+		filePath          sql.NullString
+		fileMaxFileSizeMB sql.NullInt32
+		fileMaxFiles      sql.NullInt32
+	)
 	if cfg.Spec.FileLogger != nil {
 		filePath = sql.NullString{
 			String: cfg.Spec.FileLogger.Path,
 			Valid:  true,
+		}
+		fileMaxFileSizeMB = sql.NullInt32{
+			Int32: cfg.Spec.FileLogger.MaxFileSizeMB,
+			Valid: true,
+		}
+		fileMaxFiles = sql.NullInt32{
+			Int32: cfg.Spec.FileLogger.MaxFiles,
+			Valid: true,
 		}
 	}
 
@@ -215,8 +232,10 @@ func toAuditLogConfigRow(cfg *secretv0alpha1.AuditLogConfig) (*auditLogConfigDB,
 		// Spec
 		StdoutEnable: cfg.Spec.StdoutLogger != nil && cfg.Spec.StdoutLogger.Enable,
 
-		FileEnable: cfg.Spec.FileLogger != nil && cfg.Spec.FileLogger.Enable,
-		FilePath:   filePath,
+		FileEnable:        cfg.Spec.FileLogger != nil && cfg.Spec.FileLogger.Enable,
+		FilePath:          filePath,
+		FileMaxFileSizeMB: fileMaxFileSizeMB,
+		FileMaxFiles:      fileMaxFiles,
 
 		LokiEnable:             cfg.Spec.LokiLogger != nil && cfg.Spec.LokiLogger.Enable,
 		LokiURLSecureValueName: lokiURLSecureValueName,

@@ -42,9 +42,9 @@ var (
 	// TODO
 	sqlAuditLogConfigCreate = mustTemplate("audit_log_config_create.sql")
 	sqlAuditLogConfigRead   = mustTemplate("audit_log_config_read.sql")
+	sqlAuditLogConfigDelete = mustTemplate("audit_log_config_delete.sql")
 	//sqlAuditLogConfigUpdate = mustTemplate("audit_log_config_update.sql")
 	//sqlAuditLogConfigList   = mustTemplate("audit_log_config_list.sql")
-	//sqlAuditLogConfigDelete = mustTemplate("audit_log_config_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {

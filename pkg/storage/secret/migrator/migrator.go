@@ -171,6 +171,8 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 
 			{Name: "file_enable", Type: migrator.DB_Bool, Nullable: false},
 			{Name: "file_path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
+			{Name: "file_max_file_size_mb", Type: migrator.DB_Int, Nullable: true},
+			{Name: "file_max_files", Type: migrator.DB_Int, Nullable: true},
 
 			{Name: "loki_enable", Type: migrator.DB_Bool, Nullable: false},
 			{Name: "loki_url_secure_value_name", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},

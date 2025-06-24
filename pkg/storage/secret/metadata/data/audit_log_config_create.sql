@@ -12,6 +12,12 @@ INSERT INTO {{ .Ident "secret_audit_log_config" }} (
   {{ .Ident "file_enable" }},
 {{ if .Row.FilePath.Valid }}
   {{ .Ident "file_path" }},
+{{ end }}
+{{ if .Row.FileMaxFileSizeMB.Valid }}
+  {{ .Ident "file_max_file_size_mb" }},
+{{ end }}
+{{ if .Row.FileMaxFiles.Valid }}
+  {{ .Ident "file_max_files" }},
 {{ end }} 
 {{ if .Row.LokiURLSecureValueName.Valid }}
   {{ .Ident "loki_url_secure_value_name" }},
@@ -37,6 +43,12 @@ INSERT INTO {{ .Ident "secret_audit_log_config" }} (
   {{ .Arg .Row.FileEnable }},
 {{ if .Row.FilePath.Valid }}
   {{ .Arg .Row.FilePath.String }},
+{{ end }}
+{{ if .Row.FileMaxFileSizeMB.Valid }}
+  {{ .Arg .Row.FileMaxFileSizeMB.Int32 }},
+{{ end }}
+{{ if .Row.FileMaxFiles.Valid }}
+  {{ .Arg .Row.FileMaxFiles.Int32 }},
 {{ end }}
 {{ if .Row.LokiURLSecureValueName.Valid }}
   {{ .Arg .Row.LokiURLSecureValueName.String }},

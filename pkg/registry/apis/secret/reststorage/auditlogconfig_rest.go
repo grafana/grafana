@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -161,15 +163,17 @@ func (s *AuditLogConfigRest) Create(ctx context.Context, obj runtime.Object, vFu
 	err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		if cfg.Spec.LokiLogger != nil && cfg.Spec.LokiLogger.URL.Value != "" {
 			svSpec := &secretv0alpha1.SecureValue{
-				TypeMeta:   cfg.TypeMeta,
-				ObjectMeta: cfg.ObjectMeta,
+				TypeMeta: cfg.TypeMeta,
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "secret-audit-log-loki-url-" + cfg.GetNamespace() + "-" + strconv.Itoa(int(time.Now().UnixMicro())),
+					Namespace: cfg.GetNamespace(),
+				},
 				Spec: secretv0alpha1.SecureValueSpec{
-					Description: "blabla",
+					Description: "Secrets Audit Logging Loki URL",
 					Value:       cfg.Spec.LokiLogger.URL.Value,
 					Decrypters:  []string{contracts.SecretAuditLogServiceIdentity},
 				},
 			}
-			svSpec.SetName("secret-audit-log-loki-url-" + cfg.GetNamespace())
 
 			sv, err := s.secureValueService.Create(ctx, svSpec, user.GetUID())
 			if err != nil {
@@ -262,6 +266,8 @@ func (s *AuditLogConfigRest) Delete(ctx context.Context, _ string, deleteValidat
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
+
+	// TODO: delete the secure value if it exists, but ignore if it doesn't exist
 
 	err := s.storage.Delete(ctx, xkube.Namespace(namespace))
 	if err != nil {

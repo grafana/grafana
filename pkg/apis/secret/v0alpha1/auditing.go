@@ -39,6 +39,18 @@ type FileLogger struct {
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=1024
 	Path string `json:"path"`
+
+	// MaxFileSizeMB is the maximum size in MB of the audit log file before it gets rotated.
+	// Defaults to 256MB.
+	// +k8s:validation:minimum=256
+	// +k8s:validation:maximum=8192
+	MaxFileSizeMB int32 `json:"max_file_size_mb"`
+
+	// MaxFiles is the maximum number of old audit log files to retain.
+	// Defaults to 5.
+	// +k8s:validation:minimum=1
+	// +k8s:validation:maximum=1024
+	MaxFiles int32 `json:"max_files"`
 }
 
 // LokiLoggerProtocol defines the transport protocol used to communicate with Loki.
@@ -64,7 +76,7 @@ type LokiLogger struct {
 	Protocol LokiLoggerProtocol `json:"protocol"`
 
 	// Establishes a secure connection to Loki.
-	TLS bool `json:"tls,omitempty"`
+	TLS bool `json:"tls"`
 }
 
 // LokiLoggerAddress is used to specify the address of a Loki instance.
