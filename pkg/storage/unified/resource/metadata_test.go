@@ -354,72 +354,8 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestMetadataStore_ListAll(t *testing.T) {
-	store := newMetadataStore(setupTestKV(t))
-	ctx := context.Background()
-
-	// Save multiple metadata objects
-	rv1 := node.Generate().Int64()
-	rv2 := node.Generate().Int64()
-
-	key1 := MetaDataKey{
-		Group:           "apps",
-		Resource:        "resource",
-		Namespace:       "default",
-		Name:            "resource1",
-		ResourceVersion: rv1,
-		Action:          DataActionCreated,
-	}
-
-	key2 := MetaDataKey{
-		Group:           "apps",
-		Resource:        "resource",
-		Namespace:       "default",
-		Name:            "resource2",
-		ResourceVersion: rv2,
-		Action:          DataActionCreated,
-	}
-
-	metadata1 := MetaData{}
-	metadata2 := MetaData{}
-
-	err := store.Save(ctx, MetaDataObj{
-		Key:   key1,
-		Value: metadata1,
-	})
-	require.NoError(t, err)
-	err = store.Save(ctx, MetaDataObj{
-		Key:   key2,
-		Value: metadata2,
-	})
-	require.NoError(t, err)
-
-	// List all metadata objects
-	var results []MetaDataObj
-	for obj, err := range store.ListAll(ctx, ListRequestKey{
-		Group:     "apps",
-		Resource:  "resource",
-		Namespace: "default",
-		Name:      "", // Empty name for listing
-	}) {
-		require.NoError(t, err)
-		results = append(results, obj)
-	}
-
-	assert.Len(t, results, 2)
-
-	// Check that both objects are present
-	foundNames := make(map[string]bool)
-	for _, result := range results {
-		foundNames[result.Key.Name] = true
-	}
-
-	assert.True(t, foundNames["resource1"])
-	assert.True(t, foundNames["resource2"])
-}
-
 func TestMetadataStore_ListLatest(t *testing.T) {
-	store := newMetadataStore(setupTestKV(t))
+	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
 	key := MetaDataKey{

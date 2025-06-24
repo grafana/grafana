@@ -105,7 +105,7 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
 	}
-	meta, err := k.metaStore.GetAt(ctx, ListRequestKey{
+	meta, err := k.metaStore.GetAtRevision(ctx, ListRequestKey{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
