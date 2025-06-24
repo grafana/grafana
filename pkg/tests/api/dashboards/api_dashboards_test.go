@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -36,25 +35,14 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testDashboardQuota(t, []string{})
-}
 
-func TestIntegrationDashboardQuotaK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testDashboardQuota(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testDashboardQuota(t *testing.T, featureToggles []string) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		DashboardOrgQuota:    &dashboardQuota,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous:  true,
+		EnableQuota:       true,
+		DashboardOrgQuota: &dashboardQuota,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -113,24 +101,9 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-
-	testUpdatingProvisionionedDashboards(t, []string{})
-}
-
-func TestIntegrationUpdatingProvisionionedDashboardsK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	// will be the default in g12
-	testUpdatingProvisionionedDashboards(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testUpdatingProvisionionedDashboards(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
@@ -285,30 +258,9 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	testCreate(t, []string{})
-}
-
-func TestIntegrationCreateK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testCreate(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func TestIntegrationPreserveSchemaVersion(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testPreserveSchemaVersion(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testCreate(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -461,10 +413,13 @@ func intPtr(n int) *int {
 	return &n
 }
 
-func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
+func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)

@@ -4,7 +4,6 @@ import { config } from '@grafana/runtime';
 export const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'provisioning',
   'kubernetesDashboards',
-  'kubernetesClientDashboardsFolders',
 ];
 
 /**

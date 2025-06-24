@@ -47,9 +47,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesClientDashboardsFolders,
-		},
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
@@ -121,9 +118,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					DualWriterMode: grafanarest.Mode0,
 				},
 			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
-			},
 		}))
 	})
 
@@ -136,9 +130,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				folders.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
 			},
 		}))
 	})
@@ -154,7 +145,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
 				featuremgmt.FlagNestedFolders,
 			},
 		}))
@@ -171,7 +161,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
 				featuremgmt.FlagNestedFolders,
 			},
 		}))
@@ -201,7 +190,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					// We set it to 1 here, so we always get forced pagination based on the response size.
 					UnifiedStorageMaxPageSizeBytes: 1,
 					EnableFeatureToggles: []string{
-						featuremgmt.FlagKubernetesClientDashboardsFolders,
 						featuremgmt.FlagNestedFolders,
 					},
 				}), mode)
@@ -220,7 +208,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
 				featuremgmt.FlagNestedFolders,
 			},
 		}))
@@ -237,7 +224,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesClientDashboardsFolders,
 				featuremgmt.FlagNestedFolders,
 			},
 		}))
@@ -668,7 +654,6 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesClientDashboardsFolders,
 				},
 			})
 
@@ -770,7 +755,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesClientDashboardsFolders,
 				},
 			})
 
@@ -947,7 +931,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesClientDashboardsFolders,
 				},
 			})
 
@@ -1117,7 +1100,6 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					},
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagNestedFolders,
-						featuremgmt.FlagKubernetesClientDashboardsFolders,
 					},
 				})
 

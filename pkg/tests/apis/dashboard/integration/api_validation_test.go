@@ -69,7 +69,6 @@ func TestIntegrationValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -2429,7 +2428,6 @@ func TestDashboardWithLibraryPanel(t *testing.T) {
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"unifiedStorageSearch",
-					"kubernetesClientDashboardsFolders",
 				},
 			})
 			ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)

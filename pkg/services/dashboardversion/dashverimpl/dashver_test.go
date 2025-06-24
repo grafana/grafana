@@ -47,7 +47,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
 		creationTimestamp := time.Now().Add(time.Hour * -24).UTC()
@@ -133,7 +133,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 		mockCli.On("List", mock.Anything, int64(1), mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
 
@@ -262,7 +262,7 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardVersionService.features = featuremgmt.WithFeatures()
 
 		dashboardService.On("GetDashboardUIDByID", mock.Anything,
 			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
@@ -301,7 +301,7 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
-		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders)
+		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything,
 			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
 			Return(&dashboards.DashboardRef{UID: "uid"}, nil)

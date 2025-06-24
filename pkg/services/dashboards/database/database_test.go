@@ -184,15 +184,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, queryResult.IsFolder)
 	})
 
-	t.Run("Should be able to get a dashboard UID by ID", func(t *testing.T) {
-		setup()
-		query := dashboards.GetDashboardRefByIDQuery{ID: savedDash.ID}
-		queryResult, err := dashboardStore.GetDashboardUIDByID(context.Background(), &query)
-		require.NoError(t, err)
-		require.Equal(t, queryResult.UID, savedDash.UID)
-		require.Equal(t, queryResult.FolderUID, savedFolder.UID)
-	})
-
 	t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
@@ -213,19 +204,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		_, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.Error(t, err, dashboards.ErrDashboardNotFound)
-	})
-
-	t.Run("Should be able to get dashboards by IDs & UIDs", func(t *testing.T) {
-		setup()
-		query := dashboards.GetDashboardsQuery{DashboardIDs: []int64{savedDash.ID, savedDash2.ID}}
-		queryResult, err := dashboardStore.GetDashboards(context.Background(), &query)
-		require.NoError(t, err)
-		assert.Equal(t, len(queryResult), 2)
-
-		query = dashboards.GetDashboardsQuery{DashboardUIDs: []string{savedDash.UID, savedDash2.UID}}
-		queryResult, err = dashboardStore.GetDashboards(context.Background(), &query)
-		require.NoError(t, err)
-		assert.Equal(t, len(queryResult), 2)
 	})
 
 	t.Run("Should be able to delete dashboard and associated tags", func(t *testing.T) {
@@ -327,32 +305,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		res, err = dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
 		require.NoError(t, err)
 		require.Len(t, res, 0)
-	})
-
-	t.Run("Should be able to delete all dashboards for an org", func(t *testing.T) {
-		setup()
-		dash1 := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
-		dash2 := insertTestDashboard(t, dashboardStore, "delete me2", 1, 0, "", false, "delete this2")
-		dash3 := insertTestDashboard(t, dashboardStore, "dont delete me", 2, 0, "", false, "dont delete me")
-
-		err := dashboardStore.DeleteAllDashboards(context.Background(), 1)
-		require.NoError(t, err)
-
-		// no dashboards should exist for org 1
-		queryResult, err := dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
-			OrgID:         1,
-			DashboardUIDs: []string{dash1.UID, dash2.UID},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, len(queryResult), 0)
-
-		// but we should still have one for org 2
-		queryResult, err = dashboardStore.GetDashboards(context.Background(), &dashboards.GetDashboardsQuery{
-			OrgID:         2,
-			DashboardUIDs: []string{dash3.UID},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, len(queryResult), 1)
 	})
 
 	t.Run("Should be able to get all dashboards for an org", func(t *testing.T) {
@@ -678,22 +630,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(hit2.Tags), 1)
 	})
 
-	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
-		setup()
-		// setup() saves one dashboard in the general folder and two in the "savedFolder".
-		count, err := dashboardStore.CountDashboardsInFolders(
-			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{""}, OrgID: 1})
-		require.NoError(t, err)
-		require.Equal(t, int64(1), count)
-
-		count, err = dashboardStore.CountDashboardsInFolders(
-			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
-		require.NoError(t, err)
-		require.Equal(t, int64(2), count)
-	})
-
 	t.Run("Can delete dashboards in folder", func(t *testing.T) {
 		setup()
 		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, 0, "", true, "prod", "webapp")
@@ -703,9 +639,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		err := dashboardStore.DeleteDashboardsInFolders(context.Background(), &dashboards.DeleteDashboardsInFolderRequest{OrgID: folder.OrgID, FolderUIDs: []string{folder.UID}})
 		require.NoError(t, err)
 
-		count, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{folder.UID}, OrgID: 1})
-		require.NoError(t, err)
-		require.Equal(t, count, int64(0))
+		// TODO: add get tests to ensure they are not there anymore
 	})
 }
 

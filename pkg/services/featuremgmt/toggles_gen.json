@@ -1795,19 +1795,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesClientDashboardsFolders",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-18T23:11:26Z"
-      },
-      "spec": {
-        "description": "Route the folder and dashboard service requests to k8s",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-06-05T14:34:23Z"

@@ -184,8 +184,7 @@ describe('VersionSettings', () => {
     expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
   });
 
-  test('does not show more button when kubernetesClientDashboardsFolders is enabled and continueToken is empty', async () => {
-    config.featureToggles.kubernetesClientDashboardsFolders = true;
+  test('does not show more button when continueToken is empty', async () => {
     historySrv.getHistoryList = jest.fn().mockResolvedValueOnce({
       continueToken: '',
       versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 1),
@@ -197,8 +196,6 @@ describe('VersionSettings', () => {
 
     expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /compare versions/i })).toBeInTheDocument();
-
-    config.featureToggles.kubernetesClientDashboardsFolders = false;
   });
 
   test('selecting two versions and clicking compare button should render compare view', async () => {

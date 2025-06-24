@@ -140,14 +140,9 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       return;
     }
     let lhs, rhs;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
-      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
-    } else {
-      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
-      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
-    }
+    // the id here is the resource version in k8s, use this instead to get the specific version
+    lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
+    rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
 
     this.setState({
       baseInfo,
@@ -207,10 +202,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
   // older versions may have been cleaned up in the db, so also check if the last page is less than the limit, if so, we are at the end
-  let isLastPage = model.versions.find((rev) => rev.version === 1) || model.versions.length % model.limit !== 0;
-  if (config.featureToggles.kubernetesClientDashboardsFolders) {
-    isLastPage = isLastPage || model.continueToken === '';
-  }
+  let isLastPage = model.versions.find((rev) => rev.version === 1) || model.versions.length % model.limit !== 0 || model.continueToken === '';
 
   const viewModeCompare = (
     <>
