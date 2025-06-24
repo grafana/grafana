@@ -141,7 +141,10 @@ export function FolderActionsButton({ folder }: Props) {
           subtitle={folder.title}
           onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
         >
-          <DeleteProvisionedFolderForm parentFolder={folder} />
+          <DeleteProvisionedFolderForm
+            parentFolder={folder}
+            onDismiss={() => setShowDeleteProvisionedFolderDrawer(false)}
+          />
         </Drawer>
       )}
     </>

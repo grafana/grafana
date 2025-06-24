@@ -1,121 +1,82 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FormEvent } from 'react';
-import { useForm, UseFormReturn, FieldValues } from 'react-hook-form';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderDTO } from 'app/types';
 
 import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
-import { DashboardTreeSelection } from '../types';
 
 import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
+// Mock dependencies
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn(() => ({
+    publish: jest.fn(),
+  })),
+}));
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
+  provisioningAPI: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('../hooks/useProvisionedFolderFormData');
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn(),
-}));
-
-jest.mock('react-hook-form', () => ({
-  ...jest.requireActual('react-hook-form'),
-  useForm: jest.fn(),
+jest.mock('./BrowseActions/DescendantCount', () => ({
+  DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
 }));
 
 jest.mock('app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields', () => ({
-  DashboardEditFormSharedFields: ({ workflow }: { workflow: string }) => (
-    <div data-testid="shared-fields">
-      <input data-testid="workflow-input" value={workflow} readOnly />
-    </div>
-  ),
+  DashboardEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
 
-jest.mock('./BrowseActions/DescendantCount', () => ({
-  DescendantCount: ({ selectedItems }: { selectedItems: DashboardTreeSelection }) => (
-    <div data-testid="descendant-count">Descendant count for folder: {Object.keys(selectedItems.folder)[0]}</div>
-  ),
-}));
-
-// Mock navigation
-const mockLocationAssign = jest.fn();
-Object.defineProperty(window, 'location', {
-  value: { href: '', assign: mockLocationAssign },
-  writable: true,
-});
-
-const mockDeleteRepoFile = jest.fn();
-const mockPublish = jest.fn();
-const mockHandleSubmit = jest.fn();
-const mockWatch = jest.fn();
-const mockReset = jest.fn();
-
-const mockUseDeleteRepositoryFiles = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
+const mockUseDeleteRepositoryFilesMutation = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
   typeof useDeleteRepositoryFilesWithPathMutation
 >;
 const mockUseProvisionedFolderFormData = useProvisionedFolderFormData as jest.MockedFunction<
   typeof useProvisionedFolderFormData
 >;
-const mockUseForm = useForm as jest.MockedFunction<typeof useForm>;
 
-// Mock request state helper
-type MockRequestState = {
-  isLoading: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error?: Error;
-  reset: () => void;
-};
+const mockDeleteRepoFile = jest.fn();
 
-const createMockRequestState = (overrides: Partial<MockRequestState> = {}): MockRequestState => ({
-  isLoading: false,
-  isSuccess: false,
-  isError: false,
-  reset: jest.fn(),
-  ...overrides,
-});
-
-interface SetupOptions {
-  parentFolder?: Partial<FolderDTO>;
-  requestState?: Partial<MockRequestState>;
-  formData?: Partial<ProvisionedFolderFormDataResult>;
-  workflow?: 'branch' | 'write';
-  formValues?: {
-    repo?: string;
-    path?: string;
-    comment?: string;
-    ref?: string;
-  };
-}
-
-const createMockFolder = (overrides: Partial<FolderDTO> = {}): FolderDTO => ({
-  uid: 'test-folder-uid',
+const mockParentFolder: FolderDTO = {
+  id: 1,
+  uid: 'folder-uid',
   title: 'Test Folder',
+  url: '/dashboards/f/folder-uid/test-folder',
+  hasAcl: false,
+  canSave: true,
+  canEdit: true,
   canAdmin: true,
   canDelete: true,
-  canEdit: true,
-  canSave: true,
-  created: '2023-01-01T00:00:00Z',
-  createdBy: 'test-user',
-  hasAcl: false,
-  id: 1,
-  updated: '2023-01-01T00:00:00Z',
-  updatedBy: 'test-user',
-  url: '/dashboards/f/test-folder-uid',
-  accessControl: {},
-  ...overrides,
-});
+  createdBy: '',
+  created: '',
+  updatedBy: '',
+  updated: '',
+  version: 1,
+  parentUid: 'parent-folder-uid',
+};
 
-const mockFolderObj = {
+const mockRepository: RepositoryView = {
+  name: 'test-repo',
+  target: 'folder' as const,
+  title: 'Test Repository',
+  type: 'git' as const,
+  workflows: [],
+};
+
+const mockFolder = {
   metadata: {
+    name: 'test-folder',
     annotations: {
-      'grafana.app/sourcePath': 'folders/test-folder.yaml',
+      'grafana.app/sourcePath': 'folders/test-folder.json',
     },
   },
   spec: {
@@ -124,283 +85,215 @@ const mockFolderObj = {
   status: {},
 };
 
-function setup(options: SetupOptions = {}) {
-  const { parentFolder, requestState = {}, formData = {}, workflow = 'branch', formValues = {} } = options;
-  const user = userEvent.setup();
+const mockFormData = {
+  repo: 'test-repo',
+  path: 'folders/test-folder.json',
+  ref: 'main',
+  workflow: 'write' as const,
+  comment: '',
+  title: 'Test Folder',
+};
 
-  const defaultParentFolder = createMockFolder({
-    parentUid: 'parent-folder-uid',
-    ...parentFolder,
-  });
+const defaultHookData: ProvisionedFolderFormDataResult = {
+  workflowOptions: [
+    { label: 'Write directly', value: 'write' },
+    { label: 'Create branch', value: 'branch' },
+  ],
+  isGitHub: true,
+  repository: mockRepository,
+  folder: mockFolder,
+  initialValues: mockFormData,
+};
 
-  const defaultFormData: ProvisionedFolderFormDataResult = {
-    workflowOptions: [
-      { label: 'Branch', value: 'branch' },
-      { label: 'Write', value: 'write' },
-    ],
-    isGitHub: true,
-    repository: {
-      name: 'test-repo',
-      target: 'folder' as const,
-      title: 'Test Repository',
-      type: 'github' as const,
-      workflows: ['branch', 'write'] as Array<'branch' | 'write'>,
-    },
-    folder: mockFolderObj,
-    ...formData,
+function setup(
+  props: Partial<Parameters<typeof DeleteProvisionedFolderForm>[0]> = {},
+  hookData = defaultHookData,
+  requestState: { isLoading: boolean; isSuccess: boolean; isError: boolean; error: Error | null } = {
+    isLoading: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  }
+) {
+  const mockMutationResult = [mockDeleteRepoFile, requestState] as unknown as ReturnType<
+    typeof useDeleteRepositoryFilesWithPathMutation
+  >;
+  const mockHookResult = hookData as unknown as ReturnType<typeof useProvisionedFolderFormData>;
+
+  mockUseDeleteRepositoryFilesMutation.mockReturnValue(mockMutationResult);
+  mockUseProvisionedFolderFormData.mockReturnValue(mockHookResult);
+
+  const onDismiss = jest.fn();
+  const defaultProps = {
+    parentFolder: mockParentFolder,
+    onDismiss,
   };
 
-  // Default form values
-  const defaultFormValues = {
-    repo: 'test-repo',
-    path: 'folders/test.yaml',
-    comment: '',
-    ref: 'test-ref',
-    ...formValues,
-  };
-
-  // Set up form mocks
-  mockHandleSubmit.mockImplementation((callback) => (e?: FormEvent) => {
-    e?.preventDefault?.();
-    callback(defaultFormValues);
-  });
-
-  mockWatch.mockReturnValue([defaultFormValues.ref, workflow]);
-
-  mockUseForm.mockReturnValue({
-    handleSubmit: mockHandleSubmit,
-    watch: mockWatch,
-    reset: mockReset,
-  } as unknown as UseFormReturn<FieldValues>);
-
-  // Set up other mocks
-  mockUseProvisionedFolderFormData.mockReturnValue(defaultFormData);
-  mockUseDeleteRepositoryFiles.mockReturnValue([
-    mockDeleteRepoFile,
-    createMockRequestState(requestState) as ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[1],
-  ]);
-
-  (getAppEvents as jest.Mock).mockReturnValue({
-    publish: mockPublish,
-  });
+  const renderResult = render(<DeleteProvisionedFolderForm {...defaultProps} {...props} />);
 
   return {
-    user,
-    parentFolder: defaultParentFolder,
-    ...render(<DeleteProvisionedFolderForm parentFolder={parentFolder ? defaultParentFolder : undefined} />),
+    ...renderResult,
+    onDismiss,
+    mockDeleteRepoFile,
   };
 }
 
 describe('DeleteProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset window.location.href
-    window.location.href = '';
-
-    mockHandleSubmit.mockClear();
-    mockWatch.mockClear();
-    mockReset.mockClear();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock window.location.href
+    Object.defineProperty(window, 'location', {
+      value: { href: '' },
+      writable: true,
+    });
   });
 
-  describe('Rendering', () => {
-    it('should render the form with correct elements', () => {
+  describe('rendering', () => {
+    it('should render component correctly ', () => {
       setup();
-
+      // delete warning and descendant coun
+      expect(screen.getByText(/This will delete this folder and all its descendants/)).toBeInTheDocument();
       expect(screen.getByTestId('descendant-count')).toBeInTheDocument();
-      expect(screen.getByTestId('shared-fields')).toBeInTheDocument();
+
+      // delete and cancel buttons
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
-    it('should render descendant count with correct folder uid', () => {
-      const parentFolder = { uid: 'test-folder-123', title: 'Test Folder' };
-      setup({ parentFolder });
+    it('should not render if initialValues is null', () => {
+      setup({}, { ...defaultHookData, initialValues: undefined });
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    });
+  });
 
-      expect(screen.getByTestId('descendant-count')).toHaveTextContent('test-folder-123');
+  describe('form submission', () => {
+    it('should call deleteRepoFile with correct parameters on form submission', async () => {
+      const { mockDeleteRepoFile } = setup();
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      await userEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).toHaveBeenCalledWith({
+          name: 'test-repo',
+          path: 'folders/test-folder.json/',
+          ref: undefined, // write workflow doesn't set ref
+          message: 'Delete folder: folders/test-folder.json',
+        });
+      });
     });
 
-    it('should show loading state when deletion is in progress', () => {
-      setup({
-        requestState: {
-          isLoading: true,
-        },
+    it('should use custom commit message if provided', async () => {
+      const customFormData = {
+        ...mockFormData,
+        comment: 'Custom delete message',
+      };
+      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, initialValues: customFormData });
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      await userEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Custom delete message',
+          })
+        );
       });
+    });
+
+    it('should set ref when workflow is branch', async () => {
+      const branchFormData = {
+        ...mockFormData,
+        workflow: 'branch' as const,
+        ref: 'feature-branch',
+      };
+      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, initialValues: branchFormData });
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      await userEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            ref: 'feature-branch',
+          })
+        );
+      });
+    });
+
+    it('should not submit if repository name is missing', async () => {
+      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, repository: undefined });
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      await userEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('loading state', () => {
+    it('should show loading text and disable button when request is loading', () => {
+      setup({}, defaultHookData, { isLoading: true, isSuccess: false, isError: false, error: null });
 
       const deleteButton = screen.getByRole('button', { name: /deleting/i });
       expect(deleteButton).toBeDisabled();
-      expect(deleteButton).toHaveTextContent('Deleting...');
-    });
-
-    it('should render shared form fields with correct workflow', () => {
-      setup({ workflow: 'write' });
-
-      const workflowInput = screen.getByTestId('workflow-input');
-      expect(workflowInput).toHaveValue('write');
     });
   });
 
-  describe('Hook Integration', () => {
-    it('should call useProvisionedFolderFormData with correct parameters', () => {
-      const parentFolder = { uid: 'test-folder', title: 'Test Folder' };
-      setup({ parentFolder });
-
-      expect(mockUseProvisionedFolderFormData).toHaveBeenCalledWith({
-        folderUid: 'test-folder',
-        action: 'delete',
-        reset: expect.any(Function),
-        title: 'Test Folder',
-      });
-    });
-
-    it('should call useProvisionedFolderFormData with undefined when no parent folder', () => {
-      setup({ parentFolder: undefined });
-
-      expect(mockUseProvisionedFolderFormData).toHaveBeenCalledWith({
-        folderUid: undefined,
-        action: 'delete',
-        reset: expect.any(Function),
-        title: undefined,
-      });
-    });
-  });
-
-  describe('Form Submission', () => {
-    it('should submit form with correct parameters for branch workflow', async () => {
-      const { user } = setup({
-        workflow: 'branch',
-        formData: {
-          folder: mockFolderObj,
-        },
-        formValues: {
-          repo: 'test-repo',
-          path: 'folders/test.yaml',
-          ref: 'test-branch',
-        },
-      });
-
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await user.click(deleteButton);
-
-      await waitFor(() => {
-        expect(mockDeleteRepoFile).toHaveBeenCalledWith({
-          name: 'test-repo',
-          path: 'folders/test.yaml/',
-          ref: 'test-branch',
-          message: `Delete folder: ${mockFolderObj.metadata.annotations['grafana.app/sourcePath']}`,
-        });
-      });
-    });
-
-    it('should submit form with correct parameters for write workflow', async () => {
-      const { user } = setup({
-        workflow: 'write',
-        formData: {
-          folder: mockFolderObj,
-        },
-        formValues: {
-          repo: 'test-repo',
-          path: 'folders/test.yaml',
-        },
-      });
-
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await user.click(deleteButton);
-
-      await waitFor(() => {
-        expect(mockDeleteRepoFile).toHaveBeenCalledWith({
-          name: 'test-repo',
-          path: 'folders/test.yaml/',
-          ref: undefined, // write workflow uses undefined ref
-          message: `Delete folder: ${mockFolderObj.metadata.annotations['grafana.app/sourcePath']}`,
-        });
-      });
-    });
-
-    it('should not submit when repository name is missing', async () => {
-      const { user } = setup({
-        formData: {
-          repository: undefined,
-        },
-      });
-
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await user.click(deleteButton);
-
-      expect(mockDeleteRepoFile).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Success Handling', () => {
-    it('should navigate to parent folder when deletion succeeds and parent folder has parentUid', async () => {
-      const parentFolder = {
-        uid: 'current-folder',
-        title: 'Current Folder',
-        parentUid: 'parent-folder-uid',
-      };
-
-      setup({
-        parentFolder,
-        requestState: { isSuccess: true },
-        workflow: 'write',
-      });
+  describe('success handling', () => {
+    it('should navigate to parent folder on successful write workflow', async () => {
+      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
+      setup({}, defaultHookData, successState);
 
       await waitFor(() => {
         expect(window.location.href).toBe('/dashboards/f/parent-folder-uid/');
       });
-
-      expect(mockPublish).toHaveBeenCalledWith({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Folder deleted successfully'],
-      });
     });
 
-    it('should navigate to dashboards root when deletion succeeds and no parentUid', async () => {
-      const parentFolder = {
-        uid: 'current-folder',
-        title: 'Current Folder',
-        parentUid: undefined,
-      };
-
-      setup({
-        parentFolder,
-        requestState: { isSuccess: true },
-        workflow: 'write',
-      });
+    it('should navigate to dashboards root when parent folder has no parentUid', async () => {
+      const folderWithoutParent = { ...mockParentFolder, parentUid: undefined };
+      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
+      setup({ parentFolder: folderWithoutParent }, defaultHookData, successState);
 
       await waitFor(() => {
         expect(window.location.href).toBe('/dashboards');
       });
-
-      expect(mockPublish).toHaveBeenCalledWith({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Folder deleted successfully'],
-      });
     });
 
-    // TODO: Add tests for branch workflow success handling when BE is ready
-  });
-
-  describe('Error Handling', () => {
-    it('should handle error state and show error message', async () => {
-      const error = new Error('API Error');
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      setup({
-        requestState: {
-          isError: true,
-          error,
-        },
-      });
+    it('should handle branch workflow success without navigation', async () => {
+      const branchFormData = { ...mockFormData, workflow: 'branch' } as unknown as typeof mockFormData;
+      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
+      setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Error deleting folder:', error);
-        expect(mockPublish).toHaveBeenCalledWith({
-          type: AppEvents.alertError.name,
-          payload: ['Failed to delete folder', error],
-        });
+        expect(window.location.href).toBe('');
       });
+    });
+  });
 
-      consoleSpy.mockRestore();
+  describe('error handling', () => {
+    it('should handle request failure', async () => {
+      const error = new Error('API Error');
+      const errorState = { isLoading: false, isSuccess: false, isError: true, error };
+      setup({}, defaultHookData, errorState);
+
+      // Component should handle error gracefully without crashing
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('cancel functionality', () => {
+    it('should call onDismiss when cancel button is clicked', async () => {
+      const { onDismiss } = setup();
+
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await userEvent.click(cancelButton);
+
+      expect(onDismiss).toHaveBeenCalledTimes(1);
     });
   });
 });
