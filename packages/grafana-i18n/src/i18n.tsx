@@ -30,8 +30,7 @@ function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } =
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 }
 
-// exported for testing
-export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
+export async function loadNamespacedResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
     return;
   }
@@ -42,9 +41,9 @@ export async function loadPluginResources(id: string, language: string, loaders?
     loaders.map(async (loader) => {
       try {
         const resources = await loader(resolvedLanguage);
-        addResourceBundle(resolvedLanguage, id, resources);
+        addResourceBundle(resolvedLanguage, namespace, resources);
       } catch (error) {
-        console.error(`Error loading resources for plugin ${id} and language: ${resolvedLanguage}`, error);
+        console.error(`Error loading resources for namespace ${namespace} and language: ${resolvedLanguage}`, error);
       }
     })
   );
@@ -85,7 +84,7 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
   const language = getResolvedLanguage();
   initTFuncAndTransComponent({ id });
 
-  await loadPluginResources(id, language, loaders);
+  await loadNamespacedResources(id, language, loaders);
 
   return { language };
 }
