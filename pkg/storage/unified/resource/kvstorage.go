@@ -1,8 +1,10 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"sort"
 	"strings"
@@ -61,7 +63,7 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-	}, event.Value)
+	}, io.NopCloser(bytes.NewReader(event.Value)))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
@@ -125,11 +127,14 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
 	}
-
+	value, err := io.ReadAll(data)
+	if err != nil {
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
+	}
 	return &BackendReadResponse{
 		Key:             req.Key,
 		ResourceVersion: meta.Key.ResourceVersion,
-		Value:           data,
+		Value:           value,
 		Folder:          meta.Key.Folder,
 	}
 }
@@ -222,7 +227,7 @@ func (i *kvListIterator) Next() bool {
 
 	i.rv, i.err = i.keys[i.currentIndex].Key.ResourceVersion, nil
 
-	i.value, i.err = i.dataStore.Get(i.ctx, DataKey{
+	data, err := i.dataStore.Get(i.ctx, DataKey{
 		Namespace:       i.keys[i.currentIndex].Key.Namespace,
 		Group:           i.keys[i.currentIndex].Key.Group,
 		Resource:        i.keys[i.currentIndex].Key.Resource,
@@ -230,6 +235,15 @@ func (i *kvListIterator) Next() bool {
 		ResourceVersion: i.keys[i.currentIndex].Key.ResourceVersion,
 		Action:          i.keys[i.currentIndex].Key.Action,
 	})
+	if err != nil {
+		i.err = err
+		return false
+	}
+
+	i.value, i.err = io.ReadAll(data)
+	if i.err != nil {
+		return false
+	}
 
 	// increment the offset
 	i.offset++
@@ -302,18 +316,33 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Generate a new resource version for the list
 	listRV := k.snowflake.Generate().Int64()
 
-	// Collect all history entries
+	// Determine sort order based on version match
+	sortOrder := SortOrderDesc
+	if sortAscending {
+		sortOrder = SortOrderAsc
+	}
+
+	// Get all history entries using datastore.ListHistory
 	var historyEntries []DataObj
-	for obj, err := range k.dataStore.List(ctx, ListRequestKey{
-		Namespace: req.Options.Key.Namespace,
-		Group:     req.Options.Key.Group,
-		Resource:  req.Options.Key.Resource,
-		Name:      req.Options.Key.Name,
+	for entry, err := range k.dataStore.ListHistory(ctx, ListHistoryRequest{
+		Key: ListRequestKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      key.Name,
+		},
+		Sort:  sortOrder,
+		Limit: 0, // No limit at datastore level, we'll handle it ourselves
 	}) {
 		if err != nil {
 			return 0, err
 		}
-		historyEntries = append(historyEntries, obj)
+		historyEntries = append(historyEntries, entry)
+	}
+
+	// Handle trash differently from regular history
+	if req.Source == resourcepb.ListRequest_TRASH {
+		return k.processTrashEntries(ctx, req, fn, historyEntries, lastSeenRV, sortAscending, listRV)
 	}
 
 	// Apply filtering based on version match
@@ -372,7 +401,7 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		}
 	}
 
-	// Sort the entries
+	// Sort the entries if not already sorted correctly
 	if sortAscending {
 		sort.Slice(historyEntries, func(i, j int) bool {
 			return historyEntries[i].Key.ResourceVersion < historyEntries[j].Key.ResourceVersion
@@ -419,6 +448,123 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	return listRV, nil
 }
 
+// processTrashEntries handles the special case of listing deleted items (trash)
+func (k *KVStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyEntries []DataObj, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
+	// Filter to only deleted entries
+	var deletedEntries []DataObj
+	for _, entry := range historyEntries {
+		if entry.Key.Action == MetaDataActionDeleted {
+			deletedEntries = append(deletedEntries, entry)
+		}
+	}
+
+	// Check if the resource currently exists (is live)
+	// If it exists, don't return any trash entries
+	_, err := k.metaStore.GetLatest(ctx, ListRequestKey{
+		Namespace: req.Options.Key.Namespace,
+		Group:     req.Options.Key.Group,
+		Resource:  req.Options.Key.Resource,
+		Name:      req.Options.Key.Name,
+	})
+
+	var trashEntries []DataObj
+	if err == ErrNotFound {
+		// Resource doesn't exist currently, so we can return the latest delete
+		// Find the latest delete event
+		var latestDelete *DataObj
+		for _, entry := range deletedEntries {
+			if latestDelete == nil || entry.Key.ResourceVersion > latestDelete.Key.ResourceVersion {
+				latestDelete = &entry
+			}
+		}
+		if latestDelete != nil {
+			trashEntries = append(trashEntries, *latestDelete)
+		}
+	}
+	// If err != ErrNotFound, the resource exists, so no trash entries should be returned
+
+	// Apply version filtering
+	versionMatch := req.GetVersionMatchV2()
+	if versionMatch == resourcepb.ResourceVersionMatchV2_Exact {
+		if req.ResourceVersion <= 0 {
+			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
+		}
+		var exactEntries []DataObj
+		for _, entry := range trashEntries {
+			if entry.Key.ResourceVersion == req.ResourceVersion {
+				exactEntries = append(exactEntries, entry)
+			}
+		}
+		trashEntries = exactEntries
+	} else if versionMatch == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+		if req.ResourceVersion > 0 {
+			var filteredEntries []DataObj
+			for _, entry := range trashEntries {
+				if entry.Key.ResourceVersion >= req.ResourceVersion {
+					filteredEntries = append(filteredEntries, entry)
+				}
+			}
+			trashEntries = filteredEntries
+		}
+	} else {
+		if req.ResourceVersion > 0 {
+			var filteredEntries []DataObj
+			for _, entry := range trashEntries {
+				if entry.Key.ResourceVersion <= req.ResourceVersion {
+					filteredEntries = append(filteredEntries, entry)
+				}
+			}
+			trashEntries = filteredEntries
+		}
+	}
+
+	// Sort the entries
+	if sortAscending {
+		sort.Slice(trashEntries, func(i, j int) bool {
+			return trashEntries[i].Key.ResourceVersion < trashEntries[j].Key.ResourceVersion
+		})
+	} else {
+		sort.Slice(trashEntries, func(i, j int) bool {
+			return trashEntries[i].Key.ResourceVersion > trashEntries[j].Key.ResourceVersion
+		})
+	}
+
+	// Pagination: filter out items up to and including lastSeenRV
+	var pagedEntries []DataObj
+	for _, entry := range trashEntries {
+		if lastSeenRV == 0 {
+			pagedEntries = append(pagedEntries, entry)
+		} else if sortAscending && entry.Key.ResourceVersion > lastSeenRV {
+			pagedEntries = append(pagedEntries, entry)
+		} else if !sortAscending && entry.Key.ResourceVersion < lastSeenRV {
+			pagedEntries = append(pagedEntries, entry)
+		}
+	}
+
+	// Apply limit
+	hasMore := false
+	if req.Limit > 0 && len(pagedEntries) > int(req.Limit) {
+		hasMore = true
+		pagedEntries = pagedEntries[:req.Limit]
+	}
+
+	iter := kvHistoryIterator{
+		entries:       pagedEntries,
+		currentIndex:  -1,
+		ctx:           ctx,
+		listRV:        listRV,
+		sortAscending: sortAscending,
+		hasMore:       hasMore,
+	}
+
+	err = fn(&iter)
+	if err != nil {
+		return 0, err
+	}
+
+	return listRV, nil
+}
+
 // kvHistoryIterator implements ListIterator for KV storage history
 type kvHistoryIterator struct {
 	ctx           context.Context
@@ -443,7 +589,14 @@ func (i *kvHistoryIterator) Next() bool {
 
 	entry := i.entries[i.currentIndex]
 	i.rv = entry.Key.ResourceVersion
-	i.value = entry.Value
+
+	// Read the value from the ReadCloser
+	data, err := io.ReadAll(entry.Value)
+	if err != nil {
+		i.err = err
+		return false
+	}
+	i.value = data
 	i.err = nil
 
 	return true
@@ -519,7 +672,7 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	go func() {
 		for event := range notifierEvents {
 			// fetch the data
-			data, err := k.dataStore.Get(ctx, DataKey{
+			dataReader, err := k.dataStore.Get(ctx, DataKey{
 				Namespace:       event.Namespace,
 				Group:           event.Group,
 				Resource:        event.Resource,
@@ -527,6 +680,10 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				ResourceVersion: event.ResourceVersion,
 				Action:          event.Action,
 			})
+			if err != nil {
+				return
+			}
+			data, err := io.ReadAll(dataReader)
 			if err != nil {
 				return
 			}
@@ -566,18 +723,21 @@ func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 	stats := make([]ResourceStats, 0)
 	res := make(map[string]map[string]bool)
 	rvs := make(map[string]int64)
-	for obj, err := range k.dataStore.List(ctx, ListRequestKey{Namespace: namespace}) {
+
+	// Use datastore.Keys to get all data keys for the namespace
+	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{Namespace: namespace}) {
 		if err != nil {
 			return nil, err
 		}
-		key := fmt.Sprintf("%s/%s/%s", obj.Key.Namespace, obj.Key.Group, obj.Key.Resource)
+		key := fmt.Sprintf("%s/%s/%s", dataKey.Namespace, dataKey.Group, dataKey.Resource)
 		if _, ok := res[key]; !ok {
 			res[key] = make(map[string]bool)
 			rvs[key] = 1
 		}
-		res[key][obj.Key.Name] = obj.Key.Action != MetaDataActionDeleted
-		rvs[key] = obj.Key.ResourceVersion
+		res[key][dataKey.Name] = dataKey.Action != MetaDataActionDeleted
+		rvs[key] = dataKey.ResourceVersion
 	}
+
 	for key, names := range res {
 		parts := strings.Split(key, "/")
 		count := int64(0)

@@ -1,10 +1,11 @@
 package resource
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,29 +16,135 @@ func setupTestDataStore(t *testing.T) *dataStore {
 
 func TestNewDataStore(t *testing.T) {
 	ds := setupTestDataStore(t)
-	assert.NotNil(t, ds)
+	require.NotNil(t, ds)
 }
 
 func TestDataStore_GetPrefix(t *testing.T) {
 	ds := setupTestDataStore(t)
 
-	key := ListRequestKey{
-		Namespace: "test-namespace",
-		Group:     "test-group",
-		Resource:  "test-resource",
-		Name:      "test-name",
+	tests := []struct {
+		name     string
+		key      ListRequestKey
+		expected string
+	}{
+		{
+			name: "all fields provided",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
+			},
+			expected: "test-namespace/test-group/test-resource/test-name/",
+		},
+		{
+			name: "name is empty",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "",
+			},
+			expected: "test-namespace/test-group/test-resource/",
+		},
+		{
+			name: "resource is empty",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "",
+				Name:      "test-name", // This should be ignored when resource is empty
+			},
+			expected: "test-namespace/test-group/",
+		},
+		{
+			name: "group is empty",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "",
+				Resource:  "test-resource", // This should be ignored when group is empty
+				Name:      "test-name",     // This should be ignored when group is empty
+			},
+			expected: "test-namespace/",
+		},
+		{
+			name: "namespace is empty",
+			key: ListRequestKey{
+				Namespace: "",
+				Group:     "test-group",    // This should be ignored when namespace is empty
+				Resource:  "test-resource", // This should be ignored when namespace is empty
+				Name:      "test-name",     // This should be ignored when namespace is empty
+			},
+			expected: "",
+		},
+		{
+			name: "only namespace provided",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "",
+				Resource:  "",
+				Name:      "",
+			},
+			expected: "test-namespace/",
+		},
+		{
+			name: "namespace and group provided",
+			key: ListRequestKey{
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "",
+				Name:      "",
+			},
+			expected: "test-namespace/test-group/",
+		},
+		{
+			name: "all fields empty",
+			key: ListRequestKey{
+				Namespace: "",
+				Group:     "",
+				Resource:  "",
+				Name:      "",
+			},
+			expected: "",
+		},
+		{
+			name: "fields with special characters",
+			key: ListRequestKey{
+				Namespace: "test-namespace-with-dashes",
+				Group:     "test.group.with.dots",
+				Resource:  "test_resource_with_underscores",
+				Name:      "test-name-with-multiple.special_chars",
+			},
+			expected: "test-namespace-with-dashes/test.group.with.dots/test_resource_with_underscores/test-name-with-multiple.special_chars/",
+		},
+		{
+			name: "fields with leading/trailing spaces",
+			key: ListRequestKey{
+				Namespace: " test-namespace ",
+				Group:     " test-group ",
+				Resource:  " test-resource ",
+				Name:      " test-name ",
+			},
+			expected: " test-namespace / test-group / test-resource / test-name /",
+		},
+		{
+			name: "fields with forward slashes",
+			key: ListRequestKey{
+				Namespace: "test/namespace",
+				Group:     "test/group",
+				Resource:  "test/resource",
+				Name:      "test/name",
+			},
+			expected: "test/namespace/test/group/test/resource/test/name/",
+		},
 	}
 
-	expected := "test-namespace/test-group/test-resource/test-name/"
-	actual := ds.getPrefix(key)
-
-	assert.Equal(t, expected, actual)
-
-	key.Name = ""
-	expected = "test-namespace/test-group/test-resource/"
-	actual = ds.getPrefix(key)
-	assert.Equal(t, expected, actual)
-
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := ds.getPrefix(tt.key)
+			require.Equal(t, tt.expected, actual)
+		})
+	}
 }
 
 func TestDataStore_GetKey(t *testing.T) {
@@ -88,7 +195,7 @@ func TestDataStore_GetKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := ds.getKey(tt.key)
-			assert.Equal(t, tt.expected, actual)
+			require.Equal(t, tt.expected, actual)
 		})
 	}
 }
@@ -150,10 +257,10 @@ func TestDataStore_ParseKey(t *testing.T) {
 			actual, err := ds.parseKey(tt.key)
 
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expected, actual)
+				require.Equal(t, tt.expected, actual)
 			}
 		})
 	}
@@ -173,7 +280,7 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 		ResourceVersion: rv.Int64(),
 		Action:          MetaDataActionCreated,
 	}
-	testValue := []byte("test-value")
+	testValue := io.NopCloser(bytes.NewReader([]byte("test-value")))
 
 	t.Run("save and get normal key", func(t *testing.T) {
 		err := ds.Save(ctx, testKey, testValue)
@@ -181,20 +288,20 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 
 		result, err := ds.Get(ctx, testKey)
 		require.NoError(t, err)
-		assert.Equal(t, testValue, result)
+		require.Equal(t, testValue, result)
 	})
 
 	t.Run("save and get deleted key", func(t *testing.T) {
 		deletedKey := testKey
 		deletedKey.Action = MetaDataActionDeleted
-		deletedValue := []byte("deleted-value")
+		deletedValue := io.NopCloser(bytes.NewReader([]byte("deleted-value")))
 
 		err := ds.Save(ctx, deletedKey, deletedValue)
 		require.NoError(t, err)
 
 		result, err := ds.Get(ctx, deletedKey)
 		require.NoError(t, err)
-		assert.Equal(t, deletedValue, result)
+		require.Equal(t, deletedValue, result)
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
@@ -210,8 +317,8 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 		}
 
 		_, err := ds.Get(ctx, nonExistentKey)
-		assert.Error(t, err)
-		assert.Equal(t, ErrNotFound, err)
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
 	})
 }
 
@@ -229,7 +336,7 @@ func TestDataStore_Delete(t *testing.T) {
 		ResourceVersion: rv.Int64(),
 		Action:          MetaDataActionCreated,
 	}
-	testValue := []byte("test-value")
+	testValue := io.NopCloser(bytes.NewReader([]byte("test-value")))
 
 	t.Run("delete existing key", func(t *testing.T) {
 		// First save the key
@@ -246,8 +353,8 @@ func TestDataStore_Delete(t *testing.T) {
 
 		// Verify it's gone
 		_, err = ds.Get(ctx, testKey)
-		assert.Error(t, err)
-		assert.Equal(t, ErrNotFound, err)
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
 	})
 
 	t.Run("delete non-existent key", func(t *testing.T) {
@@ -279,8 +386,8 @@ func TestDataStore_List(t *testing.T) {
 	// Create test data
 	rv1 := node.Generate()
 	rv2 := node.Generate()
-	testValue1 := []byte("test-value-1")
-	testValue2 := []byte("test-value-2")
+	testValue1 := io.NopCloser(bytes.NewReader([]byte("test-value-1")))
+	testValue2 := io.NopCloser(bytes.NewReader([]byte("test-value-2")))
 
 	dataKey1 := DataKey{
 		Namespace:       resourceKey.Namespace,
@@ -309,40 +416,30 @@ func TestDataStore_List(t *testing.T) {
 		require.NoError(t, err)
 
 		// List the data
-		var results []DataObj
-		for obj, err := range ds.List(ctx, resourceKey) {
+		var results []DataKey
+		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			results = append(results, key)
 		}
 
 		// Verify results
 		require.Len(t, results, 2)
 
-		// Create a map for easier verification
-		resultMap := make(map[int64]DataObj)
-		for _, result := range results {
-			resultMap[result.Key.ResourceVersion] = result
-		}
-
 		// Check first result
-		result1, exists := resultMap[rv1.Int64()]
-		require.True(t, exists)
-		assert.Equal(t, testValue1, result1.Value)
-		assert.Equal(t, rv1.Int64(), result1.Key.ResourceVersion)
-		assert.Equal(t, resourceKey.Namespace, result1.Key.Namespace)
-		assert.Equal(t, resourceKey.Group, result1.Key.Group)
-		assert.Equal(t, resourceKey.Resource, result1.Key.Resource)
-		assert.Equal(t, MetaDataActionCreated, result1.Key.Action)
+		result1 := results[0]
+		require.Equal(t, rv1.Int64(), result1.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, result1.Namespace)
+		require.Equal(t, resourceKey.Group, result1.Group)
+		require.Equal(t, resourceKey.Resource, result1.Resource)
+		require.Equal(t, MetaDataActionCreated, result1.Action)
 
 		// Check second result
-		result2, exists := resultMap[rv2.Int64()]
-		require.True(t, exists)
-		assert.Equal(t, testValue2, result2.Value)
-		assert.Equal(t, rv2.Int64(), result2.Key.ResourceVersion)
-		assert.Equal(t, resourceKey.Namespace, result2.Key.Namespace)
-		assert.Equal(t, resourceKey.Group, result2.Key.Group)
-		assert.Equal(t, resourceKey.Resource, result2.Key.Resource)
-		assert.Equal(t, MetaDataActionCreated, result2.Key.Action)
+		result2 := results[1]
+		require.Equal(t, rv2.Int64(), result2.ResourceVersion)
+		require.Equal(t, resourceKey.Namespace, result2.Namespace)
+		require.Equal(t, resourceKey.Group, result2.Group)
+		require.Equal(t, resourceKey.Resource, result2.Resource)
+		require.Equal(t, MetaDataActionCreated, result2.Action)
 	})
 
 	t.Run("list empty", func(t *testing.T) {
@@ -353,13 +450,13 @@ func TestDataStore_List(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		var results []DataObj
-		for obj, err := range ds.List(ctx, emptyResourceKey) {
+		var results []DataKey
+		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			results = append(results, key)
 		}
 
-		assert.Len(t, results, 0)
+		require.Len(t, results, 0)
 	})
 
 	t.Run("list with deleted keys", func(t *testing.T) {
@@ -371,7 +468,7 @@ func TestDataStore_List(t *testing.T) {
 		}
 
 		rv3 := node.Generate()
-		testValue3 := []byte("deleted-value")
+		testValue3 := io.NopCloser(bytes.NewReader([]byte("deleted-value")))
 
 		deletedKey := DataKey{
 			Namespace:       deletedResourceKey.Namespace,
@@ -387,16 +484,15 @@ func TestDataStore_List(t *testing.T) {
 		require.NoError(t, err)
 
 		// List should include deleted keys
-		var results []DataObj
-		for obj, err := range ds.List(ctx, deletedResourceKey) {
+		var results []DataKey
+		for key, err := range ds.Keys(ctx, deletedResourceKey) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			results = append(results, key)
 		}
 
 		require.Len(t, results, 1)
-		assert.Equal(t, testValue3, results[0].Value)
-		assert.Equal(t, rv3.Int64(), results[0].Key.ResourceVersion)
-		assert.Equal(t, MetaDataActionDeleted, results[0].Key.Action)
+		require.Equal(t, rv3.Int64(), results[0].ResourceVersion)
+		require.Equal(t, MetaDataActionDeleted, results[0].Action)
 	})
 }
 
@@ -419,11 +515,11 @@ func TestDataStore_Integration(t *testing.T) {
 		// Create multiple versions
 		versions := []struct {
 			rv    int64
-			value []byte
+			value io.ReadCloser
 		}{
-			{rv1.Int64(), []byte("version-1")},
-			{rv2.Int64(), []byte("version-2")},
-			{rv3.Int64(), []byte("version-3")},
+			{rv1.Int64(), io.NopCloser(bytes.NewReader([]byte("version-1")))},
+			{rv2.Int64(), io.NopCloser(bytes.NewReader([]byte("version-2")))},
+			{rv3.Int64(), io.NopCloser(bytes.NewReader([]byte("version-3")))},
 		}
 
 		// Save all versions
@@ -442,13 +538,13 @@ func TestDataStore_Integration(t *testing.T) {
 		}
 
 		// List all versions
-		var results []DataObj
-		for obj, err := range ds.List(ctx, resourceKey) {
+		var results []DataKey
+		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			results = append(results, key)
 		}
 
-		assert.Len(t, results, 3)
+		require.Len(t, results, 3)
 
 		// Delete one version
 		deleteKey := DataKey{
@@ -465,26 +561,26 @@ func TestDataStore_Integration(t *testing.T) {
 
 		// Verify it's gone
 		_, err = ds.Get(ctx, deleteKey)
-		assert.Equal(t, ErrNotFound, err)
+		require.Equal(t, ErrNotFound, err)
 
 		// List should now have 2 items
 		results = nil
-		for obj, err := range ds.List(ctx, resourceKey) {
+		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			results = append(results, key)
 		}
 
-		assert.Len(t, results, 2)
+		require.Len(t, results, 2)
 
 		// Verify remaining items
 		remainingUUIDs := make(map[int64]bool)
 		for _, result := range results {
-			remainingUUIDs[result.Key.ResourceVersion] = true
+			remainingUUIDs[result.ResourceVersion] = true
 		}
 
-		assert.True(t, remainingUUIDs[versions[0].rv])
-		assert.False(t, remainingUUIDs[versions[1].rv]) // deleted
-		assert.True(t, remainingUUIDs[versions[2].rv])
+		require.True(t, remainingUUIDs[versions[0].rv])
+		require.False(t, remainingUUIDs[versions[1].rv]) // deleted
+		require.True(t, remainingUUIDs[versions[2].rv])
 	})
 }
 
@@ -503,9 +599,9 @@ func TestDataStore_Keys(t *testing.T) {
 	rv1 := node.Generate()
 	rv2 := node.Generate()
 	rv3 := node.Generate()
-	testValue1 := []byte("test-value-1")
-	testValue2 := []byte("test-value-2")
-	testValue3 := []byte("test-value-3")
+	testValue1 := io.NopCloser(bytes.NewReader([]byte("test-value-1")))
+	testValue2 := io.NopCloser(bytes.NewReader([]byte("test-value-2")))
+	testValue3 := io.NopCloser(bytes.NewReader([]byte("test-value-3")))
 
 	dataKey1 := DataKey{
 		Namespace:       resourceKey.Namespace,
@@ -546,7 +642,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get keys
-		var keys []string
+		var keys []DataKey
 		for key, err := range ds.Keys(ctx, resourceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -556,14 +652,14 @@ func TestDataStore_Keys(t *testing.T) {
 		require.Len(t, keys, 3)
 
 		// Verify all keys are present
-		expectedKeys := []string{
-			ds.getKey(dataKey1),
-			ds.getKey(dataKey2),
-			ds.getKey(dataKey3),
+		expectedKeys := []DataKey{
+			dataKey1,
+			dataKey2,
+			dataKey3,
 		}
 
 		for _, expectedKey := range expectedKeys {
-			assert.Contains(t, keys, expectedKey)
+			require.Contains(t, keys, expectedKey)
 		}
 	})
 
@@ -575,13 +671,13 @@ func TestDataStore_Keys(t *testing.T) {
 			Name:      "empty-name",
 		}
 
-		var keys []string
+		var keys []DataKey
 		for key, err := range ds.Keys(ctx, emptyResourceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
 		}
 
-		assert.Len(t, keys, 0)
+		require.Len(t, keys, 0)
 	})
 
 	t.Run("keys with partial prefix matching", func(t *testing.T) {
@@ -603,10 +699,10 @@ func TestDataStore_Keys(t *testing.T) {
 			Action:          MetaDataActionCreated,
 		}
 
-		err := ds.Save(ctx, dataKey4, []byte("different-value"))
+		err := ds.Save(ctx, dataKey4, io.NopCloser(bytes.NewReader([]byte("different-value"))))
 		require.NoError(t, err)
 
-		var keys []string
+		var keys []DataKey
 		for key, err := range ds.Keys(ctx, partialKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -616,7 +712,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.Len(t, keys, 4) // 3 from previous test + 1 new one
 
 		// Verify the new key is included
-		assert.Contains(t, keys, ds.getKey(dataKey4))
+		require.Contains(t, keys, dataKey4)
 	})
 
 	t.Run("keys with namespace only prefix", func(t *testing.T) {
@@ -636,10 +732,10 @@ func TestDataStore_Keys(t *testing.T) {
 			Action:          MetaDataActionCreated,
 		}
 
-		err := ds.Save(ctx, dataKey5, []byte("namespace-only-value"))
+		err := ds.Save(ctx, dataKey5, io.NopCloser(bytes.NewReader([]byte("namespace-only-value"))))
 		require.NoError(t, err)
 
-		var keys []string
+		var keys []DataKey
 		for key, err := range ds.Keys(ctx, namespaceOnlyKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)
@@ -649,7 +745,7 @@ func TestDataStore_Keys(t *testing.T) {
 		require.Len(t, keys, 5) // 4 from previous tests + 1 new one
 
 		// Verify the new key is included
-		assert.Contains(t, keys, ds.getKey(dataKey5))
+		require.Contains(t, keys, dataKey5)
 	})
 
 	t.Run("keys with empty namespace", func(t *testing.T) {
@@ -661,7 +757,7 @@ func TestDataStore_Keys(t *testing.T) {
 			Name:      "test-name",
 		}
 
-		var keys []string
+		var keys []DataKey
 		for key, err := range ds.Keys(ctx, emptyNamespaceKey) {
 			require.NoError(t, err)
 			keys = append(keys, key)

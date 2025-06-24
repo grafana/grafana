@@ -409,7 +409,7 @@ func TestKVNotifier_getLastResourceVersion_WithErrors(t *testing.T) {
 	malformedKey := "invalid-key-format"
 	malformedValue := []byte(`{"test": "data"}`)
 
-	err := notifier.kv.Save(ctx, eventsSection, malformedKey, bytes.NewReader(malformedValue))
+	err := notifier.kv.Save(ctx, eventsSection, malformedKey, io.NopCloser(bytes.NewReader(malformedValue)))
 	require.NoError(t, err)
 
 	// The function should handle malformed keys gracefully and return 0
@@ -487,7 +487,7 @@ func TestKVNotifier_Send(t *testing.T) {
 	require.NoError(t, err)
 
 	// Parse the stored event
-	value, err := io.ReadAll(obj.Reader)
+	value, err := io.ReadAll(obj.Value)
 	require.NoError(t, err)
 	storedEvent, err := parseEvent(value)
 	require.NoError(t, err)

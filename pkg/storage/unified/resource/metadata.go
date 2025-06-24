@@ -101,7 +101,7 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	if err != nil {
 		return MetaData{}, err
 	}
-	value, err := io.ReadAll(obj.Reader)
+	value, err := io.ReadAll(obj.Value)
 	if err != nil {
 		return MetaData{}, err
 	}
@@ -184,10 +184,10 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 
 		// Yield is a helper function to yield a metadata object from a given object.
 		// It yields the metadata object if it is not deleted.
-		yieldObj := func(kvr KVReader, key MetaDataKey) bool {
+		yieldObj := func(obj KVObject, key MetaDataKey) bool {
 			if key.Action != MetaDataActionDeleted {
 				var meta MetaData
-				value, err := io.ReadAll(kvr.Reader)
+				value, err := io.ReadAll(obj.Value)
 				if err != nil {
 					yield(MetaDataObj{}, err)
 					return false
@@ -243,12 +243,12 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			// If the current key is not the same as the previous key, or if the rv
 			// is greater than the target rv, we need to yield the selected object.
 			if !keyMatches(metaKey, *selectedKey) || metaKey.ResourceVersion > rv {
-				kvr, err := d.kv.Get(ctx, metaSection, key)
+				obj, err := d.kv.Get(ctx, metaSection, key)
 				if err != nil {
 					yield(MetaDataObj{}, err)
 					return
 				}
-				if !yieldObj(kvr, *selectedKey) {
+				if !yieldObj(obj, *selectedKey) {
 					return
 				}
 				selectedKey = nil
@@ -258,12 +258,12 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			}
 		}
 		if selectedKey != nil { // Yield the last selected object
-			kvr, err := d.kv.Get(ctx, metaSection, d.getKey(*selectedKey))
+			obj, err := d.kv.Get(ctx, metaSection, d.getKey(*selectedKey))
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if !yieldObj(kvr, *selectedKey) {
+			if !yieldObj(obj, *selectedKey) {
 				return
 			}
 		}
@@ -290,12 +290,12 @@ func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Se
 				return
 			}
 			var meta MetaData
-			kvr, err := d.kv.Get(ctx, metaSection, key)
+			obj, err := d.kv.Get(ctx, metaSection, key)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			value, err := io.ReadAll(kvr.Reader)
+			value, err := io.ReadAll(obj.Value)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
@@ -324,5 +324,5 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), bytes.NewReader(valueBytes))
+	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), io.NopCloser(bytes.NewReader(valueBytes)))
 }

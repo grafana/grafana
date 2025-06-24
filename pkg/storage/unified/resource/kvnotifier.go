@@ -189,7 +189,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 		Resource:        event.Resource,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
-	}), bytes.NewReader(v))
+	}), io.NopCloser(bytes.NewReader(v)))
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 						// TODO: Handle error
 						continue
 					}
-					value, err := io.ReadAll(kvr.Reader)
+					value, err := io.ReadAll(kvr.Value)
 					if err != nil {
 						// TODO: Handle error
 						continue
