@@ -40,7 +40,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 func TestWrapContext(t *testing.T) {
 	const key = "some-random-metadata"
 
-	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs(key, "12345"))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs(key, "random-metadata"))
 	ctx, _ = identity.WithServiceIdentity(ctx, 12345)
 	var err error
 	ctx, err = wrapContext(ctx)
@@ -49,5 +49,16 @@ func TestWrapContext(t *testing.T) {
 	outmd, ok := metadata.FromOutgoingContext(ctx)
 	require.True(t, ok)
 	val := outmd.Get(key)
+	require.Equal(t, []string{"random-metadata"}, val)
+}
+
+func TestWrapContextWithNoPreviousMetadata(t *testing.T) {
+	ctx, _ := identity.WithServiceIdentity(context.Background(), 12345)
+	ctx, err := wrapContext(ctx)
+	require.NoError(t, err)
+
+	outmd, ok := metadata.FromOutgoingContext(ctx)
+	require.True(t, ok)
+	val := outmd.Get(mdOrgID)
 	require.Equal(t, []string{"12345"}, val)
 }
