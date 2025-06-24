@@ -169,7 +169,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          MetaDataActionCreated,
+				Action:          DataActionCreated,
 			},
 			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~created",
 		}, {
@@ -180,7 +180,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          MetaDataActionUpdated,
+				Action:          DataActionUpdated,
 			},
 			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~updated",
 		},
@@ -192,7 +192,7 @@ func TestDataStore_GetKey(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          MetaDataActionDeleted,
+				Action:          DataActionDeleted,
 			},
 			expected: "test-namespace/test-group/test-resource/test-name/1934555792099250176~deleted",
 		},
@@ -226,7 +226,7 @@ func TestDataStore_ParseKey(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv.Int64(),
-				Action:          MetaDataActionCreated,
+				Action:          DataActionCreated,
 			},
 		},
 		{
@@ -238,7 +238,7 @@ func TestDataStore_ParseKey(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv.Int64(),
-				Action:          MetaDataActionDeleted,
+				Action:          DataActionDeleted,
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 		Resource:        "test-resource",
 		Name:            "test-name",
 		ResourceVersion: rv.Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 	testValue := io.NopCloser(bytes.NewReader([]byte("test-value")))
 
@@ -303,7 +303,7 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 
 	t.Run("save and get deleted key", func(t *testing.T) {
 		deletedKey := testKey
-		deletedKey.Action = MetaDataActionDeleted
+		deletedKey.Action = DataActionDeleted
 		deletedValue := io.NopCloser(bytes.NewReader([]byte("deleted-value")))
 
 		err := ds.Save(ctx, deletedKey, deletedValue)
@@ -327,7 +327,7 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 			Resource:        "test-resource",
 			Name:            "test-name",
 			ResourceVersion: rv.Int64(),
-			Action:          MetaDataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		_, err := ds.Get(ctx, nonExistentKey)
@@ -348,7 +348,7 @@ func TestDataStore_Delete(t *testing.T) {
 		Resource:        "test-resource",
 		Name:            "test-name",
 		ResourceVersion: rv.Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 	testValue := io.NopCloser(bytes.NewReader([]byte("test-value")))
 
@@ -378,7 +378,7 @@ func TestDataStore_Delete(t *testing.T) {
 			Resource:        "test-resource",
 			Name:            "test-name",
 			ResourceVersion: rv.Int64(),
-			Action:          MetaDataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
@@ -409,7 +409,7 @@ func TestDataStore_List(t *testing.T) {
 		Resource:        resourceKey.Resource,
 		Name:            resourceKey.Name,
 		ResourceVersion: rv1.Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	dataKey2 := DataKey{
@@ -418,7 +418,7 @@ func TestDataStore_List(t *testing.T) {
 		Resource:        resourceKey.Resource,
 		Name:            resourceKey.Name,
 		ResourceVersion: rv2.Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	t.Run("list multiple keys", func(t *testing.T) {
@@ -445,7 +445,7 @@ func TestDataStore_List(t *testing.T) {
 		require.Equal(t, resourceKey.Namespace, result1.Namespace)
 		require.Equal(t, resourceKey.Group, result1.Group)
 		require.Equal(t, resourceKey.Resource, result1.Resource)
-		require.Equal(t, MetaDataActionCreated, result1.Action)
+		require.Equal(t, DataActionCreated, result1.Action)
 
 		// Check second result
 		result2 := results[1]
@@ -453,7 +453,7 @@ func TestDataStore_List(t *testing.T) {
 		require.Equal(t, resourceKey.Namespace, result2.Namespace)
 		require.Equal(t, resourceKey.Group, result2.Group)
 		require.Equal(t, resourceKey.Resource, result2.Resource)
-		require.Equal(t, MetaDataActionCreated, result2.Action)
+		require.Equal(t, DataActionCreated, result2.Action)
 	})
 
 	t.Run("list empty", func(t *testing.T) {
@@ -490,7 +490,7 @@ func TestDataStore_List(t *testing.T) {
 			Resource:        deletedResourceKey.Resource,
 			Name:            deletedResourceKey.Name,
 			ResourceVersion: rv3.Int64(),
-			Action:          MetaDataActionDeleted,
+			Action:          DataActionDeleted,
 		}
 
 		// Save deleted key
@@ -506,7 +506,7 @@ func TestDataStore_List(t *testing.T) {
 
 		require.Len(t, results, 1)
 		require.Equal(t, rv3.Int64(), results[0].ResourceVersion)
-		require.Equal(t, MetaDataActionDeleted, results[0].Action)
+		require.Equal(t, DataActionDeleted, results[0].Action)
 	})
 }
 
@@ -544,7 +544,7 @@ func TestDataStore_Integration(t *testing.T) {
 				Resource:        resourceKey.Resource,
 				Name:            resourceKey.Name,
 				ResourceVersion: version.rv,
-				Action:          MetaDataActionUpdated,
+				Action:          DataActionUpdated,
 			}
 
 			err := ds.Save(ctx, dataKey, version.value)
@@ -567,7 +567,7 @@ func TestDataStore_Integration(t *testing.T) {
 			Resource:        resourceKey.Resource,
 			Name:            resourceKey.Name,
 			ResourceVersion: versions[1].rv,
-			Action:          MetaDataActionUpdated,
+			Action:          DataActionUpdated,
 		}
 
 		err := ds.Delete(ctx, deleteKey)
@@ -623,7 +623,7 @@ func TestDataStore_Keys(t *testing.T) {
 		Resource:        resourceKey.Resource,
 		Name:            resourceKey.Name,
 		ResourceVersion: rv1.Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	dataKey2 := DataKey{
@@ -632,7 +632,7 @@ func TestDataStore_Keys(t *testing.T) {
 		Resource:        resourceKey.Resource,
 		Name:            resourceKey.Name,
 		ResourceVersion: rv2.Int64(),
-		Action:          MetaDataActionUpdated,
+		Action:          DataActionUpdated,
 	}
 
 	dataKey3 := DataKey{
@@ -641,7 +641,7 @@ func TestDataStore_Keys(t *testing.T) {
 		Resource:        resourceKey.Resource,
 		Name:            resourceKey.Name,
 		ResourceVersion: rv3.Int64(),
-		Action:          MetaDataActionDeleted,
+		Action:          DataActionDeleted,
 	}
 
 	t.Run("keys with multiple entries", func(t *testing.T) {
@@ -710,7 +710,7 @@ func TestDataStore_Keys(t *testing.T) {
 			Resource:        resourceKey.Resource,
 			Name:            "different-name",
 			ResourceVersion: rv4.Int64(),
-			Action:          MetaDataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		err := ds.Save(ctx, dataKey4, io.NopCloser(bytes.NewReader([]byte("different-value"))))
@@ -743,7 +743,7 @@ func TestDataStore_Keys(t *testing.T) {
 			Resource:        "different-resource",
 			Name:            "different-name",
 			ResourceVersion: rv5.Int64(),
-			Action:          MetaDataActionCreated,
+			Action:          DataActionCreated,
 		}
 
 		err := ds.Save(ctx, dataKey5, io.NopCloser(bytes.NewReader([]byte("namespace-only-value"))))

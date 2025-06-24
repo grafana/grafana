@@ -45,14 +45,14 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	rv := k.snowflake.Generate().Int64()
 
 	// Write data.
-	var action MetaDataAction
+	var action DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
-		action = MetaDataActionCreated
+		action = DataActionCreated
 	case resourcepb.WatchEvent_MODIFIED:
-		action = MetaDataActionUpdated
+		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
-		action = MetaDataActionDeleted
+		action = DataActionDeleted
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
@@ -388,7 +388,7 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	if useLatestDeletionAsMinRV {
 		latestDeleteRV := int64(0)
 		for _, entry := range historyEntries {
-			if entry.Key.Action == MetaDataActionDeleted && entry.Key.ResourceVersion > latestDeleteRV {
+			if entry.Key.Action == DataActionDeleted && entry.Key.ResourceVersion > latestDeleteRV {
 				latestDeleteRV = entry.Key.ResourceVersion
 			}
 		}
@@ -455,7 +455,7 @@ func (k *KVStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	// Filter to only deleted entries
 	var deletedEntries []DataObj
 	for _, entry := range historyEntries {
-		if entry.Key.Action == MetaDataActionDeleted {
+		if entry.Key.Action == DataActionDeleted {
 			deletedEntries = append(deletedEntries, entry)
 		}
 	}
@@ -691,11 +691,11 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 			}
 			var t resourcepb.WatchEvent_Type
 			switch event.Action {
-			case MetaDataActionCreated:
+			case DataActionCreated:
 				t = resourcepb.WatchEvent_ADDED
-			case MetaDataActionUpdated:
+			case DataActionUpdated:
 				t = resourcepb.WatchEvent_MODIFIED
-			case MetaDataActionDeleted:
+			case DataActionDeleted:
 				t = resourcepb.WatchEvent_DELETED
 			}
 
@@ -736,7 +736,7 @@ func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 			res[key] = make(map[string]bool)
 			rvs[key] = 1
 		}
-		res[key][dataKey.Name] = dataKey.Action != MetaDataActionDeleted
+		res[key][dataKey.Name] = dataKey.Action != DataActionDeleted
 		rvs[key] = dataKey.ResourceVersion
 	}
 

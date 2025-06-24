@@ -21,14 +21,6 @@ type MetaData struct {
 	// For now empty
 }
 
-type MetaDataAction string
-
-const (
-	MetaDataActionCreated MetaDataAction = "created"
-	MetaDataActionUpdated MetaDataAction = "updated"
-	MetaDataActionDeleted MetaDataAction = "deleted"
-)
-
 type MetaDataKey struct {
 	Namespace       string
 	Group           string
@@ -36,7 +28,7 @@ type MetaDataKey struct {
 	Name            string
 	ResourceVersion int64
 	Folder          string
-	Action          MetaDataAction
+	Action          DataAction
 }
 
 type MetaDataObj struct {
@@ -78,7 +70,7 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 		Resource:        parts[1],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          MetaDataAction(rvActionFolderParts[1]),
+		Action:          DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
 	}, nil
 }
@@ -178,7 +170,7 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 		// Yield is a helper function to yield a metadata object from a given object.
 		// It yields the metadata object if it is not deleted.
 		yieldObj := func(obj KVObject, key MetaDataKey) bool {
-			if key.Action != MetaDataActionDeleted {
+			if key.Action != DataActionDeleted {
 				var meta MetaData
 				value, err := io.ReadAll(obj.Value)
 				if err != nil {

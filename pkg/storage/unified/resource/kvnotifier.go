@@ -39,14 +39,14 @@ type EventKey struct {
 	ResourceVersion int64
 }
 type Event struct {
-	Namespace       string         `json:"namespace"`
-	Group           string         `json:"group"`
-	Resource        string         `json:"resource"`
-	Name            string         `json:"name"`
-	ResourceVersion int64          `json:"resource_version"`
-	Action          MetaDataAction `json:"action"`
-	Folder          string         `json:"folder"`
-	PreviousRV      int64          `json:"previous_rv"`
+	Namespace       string     `json:"namespace"`
+	Group           string     `json:"group"`
+	Resource        string     `json:"resource"`
+	Name            string     `json:"name"`
+	ResourceVersion int64      `json:"resource_version"`
+	Action          DataAction `json:"action"`
+	Folder          string     `json:"folder"`
+	PreviousRV      int64      `json:"previous_rv"`
 }
 
 type KVNotifierOptions struct {

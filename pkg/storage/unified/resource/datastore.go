@@ -35,7 +35,7 @@ type DataKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
-	Action          MetaDataAction
+	Action          DataAction
 }
 
 type ListRequestKey struct {
@@ -44,6 +44,14 @@ type ListRequestKey struct {
 	Resource  string
 	Name      string
 }
+
+type DataAction string
+
+const (
+	DataActionCreated DataAction = "created"
+	DataActionUpdated DataAction = "updated"
+	DataActionDeleted DataAction = "deleted"
+)
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
@@ -138,6 +146,6 @@ func (d *dataStore) parseKey(key string) (DataKey, error) {
 		Resource:        parts[2],
 		Name:            parts[3],
 		ResourceVersion: rv,
-		Action:          MetaDataAction(uidActionParts[1]),
+		Action:          DataAction(uidActionParts[1]),
 	}, nil
 }

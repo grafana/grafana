@@ -41,7 +41,7 @@ func TestMetadataStore_GetKey(t *testing.T) {
 		Namespace:       "default",
 		Name:            "test-deployment",
 		ResourceVersion: rv,
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	expectedKey := "apps/deployments/default/test-deployment/56500267212345678~created~test-folder"
@@ -54,7 +54,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 
 	rv := node.Generate()
-	key := "apps/deployments/default/test-deployment/" + rv.String() + "~" + string(MetaDataActionCreated) + "~test-folder"
+	key := "apps/deployments/default/test-deployment/" + rv.String() + "~" + string(DataActionCreated) + "~test-folder"
 
 	resourceKey, err := store.parseKey(key)
 
@@ -64,7 +64,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	assert.Equal(t, "default", resourceKey.Namespace)
 	assert.Equal(t, "test-deployment", resourceKey.Name)
 	assert.Equal(t, rv.Int64(), resourceKey.ResourceVersion)
-	assert.Equal(t, MetaDataActionCreated, resourceKey.Action)
+	assert.Equal(t, DataActionCreated, resourceKey.Action)
 	assert.Equal(t, "test-folder", resourceKey.Folder)
 }
 
@@ -130,7 +130,7 @@ func TestMetadataStore_Save(t *testing.T) {
 		Namespace:       "default",
 		Name:            "test-deployment",
 		ResourceVersion: node.Generate().Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	metadata := MetaData{}
@@ -152,7 +152,7 @@ func TestMetadataStore_Get(t *testing.T) {
 		Namespace:       "default",
 		Name:            "test-deployment",
 		ResourceVersion: node.Generate().Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	metadata := MetaData{}
@@ -181,7 +181,7 @@ func TestMetadataStore_Get_NotFound(t *testing.T) {
 		Namespace:       "default",
 		Name:            "test-deployment",
 		ResourceVersion: node.Generate().Int64(),
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	_, err := store.Get(ctx, key)
@@ -210,7 +210,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	metadata3 := MetaData{}
 
 	key.ResourceVersion = rv1
-	key.Action = MetaDataActionCreated
+	key.Action = DataActionCreated
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata1,
@@ -218,7 +218,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	key.ResourceVersion = rv2
-	key.Action = MetaDataActionUpdated
+	key.Action = DataActionUpdated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata2,
@@ -226,7 +226,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	key.ResourceVersion = rv3
-	key.Action = MetaDataActionCreated
+	key.Action = DataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata3,
@@ -256,7 +256,7 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 		Namespace:       "default",
 		Name:            "test-deployment",
 		ResourceVersion: node.Generate().Int64(),
-		Action:          MetaDataActionDeleted,
+		Action:          DataActionDeleted,
 	}
 
 	metadata := MetaData{}
@@ -360,7 +360,7 @@ func TestMetadataStore_ListAll(t *testing.T) {
 		Namespace:       "default",
 		Name:            "deployment1",
 		ResourceVersion: rv1,
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	key2 := MetaDataKey{
@@ -369,7 +369,7 @@ func TestMetadataStore_ListAll(t *testing.T) {
 		Namespace:       "default",
 		Name:            "deployment2",
 		ResourceVersion: rv2,
-		Action:          MetaDataActionCreated,
+		Action:          DataActionCreated,
 	}
 
 	metadata1 := MetaData{}
@@ -429,7 +429,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	metadata2 := MetaData{}
 
 	key.ResourceVersion = rv1
-	key.Action = MetaDataActionCreated
+	key.Action = DataActionCreated
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata1,
@@ -437,7 +437,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	key.ResourceVersion = rv2
-	key.Action = MetaDataActionCreated
+	key.Action = DataActionCreated
 	err = store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata2,
