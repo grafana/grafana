@@ -137,8 +137,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		}
 	}
 
-	txn := k.db.NewTransaction(false)
-
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchValues = false
 
@@ -159,10 +157,11 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		return string(item.Key()) >= end
 	}
 
-	iter := txn.NewIterator(opts)
 	count := int64(0)
 
 	return func(yield func(string, error) bool) {
+		txn := k.db.NewTransaction(false)
+		iter := txn.NewIterator(opts)
 		defer txn.Discard()
 		defer iter.Close()
 
@@ -189,8 +188,6 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 		}
 	}
 
-	txn := k.db.NewTransaction(false)
-
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchValues = true
 	opts.PrefetchSize = 100
@@ -212,10 +209,11 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 		return string(item.Key()) >= end
 	}
 
-	iter := txn.NewIterator(opts)
 	count := int64(0)
 
 	return func(yield func(KVObject, error) bool) {
+		txn := k.db.NewTransaction(false)
+		iter := txn.NewIterator(opts)
 		defer txn.Discard()
 		defer iter.Close()
 
