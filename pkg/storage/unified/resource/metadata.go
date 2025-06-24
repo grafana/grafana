@@ -126,28 +126,34 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, 
 	})
 
 	return func(yield func(MetaDataObj, error) bool) {
-		var selectedKey *MetaDataKey // The current key we are iterating over
+		var candidateKey *MetaDataKey // The current candidate key we are iterating over
 
-		// yieldObj is a helper function to yield results.
-		// Won't yield if the action is deleted.
-		yieldObj := func(obj KVObject, key MetaDataKey) bool {
-			if key.Action != DataActionDeleted {
-				var meta MetaData
-				value, err := io.ReadAll(obj.Value)
-				if err != nil {
-					yield(MetaDataObj{}, err)
-					return false
-				}
-				if err := json.Unmarshal(value, &meta); err != nil {
-					yield(MetaDataObj{}, err)
-					return false
-				}
-				return yield(MetaDataObj{
-					Key:   key,
-					Value: meta,
-				}, nil)
+		// yieldCandidate is a helper function to yield results.
+		// Won't yield if the resource was last deleted.
+		yieldCandidate := func(key MetaDataKey) bool {
+			if key.Action == DataActionDeleted {
+				// Skip because the resource was last deleted.
+				return true
 			}
-			return true
+			obj, err := d.kv.Get(ctx, metaSection, d.getKey(key))
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return false
+			}
+			var meta MetaData
+			value, err := io.ReadAll(obj.Value)
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return false
+			}
+			if err := json.Unmarshal(value, &meta); err != nil {
+				yield(MetaDataObj{}, err)
+				return false
+			}
+			return yield(MetaDataObj{
+				Key:   key,
+				Value: meta,
+			}, nil)
 		}
 
 		for key, err := range iter {
@@ -161,37 +167,37 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, 
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if selectedKey == nil && metaKey.ResourceVersion <= rv { // First candidate
-				selectedKey = &metaKey
-			}
 
-			if selectedKey == nil {
+			if candidateKey == nil {
+				// Skip until we have our first candidate
+				if metaKey.ResourceVersion <= rv {
+					// New candidate found.
+					candidateKey = &metaKey
+				}
 				continue
+
 			}
-			// If the current key is not the same as the previous key, or if the rv
-			// is greater than the target rv, we need to yield the selected object.
-			if !keyMatches(metaKey, *selectedKey) || metaKey.ResourceVersion > rv {
-				obj, err := d.kv.Get(ctx, metaSection, key)
-				if err != nil {
-					yield(MetaDataObj{}, err)
+			// Should yield if either:
+			// - We reached the next key.
+			// - We reached a resource version greater than the target RV.
+			if !keyMatches(metaKey, *candidateKey) || metaKey.ResourceVersion > rv {
+				if !yieldCandidate(*candidateKey) {
 					return
 				}
-				if !yieldObj(obj, *selectedKey) {
-					return
+				// If we moved to a different resource and the current key is valid, make it the new candidate
+				if !keyMatches(metaKey, *candidateKey) && metaKey.ResourceVersion <= rv {
+					candidateKey = &metaKey
+				} else {
+					candidateKey = nil
 				}
-				selectedKey = nil
-			}
-			if metaKey.ResourceVersion <= rv {
-				selectedKey = &metaKey
+			} else {
+				// Update candidate to the current key (same resource, valid version)
+				candidateKey = &metaKey
 			}
 		}
-		if selectedKey != nil { // Yield the last selected object
-			obj, err := d.kv.Get(ctx, metaSection, d.getKey(*selectedKey))
-			if err != nil {
-				yield(MetaDataObj{}, err)
-				return
-			}
-			if !yieldObj(obj, *selectedKey) {
+		if candidateKey != nil {
+			// Yield the last selected object
+			if !yieldCandidate(*candidateKey) {
 				return
 			}
 		}
