@@ -393,13 +393,14 @@ steps:
       - packages/grafana-ui/**
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
-  - pa11y-ci --config .pa11yci-pr.conf.js
+  - pa11y-ci --config e2e/pa11yci.conf.js
   depends_on:
   - grafana-server
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
     HOST: grafana-server
+    NO_THRESHOLDS: "false"
     PORT: 3001
   failure: always
   image: grafana/docker-puppeteer:1.1.0
@@ -864,13 +865,14 @@ steps:
       - packages/grafana-ui/**
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
-  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  - pa11y-ci --config e2e/pa11yci.conf.js
   depends_on:
   - grafana-server
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
     HOST: grafana-server
+    NO_THRESHOLDS: "true"
     PORT: 3001
   failure: ignore
   image: grafana/docker-puppeteer:1.1.0
@@ -2984,6 +2986,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: db5485c680a21c2f4032064cd7fd892a3075ebd92cd29422d892fcc375eb6948
+hmac: 1198b1489e48a9ced211633a0325d112814553246847fc7320fb5ac2bcb32b7d
 
 ...

@@ -1,50 +1,4 @@
-var dashboardSettings = [
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 0,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 0,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=templating',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 0,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 0,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 0,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
-    wait: 500,
-    rootElement: '.main-view',
-    // TODO: improve the accessibility of the permission tab https://github.com/grafana/grafana/issues/77203
-    threshold: 5,
-  },
-  {
-    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
-    wait: 500,
-    rootElement: '.main-view',
-    threshold: 2,
-  },
-];
-
-var config = {
+const config = {
   defaults: {
     concurrency: 1,
     runners: ['axe'],
@@ -57,18 +11,16 @@ var config = {
     // see https://github.com/grafana/grafana/pull/41693#issuecomment-979921463 for context
     // on why we're ignoring singleValue/react-select-*-placeholder elements
     hideElements: '#updateVersion, [class*="-singleValue"], [id^="react-select-"][id$="-placeholder"]',
+    reporters: ['cli', ['json', { fileName: './pa11y-ci-results.json' }]],
   },
 
   urls: [
     {
       url: '${HOST}/login',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
     {
       url: '${HOST}/login',
-      wait: 500,
       actions: [
         "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
@@ -77,74 +29,84 @@ var config = {
         "wait for element button[data-testid='data-testid Skip change password button'] to be visible",
       ],
       threshold: 2,
-      rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
-      wait: 500,
       threshold: 0,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
-    ...dashboardSettings,
+
+    // Dashboard settings
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=settings',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
+      // TODO: improve the accessibility of the permission tab https://github.com/grafana/grafana/issues/77203
+      threshold: 5,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
+      threshold: 2,
+    },
+
+    // Misc
     {
       url: '${HOST}/?orgId=1&search=open',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
     {
       url: '${HOST}/alerting/list',
-      wait: 500,
-      rootElement: '.main-view',
       // the unified alerting promotion alert's content contrast is too low
       // see https://github.com/grafana/grafana/pull/41829
       threshold: 7,
     },
     {
       url: '${HOST}/datasources',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
     {
       url: '${HOST}/org/users',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 2,
     },
     {
       url: '${HOST}/org/teams',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
     {
       url: '${HOST}/plugins',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 0,
     },
     {
       url: '${HOST}/org',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 2,
     },
     {
       url: '${HOST}/org/apikeys',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 4,
     },
     {
       url: '${HOST}/dashboards',
-      wait: 500,
-      rootElement: '.main-view',
       threshold: 2,
     },
   ],
@@ -153,9 +115,21 @@ var config = {
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
   const PORT_SERVER = process.env.PORT || '3001';
-  for (var idx = 0; idx < urls.length; idx++) {
-    urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
-  }
+  const noThresholds = process.env.NO_THRESHOLDS === 'true';
+
+  urls = urls.map((test, index) => {
+    return {
+      ...test,
+      url: test.url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`),
+      screenCapture: `./screenshots/screenshot-${index}.png`,
+      rootElement: '.main-view',
+      wait: 500,
+
+      // Depending on NO_THRESHOLDS (--no-threshold-fail in the dagger command), clear the thresholds
+      // to allow pa11y to fail the check and include error details in the results file
+      threshold: noThresholds ? undefined : test.threshold,
+    };
+  });
 
   return {
     defaults: defaults,
