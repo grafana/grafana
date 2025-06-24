@@ -9,9 +9,8 @@ To run the tests locally:
    1. Downloading it from the Github Action artifact from your PR
    1. Build it locally with:
       ```sh
-      cd ../ # move up to the parent directory of your grafana checkout
-      dagger run go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
-      cat out.txt # Will output the path to the grafana.tar.gz 
+      dagger run go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="$PWD" > dist/files.txt
+      cat dist/files.txt # Will output the path to the grafana.tar.gz 
       ```
 3. Run the dagger pipeline with:
    ```sh
