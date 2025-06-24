@@ -31,7 +31,7 @@ on:
         required: true
       service-account:
         type: string
-        required: true
+        required: false
         default: github-prerelease-writer@grafanalabs-workload-identity.iam.gserviceaccount.com
 jobs:
   publish:
