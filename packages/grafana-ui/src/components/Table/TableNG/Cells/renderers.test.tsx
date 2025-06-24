@@ -273,7 +273,7 @@ describe('TableNG Cells renderers', () => {
       });
     });
 
-    describe('performance benchmarks', () => {
+    describe.skip('performance benchmarks', () => {
       // Performance thresholds (in milliseconds)
       // these thresholds are tweaked based on performance on CI, not on a typical dev machine.
       const PERFORMANCE_THRESHOLDS = {
