@@ -261,6 +261,13 @@ type deleteSecureValueOutbox struct {
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
 
+type getOutboxMessageTimestamp struct {
+	sqltemplate.SQLTemplate
+	MessageID int64
+}
+
+func (getOutboxMessageTimestamp) Validate() error { return nil }
+
 type incrementReceiveCountOutbox struct {
 	sqltemplate.SQLTemplate
 	MessageIDs []int64

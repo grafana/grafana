@@ -300,18 +300,18 @@ func (s *outboxStore) Delete(ctx context.Context, messageID int64) (err error) {
 }
 
 func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error {
-	req := deleteSecureValueOutbox{
+	tsReq := getOutboxMessageTimestamp{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		MessageID:   messageID,
 	}
 
 	// First query the object so we can get the timestamp and calculate the total lifetime
-	timestampQuery, err := sqltemplate.Execute(sqlSecureValueOutboxQueryTimestamp, req)
+	timestampQuery, err := sqltemplate.Execute(sqlSecureValueOutboxQueryTimestamp, tsReq)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxQueryTimestamp.Name(), err)
 	}
 
-	rows, err := s.db.QueryContext(ctx, timestampQuery, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, timestampQuery, tsReq.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("querying timestamp from secure value outbox table: %w", err)
 	}
@@ -331,12 +331,17 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error 
 	s.metrics.OutboxTotalMessageLifetimeDuration.WithLabelValues(messageType).Observe(totalLifetime.Seconds())
 
 	// Then delete the object
-	query, err := sqltemplate.Execute(sqlSecureValueOutboxDelete, req)
+	delReq := deleteSecureValueOutbox{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageID:   messageID,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxDelete, delReq)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxDelete.Name(), err)
 	}
 
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := s.db.ExecContext(ctx, query, delReq.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
 	}
@@ -346,6 +351,7 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error 
 		return fmt.Errorf("get rows affected: %w", err)
 	}
 
+	// TODO: Presumably it's a bug if we delete 0 rows?
 	if rowsAffected > 1 {
 		return fmt.Errorf("bug: deleted more than one row from the outbox table, should delete only one at a time: deleted=%v", rowsAffected)
 	}

@@ -58,7 +58,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("encrypting secure value secret: %w", err)
 	}
 
-	// Especifically here so that the spans from the worker are not inside the transaction.
+	// Specifically here so that the spans from the worker are not inside the transaction.
 	requestID := tracectx.HexEncodeTraceFromContext(ctx)
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
