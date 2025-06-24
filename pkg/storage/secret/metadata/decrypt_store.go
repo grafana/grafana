@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -53,6 +54,7 @@ type decryptStorage struct {
 }
 
 // Decrypt decrypts a secure value from the keeper.
+// The returned value is an ExposedSecureValue, which is a Base64 Std encoded string of the raw decrypted value.
 func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv0alpha1.ExposedSecureValue, decryptErr error) {
 	ctx, span := s.tracer.Start(ctx, "DecryptStorage.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -108,5 +110,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptFailed
 	}
 
-	return exposedValue, nil
+	return secretv0alpha1.NewExposedSecureValue(
+		base64.StdEncoding.EncodeToString([]byte(exposedValue.DangerouslyExposeAndConsumeValue())),
+	), nil
 }

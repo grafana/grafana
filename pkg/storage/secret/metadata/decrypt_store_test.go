@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -131,7 +132,10 @@ func TestIntegrationDecrypt(t *testing.T) {
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.NoError(t, err)
 		require.NotEmpty(t, exposed)
-		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
+
+		decoded, err := base64.StdEncoding.DecodeString(exposed.DangerouslyExposeAndConsumeValue())
+		require.NoError(t, err)
+		require.Equal(t, "value", string(decoded))
 	})
 
 	t.Run("with permissions for a specific secure value but trying to decrypt another one, it returns unauthorized error", func(t *testing.T) {
