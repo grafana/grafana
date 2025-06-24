@@ -24,7 +24,6 @@ type ListOptions struct {
 	StartKey string
 	EndKey   string
 	Limit    int64
-	// WithValues bool // Question: Should we always return the values? Or maybe never ?
 }
 
 type GetOptions struct{}
