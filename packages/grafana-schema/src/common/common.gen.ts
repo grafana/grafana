@@ -862,6 +862,7 @@ export enum VariableFormatID {
   Glob = 'glob',
   HTML = 'html',
   JSON = 'json',
+  Join = 'join',
   Lucene = 'lucene',
   PercentEncode = 'percentencode',
   Pipe = 'pipe',
