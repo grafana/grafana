@@ -4,7 +4,9 @@
     "alwaysStrict": true,
     "declaration": false,
     "resolveJsonModule": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "extends": "@grafana/tsconfig",
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
