@@ -114,6 +114,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
 | `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                               |
 | `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                     |
+| `enableSCIM`                          | Enables SCIM provisioning for SAML                                                                                                                            |
+
 
 ## Development feature toggles
 
