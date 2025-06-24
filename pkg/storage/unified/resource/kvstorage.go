@@ -316,28 +316,30 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Generate a new resource version for the list
 	listRV := k.snowflake.Generate().Int64()
 
-	// Determine sort order based on version match
-	sortOrder := SortOrderDesc
-	if sortAscending {
-		sortOrder = SortOrderAsc
-	}
-
-	// Get all history entries using datastore.ListHistory
+	// Get all history entries by iterating through datastore keys
 	var historyEntries []DataObj
-	for entry, err := range k.dataStore.ListHistory(ctx, ListHistoryRequest{
-		Key: ListRequestKey{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Name:      key.Name,
-		},
-		Sort:  sortOrder,
-		Limit: 0, // No limit at datastore level, we'll handle it ourselves
+
+	// Use datastore.Keys to get all data keys for this specific resource
+	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
 	}) {
 		if err != nil {
 			return 0, err
 		}
-		historyEntries = append(historyEntries, entry)
+
+		// Get the object data using datastore
+		data, err := k.dataStore.Get(ctx, dataKey)
+		if err != nil {
+			return 0, err
+		}
+
+		historyEntries = append(historyEntries, DataObj{
+			Key:   dataKey,
+			Value: data,
+		})
 	}
 
 	// Handle trash differently from regular history

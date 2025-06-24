@@ -23,9 +23,10 @@ func TestDataStore_GetPrefix(t *testing.T) {
 	ds := setupTestDataStore(t)
 
 	tests := []struct {
-		name     string
-		key      ListRequestKey
-		expected string
+		name        string
+		key         ListRequestKey
+		expected    string
+		expectError bool
 	}{
 		{
 			name: "all fields provided",
@@ -55,7 +56,7 @@ func TestDataStore_GetPrefix(t *testing.T) {
 				Resource:  "",
 				Name:      "test-name", // This should be ignored when resource is empty
 			},
-			expected: "test-namespace/test-group/",
+			expectError: true, // Now expects error due to validation
 		},
 		{
 			name: "group is empty",
@@ -65,7 +66,7 @@ func TestDataStore_GetPrefix(t *testing.T) {
 				Resource:  "test-resource", // This should be ignored when group is empty
 				Name:      "test-name",     // This should be ignored when group is empty
 			},
-			expected: "test-namespace/",
+			expectError: true, // Now expects error due to validation
 		},
 		{
 			name: "namespace is empty",
@@ -75,7 +76,7 @@ func TestDataStore_GetPrefix(t *testing.T) {
 				Resource:  "test-resource", // This should be ignored when namespace is empty
 				Name:      "test-name",     // This should be ignored when namespace is empty
 			},
-			expected: "",
+			expectError: true, // Now expects error due to validation
 		},
 		{
 			name: "only namespace provided",
@@ -141,8 +142,13 @@ func TestDataStore_GetPrefix(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := ds.getPrefix(tt.key)
-			require.Equal(t, tt.expected, actual)
+			actual, err := ds.getPrefix(tt.key)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, actual)
+			}
 		})
 	}
 }
@@ -288,7 +294,11 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 
 		result, err := ds.Get(ctx, testKey)
 		require.NoError(t, err)
-		require.Equal(t, testValue, result)
+
+		// Read the content and compare
+		resultBytes, err := io.ReadAll(result)
+		require.NoError(t, err)
+		require.Equal(t, []byte("test-value"), resultBytes)
 	})
 
 	t.Run("save and get deleted key", func(t *testing.T) {
@@ -301,7 +311,11 @@ func TestDataStore_Save_And_Get(t *testing.T) {
 
 		result, err := ds.Get(ctx, deletedKey)
 		require.NoError(t, err)
-		require.Equal(t, deletedValue, result)
+
+		// Read the content and compare
+		resultBytes, err := io.ReadAll(result)
+		require.NoError(t, err)
+		require.Equal(t, []byte("deleted-value"), resultBytes)
 	})
 
 	t.Run("get non-existent key", func(t *testing.T) {
@@ -749,7 +763,7 @@ func TestDataStore_Keys(t *testing.T) {
 	})
 
 	t.Run("keys with empty namespace", func(t *testing.T) {
-		// Group, Resource, Name are empty but will be ignored
+		// Group, Resource, Name are provided but will be ignored due to validation
 		emptyNamespaceKey := ListRequestKey{
 			Namespace: "",
 			Group:     "test-group",
@@ -758,11 +772,18 @@ func TestDataStore_Keys(t *testing.T) {
 		}
 
 		var keys []DataKey
+		var hasError bool
 		for key, err := range ds.Keys(ctx, emptyNamespaceKey) {
-			require.NoError(t, err)
+			if err != nil {
+				hasError = true
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "namespace is required")
+				break
+			}
 			keys = append(keys, key)
 		}
 
-		require.Len(t, keys, 5)
+		// Should get an error due to validation
+		require.True(t, hasError, "Expected an error due to empty namespace with other fields provided")
 	})
 }

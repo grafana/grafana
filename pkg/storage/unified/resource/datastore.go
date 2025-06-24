@@ -40,7 +40,12 @@ type DataKey struct {
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
-	prefix := d.getPrefix(key)
+	prefix, err := d.getPrefix(key)
+	if err != nil {
+		return func(yield func(DataKey, error) bool) {
+			yield(DataKey{}, err)
+		}
+	}
 	return func(yield func(DataKey, error) bool) {
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
@@ -78,79 +83,29 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, d.getKey(key))
 }
 
-type ListHistoryRequest struct {
-	Key   ListRequestKey
-	Sort  SortOrder
-	Limit int64
-}
-
-// ListHistory returns all history for a single resource by iterating through the KV store
-func (d *dataStore) ListHistory(ctx context.Context, req ListHistoryRequest) iter.Seq2[DataObj, error] {
-	if req.Key.Namespace == "" {
-		return func(yield func(DataObj, error) bool) {
-			yield(DataObj{}, fmt.Errorf("namespace is required"))
-		}
-	}
-	if req.Key.Group == "" {
-		return func(yield func(DataObj, error) bool) {
-			yield(DataObj{}, fmt.Errorf("group is required"))
-		}
-	}
-	if req.Key.Resource == "" {
-		return func(yield func(DataObj, error) bool) {
-			yield(DataObj{}, fmt.Errorf("resource is required"))
-		}
-	}
-	if req.Key.Name == "" {
-		return func(yield func(DataObj, error) bool) {
-			yield(DataObj{}, fmt.Errorf("name is required"))
-		}
-	}
-	return func(yield func(DataObj, error) bool) {
-		prefix := d.getPrefix(req.Key)
-		iter := d.kv.Keys(ctx, dataSection, ListOptions{
-			Sort:     req.Sort,
-			StartKey: prefix,
-			EndKey:   PrefixRangeEnd(prefix),
-			Limit:    req.Limit,
-		})
-		for k, err := range iter {
-			if err != nil {
-				yield(DataObj{}, err)
-				return
-			}
-			obj, err := d.kv.Get(ctx, dataSection, k)
-			if err != nil {
-				yield(DataObj{}, err)
-				return
-			}
-			key, err := d.parseKey(k)
-			if err != nil {
-				yield(DataObj{}, err)
-				return
-			}
-			yield(DataObj{
-				Key:   key,
-				Value: obj.Value,
-			}, nil)
-		}
-	}
-}
-
-func (d *dataStore) getPrefix(key ListRequestKey) string {
+func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
 	if key.Namespace == "" {
-		return ""
+		if key.Group != "" || key.Resource != "" || key.Name != "" {
+			return "", fmt.Errorf("namespace is required but group, resource, and name are not")
+		}
+		return "", nil
 	}
 	if key.Group == "" {
-		return fmt.Sprintf("%s/", key.Namespace)
+		if key.Resource != "" || key.Name != "" {
+			return "", fmt.Errorf("group is required but resource and name are not")
+		}
+		return fmt.Sprintf("%s/", key.Namespace), nil
 	}
 	if key.Resource == "" {
-		return fmt.Sprintf("%s/%s/", key.Namespace, key.Group)
+		if key.Name != "" {
+			return "", fmt.Errorf("resource is required but name is not")
+		}
+		return fmt.Sprintf("%s/%s/", key.Namespace, key.Group), nil
 	}
 	if key.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/", key.Namespace, key.Group, key.Resource)
+		return fmt.Sprintf("%s/%s/%s/", key.Namespace, key.Group, key.Resource), nil
 	}
-	return fmt.Sprintf("%s/%s/%s/%s/", key.Namespace, key.Group, key.Resource, key.Name)
+	return fmt.Sprintf("%s/%s/%s/%s/", key.Namespace, key.Group, key.Resource, key.Name), nil
 }
 
 func (d *dataStore) getKey(key DataKey) string {
