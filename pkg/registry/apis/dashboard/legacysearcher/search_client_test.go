@@ -309,6 +309,38 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		}
 	})
 
+	t.Run("When searching for SEARCH_FIELD_TITLE_PHRASE, value should be set as title, and ExactMatch should be enabled", func(t *testing.T) {
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			Title:           "test",
+			TitleExactMatch: true,
+			SignedInUser:    user,      // user from context should be used
+			Type:            "dash-db", // should set type based off of key
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+						Operator: string(selection.Equals),
+						Values:   []string{"test"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+	})
+
 	t.Run("Should read labels for the dashboard ids", func(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{1, 2},

@@ -430,12 +430,13 @@ type DashboardACLInfoDTO struct {
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title         string
-	OrgId         int64
-	SignedInUser  identity.Requester
-	DashboardIds  []int64
-	DashboardUIDs []string
-	Type          string
+	Title           string
+	TitleExactMatch bool
+	OrgId           int64
+	SignedInUser    identity.Requester
+	DashboardIds    []int64
+	DashboardUIDs   []string
+	Type            string
 	// Deprecated: use FolderUIDs instead
 	FolderIds  []int64
 	FolderUIDs []string
