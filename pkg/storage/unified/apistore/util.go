@@ -71,9 +71,6 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 				if len(requirements) != 1 {
 					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
 				}
-				if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
-					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
-				}
 				if r.Operator() != selection.Equals {
 					return nil, predicate, apierrors.NewBadRequest("only = operator supported with: " + v)
 				}
@@ -91,7 +88,21 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					}
 				case utils.LabelKeyGetHistory:
 					req.Source = resource.ListRequest_HISTORY
-					req.Options.Key.Name = vals[0]
+					if opts.Predicate.Field == nil || opts.Predicate.Field.Empty() {
+						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
+					}
+
+					fieldRequirements := opts.Predicate.Field.Requirements()
+					if len(fieldRequirements) != 1 {
+						return nil, predicate, apierrors.NewBadRequest("only one field selector supported for history requests")
+					}
+
+					fieldReq := fieldRequirements[0]
+					if fieldReq.Field != "metadata.name" {
+						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
+					}
+
+					req.Options.Key.Name = fieldReq.Value
 				}
 
 				req.Options.Labels = nil
