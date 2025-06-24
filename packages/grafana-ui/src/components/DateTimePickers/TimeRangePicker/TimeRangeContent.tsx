@@ -23,10 +23,10 @@ import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { WeekStart } from '../WeekStartPicker';
+import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
-import { commonFormat } from '../commonFormat';
 
 interface Props {
   isFullscreen: boolean;
