@@ -219,9 +219,14 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
-		Features: featuremgmt.WithFeatures(), // none??
+		Features: featureToggles,
 		DB:       sqlStore,
 		Tracer:   tracing.NewNoopTracerService(),
 		Reg:      prometheus.NewPedanticRegistry(),
