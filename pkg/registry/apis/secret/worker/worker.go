@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -36,6 +37,17 @@ type Config struct {
 	PollingInterval time.Duration
 	// How many tries to try to process a message before marking the operation as failed
 	MaxMessageProcessingAttempts uint
+}
+
+var DefaultConfig = Config{
+	BatchSize:                    20,
+	ReceiveTimeout:               5 * time.Second,
+	PollingInterval:              100 * time.Millisecond,
+	MaxMessageProcessingAttempts: 10,
+}
+
+func ProvideWorkerConfig() Config {
+	return DefaultConfig
 }
 
 func NewWorker(
@@ -73,8 +85,11 @@ func NewWorker(
 	}, nil
 }
 
-// The main method to drive the worker
-func (w *Worker) ControlLoop(ctx context.Context) error {
+// Ensure that Worker implements the BackgroundService interface, so we can start it as a background service.
+var _ registry.BackgroundService = (*Worker)(nil)
+
+// Run is the main method to drive the worker
+func (w *Worker) Run(ctx context.Context) error {
 	t := time.NewTicker(w.config.PollingInterval)
 	defer t.Stop()
 
