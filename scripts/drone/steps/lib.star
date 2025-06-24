@@ -315,14 +315,16 @@ def store_storybook_step(ver_mode, trigger = None):
     return step
 
 def e2e_tests_artifacts():
+    # Note: This function is kept for backward compatibility but now only handles
+    # artifacts from the remaining E2E tests that haven't been migrated to GitHub Actions
     return {
         "name": "e2e-tests-artifacts-upload",
         "image": images["cloudsdk"],
         "depends_on": [
-            "end-to-end-tests-dashboards-suite",
-            "end-to-end-tests-panels-suite",
-            "end-to-end-tests-smoke-tests-suite",
-            "end-to-end-tests-various-suite",
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Only depend on remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
             github_app_generate_token_step()["name"],
         ],
         "failure": "ignore",
@@ -338,8 +340,8 @@ def e2e_tests_artifacts():
         },
         "commands": [
             "export GITHUB_TOKEN=$(cat /github-app/token)",
-            # if no videos found do nothing
-            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
+            # if no videos found do nothing (may be fewer videos now that main tests are in GitHub Actions)
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'no e2e videos found from remaining tests'; exit 0; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
@@ -647,21 +649,13 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
     commands = [
         # Note - this runs in a container running node 14, which does not support the -y option to npx
         "npx wait-on@7.0.1 http://$HOST:$PORT",
+        "pa11y-ci --config e2e/pa11yci.conf.js",
     ]
     failure = "ignore"
+    no_thresholds = "true"
     if ver_mode == "pr":
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci-pr.conf.js",
-            ],
-        )
         failure = "always"
-    else:
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json",
-            ],
-        )
+        no_thresholds = "false"
 
     return {
         "name": "test-a11y-frontend",
@@ -674,6 +668,7 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
             "GRAFANA_MISC_STATS_API_KEY": from_secret("grafana_misc_stats_api_key"),
             "HOST": "grafana-server",
             "PORT": port,
+            "NO_THRESHOLDS": no_thresholds,
         },
         "failure": failure,
         "commands": commands,
@@ -969,12 +964,15 @@ def release_canary_npm_packages_step(trigger = None):
 
     return step
 
-def upload_packages_step(ver_mode, trigger = None, depends_on = [
-    "end-to-end-tests-dashboards-suite",
-    "end-to-end-tests-panels-suite",
-    "end-to-end-tests-smoke-tests-suite",
-    "end-to-end-tests-various-suite",
-]):
+def upload_packages_step(
+        ver_mode,
+        trigger = None,
+        depends_on = [
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Updated dependencies to only include remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
+        ]):
     """Upload packages to object storage.
 
     Args:
@@ -1135,11 +1133,11 @@ def verify_gen_jsonnet_step():
     }
 
 def end_to_end_tests_deps():
+    # Note: Main E2E tests have been migrated to GitHub Actions
+    # Only return dependencies for E2E tests that still run in Drone
     return [
-        "end-to-end-tests-dashboards-suite",
-        "end-to-end-tests-panels-suite",
-        "end-to-end-tests-smoke-tests-suite",
-        "end-to-end-tests-various-suite",
+        "end-to-end-tests-cloud-plugins-suite-azure",
+        "playwright-plugin-e2e",
     ]
 
 def compile_build_cmd():

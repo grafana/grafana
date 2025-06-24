@@ -71,7 +71,7 @@
     "@grafana/faro-web-sdk": "^1.13.2",
     "@grafana/i18n": "12.1.0-pre",
     "@grafana/schema": "12.1.0-pre",
-    "@hello-pangea/dnd": "17.0.0",
+    "@hello-pangea/dnd": "18.0.1",
     "@leeoniya/ufuzzy": "1.0.18",
     "@monaco-editor/react": "4.7.0",
     "@popperjs/core": "2.11.8",
@@ -129,7 +129,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.8.1",
     "uplot": "1.6.32",
-    "uuid": "11.0.5",
+    "uuid": "11.1.0",
     "uwrap": "0.1.1"
   },
   "devDependencies": {

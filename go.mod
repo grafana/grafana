@@ -77,7 +77,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250610043455-3e20fda3b872 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250620095611-863b09716e60 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250618124654-54543efcfeed // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -96,7 +96,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
-	github.com/grafana/nanogit v0.0.0-20250618132810-4154a220824f // @grafana-app-platform-squad
+	github.com/grafana/nanogit v0.0.0-20250619160700-ebf70d342aa5 // @grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -575,7 +575,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
+
 require (
+	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.0 // indirect

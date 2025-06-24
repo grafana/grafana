@@ -68,6 +68,7 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad
+/.air.toml @macabu
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
@@ -371,8 +372,8 @@
 /public/app/features/gops/ @grafana/alerting-frontend
 
 # Library Services
-/pkg/services/libraryelements/ @grafana/dashboards-squad
-/pkg/services/librarypanels/ @grafana/dashboards-squad
+/pkg/services/libraryelements/ @grafana/sharing-squad
+/pkg/services/librarypanels/ @grafana/sharing-squad
 
 # Plugins
 /pkg/api/pluginproxy/ @grafana/plugins-platform-backend
@@ -514,8 +515,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/expressions/ @grafana/grafana-datasources-core-services
 /public/app/features/folders/ @grafana/grafana-search-navigate-organise
 /public/app/features/inspector/ @grafana/dashboards-squad
-/public/app/features/invites/ @grafana/sharing-squad
-/public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
@@ -647,8 +646,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
-.pa11yci.conf.js @grafana/grafana-frontend-platform
-.pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
@@ -665,7 +662,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
 /public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
 /public/app/plugins/datasource/jaeger/ @grafana/oss-big-tent
-/public/app/plugins/datasource/loki/ @grafana/oss-big-tent
+/public/app/plugins/datasource/loki/ @grafana/oss-big-tent @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
@@ -685,6 +682,8 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /public/app/features/explore/QueryLibrary/ @grafana/sharing-squad
+/public/app/features/library-panels/ @grafana/sharing-squad
+/public/app/features/invites/ @grafana/sharing-squad
 
 # Grafana Enterprise: Public Dashboards & Image Renderer
 /pkg/api/render.go @grafana/grafana-operator-experience-squad
@@ -841,7 +840,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/release-build.yml  @grafana/grafana-developer-enablement-squad
+/.github/workflows/release-build.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/publish-artifact.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
 /.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform

@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -130,21 +129,26 @@ func TestIntegrationPluginManager(t *testing.T) {
 	staticRootPath, err := filepath.Abs("../../../../public/")
 	require.NoError(t, err)
 
+	// We use the raw config here as it forms the basis for the setting.Provider implementation
+	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
+	// properties such as the loading paths
+	raw, err := ini.Load([]byte(`
+		app_mode = production
+
+		[plugin.test-app]
+		path=../../../plugins/manager/testdata/test-app
+
+		[plugin.test-panel]
+		not=included
+		`),
+	)
+	require.NoError(t, err)
+
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:            ini.Empty(),
+		Raw:            raw,
 		StaticRootPath: staticRootPath,
-		Azure:          &azsettings.AzureSettings{},
-		PluginSettings: map[string]map[string]string{
-			"test-app": {
-				"path": "../../../plugins/manager/testdata/test-app",
-			},
-			"test-panel": {
-				"not": "included",
-			},
-		},
 	}
-
 	tracer := tracing.InitializeTracerForTest()
 
 	hcp := httpclient.NewProvider()

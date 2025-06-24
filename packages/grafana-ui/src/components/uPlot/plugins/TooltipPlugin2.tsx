@@ -144,6 +144,8 @@ export const TooltipPlugin2 = ({
   getLinksRef.current = getDataLinks;
 
   useLayoutEffect(() => {
+    sizeRef.current?.observer.disconnect();
+
     sizeRef.current = {
       width: 0,
       height: 0,
@@ -646,6 +648,8 @@ export const TooltipPlugin2 = ({
     window.addEventListener('scroll', onscroll, true);
 
     return () => {
+      sizeRef.current?.observer.disconnect();
+
       window.removeEventListener('resize', updateWinSize);
       window.removeEventListener('scroll', onscroll, true);
 
@@ -659,6 +663,7 @@ export const TooltipPlugin2 = ({
     const size = sizeRef.current!;
 
     if (domRef.current != null) {
+      size.observer.disconnect();
       size.observer.observe(domRef.current);
 
       // since the above observer is attached after container is in DOM, we need to manually update sizeRef
