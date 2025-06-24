@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Space, Stack } from '@grafana/ui';
+import { Box, Button, Stack } from '@grafana/ui';
 import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { DashboardEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields';
@@ -55,7 +55,8 @@ export function DeleteProvisionedFolderForm({ parentFolder }: DeleteProvisionedF
   useEffect(() => {
     if (request.isSuccess && repository) {
       if (workflow === 'branch') {
-        // TODO: implement branch workflow when BE is ready
+        // TODO: handle display banner https://github.com/grafana/git-ui-sync-project/issues/300
+        // TODO: implement when BE is ready
         return;
       }
 
@@ -95,7 +96,7 @@ export function DeleteProvisionedFolderForm({ parentFolder }: DeleteProvisionedF
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
-          <div>
+          <Box paddingBottom={2}>
             <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
               This will delete this folder and all its descendants. In total, this will affect:
             </Trans>
@@ -107,8 +108,7 @@ export function DeleteProvisionedFolderForm({ parentFolder }: DeleteProvisionedF
                 $all: false,
               }}
             />
-            <Space v={2} />
-          </div>
+          </Box>
 
           <DashboardEditFormSharedFields
             isNew={false}
