@@ -17,8 +17,7 @@ var ErrNotFound = errors.New("key not found")
 type SortOrder int
 
 const (
-	SortOrderUndefined SortOrder = iota
-	SortOrderAsc
+	SortOrderAsc SortOrder = iota
 	SortOrderDesc
 )
 
@@ -42,8 +41,8 @@ type KV interface {
 	// Get retrieves a key-value pair from the store
 	Get(ctx context.Context, section string, key string) (KVObject, error)
 
-	// Save a new value from an io.Reader
-	Save(ctx context.Context, section string, key string, value io.Reader) error
+	// Save a new value
+	Save(ctx context.Context, section string, key string, value io.ReadCloser) error
 
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
@@ -98,7 +97,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObjec
 	return out, nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
+func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.ReadCloser) error {
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}

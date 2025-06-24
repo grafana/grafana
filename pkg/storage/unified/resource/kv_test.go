@@ -62,7 +62,7 @@ func TestBadgerKV_Save(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Save new key", func(t *testing.T) {
-		err := kv.Save(ctx, "section", "key1", bytes.NewReader([]byte("value1")))
+		err := kv.Save(ctx, "section", "key1", io.NopCloser(bytes.NewReader([]byte("value1"))))
 		require.NoError(t, err)
 
 		// Verify the value was saved
@@ -77,11 +77,11 @@ func TestBadgerKV_Save(t *testing.T) {
 
 	t.Run("Save overwrite existing key", func(t *testing.T) {
 		// First save
-		err := kv.Save(ctx, "section", "key1", bytes.NewReader([]byte("oldvalue")))
+		err := kv.Save(ctx, "section", "key1", io.NopCloser(bytes.NewReader([]byte("oldvalue"))))
 		require.NoError(t, err)
 
 		// Overwrite
-		err = kv.Save(ctx, "section", "key1", bytes.NewReader([]byte("newvalue")))
+		err = kv.Save(ctx, "section", "key1", io.NopCloser(bytes.NewReader([]byte("newvalue"))))
 		require.NoError(t, err)
 
 		// Verify the value was updated
@@ -103,7 +103,7 @@ func TestBadgerKV_Delete(t *testing.T) {
 
 	t.Run("Delete existing key", func(t *testing.T) {
 		// First create a key
-		err := kv.Save(ctx, "section", "key1", bytes.NewReader([]byte("value1")))
+		err := kv.Save(ctx, "section", "key1", io.NopCloser(bytes.NewReader([]byte("value1"))))
 		require.NoError(t, err)
 
 		// Delete it
@@ -136,7 +136,7 @@ func setupIteratorTestData(t *testing.T) (*badgerKV, context.Context) {
 	// Setup test data
 	keys := []string{"a1", "a2", "b1", "b2", "c1"}
 	for _, k := range keys {
-		err := kv.Save(ctx, "section", k, bytes.NewReader([]byte("value"+k)))
+		err := kv.Save(ctx, "section", k, io.NopCloser(bytes.NewReader([]byte("value"+k))))
 		require.NoError(t, err)
 	}
 
@@ -221,7 +221,7 @@ func TestBadgerKV_Concurrent(t *testing.T) {
 				value := []byte(fmt.Sprintf("value%d", i))
 
 				// Save
-				err := kv.Save(ctx, "section", key, bytes.NewReader(value))
+				err := kv.Save(ctx, "section", key, io.NopCloser(bytes.NewReader(value)))
 				require.NoError(t, err)
 
 				// Get
