@@ -225,6 +225,8 @@ export class Scene {
       this.updateConnectionsSize();
       this.fitContent(this, this.zoomToContent!);
 
+      // TODO: This is a workaround to apply styles to the elements after the size update.
+      // It's a good to go approach used by movable creator, but maybe we can find a better way.
       this.root.elements.forEach((el) => {
         el.applyLayoutStylesToDiv(false);
       });

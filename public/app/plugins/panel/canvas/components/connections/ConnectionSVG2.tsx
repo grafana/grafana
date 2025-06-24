@@ -11,20 +11,16 @@ import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
   calculateAngle,
-  // calculateCoordinates,
   calculateCoordinates2,
   calculateDistance,
   calculateMidpoint,
   getConnectionStyles,
-  // getParentBoundingClientRect,
 } from '../../utils';
 
 import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
 
 type Props = {
-  // setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
-  // setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
   setVertexPathRef: (anchorElement: SVGPathElement) => void;
   setVertexRef: (anchorElement: SVGCircleElement) => void;
   setConnectionsSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -34,15 +30,7 @@ type Props = {
 let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
-export const ConnectionSVG = ({
-  // setSVGRef,
-  setLineRef,
-  // setSVGVertexRef,
-  setVertexPathRef,
-  setVertexRef,
-  setConnectionsSVGRef,
-  scene,
-}: Props) => {
+export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setConnectionsSVGRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
   const headId = Date.now() + '_' + idCounter++;
@@ -132,25 +120,15 @@ export const ConnectionSVG = ({
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
           const { source, target, info, vertices, index } = v;
-          // const sourceRect = source.div?.getBoundingClientRect();
           const sourceRect = source.div;
-          const parent = source.div?.parentElement; // do we need this?
-          // const transformScale = scene.scale;
-          // const transformScale = 1;
-          // const parentRect = getParentBoundingClientRect(scene);
-          // const parentRect = scene.viewportDiv?.getBoundingClientRect();
+          const parent = source.div?.parentElement;
           const parentRect = scene.viewportDiv;
 
           if (!sourceRect || !parent || !parentRect) {
             return;
           }
 
-          // let { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
           let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
-          // x1 = x1 - Math.min(x1, x2);
-          // y1 = y1 - Math.min(y1, y2);
-          // x2 = x2 - Math.min(x1, x2);
-          // y2 = y2 - Math.min(y1, y2);
 
           let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
           if (v.sourceOriginal && v.targetOriginal) {
@@ -190,8 +168,6 @@ export const ConnectionSVG = ({
           let pathString = `M${x1} ${y1} `;
           if (vertices?.length) {
             vertices.map((vertex, index) => {
-              // const x = vertex.x;
-              // const y = vertex.y;
               const { x, y } = vertex;
 
               // Convert vertex relative coordinates to scene coordinates
@@ -514,10 +490,6 @@ export const ConnectionSVG = ({
                     markerStart={markerStart}
                     strokeDasharray={lineStyle}
                     strokeDashoffset={1}
-                    // x1={x1 - Math.min(x1, x2)}
-                    // y1={y1 - Math.min(y1, y2)}
-                    // x2={x2 - Math.min(x1, x2)}
-                    // y2={y2 - Math.min(y1, y2)}
                     x1={x1}
                     y1={y1}
                     x2={x2}
@@ -559,37 +531,6 @@ export const ConnectionSVG = ({
 
   return (
     <>
-      {/* svg line for connection creation */}
-      {/* <svg ref={setSVGRef} className={styles.editorSVG}>
-        <defs>
-          <marker
-            id={EDITOR_HEAD_ID}
-            markerWidth="10"
-            markerHeight="7"
-            refX="10"
-            refY="3.5"
-            orient="auto"
-            stroke={defaultArrowColor}
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
-          </marker>
-        </defs>
-        <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
-      </svg> */}
-
-      {/* svg circle for initial vertex?
-          path? is it for the line drag handling? */}
-      {/* <svg ref={setSVGVertexRef} className={styles.editorSVG}>
-        <path
-          ref={setVertexPathRef}
-          stroke={defaultArrowColor}
-          strokeWidth={2}
-          strokeDasharray={'5, 5'}
-          fill={'none'}
-        />
-        <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
-      </svg> */}
-
       <svg ref={setConnectionsSVGRef} className={styles.connection}>
         <defs>
           <marker
@@ -638,27 +579,10 @@ export const ConnectionSVG = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // editorSVG: css({
-  //   position: 'absolute',
-  //   pointerEvents: 'none',
-  //   // width: '100%',
-  //   // height: '100%',
-  //   width: '1000px',
-  //   height: '1000px',
-  //   zIndex: 1000,
-  //   display: 'none',
-  //   border: '2px solid red',
-  // }),
-  // line: css({
-  //   display: 'none',
-  // }),
   connection: css({
     position: 'absolute',
-    // width: '100%',
-    // height: '100%',
     zIndex: 1000,
     pointerEvents: 'none',
-    border: '1px solid green',
   }),
   vertex: css({
     fill: '#44aaff',

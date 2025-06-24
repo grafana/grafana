@@ -514,6 +514,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       if (!scene.editModeEnabled.getValue() && scene.shouldPanZoom && scene.infiniteViewer) {
         scene.infiniteViewer.setZoom(1);
         scene.infiniteViewer.scrollTo(0, 0);
+        // TODO: clear current selection is default behaviour on zoom-in or zoom-out,
+        // but looks like we prevented this event to trigger at some point
+        scene.clearCurrentSelection();
       }
     });
 
@@ -534,6 +537,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
 
       scene.scrollLeft = scene.infiniteViewer!.getScrollLeft();
       scene.scrollTop = scene.infiniteViewer!.getScrollTop();
+      // TODO: clear current selection is default behaviour on zoom-in or zoom-out,
+      // but looks like we prevented this event to trigger at some point
+      scene.clearCurrentSelection();
     });
   }
 };

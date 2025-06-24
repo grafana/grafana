@@ -269,49 +269,46 @@ export class ElementState implements LayerElement {
       // Minimum element size is 10x10
       minWidth: '10px',
       minHeight: '10px',
-      // rotate: `${placement.rotation ?? 0}deg`,
     };
 
-    // const translate = ['0px', '0px'];
+    let transformY = '0px';
+    let transformX = '0px';
 
     switch (vertical) {
       case VerticalConstraint.Top:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        // style.top = `${placement.top}px`;
+        transformY = `${placement.top ?? 0}px`;
         style.height = `${placement.height}px`;
-        // delete placement.bottom;
+        delete placement.bottom;
         break;
       case VerticalConstraint.Bottom:
         placement.bottom = placement.bottom ?? 0;
         placement.height = placement.height ?? 100;
-        // style.bottom = `${placement.bottom}px`;
+        transformY = `${sceneHeight! - (placement.bottom ?? 0) - (placement.height ?? 100)}px`;
         style.height = `${placement.height}px`;
-        // delete placement.top;
+        delete placement.top;
         break;
       case VerticalConstraint.TopBottom:
         placement.top = placement.top ?? 0;
         placement.bottom = placement.bottom ?? 0;
-        // style.top = `${placement.top}px`;
-        // style.bottom = `${placement.bottom}px`;
-        // delete placement.height;
-        style.height = '';
+        transformY = `${placement.top ?? 0}px`;
+        style.height = `${sceneHeight! - (placement.top ?? 0) - (placement.bottom ?? 0)}px`;
+        delete placement.height;
         break;
       case VerticalConstraint.Center:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        // translate[1] = '-50%';
-        // style.top = `calc(50% - ${placement.top}px)`;
+        transformY = `${sceneHeight! / 2 - (placement.top ?? 0) - (placement.height ?? 0) / 2}px`;
         style.height = `${placement.height}px`;
-        // delete placement.bottom;
+        delete placement.bottom;
         break;
       case VerticalConstraint.Scale:
         placement.top = placement.top ?? 0;
         placement.bottom = placement.bottom ?? 0;
-        // style.top = `${placement.top}%`;
-        // style.bottom = `${placement.bottom}%`;
-        // delete placement.height;
-        style.height = '';
+        transformY = `${(placement.top ?? 0) * (sceneHeight! / 100)}px`;
+        style.height = `${sceneHeight! - (placement.top ?? 0) * (sceneHeight! / 100) - (placement.bottom ?? 0) * (sceneHeight! / 100)}px`;
+        delete placement.height;
         break;
     }
 
@@ -319,76 +316,41 @@ export class ElementState implements LayerElement {
       case HorizontalConstraint.Left:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        // style.left = `${placement.left}px`;
+        transformX = `${placement.left ?? 0}px`;
         style.width = `${placement.width}px`;
-        // delete placement.right;
+        delete placement.right;
         break;
       case HorizontalConstraint.Right:
         placement.right = placement.right ?? 0;
         placement.width = placement.width ?? 100;
-        // style.right = `${placement.right}px`;
+        transformX = `${sceneWidth! - (placement.right ?? 0) - (placement.width ?? 100)}px`;
         style.width = `${placement.width}px`;
-        // delete placement.left;
+        delete placement.left;
         break;
       case HorizontalConstraint.LeftRight:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
-        // style.left = `${placement.left}px`;
-        // style.right = `${placement.right}px`;
-        // delete placement.width;
-        style.width = '';
+        transformX = `${placement.left ?? 0}px`;
+        style.width = `${sceneWidth! - (placement.left ?? 0) - (placement.right ?? 0)}px`;
+        delete placement.width;
         break;
       case HorizontalConstraint.Center:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        // translate[0] = '-50%';
-        // style.left = `calc(50% - ${placement.left}px)`;
+        transformX = `${sceneWidth! / 2 - (placement.left ?? 0) - (placement.width ?? 0) / 2}px`;
         style.width = `${placement.width}px`;
-        // delete placement.right;
+        delete placement.right;
         break;
       case HorizontalConstraint.Scale:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
-        // style.left = `${placement.left}%`;
-        // style.right = `${placement.right}%`;
-        // delete placement.width;
-        style.width = '';
+        transformX = `${(placement.left ?? 0) * (sceneWidth! / 100)}px`;
+        style.width = `${sceneWidth! - (placement.left ?? 0) * (sceneWidth! / 100) - (placement.right ?? 0) * (sceneWidth! / 100)}px`;
+        delete placement.width;
         break;
     }
     this.options.placement = placement;
-
-    let transformY = '0px';
-    if (vertical === VerticalConstraint.Bottom) {
-      transformY = `${sceneHeight! - (placement.bottom ?? 0) - (placement.height ?? 100)}px`;
-    } else if (vertical === VerticalConstraint.Top) {
-      transformY = `${placement.top ?? 0}px`;
-    } else if (vertical === VerticalConstraint.TopBottom) {
-      transformY = `${placement.top ?? 0}px`;
-      style.height = `${sceneHeight! - (placement.top ?? 0) - (placement.bottom ?? 0)}px`;
-    } else if (vertical === VerticalConstraint.Center) {
-      transformY = `${sceneHeight! / 2 - (placement.top ?? 0) - (placement.height ?? 0) / 2}px`;
-    } else if (vertical === VerticalConstraint.Scale) {
-      transformY = `${(placement.top ?? 0) * (sceneHeight! / 100)}px`;
-      style.height = `${sceneHeight! - (placement.top ?? 0) * (sceneHeight! / 100) - (placement.bottom ?? 0) * (sceneHeight! / 100)}px`;
-    }
-
-    let transformX = '0px';
-    if (horizontal === HorizontalConstraint.Right) {
-      transformX = `${sceneWidth! - (placement.right ?? 0) - (placement.width ?? 100)}px`;
-    } else if (horizontal === HorizontalConstraint.Left) {
-      transformX = `${placement.left ?? 0}px`;
-    } else if (horizontal === HorizontalConstraint.LeftRight) {
-      transformX = `${placement.left ?? 0}px`;
-      style.width = `${sceneWidth! - (placement.left ?? 0) - (placement.right ?? 0)}px`;
-    } else if (horizontal === HorizontalConstraint.Center) {
-      transformX = `${sceneWidth! / 2 - (placement.left ?? 0) - (placement.width ?? 0) / 2}px`;
-    } else if (horizontal === HorizontalConstraint.Scale) {
-      transformX = `${(placement.left ?? 0) * (sceneWidth! / 100)}px`;
-      style.width = `${sceneWidth! - (placement.left ?? 0) * (sceneWidth! / 100) - (placement.right ?? 0) * (sceneWidth! / 100)}px`;
-    }
     style.transform = `translate(${transformX}, ${transformY}) rotate(${placement.rotation ?? 0}deg)`;
-
-    // style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.sizeStyle = style;
 
     if (this.div) {
@@ -577,7 +539,7 @@ export class ElementState implements LayerElement {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
-    const elSize = this.getTopLeftValues(this.div!);
+    const elementRect = this.getTopLeftValues(this.div!);
 
     if (!elementContainer) {
       elementContainer = this.div && this.div.getBoundingClientRect();
@@ -585,22 +547,17 @@ export class ElementState implements LayerElement {
     // let parentBorderWidth = 0;
     if (!parentContainer) {
       parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
-      // parentBorderWidth = this.parent?.isRoot()
-      //   ? 0
-      //   : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
-    const relativeTop = Math.round(elSize.top);
-    const relativeBottom = Math.round(scene.height - elSize.top - elSize.height);
-    const relativeLeft = Math.round(elSize.left);
-    const relativeRight = Math.round(scene.width - elSize.left - elSize.width);
+    const relativeTop = Math.round(elementRect.top);
+    const relativeBottom = Math.round(scene.height - elementRect.top - elementRect.height);
+    const relativeLeft = Math.round(elementRect.left);
+    const relativeRight = Math.round(scene.width - elementRect.left - elementRect.width);
 
     const placement: Placement = {};
 
-    // const width = (elementContainer?.width ?? 100) / transformScale;
-    // const height = (elementContainer?.height ?? 100) / transformScale;
-    const width = elSize.width;
-    const height = elSize.height;
+    const width = elementRect.width;
+    const height = elementRect.height;
 
     // INFO: calculate it anyway to be able to use it for pan&zoom
     placement.top = relativeTop;
