@@ -1,9 +1,11 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"time"
 
@@ -15,22 +17,22 @@ var ErrNotFound = errors.New("key not found")
 type SortOrder int
 
 const (
-	SortOrderAsc SortOrder = iota
+	SortOrderUndefined SortOrder = iota
+	SortOrderAsc
 	SortOrderDesc
 )
 
 type ListOptions struct {
-	Sort     SortOrder
-	StartKey string
-	EndKey   string
-	Limit    int64
+	Sort     SortOrder // sort order of the results. Default is SortOrderAsc.
+	StartKey string    // lower bound of the range, included in the results
+	EndKey   string    // upper bound of the range, excluded from the results
+	Limit    int64     // maximum number of results to return. 0 means no limit.
 }
 
-type GetOptions struct{}
-
-type KVObject struct {
-	Key   string
-	Value []byte
+// KVReader represents a key-value pair with streaming value access
+type KVReader struct {
+	Key    string
+	Reader io.Reader
 }
 
 type KV interface {
@@ -38,13 +40,10 @@ type KV interface {
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
 	// Get retrieves a key-value pair from the store
-	Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error)
+	Get(ctx context.Context, section string, key string) (KVReader, error)
 
-	// List returns all the key-value pairs in the store
-	List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
-
-	// Save a new value
-	Save(ctx context.Context, section string, key string, value []byte) error
+	// Save a new value from an io.Reader
+	Save(ctx context.Context, section string, key string, value io.Reader) error
 
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
@@ -66,12 +65,12 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 	}
 }
 
-func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error) {
+func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVReader, error) {
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
 	if section == "" {
-		return KVObject{}, fmt.Errorf("section is required")
+		return KVReader{}, fmt.Errorf("section is required")
 	}
 
 	key = section + "/" + key
@@ -79,36 +78,47 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...
 	item, err := txn.Get([]byte(key))
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
-			return KVObject{}, ErrNotFound
+			return KVReader{}, ErrNotFound
 		}
-		return KVObject{}, err
+		return KVReader{}, err
 	}
-	out := KVObject{
-		Key:   string(item.Key())[len(section)+1:],
-		Value: []byte{},
+
+	out := KVReader{
+		Key: string(item.Key())[len(section)+1:],
 	}
+
+	// Get the value and create a reader from it
+	var value []byte
 	err = item.Value(func(val []byte) error {
-		out.Value = make([]byte, len(val))
-		copy(out.Value, val)
+		value = make([]byte, len(val))
+		copy(value, val)
 		return nil
 	})
 	if err != nil {
-		return KVObject{}, err
+		return KVReader{}, err
 	}
+
+	out.Reader = bytes.NewReader(value)
+
 	return out, nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, section string, key string, value []byte) error {
+func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
 	if section == "" {
 		return fmt.Errorf("section is required")
+	}
+
+	key = section + "/" + key
+
+	data, err := io.ReadAll(value)
+	if err != nil {
+		return fmt.Errorf("failed to read value: %w", err)
 	}
 
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
-	key = section + "/" + key
-
-	err := txn.Set([]byte(key), value)
+	err = txn.Set([]byte(key), data)
 	if err != nil {
 		return err
 	}
@@ -139,11 +149,8 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		}
 	}
 
-	txn := k.db.NewTransaction(false)
-
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchValues = false
-	opts.PrefetchSize = 100
 
 	start := section + "/" + opt.StartKey
 	end := section + "/" + opt.EndKey
@@ -162,10 +169,11 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 		return string(item.Key()) >= end
 	}
 
-	iter := txn.NewIterator(opts)
 	count := int64(0)
 
 	return func(yield func(string, error) bool) {
+		txn := k.db.NewTransaction(false)
+		iter := txn.NewIterator(opts)
 		defer txn.Discard()
 		defer iter.Close()
 
@@ -178,78 +186,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 				break
 			}
 			if !yield(string(item.Key())[len(section)+1:], nil) {
-				break
-			}
-			count++
-		}
-	}
-}
-
-func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error] {
-	if section == "" {
-		return func(yield func(KVObject, error) bool) {
-			yield(KVObject{}, fmt.Errorf("section is required"))
-		}
-	}
-
-	txn := k.db.NewTransaction(false)
-
-	opts := badger.DefaultIteratorOptions
-	opts.PrefetchValues = true
-	opts.PrefetchSize = 100
-
-	start := section + "/" + opt.StartKey
-	end := section + "/" + opt.EndKey
-	if opt.EndKey == "" {
-		end = PrefixRangeEnd(section + "/")
-	}
-	if opt.Sort == SortOrderDesc {
-		start, end = end, start
-		opts.Reverse = true
-	}
-
-	isEnd := func(item *badger.Item) bool {
-		if opt.Sort == SortOrderDesc {
-			return string(item.Key()) <= end
-		}
-		return string(item.Key()) >= end
-	}
-
-	iter := txn.NewIterator(opts)
-	count := int64(0)
-
-	return func(yield func(KVObject, error) bool) {
-		defer txn.Discard()
-		defer iter.Close()
-
-		for iter.Seek([]byte(start)); iter.Valid(); iter.Next() {
-			item := iter.Item()
-			if opt.Limit > 0 && count >= opt.Limit {
-				break
-			}
-			if isEnd(item) {
-				break
-			}
-
-			obj := KVObject{
-				Key:   string(item.Key())[len(section)+1:],
-				Value: []byte{},
-			}
-
-			err := item.Value(func(val []byte) error {
-				obj.Value = make([]byte, len(val))
-				copy(obj.Value, val)
-				return nil
-			})
-
-			if err != nil {
-				if !yield(KVObject{}, err) {
-					break
-				}
-				continue
-			}
-
-			if !yield(obj, nil) {
 				break
 			}
 			count++
