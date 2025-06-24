@@ -192,7 +192,7 @@ jobs:
       environment: prod
   publish-artifact-lists:
     name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
     needs:
