@@ -4,12 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var node, _ = snowflake.NewNode(1)
 
 func setupTestKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)

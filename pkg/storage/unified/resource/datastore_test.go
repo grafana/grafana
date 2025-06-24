@@ -6,8 +6,11 @@ import (
 	"io"
 	"testing"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 )
+
+var node, _ = snowflake.NewNode(1)
 
 func setupTestDataStore(t *testing.T) *dataStore {
 	kv := setupTestKV(t)
