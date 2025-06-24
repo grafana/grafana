@@ -83,8 +83,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObjec
 		return KVObject{}, err
 	}
 	out := KVObject{
-		Key:   string(item.Key())[len(section)+1:],
-		Value: []byte{},
+		Key: string(item.Key())[len(section)+1:],
 	}
 	err = item.Value(func(val []byte) error {
 		out.Value = make([]byte, len(val))
