@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "",
         "label-allow-as-recording-rules-target": "",
+        "label-manage-alerts-via-alerting-ui": "",
         "title-alerting": "경고",
-        "tooltip-manage-alerts-via-alerting-ui": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요.",
-        "tooltip-allow-as-recording-rules-target": ""
+        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-manage-alerts-via-alerting-ui": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요."
       },
       "config-editor": {
         "browser-access-mode-error": "",
@@ -171,6 +171,7 @@
         "label-query-timeout": "",
         "label-scrape-interval": "",
         "label-use-series-endpoint": "",
+        "label-series-limit": "",
         "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "",
         "title-interval-behaviour": "",
@@ -190,7 +191,8 @@
         "tooltip-query-overlap-window": "",
         "tooltip-query-timeout": "",
         "tooltip-scrape-interval": "",
-        "tooltip-use-series-endpoint": ""
+        "tooltip-use-series-endpoint": "",
+        "tooltip-series-limit": ""
       }
     },
     "querybuilder": {

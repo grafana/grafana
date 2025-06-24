@@ -1065,6 +1065,9 @@
     "error-summary-button": {
       "content-show-all-errors": "Mostra tutti gli errori"
     },
+    "errors": {
+      "failedWith": ""
+    },
     "evaluate-every-validation-options": {
       "message": {
         "required": ""
@@ -3267,9 +3270,6 @@
       "search-placeholder": "Cerca cartelle",
       "unknown-error": "Errore sconosciuto"
     },
-    "hard-delete": {
-      "success": "Dashboard {{name}} eliminato"
-    },
     "manage-folder-nav": {
       "alert-rules": "Regole di avviso",
       "dashboards": "Dashboard",
@@ -3306,6 +3306,9 @@
     "no-results": {
       "clear": "Cancella ricerca e filtri",
       "text": "Nessun risultato trovato per la ricerca"
+    },
+    "restore": {
+      "success": ""
     },
     "text-this-repository-is-read-only": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì."
   },
@@ -4055,8 +4058,12 @@
     },
     "edit-actions": {
       "add": "",
+      "move": "",
       "panel-background": "",
       "panel-description": "",
+      "panel-max-repeats-per-row": "",
+      "panel-repeat-direction": "Ripeti la direzione",
+      "panel-repeat-variable": "",
       "panel-title": "",
       "paste-panel": "Incolla pannello",
       "remove": "",
@@ -5037,6 +5044,15 @@
         }
       }
     },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "Annulla",
+      "delete-action": "Elimina dashboard",
+      "delete-read-only-file-message": "",
+      "deleting": "Eliminazione in corso...",
+      "drawer-title": "",
+      "title-this-repository-is-read-only": "Questo repository è di sola lettura"
+    },
     "description-label": {
       "description": "Descrizione"
     },
@@ -5046,6 +5062,9 @@
           "edit-link": "Modifica i collegamenti"
         }
       }
+    },
+    "edit-provisioned-dashboard-form": {
+      "success": ""
     },
     "email-list": {
       "aria-label-emailmenu": "Attiva/disattiva il menu e-mail"
@@ -5319,24 +5338,25 @@
       "affected-dashboards_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:",
       "affected-dashboards_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:"
     },
+    "save-or-delete-provisioned-dashboard-form": {
+      "dashboard-comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
+      "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
+      "description-inside-repository": "Percorso del file all'interno del repository (.json o .yaml)",
+      "label-branch": "Ramo",
+      "label-comment": "Commento",
+      "label-path": "Percorso",
+      "label-workflow": "Flusso di lavoro"
+    },
     "save-provisioned-dashboard-form": {
       "api-error": "Errore durante il salvataggio del dashboard",
-      "api-success": "Modifiche al dashboard salvate",
       "cancel": "Annulla",
       "cannot-be-saved": "Questa dashboard non può essere salvata dall'interfaccia utente di Grafana perché è stata fornita da un'altra fonte. Copia il JSON o salvalo in un file qui sotto, dopodiché potrai aggiornare la dashboard nella fonte di provisioning.",
       "copy-json-message": "Se hai accesso diretto alla destinazione, copia il file JSON e incollalo lì.",
       "copy-json-to-clipboard": "Copia JSON negli appunti",
-      "dashboard-comment-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
-      "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
-      "description-inside-repository": "Percorso del file all'interno del repository (.json o .yaml)",
       "file-path": "<0>Percorso file:</0> {{filePath}}",
-      "label-branch": "Ramo",
-      "label-comment": "Commento",
       "label-description": "Descrizione",
-      "label-path": "Percorso",
       "label-target-folder": "Cartella di destinazione",
       "label-title": "Titolo",
-      "label-workflow": "Flusso di lavoro",
       "save": "Salva",
       "save-json-to-file": "Salva JSON nel file",
       "saving": "Salvataggio in corso...",
@@ -8505,9 +8525,6 @@
     "rss-button": "Ultime dal blog"
   },
   "news": {
-    "drawer": {
-      "close": "Chiudi cassetto di navigazione"
-    },
     "link-title": "Vai al blog di Grafana Labs",
     "news-panel": {
       "body-error-loading-rss-feed": "",
@@ -9753,7 +9770,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Elimina definitivamente",
       "restore": "Ripristina"
     },
     "page": {
