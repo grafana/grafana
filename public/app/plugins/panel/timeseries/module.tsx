@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -18,9 +19,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
 
     builder.addCustomEditor({
       id: 'timezone',
-      name: 'Time zone',
+      name: t('timeseries.name-time-zone', 'Time zone'),
       path: 'timezone',
-      category: ['Axis'],
+      category: [t('timeseries.category-axis', 'Axis')],
       editor: TimezonesEditor,
       defaultValue: undefined,
     });

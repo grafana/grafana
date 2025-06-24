@@ -1,4 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
 
@@ -31,28 +32,32 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
   })
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
+    const category = [t('piechart.category-pie-chart', 'Pie chart')];
+    const legendCategory = [t('piechart.category-legend', 'Legend')];
     builder
       .addRadio({
-        name: 'Piechart type',
-        description: 'How the piechart should be rendered',
+        name: t('piechart.name-pie-chart-type', 'Pie chart type'),
+        category,
+        description: t('piechart.description-pie-chart-type', 'How the pie chart should be rendered'),
         path: 'pieType',
         settings: {
           options: [
-            { value: PieChartType.Pie, label: 'Pie' },
-            { value: PieChartType.Donut, label: 'Donut' },
+            { value: PieChartType.Pie, label: t('piechart.pie-chart-type-options.label-pie', 'Pie') },
+            { value: PieChartType.Donut, label: t('piechart.pie-chart-type-options.label-donut', 'Donut') },
           ],
         },
         defaultValue: PieChartType.Pie,
       })
       .addMultiSelect({
-        name: 'Labels',
+        name: t('piechart.name-labels', 'Labels'),
+        category,
         path: 'displayLabels',
-        description: 'Select the labels to be displayed in the pie chart',
+        description: t('piechart.description-labels', 'Select the labels to be displayed in the pie chart'),
         settings: {
           options: [
-            { value: PieChartLabels.Percent, label: 'Percent' },
-            { value: PieChartLabels.Name, label: 'Name' },
-            { value: PieChartLabels.Value, label: 'Value' },
+            { value: PieChartLabels.Percent, label: t('piechart.labels-options.label-percent', 'Percent') },
+            { value: PieChartLabels.Name, label: t('piechart.labels-options.label-name', 'Name') },
+            { value: PieChartLabels.Value, label: t('piechart.labels-options.label-value', 'Value') },
           ],
         },
       });
@@ -61,13 +66,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({
-      name: 'Legend values',
+      name: t('piechart.name-legend-values', 'Legend values'),
       path: 'legend.values',
-      category: ['Legend'],
+      category: legendCategory,
       settings: {
         options: [
-          { value: PieChartLegendValues.Percent, label: 'Percent' },
-          { value: PieChartLegendValues.Value, label: 'Value' },
+          { value: PieChartLegendValues.Percent, label: t('piechart.legend-values-options.label-percent', 'Percent') },
+          { value: PieChartLegendValues.Value, label: t('piechart.legend-values-options.label-value', 'Value') },
         ],
       },
       showIf: (c) => c.legend.showLegend !== false,

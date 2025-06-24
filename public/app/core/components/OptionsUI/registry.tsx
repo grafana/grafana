@@ -30,6 +30,7 @@ import {
   DataLinksFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
@@ -162,8 +163,8 @@ export const getAllOptionEditors = () => {
 
   const timeZone: StandardEditorsRegistryItem<TimeZone> = {
     id: 'timezone',
-    name: 'Time zone',
-    description: 'Time zone selection',
+    name: t('options-ui.registry.get-all-option-editors.name-time-zone', 'Time zone'),
+    description: t('options-ui.registry.get-all-option-editors.description-time-zone', 'Time zone selection'),
     editor: TimeZonePicker,
   };
 
@@ -222,17 +223,20 @@ export const getAllOptionEditors = () => {
  * Returns collection of common field config properties definitions
  */
 export const getAllStandardFieldConfigs = () => {
-  const category = ['Standard options'];
+  const category = [t('options-ui.registry.standard-field-configs.category', 'Standard options')];
   const displayName: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'displayName',
     path: 'displayName',
-    name: 'Display name',
-    description: 'Change the field or series name',
+    name: t('options-ui.registry.standard-field-configs.name-display-name', 'Display name'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-display-name',
+      'Change the field or series name'
+    ),
     editor: standardEditorsRegistry.get('text').editor,
     override: standardEditorsRegistry.get('text').editor,
     process: displayNameOverrideProcessor,
     settings: {
-      placeholder: 'none',
+      placeholder: t('options-ui.registry.standard-field-configs.placeholder-display-name', 'none'),
       expandTemplateVars: true,
     },
     shouldApply: () => true,
@@ -242,7 +246,7 @@ export const getAllStandardFieldConfigs = () => {
   const unit: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
-    name: 'Unit',
+    name: t('options-ui.registry.standard-field-configs.name-unit', 'Unit'),
     description: '',
 
     editor: standardEditorsRegistry.get('unit').editor,
@@ -250,7 +254,7 @@ export const getAllStandardFieldConfigs = () => {
     process: stringOverrideProcessor,
 
     settings: {
-      placeholder: 'none',
+      placeholder: t('options-ui.registry.standard-field-configs.placeholder-unit', 'none'),
     },
 
     shouldApply: () => true,
@@ -260,8 +264,11 @@ export const getAllStandardFieldConfigs = () => {
   const fieldMinMax: FieldConfigPropertyItem<FieldConfig, boolean, BooleanFieldSettings> = {
     id: 'fieldMinMax',
     path: 'fieldMinMax',
-    name: 'Field min/max',
-    description: 'Calculate min max per field',
+    name: t('options-ui.registry.standard-field-configs.name-field-min-max', 'Field min/max'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-field-min-max',
+      'Calculate min max per field'
+    ),
 
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,
@@ -277,15 +284,18 @@ export const getAllStandardFieldConfigs = () => {
   const min: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
-    name: 'Min',
-    description: 'Leave empty to calculate based on all values',
+    name: t('options-ui.registry.standard-field-configs.name-min', 'Min'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-min',
+      'Leave empty to calculate based on all values'
+    ),
 
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
-      placeholder: 'auto',
+      placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
     },
     shouldApply: (field) => field.type === FieldType.number,
     category,
@@ -294,15 +304,18 @@ export const getAllStandardFieldConfigs = () => {
   const max: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'max',
     path: 'max',
-    name: 'Max',
-    description: 'Leave empty to calculate based on all values',
+    name: t('options-ui.registry.standard-field-configs.name-max', 'Max'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-max',
+      'Leave empty to calculate based on all values'
+    ),
 
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
-      placeholder: 'auto',
+      placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
     },
 
     shouldApply: (field) => field.type === FieldType.number,
@@ -312,14 +325,14 @@ export const getAllStandardFieldConfigs = () => {
   const decimals: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
     id: 'decimals',
     path: 'decimals',
-    name: 'Decimals',
+    name: t('options-ui.registry.standard-field-configs.name-decimals', 'Decimals'),
 
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
 
     settings: {
-      placeholder: 'auto',
+      placeholder: t('options-ui.registry.standard-field-configs.placeholder-decimals', 'auto'),
       min: 0,
       max: 15,
       integer: true,
@@ -332,8 +345,11 @@ export const getAllStandardFieldConfigs = () => {
   const noValue: FieldConfigPropertyItem<FieldConfig, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
-    name: 'No value',
-    description: 'What to show when there is no value',
+    name: t('options-ui.registry.standard-field-configs.name-no-value', 'No value'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-no-value',
+      'What to show when there is no value'
+    ),
 
     editor: standardEditorsRegistry.get('text').editor,
     override: standardEditorsRegistry.get('text').editor,
@@ -347,12 +363,15 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const dataLinksCategory = 'Data links and actions';
+  const dataLinksCategory = t(
+    'options-ui.registry.standard-field-condigs.category-data-links',
+    'Data links and actions'
+  );
 
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], DataLinksFieldConfigSettings> = {
     id: 'links',
     path: 'links',
-    name: 'Data links',
+    name: t('options-ui.registry.standard-field-configs.name-data-links', 'Data links'),
     editor: standardEditorsRegistry.get('links').editor,
     override: standardEditorsRegistry.get('links').editor,
     process: dataLinksOverrideProcessor,
@@ -367,7 +386,7 @@ export const getAllStandardFieldConfigs = () => {
   const actions: FieldConfigPropertyItem<FieldConfig, Action[], DataLinksFieldConfigSettings> = {
     id: 'actions',
     path: 'actions',
-    name: 'Actions',
+    name: t('options-ui.registry.standard-field-configs.name-actions', 'Actions'),
     editor: standardEditorsRegistry.get('actions').editor,
     override: standardEditorsRegistry.get('actions').editor,
     process: actionsOverrideProcessor,
@@ -383,7 +402,7 @@ export const getAllStandardFieldConfigs = () => {
   const color: FieldConfigPropertyItem<FieldConfig, FieldColor | undefined, FieldColorConfigSettings> = {
     id: 'color',
     path: 'color',
-    name: 'Color scheme',
+    name: t('options-ui.registry.standard-field-configs.name-color-scheme', 'Color scheme'),
     editor: standardEditorsRegistry.get('fieldColor').editor,
     override: standardEditorsRegistry.get('fieldColor').editor,
     process: identityOverrideProcessor,
@@ -398,8 +417,11 @@ export const getAllStandardFieldConfigs = () => {
   const mappings: FieldConfigPropertyItem<FieldConfig, ValueMapping[], ValueMappingFieldConfigSettings> = {
     id: 'mappings',
     path: 'mappings',
-    name: 'Value mappings',
-    description: 'Modify the display text based on input value',
+    name: t('options-ui.registry.standard-field-configs.name-value-mappings', 'Value mappings'),
+    description: t(
+      'options-ui.registry.standard-field-configs.description-value-mappings',
+      'Modify the display text based on input value'
+    ),
 
     editor: standardEditorsRegistry.get('mappings').editor,
     override: standardEditorsRegistry.get('mappings').editor,
@@ -407,14 +429,14 @@ export const getAllStandardFieldConfigs = () => {
     settings: {},
     defaultValue: [],
     shouldApply: (x) => x.type !== FieldType.time,
-    category: ['Value mappings'],
+    category: [t('options-ui.registry.standard-field-configs.category-value-mappings', 'Value mappings')],
     getItemsCount: (value?) => (value ? value.length : 0),
   };
 
   const thresholds: FieldConfigPropertyItem<FieldConfig, ThresholdsConfig, ThresholdsFieldConfigSettings> = {
     id: 'thresholds',
     path: 'thresholds',
-    name: 'Thresholds',
+    name: t('options-ui.registry.standard-field-configs.name-thresholds', 'Thresholds'),
     editor: standardEditorsRegistry.get('thresholds').editor,
     override: standardEditorsRegistry.get('thresholds').editor,
     process: thresholdsOverrideProcessor,
@@ -427,14 +449,14 @@ export const getAllStandardFieldConfigs = () => {
       ],
     },
     shouldApply: () => true,
-    category: ['Thresholds'],
+    category: [t('options-ui.registry.standard-field-configs.category-thresholds', 'Thresholds')],
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
   const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
-    name: 'Ad-hoc filterable',
+    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Ad-hoc filterable'),
     hideFromDefaults: true,
     editor: standardEditorsRegistry.get('boolean').editor,
     override: standardEditorsRegistry.get('boolean').editor,

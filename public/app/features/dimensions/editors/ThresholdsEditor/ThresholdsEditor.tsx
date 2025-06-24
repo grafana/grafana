@@ -15,15 +15,6 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
-const modes: Array<SelectableValue<ThresholdsMode>> = [
-  { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
-  {
-    value: ThresholdsMode.Percentage,
-    label: 'Percentage',
-    description: 'Pick threshold based on the percent between min/max',
-  },
-];
-
 export interface Props {
   thresholds: ThresholdsConfig;
   onChange: (thresholds: ThresholdsConfig) => void;
@@ -155,7 +146,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
       return (
         <Input
           type="text"
-          value={'Base'}
+          value={t('dimensions.thresholds-editor.value-base', 'Base')}
           aria-label={ariaLabel}
           disabled
           prefix={
@@ -210,6 +201,25 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   render() {
     const { thresholds } = this.props;
     const { steps } = this.state;
+
+    const modes: Array<SelectableValue<ThresholdsMode>> = [
+      {
+        value: ThresholdsMode.Absolute,
+        label: t('dimensions.thresholds-editor.modes.label.absolute', 'Absolute'),
+        description: t(
+          'dimensions.thresholds-editor.modes.description.thresholds-based-absolute-values',
+          'Pick thresholds based on the absolute values'
+        ),
+      },
+      {
+        value: ThresholdsMode.Percentage,
+        label: t('dimensions.thresholds-editor.modes.label.percentage', 'Percentage'),
+        description: t(
+          'dimensions.thresholds-editor.modes.description.threshold-based-percent-between-minmax',
+          'Pick threshold based on the percent between min/max'
+        ),
+      },
+    ];
 
     return (
       <ThemeContext.Consumer>

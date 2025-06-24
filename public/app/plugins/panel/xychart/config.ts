@@ -5,6 +5,7 @@ import {
   identityOverrideProcessor,
   SetFieldConfigOptionsArgs,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -58,16 +59,18 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
     },
 
     useCustomConfig: (builder) => {
+      const category = [t('xychart.category-xychart', 'XY Chart')];
       builder
         .addRadio({
           path: 'show',
-          name: 'Show',
+          name: t('xychart.name-show', 'Show'),
+          category,
           defaultValue: cfg.show,
           settings: {
             options: [
-              { label: 'Points', value: XYShowMode.Points },
-              { label: 'Lines', value: XYShowMode.Lines },
-              { label: 'Both', value: XYShowMode.PointsAndLines },
+              { label: t('xychart.show-options.label-points', 'Points'), value: XYShowMode.Points },
+              { label: t('xychart.show-options.label-lines', 'Lines'), value: XYShowMode.Lines },
+              { label: t('xychart.show-options.label-both', 'Both'), value: XYShowMode.PointsAndLines },
             ],
           },
         })
@@ -92,7 +95,8 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         // )
         .addSliderInput({
           path: 'pointSize.fixed',
-          name: 'Point size',
+          name: t('xychart.name-point-size', 'Point size'),
+          category,
           defaultValue: cfg.pointSize?.fixed ?? DEFAULT_POINT_SIZE,
           settings: {
             min: 1,
@@ -103,29 +107,33 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         })
         .addNumberInput({
           path: 'pointSize.min',
-          name: 'Min point size',
+          name: t('xychart.name-min-point-size', 'Min point size'),
+          category,
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
         .addNumberInput({
           path: 'pointSize.max',
-          name: 'Max point size',
+          name: t('xychart.name-max-point-size', 'Max point size'),
+          category,
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
         .addRadio({
           path: 'pointShape',
-          name: 'Point shape',
+          name: t('xychart.name-point-shape', 'Point shape'),
+          category,
           defaultValue: PointShape.Circle,
           settings: {
             options: [
-              { value: PointShape.Circle, label: 'Circle' },
-              { value: PointShape.Square, label: 'Square' },
+              { value: PointShape.Circle, label: t('xychart.point-shape-options.label-circle', 'Circle') },
+              { value: PointShape.Square, label: t('xychart.point-shape-options.label-square', 'Square') },
             ],
           },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
         .addSliderInput({
           path: 'pointStrokeWidth',
-          name: 'Point stroke width',
+          name: t('xychart.name-point-stroke-width', 'Point stroke width'),
+          category,
           defaultValue: 1,
           settings: {
             min: 0,
@@ -135,7 +143,8 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: 'Fill opacity',
+          name: t('xychart.name-fill-opacity', 'Fill opacity'),
+          category,
           defaultValue: 50,
           settings: {
             min: 0,
@@ -147,7 +156,8 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
-          name: 'Line style',
+          name: t('xychart.name-line-style', 'Line style'),
+          category,
           showIf: (c) => c.show !== XYShowMode.Points,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -156,7 +166,8 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         })
         .addSliderInput({
           path: 'lineWidth',
-          name: 'Line width',
+          name: t('xychart.name-line-width', 'Line width'),
+          category,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,
