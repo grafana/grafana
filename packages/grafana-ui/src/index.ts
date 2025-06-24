@@ -280,7 +280,6 @@ export * from './components/Select/types';
 export { Combobox } from './components/Combobox/Combobox';
 export { MultiCombobox } from './components/Combobox/MultiCombobox';
 export { type ComboboxOption } from './components/Combobox/types';
-export { fuzzyFind } from './components/Combobox/filter';
 
 export { HorizontalGroup, VerticalGroup, Container } from './components/Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './components/Badge/Badge';

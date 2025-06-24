@@ -1,5 +1,4 @@
-import { DataFrameView, IconName } from '@grafana/data';
-import { fuzzyFind } from '@grafana/ui';
+import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -180,15 +179,9 @@ export function filterSearchResults(
 
   if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
     const searchString = query.query || query.tag?.join(',') || '';
-    const haystack: string[] = [];
-    const options: Array<{ value: number }> = [];
-    // Using forEach to do both the haystack and options array at once
-    results.forEach((hit, i) => {
-      haystack.push(`${hit.title},${hit.tags.join(',')}`);
-      options.push({ value: i });
-    });
-    const matches = fuzzyFind(options, haystack, searchString);
-    filtered = matches.map((match) => results[match.value]);
+    const haystack = results.map((hit) => `${hit.title},${hit.tags.join(',')}`);
+    const indices = fuzzySearch(haystack, searchString);
+    filtered = indices.map((index) => results[index]);
   }
 
   if (query.sort) {
