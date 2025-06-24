@@ -347,62 +347,119 @@ describe('Order Transformer', () => {
         });
       }
     );
-  });
 
-  it.each`
-    labelPodIndex | labelUserIndex | fieldNameIndex | expectedFieldNameOrder
-    ${0}          | ${1}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
-    ${0}          | ${2}           | ${1}           | ${['Series-3', 'Series-2', 'Series-1']}
-    ${1}          | ${0}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
-    ${2}          | ${0}           | ${1}           | ${['Series-3', 'Series-1', 'Series-2']}
-    ${1}          | ${2}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
-    ${2}          | ${1}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
-  `(
-    'When the indexes are label pod: $labelPodIndex / label user: $labelUserIndex / field name: $fieldNameIndex when all of them are sort DESC, then the field order is $expectedFieldNameOrder',
-    async ({ labelPodIndex, labelUserIndex, fieldNameIndex, expectedFieldNameOrder }) => {
-      let items: OrderByItem[] = Array(3);
+    it.each`
+      labelPodIndex | labelUserIndex | fieldNameIndex | expectedFieldNameOrder
+      ${0}          | ${1}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
+      ${0}          | ${2}           | ${1}           | ${['Series-3', 'Series-2', 'Series-1']}
+      ${1}          | ${0}           | ${2}           | ${['Series-3', 'Series-1', 'Series-2']}
+      ${2}          | ${0}           | ${1}           | ${['Series-3', 'Series-1', 'Series-2']}
+      ${1}          | ${2}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
+      ${2}          | ${1}           | ${0}           | ${['Series-3', 'Series-2', 'Series-1']}
+    `(
+      'When the indexes are label pod: $labelPodIndex / label user: $labelUserIndex / field name: $fieldNameIndex when all of them are sort DESC, then the field order is $expectedFieldNameOrder',
+      async ({ labelPodIndex, labelUserIndex, fieldNameIndex, expectedFieldNameOrder }) => {
+        let items: OrderByItem[] = Array(3);
 
-      items[labelPodIndex] = { type: OrderByType.Label, name: 'pod', desc: true };
-      items[labelUserIndex] = { type: OrderByType.Label, name: 'user', desc: true };
-      items[fieldNameIndex] = { type: OrderByType.Name, desc: true };
+        items[labelPodIndex] = { type: OrderByType.Label, name: 'pod', desc: true };
+        items[labelUserIndex] = { type: OrderByType.Label, name: 'user', desc: true };
+        items[fieldNameIndex] = { type: OrderByType.Name, desc: true };
 
+        const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+          id: DataTransformerID.order,
+          options: {
+            orderByMode: OrderByMode.Auto,
+            orderBy: items,
+          },
+        };
+
+        const data = toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'Series-1',
+              type: FieldType.number,
+              labels: { pod: 123, user: 555 },
+              values: [10.3],
+            },
+            {
+              name: 'Series-2',
+              type: FieldType.number,
+              labels: { pod: 123, user: 312 },
+              values: [100.3],
+            },
+            {
+              name: 'Series-3',
+              labels: { pod: 456, user: 555 },
+              type: FieldType.number,
+              values: [10000.3],
+            },
+          ],
+        });
+
+        await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+          const data = received[0];
+          const ordered = data[0];
+          expect(ordered.fields.map((f) => f.name)).toEqual(expectedFieldNameOrder);
+        });
+      }
+    );
+
+    it('should always keep the first time field first', async () => {
+      const data = toDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [3000] },
+          { name: 'pressure', type: FieldType.number, values: [10.3] },
+          { name: 'humidity', type: FieldType.number, values: [10000.3] },
+        ],
+      });
+
+      // ascending sort on name means time would be last
       const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
         id: DataTransformerID.order,
         options: {
           orderByMode: OrderByMode.Auto,
-          orderBy: items,
+          orderBy: [{ type: OrderByType.Name, desc: false }],
         },
       };
-
-      const data = toDataFrame({
-        name: 'A',
-        fields: [
-          {
-            name: 'Series-1',
-            type: FieldType.number,
-            labels: { pod: 123, user: 555 },
-            values: [10.3],
-          },
-          {
-            name: 'Series-2',
-            type: FieldType.number,
-            labels: { pod: 123, user: 312 },
-            values: [100.3],
-          },
-          {
-            name: 'Series-3',
-            labels: { pod: 456, user: 555 },
-            type: FieldType.number,
-            values: [10000.3],
-          },
-        ],
-      });
 
       await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
         const data = received[0];
         const ordered = data[0];
-        expect(ordered.fields.map((f) => f.name)).toEqual(expectedFieldNameOrder);
+        expect(ordered.fields).toEqual([
+          {
+            config: {},
+            name: 'time',
+            type: FieldType.time,
+            values: [3000],
+            state: {
+              displayName: 'time',
+              multipleFrames: false,
+            },
+          },
+          {
+            config: {},
+            name: 'humidity',
+            type: FieldType.number,
+            values: [10000.3],
+            state: {
+              displayName: 'humidity',
+              multipleFrames: false,
+            },
+          },
+          {
+            config: {},
+            name: 'pressure',
+            type: FieldType.number,
+            values: [10.3],
+            state: {
+              displayName: 'pressure',
+              multipleFrames: false,
+            },
+          },
+        ]);
       });
-    }
-  );
+    });
+  });
 });
