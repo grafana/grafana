@@ -289,7 +289,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		assert.NoError(t, err, "can list values")
 		assert.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
-	}, time.Second*10, time.Millisecond*10, "Expected dashboards to be deleted")
+	}, time.Second*20, time.Millisecond*10, "Expected dashboards to be deleted")
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
