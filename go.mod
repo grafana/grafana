@@ -575,7 +575,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+require github.com/dgraph-io/badger/v4 v4.7.0
+
 require (
+	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.0 // indirect
