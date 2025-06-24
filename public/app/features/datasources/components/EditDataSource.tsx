@@ -117,6 +117,10 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
+  // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
+  // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
+  // (which provides the `datasource` object) won't be updated yet, and they override each others `jsonData` value.
+  let currentJsonData = dataSource.jsonData;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
@@ -201,16 +205,20 @@ export function EditDataSourceView({
                 dataSource,
                 dataSourceMeta,
                 testingStatus,
-                setJsonData: (jsonData) =>
+                setJsonData: (jsonData) => {
+                  currentJsonData = { ...currentJsonData, ...jsonData };
                   onOptionsChange({
                     ...dataSource,
-                    jsonData: { ...dataSource.jsonData, ...jsonData },
-                  }),
-                setSecureJsonData: (secureJsonData) =>
+                    jsonData: currentJsonData,
+                  });
+                },
+                setSecureJsonData: (secureJsonData) => {
                   onOptionsChange({
                     ...dataSource,
+                    jsonData: { ...currentJsonData },
                     secureJsonData: { ...dataSource.secureJsonData, ...secureJsonData },
-                  }),
+                  });
+                },
               }}
             />
           </div>
