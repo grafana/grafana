@@ -349,7 +349,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         <Menu.Item
           component={() => (
             <div className={styles.sqlItem}>
-              <div className={styles.leftContent}>
+              <div className={styles.leftContent} data-testid={`expression-type-${value}`}>
                 <Icon className={styles.icon} name={expressionIconMap[value!]} />
                 {label}
                 {value === 'sql' && <FeatureBadge featureState={FeatureState.new} />}

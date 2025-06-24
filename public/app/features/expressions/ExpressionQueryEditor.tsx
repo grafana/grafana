@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -83,6 +83,15 @@ export function ExpressionQueryEditor(props: Props) {
 
   const styles = useStyles2(getStyles);
 
+  const expressionTypeOptions = useMemo(
+    () =>
+      expressionTypes.map(({ label, value }) => ({
+        label: label!,
+        value: value!,
+      })),
+    []
+  );
+
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
   }, [query.expression, query.type, setCachedExpression]);
@@ -131,10 +140,7 @@ export function ExpressionQueryEditor(props: Props) {
           labelWidth={labelWidth}
         >
           <Combobox
-            options={expressionTypes.map(({ label, value }) => ({
-              label: label!,
-              value: value!,
-            }))}
+            options={expressionTypeOptions}
             value={query.type}
             onChange={({ value }) => onSelectExpressionType({ value })}
             width={25}
