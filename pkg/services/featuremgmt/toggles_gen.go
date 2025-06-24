@@ -934,4 +934,8 @@ const (
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
+
+	// FlagTabularNumbers
+	// Use fixed-width numbers globally in the UI
+	FlagTabularNumbers = "tabularNumbers"
 )
