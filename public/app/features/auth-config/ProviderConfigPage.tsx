@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -16,8 +16,11 @@ import { SSOProvider } from './types';
 const getPageNav = (config?: SSOProvider): NavModelItem => {
   if (!config) {
     return {
-      text: 'Authentication',
-      subTitle: 'Configure authentication providers',
+      text: t('auth-config.get-page-nav.text.authentication', 'Authentication'),
+      subTitle: t(
+        'auth-config.get-page-nav.subTitle.configure-authentication-providers',
+        'Configure authentication providers'
+      ),
       icon: 'shield',
       id: 'authentication',
     };
@@ -45,7 +48,6 @@ export const ProviderConfigPage = () => {
   useEffect(() => {
     dispatch(loadProviders(provider));
   }, [dispatch, provider]);
-  const { t } = useTranslate();
 
   if (!config || !config.provider || !UIMap[config.provider]) {
     return <PageNotFound />;

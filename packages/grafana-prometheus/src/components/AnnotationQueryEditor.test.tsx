@@ -5,7 +5,7 @@ import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 import { EmptyLanguageProviderMock } from '../language_provider.mock';
 import { PromQuery } from '../types';
 
@@ -47,7 +47,7 @@ describe('AnnotationQueryEditor', () => {
   };
 
   function createMockDatasource() {
-    const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+    const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
     const mockDatasource = {
       languageProvider,
       lookupsDisabled: false,
@@ -83,12 +83,12 @@ describe('AnnotationQueryEditor', () => {
 
   it('displays an error message when annotation data is missing', () => {
     render(<AnnotationQueryEditor {...defaultProps} annotation={undefined} />);
-    expect(screen.getByText('annotation data load error!')).toBeInTheDocument();
+    expect(screen.getByText('Annotation data load error!')).toBeInTheDocument();
   });
 
   it('displays an error message when onAnnotationChange is missing', () => {
     render(<AnnotationQueryEditor {...defaultProps} onAnnotationChange={undefined} />);
-    expect(screen.getByText('annotation data load error!')).toBeInTheDocument();
+    expect(screen.getByText('Annotation data load error!')).toBeInTheDocument();
   });
 
   it('renders correctly with an empty annotation object', () => {
@@ -96,7 +96,7 @@ describe('AnnotationQueryEditor', () => {
     // Should render normally with empty values but not show an error
     expect(screen.getByText('Min step')).toBeInTheDocument();
     expect(screen.getByText('Title')).toBeInTheDocument();
-    expect(screen.queryByText('annotation data load error!')).not.toBeInTheDocument();
+    expect(screen.queryByText('Annotation data load error!')).not.toBeInTheDocument();
   });
 
   it('calls onChange when min step is updated', () => {

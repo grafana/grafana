@@ -4,17 +4,22 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { Node } from './types';
+import { NodesMap, TreeNode } from './types';
 
 export interface ScopesTreeHeadlineProps {
   anyChildExpanded: boolean;
   query: string;
-  resultsNodes: Node[];
+  resultsNodes: TreeNode[];
+  scopeNodes: NodesMap;
 }
 
-export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {
+export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes, scopeNodes }: ScopesTreeHeadlineProps) {
   const styles = useStyles2(getStyles);
-  if (anyChildExpanded || (resultsNodes.some((n) => n.nodeType === 'container') && !query)) {
+
+  if (
+    anyChildExpanded ||
+    (resultsNodes.some((n) => scopeNodes[n.scopeNodeId].spec.nodeType === 'container') && !query)
+  ) {
     return null;
   }
 

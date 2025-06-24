@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Drawer,
@@ -44,7 +44,7 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
-  const { t } = useTranslate();
+
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -138,7 +138,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select notification template',
+      label: t(
+        'alerting.template-selector.template-options.label.select-notification-template',
+        'Select notification template'
+      ),
       ariaLabel: 'Select notification template',
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
@@ -156,7 +159,6 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       setCustomTemplateValue(getUseTemplateText(template.value.name));
     }
   }, [template]);
-  const { t } = useTranslate();
 
   function onCustomTemplateChange(customInput: string) {
     setCustomTemplateValue(customInput);
@@ -289,7 +291,6 @@ function OptionCustomfield({
   onCustomTemplateChange(customInput: string): void;
   initialValue: string;
 }) {
-  const { t } = useTranslate();
   const id = `custom-template-${option.label}`;
   return (
     <Stack direction="column" gap={1}>

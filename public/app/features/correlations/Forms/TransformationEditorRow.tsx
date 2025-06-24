@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
@@ -26,7 +26,7 @@ const TransformationEditorRow = (props: Props) => {
   const { control, formState, register, setValue, watch, getValues } = useFormContext<FormDTO>();
 
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
-  const { t } = useTranslate();
+
   register(`config.transformations.${index}.type`, {
     required: {
       value: true,
@@ -138,7 +138,7 @@ const TransformationEditorRow = (props: Props) => {
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
               {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
-                ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   ' *'
                 : ''}
             </Label>

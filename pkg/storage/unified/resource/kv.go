@@ -24,7 +24,6 @@ type ListOptions struct {
 	StartKey string
 	EndKey   string
 	Limit    int64
-	// WithValues bool // Question: Should we always return the values? Or maybe never ?
 }
 
 type GetOptions struct{}
@@ -38,7 +37,7 @@ type KV interface {
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
-	// Get retrieves keys.
+	// Get retrieves a key-value pair from the store
 	Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error)
 
 	// List returns all the key-value pairs in the store
@@ -88,11 +87,14 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...
 		Key:   string(item.Key())[len(section)+1:],
 		Value: []byte{},
 	}
-	item.Value(func(val []byte) error {
+	err = item.Value(func(val []byte) error {
 		out.Value = make([]byte, len(val))
 		copy(out.Value, val)
 		return nil
 	})
+	if err != nil {
+		return KVObject{}, err
+	}
 	return out, nil
 }
 
@@ -134,7 +136,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 	if section == "" {
 		return func(yield func(string, error) bool) {
 			yield("", fmt.Errorf("section is required"))
-			return
 		}
 	}
 
@@ -188,7 +189,6 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 	if section == "" {
 		return func(yield func(KVObject, error) bool) {
 			yield(KVObject{}, fmt.Errorf("section is required"))
-			return
 		}
 	}
 

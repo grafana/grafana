@@ -222,10 +222,14 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
 			continue
 		}
-		if q.ImportedPrometheusRule != nil {
-			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
+		if q.HasPrometheusRuleDefinition != nil {
+			if *q.HasPrometheusRuleDefinition != r.HasPrometheusRuleDefinition() {
 				continue
 			}
+		}
+
+		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+			continue
 		}
 
 		ruleList = append(ruleList, r)

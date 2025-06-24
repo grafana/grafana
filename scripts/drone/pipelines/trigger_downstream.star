@@ -35,7 +35,6 @@ def enterprise_downstream_pipeline():
     ]
     deps = [
         "main-build-e2e-publish",
-        "main-integration-tests",
     ]
     return pipeline(
         name = "main-trigger-downstream",

@@ -5,11 +5,11 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { useState, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface
@@ -143,7 +143,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
                 data-testid="previous-button"
               />
 
-              <div data-testid="carousel-full-image">
+              <div className={styles.imageContainer} data-testid="carousel-full-image">
                 <img
                   className={styles.imagePreview}
                   src={validImages[selectedIndex].path}
@@ -170,6 +170,11 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   imageButton: css({
     textAlign: 'left',
+  }),
+  imageContainer: css({
+    display: 'flex',
+    justifyContent: 'center',
+    flex: 1,
   }),
   imagePreview: css({
     maxWidth: '100%',
