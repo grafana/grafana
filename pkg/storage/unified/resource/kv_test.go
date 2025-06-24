@@ -16,15 +16,15 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	db, err := badger.Open(opts)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
 	return db
 }
 
 func TestBadgerKV_Get(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer func() {
-		err := db.Close()
-		require.NoError(t, err)
-	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -51,10 +51,6 @@ func TestBadgerKV_Get(t *testing.T) {
 
 func TestBadgerKV_Save(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer func() {
-		err := db.Close()
-		require.NoError(t, err)
-	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -89,10 +85,6 @@ func TestBadgerKV_Save(t *testing.T) {
 
 func TestBadgerKV_Delete(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer func() {
-		err := db.Close()
-		require.NoError(t, err)
-	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -260,10 +252,6 @@ func TestBadgerKV_List(t *testing.T) {
 
 func TestBadgerKV_Concurrent(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer func() {
-		err := db.Close()
-		require.NoError(t, err)
-	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
