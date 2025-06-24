@@ -43,7 +43,7 @@ func TestBadgerKV_Get(t *testing.T) {
 		assert.Equal(t, "key1", obj.Key)
 
 		// Read the value from the Reader
-		value, err := io.ReadAll(obj.Reader)
+		value, err := io.ReadAll(obj.Value)
 		require.NoError(t, err)
 		assert.Equal(t, []byte("value1"), value)
 	})
@@ -70,7 +70,7 @@ func TestBadgerKV_Save(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "key1", obj.Key)
 
-		value, err := io.ReadAll(obj.Reader)
+		value, err := io.ReadAll(obj.Value)
 		require.NoError(t, err)
 		assert.Equal(t, []byte("value1"), value)
 	})
@@ -89,7 +89,7 @@ func TestBadgerKV_Save(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "key1", obj.Key)
 
-		value, err := io.ReadAll(obj.Reader)
+		value, err := io.ReadAll(obj.Value)
 		require.NoError(t, err)
 		assert.Equal(t, []byte("newvalue"), value)
 	})
@@ -229,7 +229,7 @@ func TestBadgerKV_Concurrent(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, key, obj.Key)
 
-				readValue, err := io.ReadAll(obj.Reader)
+				readValue, err := io.ReadAll(obj.Value)
 				require.NoError(t, err)
 				assert.Equal(t, value, readValue)
 
