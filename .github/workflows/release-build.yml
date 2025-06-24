@@ -178,7 +178,7 @@ jobs:
           retention-days: 1
   publish-artifacts:
     name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/prerelease-builds-gha
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
     permissions:
       id-token: write
     needs:
