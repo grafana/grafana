@@ -664,7 +664,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
 /public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
 /public/app/plugins/datasource/jaeger/ @grafana/oss-big-tent
-/public/app/plugins/datasource/loki/ @grafana/oss-big-tent
+/public/app/plugins/datasource/loki/ @grafana/oss-big-tent @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
