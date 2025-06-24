@@ -217,7 +217,6 @@ function getFramesDescription(frames: DataFrame[]): string {
 
 /**
  * Registry item for UI to configure "fields by frame refId"-matcher.
- * @public
  */
 export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
