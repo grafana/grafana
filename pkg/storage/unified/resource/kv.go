@@ -15,7 +15,8 @@ var ErrNotFound = errors.New("key not found")
 type SortOrder int
 
 const (
-	SortOrderAsc SortOrder = iota
+	SortOrderUndefined SortOrder = iota
+	SortOrderAsc
 	SortOrderDesc
 )
 
@@ -23,7 +24,7 @@ type ListOptions struct {
 	Sort     SortOrder // sort order of the results. Default is SortOrderAsc.
 	StartKey string    // lower bound of the range, included in the results
 	EndKey   string    // upper bound of the range, excluded from the results
-	Limit    int64     // maximum number of results to return
+	Limit    int64     // maximum number of results to return. 0 means no limit.
 }
 
 type KVObject struct {

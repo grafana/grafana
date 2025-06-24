@@ -182,6 +182,13 @@ func getIteratorTestCases() []iteratorTestCase {
 	}
 }
 
+func TestPrefixRangeEnd(t *testing.T) {
+	require.Equal(t, "b", PrefixRangeEnd("a"))
+	require.Equal(t, "a/c", PrefixRangeEnd("a/b"))
+	require.Equal(t, "a/b/d", PrefixRangeEnd("a/b/c"))
+	require.Equal(t, "", PrefixRangeEnd(""))
+}
+
 func TestBadgerKV_Keys(t *testing.T) {
 	for _, tc := range getIteratorTestCases() {
 		t.Run("Keys "+tc.name, func(t *testing.T) {
