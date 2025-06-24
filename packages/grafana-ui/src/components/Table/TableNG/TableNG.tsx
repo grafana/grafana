@@ -1,11 +1,11 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { debounce } from 'lodash';
 import { Key, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
+  ColumnWidths,
   DataGrid,
   DataGridProps,
   RenderCellProps,
@@ -138,14 +138,6 @@ export function TableNG(props: TableNGProps) {
   );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
-  const debouncedResizeHandler = useMemo(() => {
-    if (!onColumnResize) {
-      return undefined;
-    }
-    return debounce((column, newSize) => {
-      onColumnResize(column.key, Math.floor(newSize));
-    }, 100) satisfies DataGridProps<TableRow, TableSummaryRow>['onColumnResize'];
-  }, [onColumnResize]);
 
   const {
     rows: paginatedRows,
@@ -210,7 +202,13 @@ export function TableNG(props: TableNGProps) {
 
           setIsContextMenuOpen(true);
         },
-        onColumnResize: debouncedResizeHandler,
+        onColumnWidthsChange: onColumnResize
+          ? (columnWidths: ColumnWidths) => {
+              columnWidths.forEach(({ width: newWidth }, columnKey) => {
+                onColumnResize?.(columnKey, Math.floor(newWidth));
+              });
+            }
+          : undefined,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -227,7 +225,6 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
-      debouncedResizeHandler,
       enableVirtualization,
       sortColumns,
       rowHeight,
@@ -235,6 +232,7 @@ export function TableNG(props: TableNGProps) {
       noHeader,
       hasFooter,
       setSortColumns,
+      onColumnResize,
       onSortByChange,
     ]
   );
