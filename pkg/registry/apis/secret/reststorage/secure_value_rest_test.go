@@ -58,7 +58,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 		t.Run("`value` cannot exceed 24576 bytes", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
-			sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(strings.Repeat("a", 24576+1))
+			sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(strings.Repeat("a", contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES+1))
 			sv.Spec.Ref = nil
 
 			errs := reststorage.ValidateSecureValue(sv, nil, admission.Create, nil)
