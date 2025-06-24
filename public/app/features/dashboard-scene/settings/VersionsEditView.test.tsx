@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';

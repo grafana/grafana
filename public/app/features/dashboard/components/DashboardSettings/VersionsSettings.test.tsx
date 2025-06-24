@@ -2,7 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
