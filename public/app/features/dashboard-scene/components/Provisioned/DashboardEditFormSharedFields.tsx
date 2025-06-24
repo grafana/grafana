@@ -34,7 +34,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
             'File path inside the repository (.json or .yaml)'
           )}
         >
-          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
+          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} disabled={!isNew} />
         </Field>
 
         {/* Comment */}

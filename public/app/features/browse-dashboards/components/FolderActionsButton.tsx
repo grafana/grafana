@@ -141,7 +141,7 @@ export function FolderActionsButton({ folder }: Props) {
           subtitle={folder.title}
           onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
         >
-          <DeleteProvisionedFolderForm isReadOnly={!canEditFolders} parentFolder={folder} />
+          <DeleteProvisionedFolderForm parentFolder={folder} />
         </Drawer>
       )}
     </>

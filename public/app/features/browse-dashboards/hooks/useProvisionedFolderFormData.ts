@@ -10,7 +10,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { BaseProvisionedFormData } from '../../dashboard-scene/saving/shared';
 
 export interface UseProvisionedFolderFormDataProps {
-  folderName?: string;
+  folderUid?: string;
   action: 'create' | 'delete';
   reset?: UseFormReset<BaseProvisionedFormData>;
   title?: string;
@@ -19,28 +19,25 @@ export interface UseProvisionedFolderFormDataProps {
 export interface ProvisionedFolderFormDataResult {
   repository?: RepositoryView;
   folder?: Folder;
-  isReady: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   isGitHub: boolean;
   readOnly: boolean;
 }
 
 /**
- * Hook for managing provisioned folder form data.
- * Handles repository data, workflow options, and automatic form initialization.
+ * Hook for managing provisioned folder create/delete form data.
  */
 export function useProvisionedFolderFormData({
-  folderName,
+  folderUid,
   action,
   reset,
   title,
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName });
+  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const isGitHub = Boolean(repository?.type === 'github');
   const readOnly = !repository?.workflows?.length;
-  const isReady = !isLoading && Boolean(repository);
 
   useEffect(() => {
     // initialize form values
@@ -60,7 +57,6 @@ export function useProvisionedFolderFormData({
   return {
     repository,
     folder,
-    isReady,
     workflowOptions,
     isGitHub,
     readOnly,

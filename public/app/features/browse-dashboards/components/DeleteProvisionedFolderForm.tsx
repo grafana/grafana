@@ -17,11 +17,10 @@ import { DescendantCount } from './BrowseActions/DescendantCount';
 import { getFolderURL } from './utils';
 
 interface DeleteProvisionedFolderFormProps {
-  isReadOnly: boolean;
   parentFolder?: FolderDTO;
 }
 
-export function DeleteProvisionedFolderForm({ isReadOnly, parentFolder }: DeleteProvisionedFolderFormProps) {
+export function DeleteProvisionedFolderForm({ parentFolder }: DeleteProvisionedFolderFormProps) {
   const resourceId = parentFolder?.uid || '';
 
   // form related
@@ -31,16 +30,14 @@ export function DeleteProvisionedFolderForm({ isReadOnly, parentFolder }: Delete
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const { workflowOptions, isGitHub, repository, folder } = useProvisionedFolderFormData({
-    folderName: parentFolder?.uid,
+    folderUid: parentFolder?.uid,
     action: 'delete',
     reset,
     title: parentFolder?.title,
   });
 
-  const handleSubmitForm = async (data: BaseProvisionedFormData) => {
-    const { repo, path, comment } = data;
-    const repoName = repository?.name;
-    if (!repoName) {
+  const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
+    if (!repository?.name) {
       return;
     }
 
@@ -85,7 +82,10 @@ export function DeleteProvisionedFolderForm({ isReadOnly, parentFolder }: Delete
       console.error('Error deleting folder:', request.error);
       getAppEvents().publish({
         type: AppEvents.alertError.name,
-        payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],
+        payload: [
+          t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'),
+          request.error,
+        ],
       });
       return;
     }
@@ -112,7 +112,6 @@ export function DeleteProvisionedFolderForm({ isReadOnly, parentFolder }: Delete
 
           <DashboardEditFormSharedFields
             isNew={false}
-            readOnly={isReadOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
             isGitHub={isGitHub}
@@ -126,7 +125,7 @@ export function DeleteProvisionedFolderForm({ isReadOnly, parentFolder }: Delete
                 : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
             </Button>
             <Button variant="secondary" fill="outline">
-              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.cancel">Cancel</Trans>
+              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
