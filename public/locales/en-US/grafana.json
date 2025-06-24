@@ -3523,11 +3523,18 @@
       }
     },
     "button-item": {
+      "category-button": "Button",
       "label": {
         "center": "Center",
         "left": "Left",
         "right": "Right"
       },
+      "name-align-text": "Align text",
+      "name-api": "API",
+      "name-style": "Style",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3554,7 +3561,20 @@
         }
       }
     },
+    "category-arrow-direction": "Arrow Direction",
+    "category-background": "Background",
+    "category-border": "Border",
+    "category-canvas": "Canvas",
+    "category-color": "Color",
+    "category-data-links": "Data links and actions",
+    "category-line-style": "Line style",
+    "category-metric-value": "Metric value",
+    "category-radius": "Radius",
+    "category-selected-connection": "Selected connection",
+    "category-selected-element": "Selected element ({{element}})",
+    "category-size": "Size",
     "cloud-item": {
+      "category-cloud": "Cloud",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3563,11 +3583,48 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
     },
+    "description-experimental-types": "Enable selection of experimental element types",
+    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
+    "description-inline-editing": "Enable editing the panel directly",
+    "description-pan-zoom": "Enable pan and zoom",
+    "direction-options": {
+      "label-both": "Both",
+      "label-forward": "Forward",
+      "label-none": "None",
+      "label-reverse": "Reverse"
+    },
+    "drone-front-item": {
+      "category-drone-front": "Drone Front",
+      "name-roll-angle": "Roll Angle"
+    },
+    "drone-side-item": {
+      "category-drone-side": "Drone Side",
+      "name-pitch-angle": "Pitch Angle"
+    },
+    "drone-top-item": {
+      "category-drone-top": "Drone Top",
+      "name-back-left-rotor-rpm": "Back Left Rotor RPM",
+      "name-back-right-rotor-rpm": "Back Right Rotor RPM",
+      "name-front-left-rotor-rpm": "Front Left Rotor RPM",
+      "name-front-right-rotor-rpm": "Front Right Rotor RPM",
+      "name-yaw-angle": "Yaw Angle"
+    },
+    "element-editor": {
+      "category-layout": "Layout",
+      "description-unsupported": "Selected element type is not supported by current settings. Please enable advanced element types.",
+      "name-quick-placement": "Quick placement"
+    },
     "ellipse-item": {
+      "category-ellipse": "Ellipse",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3576,20 +3633,50 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "icon-item": {
+      "category-icon": "Icon",
+      "name-fill-color": "Fill color",
+      "name-svg-path": "SVG Path"
     },
     "inline-edit": {
       "canvas-inline-editor": "Canvas Inline Editor",
       "tooltip-close-inline-editor": "Close inline editor"
     },
     "inline-edit-body": {
+      "category-selected-element": "Selected element ({{element}})",
       "label-add-item": "Add item",
       "please-select-an-element": "Please select an element"
     },
+    "label-actions": "Actions",
+    "label-color": "Color",
+    "label-direction": "Direction",
+    "label-image": "Image",
+    "label-image-size": "Image size",
+    "label-line-style": "Line style",
+    "label-links": "Links",
+    "label-radius": "Radius",
+    "label-size": "Size",
+    "label-width": "Width",
+    "layer-editor": {
+      "category-layer": "Layer",
+      "category-layout": "Layout",
+      "name-constraints": "Constraints",
+      "name-elements": "Elements"
+    },
     "line-style-editor": {
       "label-animate": "Animate"
+    },
+    "line-style-options": {
+      "label-solid": "Solid"
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3691,15 @@
         "auto": "Auto"
       }
     },
+    "name-align-text": "Align text",
+    "name-color": "Text color",
+    "name-experimental-types": "Experimental element types",
+    "name-infinite-panning": "Infinite panning",
+    "name-inline-editing": "Inline editing",
+    "name-pan-zoom": "Pan and zoom",
+    "name-text": "Text",
+    "name-text-size": "Text size",
+    "name-vertical-align": "Vertical align",
     "not-found-display": {
       "not-found": "<0>Not found: </0><config />"
     },
@@ -3616,6 +3712,7 @@
       "zoom-scroll-wheel": "Zoom: Scroll wheel"
     },
     "parallelogram-item": {
+      "category-parallelogram": "Parallelogram",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3624,6 +3721,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3635,9 +3737,23 @@
       "placeholder-value": "Value"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-left-and-right": "Left & right",
+        "label-right": "Right",
+        "label-scale": "Scale"
+      },
       "label-constraints": "Constraints",
       "label-position": "Position",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "vertical-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-scale": "Scale",
+        "label-top": "Top",
+        "label-top-and-bottom": "Top & bottom"
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Align bottom",
@@ -3648,6 +3764,7 @@
       "tooltip-align-vertical-centers": "Align vertical centers"
     },
     "rectangle-item": {
+      "category-rectangle": "Rectangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3656,14 +3773,33 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "server-item": {
+      "category-server": "Server",
+      "name-blink-rate": "Blink rate [hz] (0 = off)",
+      "name-bulb-color": "Bulb color",
+      "name-status-color": "Status color",
+      "name-type": "Type",
+      "type-options": {
+        "label-database": "Database",
+        "label-single": "Single",
+        "label-stack": "Stack",
+        "label-terminal": "Terminal"
       }
     },
     "text-display": {
       "double-click-to-set": "Double click to set text"
     },
     "text-item": {
+      "category-text": "Text",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3672,6 +3808,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3693,6 +3834,7 @@
       "tooltip-remove": "Remove"
     },
     "triangle-item": {
+      "category-triangle": "Triangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3701,9 +3843,18 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "Wind Turbine",
+      "name-rpm": "RPM"
     }
   },
   "carousel": {
@@ -6078,6 +6229,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "Contain",
+        "label-cover": "Cover",
+        "label-fill": "Fill",
+        "label-original": "Original",
+        "label-tile": "Tile"
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": "Fixed color"
+    },
     "file-dropzone-custom-children": {
       "upload": "Upload"
     },
@@ -6090,7 +6253,10 @@
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
+      "description-field": "Use a string field result",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-mappings": "Mappings",
       "label-source": "Source"
     },
@@ -6106,8 +6272,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": "Fixed value"
+      },
       "label-limit": "Limit",
-      "label-value": "Value"
+      "label-value": "Value",
+      "scalar-options": {
+        "description-clamped": "Use field values, clamped to max and min",
+        "description-mod": "Use field values, mod from max",
+        "label-clamped": "Clamped",
+        "label-mod": "Mod"
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Max",
@@ -6115,7 +6290,10 @@
       "label-value": "Value"
     },
     "text-dimension-editor": {
+      "description-field": "Display field value",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-source": "Source",
       "label-template": "Template",
       "label-value": "Value"
