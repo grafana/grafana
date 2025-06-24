@@ -170,6 +170,7 @@
         "label-query-overlap-window": "Query overlap window",
         "label-query-timeout": "Query timeout",
         "label-scrape-interval": "Scrape interval",
+        "label-series-limit": "Series limit",
         "label-use-series-endpoint": "Use series endpoint",
         "more-info": "For more information on configuring prometheus type and version in data sources, see the <2>provisioning documentation</2>.",
         "placeholder-example-maxsourceresolutionmtimeout": "Example: {{example}}",
@@ -190,6 +191,7 @@
         "tooltip-query-overlap-window": "Set a duration like {{example1}} or {{example2}} or {{example3}}. Default of {{default}}. This duration will be added to the duration of each incremental request.",
         "tooltip-query-timeout": "Set the Prometheus query timeout.",
         "tooltip-scrape-interval": "This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and evaluation interval configured in your Prometheus config file. If you set this to a greater value than your Prometheus config file interval, Grafana will evaluate the data according to this interval and you will see less data points. Defaults to {{default}}.",
+        "tooltip-series-limit": "The limit applies to all resources (metrics, labels, and values) for both endpoints (series and labels). Leave the field empty to use the default limit (40000). Set to 0 to disable the limit and fetch everything — this may cause performance issues. Default limit is 40000.",
         "tooltip-use-series-endpoint": "Checking this option will favor the series endpoint with {{exampleParameter}} parameter over the label values endpoint with {{exampleParameter}} parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method."
       }
     },
