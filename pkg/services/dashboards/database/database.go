@@ -882,7 +882,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title, TitleExactMatch: query.TitleExactMatch})
 	}
 
 	if len(query.Type) > 0 {
