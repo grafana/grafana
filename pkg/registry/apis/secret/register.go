@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -34,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -691,27 +692,12 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 
 	// When creating a resource and the name is empty, we need to generate one.
 	if operation == admission.Create && a.GetName() == "" {
-		generatedName, err := util.GetRandomString(8)
-		if err != nil {
-			return fmt.Errorf("generate random string: %w", err)
-		}
-
 		switch typedObj := obj.(type) {
 		case *secretv0alpha1.SecureValue:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "sv-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.Name = names.SimpleNameGenerator.GenerateName(cmp.Or(typedObj.GenerateName, "sv-"))
 
 		case *secretv0alpha1.Keeper:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "kp-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.Name = names.SimpleNameGenerator.GenerateName(cmp.Or(typedObj.GenerateName, "kp-"))
 		}
 	}
 
