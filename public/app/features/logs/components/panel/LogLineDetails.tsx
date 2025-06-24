@@ -13,6 +13,8 @@ import { LabelWithLinks, LogDetailsFields, LogDetailsLabelFields } from './LogLi
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { getLabelTypeFromRow } from '../../utils';
+import { groupBy } from 'lodash';
 
 interface Props {
   containerElement: HTMLDivElement;
@@ -70,7 +72,6 @@ const LogDetailsComponent = ({
   styles: LogLineDetailsStyles;
 }) => {
   const extensionLinks = useAttributesExtensionLinks(log);
-  //const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], log) : null;
   const fieldsWithLinks = useMemo(() => {
     const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
     const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
@@ -95,6 +96,11 @@ const LogDetailsComponent = ({
         })),
     [extensionLinks, log.labels]
   );
+  const groupedLabels = useMemo(
+    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log)),
+    [labelsWithLinks, log]
+  );
+  const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
   return (
     <div className={styles.componentWrapper}>
@@ -104,21 +110,16 @@ const LogDetailsComponent = ({
       <ControlledCollapse label={t('logs.log-line-details.links-section', 'Links')} collapsible>
         <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
       </ControlledCollapse>
-      <ControlledCollapse label={t('logs.log-line-details.labels-section', 'Labels')} collapsible>
-        <LogDetailsLabelFields log={log} logs={logs} fields={labelsWithLinks} />
-      </ControlledCollapse>
-      <ControlledCollapse
-        label={t('logs.log-line-details.structured-metadata-section', 'Structured metadata')}
-        collapsible
-      >
-        <p>Metadata</p>
-      </ControlledCollapse>
-      <ControlledCollapse label={t('logs.log-line-details.parsed-fields-section', 'Parsed fields')} collapsible>
-        <p>Fields</p>
-      </ControlledCollapse>
-      <ControlledCollapse label={t('logs.log-line-details.indexed-labels-section', 'Indexed labels')} collapsible>
-        <p>Labels</p>
-      </ControlledCollapse>
+      {labelGroups.map((group) => (
+        <ControlledCollapse
+          key={group ?? 'fields'}
+          label={group === '' ? t('logs.log-line-details.fields-section', 'Fields') : group}
+          collapsible
+          isOpen={true}
+        >
+          <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+        </ControlledCollapse>
+      ))}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
@@ -5,7 +6,7 @@ import * as React from 'react';
 import { CoreApp, Field, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -55,7 +56,7 @@ export interface LabelWithLinks {
 interface LogDetailsLabelFieldsProps {
   log: LogListModel;
   logs: LogListModel[];
-  fields: LabelWithLink[];
+  fields: LabelWithLinks[];
 }
 
 export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFieldsProps) => {
@@ -89,7 +90,16 @@ interface LogDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, isLabel, links, log, keys, values }: LogDetailsFieldProps) => {
+export const LogDetailsField = ({
+  disableActions = false,
+  fieldIndex,
+  getLogs,
+  isLabel,
+  links,
+  log,
+  keys,
+  values,
+}: LogDetailsFieldProps) => {
   const [showFieldsStats, setShowFieldStats] = useState(false);
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
@@ -105,6 +115,8 @@ export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, i
     onPinLine,
     pinLineButtonTooltipTitle,
   } = useLogListContext();
+
+  const styles = useStyles2(getStyles);
 
   const getStats = useCallback(() => {
     if (isLabel) {
@@ -214,7 +226,7 @@ export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, i
       <tr>
         {!disableActions && (
           <td>
-            <div>
+            <div className={styles.actions}>
               {onClickFilterLabel && (
                 <AsyncIconButton
                   name="search-plus"
@@ -267,13 +279,13 @@ export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, i
                 onClick={showStats}
               />
             </div>
-        </td>
+          </td>
         )}
         <td>{singleKey ? keys[0] : <MultipleValue values={keys} />}</td>
+        <td>{singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}</td>
+        <td>{singleValue && <ClipboardButtonWrapper value={values[0]} />}</td>
         <td>
           <div>
-            {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
-            {singleValue && <ClipboardButtonWrapper value={values[0]} />}
             <div>
               {links?.map((link, i) => {
                 if (link.onClick && onPinLine) {
@@ -335,18 +347,22 @@ export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, i
   );
 };
 
+const getStyles = () => ({
+  actions: css({
+    whiteSpace: 'nowrap',
+  }),
+});
+
 const ClipboardButtonWrapper = ({ value }: { value: string }) => {
   return (
-    <div>
-      <ClipboardButton
-        getText={() => value}
-        title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
-        fill="text"
-        variant="secondary"
-        icon="copy"
-        size="md"
-      />
-    </div>
+    <ClipboardButton
+      getText={() => value}
+      title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
+      fill="text"
+      variant="secondary"
+      icon="copy"
+      size="md"
+    />
   );
 };
 
@@ -357,10 +373,8 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
         {values.map((val, i) => {
           return (
             <tr key={`${val}-${i}`}>
-              <td>
-                {val}
-                {showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}
-              </td>
+              <td>{val}</td>
+              <td>{showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}</td>
             </tr>
           );
         })}
