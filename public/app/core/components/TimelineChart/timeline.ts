@@ -59,6 +59,28 @@ export interface TimelineCoreOptions {
 /**
  * @internal
  */
+export function shouldDrawYValue(yValue: unknown, mappedNull?: boolean, mappedNaN?: boolean): boolean {
+  if (typeof yValue === 'boolean') {
+    return true;
+  }
+  if (typeof yValue === 'string') {
+    return true;
+  }
+  if (typeof yValue === 'number' && !Number.isNaN(yValue)) {
+    return true;
+  }
+  if (yValue === null && mappedNull) {
+    return true;
+  }
+  if (Number.isNaN(yValue) && mappedNaN) {
+    return true;
+  }
+  return !!yValue;
+}
+
+/**
+ * @internal
+ */
 export function getConfig(opts: TimelineCoreOptions) {
   const {
     mode,
@@ -210,9 +232,7 @@ export function getConfig(opts: TimelineCoreOptions) {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
-
-              const shouldDrawY =
-                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+              const shouldDrawY = shouldDrawYValue(yVal, mappedNull, mappedNaN);
 
               if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
@@ -257,8 +277,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
             for (let ix = idx0; ix <= idx1; ix++) {
               let yVal = dataY[ix];
-              const shouldDrawY =
-                !!yVal || yVal === 0 || (yVal === null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+              const shouldDrawY = shouldDrawYValue(yVal, mappedNull, mappedNaN);
 
               if (shouldDrawY) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
@@ -321,8 +340,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 const yVal = dataY[ix];
-                const shouldDrawY =
-                  !!yVal || yVal === 0 || (yVal == null && mappedNull) || (Number.isNaN(yVal) && mappedNaN);
+                const shouldDrawY = shouldDrawYValue(yVal, mappedNull, mappedNaN);
 
                 if (shouldDrawY) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];

@@ -3,7 +3,7 @@ import uPlot from 'uplot';
 import { getDefaultTimeRange, createTheme } from '@grafana/data';
 import { VisibilityMode } from '@grafana/schema';
 
-import { getConfig, TimelineCoreOptions } from './timeline';
+import { getConfig, TimelineCoreOptions, shouldDrawYValue } from './timeline';
 import { TimelineMode } from './utils';
 
 jest.mock('uplot');
@@ -206,6 +206,82 @@ describe('StateTimeline uPlot integration', () => {
           expect(rect).toHaveBeenCalledTimes(1);
         });
       });
+    });
+  });
+
+  describe('#shouldDrawYValue', () => {
+    describe.each([
+      [true, undefined, undefined, true, 'boolean true returns true'],
+      [false, undefined, undefined, true, 'boolean false returns true'],
+    ])('boolean values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([
+      [0, undefined, undefined, true, 'zero returns true'],
+      [1, undefined, undefined, true, 'positive integer returns true'],
+      [-2.71, undefined, undefined, true, 'negative float returns true'],
+      [Number.MAX_VALUE, undefined, undefined, true, 'max value returns true'],
+      [Number.MIN_VALUE, undefined, undefined, true, 'min value returns true'],
+    ])('finite numeric values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([
+      [Infinity, undefined, undefined, true, 'positive infinity returns true'],
+      [-Infinity, undefined, undefined, true, 'negative infinity returns true'],
+      [Number.POSITIVE_INFINITY, undefined, undefined, true, 'Number.POSITIVE_INFINITY returns true'],
+      [Number.NEGATIVE_INFINITY, undefined, undefined, true, 'Number.NEGATIVE_INFINITY returns true'],
+    ])('non-finite numeric values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([
+      [null, undefined, undefined, false, 'null without mappings returns false'],
+      [null, false, true, false, 'null with false mappedNull returns false'],
+      [null, true, undefined, true, 'null with ture mappedNull returns true'],
+    ])('null values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([
+      [NaN, undefined, undefined, false, 'NaN without mappings returns false'],
+      [NaN, true, undefined, false, 'NaN with false mappedNaN returns false'],
+      [NaN, undefined, true, true, 'NaN with true mappedNaN returns true'],
+    ])('NaN values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([
+      ['', undefined, undefined, true, 'empty string returns true'],
+      ['to be or not to be', undefined, undefined, true, 'non-empty string returns true'],
+    ])('string values', (yValue, mappedNull, mappedNaN, expected, testName) => {
+      it(testName, () => {
+        expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+      });
+    });
+
+    describe.each([[undefined, undefined, undefined, false, 'undefined returns false']])(
+      'falsy values',
+      (yValue, mappedNull, mappedNaN, expected, testName) => {
+        it(testName, () => {
+          expect(shouldDrawYValue(yValue, mappedNull, mappedNaN)).toBe(expected);
+        });
+      }
+    );
+
+    describe('non-supported values', () => {
+      it.todo(`TODO: this helper currently returns true for many non-supported truthy values, but should not`);
     });
   });
 });
