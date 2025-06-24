@@ -130,7 +130,7 @@ export const VizTooltipRow = ({
   return (
     <div className={styles.contentWrapper}>
       {(color || label) && (
-        <div className={styles.valueWrapper}>
+        <div className={styles.labelWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
             <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
           )}
@@ -222,6 +222,12 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
     overflow: 'hidden',
     marginRight: theme.spacing(2),
   }),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    flex: '2',
+    minWidth: 0,
+  }),
   value: css({
     fontWeight: 500,
     textOverflow: 'ellipsis',
@@ -230,6 +236,7 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
+    flex: '1',
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
