@@ -58,7 +58,6 @@ export function prepSeries(
   colorFieldName?: string
 ): BarSeries {
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    // TODO this should be localized
     return {
       series: [],
       _rest: [],
