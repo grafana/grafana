@@ -40,5 +40,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next --config locales/i18next-parser.config.cjs"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.2"
 }
