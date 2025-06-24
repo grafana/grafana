@@ -236,6 +236,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 			}
 
 			return c.getLibraryPanelConnections(ctx, user, vals[0], req.Options.Key.Namespace)
+		case resource.SEARCH_FIELD_TITLE_PHRASE:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one title supported")
+			}
+
+			query.Title = vals[0]
+			query.TitleExactMatch = true
 		}
 	}
 
