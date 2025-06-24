@@ -342,7 +342,6 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
-			doc.References = nil // remove references (for now!)
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
