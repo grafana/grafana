@@ -81,7 +81,7 @@ func (r *Runner) createOrUpdate(ctx context.Context, log logging.Logger, obj res
 			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
 			if err != nil && !errors.IsAlreadyExists(err) {
 				// Ignore the error, it's probably due to a race condition
-				log.Error("Error updating check type", "error", err)
+				log.Info("Error updating check type, ignoring", "error", err)
 			}
 			return nil
 		}
@@ -123,9 +123,13 @@ func (r *Runner) Run(ctx context.Context) error {
 		for i := 0; i < r.retryAttempts; i++ {
 			err := r.createOrUpdate(context.WithoutCancel(ctx), logger, obj)
 			if err != nil {
-				logger.Error("Error creating check type, retrying", "error", err, "attempt", i+1)
+				if !checks.IsRetryableError(err) {
+					logger.Debug("Error creating check type, not retrying", "error", err)
+					return err
+				}
+				logger.Debug("Error creating check type, retrying", "error", err, "attempt", i+1)
 				if i == r.retryAttempts-1 {
-					logger.Error("Unable to register check type")
+					logger.Error("Unable to register check type", "check_type", t.ID(), "error", err)
 				} else {
 					// Calculate exponential backoff delay: baseDelay * 2^attempt
 					delay := r.retryDelay * time.Duration(1<<i)
