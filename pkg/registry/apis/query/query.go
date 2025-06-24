@@ -179,6 +179,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
+		logEmptyRefids(raw.Queries, b.log)
+
 		for i := range req.Requests {
 			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
@@ -213,6 +215,15 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
+}
+
+func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
+	for _, q := range queries {
+		if q.RefID == "" {
+			logger.Info("empty refid found", "query_count", len(queries))
+			break
+		}
+	}
 }
 
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, instanceConfig clientapi.InstanceConfigurationSettings) (qdr *backend.QueryDataResponse, err error) {
