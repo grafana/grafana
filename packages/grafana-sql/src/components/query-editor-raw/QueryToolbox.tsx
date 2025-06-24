@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
+import { Stack, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { QueryValidator, QueryValidatorProps } from './QueryValidator';
 
@@ -70,7 +70,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
       </div>
       {showTools && (
         <div>
-          <HorizontalGroup spacing="sm">
+          <Stack gap={1}>
             {onFormatCode && (
               <IconButton
                 onClick={() => {
@@ -81,7 +81,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 }}
                 name="brackets-curly"
                 size="xs"
-                tooltip={t('components.query-toolbox.tooltip-format-query', 'Format query')}
+                tooltip={t('grafana-sql.components.query-toolbox.tooltip-format-query', 'Format query')}
               />
             )}
             {onExpand && (
@@ -98,20 +98,20 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 size="xs"
                 tooltip={
                   isExpanded
-                    ? t('components.query-toolbox.tooltip-collapse', 'Collapse editor')
-                    : t('components.query-toolbox.tooltip-expand', 'Expand editor')
+                    ? t('grafana-sql.components.query-toolbox.tooltip-collapse', 'Collapse editor')
+                    : t('grafana-sql.components.query-toolbox.tooltip-expand', 'Expand editor')
                 }
               />
             )}
             <Tooltip
               content={t(
-                'components.query-toolbox.content-hit-ctrlcmdreturn-to-run-query',
+                'grafana-sql.components.query-toolbox.content-hit-ctrlcmdreturn-to-run-query',
                 'Hit CTRL/CMD+Return to run query'
               )}
             >
               <Icon className={styles.hint} name="keyboard" />
             </Tooltip>
-          </HorizontalGroup>
+          </Stack>
         </div>
       )}
     </div>

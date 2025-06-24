@@ -541,7 +541,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery);
+    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true });
   };
 
   return queryLibraryEnabled ? (
