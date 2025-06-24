@@ -65,6 +65,7 @@ export function TableNG(props: TableNGProps) {
     onSortByChange,
     replaceVariables,
     showTypeIcons,
+    structureRev,
     width,
   } = props;
 
@@ -452,6 +453,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
+        key={structureRev} // forces re-render when editing the panel
         className={styles.grid}
         columns={columns}
         rows={paginatedRows}

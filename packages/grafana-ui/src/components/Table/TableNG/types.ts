@@ -134,6 +134,7 @@ export interface BaseTableProps {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  structureRev?: number;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
