@@ -1,5 +1,4 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-// @ts-ignore - node needs the extension to strip types successfully
 import grafanaConfig from '@grafana/plugin-configs/webpack.config.ts';
 import { mergeWithCustomize, unique } from 'webpack-merge';
 import { type Configuration } from 'webpack';
