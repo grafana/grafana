@@ -72,7 +72,6 @@ export function ExtensionToolbarItem() {
                 setDockedComponentId(id);
               }
             }}
-            pluginId={dockedPluginId}
           />
         );
       })}
