@@ -109,9 +109,10 @@ func TestBadgerKV_Delete(t *testing.T) {
 	})
 }
 
-func TestBadgerKV_Keys(t *testing.T) {
+// setupIteratorTestData creates a test environment with common test data
+func setupIteratorTestData(t *testing.T) (*badgerKV, context.Context) {
 	db := setupTestBadgerDB(t)
-	defer db.Close()
+	t.Cleanup(func() { db.Close() })
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -119,61 +120,122 @@ func TestBadgerKV_Keys(t *testing.T) {
 	// Setup test data
 	keys := []string{"a1", "a2", "b1", "b2", "c1"}
 	for _, k := range keys {
-		kv.Save(ctx, "section", k, []byte("value"+k))
+		err := kv.Save(ctx, "section", k, []byte("value"+k))
+		require.NoError(t, err)
 	}
 
-	t.Run("Keys", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
+	return kv, ctx
+}
+
+// iteratorTestCase represents a test case for iteration methods
+type iteratorTestCase struct {
+	name         string
+	options      ListOptions
+	expectedKeys []string
+}
+
+// getIteratorTestCases returns common test cases for both Keys and List methods
+func getIteratorTestCases() []iteratorTestCase {
+	return []iteratorTestCase{
+		{
+			name:         "all items",
+			options:      ListOptions{},
+			expectedKeys: []string{"a1", "a2", "b1", "b2", "c1"},
+		},
+		{
+			name:         "with limit",
+			options:      ListOptions{Limit: 2},
+			expectedKeys: []string{"a1", "a2"},
+		},
+		{
+			name:         "with range",
+			options:      ListOptions{StartKey: "a", EndKey: "b"},
+			expectedKeys: []string{"a1", "a2"},
+		},
+		{
+			name:         "with prefix",
+			options:      ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a")},
+			expectedKeys: []string{"a1", "a2"},
+		},
+		{
+			name:         "in descending order",
+			options:      ListOptions{Sort: SortOrderDesc},
+			expectedKeys: []string{"c1", "b2", "b1", "a2", "a1"},
+		},
+		{
+			name:         "in descending order with prefix",
+			options:      ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a"), Sort: SortOrderDesc},
+			expectedKeys: []string{"a2", "a1"},
+		},
+	}
+}
+
+func TestBadgerKV_Keys(t *testing.T) {
+	for _, tc := range getIteratorTestCases() {
+		t.Run("Keys "+tc.name, func(t *testing.T) {
+			kv, ctx := setupIteratorTestData(t)
+
+			var keys []string
+			for k, err := range kv.Keys(ctx, "section", tc.options) {
+				require.NoError(t, err)
+				keys = append(keys, k)
+			}
+			assert.Equal(t, tc.expectedKeys, keys)
+		})
+	}
+}
+
+func TestBadgerKV_List(t *testing.T) {
+	for _, tc := range getIteratorTestCases() {
+		t.Run("List "+tc.name, func(t *testing.T) {
+			kv, ctx := setupIteratorTestData(t)
+
+			var objects []KVObject
+			for obj, err := range kv.List(ctx, "section", tc.options) {
+				require.NoError(t, err)
+				objects = append(objects, obj)
+			}
+
+			// Verify we got the expected number of objects
+			assert.Len(t, objects, len(tc.expectedKeys))
+
+			// Verify keys and values match expectations
+			for i, expectedKey := range tc.expectedKeys {
+				assert.Equal(t, expectedKey, objects[i].Key)
+				assert.Equal(t, []byte("value"+expectedKey), objects[i].Value)
+			}
+		})
+	}
+
+	// Test edge cases with fresh setup
+	t.Run("List empty section", func(t *testing.T) {
+		kv, ctx := setupIteratorTestData(t)
+
+		var objects []KVObject
+		var errors []error
+		for obj, err := range kv.List(ctx, "emptysection", ListOptions{}) {
+			if err != nil {
+				errors = append(errors, err)
+			} else {
+				objects = append(objects, obj)
+			}
 		}
-		assert.Equal(t, []string{"a1", "a2", "b1", "b2", "c1"}, keys)
+		assert.Len(t, objects, 0)
+		assert.Len(t, errors, 0)
 	})
 
-	t.Run("Keys with limit", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{Limit: 2}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
-		}
-		assert.Equal(t, []string{"a1", "a2"}, keys)
-	})
+	t.Run("List with empty section parameter", func(t *testing.T) {
+		kv, ctx := setupIteratorTestData(t)
 
-	t.Run("Keys with range", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: "b"}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
+		var errors []error
+		for _, err := range kv.List(ctx, "", ListOptions{}) {
+			if err != nil {
+				errors = append(errors, err)
+				break
+			}
 		}
-		assert.Equal(t, []string{"a1", "a2"}, keys)
-	})
-
-	t.Run("Keys with prefix", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a")}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
-		}
-		assert.Equal(t, []string{"a1", "a2"}, keys)
-	})
-
-	t.Run("Keys in descending order", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{Sort: SortOrderDesc}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
-		}
-		assert.Equal(t, []string{"c1", "b2", "b1", "a2", "a1"}, keys)
-	})
-
-	t.Run("Keys in descending order with prefix", func(t *testing.T) {
-		var keys []string
-		for k, err := range kv.Keys(ctx, "section", ListOptions{StartKey: "a", EndKey: PrefixRangeEnd("a"), Sort: SortOrderDesc}) {
-			require.NoError(t, err)
-			keys = append(keys, k)
-		}
-		assert.Equal(t, []string{"a2", "a1"}, keys)
+		assert.Len(t, errors, 1)
+		assert.Contains(t, errors[0].Error(), "section is required")
 	})
 }
 
