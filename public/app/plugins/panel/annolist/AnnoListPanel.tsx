@@ -12,6 +12,7 @@ import {
   locationUtil,
   PanelProps,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
@@ -247,7 +248,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   render() {
     const { loaded, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
-      return <div>loading...</div>;
+      return (
+        <div>
+          <Trans i18nKey="annolist.anno-list-panel.loading">Loading...</Trans>
+        </div>
+      );
     }
 
     // Previously we showed inidication that it covered all time
@@ -262,14 +267,20 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       <ScrollContainer minHeight="100%">
         {hasFilter && (
           <div className={this.style.filter}>
-            <b>Filter:</b>
+            <b>
+              <Trans i18nKey="annolist.anno-list-panel.filter">Filter:</Trans>
+            </b>
             {queryUser && (
               <Button
                 size="sm"
                 variant="secondary"
                 fill="text"
                 onClick={this.onClearUser}
-                aria-label={`Remove filter: ${queryUser.email}`}
+                aria-label={t(
+                  'annolist.anno-list-panel.aria-label-remove-filter',
+                  'Remove filter: {{filterToRemove}}',
+                  { filterToRemove: queryUser.email }
+                )}
               >
                 {queryUser.email}
               </Button>
@@ -287,7 +298,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
           </div>
         )}
 
-        {annotations.length < 1 && <div className={this.style.noneFound}>No Annotations Found</div>}
+        {annotations.length < 1 && (
+          <div className={this.style.noneFound}>
+            <Trans i18nKey="annolist.anno-list-panel.no-annotations-found">No annotations found</Trans>
+          </div>
+        )}
 
         <AbstractList items={annotations} renderItem={this.renderItem} getItemKey={(item) => `${item.id}`} />
       </ScrollContainer>

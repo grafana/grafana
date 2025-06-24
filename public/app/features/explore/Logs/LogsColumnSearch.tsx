@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input, useTheme2 } from '@grafana/ui';
 
 function getStyles(theme: GrafanaTheme2) {
@@ -15,7 +15,7 @@ function getStyles(theme: GrafanaTheme2) {
 
 export function LogsColumnSearch(props: { onChange: (e: React.FormEvent<HTMLInputElement>) => void; value: string }) {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme);
   return (
     <Field className={styles.searchWrap}>

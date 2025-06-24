@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
@@ -28,7 +28,6 @@ const ContactPointsFilter = () => {
     setSearchValue('');
     setSearchParams({ search: '' }, true);
   }, [cancel, setSearchParams]);
-  const { t } = useTranslate();
 
   const hasInput = Boolean(defaultValue);
 

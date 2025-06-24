@@ -6,9 +6,10 @@ WIRE_TAGS = "oss"
 
 -include local/Makefile
 include .bingo/Variables.mk
+include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.3
+GO_VERSION = 1.24.4
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -60,13 +61,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(GO) tool swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -84,7 +85,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -98,7 +99,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(GO) tool swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -110,11 +111,11 @@ cleanup-old-git-hooks:
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
-	$(GO) tool lefthook install -f
+	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
 lefthook-uninstall:
-	$(GO) tool lefthook uninstall
+	$(lefthook) uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -139,6 +140,8 @@ endif
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	@echo "Extracting i18n strings for packages"
+	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
 	yarn run plugin:i18n-extract
 
@@ -194,8 +197,8 @@ gen-go:
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(GO) tool cue fix kinds/**/*.cue
-	$(GO) tool cue fix public/app/plugins/**/**/*.cue
+	$(cue) fix kinds/**/*.cue
+	$(cue) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -252,7 +255,7 @@ build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
 run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(GO) tool bra run
+	$(bra) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -262,6 +265,10 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
+
+.PHONY: run-air
+run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
+	air -c .air.toml
 
 ##@ Testing
 
@@ -344,7 +351,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GO) tool golangci-lint run \
+	$(golangci-lint) run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
@@ -359,7 +366,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
+		$(XARGSR) $(golangci-lint) run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -513,3 +520,9 @@ check-tparse:
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+# check licenses of used dependencies (can be run using build image using
+# container/check-licenses target)
+check-licenses:
+	license_finder --decisions-file .github/license_finder.yaml
+

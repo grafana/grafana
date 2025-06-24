@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
@@ -12,7 +12,6 @@ import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryIt
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
-  const { t } = useTranslate();
   return function Render({ options, onChange }) {
     const { validator } = config;
     const { value } = options;

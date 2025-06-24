@@ -11,6 +11,11 @@ type CommonDataSourceClientSupplier struct {
 	Client clientapi.QueryDataClient
 }
 
-func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (clientapi.QueryDataClient, error) {
+func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string, _ clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
 	return s.Client, nil
+}
+
+func (s *CommonDataSourceClientSupplier) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
+	// FIXME: for now it's an empty structure, we'll find a way to fill it correctly.
+	return clientapi.InstanceConfigurationSettings{}, nil
 }

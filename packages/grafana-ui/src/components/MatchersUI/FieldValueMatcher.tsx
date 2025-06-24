@@ -11,10 +11,10 @@ import {
   SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -102,11 +102,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const fieldValueMatcherItem: FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = {
+export const getFieldValueMatcherItem: () => FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = () => ({
   id: FieldMatcherID.byValue,
   component: FieldValueMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byValue),
-  name: 'Fields with values',
-  description: 'Set properties for fields with reducer condition',
+  name: t('grafana-ui.matchers-ui.name-fields-with-value', 'Fields with values'),
+  description: t(
+    'grafana-ui.matchers-ui.description-fields-with-value',
+    'Set properties for fields with reducer condition'
+  ),
   optionsToLabel: (options) => `${options?.reducer} ${options?.op} ${options?.value}`,
-};
+});

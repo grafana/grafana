@@ -41,8 +41,6 @@ __debug_bin*
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
-/devenv/docker/blocks/spanner_tests
-/devenv/docker/blocks/spanner_tests_multi
 /devenv/docker/blocks/mt-db
 
 /tmp
@@ -71,6 +69,7 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .cursor/
+.devcontainer/
 
 .eslintcache
 .stylelintcache

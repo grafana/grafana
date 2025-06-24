@@ -476,7 +476,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t1, eval.Alerting),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 				},
@@ -525,7 +525,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Alerting),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: t2,
 					LastSentAt:         &t2,
 				},
@@ -557,7 +557,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            tn(4),
+					FiredAt:            util.Pointer(tn(4)),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
 				},
@@ -583,7 +583,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t2, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t2,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -613,7 +613,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Normal),
 					StartsAt:           t2,
 					EndsAt:             t2,
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
 					ResolvedAt:         &t2,
 					LastSentAt:         &t2,
@@ -646,7 +646,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.Alerting),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: tn(4),
 					ResolvedAt:         &t3,
 					LastSentAt:         &t3,
@@ -713,7 +713,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(4), eval.NoData),
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
-					FiredAt:            t3,
+					FiredAt:            &t3,
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
@@ -885,7 +885,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 1,
+			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
 					Labels:             labels["system + rule + labels1"],
@@ -895,16 +895,6 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t3,
-				},
-				{
-					Labels:             labels["system + rule + no-data"],
-					ResultFingerprint:  noDataLabels.Fingerprint(),
-					State:              eval.NoData,
-					LatestResult:       newEvaluation(t2, eval.NoData),
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 4),
-					LastEvaluationTime: t2,
-					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -967,7 +957,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Error),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
-					FiredAt:            tn(5),
+					FiredAt:            util.Pointer(tn(5)),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
 				},
@@ -1029,15 +1019,18 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels:             labels["system + rule"],
+					Labels:             data.Labels{"label": "test", "system": "owned"},
 					ResultFingerprint:  data.Labels{}.Fingerprint(),
 					State:              eval.Alerting,
 					LatestResult:       newEvaluation(t3, eval.Alerting),
-					StartsAt:           t3,
+					StartsAt:           t1,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            t3,
+					FiredAt:            &t1,
 					LastEvaluationTime: t3,
-					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
+					LastSentAt:         &t1,
+					Annotations: map[string]string{
+						"annotation": "test",
+					},
 				},
 			},
 		},
@@ -1067,7 +1060,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
@@ -1103,7 +1096,7 @@ func TestProcessEvalResults(t *testing.T) {
 					}),
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
-					FiredAt:            t1,
+					FiredAt:            &t1,
 					LastEvaluationTime: t1,
 					LastSentAt:         &t1,
 					Values: map[string]float64{
@@ -1136,7 +1129,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(t3, eval.Normal),
 					StartsAt:           t3,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: t3,
 					LastSentAt:         util.Pointer(t2),
 				},
@@ -1171,7 +1164,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Normal),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5),
-					FiredAt:            t2,
+					FiredAt:            &t2,
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(tn(5)),
 					ResolvedAt:         util.Pointer(tn(5)),
@@ -1210,7 +1203,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(6), eval.Normal),
 					StartsAt:           tn(6),
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
-					FiredAt:            tn(4),
+					FiredAt:            util.Pointer(tn(4)),
 					LastEvaluationTime: tn(6),
 					LastSentAt:         util.Pointer(tn(5)),
 				},
@@ -1245,7 +1238,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LatestResult:       newEvaluation(tn(5), eval.Alerting),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
-					FiredAt:            tn(5),
+					FiredAt:            util.Pointer(tn(5)),
 					LastEvaluationTime: tn(5),
 					LastSentAt:         util.Pointer(t3),
 				},
@@ -1417,9 +1410,10 @@ func TestProcessEvalResults(t *testing.T) {
 		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
 		rule := models.RuleGen.GenerateRef()
-		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
+		now := clk.Now()
+		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
-		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels), nil)
+		states := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -2063,4 +2057,220 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		result[k] = v
 	}
 	return result
+}
+
+// TestStateManager_HistorianIntegration tests that the state manager properly sends
+// all expected state transitions to the historian backend.
+func TestStateManager_HistorianIntegration(t *testing.T) {
+	baseInterval := 1 * time.Second
+	tN := func(n int) time.Time {
+		return time.Unix(0, 0).UTC().Add(time.Duration(n) * baseInterval)
+	}
+	t1 := tN(1)
+	t2 := tN(2)
+	t3 := tN(3)
+
+	labels1 := data.Labels{"instance": "server1", "job": "webapp"}
+	labels2 := data.Labels{"instance": "server2", "job": "webapp"}
+
+	baseRule := &models.AlertRule{
+		ID:              1,
+		OrgID:           1,
+		Title:           "test rule",
+		UID:             "test-rule-uid",
+		NamespaceUID:    "test-namespace",
+		IntervalSeconds: 10,
+		NoDataState:     models.NoData,
+		ExecErrState:    models.ErrorErrState,
+		For:             0,
+	}
+
+	type transition struct {
+		previousState eval.State
+		currentState  eval.State
+	}
+
+	scenarios := []struct {
+		name                string
+		rule                *models.AlertRule
+		evaluations         map[time.Time][]eval.Result
+		expectedTransitions map[time.Time][]transition
+	}{
+		{
+			name: "1:normal -> 1:alerting -> 1:normal",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Normal},
+				},
+				t2: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Normal},
+				},
+			},
+		},
+		{
+			name: "1:alerting, 2:alerting -> 2:alerting -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t2: {
+					// labels1 is missing from this evaluation
+					{Instance: labels2, State: eval.Alerting},
+				},
+				t3: {
+					// Both labels1 and labels2 are missing
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> {} -> {}",
+			rule: baseRule,
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting, EvaluatedAt: t1},
+				},
+				t2: {
+					// labels1 is missing - first missing evaluation
+				},
+				t3: {
+					// labels1 is still missing - second missing evaluation
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+				t3: {
+					{previousState: eval.Alerting, currentState: eval.Alerting},
+				},
+			},
+		},
+		{
+			name: "1:alerting -> 1:recovering -> 1:normal",
+			rule: &models.AlertRule{
+				ID:              1,
+				OrgID:           1,
+				Title:           "test rule",
+				UID:             "test-rule-uid",
+				NamespaceUID:    "test-namespace",
+				IntervalSeconds: 10,
+				NoDataState:     models.NoData,
+				ExecErrState:    models.ErrorErrState,
+				For:             0,
+				KeepFiringFor:   10,
+			},
+			evaluations: map[time.Time][]eval.Result{
+				t1: {
+					{Instance: labels1, State: eval.Alerting},
+				},
+				t2: {
+					{Instance: labels1, State: eval.Normal},
+				},
+				t3: {
+					{Instance: labels1, State: eval.Normal},
+				},
+			},
+			expectedTransitions: map[time.Time][]transition{
+				t1: {
+					{previousState: eval.Normal, currentState: eval.Alerting},
+				},
+				t2: {
+					{previousState: eval.Alerting, currentState: eval.Recovering},
+				},
+				t3: {
+					{previousState: eval.Recovering, currentState: eval.Normal},
+				},
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			historian := &state.FakeHistorian{}
+
+			cfg := state.ManagerCfg{
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clock.NewMock(),
+				Historian:     historian,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.NewNopLogger(),
+			}
+
+			mgr := state.NewManager(cfg, state.NewNoopPersister())
+
+			// Helper function to process one time step and verify historian
+			processTimeStep := func(evalTime time.Time) {
+				results := scenario.evaluations[evalTime]
+				expectedTransitions := scenario.expectedTransitions[evalTime]
+
+				for i := range results {
+					results[i].EvaluatedAt = evalTime
+				}
+
+				// Clear historian state transitions before the evaluation
+				historian.StateTransitions = nil
+
+				mgr.ProcessEvalResults(
+					context.Background(),
+					evalTime,
+					scenario.rule,
+					results,
+					make(data.Labels),
+					nil,
+				)
+
+				// Extract just the data we care about from the actual transitions
+				actualTransitions := make([]transition, len(historian.StateTransitions))
+				for i, t := range historian.StateTransitions {
+					actualTransitions[i] = transition{
+						previousState: t.PreviousState,
+						currentState:  t.State.State,
+					}
+				}
+
+				require.ElementsMatch(t, expectedTransitions, actualTransitions)
+			}
+
+			processTimeStep(t1)
+			processTimeStep(t2)
+			processTimeStep(t3)
+		})
+	}
 }

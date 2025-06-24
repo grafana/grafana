@@ -1,14 +1,14 @@
-name: Add issues and PRs to Skye project board
+name: Add issues to Skye project board
 on:
   workflow_dispatch:
     inputs:
       manual_issue_number:
-        description: 'Issue/PR number to add to project'
+        description: 'Issue to add to project'
         required: false
         type: number
+  # Ideally we could trigger this for PRs as well, but getting the secrets on that is tricky
+  # so we just won't bother for now
   issues:
-    types: [opened]
-  pull_request:
     types: [opened]
 
 permissions:
@@ -47,26 +47,16 @@ jobs:
           app_id: ${{ env.GH_APP_ID }}
           private_key: ${{ env.GH_APP_PEM }}
 
-      # Check if the user is in the list from the secret
+      # We do the check in the Github Actions expression and then export it to the output
+      # to reuse it
       - name: Check if user is allowed
         id: check_user
         env:
-          ALLOWED_USERS: ${{ env.ALLOWED_USERS }}
-          USERNAME: ${{ github.event.sender.login }}
+          USER_IS_ALLOWED: ${{ contains(fromJSON(env.ALLOWED_USERS), github.event.sender.login) }}
         run: |
-          # Convert the comma-separated list to an array
-          IFS=',' read -ra ALLOWED_USERS <<< "$ALLOWED_USERS"
+          echo "user_allowed=${USER_IS_ALLOWED}" >> "$GITHUB_OUTPUT"
 
-          # Check if user is in the allowed list
-          for allowed_user in "${ALLOWED_USERS[@]}"; do
-            if [ "$allowed_user" = "$USERNAME" ]; then
-              echo "user_allowed=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          done
-          echo "user_allowed=false" >> "$GITHUB_OUTPUT"
-
-      # Convert the issue/PR number to a node ID for the GraphQL API
+      # Convert the issue to a node ID for the GraphQL API
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
@@ -88,7 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-      # Finally, add the issue/PR to the project board
+      # Finally, add the issue to the project board
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
         uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32

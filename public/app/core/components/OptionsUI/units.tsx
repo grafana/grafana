@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
 import { StandardEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string, UnitFieldConfigSettings>;
 
 export function UnitValueEditor({ value, onChange, item }: Props) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (item?.settings?.isClearable && value != null) {
     return (
       <div className={styles.wrapper}>

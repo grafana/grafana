@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import { useRef } from 'react';
 
 import {
+  CoreApp,
   DataQueryResponse,
   DataSourceApi,
   GrafanaTheme2,
@@ -9,18 +11,20 @@ import {
   LogsDedupStrategy,
   SplitOpen,
   SupplementaryQueryType,
+  TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
+import { LogList } from 'app/features/logs/components/panel/LogList';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTING_KEY_ROOT, SETTINGS_KEYS } from './utils/logs';
 
 type Props = {
   queryResponse: DataQueryResponse | undefined;
@@ -30,13 +34,16 @@ type Props = {
   datasourceInstance: DataSourceApi | null | undefined;
   splitOpen: SplitOpen;
   setLogsSampleEnabled: (enabled: boolean) => void;
+  timeRange: TimeRange;
 };
 
 export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
+  const logsContainerRef = useRef<HTMLDivElement | null>(null);
+
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
     reportInteraction('grafana_explore_logs_sample_toggle_clicked', {
@@ -103,24 +110,36 @@ export function LogsSamplePanel(props: Props) {
     );
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);
-    LogsSamplePanelContent = (
-      <>
-        <OpenInSplitViewButton />
-        <div className={styles.logContainer}>
-          <LogRows
-            logRows={logs.rows}
-            dedupStrategy={LogsDedupStrategy.none}
-            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-            timeZone={timeZone}
-            enableLogDetails={true}
-            scrollElement={null}
-          />
-        </div>
-      </>
-    );
+    LogsSamplePanelContent =
+      config.featureToggles.newLogsPanel && logsContainerRef.current ? (
+        <LogList
+          app={CoreApp.Explore}
+          containerElement={logsContainerRef.current}
+          enableLogDetails
+          dedupStrategy={LogsDedupStrategy.none}
+          displayedFields={[]}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+          logs={logs.rows}
+          showControls
+          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+          sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
+          timeRange={props.timeRange}
+          timeZone={timeZone}
+          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+        />
+      ) : (
+        <LogRows
+          logRows={logs.rows}
+          dedupStrategy={LogsDedupStrategy.none}
+          showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+          prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+          timeZone={timeZone}
+          enableLogDetails
+          scrollElement={null}
+        />
+      );
   }
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
@@ -139,7 +158,10 @@ export function LogsSamplePanel(props: Props) {
       collapsible={true}
       onToggle={onToggleLogsSampleCollapse}
     >
-      {LogsSamplePanelContent}
+      <OpenInSplitViewButton />
+      <div className={styles.logContainer} ref={logsContainerRef}>
+        {LogsSamplePanelContent}
+      </div>
     </Collapse>
   ) : null;
 }
@@ -152,7 +174,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
     }),
     logContainer: css({
-      overflow: 'scroll',
+      overflow: config.featureToggles.newLogsPanel ? 'visible' : 'scroll',
     }),
     infoTooltip: css({
       marginLeft: theme.spacing(1),

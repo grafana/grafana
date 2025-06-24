@@ -5,7 +5,7 @@ import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
 
 import { ExportFormats, ExportProvider, ProvisioningType, allGrafanaExportProviders } from './providers';
@@ -96,7 +96,10 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
 
   const exportInlineDoc: Record<ProvisioningType, { title: string; component: React.ReactNode }> = {
     file: {
-      title: 'File-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.fileprovisioning-format',
+        'File-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
           {{ name }} format is only valid for File Provisioning.{' '}
@@ -110,7 +113,10 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
       ),
     },
     api: {
-      title: 'API-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.apiprovisioning-format',
+        'API-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
           {{ name }} format is only valid for API Provisioning.{' '}
@@ -124,7 +130,10 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
       ),
     },
     terraform: {
-      title: 'Terraform-provisioning format',
+      title: t(
+        'alerting.file-export-inline-documentation.export-inline-doc.title.terraformprovisioning-format',
+        'Terraform-provisioning format'
+      ),
       component: (
         <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
           {{ name }} format is only valid for Terraform Provisioning.{' '}

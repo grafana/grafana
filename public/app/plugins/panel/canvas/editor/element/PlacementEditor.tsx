@@ -2,6 +2,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -38,7 +39,11 @@ export function PlacementEditor({ item }: Props) {
   useObservable(settings?.scene ? settings.scene.moved : new Subject());
 
   if (!settings) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="canvas.placement-editor.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   const element = settings.element;
@@ -95,7 +100,7 @@ export function PlacementEditor({ item }: Props) {
     <div>
       <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
       <br />
-      <Field label="Constraints">
+      <Field label={t('canvas.placement-editor.label-constraints', 'Constraints')}>
         <Stack direction="row">
           <ConstraintSelectionBox
             onVerticalConstraintChange={onVerticalConstraintChange}
@@ -121,7 +126,7 @@ export function PlacementEditor({ item }: Props) {
 
       <br />
 
-      <Field label="Position">
+      <Field label={t('canvas.placement-editor.label-position', 'Position')}>
         <>
           {places.map((p) => {
             const v = placement![p];

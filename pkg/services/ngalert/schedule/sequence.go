@@ -117,7 +117,7 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 
 	// only evaluate rules in imported groups sequentially
 	for _, item := range groupItems {
-		if item.rule.ImportedFromPrometheus() {
+		if item.rule.ImportedPrometheusRule() {
 			return true
 		}
 	}

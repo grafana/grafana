@@ -54,6 +54,7 @@ export interface AdHocVariableFilter {
   operator: string;
   value: string;
   values?: string[];
+  origin?: 'dashboard' | string;
   /** @deprecated  */
   condition?: string;
 }
@@ -78,6 +79,7 @@ export interface GroupByVariableModel extends VariableWithOptions {
   datasource: DataSourceRef | null;
   multi: true;
   allowCustomValue?: boolean;
+  defaultValue?: VariableOption;
 }
 
 export interface VariableOption {

@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
+import { DataGrid, RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -16,10 +16,10 @@ import {
   GrafanaTheme2,
   ReducerID,
 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
@@ -280,8 +280,11 @@ export function TableNG(props: TableNGProps) {
 
     // Helper function to get displayed value
     const getDisplayedValue = (row: TableRow, key: string) => {
-      const field = props.data.fields.find((field) => field.name === key)!;
-      const displayedValue = formattedValueToString(field.display!(row[key]));
+      const field = props.data.fields.find((field) => getDisplayName(field) === key);
+      if (!field || !field.display) {
+        return '';
+      }
+      const displayedValue = formattedValueToString(field.display(row[key]));
       return displayedValue;
     };
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 
 import { Card } from './Card';
@@ -11,7 +11,7 @@ describe('Card', () => {
     const user = userEvent.setup();
     const callback = jest.fn();
     render(
-      <Card onClick={callback}>
+      <Card noMargin onClick={callback}>
         <Card.Heading>Test Heading</Card.Heading>
       </Card>
     );
@@ -22,7 +22,7 @@ describe('Card', () => {
   describe('Card Actions', () => {
     it('Children should be disabled or enabled according to Card disabled prop', () => {
       const { rerender } = render(
-        <Card>
+        <Card noMargin>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -37,7 +37,7 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
 
       rerender(
-        <Card disabled>
+        <Card noMargin disabled>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -54,7 +54,7 @@ describe('Card', () => {
 
     it('Children should be independently enabled or disabled if explicitly set', () => {
       const { rerender } = render(
-        <Card>
+        <Card noMargin>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled>Click Me</Button>
@@ -69,7 +69,7 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
 
       rerender(
-        <Card disabled>
+        <Card noMargin disabled>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled={false}>Click Me</Button>
@@ -87,7 +87,7 @@ describe('Card', () => {
     it('Children should be conditional', () => {
       const shouldNotRender = false;
       render(
-        <Card>
+        <Card noMargin>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -105,7 +105,7 @@ describe('Card', () => {
 
     it('Should allow selectable cards', () => {
       const { rerender } = render(
-        <Card isSelected={true}>
+        <Card noMargin isSelected={true}>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );
@@ -114,7 +114,7 @@ describe('Card', () => {
       expect(screen.getByRole('radio')).toBeChecked();
 
       rerender(
-        <Card isSelected={false}>
+        <Card noMargin isSelected={false}>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );
@@ -123,7 +123,7 @@ describe('Card', () => {
       expect(screen.getByRole('radio')).not.toBeChecked();
 
       rerender(
-        <Card>
+        <Card noMargin>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );

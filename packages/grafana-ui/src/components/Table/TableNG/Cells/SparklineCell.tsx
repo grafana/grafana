@@ -23,8 +23,8 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
-import { measureText } from '../../../../utils';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
 import { SparklineCellProps } from '../types';
@@ -100,6 +100,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
           width: `${valueWidth - theme.spacing.gridSize}px`,
           textAlign: 'right',
           marginRight: theme.spacing(1),
+          marginLeft: theme.spacing(1),
         }}
         className={styles.valueContainer}
         value={displayValue}

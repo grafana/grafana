@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
+import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -18,7 +19,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -51,10 +52,10 @@ export interface AmRoutesExpandedFormProps {
 export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const { selectedAlertmanager } = useAlertmanager();
+  const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
-  const { t } = useTranslate();
+
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const formAmRoute = {
@@ -133,7 +134,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       defaultValue={field.operator}
                       control={control}
                       name={`object_matchers.${index}.operator`}
-                      rules={{ required: { value: true, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: true,
+                          message: t('alerting.am-routes-expanded-form.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field
@@ -172,17 +178,31 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
 
       <Field label={t('alerting.am-routes-expanded-form.label-contact-point', 'Contact point')}>
         <Controller
-          render={({ field: { onChange, ref, value, ...field } }) => (
-            <ContactPointSelector
-              selectProps={{
-                ...field,
-                className: formStyles.input,
-                onChange: (value) => handleContactPointSelect(value, onChange),
-                isClearable: true,
-              }}
-              selectedContactPointName={value}
-            />
-          )}
+          render={({ field: { onChange, ref, value, ...field } }) =>
+            isGrafanaAlertmanager ? (
+              <GrafanaManagedContactPointSelector
+                onChange={(contactPoint) => {
+                  handleContactPointSelect(contactPoint?.spec.title, onChange);
+                }}
+                isClearable
+                value={value}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
+              />
+            ) : (
+              <ExternalAlertmanagerContactPointSelector
+                selectProps={{
+                  ...field,
+                  className: formStyles.input,
+                  onChange: (value) => handleContactPointSelect(value.value?.name, onChange),
+                  isClearable: true,
+                }}
+                selectedContactPointName={value}
+              />
+            )
+          }
           control={control}
           name="receiver"
         />

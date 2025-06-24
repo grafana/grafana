@@ -21,7 +21,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -253,6 +253,11 @@ export class DashboardGridItem
   }
 
   public scrollIntoView() {
-    scrollCanvasElementIntoView(this, this.containerRef);
+    const gridItemEl = document.querySelector(`[data-griditem-key="${this.state.key}"`);
+    if (gridItemEl instanceof HTMLElement) {
+      scrollIntoView(gridItemEl);
+    } else {
+      scrollCanvasElementIntoView(this, this.containerRef);
+    }
   }
 }

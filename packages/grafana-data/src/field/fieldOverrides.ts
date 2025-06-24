@@ -1,6 +1,6 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -35,7 +35,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return 'Transformations';
+    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
@@ -71,7 +71,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
-  const { t } = useTranslate();
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);

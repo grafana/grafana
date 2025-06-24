@@ -30,7 +30,9 @@ type PlaylistSpec struct {
 
 // NewPlaylistSpec creates a new PlaylistSpec object.
 func NewPlaylistSpec() *PlaylistSpec {
-	return &PlaylistSpec{}
+	return &PlaylistSpec{
+		Items: []PlaylistItem{},
+	}
 }
 
 // +k8s:openapi-gen=true

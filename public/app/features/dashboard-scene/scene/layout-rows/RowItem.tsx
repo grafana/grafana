@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObject,
@@ -22,7 +22,6 @@ import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSe
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
-import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { BulkActionElement } from '../types/BulkActionElement';
@@ -59,7 +58,6 @@ export class RowItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
-  private _layoutRestorer = new LayoutRestorer();
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
 
   public constructor(state?: Partial<RowItemState>) {
@@ -101,7 +99,7 @@ export class RowItem
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
+    this.setState({ layout });
   }
 
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {

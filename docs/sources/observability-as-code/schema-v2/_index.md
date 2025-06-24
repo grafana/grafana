@@ -18,7 +18,13 @@ weight: 200
 
 # Dashboard JSON schema v2
 
-{{< docs/experimental product="Dashboard JSON schema v2" featureFlag="`dashboardNewLayouts`" >}}
+{{< admonition type="caution" >}}
+
+Dashboard JSON schema v2 is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `dashboardNewLayouts` feature toggle in Grafana to use this feature.
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
 
 Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
@@ -148,31 +154,31 @@ The table includes default and other fields:
 ### `annotations`
 
 The configuration for the list of annotations that are associated with the dashboard.
-For the JSON and field usage notes, refer to the [annotations schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/annotations-schema/).
+For the JSON and field usage notes, refer to the [annotations schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/annotations-schema/).
 
 ### `elements`
 
 Dashboards can contain the following elements:
 
-- [PanelKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/panel-schema/)
-- [LibraryPanelKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/librarypanel-schema/)
+- [PanelKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/panel-schema/)
+- [LibraryPanelKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/librarypanel-schema/)
 
 ### `layout`
 
 Dashboards can have four layout options:
 
-- [GridLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/layout-schema/#gridlayoutkind)
-- [AutoGridLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/layout-schema/#autogridlayoutkind)
-- [RowsLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/layout-schema/#rowslayoutkind)
-- [TabsLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/layout-schema/#tabslayoutkind)
+- [GridLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/layout-schema/#gridlayoutkind)
+- [AutoGridLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/layout-schema/#autogridlayoutkind)
+- [RowsLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/layout-schema/#rowslayoutkind)
+- [TabsLayoutKind](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/layout-schema/#tabslayoutkind)
 
-For the JSON and field usage notes about each of these, refer to the [layout schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/layout-schema/).
+For the JSON and field usage notes about each of these, refer to the [layout schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/layout-schema/).
 
 ### `links`
 
 The configuration for links with references to other dashboards or external websites.
 
-For the JSON and field usage notes, refer to the [links schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/links-schema/).
+For the JSON and field usage notes, refer to the [links schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/links-schema/).
 
 ### `tags`
 
@@ -183,7 +189,7 @@ The tags associated with the dashboard:
 ### `timesettings`
 
 The `TimeSettingsSpec` defines the default time configuration for the time picker and the refresh picker for the specific dashboard.
-For the JSON and field usage notes about the `TimeSettingsSpec`, refer to the [timesettings schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/timesettings-schema/).
+For the JSON and field usage notes about the `TimeSettingsSpec`, refer to the [timesettings schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/timesettings-schema/).
 
 ### `variables`
 
@@ -200,7 +206,7 @@ There are eight variables types:
 - GroupByVariableKind
 - AdhocVariableKind
 
-For the JSON and field usage notes about the `variables` spec, refer to the [variables schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/variables-schema/).
+For the JSON and field usage notes about the `variables` spec, refer to the [variables schema documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/variables-schema/).
 
 ## Notes and limitations
 

@@ -1,13 +1,11 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ToolbarActionProps } from '../types';
 
 export const MakeDashboardEditableButton = ({ dashboard }: ToolbarActionProps) => {
-  const { t } = useTranslate();
-
   return (
     <Button
       disabled={playlistSrv.state.isPlaying}

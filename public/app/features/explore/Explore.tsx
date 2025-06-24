@@ -19,7 +19,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -466,7 +466,15 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderLogsSamplePanel() {
-    const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance, queries } = this.props;
+    const {
+      logsSample,
+      timeZone,
+      setSupplementaryQueryEnabled,
+      exploreId,
+      datasourceInstance,
+      queries,
+      queryResponse,
+    } = this.props;
 
     return (
       <ContentOutlineItem
@@ -484,6 +492,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           setLogsSampleEnabled={(enabled: boolean) =>
             setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsSample)
           }
+          timeRange={queryResponse.timeRange}
         />
       </ContentOutlineItem>
     );

@@ -1,13 +1,14 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
 import { DashboardScene } from '../scene/DashboardScene';
+
+import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
 
 interface ButtonProps {
   dashboard: DashboardScene;
@@ -34,7 +35,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
         dashboard: 1,
       },
       source: 'dashboard_scene_settings',
-      restore_enabled: false,
+      restore_enabled: Boolean(config.featureToggles.restoreDashboards),
     });
     toggleModal();
     if (dashboard.state.uid) {
@@ -50,12 +51,14 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
     await dashboard.onDashboardDelete();
   }, [dashboard, toggleModal]);
 
-  if (dashboard.state.meta.provisioned && showModal) {
-    return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
+  // Git managed dashboard
+  if (dashboard.isManagedRepository() && showModal) {
+    return <DeleteProvisionedDashboardDrawer dashboard={dashboard} onDismiss={toggleModal} />;
   }
 
-  if (dashboard.isManagedRepository() && showModal) {
-    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
+  // classic provisioning
+  if (dashboard.state.meta.provisioned && showModal) {
+    return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
   }
 
   return (
@@ -76,14 +79,12 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 }
 
 export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
-  const { t } = useTranslate();
-
   return (
     <ConfirmModal
       isOpen={true}
       body={
         <>
-          {false && ( // TODO: re-enable when restore is reworked
+          {config.featureToggles.restoreDashboards && (
             <>
               <Text element="p">
                 <Trans i18nKey="dashboard-settings.delete-modal-restore-dashboards-text">
@@ -112,8 +113,6 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
 }
 
 function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModalProps) {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={true}

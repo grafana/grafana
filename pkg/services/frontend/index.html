@@ -53,6 +53,10 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
 
+      [[if .Assets.ContentDeliveryURL]]
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+      [[end]]
+
       window.__grafana_load_failed = function(...args) {
         console.error('Failed to load Grafana', ...args);
       };
