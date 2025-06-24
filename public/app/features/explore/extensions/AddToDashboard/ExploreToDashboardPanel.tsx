@@ -1,9 +1,9 @@
 import { type ReactElement } from 'react';
 
-import { AddToDashboardForm } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardForm';
-import { useSelector } from 'app/types';
 import { TimeRange } from '@grafana/data';
 import { Panel } from '@grafana/schema';
+import { AddToDashboardForm } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardForm';
+import { useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
 

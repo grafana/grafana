@@ -1,5 +1,6 @@
-import { Panel } from '@grafana/schema';
 import { ComponentType } from 'react';
+
+import { Panel } from '@grafana/schema';
 
 /**
  * Used to work with user defined addToDashboard.
