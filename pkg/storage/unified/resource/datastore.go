@@ -129,7 +129,7 @@ func (d *dataStore) getKey(key DataKey) string {
 
 func (d *dataStore) parseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	if len(parts) <= 4 {
+	if len(parts) != 5 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 	uidActionParts := strings.Split(parts[4], "~")
