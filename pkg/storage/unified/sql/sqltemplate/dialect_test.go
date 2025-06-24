@@ -182,3 +182,89 @@ func TestName_Name(t *testing.T) {
 		t.Fatalf("unexpected dialect name %q", n.DialectName())
 	}
 }
+
+func TestReturning(t *testing.T) {
+	t.Parallel()
+
+	t.Run("noopReturningClause", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			name  string
+			input []string
+		}{
+			{"empty slice", []string{}},
+			{"valid string slice", []string{"id", "name"}},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				got, err := noopReturningClause{}.Returning(tc.input...)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if got != "" {
+					t.Fatalf("expected empty string, got: %q", got)
+				}
+			})
+		}
+	})
+
+	t.Run("returningClause", func(t *testing.T) {
+		testCases := []struct {
+			name   string
+			input  []string
+			output string
+			isErr  bool
+		}{
+			{
+				name:   "empty slice",
+				input:  []string{},
+				output: "",
+			},
+			{
+				name:  "multiple columns with empty values",
+				input: []string{"id", "name", ""},
+				isErr: true,
+			},
+			{
+				name:   "single column",
+				input:  []string{"id"},
+				output: "RETURNING id",
+			},
+			{
+				name:   "multiple columns",
+				input:  []string{"id", "name", "created_at"},
+				output: "RETURNING id, name, created_at",
+			},
+			{
+				name:   "column with asterisk",
+				input:  []string{"*"},
+				output: "RETURNING *",
+			},
+			{
+				name:   "complex expressions",
+				input:  []string{"id", "name AS user_name", "UPPER(email) AS email_upper"},
+				output: "RETURNING id, name AS user_name, UPPER(email) AS email_upper",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				got, err := returningClause{}.Returning(tc.input...)
+
+				if err != nil && !tc.isErr {
+					t.Fatalf("unexpected error: %v", err)
+				} else if err == nil && tc.isErr {
+					t.Fatalf("expected error but got none")
+				}
+
+				if got != tc.output {
+					t.Fatalf("expected %q, got %q", tc.output, got)
+				}
+			})
+		}
+	})
+}

@@ -118,6 +118,39 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 
+	// Drivers that support `RETURNING`.
+	if s.db.DriverName() == "postgres" {
+		rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+		if err != nil {
+			if unifiedsql.IsRowAlreadyExistsError(err) {
+				return 0, contracts.ErrSecureValueOperationInProgress
+			}
+			return 0, fmt.Errorf("inserting message into secure value outbox table: %w", err)
+		}
+
+		defer func() { _ = rows.Close() }()
+
+		if !rows.Next() {
+			return 0, fmt.Errorf("expected to receive a row with the last inserted id, but got none")
+		}
+
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return 0, fmt.Errorf("scanning last inserted id: %w", err)
+		}
+
+		if id == 0 {
+			return 0, fmt.Errorf("expected last inserted id to be greater than 0")
+		}
+
+		if err := rows.Err(); err != nil {
+			return 0, fmt.Errorf("reading rows: %w", err)
+		}
+
+		return id, nil
+	}
+
+	// Drivers that support LastInsertId.
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		if unifiedsql.IsRowAlreadyExistsError(err) {

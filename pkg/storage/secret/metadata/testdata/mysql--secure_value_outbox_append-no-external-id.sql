@@ -16,4 +16,4 @@ INSERT INTO `secret_secure_value_outbox` (
   'keeper',
   0,
   1234
-);
+) ;

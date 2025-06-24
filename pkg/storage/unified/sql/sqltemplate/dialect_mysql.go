@@ -18,6 +18,7 @@ type mysql struct {
 	backtickIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
+	noopReturningClause
 	name
 }
 

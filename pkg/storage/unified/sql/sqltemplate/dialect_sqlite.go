@@ -14,6 +14,7 @@ type sqlite struct {
 	standardIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
+	returningClause
 	name
 }
 

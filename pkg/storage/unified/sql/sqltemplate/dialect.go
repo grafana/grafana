@@ -65,6 +65,11 @@ type Dialect interface {
 
 	// CurrentEpoch returns the current epoch value for the database in microseconds.
 	CurrentEpoch() string
+
+	// Returning returns a list of columns to be returned by an INSERT or UPDATE statement.
+	// Implementations of this method should use `returningClause`,
+	// while non-supported drivers should use `noopReturningClause`.
+	Returning(values ...string) (string, error)
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.
@@ -181,4 +186,35 @@ type name string
 
 func (n name) DialectName() string {
 	return string(n)
+}
+
+type noopReturningClause struct{}
+
+func (noopReturningClause) Returning(values ...string) (string, error) {
+	return "", nil
+}
+
+type returningClause struct{}
+
+func (returningClause) Returning(values ...string) (string, error) {
+	if len(values) == 0 {
+		return "", nil
+	}
+
+	var b strings.Builder
+	b.WriteString("RETURNING ")
+
+	for i, value := range values {
+		if value == "" {
+			return "", errors.New("empty value in RETURNING clause")
+		}
+
+		if i > 0 {
+			b.WriteString(", ")
+		}
+
+		b.WriteString(value)
+	}
+
+	return b.String(), nil
 }

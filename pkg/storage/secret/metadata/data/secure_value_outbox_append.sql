@@ -30,4 +30,4 @@ INSERT INTO {{ .Ident "secret_secure_value_outbox" }} (
 {{ end }}
   {{ .Arg .Row.ReceiveCount }},
   {{ .Arg .Row.Created }}
-);
+) {{ .Returning "id" }};

@@ -18,4 +18,4 @@ INSERT INTO "secret_secure_value_outbox" (
   '',
   0,
   1234
-);
+) RETURNING id;

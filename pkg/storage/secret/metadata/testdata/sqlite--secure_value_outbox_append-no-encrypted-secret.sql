@@ -16,4 +16,4 @@ INSERT INTO "secret_secure_value_outbox" (
   'external-id',
   0,
   1234
-);
+) RETURNING id;

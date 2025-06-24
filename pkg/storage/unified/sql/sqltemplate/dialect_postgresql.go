@@ -23,6 +23,7 @@ type postgresql struct {
 	standardIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
+	returningClause
 	name
 }
 
