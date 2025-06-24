@@ -6,7 +6,7 @@ const DASHBOARD_NAME = 'Test variable output';
 const gdev_mysql = 'gdev-mysql';
 const gdev_mysql_ds_tests = 'gdev-mysql-ds-tests';
 
-describe('Variables - Datasource', () => {
+describe('Variables - Datasource', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

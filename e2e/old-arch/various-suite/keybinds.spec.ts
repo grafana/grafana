@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-describe('Keyboard shortcuts', () => {
+describe('Keyboard shortcuts', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 

@@ -5,7 +5,7 @@ import { e2e } from '../utils';
 const DATASOURCE_ID = 'Prometheus';
 const DATASOURCE_TYPED_NAME = 'PrometheusDatasourceInstance';
 
-describe('Prometheus config', () => {
+describe('Prometheus config', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
 

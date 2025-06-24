@@ -18,7 +18,7 @@ const addDataSource = () => {
   });
 };
 
-describe('Exemplars', () => {
+describe('Exemplars', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 

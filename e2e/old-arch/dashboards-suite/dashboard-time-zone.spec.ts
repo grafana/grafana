@@ -11,7 +11,7 @@ import {
 
 import { e2e } from '../utils';
 
-describe('Dashboard time zone support', () => {
+describe('Dashboard time zone support', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

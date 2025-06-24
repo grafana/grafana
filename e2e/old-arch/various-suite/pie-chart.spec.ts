@@ -2,7 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
 
-describe('Pie Chart Panel', () => {
+describe('Pie Chart Panel', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

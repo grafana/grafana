@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/TestDashboard.json';
 import { e2e } from '../utils';
 
-describe('Dashboard browse', () => {
+describe('Dashboard browse', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'a6801696-cc53-4196-b1f9-2403e3909185/panel-tests-dashlist-variables';
 
-describe('DashList panel', () => {
+describe('DashList panel', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

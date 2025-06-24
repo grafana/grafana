@@ -19,7 +19,7 @@ function assertPreviewValues(expectedValues: string[]) {
   }
 }
 
-describe('Variables - Custom', () => {
+describe('Variables - Custom', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

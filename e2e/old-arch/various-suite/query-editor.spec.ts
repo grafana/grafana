@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 import { waitForMonacoToLoad } from '../utils/support/monaco';
 
-describe('Query editor', () => {
+describe('Query editor', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

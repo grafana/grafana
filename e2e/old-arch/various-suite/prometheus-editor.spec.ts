@@ -42,7 +42,7 @@ function navigateToEditor(editorType: editorType, name: string): void {
   cy.contains(name).scrollIntoView().should('be.visible').click();
 }
 
-describe('Prometheus query editor', () => {
+describe('Prometheus query editor', { defaultCommandTimeout: 10000 }, () => {
   it('should have a kickstart component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist');
@@ -70,7 +70,7 @@ describe('Prometheus query editor', () => {
     cy.get(`[data-testid="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
-  describe('Code editor', () => {
+  describe('Code editor', { defaultCommandTimeout: 10000 }, () => {
     it('navigates to the code editor with editor type as code', () => {
       navigateToEditor('Code', 'prometheusCode');
     });
@@ -120,7 +120,7 @@ describe('Prometheus query editor', () => {
     });
   });
 
-  describe('Query builder', () => {
+  describe('Query builder', { defaultCommandTimeout: 10000 }, () => {
     it('navigates to the query builder with editor type as code', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
     });

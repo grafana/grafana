@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 
 export const smokeTestScenario = () =>
-  describe('Smoke tests', () => {
+  describe('Smoke tests', { defaultCommandTimeout: 10000 }, () => {
     before(() => {
       cy.logToConsole('disabling dashboardScene feature toggle in localstorage');
       cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');

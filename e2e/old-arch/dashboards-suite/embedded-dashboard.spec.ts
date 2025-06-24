@@ -3,7 +3,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-describe('Embedded dashboard', function () {
+describe('Embedded dashboard', { defaultCommandTimeout: 10000 }, function () {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

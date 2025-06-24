@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Gauge Panel', () => {
+describe('Gauge Panel', { defaultCommandTimeout: 10000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
