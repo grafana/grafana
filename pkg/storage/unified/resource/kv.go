@@ -141,7 +141,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 
 	opts := badger.DefaultIteratorOptions
 	opts.PrefetchValues = false
-	opts.PrefetchSize = 100
 
 	start := section + "/" + opt.StartKey
 	end := section + "/" + opt.EndKey
