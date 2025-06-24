@@ -1,4 +1,5 @@
 import { DataFrameView, IconName } from '@grafana/data';
+import { fuzzyFind } from '@grafana/ui';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -165,6 +166,7 @@ export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): Dashbo
 /**
  * Filters search results based on query parameters
  * This is used when backend filtering is not available (e.g., for deleted dashboards)
+ * Supports fuzzy search for tags and titles and alphabetical sorting
  */
 export function filterSearchResults(
   results: SearchHit[],
@@ -176,12 +178,17 @@ export function filterSearchResults(
 ): SearchHit[] {
   let filtered = results;
 
-  if (query.query && query.query.trim() !== '' && query.query !== '*') {
-    const searchTerm = query.query.toLowerCase();
-    filtered = filtered.filter(
-      (hit) =>
-        hit.title.toLowerCase().includes(searchTerm) || hit.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
-    );
+  if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
+    const searchString = query.query || query.tag?.join(',') || '';
+    const haystack: string[] = [];
+    const options: Array<{ value: number }> = [];
+    // Using forEach to do both the haystack and options array at once
+    results.forEach((hit, i) => {
+      haystack.push(`${hit.title},${hit.tags.join(',')}`);
+      options.push({ value: i });
+    });
+    const matches = fuzzyFind(options, haystack, searchString);
+    filtered = matches.map((match) => results[match.value]);
   }
 
   if (query.sort) {
@@ -195,12 +202,6 @@ export function filterSearchResults(
       }
       return 0;
     });
-  }
-
-  if (query.tag && query.tag.length > 0) {
-    filtered = filtered.filter((hit) =>
-      query.tag!.every((tagFilter) => hit.tags.some((hitTag) => hitTag.toLowerCase() === tagFilter.toLowerCase()))
-    );
   }
 
   return filtered;
