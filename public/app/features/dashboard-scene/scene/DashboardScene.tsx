@@ -1,7 +1,7 @@
 import * as H from 'history';
 
 import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,

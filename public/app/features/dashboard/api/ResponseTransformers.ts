@@ -56,6 +56,7 @@ import {
   ObjectMeta,
 } from 'app/features/apiserver/types';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
+import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
@@ -627,8 +628,8 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           spec: {
             ...commonProperties,
             datasource: v.datasource || getDefaultDatasource(),
-            baseFilters: v.baseFilters || [],
-            filters: v.filters || [],
+            baseFilters: validateFiltersOrigin(v.baseFilters) || [],
+            filters: validateFiltersOrigin(v.filters) || [],
             defaultKeys: v.defaultKeys || [],
             allowCustomValue: v.allowCustomValue ?? true,
           },

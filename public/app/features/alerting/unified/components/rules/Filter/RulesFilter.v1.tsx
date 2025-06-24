@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
@@ -48,10 +48,12 @@ interface RulesFilerProps {
   onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-  label: alertStateToReadable(value),
-  value,
-}));
+const RuleStateOptions = Object.entries(PromAlertingRuleState)
+  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
+  .map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
 const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
@@ -72,7 +74,6 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   useEffect(() => {
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
-  const { t } = useTranslate();
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
     const dataSourceNames =
@@ -353,7 +354,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function SearchQueryHelp() {
   const styles = useStyles2(helpStyles);
-  const { t } = useTranslate();
+
   return (
     <div>
       <div>

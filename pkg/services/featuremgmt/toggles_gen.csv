@@ -45,6 +45,7 @@ mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
+nanoGit,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
@@ -55,7 +56,7 @@ dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
-libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false
+libraryPanelRBAC,GA,@grafana/dashboards-squad,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
@@ -145,7 +146,6 @@ alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,GA,@grafana/dashboards-squad,false,false,false
 tableNextGen,preview,@grafana/dataviz-squad,false,false,true
-lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
@@ -185,10 +185,10 @@ investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,fal
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
-teamHttpHeadersMimir,preview,@grafana/identity-access-team,false,false,false
+teamHttpHeadersMimir,GA,@grafana/identity-access-team,false,false,false
 teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
-grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
+grafanaAdvisor,privatePreview,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
@@ -199,7 +199,7 @@ alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
-newShareReportDrawer,experimental,@grafana/sharing-squad,false,false,false
+newShareReportDrawer,preview,@grafana/sharing-squad,false,false,false
 rendererDisableAppPluginsPreload,experimental,@grafana/sharing-squad,false,false,true
 assetSriChecks,experimental,@grafana/frontend-ops,false,false,true
 alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
@@ -214,7 +214,6 @@ unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,
 extensionSidebar,experimental,@grafana/observability-logs,false,false,true
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
 alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,true
-xrayApplicationSignals,experimental,@grafana/aws-datasources,false,false,true
 multiTenantTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
@@ -226,7 +225,9 @@ alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,fal
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 extensionsReadOnlyProxy,experimental,@grafana/plugins-platform-backend,false,false,true
+kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
+preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false

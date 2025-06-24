@@ -249,7 +249,8 @@ type FrontendSettingsDTO struct {
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
-	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultDatasourceManageAlertsUIToggle          bool `json:"defaultDatasourceManageAlertsUiToggle"`
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool `json:"defaultAllowRecordingRulesTargetAlertsUiToggle"`
 
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
@@ -274,7 +275,8 @@ type FrontendSettingsDTO struct {
 	CloudMigrationIsTarget       bool `json:"cloudMigrationIsTarget"`
 	CloudMigrationPollIntervalMs int  `json:"cloudMigrationPollIntervalMs"`
 
-	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
+	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
+	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
 

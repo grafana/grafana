@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { Folder, useGetFolderQuery } from 'app/api/clients/folder';
-import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
+import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 interface GetResourceRepositoryArgs {
