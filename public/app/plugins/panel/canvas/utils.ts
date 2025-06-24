@@ -367,32 +367,11 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 
 export const getParentBoundingClientRect = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    // const transformRef = scene.transformComponentRef?.current;
-    // const transformRef = scene.viewportDiv;
-    // return transformRef?.instance.contentComponent?.getBoundingClientRect();
-    // return transformRef?.getBoundingClientRect();
     return scene.viewportDiv?.getBoundingClientRect();
   }
 
   return scene.div?.getBoundingClientRect();
 };
-
-// export const getTransformInstance = (scene: Scene) => {
-//   if (config.featureToggles.canvasPanelPanZoom) {
-//     // return scene.transformComponentRef?.current?.instance;
-//     return scene.viewportDiv;
-//   }
-//   return undefined;
-// };
-
-// export const getParent = (scene: Scene) => {
-//   if (config.featureToggles.canvasPanelPanZoom) {
-//     // return scene.transformComponentRef?.current?.instance.contentComponent;
-//     return scene.viewportDiv;
-//   }
-//   // return scene.div;
-//   return scene.viewportDiv;
-// };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
   const fields = new Set<Field>();
