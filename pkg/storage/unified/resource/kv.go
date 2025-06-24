@@ -29,10 +29,10 @@ type ListOptions struct {
 	Limit    int64     // maximum number of results to return. 0 means no limit.
 }
 
-// KVReader represents a key-value pair with streaming value access
-type KVReader struct {
-	Key    string
-	Reader io.Reader
+// KVObject represents a key-value object
+type KVObject struct {
+	Key   string        // the key of the object within the section
+	Value io.ReadCloser // the value of the object
 }
 
 type KV interface {
@@ -40,7 +40,7 @@ type KV interface {
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
 	// Get retrieves a key-value pair from the store
-	Get(ctx context.Context, section string, key string) (KVReader, error)
+	Get(ctx context.Context, section string, key string) (KVObject, error)
 
 	// Save a new value from an io.Reader
 	Save(ctx context.Context, section string, key string, value io.Reader) error
@@ -65,12 +65,12 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 	}
 }
 
-func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVReader, error) {
+func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObject, error) {
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
 	if section == "" {
-		return KVReader{}, fmt.Errorf("section is required")
+		return KVObject{}, fmt.Errorf("section is required")
 	}
 
 	key = section + "/" + key
@@ -78,27 +78,22 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVReade
 	item, err := txn.Get([]byte(key))
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
-			return KVReader{}, ErrNotFound
+			return KVObject{}, ErrNotFound
 		}
-		return KVReader{}, err
+		return KVObject{}, err
 	}
 
-	out := KVReader{
+	out := KVObject{
 		Key: string(item.Key())[len(section)+1:],
 	}
 
 	// Get the value and create a reader from it
-	var value []byte
-	err = item.Value(func(val []byte) error {
-		value = make([]byte, len(val))
-		copy(value, val)
-		return nil
-	})
+	value, err := item.ValueCopy(nil)
 	if err != nil {
-		return KVReader{}, err
+		return KVObject{}, err
 	}
 
-	out.Reader = bytes.NewReader(value)
+	out.Value = io.NopCloser(bytes.NewReader(value))
 
 	return out, nil
 }
