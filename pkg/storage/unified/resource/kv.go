@@ -20,13 +20,11 @@ const (
 )
 
 type ListOptions struct {
-	Sort     SortOrder
-	StartKey string
-	EndKey   string
-	Limit    int64
+	Sort     SortOrder // sort order of the results. Default is SortOrderAsc.
+	StartKey string    // lower bound of the range, included in the results
+	EndKey   string    // upper bound of the range, excluded from the results
+	Limit    int64     // maximum number of results to return
 }
-
-type GetOptions struct{}
 
 type KVObject struct {
 	Key   string
@@ -38,7 +36,7 @@ type KV interface {
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
 	// Get retrieves a key-value pair from the store
-	Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error)
+	Get(ctx context.Context, section string, key string) (KVObject, error)
 
 	// List returns all the key-value pairs in the store
 	List(ctx context.Context, section string, opt ListOptions) iter.Seq2[KVObject, error]
@@ -66,7 +64,7 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 	}
 }
 
-func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error) {
+func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObject, error) {
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
