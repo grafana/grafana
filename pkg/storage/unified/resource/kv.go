@@ -37,7 +37,7 @@ type KV interface {
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
 
-	// Get retrieves keys.
+	// Get retrieves a key-value pair from the store
 	Get(ctx context.Context, section string, key string, opts ...GetOptions) (KVObject, error)
 
 	// List returns all the key-value pairs in the store
