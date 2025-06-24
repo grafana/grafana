@@ -573,7 +573,7 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 // - The state has been resolved since the last notification.
 // - The state is firing and the last notification was sent at least resendDelay ago.
 // - The state was resolved within the resolvedRetention period, and the last notification was sent at least resendDelay ago.
-func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.Duration) bool {
+func (a *State) NeedsSending(now time.Time, resendDelay time.Duration, resolvedRetention time.Duration) bool {
 	if a.State == eval.Pending {
 		// We do not send notifications for pending states.
 		return false
@@ -586,13 +586,13 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 
 	// For normal states, we should only be sending if this is a resolved notification or a re-send of the resolved
 	// notification within the resolvedRetention period.
-	if a.State == eval.Normal && (a.ResolvedAt == nil || a.LastEvaluationTime.Sub(*a.ResolvedAt) > resolvedRetention) {
+	if a.State == eval.Normal && (a.ResolvedAt == nil || now.Sub(*a.ResolvedAt) > resolvedRetention) {
 		return false
 	}
 
-	// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay.
+	// We should send, and re-send notifications, each time LastSentAt is <= now + resendDelay.
 	// This can include normal->normal transitions that were resolved in recent past evaluations.
-	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(a.LastEvaluationTime)
+	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(now)
 }
 
 func (a *State) Equals(b *State) bool {

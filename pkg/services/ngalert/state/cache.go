@@ -166,25 +166,23 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 	return expanded, errs
 }
 
-func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
-	deleted := make([]*State, 0)
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) {
 	for id, state := range rs.states {
 		if predicate(state) {
 			delete(rs.states, id)
-			deleted = append(deleted, state)
 		}
 	}
-	return deleted
 }
 
-func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+// deleteRuleStates iterates over all states for the given rule and deletes those where predicate returns true.
+// The predicate function is called once for each state and should return true if the state should be deleted.
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
 	if ok {
-		return ruleStates.deleteStates(predicate)
+		ruleStates.deleteStates(predicate)
 	}
-	return nil
 }
 
 func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {

@@ -510,7 +510,7 @@ func TestNeedsSending(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay, tc.resolvedRetention))
+			assert.Equal(t, tc.expected, tc.testState.NeedsSending(evaluationTime, tc.resendDelay, tc.resolvedRetention))
 		})
 	}
 }
