@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = 'AejrN1AMz';
 
-describe('TextBox - load options scenarios', { defaultCommandTimeout: 10000 }, function () {
+describe('TextBox - load options scenarios', function () {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

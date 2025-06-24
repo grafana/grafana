@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Value reducers 1';
 
-describe('Inspect drawer tests', { defaultCommandTimeout: 10000 }, () => {
+describe('Inspect drawer tests', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

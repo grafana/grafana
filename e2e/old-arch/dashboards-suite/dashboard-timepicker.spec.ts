@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Dashboard timepicker', { defaultCommandTimeout: 10000 }, () => {
+describe('Dashboard timepicker', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

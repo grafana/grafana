@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
-describe('Variables - Load options from Url', { defaultCommandTimeout: 10000 }, () => {
+describe('Variables - Load options from Url', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

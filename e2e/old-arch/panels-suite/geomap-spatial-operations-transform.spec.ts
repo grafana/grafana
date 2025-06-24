@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'P2jR04WVk';
 
-describe.skip('Geomap spatial operations', { defaultCommandTimeout: 10000 }, () => {
+describe.skip('Geomap spatial operations', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

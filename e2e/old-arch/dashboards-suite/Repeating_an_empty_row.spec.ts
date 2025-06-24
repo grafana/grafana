@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
-describe('Repeating empty rows', { defaultCommandTimeout: 10000 }, () => {
+describe('Repeating empty rows', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Dashboard Panel Attention', { defaultCommandTimeout: 10000 }, () => {
+describe('Dashboard Panel Attention', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
     // Open all panels dashboard

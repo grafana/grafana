@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Solo Route', { defaultCommandTimeout: 10000 }, () => {
+describe('Solo Route', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

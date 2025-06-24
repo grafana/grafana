@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
-describe('Repeating a panel horizontally', { defaultCommandTimeout: 10000 }, () => {
+describe('Repeating a panel horizontally', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Panel edit tests - transformations', { defaultCommandTimeout: 10000 }, () => {
+describe('Panel edit tests - transformations', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

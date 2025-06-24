@@ -6,7 +6,7 @@ const MAP_LAYERS_TYPE = 'Map layers Layer type';
 const MAP_LAYERS_DATA = 'Map layers Data';
 const MAP_LAYERS_GEOJSON = 'Map layers GeoJSON URL';
 
-describe('Geomap layer types', { defaultCommandTimeout: 10000 }, () => {
+describe('Geomap layer types', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

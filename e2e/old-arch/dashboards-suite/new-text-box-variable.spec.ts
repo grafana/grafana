@@ -3,7 +3,7 @@ import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
 
-describe('Variables - Text box', { defaultCommandTimeout: 10000 }, () => {
+describe('Variables - Text box', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

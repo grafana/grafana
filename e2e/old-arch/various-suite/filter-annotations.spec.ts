@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'ed155665';
 
-describe('Annotations filtering', { defaultCommandTimeout: 10000 }, () => {
+describe('Annotations filtering', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

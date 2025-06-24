@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
-describe('Panel edit tests', { defaultCommandTimeout: 10000 }, () => {
+describe('Panel edit tests', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

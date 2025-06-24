@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 const DASHBOARD_ID = 'P2jR04WVk';
 const TIMEOUT = 45000;
 
-describe('Geomap layer controls options', { defaultCommandTimeout: 10000 }, () => {
+describe('Geomap layer controls options', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

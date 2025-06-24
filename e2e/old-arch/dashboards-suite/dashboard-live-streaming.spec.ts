@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/DashboardLiveTest.json';
 import { e2e } from '../utils';
 
-describe('Dashboard Live streaming support', { defaultCommandTimeout: 10000 }, () => {
+describe('Dashboard Live streaming support', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
     e2e.flows.importDashboard(testDashboard, 1000);

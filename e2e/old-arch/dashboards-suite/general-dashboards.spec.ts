@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = 'edediimbjhdz4b/a-tall-dashboard';
 
-describe('Dashboards', { defaultCommandTimeout: 10000 }, () => {
+describe('Dashboards', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

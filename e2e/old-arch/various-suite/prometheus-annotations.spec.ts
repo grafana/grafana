@@ -26,7 +26,7 @@ function addPrometheusAnnotation(annotationName: string) {
   cy.contains(DATASOURCE_NAME).scrollIntoView().should('be.visible').click();
 }
 
-describe('Prometheus annotations', { defaultCommandTimeout: 10000 }, () => {
+describe('Prometheus annotations', () => {
   beforeEach(() => {
     createPromDS(DATASOURCE_ID, DATASOURCE_NAME);
   });

@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Explore', { defaultCommandTimeout: 10000 }, () => {
+describe('Explore', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

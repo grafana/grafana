@@ -4,7 +4,7 @@ const DASHBOARD_ID = 'XMjIZPmik';
 const DASHBOARD_NAME = 'Panel Tests - Graph Time Regions';
 const UPLOT_MAIN_DIV_SELECTOR = '[data-testid="uplot-main-div"]';
 
-describe('Auto-migrate graph panel', { defaultCommandTimeout: 10000 }, () => {
+describe('Auto-migrate graph panel', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

@@ -77,7 +77,7 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
   }
 }
 
-describe('Prometheus variable query editor', { defaultCommandTimeout: 10000 }, () => {
+describe('Prometheus variable query editor', () => {
   beforeEach(() => {
     createPromDS(DATASOURCE_ID, DATASOURCE_NAME);
   });

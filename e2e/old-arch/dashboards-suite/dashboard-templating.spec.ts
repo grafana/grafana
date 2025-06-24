@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Dashboard templating', { defaultCommandTimeout: 10000 }, () => {
+describe('Dashboard templating', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

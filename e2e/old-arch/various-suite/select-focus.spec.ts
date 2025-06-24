@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe('Select focus/unfocus tests', { defaultCommandTimeout: 10000 }, () => {
+describe('Select focus/unfocus tests', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

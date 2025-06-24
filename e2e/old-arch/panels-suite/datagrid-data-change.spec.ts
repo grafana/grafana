@@ -4,7 +4,7 @@ const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_SELECT_SERIES = 'Datagrid Select series';
 
 //TODO enable this test when panel goes live
-describe.skip('Datagrid data changes', { defaultCommandTimeout: 10000 }, () => {
+describe.skip('Datagrid data changes', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
