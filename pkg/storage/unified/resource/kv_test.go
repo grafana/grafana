@@ -25,6 +25,14 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 	return db
 }
 
+func setupTestKV(t *testing.T) KV {
+	db := setupTestBadgerDB(t)
+	t.Cleanup(func() {
+		db.Close()
+	})
+	return NewBadgerKV(db)
+}
+
 func TestBadgerKV_Get(t *testing.T) {
 	db := setupTestBadgerDB(t)
 
