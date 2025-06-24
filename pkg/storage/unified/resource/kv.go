@@ -17,8 +17,7 @@ var ErrNotFound = errors.New("key not found")
 type SortOrder int
 
 const (
-	SortOrderUndefined SortOrder = iota
-	SortOrderAsc
+	SortOrderAsc SortOrder = iota
 	SortOrderDesc
 )
 
