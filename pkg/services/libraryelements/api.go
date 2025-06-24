@@ -315,8 +315,13 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 			// note: the connection ID cannot be used to get, update, or delete a connection, so this is solely to keep the api returning the same fields for now,
 			// while we deprecate the endpoint.
 			hash := fnv.New64a()
-			hash.Write([]byte(fmt.Sprintf("%d:%s:%d:%d", element.ID, dashboard.UID, c.GetOrgID(), element.Meta.Created.Unix())))
-			connectionID = int64(hash.Sum64())
+			_, err := fmt.Fprintf(hash, "%d:%s:%d:%d", element.ID, dashboard.UID, c.GetOrgID(), element.Meta.Created.Unix())
+			if err != nil {
+				return l.toLibraryElementError(err, "Failed to generate connection id")
+			}
+			// ensure it is positive and smaller than 9007199254740991, otherwise we will lose prescision
+			// in javascript, which has the safest number as 9007199254740991, compared to 9223372036854775807 in go
+			connectionID = int64(hash.Sum64() & ((1 << 52) - 1))
 		}
 
 		connections = append(connections, model.LibraryElementConnectionDTO{

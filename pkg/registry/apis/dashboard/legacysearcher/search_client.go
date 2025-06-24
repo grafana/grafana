@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -230,7 +229,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
 			query.ManagerIdentity = vals[0]
-		case search.DASHBOARD_LIBRARY_PANEL_REFERENCE:
+		case unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE:
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one library panel uid is supported")
 			}
