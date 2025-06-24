@@ -1,9 +1,11 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"math"
 	"strconv"
@@ -99,8 +101,12 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	if err != nil {
 		return MetaData{}, err
 	}
+	value, err := io.ReadAll(obj.Reader)
+	if err != nil {
+		return MetaData{}, err
+	}
 	var meta MetaData
-	if err := json.Unmarshal(obj.Value, &meta); err != nil {
+	if err := json.Unmarshal(value, &meta); err != nil {
 		return meta, err
 	}
 	return meta, nil
@@ -168,21 +174,25 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			yield(MetaDataObj{}, err)
 		}
 	}
-	iter := d.kv.List(ctx, metaSection, ListOptions{
+	iter := d.kv.Keys(ctx, metaSection, ListOptions{
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 	})
 
 	return func(yield func(MetaDataObj, error) bool) {
 		var selectedKey *MetaDataKey // The current key we are iterating over
-		var selectedObj *KVObject
 
 		// Yield is a helper function to yield a metadata object from a given object.
 		// It yields the metadata object if it is not deleted.
-		yieldObj := func(obj KVObject, key MetaDataKey) bool {
+		yieldObj := func(kvr KVReader, key MetaDataKey) bool {
 			if key.Action != MetaDataActionDeleted {
 				var meta MetaData
-				if err := json.Unmarshal(obj.Value, &meta); err != nil {
+				value, err := io.ReadAll(kvr.Reader)
+				if err != nil {
+					yield(MetaDataObj{}, err)
+					return false
+				}
+				if err := json.Unmarshal(value, &meta); err != nil {
 					yield(MetaDataObj{}, err)
 					return false
 				}
@@ -212,20 +222,19 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			return true
 		}
 
-		for obj, err := range iter {
+		for key, err := range iter {
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
 
-			key, err := d.parseKey(obj.Key)
+			metaKey, err := d.parseKey(key)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			if selectedKey == nil && key.ResourceVersion <= rv { // First candidate
-				selectedKey = &key
-				selectedObj = &obj
+			if selectedKey == nil && metaKey.ResourceVersion <= rv { // First candidate
+				selectedKey = &metaKey
 			}
 
 			if selectedKey == nil {
@@ -233,20 +242,28 @@ func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64
 			}
 			// If the current key is not the same as the previous key, or if the rv
 			// is greater than the target rv, we need to yield the selected object.
-			if !keyMatches(key, *selectedKey) || key.ResourceVersion > rv {
-				if !yieldObj(*selectedObj, *selectedKey) {
+			if !keyMatches(metaKey, *selectedKey) || metaKey.ResourceVersion > rv {
+				kvr, err := d.kv.Get(ctx, metaSection, key)
+				if err != nil {
+					yield(MetaDataObj{}, err)
+					return
+				}
+				if !yieldObj(kvr, *selectedKey) {
 					return
 				}
 				selectedKey = nil
-				selectedObj = nil
 			}
-			if key.ResourceVersion <= rv {
-				selectedKey = &key
-				selectedObj = &obj
+			if metaKey.ResourceVersion <= rv {
+				selectedKey = &metaKey
 			}
 		}
 		if selectedKey != nil { // Yield the last selected object
-			if !yieldObj(*selectedObj, *selectedKey) {
+			kvr, err := d.kv.Get(ctx, metaSection, d.getKey(*selectedKey))
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			if !yieldObj(kvr, *selectedKey) {
 				return
 			}
 		}
@@ -261,22 +278,33 @@ func (d *metadataStore) ListAll(ctx context.Context, key ListRequestKey) iter.Se
 			yield(MetaDataObj{}, err)
 		}
 	}
-	iter := d.kv.List(ctx, metaSection, ListOptions{
+	iter := d.kv.Keys(ctx, metaSection, ListOptions{
+		Sort:     SortOrderAsc,
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 	})
 	return func(yield func(MetaDataObj, error) bool) {
-		for obj, err := range iter {
+		for key, err := range iter {
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
 			var meta MetaData
-			if err := json.Unmarshal(obj.Value, &meta); err != nil {
+			kvr, err := d.kv.Get(ctx, metaSection, key)
+			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
 			}
-			parsedKey, err := d.parseKey(obj.Key)
+			value, err := io.ReadAll(kvr.Reader)
+			if err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			if err := json.Unmarshal(value, &meta); err != nil {
+				yield(MetaDataObj{}, err)
+				return
+			}
+			parsedKey, err := d.parseKey(key)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
@@ -296,5 +324,5 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), valueBytes)
+	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), bytes.NewReader(valueBytes))
 }

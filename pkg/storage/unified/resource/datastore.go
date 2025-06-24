@@ -1,8 +1,10 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"iter"
 	"strconv"
 	"strings"
@@ -115,9 +117,10 @@ func (d *dataStore) List(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 				yield(DataObj{}, err)
 				return
 			}
+			value, err := io.ReadAll(obj.Reader)
 			yield(DataObj{
 				Key:   key,
-				Value: obj.Value,
+				Value: value,
 			}, nil)
 		}
 	}
@@ -128,11 +131,15 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return obj.Value, nil
+	value, err := io.ReadAll(obj.Reader)
+	if err != nil {
+		return nil, err
+	}
+	return value, nil
 }
 
 func (d *dataStore) Save(ctx context.Context, key DataKey, value []byte) error {
-	return d.kv.Save(ctx, dataSection, d.getKey(key), value)
+	return d.kv.Save(ctx, dataSection, d.getKey(key), bytes.NewReader(value))
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {

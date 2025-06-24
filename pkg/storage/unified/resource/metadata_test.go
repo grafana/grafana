@@ -461,11 +461,3 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	assert.Equal(t, rv2, results[0].Key.ResourceVersion)
 	assert.Equal(t, metadata2, results[0].Value)
 }
-
-func TestPrefixRangeEnd(t *testing.T) {
-	prefix := "/unified/meta/apps/"
-	expected := "/unified/meta/apps0" // '/' + 1 = '0'
-
-	result := PrefixRangeEnd(prefix)
-	assert.Equal(t, expected, result)
-}

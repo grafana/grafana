@@ -1,9 +1,11 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"sync"
@@ -161,12 +163,12 @@ func (n *kvNotifier) getLastResourceVersion(ctx context.Context) int64 {
 		Limit: 1,
 	}
 
-	for obj, err := range n.kv.List(ctx, eventsSection, opts) {
+	for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
 		if err != nil {
 			continue
 		}
 		// Parse the key to extract the resource version
-		if eventKey, err := n.parseKey(obj.Key); err == nil && eventKey.ResourceVersion > lastRV {
+		if eventKey, err := n.parseKey(key); err == nil && eventKey.ResourceVersion > lastRV {
 			lastRV = eventKey.ResourceVersion
 		}
 		// Since we're using Limit=1, we only need to process the first (highest) key
@@ -187,7 +189,7 @@ func (n *kvNotifier) Send(ctx context.Context, event Event) error {
 		Resource:        event.Resource,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
-	}), v)
+	}), bytes.NewReader(v))
 	if err != nil {
 		return err
 	}
@@ -208,12 +210,22 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 				return
 			case <-time.After(n.opts.PollInterval):
 				startKey := n.getStartKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
-				for obj, err := range n.kv.List(ctx, eventsSection, ListOptions{StartKey: startKey}) {
+				for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
 					if err != nil {
 						// TODO: Handle error
 						continue
 					}
-					ev, err := parseEvent(obj.Value)
+					kvr, err := n.kv.Get(ctx, eventsSection, key)
+					if err != nil {
+						// TODO: Handle error
+						continue
+					}
+					value, err := io.ReadAll(kvr.Reader)
+					if err != nil {
+						// TODO: Handle error
+						continue
+					}
+					ev, err := parseEvent(value)
 					if err != nil {
 						// TODO: Handle error
 						continue
