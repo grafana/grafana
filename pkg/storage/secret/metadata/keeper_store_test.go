@@ -40,7 +40,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// get system keeper config
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, nil, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Nil(t, keeperConfig)
+		require.IsType(t, &secretv0alpha1.SystemKeeperConfig{}, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
