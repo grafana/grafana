@@ -6,7 +6,6 @@ import {
   Box,
   InlineField,
   InlineSwitch,
-  Space,
   Field,
   TagsInput,
   Input,
@@ -45,9 +44,8 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
       </Box>
       {advancedHttpSettingsIsOpen && options.access === 'proxy' && (
         <>
-          <Space v={2} />
-          <div style={{ gap: '16px', paddingLeft: '10px' }}>
-            <div style={{ width: '50%' }}>
+          <Box paddingLeft={1} marginY={1}>
+            <Box width="50%" marginBottom={2}>
               <Field
                 label="Allowed cookies"
                 description="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should
@@ -74,8 +72,9 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                   }}
                 />
               </Field>
-            </div>
-            <div style={{ width: '50%' }}>
+            </Box>
+
+            <Box width="50%" marginBottom={2}>
               <Field
                 htmlFor="advanced-http-timeout"
                 label="Timeout"
@@ -107,12 +106,12 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                   onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField}
                 />
               </Field>
-            </div>
-            <Space v={1} />
+            </Box>
+
             {advancedHttpSettingsIsOpen && (
               <CustomHeadersSettings dataSourceConfig={options} onChange={onOptionsChange} />
             )}
-          </div>
+          </Box>
         </>
       )}
     </>

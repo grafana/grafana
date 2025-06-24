@@ -17,9 +17,9 @@ import {
   Label,
   RadioButtonGroup,
   SecretInput,
-  Space,
   useStyles2,
   Text,
+  Stack,
 } from '@grafana/ui';
 
 import { AUTH_RADIO_BUTTON_OPTIONS, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
@@ -120,9 +120,9 @@ export const AuthSettings = (props: Props) => {
   }, []);
 
   return (
-    <>
+    <Stack direction="column">
       {/* Header toggle */}
-      <Box display="flex" alignItems="center">
+      <Box alignItems="center">
         <InlineField label={<div className={cx(styles.label)}>Auth and TLS/SSL Settings</div>} labelWidth={35}>
           <InlineSwitch
             data-testid="influxdb-v2-config-auth-settings-toggle"
@@ -135,121 +135,124 @@ export const AuthSettings = (props: Props) => {
       {/* Collapsible settings body */}
       {authenticationSettingsIsOpen && (
         <Box paddingLeft={1}>
-          <Space v={2} />
-
           {/* Authentication Method */}
-          <Field label={<Text element="h5">Authentication Method</Text>}>
-            <Box width="50%" display="flex" marginTop={1}>
-              <RadioButtonGroup
-                options={AUTH_RADIO_BUTTON_OPTIONS}
-                value={selectedMethod}
-                onChange={handleAuthMethodChange}
-              />
-            </Box>
-          </Field>
-
-          {/* Basic Auth settings */}
-          {authOptions.basicAuth && (
-            <>
-              <Space v={1} />
-              <Box display="flex" direction="column" width="60%" marginBottom={2}>
-                <InlineField label="User" labelWidth={14} grow>
-                  <Input
-                    placeholder="User"
-                    onChange={onUpdateDatasourceOption(props, 'basicAuthUser')}
-                    value={options.basicAuthUser || ''}
-                  />
-                </InlineField>
-                <InlineField label="Password" labelWidth={14} grow>
-                  <SecretInput
-                    placeholder="Password"
-                    isConfigured={options.secureJsonFields.basicAuthPassword || false}
-                    onChange={onUpdateDatasourceSecureJsonDataOption(props, 'basicAuthPassword')}
-                    onReset={() => updateDatasourcePluginResetOption(props, 'basicAuthPassword')}
-                    value={options.secureJsonData?.basicAuthPassword || ''}
-                  />
-                </InlineField>
-              </Box>
-            </>
-          )}
-
-          {/* TLS Client Auth */}
-          <Field>
-            <>
-              <Text element="h5">TLS Settings</Text>
-              <Space v={3} />
-              <Box
-                display="flex"
-                alignItems="center"
-                data-testid="influxdb-v2-config-auth-settings-tls-client-auth-toggle"
-              >
-                <Label style={{ width: '125px' }}>TLS Client Auth</Label>
+          <Box marginBottom={2}>
+            <Field label={<Text element="h5">Authentication Method</Text>} noMargin>
+              <Box width="50%" marginY={2}>
                 <RadioButtonGroup
-                  options={RADIO_BUTTON_OPTIONS}
-                  value={authOptions.tlsClientAuth}
-                  onChange={() => toggleOption('tlsClientAuth', authProps.TLS!.TLSClientAuth.onToggle)}
-                  size="sm"
+                  options={AUTH_RADIO_BUTTON_OPTIONS}
+                  value={selectedMethod}
+                  onChange={handleAuthMethodChange}
                 />
               </Box>
+            </Field>
+          </Box>
 
-              {authOptions.tlsClientAuth && (
-                <>
-                  <Space v={3} />
-                  <InlineField label="Server Name" labelWidth={14} grow>
+          <Box marginBottom={2}>
+            {/* Basic Auth settings */}
+            {authOptions.basicAuth && (
+              <>
+                <Box display="flex" direction="column" width="60%" marginBottom={2}>
+                  <InlineField label="User" labelWidth={14} grow>
                     <Input
-                      placeholder="domain.example.com"
-                      onChange={(e) => authProps.TLS?.TLSClientAuth.onServerNameChange(e.currentTarget.value)}
-                      value={authProps.TLS?.TLSClientAuth.serverName || ''}
+                      placeholder="User"
+                      onChange={onUpdateDatasourceOption(props, 'basicAuthUser')}
+                      value={options.basicAuthUser || ''}
                     />
                   </InlineField>
-                  <CertificationKey
-                    label="Client Cert"
-                    placeholder="Begins with -----BEGIN CERTIFICATE-----"
-                    onChange={(e) => authProps.TLS?.TLSClientAuth.onClientCertificateChange(e.currentTarget.value)}
-                    hasCert={!!authProps.TLS?.TLSClientAuth.clientCertificateConfigured}
-                    onClick={() => authProps.TLS?.TLSClientAuth.onClientCertificateReset()}
+                  <InlineField label="Password" labelWidth={14} grow>
+                    <SecretInput
+                      placeholder="Password"
+                      isConfigured={options.secureJsonFields.basicAuthPassword || false}
+                      onChange={onUpdateDatasourceSecureJsonDataOption(props, 'basicAuthPassword')}
+                      onReset={() => updateDatasourcePluginResetOption(props, 'basicAuthPassword')}
+                      value={options.secureJsonData?.basicAuthPassword || ''}
+                    />
+                  </InlineField>
+                </Box>
+              </>
+            )}
+          </Box>
+
+          {/* TLS Client Auth */}
+          <Box marginBottom={2}>
+            <Field noMargin>
+              <>
+                <Text element="h5">TLS Settings</Text>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  data-testid="influxdb-v2-config-auth-settings-tls-client-auth-toggle"
+                  marginTop={2}
+                >
+                  <Label style={{ width: '125px' }}>TLS Client Auth</Label>
+                  <RadioButtonGroup
+                    options={RADIO_BUTTON_OPTIONS}
+                    value={authOptions.tlsClientAuth}
+                    onChange={() => toggleOption('tlsClientAuth', authProps.TLS!.TLSClientAuth.onToggle)}
+                    size="sm"
                   />
-                  <CertificationKey
-                    label="Client Key"
-                    placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
-                    onChange={(e) => authProps.TLS?.TLSClientAuth.onClientKeyChange(e.currentTarget.value)}
-                    hasCert={!!authProps.TLS?.TLSClientAuth.clientKeyConfigured}
-                    onClick={() => authProps.TLS?.TLSClientAuth.onClientKeyReset()}
-                  />
-                </>
-              )}
-            </>
-          </Field>
+                </Box>
+
+                {authOptions.tlsClientAuth && (
+                  <Box marginTop={2}>
+                    <InlineField label="Server Name" labelWidth={14} grow>
+                      <Input
+                        placeholder="domain.example.com"
+                        onChange={(e) => authProps.TLS?.TLSClientAuth.onServerNameChange(e.currentTarget.value)}
+                        value={authProps.TLS?.TLSClientAuth.serverName || ''}
+                      />
+                    </InlineField>
+                    <CertificationKey
+                      label="Client Cert"
+                      placeholder="Begins with -----BEGIN CERTIFICATE-----"
+                      onChange={(e) => authProps.TLS?.TLSClientAuth.onClientCertificateChange(e.currentTarget.value)}
+                      hasCert={!!authProps.TLS?.TLSClientAuth.clientCertificateConfigured}
+                      onClick={() => authProps.TLS?.TLSClientAuth.onClientCertificateReset()}
+                    />
+                    <CertificationKey
+                      label="Client Key"
+                      placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
+                      onChange={(e) => authProps.TLS?.TLSClientAuth.onClientKeyChange(e.currentTarget.value)}
+                      hasCert={!!authProps.TLS?.TLSClientAuth.clientKeyConfigured}
+                      onClick={() => authProps.TLS?.TLSClientAuth.onClientKeyReset()}
+                    />
+                  </Box>
+                )}
+              </>
+            </Field>
+          </Box>
 
           {/* CA Cert */}
-          <Field>
-            <>
-              <Box display="flex" alignItems="center" data-testid="influxdb-v2-config-auth-settings-ca-cert-toggle">
-                <Label style={{ width: '125px' }}>CA Cert</Label>
-                <RadioButtonGroup
-                  options={RADIO_BUTTON_OPTIONS}
-                  value={authOptions.caCert}
-                  onChange={() => toggleOption('caCert', authProps.TLS!.selfSignedCertificate.onToggle)}
-                  size="sm"
-                />
-              </Box>
-              {authOptions.caCert && (
-                <>
-                  <Space v={3} />
-                  <CertificationKey
-                    label="CA Cert"
-                    placeholder="Begins with -----BEGIN CERTIFICATE-----"
-                    onChange={(e) => authProps.TLS?.selfSignedCertificate.onCertificateChange(e.currentTarget.value)}
-                    hasCert={!!authProps.TLS?.selfSignedCertificate.certificateConfigured}
-                    onClick={() => authProps.TLS?.selfSignedCertificate.onCertificateReset()}
+          <Box marginBottom={2}>
+            <Field noMargin>
+              <>
+                <Box display="flex" alignItems="center" data-testid="influxdb-v2-config-auth-settings-ca-cert-toggle">
+                  <Label style={{ width: '125px' }}>CA Cert</Label>
+                  <RadioButtonGroup
+                    options={RADIO_BUTTON_OPTIONS}
+                    value={authOptions.caCert}
+                    onChange={() => toggleOption('caCert', authProps.TLS!.selfSignedCertificate.onToggle)}
+                    size="sm"
                   />
-                </>
-              )}
-            </>
-          </Field>
+                </Box>
+                {authOptions.caCert && (
+                  <Box marginTop={3}>
+                    <CertificationKey
+                      label="CA Cert"
+                      placeholder="Begins with -----BEGIN CERTIFICATE-----"
+                      onChange={(e) => authProps.TLS?.selfSignedCertificate.onCertificateChange(e.currentTarget.value)}
+                      hasCert={!!authProps.TLS?.selfSignedCertificate.certificateConfigured}
+                      onClick={() => authProps.TLS?.selfSignedCertificate.onCertificateReset()}
+                    />
+                  </Box>
+                )}
+              </>
+            </Field>
+          </Box>
 
           {/* Skip TLS verify */}
-          <Box display="flex" alignItems="center">
+          <Box display="flex" direction="row" alignItems="center">
             <Label style={{ width: '125px' }}>Skip TLS Verify</Label>
             <InlineSwitch
               data-testid="influxdb-v2-config-auth-settings-skip-tls-verify"
@@ -259,6 +262,6 @@ export const AuthSettings = (props: Props) => {
           </Box>
         </Box>
       )}
-    </>
+    </Stack>
   );
 };
