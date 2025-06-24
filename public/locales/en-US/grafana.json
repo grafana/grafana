@@ -9991,7 +9991,7 @@
       },
       "label-name": {
         "error": {
-          "invalid": "Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "invalid": "Label name must start and end with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
           "required": "Label name is required",
           "too-long": "Label name must be less than {{maxLength}} characters",
           "unique": "Label name must be unique"
@@ -10000,7 +10000,7 @@
       },
       "label-value": {
         "error": {
-          "invalid": "Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
+          "invalid": "Label value must start and end with a letter or number and can only contain letters, numbers, dashes, underscores, and periods",
           "required": "Label value is required",
           "too-long": "Label value must be less than {{maxLength}} characters"
         },
@@ -10020,7 +10020,7 @@
       "name": {
         "description": "The name will be used to reference the secret",
         "error": {
-          "invalid": "Name must start with a letter or number and can only contain letters, numbers, dashes, and periods",
+          "invalid": "Name must start and end with a letter or number and can only contain letters, numbers, dashes, and periods",
           "required": "Name is required",
           "too-long": "Name must be less than {{maxLength}} characters",
           "unique": "A secret with this name already exists"
@@ -10030,7 +10030,8 @@
       "value": {
         "description": "Secret value",
         "error": {
-          "required": "Value is required"
+          "required": "Value is required",
+          "too-long": "Value must be less than {{maxLength}} characters"
         },
         "label": "Value"
       }
@@ -10039,10 +10040,10 @@
       "copy-value-aria-label": "Copy \"{{value}}\"",
       "delete-item-aria-label": "Delete {{name}}",
       "delete-modal": {
-        "body": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "body": "Are you sure you want to delete <1>{{name}}</1>?",
         "confirm-text": "delete",
         "delete-button": "Delete",
-        "description": "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it.",
+        "description": "Deleting a secret is irreversible and will remove the secret from Grafana. Any references to this secret will be broken.",
         "title": "Delete secret"
       },
       "edit-item": "Edit",

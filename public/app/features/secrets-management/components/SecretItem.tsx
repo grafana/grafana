@@ -3,8 +3,8 @@ import { debounce } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { Trans, t } from '@grafana/i18n';
-import { Text, Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, useStyles2, Tag } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Badge, Button, ClipboardButton, ConfirmModal, LoadingBar, Tag, Text, useStyles2 } from '@grafana/ui';
 
 import { DECRYPT_ALLOW_LIST_LABEL_MAP } from '../constants';
 import { Secret } from '../types';
@@ -179,15 +179,17 @@ export function SecretItem({ secret, onEditSecret, onDeleteSecret }: SecretItemP
         confirmText={t('secrets.item.delete-modal.delete-button', 'Delete')}
         confirmationText={t('secrets.item.delete-modal.confirm-text', 'delete')}
         title={t('secrets.item.delete-modal.title', 'Delete secret')}
-        body={t(
-          'secrets.item.delete-modal.body',
-          'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
-          { name: secret.name }
-        )}
-        description={t(
-          'secrets.item.delete-modal.description',
-          "Before you delete this secret, make sure it's not being used by any service. Deleting this secret will not remove any references to it."
-        )}
+        body={
+          <Trans i18nKey="secrets.item.delete-modal.body" values={{ name: secret.name }}>
+            Are you sure you want to delete <code>{'{{name}}'}</code>?
+          </Trans>
+        }
+        description={
+          <Trans i18nKey="secrets.item.delete-modal.description">
+            Deleting a secret is irreversible and will remove the secret from Grafana. Any references to this secret
+            will be broken.
+          </Trans>
+        }
       />
     </>
   );

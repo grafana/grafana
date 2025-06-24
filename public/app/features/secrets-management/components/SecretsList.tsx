@@ -1,4 +1,5 @@
 import { Secret } from '../types';
+import { transformSecretName } from '../utils';
 
 import { SecretItem } from './SecretItem';
 import { SecretsEmptyState } from './SecretsEmptyState';
@@ -16,7 +17,7 @@ export function SecretsList({ secrets = [], onEditSecret, onDeleteSecret, filter
   const hasSecrets = secrets.length > 0;
   const filteredSecrets = !filter
     ? secrets
-    : secrets.filter((secret) => secret.name.toLowerCase().includes(filter?.toLowerCase() || ''));
+    : secrets.filter((secret) => secret.name.includes(transformSecretName(filter) || ''));
   const hasFilteredSecrets = filteredSecrets.length > 0;
 
   if (!hasSecrets) {

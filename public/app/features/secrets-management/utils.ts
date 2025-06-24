@@ -3,7 +3,12 @@ import { FormEvent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { DECRYPT_ALLOW_LIST_LABEL_MAP, LABEL_MAX_LENGTH, SUBDOMAIN_MAX_LENGTH } from './constants';
+import {
+  DECRYPT_ALLOW_LIST_LABEL_MAP,
+  LABEL_MAX_LENGTH,
+  SECURE_VALUE_MAX_LENGTH,
+  SUBDOMAIN_MAX_LENGTH,
+} from './constants';
 import {
   FieldErrorMap,
   Secret,
@@ -119,10 +124,10 @@ export function validateSecretName(value: string): true | string {
     });
   }
 
-  if (!RegExp(/^[a-z\d][a-z\d.-]*$/).test(value)) {
+  if (!RegExp(/^[a-z0-9]([a-z0-9\-.]*[a-z0-9])?$/).test(value)) {
     return t(
       'secrets.form.name.error.invalid',
-      'Name must start with a letter or number and can only contain letters, numbers, dashes, and periods'
+      'Name must start and end with a letter or number and can only contain letters, numbers, dashes, and periods'
     );
   }
 
@@ -153,6 +158,12 @@ export function validateSecretValue(value: string | undefined): true | string {
     return t('secrets.form.value.error.required', 'Value is required');
   }
 
+  if (value.length > SECURE_VALUE_MAX_LENGTH) {
+    return t('secrets.form.value.error.too-long', 'Value must be less than {{maxLength}} characters', {
+      maxLength: SECURE_VALUE_MAX_LENGTH,
+    });
+  }
+
   return true;
 }
 
@@ -180,15 +191,15 @@ export function validateSecretLabel(key: 'name' | 'value', nameOrValue: string):
         );
   }
 
-  if (!RegExp(/^[a-zA-Z\d][a-zA-Z\d._-]*$/).test(nameOrValue)) {
+  if (!RegExp(/^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$/).test(nameOrValue)) {
     return key === 'name'
       ? t(
           'secrets.form.label-name.error.invalid',
-          'Label name must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
+          'Label name must start and end with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
         )
       : t(
           'secrets.form.label-value.error.invalid',
-          'Label value must start with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
+          'Label value must start and end with a letter or number and can only contain letters, numbers, dashes, underscores, and periods'
         );
   }
 
@@ -222,7 +233,7 @@ export function checkLabelNameAvailability(
  * @param {(value: string) => void} onTransformedHandler Function to handle the transformed value
  */
 export function onChangeTransformation(
-  event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+  event: Pick<FormEvent<HTMLInputElement | HTMLTextAreaElement>, 'currentTarget'>,
   transformationFunction: (value: string) => string,
   onTransformedHandler: (value: string) => void
 ): void {

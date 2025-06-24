@@ -16,8 +16,8 @@ import { getErrorMessage } from './utils';
 export default function SecretsManagementPage() {
   const styles = useStyles2(getStyles);
 
-  // Api test
   const [pollingInterval, setPollingInterval] = useState(0);
+
   const {
     data: secrets,
     isLoading,
@@ -58,6 +58,13 @@ export default function SecretsManagementPage() {
     setEditTarget(name);
   }, []);
 
+  // Applies the same transformation as the name field in the secret form.
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+  };
+
+  // @todo Point 'documentation' link to the actual secrets management documentation page
+
   return (
     <Page
       navId="secrets-management"
@@ -84,7 +91,8 @@ export default function SecretsManagementPage() {
               className={styles.filterInput}
               placeholder={t('secrets.search-placeholder', 'Search secret by name')}
               value={filter}
-              onChange={(value) => setFilter(value)}
+              onChange={handleFilterChange}
+              escapeRegex={false}
             />
           </InlineField>
         </div>
