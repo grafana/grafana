@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -196,6 +197,10 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return fmt.Errorf("scheme set version priority: %w", err)
 	}
 
+	return nil
+}
+
+func (b *SecretAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 
@@ -696,28 +701,13 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 
 	// When creating a resource and the name is empty, we need to generate one.
 	if operation == admission.Create && a.GetName() == "" {
-		generatedName, err := util.GetRandomString(8)
-		if err != nil {
-			return fmt.Errorf("generate random string: %w", err)
-		}
-
 		switch typedObj := obj.(type) {
 		case *secretv0alpha1.SecureValue:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "sv-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "sv-") + util.GenerateShortUID())
 			logging.FromContext(ctx).Debug("generated name for secure value", "name", typedObj.Name)
 
 		case *secretv0alpha1.Keeper:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "kp-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "kp-") + util.GenerateShortUID())
 			logging.FromContext(ctx).Debug("generated name for keeper", "name", typedObj.Name)
 		}
 	}

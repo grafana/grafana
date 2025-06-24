@@ -1,3 +1,5 @@
+import { PathValidationError } from '@grafana/data';
+
 import {
   isContentTypeJson,
   parseBody,
@@ -29,6 +31,18 @@ describe('parseUrlFromOptions', () => {
       expect(parseUrlFromOptions({ params, url })).toEqual(expected);
     }
   );
+
+  it('should validate the path if validatePath is true', () => {
+    expect(() => parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: true })).toThrow(
+      PathValidationError
+    );
+  });
+
+  it('should not validate the path if validatePath is false', () => {
+    expect(parseUrlFromOptions({ url: '/api/users/%2e%2e/admin', validatePath: false })).toEqual(
+      '/api/users/%2e%2e/admin'
+    );
+  });
 });
 
 describe('parseInitFromOptions', () => {

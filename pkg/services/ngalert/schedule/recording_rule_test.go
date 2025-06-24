@@ -17,8 +17,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -808,7 +810,8 @@ func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, r
 		DefaultDatasourceUID: "",
 	}
 
-	return writer.NewDatasourceWriter(cfg, dss, provider, clock.NewMock(),
+	mockPluginConfig := &mockPluginContextProvider{}
+	return writer.NewDatasourceWriter(cfg, dss, provider, mockPluginConfig, clock.NewMock(),
 		log.New("test"), m.GetRemoteWriterMetrics())
 }
 
@@ -816,4 +819,10 @@ type testClientProvider struct{}
 
 func (t testClientProvider) New(options ...httpclient.Options) (*http.Client, error) {
 	return &http.Client{}, nil
+}
+
+type mockPluginContextProvider struct{}
+
+func (m *mockPluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+	return backend.PluginContext{}, nil
 }
