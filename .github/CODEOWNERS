@@ -421,7 +421,6 @@
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
-/packages/grafana-ui/.storybook/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
@@ -446,6 +445,7 @@
 /packages/grafana-test-utils @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
+.storybook/ @grafana/grafana-frontend-platform
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
 /nx.json @grafana/frontend-ops
