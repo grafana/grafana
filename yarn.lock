@@ -18450,6 +18450,7 @@ __metadata:
     whatwg-fetch: "npm:3.6.20"
     yaml: "npm:^2.0.0"
     yargs: "npm:^17.5.1"
+    zod: "npm:^3.25.55"
   dependenciesMeta:
     prettier@3.4.2:
       unplugged: true
@@ -32976,5 +32977,12 @@ __metadata:
   version: 3.25.67
   resolution: "zod@npm:3.25.67"
   checksum: 10/0e35432dcca7f053e63f5dd491a87c78abe0d981817547252c3b6d05f0f58788695d1a69724759c6501dff3fd62929be24c9f314a3625179bee889150f7a61fa
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.25.55":
+  version: 3.25.55
+  resolution: "zod@npm:3.25.55"
+  checksum: 10/1f86d370730fc1eed10fe584079bfebd0008303722f2da21057d493e784b42f0b1edbac028b5a788e2e04bd31da070eac8e8d5f237ec968bc2a6aa30985fa9d6
   languageName: node
   linkType: hard
