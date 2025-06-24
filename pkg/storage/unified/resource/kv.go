@@ -88,11 +88,14 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string, opts ...
 		Key:   string(item.Key())[len(section)+1:],
 		Value: []byte{},
 	}
-	item.Value(func(val []byte) error {
+	err = item.Value(func(val []byte) error {
 		out.Value = make([]byte, len(val))
 		copy(out.Value, val)
 		return nil
 	})
+	if err != nil {
+		return KVObject{}, err
+	}
 	return out, nil
 }
 
@@ -134,7 +137,6 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 	if section == "" {
 		return func(yield func(string, error) bool) {
 			yield("", fmt.Errorf("section is required"))
-			return
 		}
 	}
 
@@ -188,7 +190,6 @@ func (k *badgerKV) List(ctx context.Context, section string, opt ListOptions) it
 	if section == "" {
 		return func(yield func(KVObject, error) bool) {
 			yield(KVObject{}, fmt.Errorf("section is required"))
-			return
 		}
 	}
 

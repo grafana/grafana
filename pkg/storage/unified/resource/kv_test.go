@@ -21,7 +21,10 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 
 func TestBadgerKV_Get(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		require.NoError(t, err)
+	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -48,7 +51,10 @@ func TestBadgerKV_Get(t *testing.T) {
 
 func TestBadgerKV_Save(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		require.NoError(t, err)
+	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -83,7 +89,10 @@ func TestBadgerKV_Save(t *testing.T) {
 
 func TestBadgerKV_Delete(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		require.NoError(t, err)
+	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -112,7 +121,10 @@ func TestBadgerKV_Delete(t *testing.T) {
 // setupIteratorTestData creates a test environment with common test data
 func setupIteratorTestData(t *testing.T) (*badgerKV, context.Context) {
 	db := setupTestBadgerDB(t)
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
@@ -241,7 +253,10 @@ func TestBadgerKV_List(t *testing.T) {
 
 func TestBadgerKV_Concurrent(t *testing.T) {
 	db := setupTestBadgerDB(t)
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		require.NoError(t, err)
+	}()
 
 	kv := NewBadgerKV(db)
 	ctx := context.Background()
