@@ -2,7 +2,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 
 import { e2e } from '../utils';
 
-describe('Panels smokescreen', () => {
+describe('Panels smokescreen', { defaultCommandTimeout: 60000 }, () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
   });

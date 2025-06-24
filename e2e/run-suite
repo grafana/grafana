@@ -91,7 +91,6 @@ case "$1" in
         ;;
    "old-arch")
       env[dashboardScene]=false
-      cypressConfig[defaultCommandTimeout]=10000
       cypressConfig[specPattern]=$rootForOldArch/*/$testFilesForSingleSuite
       cypressConfig[video]=false
         case "$2" in
