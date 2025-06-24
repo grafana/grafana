@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
+	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -78,37 +80,39 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	pluginContextProvider *plugincontext.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	userService user.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                  cfg,
-		FeatureToggles:       featureToggles,
-		DataSourceCache:      dataSourceCache,
-		DataSourceService:    dataSourceService,
-		RouteRegister:        routeRegister,
-		SQLStore:             sqlStore,
-		KVStore:              kvStore,
-		ExpressionService:    expressionService,
-		DataProxy:            dataProxy,
-		QuotaService:         quotaService,
-		SecretsService:       secretsService,
-		Metrics:              m,
-		Log:                  log.New("ngalert"),
-		NotificationService:  notificationService,
-		folderService:        folderService,
-		accesscontrol:        ac,
-		dashboardService:     dashboardService,
-		renderService:        renderService,
-		bus:                  bus,
-		AccesscontrolService: accesscontrolService,
-		annotationsRepo:      annotationsRepo,
-		pluginsStore:         pluginsStore,
-		tracer:               tracer,
-		store:                ruleStore,
-		httpClientProvider:   httpClientProvider,
-		ResourcePermissions:  resourcePermissions,
-		userService:          userService,
+		Cfg:                   cfg,
+		FeatureToggles:        featureToggles,
+		DataSourceCache:       dataSourceCache,
+		DataSourceService:     dataSourceService,
+		RouteRegister:         routeRegister,
+		SQLStore:              sqlStore,
+		KVStore:               kvStore,
+		ExpressionService:     expressionService,
+		DataProxy:             dataProxy,
+		QuotaService:          quotaService,
+		SecretsService:        secretsService,
+		Metrics:               m,
+		Log:                   log.New("ngalert"),
+		NotificationService:   notificationService,
+		folderService:         folderService,
+		accesscontrol:         ac,
+		dashboardService:      dashboardService,
+		renderService:         renderService,
+		bus:                   bus,
+		AccesscontrolService:  accesscontrolService,
+		annotationsRepo:       annotationsRepo,
+		pluginsStore:          pluginsStore,
+		tracer:                tracer,
+		store:                 ruleStore,
+		httpClientProvider:    httpClientProvider,
+		pluginContextProvider: pluginContextProvider,
+		ResourcePermissions:   resourcePermissions,
+		userService:           userService,
 	}
 
 	if ng.IsDisabled() {
@@ -124,30 +128,31 @@ func ProvideService(
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg                 *setting.Cfg
-	FeatureToggles      featuremgmt.FeatureToggles
-	DataSourceCache     datasources.CacheService
-	DataSourceService   datasources.DataSourceService
-	RouteRegister       routing.RouteRegister
-	SQLStore            db.DB
-	KVStore             kvstore.KVStore
-	ExpressionService   *expr.Service
-	DataProxy           *datasourceproxy.DataSourceProxyService
-	QuotaService        quota.Service
-	SecretsService      secrets.Service
-	Metrics             *metrics.NGAlert
-	NotificationService notifications.Service
-	Log                 log.Logger
-	renderService       rendering.Service
-	ImageService        image.ImageService
-	RecordingWriter     schedule.RecordingWriter
-	schedule            schedule.ScheduleService
-	stateManager        *state.Manager
-	folderService       folder.Service
-	dashboardService    dashboards.DashboardService
-	Api                 *api.API
-	httpClientProvider  httpclient.Provider
-	InstanceStore       state.InstanceStore
+	Cfg                   *setting.Cfg
+	FeatureToggles        featuremgmt.FeatureToggles
+	DataSourceCache       datasources.CacheService
+	DataSourceService     datasources.DataSourceService
+	RouteRegister         routing.RouteRegister
+	SQLStore              db.DB
+	KVStore               kvstore.KVStore
+	ExpressionService     *expr.Service
+	DataProxy             *datasourceproxy.DataSourceProxyService
+	QuotaService          quota.Service
+	SecretsService        secrets.Service
+	Metrics               *metrics.NGAlert
+	NotificationService   notifications.Service
+	Log                   log.Logger
+	renderService         rendering.Service
+	ImageService          image.ImageService
+	RecordingWriter       schedule.RecordingWriter
+	schedule              schedule.ScheduleService
+	stateManager          *state.Manager
+	folderService         folder.Service
+	dashboardService      dashboards.DashboardService
+	Api                   *api.API
+	httpClientProvider    httpclient.Provider
+	pluginContextProvider *plugincontext.Provider
+	InstanceStore         state.InstanceStore
 	// StartupInstanceReader is used to fetch the state of alerts on startup.
 	StartupInstanceReader state.InstanceReader
 
@@ -187,15 +192,30 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if remotePrimary || remoteSecondary {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+		smtpCfg := remoteClient.SmtpConfig{
+			FromAddress:    ng.Cfg.Smtp.FromAddress,
+			FromName:       ng.Cfg.Smtp.FromName,
+			Host:           ng.Cfg.Smtp.Host,
+			User:           ng.Cfg.Smtp.User,
+			Password:       ng.Cfg.Smtp.Password,
+			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
+			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
+			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
+			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
+		}
+
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
 			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+
+			// TODO: Remove once everything can be sent in the 'smtp_config' field.
+			SmtpFrom:      ng.Cfg.Smtp.FromAddress,
+			StaticHeaders: ng.Cfg.Smtp.StaticHeaders,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
@@ -317,7 +337,7 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, clk, ng.Metrics.GetRemoteWriterMetrics())
+	recordingWriter, err := createRecordingWriter(ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.DataSourceService, ng.pluginContextProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
@@ -342,7 +362,22 @@ func (ng *AlertNG) init() error {
 		FeatureToggles:       ng.FeatureToggles,
 	}
 
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))
+	history, err := configureHistorianBackend(
+		initCtx,
+		ng.Cfg.UnifiedAlerting.StateHistory,
+		ng.annotationsRepo,
+		ng.dashboardService,
+		ng.store,
+		ng.Metrics.GetHistorianMetrics(),
+		ng.Log,
+		ng.tracer,
+		ac.NewRuleService(ng.accesscontrol),
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		ng.pluginContextProvider,
+		clk,
+		ng.Metrics.GetRemoteWriterMetrics(),
+	)
 	if err != nil {
 		return err
 	}
@@ -586,7 +621,22 @@ type Historian interface {
 	state.Historian
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer, ac historian.AccessControl) (Historian, error) {
+func configureHistorianBackend(
+	ctx context.Context,
+	cfg setting.UnifiedAlertingStateHistorySettings,
+	ar annotations.Repository,
+	ds dashboards.DashboardService,
+	rs historian.RuleStore,
+	met *metrics.Historian,
+	l log.Logger,
+	tracer tracing.Tracer,
+	ac historian.AccessControl,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
+	pluginContextProvider *plugincontext.Provider,
+	clock clock.Clock,
+	mw *metrics.RemoteWriter,
+) (Historian, error) {
 	if !cfg.Enabled {
 		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
@@ -601,7 +651,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -610,7 +660,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -622,7 +672,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "annotations"})
+		annotationBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
@@ -631,7 +682,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
 		req := historian.NewRequester()
-		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "loki"})
+		lokiBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
 		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer, rs, ac)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
@@ -642,6 +694,25 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return backend, nil
 	}
 
+	if backend == historian.BackendTypePrometheus {
+		pcfg, err := historian.NewPrometheusConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("invalid remote prometheus configuration: %w", err)
+		}
+		writerCfg := writer.DatasourceWriterConfig{
+			Timeout: cfg.PrometheusWriteTimeout,
+		}
+		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "prometheus"})
+		prometheusBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
+		w := writer.NewDatasourceWriter(writerCfg, datasourceService, httpClientProvider, pluginContextProvider, clock, prometheusBackendLogger, mw)
+		if w == nil {
+			return nil, fmt.Errorf("failed to create alert state metrics writer")
+		}
+		backend := historian.NewRemotePrometheusBackend(pcfg, w, prometheusBackendLogger)
+
+		return backend, nil
+	}
+
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
@@ -649,7 +720,7 @@ func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig
 	return remote.NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, datasourceService datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
 	if settings.Enabled {
@@ -662,7 +733,7 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 		logger.Info("Setting up remote write using data sources",
 			"timeout", cfg.Timeout, "default_datasource_uid", cfg.DefaultDatasourceUID)
 
-		return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, clock, logger, m), nil
+		return writer.NewDatasourceWriter(cfg, datasourceService, httpClientProvider, pluginContextProvider, clock, logger, m), nil
 	}
 
 	return writer.NoopWriter{}, nil

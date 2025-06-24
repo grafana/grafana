@@ -1,10 +1,11 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
+import { createReturnTo } from '../hooks/useReturnTo';
 import { GrafanaRulesSource } from '../utils/datasource';
 import { totalFromStats } from '../utils/ruleStats';
 import { rulerRuleType } from '../utils/rules';
@@ -46,7 +47,6 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
-  const { t } = useTranslate();
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
   const promRule = promRuleGroup?.data.groups
@@ -92,6 +92,7 @@ interface GrafanaRuleListItemProps {
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
   operation?: RuleOperation;
+  showLocation?: boolean;
 }
 
 export function GrafanaRuleListItem({
@@ -100,7 +101,10 @@ export function GrafanaRuleListItem({
   groupIdentifier,
   namespaceName,
   operation,
+  showLocation = true,
 }: GrafanaRuleListItemProps) {
+  const returnTo = createReturnTo();
+
   const {
     grafana_alert: { uid, title, provenance, is_paused },
     annotations = {},
@@ -112,7 +116,7 @@ export function GrafanaRuleListItem({
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
     namespace: namespaceName,
-    href: createRelativeUrl(`/alerting/grafana/${uid}/view`),
+    href: createRelativeUrl(`/alerting/grafana/${uid}/view`, { returnTo }),
     health: rule?.health,
     error: rule?.lastError,
     labels: labels,
@@ -120,6 +124,7 @@ export function GrafanaRuleListItem({
     isPaused: rule?.isPaused ?? is_paused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
+    showLocation,
   };
 
   if (rulerRuleType.grafana.alertingRule(rulerRule)) {

@@ -12,7 +12,7 @@ import {
   FieldType,
   GrafanaTheme2,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';
@@ -24,7 +24,6 @@ export const SeriesEditor = ({
   onChange,
   context,
 }: StandardEditorProps<XYSeriesConfig[], unknown, Options>) => {
-  const { t } = useTranslate();
   const style = useStyles2(getStyles);
 
   // reset opts when mapping changes (no way to do this in panel opts builder?)
@@ -183,10 +182,11 @@ export const SeriesEditor = ({
                   filter: (field) =>
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                    field.type === FieldType.number &&
+                    (field.type === FieldType.number || field.type === FieldType.time) &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto ? 'First number or time field in each frame' : undefined,
                 },
               }}
             />

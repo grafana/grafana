@@ -147,7 +147,14 @@ export class BackendSrv implements BackendService {
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
-    const url = parseUrlFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
+
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -295,8 +302,14 @@ export class BackendSrv implements BackendService {
   }
 
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
 
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {

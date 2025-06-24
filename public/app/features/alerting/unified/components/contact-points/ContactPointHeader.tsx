@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
@@ -42,7 +42,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
-  const { t } = useTranslate();
+
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
   const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');

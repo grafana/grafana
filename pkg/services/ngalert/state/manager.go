@@ -538,7 +538,15 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 		// Now we need check if it's stale, and if so, we need to resolve it.
 		oldState := s.State
 		oldReason := s.StateReason
-		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, alertRule.GetMissingSeriesEvalsToResolve())
+
+		missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+		// Error state should be resolved after 1 missing evaluation instead of waiting
+		// for the configured missing series evaluations. This ensures resolved notifications are sent
+		// immediately when the alert transitions from these states.
+		if s.State == eval.Error || s.State == eval.NoData {
+			missingEvalsToResolve = 1
+		}
+		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve)
 
 		if isStale {
 			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
@@ -558,6 +566,10 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			}
 
 			staleStatesCount++
+		} else if s.State == eval.Alerting {
+			// We need to update EndsAt for the state so that it will not be resolved by the
+			// Alertmanager automatically.
+			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
 		record := StateTransition{
