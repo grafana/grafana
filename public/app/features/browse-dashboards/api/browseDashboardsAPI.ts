@@ -402,14 +402,39 @@ export const browseDashboardsAPI = createApi({
           folderUid,
         },
       }),
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
+        // Check if a dashboard with this UID already exists to find its current folder
+        let currentFolderUid: string | undefined;
+        if (dashboard.uid) {
+          try {
+            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            currentFolderUid = isDashboardV2Resource(existingDashboard)
+              ? existingDashboard.metadata?.name
+              : existingDashboard.meta?.folderUid;
+          } catch (error) {
+            // Dashboard doesn't exist yet, which is fine
+          }
+        }
+
         queryFulfilled.then(async (response) => {
+          // Refresh destination folder
           dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+
+          // If the dashboard was moved from a different folder, refresh the source folder too
+          if (currentFolderUid && currentFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: currentFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
+
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
