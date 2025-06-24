@@ -239,7 +239,7 @@ func TestLargeDashboardSupportCrossVersion(t *testing.T) {
 
 	// Marshal the original v1 spec to use as our "blob" data
 	// This simulates what would be stored as blob data for a large v1 dashboard
-	originalV1SpecBlob, err := json.Marshal(originalV1Dash.Spec.Object)
+	originalV1SpecBlob, err := json.Marshal(originalV1Dash.Spec)
 	require.NoError(t, err)
 
 	// Skip the ReduceSpec test to avoid DeepCopy issues with complex nested interface{} types
