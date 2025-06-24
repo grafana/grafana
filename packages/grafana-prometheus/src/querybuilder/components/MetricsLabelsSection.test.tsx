@@ -205,9 +205,9 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await onGetLabelNamesCallback({});
 
-    // Check that fetchLabels was called
+    // Check that queryLabelKeys was called
     expect(datasource.languageProvider.queryLabelKeys).toHaveBeenCalledWith(defaultTimeRange);
-    // Check that getLabelKeys was called
+    // Check that retrieveLabelKeys was called
     expect(datasource.languageProvider.retrieveLabelKeys).toHaveBeenCalled();
   });
 
@@ -231,7 +231,7 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await onGetLabelNamesCallback({});
 
-    // Check that fetchLabelsWithMatch was called
+    // Check that queryLabelKeys was called
     expect(datasource.languageProvider.queryLabelKeys).toHaveBeenCalled();
   });
 
@@ -255,7 +255,7 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await getLabelValuesCallback('val', 'label1');
 
-    // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
+    // Check that queryLabelValues was called (since hasLabelsMatchAPISupport is true)
     expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalled();
   });
 
@@ -280,7 +280,7 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await onGetLabelValuesCallback({ label: 'label1' });
 
-    // Check that getLabelValues was called
+    // Check that queryLabelValues was called
     expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(defaultTimeRange, 'label1');
   });
 
@@ -304,7 +304,7 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await onGetLabelValuesCallback({ label: 'label1' });
 
-    // Check that fetchSeriesValuesWithMatch was called (since hasLabelsMatchAPISupport is true)
+    // Check that queryLabelValues was called (since hasLabelsMatchAPISupport is true)
     expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalled();
   });
 
@@ -357,7 +357,6 @@ describe('MetricsLabelsSection', () => {
     // Check that we get back variables and metrics
     expect(result).toContainEqual(expect.objectContaining({ label: '$var1', value: '$var1' }));
     expect(result).toContainEqual(expect.objectContaining({ label: '$var2', value: '$var2' }));
-    // Metrics should be included too, but they come from the mocked getSeries or getLabelValues
   });
 
   it('should load metrics metadata if not present', async () => {
@@ -379,7 +378,7 @@ describe('MetricsLabelsSection', () => {
     // Call it
     await onGetMetricsCallback();
 
-    // loadMetricsMetadata should be called
+    // queryMetricsMetadata should be called
     expect(datasource.languageProvider.queryMetricsMetadata).toHaveBeenCalled();
   });
 });
