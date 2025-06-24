@@ -2059,11 +2059,14 @@
     {
       "metadata": {
         "name": "newInfluxDSConfigPageDesign",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "resourceVersion": "1750787021637",
+        "creationTimestamp": "2025-06-20T15:44:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-24 17:43:41.637607 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables new design for data source configuration pages",
+        "description": "Enables new design for the InfluxDB data source configuration page",
         "stage": "privatePreview",
         "codeowner": "@grafana/partner-datasources",
         "expression": "false"
