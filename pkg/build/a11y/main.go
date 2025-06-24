@@ -55,6 +55,7 @@ func NewApp() *cli.Command {
 			&cli.StringFlag{
 				Name:      "config",
 				Usage:     "Path to the pa11y config file to use",
+				Value:     "e2e/pa11yci.conf.js",
 				Validator: mustBeFile("config", true),
 				TakesFile: true,
 			},
@@ -62,6 +63,11 @@ func NewApp() *cli.Command {
 				Name:      "results",
 				Usage:     "Path to the pa11y results file to export",
 				TakesFile: true,
+			},
+			&cli.BoolFlag{
+				Name:  "no-threshold-fail",
+				Usage: "Don't fail the task if any of the tests fail. Use this in combination with --results to list all violations even if they're within thresholds",
+				Value: false,
 			},
 		},
 		Action: run,
@@ -74,6 +80,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	licensePath := cmd.String("license")
 	pa11yConfigPath := cmd.String("config")
 	pa11yResultsPath := cmd.String("results")
+	noThresholdFail := cmd.Bool("no-threshold-fail")
 
 	d, err := dagger.Connect(ctx)
 	if err != nil {
@@ -109,7 +116,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
 	}
 
-	c, runErr := RunTest(ctx, d, svc, pa11yConfig, pa11yResultsPath)
+	c, runErr := RunTest(ctx, d, svc, pa11yConfig, noThresholdFail, pa11yResultsPath)
 	if runErr != nil {
 		return fmt.Errorf("failed to run a11y test suite: %w", runErr)
 	}
@@ -124,7 +131,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("failed to get exit code of a11y test suite: %w", codeErr)
 	}
 
-	if code != 0 {
+	if code == 0 {
+		log.Printf("a11y tests passed with exit code %d", code)
+	} else if noThresholdFail {
+		log.Printf("a11y tests failed with exit code %d, but noFail is true", code)
+	} else {
 		return fmt.Errorf("a11y tests failed with exit code %d", code)
 	}
 

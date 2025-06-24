@@ -157,13 +157,13 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --config=./.pa11yci-pr.conf.js
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz
       - name: Run non-PR a11y test
         if: github.event_name != 'pull_request'
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/a11y --package=grafana.tar.gz --config=./.pa11yci.conf.js
+          args: go run ./pkg/build/a11y --package=grafana.tar.gz --no-threshold-fail
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests.

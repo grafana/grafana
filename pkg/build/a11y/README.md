@@ -15,7 +15,7 @@ To run the tests locally:
       ```
 3. Run the dagger pipeline with:
    ```sh
-   dagger -v run go run ./pkg/build/a11y --package=(full path to .tar.gz) --config=./.pa11yci-pr.conf.js --results=./pa11y-ci-results.json
+   dagger -v run go run ./pkg/build/a11y --package=(full path to .tar.gz) --results=./pa11y-ci-results.json
    ```
    The JSON results file will be saved to the file from the `--results` arg 
 4. If they fail and you want to see the full output
