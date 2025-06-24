@@ -13,7 +13,7 @@ export function getPluginSettings(pluginId: string, options?: Partial<BackendSrv
     return Promise.resolve(v);
   }
   return getBackendSrv()
-    .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
+    .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, { ...options, validatePath: true })
     .then((settings) => {
       pluginInfoCache[pluginId] = settings;
       return settings;

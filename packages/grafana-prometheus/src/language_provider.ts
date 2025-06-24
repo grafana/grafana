@@ -17,8 +17,8 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
-import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
+import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
@@ -30,11 +30,10 @@ import {
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
-import { MATCH_ALL_LABELS_STR, PromMetricsMetadata, PromQuery } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
-const EMPTY_SELECTOR = '{}';
 
 /**
  * Prometheus API endpoints for fetching resources
@@ -104,7 +103,7 @@ export interface PrometheusLegacyLanguageProvider {
   /**
    * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
    */
-  fetchLabelValues: (range: TimeRange, key: string, limit?: string) => Promise<string[]>;
+  fetchLabelValues: (range: TimeRange, key: string, limit?: string | number) => Promise<string[]>;
   /**
    * @deprecated Use queryLabelValues() method insteadIt'll determine the right endpoint based on the datasource settings
    */
@@ -125,7 +124,7 @@ export interface PrometheusLegacyLanguageProvider {
     name: string,
     match?: string,
     requestId?: string,
-    withLimit?: string
+    withLimit?: string | number
   ) => Promise<string[]>;
   /**
    * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
@@ -138,7 +137,7 @@ export interface PrometheusLegacyLanguageProvider {
     timeRange: TimeRange,
     name: string,
     withName?: boolean,
-    withLimit?: string
+    withLimit?: string | number
   ) => Promise<Record<string, string[]>>;
   /**
    * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
@@ -147,12 +146,16 @@ export interface PrometheusLegacyLanguageProvider {
     timeRange: TimeRange,
     name: string,
     withName?: boolean,
-    withLimit?: string
+    withLimit?: string | number
   ) => Promise<Record<string, string[]>>;
   /**
    * @deprecated Use queryLabelKeys() method instead. It'll determine the right endpoint based on the datasource settings
    */
-  fetchSeriesLabelsMatch: (timeRange: TimeRange, name: string, withLimit?: string) => Promise<Record<string, string[]>>;
+  fetchSeriesLabelsMatch: (
+    timeRange: TimeRange,
+    name: string,
+    withLimit?: string | number
+  ) => Promise<Record<string, string[]>>;
   /**
    * @deprecated If you need labelKeys or labelValues please use queryLabelKeys() or queryLabelValues() functions
    */
@@ -250,7 +253,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     }
   }
 
-  fetchLabelValues = async (range: TimeRange, key: string, limit?: string): Promise<string[]> => {
+  fetchLabelValues = async (range: TimeRange, key: string, limit?: string | number): Promise<string[]> => {
     const params = { ...this.datasource.getAdjustedInterval(range), ...(limit ? { limit } : {}) };
     const interpolatedName = this.datasource.interpolateString(key);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
@@ -322,7 +325,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     name: string,
     match?: string,
     requestId?: string,
-    withLimit?: string
+    withLimit?: string | number
   ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
@@ -378,7 +381,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     timeRange: TimeRange,
     name: string,
     withName?: boolean,
-    withLimit?: string
+    withLimit?: string | number
   ): Promise<Record<string, string[]>> => {
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(timeRange, name, withLimit);
@@ -395,7 +398,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
     timeRange: TimeRange,
     name: string,
     withName?: boolean,
-    withLimit?: string
+    withLimit?: string | number
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(timeRange);
@@ -417,7 +420,7 @@ export default class PromQlLanguageProvider extends LanguageProvider implements 
   fetchSeriesLabelsMatch = async (
     timeRange: TimeRange,
     name: string,
-    withLimit?: string
+    withLimit?: string | number
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(timeRange);
@@ -520,8 +523,8 @@ export interface PrometheusLanguageProviderInterface
   retrieveLabelKeys: () => string[];
 
   queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
-  queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: string) => Promise<string[]>;
-  queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: string) => Promise<string[]>;
+  queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
+  queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
 }
 
 /**
@@ -678,7 +681,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @param {string} [limit] - Optional maximum number of label keys to return
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
-  public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: string): Promise<string[]> => {
+  public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
     return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
   };
 
@@ -711,7 +714,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     timeRange: TimeRange,
     labelKey: string,
     match?: string,
-    limit?: string
+    limit?: number
   ): Promise<string[]> => {
     return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
   };

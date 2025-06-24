@@ -42,7 +42,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import { SUGGESTIONS_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, SUGGESTIONS_LIMIT } from './constants';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
 import {
   exportToAbstractQuery,
@@ -109,6 +109,7 @@ export class PrometheusDatasource
   cache: QueryCache<PromQuery>;
   metricNamesAutocompleteSuggestionLimit: number;
   seriesEndpoint: boolean;
+  seriesLimit: number;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -132,6 +133,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.seriesLimit = instanceSettings.jsonData.seriesLimit ?? DEFAULT_SERIES_LIMIT;
     this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
@@ -536,7 +538,7 @@ export class PrometheusDatasource
 
     const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
 
-    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match, '0');
+    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match);
 
     // filter out already used labels
     return labelKeys
@@ -567,7 +569,7 @@ export class PrometheusDatasource
 
     const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
 
-    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match, '0')).map((v) => ({
+    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match)).map((v) => ({
       value: v,
       text: v,
     }));
