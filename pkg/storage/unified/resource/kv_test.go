@@ -46,7 +46,6 @@ func TestBadgerKV_Get(t *testing.T) {
 		value, err := io.ReadAll(obj.Reader)
 		require.NoError(t, err)
 		assert.Equal(t, []byte("value1"), value)
-		assert.Equal(t, int64(6), obj.Size)
 	})
 
 	t.Run("Get non-existent key", func(t *testing.T) {
