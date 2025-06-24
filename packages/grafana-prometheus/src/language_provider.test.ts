@@ -81,6 +81,7 @@ describe('Prometheus Language Provider', () => {
     cacheLevel: PrometheusCacheLevel.None,
     getIntervalVars: () => ({}),
     getRangeScopedVars: () => ({}),
+    seriesLimit: DEFAULT_SERIES_LIMIT,
   } as unknown as PrometheusDatasource;
 
   describe('Series and label fetching', () => {
