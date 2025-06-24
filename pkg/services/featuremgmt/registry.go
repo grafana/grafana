@@ -1780,6 +1780,13 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "tabularNumbers",
+			Description: "Use fixed-width numbers globally in the UI",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "true",
+		},
 	}
 )
 

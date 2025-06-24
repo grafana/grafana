@@ -1036,4 +1036,9 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
+  /**
+  * Use fixed-width numbers globally in the UI
+  * @default true
+  */
+  tabularNumbers?: boolean;
 }
