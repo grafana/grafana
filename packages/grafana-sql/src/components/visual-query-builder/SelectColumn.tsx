@@ -16,7 +16,7 @@ export function SelectColumn({ columns, onParameterChange, value }: Props) {
   const selectInputId = useId();
 
   return (
-    <EditorField label={t('components.select-column.label-column', 'Column')} width={25}>
+    <EditorField label={t('grafana-sql.components.select-column.label-column', 'Column')} width={25}>
       <Select
         value={value}
         data-testid={selectors.components.SQLQueryEditor.selectColumn}

@@ -1,6 +1,6 @@
 import { Grammar } from 'prismjs';
 
-import { escapeRegex } from '@grafana/data';
+import { escapeRegex, parseFlags } from '@grafana/data';
 
 import { LogListModel } from './processing';
 
@@ -30,14 +30,26 @@ export const generateTextMatchGrammar = (
   highlightWords: string[] | undefined = [],
   search: string | undefined
 ): Grammar => {
-  const textMatches = [...highlightWords];
+  /**
+   * See:
+   * - https://github.com/grafana/grafana/blob/96f1582c36f94cf4ac7621b7af86bc9e2ad626fb/public/app/features/logs/components/LogRowMessage.tsx#L67
+   * - https://github.com/grafana/grafana/blob/96f1582c36f94cf4ac7621b7af86bc9e2ad626fb/packages/grafana-data/src/text/text.ts#L12
+   */
+  const expressions = highlightWords.map((word) => {
+    const { cleaned, flags } = parseFlags(cleanNeedle(word));
+    return new RegExp(`(?:${cleaned})`, flags);
+  });
   if (search) {
-    textMatches.push(escapeRegex(search));
+    expressions.push(new RegExp(escapeRegex(search), 'gi'));
   }
-  if (!textMatches.length) {
+  if (!expressions.length) {
     return {};
   }
   return {
-    'log-search-match': new RegExp(textMatches.join('|'), 'g'),
+    'log-search-match': expressions,
   };
+};
+
+const cleanNeedle = (needle: string): string => {
+  return needle.replace(/[[{(][\w,.\/:;<=>?:*+]+$/, '');
 };

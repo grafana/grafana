@@ -65,6 +65,11 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 			return err
 		}
 
+		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
+		if err := s.validateSecureValueReferences(ctx, keeper); err != nil {
+			return err
+		}
+
 		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
@@ -163,6 +168,11 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	var newRow *keeperDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
+		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
+			return err
+		}
+
 		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
 		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
 			return err

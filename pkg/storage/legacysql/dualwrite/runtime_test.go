@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -76,7 +77,7 @@ func TestRuntime_Create(t *testing.T) {
 				tt.setupStorageFn(us.Mock, tt.input)
 			}
 
-			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, nil)
+			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, kvstore.NewFakeKVStore(), nil)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
 
@@ -148,7 +149,7 @@ func TestRuntime_Get(t *testing.T) {
 				tt.setupStorageFn(us.Mock, name)
 			}
 
-			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, nil)
+			m := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, kvstore.NewFakeKVStore(), nil)
 			dw, err := m.NewStorage(kind, ls, us)
 			require.NoError(t, err)
 			status, err := m.Status(context.Background(), kind)
@@ -232,7 +233,7 @@ func TestRuntime_CreateWhileMigrating(t *testing.T) {
 		}
 
 	// Shared provider across all tests
-	dual := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, nil)
+	dual := ProvideService(featuremgmt.WithFeatures(featuremgmt.FlagManagedDualWriter), p, kvstore.NewFakeKVStore(), nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
