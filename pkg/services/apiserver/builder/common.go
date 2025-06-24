@@ -37,7 +37,14 @@ type APIGroupBuilder interface {
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
+
+	// Do not return anything unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1, with AllResourcesAllowed allowing all in the group.
+	// This is to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources() []string
 }
+
+const AllResourcesAllowed = "*"
 
 type APIGroupVersionProvider interface {
 	GetGroupVersion() schema.GroupVersion
