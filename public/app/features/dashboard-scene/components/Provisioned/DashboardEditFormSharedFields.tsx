@@ -24,35 +24,36 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
       formState: { errors },
     } = useFormContext();
 
+    const pathText =
+      resourceType === 'dashboard'
+        ? 'File path inside the repository (.json or .yaml)'
+        : 'Folder path inside the repository';
+
     return (
       <>
         {/* Path */}
         <Field
           noMargin
-          label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-path', 'Path')}
-          description={
-            resourceType === 'dashboard'
-              ? t(
-                  'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
-                  'File path inside the repository (.json or .yaml)'
-                )
-              : t(
-                  'dashboard-scene.save-or-delete-provisioned-folder-form.description-inside-repository-folder',
-                  'Folder path inside the repository'
-                )
-          }
+          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
+          description={t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
+            pathText
+          )}
         >
           <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
         </Field>
 
         {/* Comment */}
-        <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-comment', 'Comment')}>
+        <Field
+          noMargin
+          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+        >
           <TextArea
-            id="dashboard-comment"
+            id="provisioned-resource-form-comment"
             {...register('comment')}
             disabled={readOnly}
             placeholder={t(
-              'dashboard-scene.save-or-delete-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
               'Add a note to describe your changes (optional)'
             )}
             rows={5}
@@ -64,28 +65,28 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
           <>
             <Field
               noMargin
-              label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-workflow', 'Workflow')}
+              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
             >
               <Controller
                 control={control}
                 name="workflow"
                 render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup id="dashboard-workflow" {...field} options={workflowOptions} />
+                  <RadioButtonGroup id="provisioned-resource-form-workflow" {...field} options={workflowOptions} />
                 )}
               />
             </Field>
             {workflow === 'branch' && (
               <Field
                 noMargin
-                label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-branch', 'Branch')}
+                label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
                 description={t(
-                  'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-branch-name-in-git-hub',
+                  'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name-in-git-hub',
                   'Branch name in GitHub'
                 )}
                 invalid={!!errors.ref}
                 error={errors.ref && <BranchValidationError />}
               >
-                <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
+                <Input id="provisioned-resource-form-branch" {...register('ref', { validate: validateBranchName })} />
               </Field>
             )}
           </>

@@ -192,6 +192,7 @@ describe('DashboardEditFormSharedFields', () => {
                 { label: 'Create branch', value: 'branch' },
               ]}
               isNew={true}
+              resourceType="dashboard"
             />
           </FormProvider>
         );
