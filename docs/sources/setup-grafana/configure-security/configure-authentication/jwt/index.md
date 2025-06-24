@@ -23,9 +23,9 @@ This method of authentication is useful for integrating with other systems that
 use JWKS but can't directly integrate with Grafana or if you want to use pass-through
 authentication in an app embedding Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana does not currently support refresh tokens.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Enable JWT
 
@@ -96,18 +96,18 @@ email_attribute_path = user.emails[1] # user's email is professional@email.com
 If you want to embed Grafana in an iframe while maintaining user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana Cloud, or scenarios where verifying viewer identity is not required,
 embed [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 In this scenario, you will need to configure Grafana to accept a JWT
 provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
@@ -119,10 +119,10 @@ can use URL login instead.
 
 **Note**: You need to have enabled JWT before setting this setting see section Enabled JWT
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
 using HTTP over TLS.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```ini
 # [auth.jwt]

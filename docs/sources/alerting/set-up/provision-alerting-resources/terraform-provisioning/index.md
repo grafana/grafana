@@ -341,7 +341,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
 [Notification policies](ref:notification-policy) defines how to route alert instances to your contact points.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 
 Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource will overwrite a policy tree created through any other means.
 

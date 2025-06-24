@@ -702,7 +702,7 @@ Create or reset the notification policy tree using provisioning files in your Gr
 
 In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 
 Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
 

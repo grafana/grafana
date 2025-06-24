@@ -21,9 +21,9 @@ weight: 800
 
 The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in Microsoft Entra ID that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Create the Microsoft Entra ID application
 
@@ -94,9 +94,9 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 1. Click **Users and Groups**.
 1. Click **Add user/group** to add a user or group to the Grafana roles.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When assigning a group to a Grafana role, ensure that users are direct members of the group. Users in nested groups will not have access to Grafana due to limitations within Azure AD/Entra ID side. For more information, see [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/en-us/entra/identity/users/directory-service-limits-restrictions).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Configure application roles for Grafana in the Azure Portal
 
@@ -128,9 +128,9 @@ If you prefer to configure the application roles for Grafana in the manifest fil
 
 1. Add a Universally Unique Identifier to each role.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/wiki/Universally_unique_identifier) which you can generate on Linux with `uuidgen`, and on Windows through Microsoft PowerShell with `New-Guid`.
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Replace each "SOME_UNIQUE_ID" with the generated ID in the manifest file:
 
@@ -205,9 +205,9 @@ Ensure that you have followed the steps in [Create the Microsoft Entra ID applic
 
 ## Configure Azure AD authentication client using the Grafana UI
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{% /admonition %}}
+{{< /admonition >}}
 
 As a Grafana Admin, you can configure your Azure AD/Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
@@ -215,15 +215,15 @@ After you have filled in the form, click **Save** to save the configuration. If 
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Configure Azure AD authentication client using the Terraform provider
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "azuread_sso_settings" {
@@ -292,9 +292,9 @@ GF_AUTH_AZUREAD_MANAGED_IDENTITY_CLIENT_ID
 GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Verify that the Grafana [root_url](../../../configure-grafana/#root_url) is set in your Azure Application Redirect URLs.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Configure refresh token
 
@@ -348,9 +348,9 @@ To configure group membership claims from the Azure Portal UI, complete the foll
 
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If the user is a member of more than 200 groups, Entra ID does not emit the groups claim in the token and instead emits a group overage claim. To set up a group overage claim, see [Users with over 200 Group assignments](#users-with-over-200-group-assignments).
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Configure group membership claim in the manifest file
 
@@ -419,11 +419,11 @@ Grafana attempts to retrieve the user's group membership by calling the included
 
 To ensure this functionality works correctly, you must enable [`force_use_graph_api`](./#force-fetching-groups-from-microsoft-graph-api) in your configuration.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The 'App registration' must include the `GroupMember.Read.All` API permission for group overage claim calls to succeed.
 
 Admin consent might be required for this permission.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Configure the required Graph API permissions
 
@@ -434,9 +434,9 @@ Admin consent might be required for this permission.
 1. Under the **GroupMember** section, select **GroupMember.Read.All**.
 1. Click **Add permissions**.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Admin consent may be required for this permission.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Force fetching groups from Microsoft Graph API
 

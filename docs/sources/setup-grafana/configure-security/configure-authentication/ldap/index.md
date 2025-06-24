@@ -18,9 +18,9 @@ weight: 300
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 [Enhanced LDAP authentication](../enhanced-ldap/) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [Role-based access control](../../../../administration/roles-and-permissions/access-control/) to understand how you can control access with role-based permissions.
 
@@ -130,9 +130,9 @@ member_of = "memberOf"
 email =  "email"
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Whenever you modify the ldap.toml file, you must restart Grafana in order for the change(s) to take effect.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Using environment variables
 
@@ -236,10 +236,10 @@ org_role = "Viewer"
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users.                  | `false`              |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Commenting out a group mapping requires also commenting out the header of
 said group or it will fail validation as an empty mapping.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Example:
 

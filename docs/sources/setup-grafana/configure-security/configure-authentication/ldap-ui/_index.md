@@ -22,9 +22,9 @@ Benefits of using the Grafana user interface to configure LDAP authentication in
 - Quickly test the connection to the LDAP server.
 - There is no need to restart Grafana after making changes.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. If you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 

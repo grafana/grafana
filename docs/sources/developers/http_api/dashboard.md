@@ -262,9 +262,9 @@ Status Codes:
 
 ## Hard delete dashboard by uid
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
-{{% /admonition %}}
+{{< /admonition >}}
 
 `DELETE /api/dashboards/uid/:uid/trash`
 
@@ -312,9 +312,9 @@ Status Codes:
 
 ## Restore deleted dashboard by uid
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is currently in private preview and behind the `dashboardRestore` feature toggle.
-{{% /admonition %}}
+{{< /admonition >}}
 
 `PATCH /api/dashboards/uid/:uid/trash`
 

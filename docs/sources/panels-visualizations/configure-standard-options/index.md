@@ -152,9 +152,9 @@ This section explains all available standard options.
 
 To set these options, expand the **Standard options** section in the panel editor pane. Most field options won't affect the visualization until you click outside of the field option box you're editing or press Enter.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with standard options.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Unit
 

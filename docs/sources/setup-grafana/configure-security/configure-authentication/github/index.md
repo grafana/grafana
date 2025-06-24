@@ -23,9 +23,9 @@ weight: 900
 
 This topic describes how to configure GitHub OAuth authentication.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in GitHub that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -43,9 +43,9 @@ Ensure you know how to create a GitHub OAuth app. Consult GitHub's documentation
 
 ## Configure GitHub authentication client using the Grafana UI
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{% /admonition %}}
+{{< /admonition >}}
 
 As a Grafana Admin, you can configure GitHub OAuth client from within Grafana using the GitHub UI. To do this, navigate to **Administration > Authentication > GitHub** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
@@ -53,17 +53,17 @@ After you have filled in the form, click **Save** . If the save was successful, 
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitHub authentication client using the Terraform provider
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "github_sso_settings" {
