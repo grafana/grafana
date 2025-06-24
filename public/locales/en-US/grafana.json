@@ -846,13 +846,11 @@
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
-      "aria-label-refresh-contact-points": "Refresh contact points",
       "contact-point-picker-label-contact-point": "Contact point",
       "message": {
         "contact-point-is-required": "Contact point is required."
       },
-      "title-failed-to-fetch-contact-points": "Failed to fetch contact points",
-      "tooltip-refresh-contact-points-list": "Refresh contact points list"
+      "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
     },
     "contact-points": {
       "create": "Create contact point",
@@ -911,6 +909,11 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "contactPoints": {
+      "validation": {
+        "notFound": "Contact point \"{{contactPoint}}\" could not be found"
+      }
     },
     "continue-matching-indicator": {
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
@@ -1908,6 +1911,7 @@
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
+      "placeholder-search-by-contact-point": "Choose a contact point",
       "search-query-input-placeholder-search": "Search"
     },
     "notification-policies-list": {
@@ -4067,6 +4071,9 @@
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
+      "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-repeat-direction": "Repeat direction",
+      "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
