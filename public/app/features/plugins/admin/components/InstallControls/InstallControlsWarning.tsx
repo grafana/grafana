@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, LinkButton, useStyles2, Alert, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { getExternalManageLink } from '../../helpers';
@@ -22,6 +22,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
+
   const isCompatible = Boolean(latestCompatibleVersion);
 
   if (plugin.type === PluginType.renderer) {

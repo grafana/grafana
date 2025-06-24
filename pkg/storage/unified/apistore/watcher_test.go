@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -130,7 +131,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resource.HealthCheckRequest{})
+		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 		require.NoError(t, err)
 	case StorageTypeUnified:
 		if testing.Short() {
@@ -377,7 +378,7 @@ func newPodList() runtime.Object {
 	return &example.PodList{}
 }
 
-func testKeyParser(val string) (*resource.ResourceKey, error) {
+func testKeyParser(val string) (*resourcepb.ResourceKey, error) {
 	k, err := grafanaregistry.ParseKey(val)
 	if err != nil {
 		if strings.HasPrefix(val, "pods/") {
@@ -407,7 +408,7 @@ func testKeyParser(val string) (*resource.ResourceKey, error) {
 	if k.Resource == "" {
 		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
 	}
-	return &resource.ResourceKey{
+	return &resourcepb.ResourceKey{
 		Namespace: k.Namespace,
 		Group:     k.Group,
 		Resource:  k.Resource,

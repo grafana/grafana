@@ -2,9 +2,9 @@ import { SyntheticEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Tooltip, Field, Button, Alert, useStyles2, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getStyles } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -27,6 +27,7 @@ interface PasswordDTO {
 
 export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }: Props) => {
   const styles = useStyles2(getStyles);
+
   const [displayValidationLabels, setDisplayValidationLabels] = useState(false);
   const [pristine, setPristine] = useState(true);
 

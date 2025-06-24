@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"math/rand/v2"
 	"slices"
 	"strings"
 	"testing"
@@ -13,8 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -43,7 +43,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	logger := &logtest.Fake{}
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
@@ -238,7 +238,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
 
 	sqlStore := db.InitTestDB(t)
@@ -535,7 +535,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all version and insert one with empty rule_uid when DeletedRuleRetention is set", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000))
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -602,7 +602,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if DeletedRuleRetention = 0", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000))
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -655,7 +655,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	})
 
 	t.Run("should remove all versions and not keep history if permanently is true", func(t *testing.T) {
-		orgID := int64(rand.Intn(1000))
+		orgID := int64(rand.IntN(1000))
 		gen = gen.With(gen.WithOrgID(orgID))
 		// Create a new store to pass the custom bus to check the signal
 		b := &fakeBus{}
@@ -839,7 +839,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
-		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+		require.ErrorContains(t, err, fmt.Sprintf("Failed to save alert rule '%s' in organization %d due to conflict", cp.UID, cp.OrgID))
 	})
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
@@ -1285,7 +1285,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			TimeIntervalName: timeInterval,
 		})
 		require.NoError(t, err)
-		require.EqualValuesf(t, expected, maps.Keys(actual), "got more rules than expected: %#v", actual)
+		require.EqualValuesf(t, expected, slices.Collect(maps.Keys(actual)), "got more rules than expected: %#v", actual)
 	})
 }
 
@@ -1374,7 +1374,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	t.Run("GetAlertRulesGroupByRuleUID", func(t *testing.T) {
 		t.Run("should return rules that belong to only that group", func(t *testing.T) {
 			result, err := store.GetAlertRulesGroupByRuleUID(context.Background(), &models.GetAlertRulesGroupByRuleUIDQuery{
-				UID:   group1[rand.Intn(len(group1))].UID,
+				UID:   group1[rand.IntN(len(group1))].UID,
 				OrgID: groupKey1.OrgID,
 			})
 			require.NoError(t, err)
@@ -1452,7 +1452,7 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1501,7 +1501,7 @@ func TestGetRuleVersions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1534,7 +1534,7 @@ func TestGetRuleVersions(t *testing.T) {
 	})
 
 	t.Run("should not remove versions without diff", func(t *testing.T) {
-		for i := 0; i < rand.Intn(2)+1; i++ {
+		for i := 0; i < rand.IntN(2)+1; i++ {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
 			require.NoError(t, err)
 			rn := models.CopyRule(r)
@@ -1633,7 +1633,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	}
 	usr := models.UserUID("test")
 	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second,
+		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
 	}
 	sqlStore := db.InitTestDB(t)
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
@@ -1733,7 +1733,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
-		BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
 	}
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
@@ -1743,7 +1743,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
 		ruleGen.WithOrgID(orgID),
 	)
-	t.Run("filter by ImportedPrometheusRule", func(t *testing.T) {
+	t.Run("filter by HasPrometheusRuleDefinition", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
 		importedRule := createRule(t, store, ruleGen.With(
@@ -1773,8 +1773,8 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		for _, tt := range tc {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesQuery{
-					OrgID:                  orgID,
-					ImportedPrometheusRule: tt.importedPrometheusRule,
+					OrgID:                       orgID,
+					HasPrometheusRuleDefinition: tt.importedPrometheusRule,
 				}
 				result, err := store.ListAlertRules(context.Background(), query)
 				require.NoError(t, err)
@@ -1899,7 +1899,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 	gen := models.RuleGen
-	orgID := int64(rand.Intn(1000))
+	orgID := int64(rand.IntN(1000))
 
 	gen = gen.With(gen.WithOrgID(orgID))
 

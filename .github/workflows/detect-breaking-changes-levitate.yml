@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -86,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -136,7 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.11.0
+          node-version: 22.16.0
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v4
@@ -314,7 +314,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n\nAuthor: ${{ github.event.pull_request.user.login }}"
                     },
                     {
                       "type": "mrkdwn",
@@ -399,7 +399,7 @@ jobs:
             echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
 
-          exit ${LV_EXIT_CODE}
+          exit "${LV_EXIT_CODE}"
         shell: bash
         env:
           LV_EXIT_CODE: ${{ steps.levitate-run.outputs.exit_code }}

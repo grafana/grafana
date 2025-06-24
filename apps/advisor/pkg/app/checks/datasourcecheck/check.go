@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	sysruntime "runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -30,6 +31,7 @@ type check struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
+	GrafanaVersion        string
 }
 
 func New(
@@ -38,6 +40,7 @@ func New(
 	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 	pluginRepo repo.Service,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
 		DatasourceSvc:         datasourceSvc,
@@ -45,6 +48,7 @@ func New(
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
 		PluginRepo:            pluginRepo,
+		GrafanaVersion:        grafanaVersion,
 	}
 }
 
@@ -65,14 +69,30 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+	ds, err := c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		UID:   id,
 		OrgID: requester.GetOrgID(),
 	})
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			// The data source does not exist, skip the check
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ds, nil
 }
 
 func (c *check) ID() string {
 	return CheckID
+}
+
+func (c *check) Name() string {
+	return "data source"
+}
+
+func (c *check) Init(ctx context.Context) error {
+	return nil
 }
 
 func (c *check) Steps() []checks.Step {
@@ -83,8 +103,9 @@ func (c *check) Steps() []checks.Step {
 			PluginClient:          c.PluginClient,
 		},
 		&missingPluginStep{
-			PluginStore: c.PluginStore,
-			PluginRepo:  c.PluginRepo,
+			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
 		},
 	}
 }
@@ -137,7 +158,7 @@ func (s *healthCheckStep) Title() string {
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Checks if a data sources is healthy."
+	return "Checks if a data source is healthy."
 }
 
 func (s *healthCheckStep) Resolution() string {
@@ -201,8 +222,9 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 }
 
 type missingPluginStep struct {
-	PluginStore pluginstore.Store
-	PluginRepo  repo.Service
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	GrafanaVersion string
 }
 
 func (s *missingPluginStep) Title() string {
@@ -210,7 +232,7 @@ func (s *missingPluginStep) Title() string {
 }
 
 func (s *missingPluginStep) Description() string {
-	return "Checks if the plugin associated with the data source is installed."
+	return "Checks if the plugin associated with the data source is installed and available."
 }
 
 func (s *missingPluginStep) Resolution() string {
@@ -235,11 +257,17 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 			},
 		}
-		_, err := s.PluginRepo.PluginInfo(ctx, ds.Type)
-		if err == nil {
+		plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
+			IncludeDeprecated: true,
+			Plugins:           []string{ds.Type},
+		}, repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH))
+		if err != nil {
+			return nil, err
+		}
+		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
-				Message: "Install plugin",
+				Message: "View plugin",
 				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
 			})
 		}

@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Box, Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;

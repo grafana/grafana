@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Input, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
-import { t, Trans } from 'app/core/internationalization';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
@@ -20,6 +20,7 @@ export interface Props {
 
 export const RowOptionsForm = ({ repeat, title, warning, onUpdate, onCancel }: Props) => {
   const [newRepeat, setNewRepeat] = useState<string | undefined>(repeat);
+
   const onChangeRepeat = useCallback((name?: string) => setNewRepeat(name), [setNewRepeat]);
 
   return (

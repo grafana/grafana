@@ -274,7 +274,7 @@ describe('Plugin details page', () => {
 
       // Check the column headers
       expect(getByRole('columnheader', { name: /version/i })).toBeInTheDocument();
-      expect(getByRole('columnheader', { name: /last updated/i })).toBeInTheDocument();
+      expect(getByRole('columnheader', { name: /latest release date/i })).toBeInTheDocument();
 
       // Check the data
       for (const version of versions) {

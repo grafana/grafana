@@ -1,7 +1,7 @@
 import { useId } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Modal, Button, Input, Stack, ClipboardButton, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
@@ -37,6 +37,7 @@ export const CreateTokenModal = ({ isOpen, hideModal, migrationToken }: Props) =
 
 function TokenSuccessContent({ migrationToken }: { migrationToken: string }) {
   const inputId = useId();
+
   return (
     <Field
       description={t(

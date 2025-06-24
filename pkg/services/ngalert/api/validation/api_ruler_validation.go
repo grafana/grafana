@@ -23,15 +23,12 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
-	// Whether recording rules are allowed.
-	RecordingRulesAllowed bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
-		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -142,7 +139,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
-		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		newRule.NotificationSettings, err = ValidateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
 			return ngmodels.AlertRule{}, err
 		}
@@ -176,10 +173,6 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
 // it will load fields that pass validation onto newRule and return the result.
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
-	if !limits.RecordingRulesAllowed {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
 	err := ValidateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
@@ -391,7 +384,7 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
 		Receiver:            n.Receiver,
 		GroupBy:             n.GroupBy,

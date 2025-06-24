@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDefaultVizPanel } from '../../utils/utils';
@@ -59,7 +59,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           variant="primary"
           fill="text"
           icon="layers"
-          onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
+          data-testid={selectors.components.CanvasGridAddActions.groupPanels}
         >
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
@@ -118,7 +118,13 @@ function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLay
   }
 
   return (
-    <Button variant="primary" fill="text" icon="layers-slash" onClick={onClick}>
+    <Button
+      variant="primary"
+      fill="text"
+      icon="layers-slash"
+      onClick={onClick}
+      data-testid={selectors.components.CanvasGridAddActions.ungroup}
+    >
       <Trans i18nKey="dashboard.canvas-actions.un-group-panels">Ungroup</Trans>
     </Button>
   );
@@ -132,7 +138,13 @@ function UngroupButtonRows({ parentLayout, onClick }: UngroupButtonProps<RowsLay
   }
 
   return (
-    <Button variant="primary" fill="text" icon="layers-slash" onClick={onClick}>
+    <Button
+      variant="primary"
+      fill="text"
+      icon="layers-slash"
+      onClick={onClick}
+      data-testid={selectors.components.CanvasGridAddActions.ungroup}
+    >
       <Trans i18nKey="dashboard.canvas-actions.un-group-panels">Ungroup</Trans>
     </Button>
   );

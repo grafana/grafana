@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
-import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
+import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 
 import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
@@ -75,7 +76,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
 }
 
 function getGlobalActions(): CommandPaletteAction[] {
-  return [
+  const actions: CommandPaletteAction[] = [
     {
       id: 'preferences/theme',
       name: t('command-palette.action.change-theme', 'Change theme'),
@@ -100,6 +101,37 @@ function getGlobalActions(): CommandPaletteAction[] {
       priority: PREFERENCES_PRIORITY,
     },
   ];
+
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable @grafana/i18n/no-untranslated-strings
+    const section = 'Dev tooling';
+    const currentState = currentMockApiState();
+    const mockApiAction = currentState ? 'Disable' : 'Enable';
+    actions.push({
+      id: 'preferences/dev/toggle-mock-api',
+      section,
+      name: `${mockApiAction} Mock API worker and reload`,
+      subtitle: 'Intercepts requests and returns mock data using MSW',
+      keywords: 'mock api',
+      priority: PREFERENCES_PRIORITY,
+      perform: toggleMockApiAndReload,
+    });
+
+    actions.push({
+      id: 'preferences/dev/pseudo-locale',
+      section,
+      name: 'Toggle pseudo locale',
+      subtitle: 'Toggles between default language and pseudo locale',
+      keywords: 'pseudo locale',
+      priority: PREFERENCES_PRIORITY,
+      perform: () => {
+        togglePseudoLocale();
+      },
+    });
+    // eslint-enable @grafana/i18n/no-untranslated-strings
+  }
+
+  return actions;
 }
 
 export function useStaticActions(): CommandPaletteAction[] {

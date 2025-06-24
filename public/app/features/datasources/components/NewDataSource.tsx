@@ -1,9 +1,9 @@
 import { Action } from 'redux';
 
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { t, Trans } from 'app/core/internationalization';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
 import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 

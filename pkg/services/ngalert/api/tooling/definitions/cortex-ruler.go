@@ -97,6 +97,19 @@ import (
 //       403: ForbiddenError
 //
 
+// swagger:route PATCH /ruler/grafana/api/v1/rules/{Namespace} ruler RouteUpdateNamespaceRules
+//
+// Update all rules in a namespace
+//
+//     Consumes:
+//     - application/json
+//
+//     Responses:
+//       202: UpdateNamespaceRulesResponse
+//       403: ForbiddenError
+//       404: NotFound.
+//
+
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
@@ -685,4 +698,23 @@ type UpdateRuleGroupResponse struct {
 	Created []string `json:"created,omitempty"`
 	Updated []string `json:"updated,omitempty"`
 	Deleted []string `json:"deleted,omitempty"`
+}
+
+// swagger:parameters RouteUpdateNamespaceRules
+type UpdateNamespaceRulesParams struct {
+	// The UID of the rule folder
+	// in:path
+	Namespace string
+	// in:body
+	Body UpdateNamespaceRulesRequest
+}
+
+// swagger:model
+type UpdateNamespaceRulesRequest struct {
+	IsPaused *bool `json:"is_paused"`
+}
+
+// swagger:model
+type UpdateNamespaceRulesResponse struct {
+	Message string `json:"message"`
 }

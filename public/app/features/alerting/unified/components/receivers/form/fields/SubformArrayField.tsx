@@ -1,7 +1,7 @@
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
 import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
 
@@ -39,7 +39,7 @@ export const SubformArrayField = ({
     <div className={styles.wrapper}>
       <CollapsibleSection
         className={styles.collapsibleSection}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         label={`${option.label} (${fields.length})`}
         description={option.description}
       >

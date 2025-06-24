@@ -76,3 +76,22 @@ To view or restore previous versions for an alert rule, complete the following s
 
 On the Alert rule's Versions page you can view, compare and restore the previous rule versions.
 {{< figure src="/media/docs/alerting/screenshot-grafana-alerting-version-history-v3.png" max-width="750px" alt="View alert rule history to compare and restore previous alert rules." >}}
+
+## Bulk pause or resume alert rules evaluations within a folder
+
+Admin users can pause or resume all of the alert rules evaluations within a folder. To pause or resume all the alert rules evaluations in a folder, click the menu icon and select **Pause all rule evaluation** or **Resume all rule evaluation**.
+
+## Bulk delete all alert rules within a folder
+
+Admin users can delete all of the alert rules within a folder. To delete all the alert rules in a folder, click the menu icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion.
+
+## Permanently delete or restore deleted alert rules
+
+Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
+
+1. Go to **Alerts & IRM > Alerting > Recently deleted**.
+1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
+
+{{< admonition type="note" >}}
+Deleted alert rules are stored for 30 days. Grafana Enterprise and OSS users can adjust the length of time for which the rules are stored can be adjusted in the Grafana configuration file's `[unified_alerting].deleted_rule_retention` field. For an example of how to modify the Grafana configuration file, refer to the [documentation example here](/docs/grafana/latest/alerting/set-up/configure-alert-state-history/#configuring-grafana).  
+{{< /admonition >}}

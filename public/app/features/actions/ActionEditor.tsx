@@ -1,7 +1,15 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
+import {
+  Action,
+  GrafanaTheme2,
+  httpMethodOptions,
+  HttpRequestMethod,
+  VariableSuggestion,
+  ActionVariable,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   Switch,
   Field,
@@ -13,10 +21,10 @@ import {
   ColorPicker,
   useTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
+import { ActionVariablesEditor } from './ActionVariablesEditor';
 import { ParamsEditor } from './ParamsEditor';
 
 interface ActionEditorProps {
@@ -72,6 +80,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         ...value.fetch,
         method,
       },
+    });
+  };
+
+  const onVariablesChange = (variables: ActionVariable[]) => {
+    onChange(index, {
+      ...value,
+      variables,
     });
   };
 
@@ -204,6 +219,14 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           />
         </InlineField>
       </InlineFieldRow>
+
+      <Field
+        label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
+        className={styles.fieldGap}
+        noMargin
+      >
+        <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
+      </Field>
 
       <Field
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}

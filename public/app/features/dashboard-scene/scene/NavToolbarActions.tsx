@@ -3,6 +3,7 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
   Badge,
@@ -20,7 +21,6 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useSelector } from 'app/types';
@@ -74,6 +74,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
+
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
 

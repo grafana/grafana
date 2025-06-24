@@ -1,5 +1,6 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
+const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
@@ -12,12 +13,18 @@ const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const bettererConfig = require('./.betterer.eslint.config');
 const getEnvConfig = require('./scripts/webpack/env-util');
 
 const envConfig = getEnvConfig();
 const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
+const pluginsToTranslate = [
+  'public/app/plugins/panel',
+  'public/app/plugins/datasource/azuremonitor',
+  'public/app/plugins/datasource/mssql',
+];
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -91,6 +98,7 @@ module.exports = [
       'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
+      '@grafana/no-restricted-img-srcs': 'error',
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -116,25 +124,33 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['react-i18next', 'i18next'],
+              importNames: ['t'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+            {
+              group: ['react-i18next'],
+              importNames: ['Trans'],
+              message: 'Please import from @grafana/i18n instead',
+            },
+            {
+              regex: '\\.test$',
+              message:
+                'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
               importNames: ['useDispatch', 'useSelector'],
               message: 'Please import from app/types instead.',
             },
-            {
-              name: 'react-i18next',
-              importNames: ['Trans', 't'],
-              message: 'Please import from app/core/internationalization instead',
-            },
-            {
-              name: 'i18next',
-              importNames: ['t'],
-              message: 'Please import from app/core/internationalization instead',
-            },
           ],
         },
       ],
+      'no-restricted-globals': ['error'].concat(restrictedGlobals),
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
@@ -266,7 +282,7 @@ module.exports = [
       react: reactPlugin,
       '@grafana': grafanaPlugin,
     },
-    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}', 'packages/grafana-alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'dot-notation': 'error',
@@ -283,23 +299,29 @@ module.exports = [
     name: 'grafana/i18n-overrides',
     plugins: {
       '@grafana': grafanaPlugin,
+      '@grafana/i18n': grafanaI18nPlugin,
     },
-    files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
+    files: [
+      'public/app/!(plugins)/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-ui/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-sql/**/*.{ts,tsx,js,jsx}',
+      'packages/grafana-prometheus/**/*.{ts,tsx,js,jsx}',
+      ...pluginsToTranslate.map((plugin) => `${plugin}/**/*.{ts,tsx,js,jsx}`),
+    ],
     ignores: [
-      'public/app/plugins/**',
-      '**/*.story.tsx',
-      '**/*.{test,spec}.{ts,tsx}',
-      '**/__mocks__/',
-      'public/test',
-      '**/spec/**/*.{ts,tsx}',
+      'public/test/**',
+      '**/*.{test,spec,story}.{ts,tsx}',
+      '**/{tests,__mocks__,__tests__,fixtures,spec,mocks}/**',
+      '**/{test-utils,testHelpers,mocks}.{ts,tsx}',
+      '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/no-untranslated-strings': 'error',
-      '@grafana/no-translation-top-level': 'error',
+      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
   {
-    name: 'grafana/alerting-test-overrides',
+    name: 'grafana/tests',
     plugins: {
       'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
@@ -307,12 +329,25 @@ module.exports = [
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
       'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
+      'packages/{grafana-ui,grafana-alerting}/**/*.{spec,test}.{ts,tsx}',
     ],
     rules: {
       ...testingLibraryPlugin.configs['flat/react'].rules,
       ...jestDomPlugin.configs['flat/recommended'].rules,
       'testing-library/prefer-user-event': 'error',
-      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'reducerTester'] }],
+      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'assert*', 'reducerTester'] }],
+    },
+  },
+  {
+    name: 'grafana/test-overrides-to-fix',
+    plugins: {
+      'testing-library': testingLibraryPlugin,
+    },
+    files: ['packages/grafana-ui/**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      // grafana-ui has lots of violations of direct node access and container methods, so disabling for now
+      'testing-library/no-node-access': 'off',
+      'testing-library/no-container': 'off',
     },
   },
   {

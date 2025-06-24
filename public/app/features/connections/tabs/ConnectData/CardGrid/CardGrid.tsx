@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   PluginDeprecatedBadge,
   PluginDisabledBadge,

@@ -177,8 +177,7 @@ type CreateLibraryElementCommand struct {
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
+	// Enum: 1
 	Kind int64 `json:"kind" binding:"Required"`
 	// required: false
 	UID string `json:"uid"`
@@ -199,8 +198,7 @@ type PatchLibraryElementCommand struct {
 	// Kind of element to create, Use 1 for library panels or 2 for c.
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// Enum: 1,2
+	// Enum: 1
 	Kind int64 `json:"kind" binding:"Required"`
 	// Version of the library element you are updating.
 	Version int64 `json:"version" binding:"Required"`
@@ -263,8 +261,6 @@ type LibraryElementKind int
 const (
 	// PanelElement is used for library elements that are of the Panel kind
 	PanelElement LibraryElementKind = iota + 1
-	// VariableElement is used for library elements that are of the Variable kind
-	VariableElement
 )
 
 const LibraryElementConnectionTableName = "library_element_connection"

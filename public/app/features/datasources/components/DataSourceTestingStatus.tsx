@@ -3,9 +3,9 @@ import { HTMLAttributes } from 'react';
 
 import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
 
 const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
+
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
@@ -82,6 +83,7 @@ interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
 
 const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
   const theme = useTheme2();
+
   const styles = {
     content: css({
       color: theme.colors.text.secondary,
@@ -141,7 +143,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
       grafana_version: config.buildInfo.version,
       datasource_uid: dataSource.uid,
       plugin_name: dataSource.typeName,
-      path: location.pathname,
+      path: window.location.pathname,
     });
   };
   const styles = useStyles2(getTestingStatusStyles);

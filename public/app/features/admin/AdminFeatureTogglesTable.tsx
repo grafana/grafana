@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
 
@@ -37,6 +37,7 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveModel, setShowSaveModal] = useState(false);
+
   const togglesApi = getTogglesAPI();
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {

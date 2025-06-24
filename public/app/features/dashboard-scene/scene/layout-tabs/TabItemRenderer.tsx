@@ -3,9 +3,9 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Box, Icon, Tab, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
@@ -66,6 +66,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             )}
             active={isActive}
             title={titleInterpolated}
+            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
             href={href}
             aria-selected={isActive}
             onPointerDown={(evt) => {
@@ -88,6 +89,21 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
         </div>
       )}
     </Draggable>
+  );
+}
+
+function IsHiddenSuffix() {
+  return (
+    <Box paddingLeft={1} display={'inline'}>
+      <Tooltip
+        content={t(
+          'dashboard.conditional-rendering.overlay.tooltip',
+          'Element is hidden due to conditional rendering.'
+        )}
+      >
+        <Icon name="eye-slash" />
+      </Tooltip>
+    </Box>
   );
 }
 

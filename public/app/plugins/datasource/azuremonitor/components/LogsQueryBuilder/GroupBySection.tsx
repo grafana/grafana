@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button } from '@grafana/ui';
 
@@ -88,11 +89,12 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
     <EditorRow>
       <EditorFieldGroup>
         <EditorField
-          label="Group by"
+          label={t('components.group-by-section.label-group-by', 'Group by')}
           optional={true}
-          tooltip={`Organize results into categories based on specified columns. Group by can be used independently to list
-              unique values in selected columns, or combined with aggregate functions to produce summary statistics for
-              each group. When used alone, it returns distinct combinations of the specified columns.`}
+          tooltip={t(
+            'components.group-by-section.tooltip-group-by',
+            'Organize results into categories based on specified columns. Group by can be used independently to list unique values in selected columns, or combined with aggregate functions to produce summary statistics for each group. When used alone, it returns distinct combinations of the specified columns.'
+          )}
         >
           <InputGroup>
             {groupBys.length > 0 ? (

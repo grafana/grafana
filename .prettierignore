@@ -35,7 +35,8 @@ public/openapi3.json
 public/mockServiceWorker.js
 
 # Crowdin files
-public/locales/**/*.json
+# Ignore `locales` directory so we also catch enterprise files
+**/locales/**/*.json
 
 /.nx/cache
 /.nx/workspace-data

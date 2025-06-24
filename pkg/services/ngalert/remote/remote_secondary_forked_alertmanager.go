@@ -22,7 +22,7 @@ type configStore interface {
 type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
-	CompareAndSendState(context.Context) error
+	SendState(context.Context) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
@@ -43,7 +43,7 @@ type RemoteSecondaryConfig struct {
 	Store  configStore
 
 	// SyncInterval determines how often we should attempt to synchronize
-	// state and configuration on the external Alertmanager.
+	// the configuration on the remote Alertmanager.
 	SyncInterval time.Duration
 }
 
@@ -89,21 +89,13 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 
 		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
 		if time.Since(fam.lastSync) >= fam.syncInterval {
-			fam.log.Debug("Syncing configuration and state with the remote Alertmanager", "lastSync", fam.lastSync)
-			cfgErr := fam.remote.CompareAndSendConfiguration(ctx, config)
-			if cfgErr != nil {
-				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", cfgErr)
-			}
-
-			stateErr := fam.remote.CompareAndSendState(ctx)
-			if stateErr != nil {
-				fam.log.Error("Unable to upload the state to the remote Alertmanager", "err", stateErr)
-			}
-			fam.log.Debug("Finished syncing configuration and state with the remote Alertmanager")
-
-			if cfgErr == nil && stateErr == nil {
+			fam.log.Debug("Syncing configuration with the remote Alertmanager", "lastSync", fam.lastSync)
+			if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+			} else {
 				fam.lastSync = time.Now()
 			}
+			fam.log.Debug("Finished syncing configuration with the remote Alertmanager")
 		}
 	}()
 
@@ -180,7 +172,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	// Send config and state to the remote Alertmanager.
 	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
 	ctx := context.TODO()
-	if err := fam.remote.CompareAndSendState(ctx); err != nil {
+	if err := fam.remote.SendState(ctx); err != nil {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
 	}
 

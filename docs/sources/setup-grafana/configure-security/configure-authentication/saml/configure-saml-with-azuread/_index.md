@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ./saml/#set-up-saml-with-azure-ad
-  - ../saml/#set-up-saml-with-azure-ad
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
@@ -82,6 +79,20 @@ In order to validate Entra ID users with Grafana, you need to configure the SAML
 1. Set the expiration date for the secret.
 1. Select **Add**.
 1. Copy the value of the secret. This value is used in the `client_secret` field in the [SAML configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/).
+
+## Configure SAML assertions when using SCIM provisioning
+
+In order to verify the logged in user is the same user that was provisioned through Azure AD, you need to include the same `externalId` in the SAML assertion by mapping the SAML assertion `assertion_attribute_external_id`.
+
+1. Open your Entra ID application.
+1. Select the SAML single sign-on configuration.
+1. Edit the `Attributes & Claims` section.
+1. Add a new claim with the following settings:
+   - Name: `userUID`
+   - Namespace: leave blank
+   - Source: Attribute
+   - Source attribute: `user.objectId`
+1. **Save** the current configuration.
 
 ## Configure a Graph API application in Entra ID
 

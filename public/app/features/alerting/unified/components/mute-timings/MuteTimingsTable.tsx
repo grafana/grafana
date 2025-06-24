@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
   ALL_MUTE_TIMINGS,
@@ -149,7 +149,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     const columns: Array<DynamicTableColumnProps<MuteTiming>> = [
       {
         id: 'name',
-        label: 'Name',
+        label: t('alerting.use-columns.columns.label.name', 'Name'),
         renderCell: function renderName({ data }) {
           return (
             <div>
@@ -164,7 +164,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
       },
       {
         id: 'timeRange',
-        label: 'Time range',
+        label: t('alerting.use-columns.columns.label.time-range', 'Time range'),
         renderCell: ({ data }) => {
           return renderTimeIntervals(data);
         },
@@ -174,7 +174,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     if (showActions) {
       columns.push({
         id: 'actions',
-        label: 'Actions',
+        label: t('alerting.use-columns.label.actions', 'Actions'),
         alignColumn: 'end',
         renderCell: ({ data }) => (
           <MuteTimingActionsButtons muteTiming={data} alertManagerSourceName={alertManagerSourceName} />

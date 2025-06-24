@@ -1,16 +1,18 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo } from 'react';
+import React, { useCallback, useId, useMemo } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 
 import { ComboboxList } from './ComboboxList';
+import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
@@ -129,7 +131,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     autoFocus,
     onBlur,
     disabled,
-    loading,
     invalid,
   } = props;
 
@@ -330,12 +331,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
-  const suffixIcon = asyncLoading
-    ? 'spinner'
-    : // If it's loading, show loading icon. Otherwise, icon indicating menu state
-      isOpen
-      ? 'search'
-      : 'angle-down';
+  const loading = props.loading || asyncLoading;
 
   const inputSuffix = (
     <>
@@ -357,19 +353,25 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         />
       )}
 
-      <Icon name={suffixIcon} />
+      <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
     </>
   );
 
+  const { Wrapper, wrapperProps } = isAutoSize
+    ? {
+        Wrapper: 'div',
+        wrapperProps: { className: styles.adaptToParent },
+      }
+    : { Wrapper: React.Fragment };
+
   return (
-    <div className={isAutoSize ? styles.addaptToParent : undefined}>
+    <Wrapper {...wrapperProps}>
       <InputComponent
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         onBlur={onBlur}
         disabled={disabled}
-        loading={loading}
         invalid={invalid}
         className={styles.input}
         suffix={inputSuffix}
@@ -402,6 +404,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           )}
         </div>
       </Portal>
-    </div>
+    </Wrapper>
   );
 };

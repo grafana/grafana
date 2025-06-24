@@ -1,9 +1,9 @@
 import { useAsync } from 'react-use';
 
+import { t } from '@grafana/i18n';
 import { Badge, IconSize, Tooltip } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 
-import { t } from '../../../../core/internationalization';
 import { getPluginSettings } from '../../../plugins/pluginSettings';
 
 interface PluginOriginBadgeProps {
