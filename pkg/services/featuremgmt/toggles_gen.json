@@ -2127,7 +2127,8 @@
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-08-22T19:30:43Z"
+        "creationTimestamp": "2024-08-22T19:30:43Z",
+        "deletionTimestamp": "2025-06-19T13:40:02Z"
       },
       "spec": {
         "description": "Send dashboard and panel names to Loki when querying",
@@ -3233,6 +3234,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tabularNumbers",
+        "resourceVersion": "1750754828442",
+        "creationTimestamp": "2025-06-20T12:08:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-24 08:47:08.442537461 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use fixed-width numbers globally in the UI",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {

@@ -1131,12 +1131,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "lokiSendDashboardPanelNames",
-			Description: "Send dashboard and panel names to Loki when querying",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "alertingPrometheusRulesPrimary",
 			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
 			Stage:        FeatureStageExperimental,
@@ -1778,6 +1772,13 @@ var (
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "tabularNumbers",
+			Description: "Use fixed-width numbers globally in the UI",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "true",
 		},
 	}
 )

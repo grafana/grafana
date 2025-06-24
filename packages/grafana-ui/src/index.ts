@@ -341,7 +341,7 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { graphFieldOptions } from './components/uPlot/config';
+export { graphFieldOptions, getGraphFieldOptions } from './components/uPlot/config';
 export { UPlotConfigBuilder } from './components/uPlot/config/UPlotConfigBuilder';
 export { UPLOT_AXIS_FONT_SIZE } from './components/uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './components/uPlot/Plot';
