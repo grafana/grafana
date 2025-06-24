@@ -87,7 +87,7 @@ export function addToDashboard({
   }
   let navigateToDashboardUrl = locationUtil.stripBaseFromUrl(dashboardURL);
 
-  if (options && options === 'external-app') {
+  if (options === 'external-app') {
     navigateToDashboardUrl = '/' + navigateToDashboardUrl;
   }
 
