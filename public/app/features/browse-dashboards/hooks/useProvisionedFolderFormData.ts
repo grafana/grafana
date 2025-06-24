@@ -21,7 +21,6 @@ export interface ProvisionedFolderFormDataResult {
   folder?: Folder;
   workflowOptions: Array<{ label: string; value: string }>;
   isGitHub: boolean;
-  readOnly: boolean;
 }
 
 /**
@@ -37,7 +36,6 @@ export function useProvisionedFolderFormData({
 
   const workflowOptions = getWorkflowOptions(repository);
   const isGitHub = Boolean(repository?.type === 'github');
-  const readOnly = !repository?.workflows?.length;
 
   useEffect(() => {
     // initialize form values
@@ -59,6 +57,5 @@ export function useProvisionedFolderFormData({
     folder,
     workflowOptions,
     isGitHub,
-    readOnly,
   };
 }
