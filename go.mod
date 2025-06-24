@@ -575,7 +575,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/dgraph-io/badger/v4 v4.7.0
+require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
