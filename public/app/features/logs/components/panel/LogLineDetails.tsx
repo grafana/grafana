@@ -2,42 +2,26 @@ import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ControlledCollapse, getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LogDetails } from './LogDetails';
+import { useAttributesExtensionLinks } from '../LogDetails';
+import { createLogLineLinks } from '../logParser';
+
+import { LabelWithLinks, LogDetailsFields, LogDetailsLabelFields } from './LogLineDetailsFields';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
-import { createLogLineLinks } from '../logParser';
 
 interface Props {
   containerElement: HTMLDivElement;
-  getFieldLinks?: GetFieldLinksFn;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize }: Props) => {
-  const {
-    app,
-    closeDetails,
-    detailsWidth,
-    displayedFields,
-    isLabelFilterActive,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    onClickShowField,
-    onClickHideField,
-    onPinLine,
-    pinLineButtonTooltipTitle,
-    setDetailsWidth,
-    showDetails,
-    wrapLogMessage,
-  } = useLogListContext();
-  const getRows = useCallback(() => logs, [logs]);
+export const LogLineDetails = ({ containerElement, logs, onResize }: Props) => {
+  const { closeDetails, detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -69,42 +53,48 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
             aria-label={t('logs.log-details.close', 'Close log details')}
             onClick={closeDetails}
           />
-          <table width="100%" style={{ display: 'none' }}>
-            <tbody>
-              <LogDetails
-                getRows={getRows}
-                row={showDetails[0]}
-                showDuplicates={false}
-                wrapLogMessage={wrapLogMessage}
-                onPinLine={onPinLine}
-                getFieldLinks={getFieldLinks}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                hasError={showDetails[0].hasError}
-                displayedFields={displayedFields}
-                app={app}
-                isFilterLabelActive={isLabelFilterActive}
-                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-              />
-            </tbody>
-          </table>
-          <LogDetailsComponent log={showDetails[0]} styles={styles} />
+          <LogDetailsComponent log={showDetails[0]} logs={logs} styles={styles} />
         </div>
       </div>
     </Resizable>
   );
 };
 
-const LogDetailsComponent = ({ log, styles }: { log: LogListModel; styles: LogLineDetailsStyles }) => {
-  const links = useMemo(() => {
+const LogDetailsComponent = ({
+  log,
+  logs,
+  styles,
+}: {
+  log: LogListModel;
+  logs: LogListModel[];
+  styles: LogLineDetailsStyles;
+}) => {
+  const extensionLinks = useAttributesExtensionLinks(log);
+  //const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], log) : null;
+  const fieldsWithLinks = useMemo(() => {
     const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
     const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
     const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
     const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
     return [...displayedFieldsWithLinks, ...fieldsWithLinksFromVariableMap];
   }, [log.entryFieldIndex, log.fields]);
+  const fieldsWithoutLinks =
+    log.dataFrame.meta?.type === DataFrameType.LogLines
+      ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+        []
+      : // for other frames, do not show the log message unless there is a link attached
+        log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
+  const labelsWithLinks: LabelWithLinks[] = useMemo(
+    () =>
+      Object.keys(log.labels)
+        .sort()
+        .map((label) => ({
+          key: label,
+          value: log.labels[label],
+          link: extensionLinks?.[label],
+        })),
+    [extensionLinks, log.labels]
+  );
 
   return (
     <div className={styles.componentWrapper}>
@@ -112,9 +102,10 @@ const LogDetailsComponent = ({ log, styles }: { log: LogListModel; styles: LogLi
         {log.raw}
       </ControlledCollapse>
       <ControlledCollapse label={t('logs.log-line-details.links-section', 'Links')} collapsible>
-        {links.map((link, i) => (
-          <div key={i}>Link</div>
-        ))}
+        <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
+      </ControlledCollapse>
+      <ControlledCollapse label={t('logs.log-line-details.labels-section', 'Labels')} collapsible>
+        <LogDetailsLabelFields log={log} logs={logs} fields={labelsWithLinks} />
       </ControlledCollapse>
       <ControlledCollapse
         label={t('logs.log-line-details.structured-metadata-section', 'Structured metadata')}

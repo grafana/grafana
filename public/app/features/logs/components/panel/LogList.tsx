@@ -457,12 +457,7 @@ const LogListComponent = ({
         </InfiniteScroll>
       </div>
       {showDetails.length > 0 && (
-        <LogLineDetails
-          containerElement={containerElement}
-          getFieldLinks={getFieldLinks}
-          logs={filteredLogs}
-          onResize={handleLogDetailsResize}
-        />
+        <LogLineDetails containerElement={containerElement} logs={filteredLogs} onResize={handleLogDetailsResize} />
       )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>

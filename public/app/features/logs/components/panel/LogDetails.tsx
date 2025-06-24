@@ -21,7 +21,7 @@ import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { getAllFields, createLogLineLinks } from '../logParser';
 
 import { LogDetailsBody } from './LogDetailsBody';
-import { LogDetailsRow } from './LogDetailsRow';
+import { LogDetailsRow } from './LogLineDetailsFields';
 
 export interface Props {
   row: LogRowModel;
@@ -110,11 +110,13 @@ export const LogDetails = ({
   const styles = useStyles2(getStyles);
   const labels = row.labels ? row.labels : {};
   const labelsAvailable = Object.keys(labels).length > 0;
+
   const fieldsAndLinks = getAllFields(row, getFieldLinks);
   let fieldsWithLinks = fieldsAndLinks.filter((f) => f.links?.length);
   const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
   const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
   const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
+
   const fieldsWithLinksAvailable =
     (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
     (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);

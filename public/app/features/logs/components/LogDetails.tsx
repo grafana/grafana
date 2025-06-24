@@ -50,7 +50,7 @@ interface LinkModelWithIcon extends LinkModel {
   icon?: IconName;
 }
 
-const useAttributesExtensionLinks = (row: LogRowModel) => {
+export const useAttributesExtensionLinks = (row: LogRowModel) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     return {

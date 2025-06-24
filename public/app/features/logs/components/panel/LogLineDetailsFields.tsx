@@ -1,0 +1,387 @@
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+
+import { CoreApp, Field, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+
+import { logRowToSingleRowDataFrame } from '../../logsModel';
+import { calculateLogsLabelStats, calculateStats } from '../../utils';
+import { LogLabelStats } from '../LogLabelStats';
+import { FieldDef } from '../logParser';
+
+import { useLogListContext } from './LogListContext';
+import { LogListModel } from './processing';
+
+interface LogDetailsFieldsProps {
+  log: LogListModel;
+  logs: LogListModel[];
+  fields: FieldDef[];
+}
+
+export const LogDetailsFields = ({ log, logs, fields }: LogDetailsFieldsProps) => {
+  const getLogs = useCallback(() => logs, [logs]);
+  return (
+    <table>
+      <tbody>
+        {fields.map((field, i) => (
+          <LogDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+interface LinkModelWithIcon extends LinkModel<Field> {
+  icon?: IconName;
+}
+
+export interface LabelWithLinks {
+  key: string;
+  value: string;
+  links?: LinkModelWithIcon[];
+}
+
+interface LogDetailsLabelFieldsProps {
+  log: LogListModel;
+  logs: LogListModel[];
+  fields: LabelWithLink[];
+}
+
+export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFieldsProps) => {
+  const getLogs = useCallback(() => logs, [logs]);
+  return (
+    <table>
+      <tbody>
+        {fields.map((field, i) => (
+          <LogDetailsField
+            key={`${field.key}=${field.value}-${i}`}
+            getLogs={getLogs}
+            keys={[field.key]}
+            links={field.links}
+            log={log}
+            values={[field.value]}
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+interface LogDetailsFieldProps {
+  keys: string[];
+  values: string[];
+  disableActions?: boolean;
+  fieldIndex?: number;
+  getLogs(): LogListModel[];
+  isLabel?: boolean;
+  links?: LinkModelWithIcon[];
+  log: LogListModel;
+}
+
+export const LogDetailsField = ({ disableActions = false, fieldIndex, getLogs, isLabel, links, log, keys, values }: LogDetailsFieldProps) => {
+  const [showFieldsStats, setShowFieldStats] = useState(false);
+  const [fieldCount, setFieldCount] = useState(0);
+  const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
+  const {
+    app,
+    closeDetails,
+    displayedFields,
+    isLabelFilterActive,
+    onClickFilterLabel,
+    onClickFilterOutLabel,
+    onClickShowField,
+    onClickHideField,
+    onPinLine,
+    pinLineButtonTooltipTitle,
+  } = useLogListContext();
+
+  const getStats = useCallback(() => {
+    if (isLabel) {
+      return calculateLogsLabelStats(getLogs(), keys[0]);
+    }
+    if (fieldIndex) {
+      return calculateStats(log.dataFrame.fields[fieldIndex].values);
+    }
+    return [];
+  }, [fieldIndex, getLogs, isLabel, keys, log.dataFrame.fields]);
+
+  const updateStats = useCallback(() => {
+    const fieldStats = getStats();
+    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
+    if (!isEqual(fieldStats, fieldStats) || fieldCount !== fieldCount) {
+      setFieldStats(fieldStats);
+      setFieldCount(fieldCount);
+    }
+  }, [getStats]);
+
+  useEffect(() => {
+    if (showFieldsStats) {
+      updateStats();
+    }
+  }, [showFieldsStats, updateStats]);
+
+  const showField = useCallback(() => {
+    if (onClickShowField) {
+      onClickShowField(keys[0]);
+    }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: log.datasourceType,
+      logRowUid: log.uid,
+      type: 'enable',
+    });
+  }, [onClickShowField, keys, log.datasourceType, log.uid]);
+
+  const hideField = useCallback(() => {
+    if (onClickHideField) {
+      onClickHideField(keys[0]);
+    }
+
+    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+      datasourceType: log.datasourceType,
+      logRowUid: log.uid,
+      type: 'disable',
+    });
+  }, [onClickHideField, keys, log.datasourceType, log.uid]);
+
+  const filterLabel = useCallback(() => {
+    if (onClickFilterLabel) {
+      onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+    }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: log.datasourceType,
+      filterType: 'include',
+      logRowUid: log.uid,
+    });
+  }, [onClickFilterLabel, keys, values, log]);
+
+  const filterOutLabel = useCallback(() => {
+    if (onClickFilterOutLabel) {
+      onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+    }
+
+    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+      datasourceType: log.datasourceType,
+      filterType: 'exclude',
+      logRowUid: log.uid,
+    });
+  }, [onClickFilterOutLabel, keys, values, log]);
+
+  const labelFilterActive = useCallback(async () => {
+    if (isLabelFilterActive) {
+      return await isLabelFilterActive(keys[0], values[0], log.dataFrame?.refId);
+    }
+    return false;
+  }, [isLabelFilterActive, keys, values, log.dataFrame?.refId]);
+
+  const showStats = useCallback(() => {
+    if (!showFieldsStats) {
+      updateStats();
+    }
+    setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
+
+    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
+      dataSourceType: log.datasourceType,
+      fieldType: isLabel ? 'label' : 'detectedField',
+      type: showFieldsStats ? 'close' : 'open',
+      logRowUid: log.uid,
+      app,
+    });
+  }, [app, isLabel, log.datasourceType, log.uid, showFieldsStats, updateStats]);
+
+  const refIdTooltip = useMemo(
+    () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
+    [app, log.dataFrame?.refId]
+  );
+  const singleKey = keys.length === 1;
+  const singleValue = values.length === 1;
+  const emtpyValues = values.every((val) => val === '');
+
+  return (
+    <>
+      <tr>
+        {!disableActions && (
+          <td>
+            <div>
+              {onClickFilterLabel && (
+                <AsyncIconButton
+                  name="search-plus"
+                  onClick={filterLabel}
+                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                  isActive={labelFilterActive}
+                  tooltipSuffix={refIdTooltip}
+                />
+              )}
+              {onClickFilterOutLabel && (
+                <IconButton
+                  name="search-minus"
+                  tooltip={
+                    app === CoreApp.Explore && log.dataFrame?.refId
+                      ? t('logs.un-themed-log-details-log.filter-out-query', 'Filter out value in query {{query}}', {
+                          query: log.dataFrame?.refId,
+                        })
+                      : t('logs.un-themed-log-details-log.filter-out', 'Filter out value')
+                  }
+                  onClick={filterOutLabel}
+                />
+              )}
+              {singleKey && displayedFields.includes(keys[0]) && (
+                <IconButton
+                  variant="primary"
+                  tooltip={t(
+                    'logs.un-themed-log-details-log.toggle-field-button.tooltip-hide-this-field',
+                    'Hide this field'
+                  )}
+                  name="eye"
+                  onClick={hideField}
+                />
+              )}
+              {singleKey && !displayedFields.includes(keys[0]) && (
+                <IconButton
+                  tooltip={t(
+                    'logs.un-themed-log-details-log.toggle-field-button.tooltip-field-instead-message',
+                    'Show this field instead of the message'
+                  )}
+                  name="eye"
+                  onClick={showField}
+                />
+              )}
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip={t('logs.un-themed-log-details-log.tooltip-adhoc-statistics', 'Ad-hoc statistics')}
+                className="stats-button"
+                disabled={!singleKey}
+                onClick={showStats}
+              />
+            </div>
+        </td>
+        )}
+        <td>{singleKey ? keys[0] : <MultipleValue values={keys} />}</td>
+        <td>
+          <div>
+            {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
+            {singleValue && <ClipboardButtonWrapper value={values[0]} />}
+            <div>
+              {links?.map((link, i) => {
+                if (link.onClick && onPinLine) {
+                  const originalOnClick = link.onClick;
+                  link.onClick = (e, origin) => {
+                    // Pin the line
+                    onPinLine(log);
+
+                    // Execute the link onClick function
+                    originalOnClick(e, origin);
+
+                    closeDetails();
+                  };
+                }
+                return (
+                  <span key={`${link.title}-${i}`}>
+                    <DataLinkButton
+                      buttonProps={{
+                        // Show tooltip message if max number of pinned lines has been reached
+                        tooltip:
+                          typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                            ? pinLineButtonTooltipTitle
+                            : undefined,
+                        variant: 'secondary',
+                        fill: 'outline',
+                        ...(link.icon && { icon: link.icon }),
+                      }}
+                      link={link}
+                    />
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </td>
+      </tr>
+      {showFieldsStats && singleKey && singleValue && (
+        <tr>
+          <td colSpan={2}>
+            <IconButton
+              variant={showFieldsStats ? 'primary' : 'secondary'}
+              name="signal"
+              tooltip={t('logs.un-themed-log-details-log.tooltip-hide-adhoc-statistics', 'Hide ad-hoc statistics')}
+              onClick={showStats}
+            />
+          </td>
+          <td colSpan={2}>
+            <LogLabelStats
+              stats={fieldStats!}
+              label={keys[0]}
+              value={values[0]}
+              rowCount={fieldCount}
+              isLabel={isLabel}
+            />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
+
+const ClipboardButtonWrapper = ({ value }: { value: string }) => {
+  return (
+    <div>
+      <ClipboardButton
+        getText={() => value}
+        title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
+        fill="text"
+        variant="secondary"
+        icon="copy"
+        size="md"
+      />
+    </div>
+  );
+};
+
+const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+  return (
+    <table>
+      <tbody>
+        {values.map((val, i) => {
+          return (
+            <tr key={`${val}-${i}`}>
+              <td>
+                {val}
+                {showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+};
+
+interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+  name: IconName;
+  isActive(): Promise<boolean>;
+  tooltipSuffix: string;
+}
+
+const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonProps) => {
+  const [active, setActive] = useState(false);
+  const tooltip = active ? 'Remove filter' : 'Filter for value';
+
+  useEffect(() => {
+    isActive().then(setActive);
+  }, [isActive]);
+
+  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
+};
