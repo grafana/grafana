@@ -81,6 +81,8 @@ type Service struct {
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
 	metrics *Metrics
+
+	grafanaVersion string
 }
 
 var LogPrefix = "cloudmigration.service"
@@ -190,6 +192,8 @@ func ProvideService(
 			return s, fmt.Errorf("registering cloud migration metrics: %w", err)
 		}
 	}
+
+	s.grafanaVersion = cfg.BuildVersion
 
 	return s, nil
 }
@@ -447,7 +451,7 @@ func (s *Service) CreateSession(ctx context.Context, signedInUser *user.SignedIn
 		return nil, cloudmigration.ErrSessionCreationFailure.Errorf("error creating migration")
 	}
 
-	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil, signedInUser.UserUID, s.cfg.BuildVersion)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil, signedInUser.UserUID)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -463,12 +467,12 @@ func (s *Service) DeleteSession(ctx context.Context, orgID int64, signedInUser *
 
 	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, orgID, sessionUID)
 	if err != nil {
-		s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID, s.cfg.BuildVersion)
+		s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 		return nil, fmt.Errorf("deleting migration from db for session %v: %w", sessionUID, err)
 	}
 
 	err = s.deleteLocalFiles(snapshots)
-	s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID, s.cfg.BuildVersion)
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 	return session, nil
 }
 
@@ -535,7 +539,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
 		s.cancelFunc = cancelFunc
 
-		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID, s.cfg.BuildVersion)
+		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.buildSnapshot(asyncCtx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot, cmd.ResourceTypes)
@@ -556,7 +560,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		}
 
 		span.SetStatus(codes.Ok, "snapshot built")
-		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err, signedInUser.UserUID, s.cfg.BuildVersion)
+		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return &snapshot, nil
@@ -763,7 +767,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 
 		asyncCtx, s.cancelFunc = context.WithCancel(asyncCtx)
 
-		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil, signedInUser.UserUID, s.cfg.BuildVersion)
+		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.uploadSnapshot(asyncCtx, session, snapshot, uploadUrl)
@@ -783,7 +787,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 			}
 		}
 
-		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err, signedInUser.UserUID, s.cfg.BuildVersion)
+		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return nil
@@ -832,7 +836,6 @@ func (s *Service) report(
 	d time.Duration,
 	evtErr error,
 	userUID string,
-	grafanaVersion string,
 ) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.report")
 	defer span.End()
@@ -858,7 +861,7 @@ func (s *Service) report(
 		Event:          t,
 		LocalID:        id,
 		UserUID:        userUID,
-		GrafanaVersion: grafanaVersion,
+		GrafanaVersion: s.grafanaVersion,
 	}
 
 	if d != 0 {
