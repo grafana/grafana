@@ -28,7 +28,8 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 func setupTestKV(t *testing.T) KV {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		require.NoError(t, err)
 	})
 	return NewBadgerKV(db)
 }
