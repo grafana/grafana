@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,16 @@ func TestValidateSecureValue(t *testing.T) {
 			errs = reststorage.ValidateSecureValue(sv, nil, admission.Create, nil)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
+		})
+
+		t.Run("`value` cannot exceed 24576 bytes", func(t *testing.T) {
+			sv := validSecureValue.DeepCopy()
+			sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(strings.Repeat("a", 24576+1))
+			sv.Spec.Ref = nil
+
+			errs := reststorage.ValidateSecureValue(sv, nil, admission.Create, nil)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec.value", errs[0].Field)
 		})
 	})
 

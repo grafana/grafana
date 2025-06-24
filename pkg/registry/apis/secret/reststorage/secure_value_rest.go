@@ -283,6 +283,13 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	}
 
 	// General validations.
+	if len(sv.Spec.Value) > 24576 {
+		errs = append(
+			errs,
+			field.TooLong(field.NewPath("spec", "value"), len(sv.Spec.Value), 24576),
+		)
+	}
+
 	if errs := validateDecrypters(sv.Spec.Decrypters, decryptersAllowList); len(errs) > 0 {
 		return errs
 	}
