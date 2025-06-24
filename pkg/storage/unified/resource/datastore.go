@@ -38,6 +38,13 @@ type DataKey struct {
 	Action          MetaDataAction
 }
 
+type ListRequestKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string
+}
+
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
 	prefix, err := d.getPrefix(key)

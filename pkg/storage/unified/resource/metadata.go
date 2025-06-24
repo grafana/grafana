@@ -142,13 +142,6 @@ func (d *metadataStore) GetAt(ctx context.Context, key ListRequestKey, rv int64)
 	return MetaDataObj{}, ErrNotFound
 }
 
-type ListRequestKey struct {
-	Namespace string
-	Group     string
-	Resource  string
-	Name      string
-}
-
 func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
 	return d.ListAt(ctx, key, math.MaxInt64)
 }
