@@ -131,8 +131,11 @@ Additionally, you can use [silences](ref:silences) and [mute timings](ref:mute-t
 
 ## Architecture
 
-Grafana Alerting is based on the Prometheus model for designing alerting systems. Its architecture decouples the alert generator from the alert notification manager (known as the Alertmanager) to enhance scalability and performance.
+Grafana Alerting is built on the Prometheus model, which separates two main components for scalability and performance:
+
+- **An alert generator** that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
+- **An alert receiver** (also known as Alertmanager) that receives the alerts and is responsible for sending their notifications.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana provides a custom Alertmanager, extending the Prometheus Alertmanager, to manage and deliver alert notifications. If you run a Prometheus or Mimir Alertmanager, you can configure Grafana Alerting to manage them and handle notifications for Grafana-managed alerts. For details, refer to [configure Alertmanagers](ref:configure-alertmanager).
+Grafana includes a custom Alertmanager that extends the Prometheus Alertmanager to manage and deliver alert notifications. You can also [configure Grafana Alerting to work with other Alertmanagers](ref:configure-alertmanager).
