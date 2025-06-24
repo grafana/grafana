@@ -34,6 +34,7 @@ func ConvertToK8sResource(
 			UID:       types.UID(rule.UID),
 			Name:      rule.UID,
 			Namespace: namespaceMapper(orgID),
+			Labels:    make(map[string]string),
 		},
 		Spec: model.AlertRuleSpec{
 			Title:    rule.Title,
@@ -51,6 +52,10 @@ func ConvertToK8sResource(
 			PanelID:                     rule.PanelID,
 			DashboardUID:                rule.DashboardUID,
 		},
+	}
+
+	if rule.RuleGroup != "" {
+		k8sRule.ObjectMeta.Labels["group"] = rule.RuleGroup
 	}
 
 	for k, v := range rule.Annotations {

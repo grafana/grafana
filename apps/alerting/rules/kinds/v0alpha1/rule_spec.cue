@@ -13,6 +13,8 @@ TemplateString: string                       // =~ figure out the regex for the 
 	title:   string
 	paused?: bool
 	data: {
+		// TODO: validate that only one can specify source=true
+		// Note: any issues with go hash map key sorting?
 		[string]: #Query
 	}
 	interval: #PromDuration
