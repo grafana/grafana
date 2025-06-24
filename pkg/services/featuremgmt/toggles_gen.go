@@ -934,4 +934,8 @@ const (
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
+
+	// FlagAlertingStateHistoryPrometheus
+	// Enables the Prometheus state history writer for alert rules.
+	FlagAlertingStateHistoryPrometheus = "alertingStateHistoryPrometheus"
 )
