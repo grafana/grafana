@@ -29,7 +29,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
   }
 
   public getTabLabel() {
-    return 'Alert';
+    return t('dashboard-scene.panel-data-alerting-tab.tab-label', 'Alert');
   }
 
   public getDashboardUID() {

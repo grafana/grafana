@@ -10,31 +10,40 @@ import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
 import { convertDurationToMilliseconds } from '../utils';
 
-const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
-  {
-    label: 'Size',
-    value: HeatmapCalculationMode.Size,
-    description: 'Split the buckets based on size',
-  },
-  {
-    label: 'Count',
-    value: HeatmapCalculationMode.Count,
-    description: 'Split the buckets based on count',
-  },
-];
-
-const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
-  {
-    label: 'Split',
-    value: HeatmapCalculationMode.Size,
-    description: 'Split the buckets based on size',
-  },
-];
-
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
   const modeSwitchCounter = useRef(0);
+
+  const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
+    {
+      label: t('transformers.axis-editor.mode-options.label.size', 'Size'),
+      value: HeatmapCalculationMode.Size,
+      description: t(
+        'transformers.axis-editor.mode-options.description.split-the-buckets-based-on-size',
+        'Split the buckets based on size'
+      ),
+    },
+    {
+      label: t('transformers.axis-editor.mode-options.label.count', 'Count'),
+      value: HeatmapCalculationMode.Count,
+      description: t(
+        'transformers.axis-editor.mode-options.description.split-the-buckets-based-on-count',
+        'Split the buckets based on count'
+      ),
+    },
+  ];
+
+  const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
+    {
+      label: t('transformers.axis-editor.log-mode-options.label.split', 'Split'),
+      value: HeatmapCalculationMode.Size,
+      description: t(
+        'transformers.axis-editor.log-mode-options.description.split-the-buckets-based-on-size',
+        'Split the buckets based on size'
+      ),
+    },
+  ];
 
   const allowInterval = item.settings?.allowInterval ?? false;
 
