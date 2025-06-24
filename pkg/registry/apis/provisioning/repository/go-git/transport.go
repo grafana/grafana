@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"sync/atomic"
+
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 var errBytesLimitExceeded = fmt.Errorf("bytes limit exceeded")
@@ -17,10 +19,10 @@ type ByteLimitedTransport struct {
 }
 
 // NewByteLimitedTransport creates a new ByteLimitedTransport with the specified transport and byte limit.
-// If transport is nil, http.DefaultTransport will be used.
+// If transport is nil, a new http.Transport modeled after http.DefaultTransport will be used.
 func NewByteLimitedTransport(transport http.RoundTripper, limit int64) *ByteLimitedTransport {
 	if transport == nil {
-		transport = http.DefaultTransport
+		transport = httpclient.NewHTTPTransport()
 	}
 	return &ByteLimitedTransport{
 		Transport: transport,

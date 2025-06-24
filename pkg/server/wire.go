@@ -41,6 +41,8 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -85,7 +87,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
@@ -158,12 +159,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
+	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
+	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -215,8 +219,8 @@ var wireBasicSet = wire.NewSet(
 	localcache.ProvideService,
 	bundleregistry.ProvideService,
 	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
-	updatechecker.ProvideGrafanaService,
-	updatechecker.ProvidePluginsService,
+	updatemanager.ProvideGrafanaService,
+	updatemanager.ProvidePluginsService,
 	uss.ProvideService,
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	validator.ProvideService,
@@ -337,7 +341,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideService,
 	wire.Bind(new(plugindashboards.Service), new(*plugindashboardsservice.Service)),
 	plugindashboardsservice.ProvideDashboardUpdater,
-	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
@@ -418,6 +421,13 @@ var wireBasicSet = wire.NewSet(
 	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
+	secretmetadata.ProvideOutboxQueue,
+	secretencryption.ProvideEncryptedValueStorage,
+	secretmigrator.NewWithEngine,
+	secretdatabase.ProvideDatabase,
+	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
+	secretdecrypt.ProvideDecryptAuthorizer,
+	secretdecrypt.ProvideDecryptAllowList,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

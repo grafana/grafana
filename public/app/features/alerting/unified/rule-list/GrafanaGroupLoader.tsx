@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logWarning } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
@@ -43,6 +44,7 @@ export function GrafanaGroupLoader({
     {
       folderUid: groupIdentifier.namespace.uid,
       groupName: groupIdentifier.groupName,
+      limitAlerts: 0,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
   );
@@ -96,6 +98,7 @@ export function GrafanaGroupLoader({
               groupIdentifier={groupIdentifier}
               namespaceName={namespaceName}
               operation={RuleOperation.Creating}
+              showLocation={false}
             />
           );
         }
@@ -107,6 +110,8 @@ export function GrafanaGroupLoader({
             rulerRule={rulerRule}
             groupIdentifier={groupIdentifier}
             namespaceName={namespaceName}
+            // we don't show the location again for rules, it's redundant because they are shown in a folder > group hierarchy
+            showLocation={false}
           />
         );
       })}
@@ -119,6 +124,7 @@ export function GrafanaGroupLoader({
           rulesSource={GrafanaRulesSource}
           application="grafana"
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
     </>
@@ -153,6 +159,14 @@ export function matchRules(
   );
 
   matchingResult.promOnlyRules.push(...promRulesMap.values());
+
+  if (matchingResult.promOnlyRules.length > 0) {
+    // Grafana Prometheus rules should be strongly consistent now so each Ruler rule should have a matching Prometheus rule
+    // If not, log it as a warning
+    logWarning('Grafana Managed Rules: No matching Prometheus rule found for Ruler rule', {
+      promOnlyRulesCount: matchingResult.promOnlyRules.length.toString(),
+    });
+  }
 
   return matchingResult;
 }

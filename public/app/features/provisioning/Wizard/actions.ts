@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n';
 import {
   GetRepositoryFilesApiResponse,
   GetResourceStatsApiResponse,
   RepositoryViewList,
-} from 'app/api/clients/provisioning';
-import { t } from 'app/core/internationalization';
+} from 'app/api/clients/provisioning/v0alpha1';
 
 import { ModeOption } from './types';
 

@@ -3,6 +3,7 @@ import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -16,7 +17,6 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
@@ -52,8 +52,9 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
+
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
   const formAmRoute = {
@@ -132,7 +133,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                       defaultValue={field.operator}
                       control={control}
                       name={`object_matchers.${index}.operator`}
-                      rules={{ required: { value: true, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: true,
+                          message: t('alerting.am-routes-expanded-form.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field
@@ -307,6 +313,30 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           )}
           control={control}
           name="muteTimeIntervals"
+        />
+      </Field>
+      <Field
+        label={t('alerting.am-routes-expanded-form.am-active-timing-select-label-active-timings', 'Active timings')}
+        data-testid="am-active-timing-select"
+        description={t(
+          'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-active-timing-to-policy',
+          'Add active timing to policy'
+        )}
+        invalid={!!errors.activeTimeIntervals}
+      >
+        <Controller
+          render={({ field: { onChange, ref, ...field } }) => (
+            <MuteTimingsSelector
+              alertmanager={selectedAlertmanager!}
+              selectProps={{
+                ...field,
+                disabled: !canSeeMuteTimings,
+                onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+              }}
+            />
+          )}
+          control={control}
+          name="activeTimeIntervals"
         />
       </Field>
       {actionButtons}

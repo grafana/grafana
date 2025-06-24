@@ -6,13 +6,14 @@
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "12.1.0-pre",
-    "@grafana/plugin-ui": "0.10.5",
+    "@grafana/i18n": "12.1.0-pre",
+    "@grafana/plugin-ui": "0.10.7",
     "@grafana/runtime": "12.1.0-pre",
     "@grafana/sql": "12.1.0-pre",
     "@grafana/ui": "12.1.0-pre",
     "lodash": "4.17.21",
     "react": "18.3.1",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "tslib": "2.8.1"
   },
   "devDependencies": {
@@ -23,8 +24,9 @@
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.15",
-    "@types/node": "22.12.0",
+    "@types/node": "22.15.0",
     "@types/react": "18.3.18",
+    "i18next-parser": "9.3.0",
     "ts-node": "10.9.2",
     "typescript": "5.7.3",
     "webpack": "5.97.1"
@@ -35,7 +37,8 @@
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "webpack -w -c ./webpack.config.ts --env development"
+    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "i18n-extract": "i18next --config locales/i18next-parser.config.cjs"
   },
   "packageManager": "yarn@4.6.0"
 }

@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 
-import { t } from '../../../../../../core/internationalization';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
@@ -21,6 +21,7 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
+
   const ruleFormType = watch('type');
 
   return (
@@ -52,7 +53,13 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             name="dataSourceName"
             control={control}
             rules={{
-              required: { value: true, message: 'Please select a data source' },
+              required: {
+                value: true,
+                message: t(
+                  'alerting.cloud-data-source-selector.message.please-select-a-data-source',
+                  'Please select a data source'
+                ),
+              },
             }}
           />
         </Field>

@@ -12,6 +12,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
@@ -23,7 +24,6 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';

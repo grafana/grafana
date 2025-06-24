@@ -19,8 +19,8 @@ import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -131,7 +131,6 @@ const options = [
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
-
   const onChange = useCallback(
     (value: SelectableValue<GroupByOperationID | null>) => {
       onConfigChange({

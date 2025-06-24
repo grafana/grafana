@@ -25,9 +25,9 @@ You can assign a user one of three types of permissions:
 - Organization permissions: Manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
 - Dashboard and folder permission: Manage access to dashboards and folders
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are running Grafana Enterprise, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 For Grafana Cloud users, Grafana Support is not authorised to make org role changes. Instead, contact your org administrator.
@@ -37,9 +37,9 @@ For Grafana Cloud users, Grafana Support is not authorised to make org role chan
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The server administrator role does not mean that the user is also a Grafana [organization administrator](#organization-roles).
-{{% /admonition %}}
+{{< /admonition >}}
 
 A server administrator can perform the following tasks:
 
@@ -49,9 +49,9 @@ A server administrator can perform the following tasks:
 - View Grafana server statistics, including total users and active sessions
 - Upgrade the server to Grafana Enterprise.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The server administrator role does not exist in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To assign or remove server administrator privileges, see [Server user management](../user-management/server-user-management/assign-remove-server-admin-privileges/).
 
@@ -71,7 +71,7 @@ Permissions assigned to a user within an organization control the extent to whic
 - plugins
 - annotations
 - library panels
-- API keys
+- service accounts
 
 For more information about managing organization users, see [User management](../user-management/manage-org-users/).
 

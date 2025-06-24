@@ -18,6 +18,8 @@ import (
 type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
 	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
@@ -232,4 +234,35 @@ func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaRe
 // Encrypt delegates encryption to secrets.Service.
 func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	return c.secrets.Encrypt(ctx, payload, opt)
+}
+
+func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	for i := range config.ExtraConfigs {
+		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
+		if err != nil {
+			return fmt.Errorf("failed to encrypt extra configuration: %w", err)
+		}
+
+		config.ExtraConfigs[i].AlertmanagerConfig = base64.StdEncoding.EncodeToString(encryptedValue)
+	}
+
+	return nil
+}
+
+func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	for i := range config.ExtraConfigs {
+		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
+		if err != nil {
+			return fmt.Errorf("failed to base64 decode extra configuration: %w", err)
+		}
+
+		decryptedValue, err := c.secrets.Decrypt(ctx, encryptedValue)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt extra configuration: %w", err)
+		}
+
+		config.ExtraConfigs[i].AlertmanagerConfig = string(decryptedValue)
+	}
+
+	return nil
 }

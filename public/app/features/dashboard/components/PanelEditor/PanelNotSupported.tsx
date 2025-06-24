@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { PanelEditorTabId } from './types';
 

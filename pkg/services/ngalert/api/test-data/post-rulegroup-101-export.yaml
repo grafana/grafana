@@ -93,6 +93,8 @@ groups:
             repeat_interval: 5m
             mute_time_intervals:
                 - test-mute
+            active_time_intervals:
+                - test-mute
         - uid: alert-with-uid
           title: alert with uid
           condition: B
@@ -138,6 +140,8 @@ groups:
             group_interval: 5s
             repeat_interval: 5m
             mute_time_intervals:
+                - test-mute
+            active_time_intervals:
                 - test-mute
         - title: recording rule
           data:

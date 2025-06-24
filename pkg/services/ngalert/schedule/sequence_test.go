@@ -90,6 +90,8 @@ func TestSequence(t *testing.T) {
 						models.RuleGen.WithUID("4"),
 						models.RuleGen.WithGroupIndex(2),
 						models.RuleGen.WithGroupName("rg2"),
+						// This rule has the Prometheus rule YAML definition,
+						// indicating it was converted from Prometheus.
 						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 					).GenerateRef(),
 					folderTitle: "folder1",
@@ -102,7 +104,9 @@ func TestSequence(t *testing.T) {
 						models.RuleGen.WithUID("5"),
 						models.RuleGen.WithGroupIndex(3),
 						models.RuleGen.WithGroupName("rg2"),
-						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+						// This rule does not have the YAML definition,
+						// but still has the label indicating it was converted from Prometheus.
+						models.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},

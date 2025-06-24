@@ -3,11 +3,11 @@ import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, rangeUtil, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
@@ -503,7 +503,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         {unloadEvaluator && (
           <>
             <div className={styles.label}>
-              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">Stop alerting when </Trans>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
             </div>
             <div className={styles.value}>{expression}</div>
 

@@ -1,9 +1,9 @@
 import { Fragment } from 'react';
 
 import { textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';

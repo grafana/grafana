@@ -5,9 +5,9 @@ import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
 import { DataFrame, Field as DataFrameField } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Field, Switch } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ItemLabels } from './ItemLabels';
 import RawListItem from './RawListItem';

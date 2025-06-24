@@ -59,6 +59,7 @@ exports[`routes Should add a new route with receiver E as a child of default rou
           "routes": [],
         },
         {
+          "active_time_intervals": undefined,
           "continue": undefined,
           "group_by": undefined,
           "group_interval": undefined,
@@ -126,6 +127,7 @@ exports[`routes Should update an existing route A with receiver B 1`] = `
       "receiver": "ROOT",
       "routes": [
         {
+          "active_time_intervals": undefined,
           "continue": undefined,
           "group_by": undefined,
           "group_interval": undefined,

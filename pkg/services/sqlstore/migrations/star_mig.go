@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // does not rely on dashboard table existing, can be run before dashboard migrations
@@ -82,15 +82,6 @@ func RunStarMigrations(sess *xorm.Session, driverName string) error {
 			star.org_id = dashboard.org_id,
 			star.updated = NOW()
 		WHERE star.dashboard_uid IS NULL OR star.org_id IS NULL;`
-	case Spanner:
-		sql = `UPDATE star
-				SET
-					dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = star.dashboard_id),
-					org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = star.dashboard_id),
-					updated = CURRENT_TIMESTAMP()
-				WHERE
-					(dashboard_uid IS NULL OR org_id IS NULL)
-				  AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = star.dashboard_id)`
 	}
 
 	if _, err := sess.Exec(sql); err != nil {

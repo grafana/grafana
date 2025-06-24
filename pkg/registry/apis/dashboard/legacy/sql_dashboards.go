@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -62,6 +64,8 @@ type dashboardSqlAccess struct {
 	dashStore             dashboards.Store
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
+	libraryPanelSvc librarypanels.Service
+
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -72,6 +76,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -81,6 +86,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
 		dashboardSearchClient: *dashboardSearchClient,
+		libraryPanelSvc:       libraryPanelSvc,
 		log:                   log.New("dashboard.legacysql"),
 	}
 }
@@ -182,11 +188,6 @@ func (r *rowsWrapper) Next() bool {
 
 // ContinueToken implements resource.ListIterator.
 func (r *rowsWrapper) ContinueToken() string {
-	return r.row.token.String()
-}
-
-// ContinueTokenWithCurrentRV implements resource.ListIterator.
-func (r *rowsWrapper) ContinueTokenWithCurrentRV() string {
 	return r.row.token.String()
 }
 
@@ -303,19 +304,18 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if origin_name.String != "" {
-			// if the reader cannot be found, it may be an orphaned provisioned dashboard
-			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
-			if resolvedPath != "" {
-				meta.SetSourceProperties(utils.SourceProperties{
-					Path:            origin_path.String,
-					Checksum:        origin_hash.String,
-					TimestampMillis: origin_ts.Int64,
-				})
-				meta.SetManagerProperties(utils.ManagerProperties{
-					Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
-					Identity: origin_name.String,
-				})
-			}
+			editable := a.provisioning.GetAllowUIUpdatesFromConfig(origin_name.String)
+			prefix := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String) + "/"
+			meta.SetSourceProperties(utils.SourceProperties{
+				Path:            strings.TrimPrefix(origin_path.String, prefix),
+				Checksum:        origin_hash.String,
+				TimestampMillis: origin_ts.Int64,
+			})
+			meta.SetManagerProperties(utils.ManagerProperties{
+				Kind:        utils.ManagerKindClassicFP, // nolint:staticcheck
+				Identity:    origin_name.String,
+				AllowsEdits: editable,
+			})
 		} else if plugin_id.String != "" {
 			meta.SetManagerProperties(utils.ManagerProperties{
 				Kind:     utils.ManagerKindPlugin,
@@ -438,7 +438,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, created, err
 	}
 	if failOnExisting && !created {
-		return nil, created, dashboards.ErrDashboardWithSameUIDExists
+		return nil, created, apierrors.NewConflict(dashboardV1.DashboardResourceInfo.GroupResource(), dash.Name, dashboards.ErrDashboardWithSameUIDExists)
 	}
 
 	out, err := a.dashStore.SaveDashboard(ctx, *cmd)
@@ -453,6 +453,17 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, false, err
 	} else if dash == nil {
 		return nil, false, fmt.Errorf("unable to retrieve dashboard after save")
+	}
+
+	// TODO: for modes 3+, we need to migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	err = a.libraryPanelSvc.ConnectLibraryPanelsForDashboard(ctx, requester, out)
+	if err != nil {
+		return nil, false, err
 	}
 
 	// stash the raw value in context (if requested)

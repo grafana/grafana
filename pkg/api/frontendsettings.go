@@ -28,6 +28,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// GetBootdataAPI returns the same data we currently have rendered into index.html
+// NOTE: this should not be added to the public API docs, and is useful for a transition
+// towards a fully static index.html -- this will likely be replaced with multiple calls
+func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
+	data, err := hs.setIndexViewData(c)
+	if err != nil {
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
@@ -235,6 +247,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		TrustedTypesDefaultPolicyEnabled: trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:             hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                      hs.Cfg.DateFormats,
+		QuickRanges:                      hs.Cfg.QuickRanges,
 		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
@@ -248,7 +261,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExploreDefaultTimeOffset:         hs.Cfg.ExploreDefaultTimeOffset,
 		ExploreHideLogsDownload:          hs.Cfg.ExploreHideLogsDownload,
 
-		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
+		DefaultDatasourceManageAlertsUIToggle:          hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
+		DefaultAllowRecordingRulesTargetAlertsUIToggle: hs.Cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -286,7 +300,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
 		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogPreinstalledPlugins: hs.Cfg.PreinstallPlugins,
+		PluginCatalogPreinstalledPlugins: append(hs.Cfg.PreinstallPluginsAsync, hs.Cfg.PreinstallPluginsSync...),
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
@@ -339,6 +353,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
+	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = hs.Cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled

@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
@@ -96,7 +96,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, errors.New("legacy migrator error"))
+		})).Return(&resourcepb.BulkResponse{}, errors.New("legacy migrator error"))
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -311,11 +311,11 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Count phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{
-			Summary: []*resource.BulkResponse_Summary{
+		})).Return(&resourcepb.BulkResponse{
+			Summary: []*resourcepb.BulkResponse_Summary{
 				{
 					Group:    "test.grafana.app",
 					Resource: "tests",
@@ -390,7 +390,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			signature.NewGrafanaSigner(),
 		)
 
-		err := migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err := migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unmarshal unstructured")
 
@@ -440,7 +440,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			signature.NewGrafanaSigner(),
 		)
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.NoError(t, err) // Error is recorded but not returned
 
 		mockParser.AssertExpectations(t)
@@ -483,7 +483,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			mockSigner,
 		)
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.Error(t, err)
 		require.EqualError(t, err, "add author signature: signing error")
 
@@ -543,7 +543,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			mockSigner,
 		)
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.NoError(t, err)
 
 		mockParser.AssertExpectations(t)
@@ -592,7 +592,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		)
 
 		writeResourceFileFromObject.Return("aaaa.json", nil)
-		err := migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
+		err := migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte(""))
 		require.NoError(t, err)
 		require.Equal(t, "aaaa.json", migrator.history["test"], "kept track of the old files")
 
@@ -601,7 +601,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		mockRepo.On("Delete", mock.Anything, "aaaa.json", "", "moved to: bbbb.json").
 			Return(nil).Once()
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte(""))
 		require.NoError(t, err)
 		require.Equal(t, "bbbb.json", migrator.history["test"], "kept track of the old files")
 
@@ -685,7 +685,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			signature.NewGrafanaSigner(),
 		)
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.NoError(t, err)
 
 		mockParser.AssertExpectations(t)
@@ -731,7 +731,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			signature.NewGrafanaSigner(),
 		)
 
-		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte("test"))
+		err = migrator.Write(context.Background(), &resourcepb.ResourceKey{}, []byte("test"))
 		require.EqualError(t, err, "too many errors")
 
 		mockParser.AssertExpectations(t)
@@ -745,7 +745,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, errors.New("count error"))
+		})).Return(&resourcepb.BulkResponse{}, errors.New("count error"))
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -774,10 +774,10 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Count phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, errors.New("write error")).Once() // Write phase
+		})).Return(&resourcepb.BulkResponse{}, errors.New("write error")).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -806,10 +806,10 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Count phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Write phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -836,8 +836,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{
-			Summary: []*resource.BulkResponse_Summary{
+		})).Return(&resourcepb.BulkResponse{
+			Summary: []*resourcepb.BulkResponse_Summary{
 				{
 					Group:    "test.grafana.app",
 					Resource: "tests",
@@ -848,7 +848,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Write phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -876,8 +876,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{
-			Summary: []*resource.BulkResponse_Summary{
+		})).Return(&resourcepb.BulkResponse{
+			Summary: []*resourcepb.BulkResponse_Summary{
 				{
 					Group:    "test.grafana.app",
 					Resource: "tests",
@@ -888,7 +888,7 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		}, nil).Once() // Count phase
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
 			return !opts.OnlyCount && opts.Namespace == "test-namespace"
-		})).Return(&resource.BulkResponse{}, nil).Once() // Write phase
+		})).Return(&resourcepb.BulkResponse{}, nil).Once() // Write phase
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -930,7 +930,7 @@ func TestLegacyResourceResourceMigrator_CloseWithResults(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, response)
-		require.IsType(t, &resource.BulkResponse{}, response)
+		require.IsType(t, &resourcepb.BulkResponse{}, response)
 		require.Empty(t, response.Summary)
 	})
 }

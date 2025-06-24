@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { TimeOptions } from '../../types/time';
 
@@ -39,7 +39,7 @@ export function PromDurationDocs() {
           <div>
             <Trans i18nKey="alerting.prom-duration-docs.multiple-units-combined">Multiple units combined</Trans>
           </div>
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+          {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
           <code>1m30s, 2h30m20s, 1w2d</code>
         </div>
       </div>

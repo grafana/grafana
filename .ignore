@@ -19,4 +19,3 @@
 # This is the new place of the block, but I leave the previous here for a while
 !/devenv/docker/blocks/auth/saml-enterprise
 !/devenv/docker/blocks/auth/signer
-!/devenv/docker/blocks/spanner_tests

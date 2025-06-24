@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -35,6 +35,7 @@ export const RuleDetails = ({ rule }: Props) => {
   } = rule;
 
   const annotations = useCleanAnnotations(rule.annotations);
+
   const isAlertingRule =
     rulerRuleType.any.alertingRule(rule.rulerRule) || prometheusRuleType.alertingRule(rule.promRule);
 
@@ -70,7 +71,7 @@ interface EvaluationBehaviorSummaryProps {
 }
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
-  const every = rule.group.interval;
+  const interval = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
   const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
@@ -78,6 +79,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
+
   const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   return (
@@ -87,10 +89,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           {metric}
         </DetailsField>
       )}
-      {every && (
+      {interval && (
         <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
-          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ every }}>
-            Every {{ every }}
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ interval }}>
+            Every {{ interval }}
           </Trans>
         </DetailsField>
       )}
@@ -116,6 +118,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
@@ -133,8 +136,13 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
           horizontal={true}
         >
-          <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
-            <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
+          <Tooltip
+            placement="top"
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            content={`${lastEvaluationDuration}s`}
+            theme="info"
+          >
+            <span>{Time({ timeInMs: lastEvaluationDuration, humanize: true })}</span>
           </Tooltip>
         </DetailsField>
       )}

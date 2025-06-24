@@ -143,15 +143,15 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	encValueStore := newInMemoryEncryptedValueStorage()
 
 	// Initialize the SQLKeeper
-	sqlKeeper, err := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	sqlKeeper := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
 
-	return sqlKeeper, err
+	return sqlKeeper, nil
 }
 
 // While we don't have the real implementation, use an in-memory one
 type inMemoryEncryptionManager struct{}
 
-func (m *inMemoryEncryptionManager) Encrypt(_ context.Context, _ string, value []byte, _ contracts.EncryptionOptions) ([]byte, error) {
+func (m *inMemoryEncryptionManager) Encrypt(_ context.Context, _ string, value []byte) ([]byte, error) {
 	return []byte(base64.StdEncoding.EncodeToString(value)), nil
 }
 

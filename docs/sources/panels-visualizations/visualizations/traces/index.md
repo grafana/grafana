@@ -50,8 +50,12 @@ refs:
 
 # Traces
 
+{{< shared id="traces-viz" >}}
+
 Traces visualizations let you follow a request as it traverses the services in your infrastructure.
 The traces visualization displays traces data in a diagram that allows you to easily interpret it. Traces visualizations currently render one trace traversal based on the traceID used in TraceQL or using a variable.
+
+{{< /shared >}}
 
 For more information about traces and how to use them, refer to the following documentation:
 

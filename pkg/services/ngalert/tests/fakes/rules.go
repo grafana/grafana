@@ -2,7 +2,6 @@ package fakes
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"slices"
 	"sync"
@@ -223,10 +222,14 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
 			continue
 		}
-		if q.ImportedPrometheusRule != nil {
-			if *q.ImportedPrometheusRule != r.ImportedFromPrometheus() {
+		if q.HasPrometheusRuleDefinition != nil {
+			if *q.HasPrometheusRuleDefinition != r.HasPrometheusRuleDefinition() {
 				continue
 			}
+		}
+
+		if q.ReceiverName != "" && (len(r.NotificationSettings) < 1 || r.NotificationSettings[0].Receiver != q.ReceiverName) {
+			continue
 		}
 
 		ruleList = append(ruleList, r)
@@ -270,7 +273,7 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 			return folder, nil
 		}
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, dashboards.ErrFolderNotFound
 }
 
 func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {

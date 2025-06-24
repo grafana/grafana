@@ -5,7 +5,7 @@ import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { ScrollIndicators } from './ScrollIndicators';
 

@@ -117,6 +117,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.Annotations:
         update.lines = 10;
         break;
+      case TestDataQueryType.Steps:
+        update.csvContent = 'a\nb\nc\n';
+        break;
       case TestDataQueryType.USA:
         update.usa = {
           mode: usaQueryModes[0].value,
@@ -293,6 +296,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === TestDataQueryType.CSVContent && (
         <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />
       )}
+      {scenarioId === TestDataQueryType.Steps && <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === TestDataQueryType.Logs && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>

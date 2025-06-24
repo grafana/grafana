@@ -4,6 +4,7 @@ import { memo } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { ScopesContextValue } from '@grafana/runtime';
 import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -11,7 +12,6 @@ import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
 

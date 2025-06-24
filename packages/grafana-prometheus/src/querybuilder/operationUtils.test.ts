@@ -2,9 +2,9 @@
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
-  getOperationParamId,
   isConflictingSelector,
 } from './operationUtils';
+import { getOperationParamId } from './shared/param_utils';
 
 describe('createAggregationOperation', () => {
   it('returns correct aggregation definitions with overrides', () => {

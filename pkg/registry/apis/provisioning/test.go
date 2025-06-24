@@ -43,7 +43,7 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := readBody(r, defaultMaxBodySize)
 		if err != nil {
 			responder.Error(err)

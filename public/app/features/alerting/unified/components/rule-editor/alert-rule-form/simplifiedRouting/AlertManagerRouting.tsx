@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { CollapsableSection, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
@@ -14,6 +14,7 @@ import { NeedHelpInfo } from '../../NeedHelpInfo';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
+import { ActiveTimingFields } from './route-settings/ActiveTimingFields';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
 import { RoutingSettings } from './route-settings/RouteSettings';
 
@@ -114,6 +115,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
               />
             </Stack>
             <MuteTimingFields alertmanager={alertManagerName} />
+            <ActiveTimingFields alertmanager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
           </Stack>
         </CollapsableSection>

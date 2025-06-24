@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -82,7 +81,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		}),
 	})
 
-	_ = testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
@@ -92,18 +91,20 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	})
 
 	dash1Annotation := &annotations.Item{
-		OrgID:       1,
-		DashboardID: 1,
-		Epoch:       10,
+		OrgID:        1,
+		DashboardID:  1, // nolint: staticcheck
+		DashboardUID: dashboard1.UID,
+		Epoch:        10,
 	}
 	err = repo.Save(context.Background(), dash1Annotation)
 	require.NoError(t, err)
 
 	dash2Annotation := &annotations.Item{
-		OrgID:       1,
-		DashboardID: 2,
-		Epoch:       10,
-		Tags:        []string{"foo:bar"},
+		OrgID:        1,
+		DashboardID:  2, // nolint: staticcheck
+		DashboardUID: dashboard2.UID,
+		Epoch:        10,
+		Tags:         []string{"foo:bar"},
 	}
 	err = repo.Save(context.Background(), dash2Annotation)
 	require.NoError(t, err)
@@ -238,12 +239,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		dashStore, err := database.ProvideDashboardStore(sql, cfg, features, tagService)
 		require.NoError(t, err)
 
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-		})
-
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
@@ -299,10 +294,11 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 			annotationTxt := fmt.Sprintf("annotation %d", i)
 			dash1Annotation := &annotations.Item{
-				OrgID:       orgID,
-				DashboardID: dashboard.ID,
-				Epoch:       10,
-				Text:        annotationTxt,
+				OrgID:        orgID,
+				DashboardID:  dashboard.ID, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
+				Epoch:        10,
+				Text:         annotationTxt,
 			}
 			err = store.Add(context.Background(), dash1Annotation)
 			require.NoError(t, err)

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { useDashboardRestore } from './useDashboardRestore';
 export interface RevertDashboardModalProps {

@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
@@ -143,8 +143,10 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
                   <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
                   <br />
                   <Trans i18nKey="alerting.templates.misconfigured-warning-details">
-                    Templates must be defined in both the <CodeText content="template_files" /> and{' '}
-                    <CodeText content="templates" /> sections of your alertmanager configuration.
+                    Templates must be defined in both the{' '}
+                    <CodeText content={t('alerting.template-row.content-templatefiles', 'template_files')} /> and{' '}
+                    <CodeText content={t('alerting.template-row.content-templates', 'templates')} /> sections of your
+                    alertmanager configuration.
                   </Trans>
                 </>
               }

@@ -10,7 +10,9 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const grpcMetaKeyCollection = "x-gf-batch-collection"
@@ -25,28 +27,28 @@ type BulkRequestIterator interface {
 	Next() bool
 
 	// The next event we should process
-	Request() *BulkRequest
+	Request() *resourcepb.BulkRequest
 
 	// Rollback requested
 	RollbackRequested() bool
 }
 
 type BulkProcessingBackend interface {
-	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *BulkResponse
+	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse
 }
 
 type BulkResourceWriter interface {
 	io.Closer
 
-	Write(ctx context.Context, key *ResourceKey, value []byte) error
+	Write(ctx context.Context, key *resourcepb.ResourceKey, value []byte) error
 
 	// Called when finished writing
-	CloseWithResults() (*BulkResponse, error)
+	CloseWithResults() (*resourcepb.BulkResponse, error)
 }
 
 type BulkSettings struct {
 	// All requests will be within this namespace/group/resource
-	Collection []*ResourceKey
+	Collection []*resourcepb.ResourceKey
 
 	// The batch will include everything from the collection
 	// - all existing values will be removed/replaced if the batch completes successfully
@@ -60,7 +62,7 @@ func (x *BulkSettings) ToMD() metadata.MD {
 	md := make(metadata.MD)
 	if len(x.Collection) > 0 {
 		for _, v := range x.Collection {
-			md[grpcMetaKeyCollection] = append(md[grpcMetaKeyCollection], v.SearchID())
+			md[grpcMetaKeyCollection] = append(md[grpcMetaKeyCollection], SearchID(v))
 		}
 	}
 	if x.RebuildCollection {
@@ -78,8 +80,8 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 		switch k {
 		case grpcMetaKeyCollection:
 			for _, c := range v {
-				key := &ResourceKey{}
-				err := key.ReadSearchID(c)
+				key := &resourcepb.ResourceKey{}
+				err := ReadSearchID(key, c)
 				if err != nil {
 					return settings, fmt.Errorf("error reading collection metadata: %s / %w", c, err)
 				}
@@ -96,12 +98,12 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 
 // BulkWrite implements ResourceServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
-func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
+func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
 			},
@@ -110,8 +112,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "unable to read metadata gRPC request",
 				Code:    http.StatusPreconditionFailed,
 			},
@@ -123,8 +125,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 	}
 	settings, err := NewBulkSettings(md)
 	if err != nil {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "error reading settings",
 				Reason:  err.Error(),
 				Code:    http.StatusPreconditionFailed,
@@ -133,8 +135,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 	}
 
 	if len(settings.Collection) < 1 {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "Missing target collection(s) in request header",
 				Code:    http.StatusBadRequest,
 			},
@@ -151,8 +153,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 				Verb:      utils.VerbDeleteCollection,
 			})
 			if err != nil || !rsp.Allowed {
-				return stream.SendAndClose(&BulkResponse{
-					Error: &ErrorResult{
+				return stream.SendAndClose(&resourcepb.BulkResponse{
+					Error: &resourcepb.ErrorResult{
 						Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
 						Code:    http.StatusForbidden,
 					},
@@ -160,15 +162,15 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[k.NSGR()], err = s.access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[NSGR(k)], err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
 				Verb:      utils.VerbCreate,
 			})
 			if err != nil {
-				return stream.SendAndClose(&BulkResponse{
-					Error: &ErrorResult{
+				return stream.SendAndClose(&resourcepb.BulkResponse{
+					Error: &resourcepb.ErrorResult{
 						Message: "Unable to check `create` permission",
 						Code:    http.StatusForbidden,
 					},
@@ -176,8 +178,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 			}
 		}
 	} else {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "Bulk currently only supports RebuildCollection",
 				Code:    http.StatusBadRequest,
 			},
@@ -186,8 +188,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 
 	backend, ok := s.backend.(BulkProcessingBackend)
 	if !ok {
-		return stream.SendAndClose(&BulkResponse{
-			Error: &ErrorResult{
+		return stream.SendAndClose(&resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Message: "The server backend does not support batch processing",
 				Code:    http.StatusNotImplemented,
 			},
@@ -197,8 +199,8 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 	// BulkProcess requests
 	rsp := backend.ProcessBulk(ctx, settings, runner)
 	if rsp == nil {
-		rsp = &BulkResponse{
-			Error: &ErrorResult{
+		rsp = &resourcepb.BulkResponse{
+			Error: &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
 				Message: "Nothing returned from process batch",
 			},
@@ -218,7 +220,7 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 			}, summary.Count, summary.ResourceVersion)
 			if err != nil {
 				s.log.Warn("error building search index after batch load", "err", err)
-				rsp.Error = &ErrorResult{
+				rsp.Error = &resourcepb.ErrorResult{
 					Code:    http.StatusInternalServerError,
 					Message: "err building search index: " + summary.Resource,
 					Reason:  err.Error(),
@@ -234,9 +236,9 @@ var (
 )
 
 type batchRunner struct {
-	stream   BulkStore_BulkProcessServer
+	stream   resourcepb.BulkStore_BulkProcessServer
 	rollback bool
-	request  *BulkRequest
+	request  *resourcepb.BulkRequest
 	err      error
 	checker  map[string]authlib.ItemChecker
 }
@@ -262,7 +264,7 @@ func (b *batchRunner) Next() bool {
 
 	if b.request != nil {
 		key := b.request.Key
-		k := key.NSGR()
+		k := NSGR(key)
 		checker, ok := b.checker[k]
 		if !ok {
 			b.err = fmt.Errorf("missing access control for: %s", k)
@@ -277,7 +279,7 @@ func (b *batchRunner) Next() bool {
 }
 
 // Request implements BulkRequestIterator.
-func (b *batchRunner) Request() *BulkRequest {
+func (b *batchRunner) Request() *resourcepb.BulkRequest {
 	if b.rollback {
 		return nil
 	}

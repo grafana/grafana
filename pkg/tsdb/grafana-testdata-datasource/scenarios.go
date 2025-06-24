@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -107,6 +107,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeLive,
 		Name:    "Grafana Live",
+		handler: s.handleClientSideScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeSteps,
+		Name:    "Steps",
 		handler: s.handleClientSideScenario,
 	})
 
@@ -890,6 +896,7 @@ func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
+		setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 		frames = append(frames, frame)
 	}
 	return frames, nil
@@ -967,6 +974,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model, 0)
+	setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 
 	return frame, nil
 }

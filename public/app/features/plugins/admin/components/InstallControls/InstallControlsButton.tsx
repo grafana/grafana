@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -9,7 +10,6 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
-import { t } from '../../../../../core/internationalization';
 import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,

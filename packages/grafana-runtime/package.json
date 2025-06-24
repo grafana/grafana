@@ -35,7 +35,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
@@ -63,7 +63,7 @@
     "lodash": "4.17.21",
     "react-loading-skeleton": "3.5.0",
     "react-use": "17.6.0",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.2",
     "tslib": "2.8.1"
   },
   "devDependencies": {
@@ -84,7 +84,6 @@
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
-    "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",

@@ -5,6 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -19,7 +20,6 @@ import {
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';

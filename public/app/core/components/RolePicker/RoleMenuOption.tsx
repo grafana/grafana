@@ -1,11 +1,10 @@
 import { cx } from '@emotion/css';
 import { forwardRef, FormEvent } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Checkbox, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
 import { Role } from 'app/types';
-
-import { t } from '../../internationalization';
 
 import { getStyles } from './styles';
 
@@ -25,6 +24,7 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
+
     disabled = disabled || mapped;
     let disabledMessage = '';
     if (disabled) {

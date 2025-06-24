@@ -3,10 +3,10 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
 
