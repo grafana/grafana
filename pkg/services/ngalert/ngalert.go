@@ -708,7 +708,7 @@ func configureHistorianBackend(
 		if w == nil {
 			return nil, fmt.Errorf("failed to create alert state metrics writer")
 		}
-		backend := historian.NewRemotePrometheusBackend(pcfg, w, prometheusBackendLogger)
+		backend := historian.NewRemotePrometheusBackend(pcfg, w, prometheusBackendLogger, met)
 
 		return backend, nil
 	}
