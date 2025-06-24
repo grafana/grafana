@@ -2,16 +2,13 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
-// @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import { type Configuration, BannerPlugin } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
-// @ts-ignore - node needs the extension to strip types successfully
 import { DIST_DIR } from './constants.ts';
-// @ts-ignore - node needs the extension to strip types successfully
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
 
 function skipFiles(f: string): boolean {
