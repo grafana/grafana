@@ -1464,7 +1464,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
+"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7":
   version: 7.27.6
   resolution: "@babel/runtime@npm:7.27.6"
   checksum: 10/cc957a12ba3781241b83d528eb69ddeb86ca5ac43179a825e83aa81263a6b3eb88c57bed8a937cdeacfc3192e07ec24c73acdfea4507d0c0428c8e23d6322bfe
@@ -3397,7 +3397,7 @@ __metadata:
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:12.1.0-pre"
-    "@hello-pangea/dnd": "npm:17.0.0"
+    "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
@@ -3640,7 +3640,7 @@ __metadata:
     "@grafana/i18n": "npm:12.1.0-pre"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
-    "@hello-pangea/dnd": "npm:17.0.0"
+    "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
@@ -3780,7 +3780,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hello-pangea/dnd@npm:17.0.0, @hello-pangea/dnd@npm:^17.0.0":
+"@hello-pangea/dnd@npm:18.0.1":
+  version: 18.0.1
+  resolution: "@hello-pangea/dnd@npm:18.0.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.26.7"
+    css-box-model: "npm:^1.2.1"
+    raf-schd: "npm:^4.0.3"
+    react-redux: "npm:^9.2.0"
+    redux: "npm:^5.0.1"
+  peerDependencies:
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/32438e33d8fde4dc3efe2b872d8825bd3fc59bbc215a838d9ee4bc36ea78877b8a982fbd7784f8a4a1d4887cc5e7233d0142a54edf187faf95e058073d86edfe
+  languageName: node
+  linkType: hard
+
+"@hello-pangea/dnd@npm:^17.0.0":
   version: 17.0.0
   resolution: "@hello-pangea/dnd@npm:17.0.0"
   dependencies:
@@ -18147,7 +18163,7 @@ __metadata:
     "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "workspace:*"
-    "@hello-pangea/dnd": "npm:17.0.0"
+    "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.18"
     "@lezer/common": "npm:1.2.3"
@@ -32973,16 +32989,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.23.8, zod@npm:^3.25.3":
+"zod@npm:^3.23.8, zod@npm:^3.25.3, zod@npm:^3.25.55":
   version: 3.25.67
   resolution: "zod@npm:3.25.67"
   checksum: 10/0e35432dcca7f053e63f5dd491a87c78abe0d981817547252c3b6d05f0f58788695d1a69724759c6501dff3fd62929be24c9f314a3625179bee889150f7a61fa
-  languageName: node
-  linkType: hard
-
-"zod@npm:^3.25.55":
-  version: 3.25.55
-  resolution: "zod@npm:3.25.55"
-  checksum: 10/1f86d370730fc1eed10fe584079bfebd0008303722f2da21057d493e784b42f0b1edbac028b5a788e2e04bd31da070eac8e8d5f237ec968bc2a6aa30985fa9d6
   languageName: node
   linkType: hard
