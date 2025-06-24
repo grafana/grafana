@@ -12,7 +12,7 @@ import {
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';

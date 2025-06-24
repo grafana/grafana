@@ -297,9 +297,6 @@ export class LokiDatasource
 
   private getQueryHeaders(request: DataQueryRequest<LokiQuery>): Record<string, string> {
     const headers: Record<string, string> = {};
-    if (!config.featureToggles.lokiSendDashboardPanelNames) {
-      return headers;
-    }
     // only add headers if we are in the context of a dashboard
     if (
       [CoreApp.Dashboard.toString(), CoreApp.PanelEditor.toString(), CoreApp.PanelViewer.toString()].includes(

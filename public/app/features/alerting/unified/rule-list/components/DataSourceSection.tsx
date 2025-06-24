@@ -3,7 +3,7 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, IconButton, LinkButton, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { GrafanaRulesSourceSymbol, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
@@ -38,7 +38,6 @@ export const DataSourceSection = ({
   const [isCollapsed, toggleCollapsed] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
 
-  const { t } = useTranslate();
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
       const userIsAdmin = isAdmin();
@@ -75,18 +74,19 @@ export const DataSourceSection = ({
                   </Text>
                 )}
 
+                <Spacer />
+
                 {Boolean(error) && (
                   <Toggletip
                     title={t('alerting.rule-list.ds-error.title', 'Cannot load rules for this datasource')}
-                    content={<div>{stringifyErrorLike(error)}</div>}
+                    content={<Text color="error">{stringifyErrorLike(error)}</Text>}
                   >
-                    <Button variant="destructive" fill="outline" size="sm" icon="exclamation-circle">
+                    <Button variant="destructive" fill="text" size="sm" icon="exclamation-circle">
                       <Trans i18nKey="alerting.rule-list.error-button">Error</Trans>
                     </Button>
                   </Toggletip>
                 )}
 
-                <Spacer />
                 {configureLink && (
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}
