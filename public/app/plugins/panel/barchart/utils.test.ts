@@ -173,7 +173,7 @@ describe('BarChart utils', () => {
       expect(warning.warn).toEqual('No data in response');
     });
 
-    it('will warn when there is no frames in the response', () => {
+    it('will use a custom message for the no frames messages if provided', () => {
       const info = prepSeries(
         [],
         { ...fieldConfig, defaults: { noValue: 'Uh oh!' } },
