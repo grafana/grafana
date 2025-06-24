@@ -1,10 +1,8 @@
 <!doctype html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="und" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
-  <title>
-    {{ Subject .Subject .TemplateData "{{ .Title }}" }}
-  </title>
+  <title>{{ Subject .Subject .TemplateData "{{ .Title }}" }}</title>
   {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
@@ -103,7 +101,7 @@
 
   </style>
   <style type="text/css">
-    @media only screen and (max-width:480px) {
+    @media only screen and (max-width:479px) {
       table.mj-full-width-mobile {
         width: 100% !important;
       }
@@ -114,15 +112,12 @@
     }
 
   </style>
-  <style type="text/css">
-  </style>
   {{ $numberOfFiringInstance := (len .Alerts.Firing) }}
   {{ $numberOfResolvedAlerts := (len .Alerts.Resolved) }}
 </head>
 
 <body style="word-spacing:normal;">
-  <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-    <mj-raw>
+  <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;"><mj-raw>
       {{ if $numberOfFiringInstance }}
     </mj-raw>
     <strong>{{ $numberOfFiringInstance }} firing</strong> alert {{ $numberOfFiringInstance| plural "instance" "instances" }}
@@ -142,7 +137,7 @@
       {{ end }}
     </mj-raw>
   </div>
-  <div class="canvas" style="background-color: #fff;">
+  <div class="canvas" style="background-color: #fff;" lang="und" dir="auto">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -159,7 +154,7 @@
                           <tbody>
                             <tr>
                               <td style="width:200px;">
-                                <img height="auto" src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200">
+                                <img alt src="https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="200" height="auto">
                               </td>
                             </tr>
                           </tbody>
@@ -238,8 +233,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
-                                    <mj-raw>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><mj-raw>
                                       {{ range $line := (splitList "\n" .Message) }}
                                     </mj-raw>
                                     {{ $line }}<br>
@@ -311,7 +305,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -345,7 +339,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -387,7 +381,7 @@
                                       <tr>
                                         <td style="width:600px;">
                                           <a href="{{ .ImageURL }}" target="_blank" style="color: #6E9FFF;">
-                                            <img height="auto" src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600">
+                                            <img alt src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600" height="auto">
                                           </a>
                                         </td>
                                       </tr>
@@ -422,7 +416,7 @@
                                     <tbody>
                                       <tr>
                                         <td style="width:600px;">
-                                          <img height="auto" src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600">
+                                          <img alt src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600" height="auto">
                                         </td>
                                       </tr>
                                     </tbody>
@@ -469,8 +463,7 @@
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
-                                    <mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
                                     {{ $line }}<br>
                                     <mj-raw>{{ end }}</mj-raw>
                                   </div>
@@ -528,8 +521,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
-                                            <mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
+                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
                                             {{ $refID }}={{ $value }}&nbsp; <mj-raw>{{ end }}</mj-raw>
                                           </div>
                                         </td>
@@ -624,7 +616,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -646,7 +638,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -668,7 +660,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -690,7 +682,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -802,7 +794,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -836,7 +828,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:middle;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -878,7 +870,7 @@
                                       <tr>
                                         <td style="width:600px;">
                                           <a href="{{ .ImageURL }}" target="_blank" style="color: #6E9FFF;">
-                                            <img height="auto" src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600">
+                                            <img alt src="{{ .ImageURL }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600" height="auto">
                                           </a>
                                         </td>
                                       </tr>
@@ -913,7 +905,7 @@
                                     <tbody>
                                       <tr>
                                         <td style="width:600px;">
-                                          <img height="auto" src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600">
+                                          <img alt src="cid:{{ .EmbeddedImage }}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="600" height="auto">
                                         </td>
                                       </tr>
                                     </tbody>
@@ -960,8 +952,7 @@
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
-                                    <mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
                                     {{ $line }}<br>
                                     <mj-raw>{{ end }}</mj-raw>
                                   </div>
@@ -1019,8 +1010,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
-                                            <mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
+                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
                                             {{ $refID }}={{ $value }}&nbsp; <mj-raw>{{ end }}</mj-raw>
                                           </div>
                                         </td>
@@ -1115,7 +1105,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -1137,7 +1127,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -1159,7 +1149,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
@@ -1181,7 +1171,7 @@
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
-                                <td align="center" vertical-align="middle" style="font-size:0px;padding:0;word-break:break-word;">
+                                <td align="center" style="font-size:0px;padding:0;word-break:break-word;">
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tbody>
                                       <tr>
