@@ -1776,8 +1776,9 @@ var (
 		{
 			Name:        "tabularNumbers",
 			Description: "Use fixed-width numbers globally in the UI",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "true",
 		},
 	}
 )
