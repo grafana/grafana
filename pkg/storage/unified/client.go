@@ -161,9 +161,14 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 		backend := resource.NewKVStorageBackend(resource.NewBadgerKV(kv))
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
+		if err != nil {
+			return nil, err
+		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
+			Search:  searchOptions,
 		})
 		if err != nil {
 			return nil, err
