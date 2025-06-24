@@ -1,6 +1,7 @@
 import { type ReactElement } from 'react';
 
 import { TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Panel } from '@grafana/schema';
 import { AddToDashboardForm } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardForm';
 import { useSelector } from 'app/types';
@@ -39,7 +40,7 @@ export function ExploreToDashboardPanel(props: Props): ReactElement {
     // Return a default panel if neither panelData nor exploreItem exist
     return {
       type: 'timeseries',
-      title: 'New Panel',
+      title: t('dashboard.new-panel-title', 'New panel'),
       gridPos: { x: 0, y: 0, w: 12, h: 8 },
       targets: [],
     };
