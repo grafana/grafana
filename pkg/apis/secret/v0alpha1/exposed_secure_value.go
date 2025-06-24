@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -21,12 +22,12 @@ var (
 	_ yaml.Marshaler = (*ExposedSecureValue)(nil)
 )
 
-// NewExposedSecureValue creates a new exposed secure value wrapper.
+// NewExposedSecureValue creates a new base64 encoded exposed secure value wrapper.
 func NewExposedSecureValue(v string) ExposedSecureValue {
-	return ExposedSecureValue(v)
+	return ExposedSecureValue(base64.StdEncoding.EncodeToString([]byte(v)))
 }
 
-// DangerouslyExposeAndConsumeValue will move the decrypted secure value out of the wrapper and return it.
+// DangerouslyExposeAndConsumeValue will move the decrypted secure value out of the wrapper and return it as a bas64 encoded string.
 // Further attempts to call this method will panic.
 // The function name is intentionally kept long and weird because this is a dangerous operation and should be used carefully!
 func (s *ExposedSecureValue) DangerouslyExposeAndConsumeValue() string {

@@ -2,6 +2,7 @@ package v0alpha1_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -40,8 +41,10 @@ func TestExposedSecureValue(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "'"+expected+"'\n", string(bytes))
 
-	// DangerouslyExposeAndConsumeValue returns the raw value.
-	require.Equal(t, rawValue, esv.DangerouslyExposeAndConsumeValue())
+	// DangerouslyExposeAndConsumeValue returns the raw value base64 encoded.
+	decoded, err := base64.StdEncoding.DecodeString(esv.DangerouslyExposeAndConsumeValue())
+	require.NoError(t, err)
+	require.Equal(t, rawValue, string(decoded))
 
 	// Further calls to DangerouslyExposeAndConsumeValue will panic.
 	require.Panics(t, func() { esv.DangerouslyExposeAndConsumeValue() })
