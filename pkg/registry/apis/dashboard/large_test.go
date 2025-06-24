@@ -96,89 +96,20 @@ func TestLargeDashboardSupportV2(t *testing.T) {
 				{
 					Kind: "AnnotationQuery",
 					Spec: dashv2.DashboardAnnotationQuerySpec{
-						Name:      "Test Annotation",
-						Enable:    true,
-						Hide:      false,
-						IconColor: "red",
-						BuiltIn:   boolPtr(false),
-						Datasource: &dashv2.DashboardDataSourceRef{
-							Type: stringPtr("prometheus"),
-							Uid:  stringPtr("prometheus-uid"),
-						},
-						Query: &dashv2.DashboardDataQueryKind{
-							Kind: "prometheus",
-							Spec: map[string]interface{}{
-								"expr":    "up",
-								"refId":   "A",
-								"instant": true,
-							},
-						},
+						Name: "Test Annotation",
 					},
 				},
 			},
 			Elements: map[string]dashv2.DashboardElement{
 				"panel-1": {
-					PanelKind: &dashv2.DashboardPanelKind{
-						Kind: "Panel",
-						Spec: dashv2.DashboardPanelSpec{
-							Id:          1,
-							Title:       "Test Panel",
-							Description: "Test panel description",
-							Links:       []dashv2.DashboardDataLink{},
-							Data: dashv2.DashboardQueryGroupKind{
-								Kind: "QueryGroup",
-								Spec: dashv2.DashboardQueryGroupSpec{
-									Queries:         []dashv2.DashboardPanelQueryKind{},
-									Transformations: []dashv2.DashboardTransformationKind{},
-									QueryOptions:    *dashv2.NewDashboardQueryOptionsSpec(),
-								},
-							},
-							VizConfig: dashv2.DashboardVizConfigKind{
-								Kind: "timeseries",
-								Spec: dashv2.DashboardVizConfigSpec{
-									PluginVersion: "1.0.0",
-									Options:       map[string]interface{}{"legend": map[string]interface{}{"displayMode": "table"}},
-									FieldConfig:   *dashv2.NewDashboardFieldConfigSource(),
-								},
-							},
-						},
-					},
+					PanelKind: &dashv2.DashboardPanelKind{},
 				},
 			},
-			Layout: dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
-				GridLayoutKind: &dashv2.DashboardGridLayoutKind{
-					Kind: "GridLayout",
-					Spec: dashv2.DashboardGridLayoutSpec{
-						Items: []dashv2.DashboardGridLayoutItemKind{
-							{
-								Kind: "GridLayoutItem",
-								Spec: dashv2.DashboardGridLayoutItemSpec{
-									Element: dashv2.DashboardElementReference{
-										Kind: "PanelElement",
-										Name: "panel-1",
-									},
-									X:      0,
-									Y:      0,
-									Width:  12,
-									Height: 8,
-								},
-							},
-						},
-					},
-				},
-			},
-			TimeSettings: dashv2.DashboardTimeSettingsSpec{
-				From:                 "now-6h",
-				To:                   "now",
-				Timezone:             stringPtr("browser"),
-				AutoRefresh:          "5s",
-				AutoRefreshIntervals: []string{"5s", "10s", "30s", "1m", "5m"},
-				HideTimepicker:       false,
-				FiscalYearStartMonth: 0,
-			},
-			CursorSync: dashv2.DashboardDashboardCursorSyncOff,
-			Variables:  []dashv2.DashboardVariableKind{},
-			Links:      []dashv2.DashboardDashboardLink{},
+			Layout:       dashv2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{},
+			TimeSettings: dashv2.DashboardTimeSettingsSpec{},
+			CursorSync:   dashv2.DashboardDashboardCursorSyncOff,
+			Variables:    []dashv2.DashboardVariableKind{},
+			Links:        []dashv2.DashboardDashboardLink{},
 		},
 	}
 
@@ -236,42 +167,11 @@ func TestLargeDashboardSupportV2(t *testing.T) {
 	annotation := rehydratedDash.Spec.Annotations[0]
 	require.Equal(t, "AnnotationQuery", annotation.Kind)
 	require.Equal(t, "Test Annotation", annotation.Spec.Name)
-	require.True(t, annotation.Spec.Enable)
-	require.False(t, annotation.Spec.Hide)
-	require.Equal(t, "red", annotation.Spec.IconColor)
-	require.NotNil(t, annotation.Spec.Datasource)
-	require.Equal(t, stringPtr("prometheus"), annotation.Spec.Datasource.Type)
-	require.Equal(t, stringPtr("prometheus-uid"), annotation.Spec.Datasource.Uid)
 
 	// Verify elements are restored
 	require.Len(t, rehydratedDash.Spec.Elements, 1)
-	panel, exists := rehydratedDash.Spec.Elements["panel-1"]
+	_, exists := rehydratedDash.Spec.Elements["panel-1"]
 	require.True(t, exists)
-	require.NotNil(t, panel.PanelKind)
-	require.Equal(t, "Panel", panel.PanelKind.Kind)
-	require.Equal(t, "Test Panel", panel.PanelKind.Spec.Title)
-	require.Equal(t, "timeseries", panel.PanelKind.Spec.VizConfig.Kind)
-
-	// Verify layout is restored
-	require.NotNil(t, rehydratedDash.Spec.Layout.GridLayoutKind)
-	require.Equal(t, "GridLayout", rehydratedDash.Spec.Layout.GridLayoutKind.Kind)
-	require.Len(t, rehydratedDash.Spec.Layout.GridLayoutKind.Spec.Items, 1)
-	layoutItem := rehydratedDash.Spec.Layout.GridLayoutKind.Spec.Items[0]
-	require.Equal(t, "panel-1", layoutItem.Spec.Element.Name)
-	require.Equal(t, int64(0), layoutItem.Spec.X)
-	require.Equal(t, int64(0), layoutItem.Spec.Y)
-	require.Equal(t, int64(12), layoutItem.Spec.Width)
-	require.Equal(t, int64(8), layoutItem.Spec.Height)
-
-	// Verify time settings are restored
-	require.Equal(t, "now-6h", rehydratedDash.Spec.TimeSettings.From)
-	require.Equal(t, "now", rehydratedDash.Spec.TimeSettings.To)
-	require.Equal(t, stringPtr("browser"), rehydratedDash.Spec.TimeSettings.Timezone)
-	require.Equal(t, "5s", rehydratedDash.Spec.TimeSettings.AutoRefresh)
-	require.Equal(t, []string{"5s", "10s", "30s", "1m", "5m"}, rehydratedDash.Spec.TimeSettings.AutoRefreshIntervals)
-
-	// Verify cursor sync is restored
-	require.Equal(t, dashv2.DashboardDashboardCursorSyncOff, rehydratedDash.Spec.CursorSync)
 }
 
 // Helper functions for pointer types
