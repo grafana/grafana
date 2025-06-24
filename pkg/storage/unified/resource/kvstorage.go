@@ -164,7 +164,7 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	// Fetch the latest objects
 	keys := make([]MetaDataObj, 0)
 	idx := 0
-	for metaObj, err := range k.metaStore.ListAt(ctx, ListRequestKey{
+	for metaObj, err := range k.metaStore.ListAtRevision(ctx, ListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,

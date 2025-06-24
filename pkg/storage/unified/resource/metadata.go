@@ -16,9 +16,10 @@ const (
 	metaSection = "unified/meta"
 )
 
-// Metadata store
+// Metadata store stores search documents for resources in unified storage.
+// The store keeps track of the latest versions of each resource.
 type MetaData struct {
-	// For now empty
+	IndexableDocument
 }
 
 type MetaDataKey struct {
@@ -52,7 +53,7 @@ func (d *metadataStore) getKey(key MetaDataKey) string {
 
 func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 	parts := strings.Split(key, "/")
-	if len(parts) < 4 {
+	if len(parts) != 5 {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)
 	}
 
@@ -124,7 +125,7 @@ func (d *metadataStore) GetAt(ctx context.Context, key ListRequestKey, rv int64)
 	if key.Name == "" {
 		return MetaDataObj{}, fmt.Errorf("name is required")
 	}
-	iter := d.ListAt(ctx, key, rv)
+	iter := d.ListAtRevision(ctx, key, rv)
 	for obj, err := range iter {
 		if err != nil {
 			return MetaDataObj{}, err
@@ -135,11 +136,11 @@ func (d *metadataStore) GetAt(ctx context.Context, key ListRequestKey, rv int64)
 }
 
 func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
-	return d.ListAt(ctx, key, math.MaxInt64)
+	return d.ListAtRevision(ctx, key, math.MaxInt64)
 }
 
-// ListAt lists all metadata objects for a given resource key and resource version.
-func (d *metadataStore) ListAt(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
+// ListAtRevision lists all metadata objects for a given resource key and resource version.
+func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
