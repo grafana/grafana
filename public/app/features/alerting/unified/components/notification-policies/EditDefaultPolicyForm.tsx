@@ -1,12 +1,14 @@
 import { ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
 import {
   amRouteToFormAmRoute,
@@ -33,6 +35,7 @@ export interface AmRootRouteFormProps {
 export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmit, route }: AmRootRouteFormProps) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
+  const { isGrafanaAlertmanager } = useAlertmanager();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));
 
   const defaultValues = amRouteToFormAmRoute(route);
@@ -59,15 +62,29 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
       >
         <div className={styles.container} data-testid="am-receiver-select">
           <Controller
-            render={({ field: { onChange, ref, value, ...field } }) => (
-              <ContactPointSelector
-                selectProps={{
-                  ...field,
-                  onChange: (changeValue) => handleContactPointSelect(changeValue, onChange),
-                }}
-                selectedContactPointName={value}
-              />
-            )}
+            render={({ field: { onChange, ref, value, ...field } }) =>
+              isGrafanaAlertmanager ? (
+                <GrafanaManagedContactPointSelector
+                  onChange={(contactPoint) => {
+                    handleContactPointSelect(contactPoint?.spec.title, onChange);
+                  }}
+                  isClearable={false}
+                  value={value}
+                  placeholder={t(
+                    'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                    'Choose a contact point'
+                  )}
+                />
+              ) : (
+                <ExternalAlertmanagerContactPointSelector
+                  selectProps={{
+                    ...field,
+                    onChange: (changeValue) => handleContactPointSelect(changeValue.value?.name, onChange),
+                  }}
+                  selectedContactPointName={value}
+                />
+              )
+            }
             control={control}
             name="receiver"
             rules={{
