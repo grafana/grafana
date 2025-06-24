@@ -391,6 +391,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     importDashboard: builder.mutation<ImportDashboardResponseDTO, ImportOptions>({
+      invalidatesTags: (_, __, arg) => (arg.overwrite ? ['getFolder'] : []),
       query: ({ dashboard, overwrite, inputs, folderUid }) => ({
         method: 'POST',
         url: '/dashboards/import',
