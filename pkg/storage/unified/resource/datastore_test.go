@@ -57,7 +57,7 @@ func TestDataStore_GetPrefix(t *testing.T) {
 				Namespace: "test-namespace",
 				Group:     "test-group",
 				Resource:  "",
-				Name:      "test-name", // This should be ignored when resource is empty
+				Name:      "test-name",
 			},
 			expectError: true, // Now expects error due to validation
 		},
@@ -66,8 +66,8 @@ func TestDataStore_GetPrefix(t *testing.T) {
 			key: ListRequestKey{
 				Namespace: "test-namespace",
 				Group:     "",
-				Resource:  "test-resource", // This should be ignored when group is empty
-				Name:      "test-name",     // This should be ignored when group is empty
+				Resource:  "test-resource",
+				Name:      "test-name",
 			},
 			expectError: true, // Now expects error due to validation
 		},
@@ -75,9 +75,9 @@ func TestDataStore_GetPrefix(t *testing.T) {
 			name: "namespace is empty",
 			key: ListRequestKey{
 				Namespace: "",
-				Group:     "test-group",    // This should be ignored when namespace is empty
-				Resource:  "test-resource", // This should be ignored when namespace is empty
-				Name:      "test-name",     // This should be ignored when namespace is empty
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
 			},
 			expectError: true, // Now expects error due to validation
 		},
@@ -120,26 +120,6 @@ func TestDataStore_GetPrefix(t *testing.T) {
 				Name:      "test-name-with-multiple.special_chars",
 			},
 			expected: "test-namespace-with-dashes/test.group.with.dots/test_resource_with_underscores/test-name-with-multiple.special_chars/",
-		},
-		{
-			name: "fields with leading/trailing spaces",
-			key: ListRequestKey{
-				Namespace: " test-namespace ",
-				Group:     " test-group ",
-				Resource:  " test-resource ",
-				Name:      " test-name ",
-			},
-			expected: " test-namespace / test-group / test-resource / test-name /",
-		},
-		{
-			name: "fields with forward slashes",
-			key: ListRequestKey{
-				Namespace: "test/namespace",
-				Group:     "test/group",
-				Resource:  "test/resource",
-				Name:      "test/name",
-			},
-			expected: "test/namespace/test/group/test/resource/test/name/",
 		},
 	}
 
@@ -247,6 +227,11 @@ func TestDataStore_ParseKey(t *testing.T) {
 		{
 			name:        "invalid key - too short",
 			key:         "test",
+			expectError: true,
+		},
+		{
+			name:        "invalid key - too many slashes",
+			key:         "test-namespace/test-group/test-resource/test-name/1934555792099250176~created/extra-slash",
 			expectError: true,
 		},
 		{

@@ -8,14 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestKV(t *testing.T) KV {
-	db := setupTestBadgerDB(t)
-	t.Cleanup(func() {
-		db.Close()
-	})
-	return NewBadgerKV(db)
-}
-
 func setupTestMetadataStore(t *testing.T) *metadataStore {
 	kv := setupTestKV(t)
 	return newMetadataStore(kv)
