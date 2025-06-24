@@ -29,6 +29,10 @@ on:
       run-id:
         type: string
         required: true
+      service-account:
+        type: string
+        required: false
+        default: github-prerelease-writer@grafanalabs-workload-identity.iam.gserviceaccount.com
 jobs:
   publish:
     runs-on: github-hosted-ubuntu-x64-small
@@ -47,6 +51,7 @@ jobs:
         uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
         with:
           environment: ${{ inputs.environment }}
+          service_account: ${{ inputs.service-account }}
       - name: Coalesce artifacts
         run: |
           mkdir out
