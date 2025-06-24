@@ -161,12 +161,12 @@ func (n *kvNotifier) getLastResourceVersion(ctx context.Context) int64 {
 		Limit: 1,
 	}
 
-	for k, err := range n.kv.Keys(ctx, eventsSection, opts) {
+	for obj, err := range n.kv.List(ctx, eventsSection, opts) {
 		if err != nil {
 			continue
 		}
 		// Parse the key to extract the resource version
-		if eventKey, err := n.parseKey(k); err == nil && eventKey.ResourceVersion > lastRV {
+		if eventKey, err := n.parseKey(obj.Key); err == nil && eventKey.ResourceVersion > lastRV {
 			lastRV = eventKey.ResourceVersion
 		}
 		// Since we're using Limit=1, we only need to process the first (highest) key
@@ -208,17 +208,12 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 				return
 			case <-time.After(n.opts.PollInterval):
 				startKey := n.getStartKey(lastRV) // TODO : implement lookback to ensure we don't miss any events
-				for k, err := range n.kv.Keys(ctx, eventsSection, ListOptions{StartKey: startKey}) {
+				for obj, err := range n.kv.List(ctx, eventsSection, ListOptions{StartKey: startKey}) {
 					if err != nil {
 						// TODO: Handle error
 						continue
 					}
-					v, err := n.kv.Get(ctx, eventsSection, k)
-					if err != nil {
-						// TODO: Handle error
-						continue
-					}
-					ev, err := parseEvent(v.Value)
+					ev, err := parseEvent(obj.Value)
 					if err != nil {
 						// TODO: Handle error
 						continue
@@ -233,7 +228,7 @@ func (n *kvNotifier) Notify(ctx context.Context) (<-chan Event, error) {
 					// n.markUIDSeen(ev.ResourceVersion)
 
 					if ev.ResourceVersion > lastRV {
-						lastRV = ev.ResourceVersion
+						lastRV = ev.ResourceVersion + 1
 					}
 					// Send the event
 					select {
