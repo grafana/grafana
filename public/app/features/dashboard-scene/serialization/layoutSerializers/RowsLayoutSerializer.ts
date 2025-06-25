@@ -4,7 +4,6 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isClonedKey } from '../../utils/clone';
 
@@ -30,6 +29,12 @@ export function serializeRow(row: RowItem): RowsLayoutRowKind {
       layout: layout,
       fillScreen: row.state.fillScreen,
       hideHeader: row.state.hideHeader,
+      ...(row.state.repeatByVariable && {
+        repeat: {
+          mode: 'variable',
+          value: row.state.repeatByVariable,
+        },
+      }),
     },
   };
 
@@ -39,16 +44,6 @@ export function serializeRow(row: RowItem): RowsLayoutRowKind {
     rowKind.spec.conditionalRendering = conditionalRenderingRootGroup;
   }
 
-  if (row.state.$behaviors) {
-    for (const behavior of row.state.$behaviors) {
-      if (behavior instanceof RowItemRepeaterBehavior) {
-        if (rowKind.spec.repeat) {
-          throw new Error('Multiple repeaters are not supported');
-        }
-        rowKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
-      }
-    }
-  }
   return rowKind;
 }
 
@@ -72,16 +67,13 @@ export function deserializeRow(
   panelIdGenerator?: () => number
 ): RowItem {
   const layout = row.spec.layout;
-  const $behaviors = !row.spec.repeat
-    ? undefined
-    : [new RowItemRepeaterBehavior({ variableName: row.spec.repeat.value })];
 
   return new RowItem({
     title: row.spec.title,
     collapse: row.spec.collapse,
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
-    $behaviors,
+    repeatByVariable: row.spec.repeat?.value,
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });

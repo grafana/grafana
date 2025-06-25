@@ -45,7 +45,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -239,7 +238,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
         children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
       }),
     }),
-    $behaviors: row.repeat ? [new RowItemRepeaterBehavior({ variableName: row.repeat })] : undefined,
+    repeatByVariable: row.repeat,
   });
   return rowItem;
 }
