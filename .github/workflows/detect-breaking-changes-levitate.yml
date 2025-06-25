@@ -12,6 +12,8 @@ on:
   pull_request:
     paths:
       - 'packages/**'
+      - '.nvmrc'
+      - '.github/workflows/detect-breaking-changes-levitate.yml'
     branches:
       - 'main'
 
@@ -34,7 +36,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.16.0
+          node-version-file: './pr/.nvmrc'
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -86,7 +88,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.16.0
+          node-version-file: './base/.nvmrc'
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -136,7 +138,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.16.0
+          node-version-file: '.nvmrc'
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v4
