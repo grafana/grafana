@@ -4,8 +4,10 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 // @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
-import { Configuration } from 'webpack';
+import TerserPlugin from 'terser-webpack-plugin';
+import { type Configuration, BannerPlugin } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+import VirtualModulesPlugin from 'webpack-virtual-modules';
 
 import { DIST_DIR } from './constants';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
@@ -30,8 +32,24 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-const config = async (env: Record<string, unknown>): Promise<Configuration> => {
+type Env = {
+  [key: string]: true | string | Env;
+};
+
+const config = async (env: Env): Promise<Configuration> => {
   const pluginJson = getPluginJson();
+  // Inject module
+  const virtualPublicPath = new VirtualModulesPlugin({
+    'node_modules/grafana-public-path.js': `
+  import amdMetaModule from 'amd-module';
+
+  __webpack_public_path__ =
+    amdMetaModule && amdMetaModule.uri
+      ? amdMetaModule.uri.slice(0, amdMetaModule.uri.lastIndexOf('/') + 1)
+      : 'public/plugins/${pluginJson.id}/';
+  `,
+  });
+
   const baseConfig: Configuration = {
     cache: {
       type: 'filesystem',
@@ -48,6 +66,8 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
     entry: await getEntries(),
 
     externals: [
+      // Required for dynamic publicPath resolution
+      { 'amd-module': 'module' },
       'lodash',
       'jquery',
       'moment',
@@ -89,6 +109,18 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
 
     module: {
       rules: [
+        // This must come first in the rules array otherwise it breaks sourcemaps.
+        {
+          test: /module\.tsx?$/,
+          use: [
+            {
+              loader: require.resolve('imports-loader'),
+              options: {
+                imports: `side-effects grafana-public-path`,
+              },
+            },
+          ],
+        },
         {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
@@ -158,7 +190,30 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       uniqueName: pluginJson.id,
     },
 
+    optimization: {
+      minimize: Boolean(env.production),
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            format: {
+              comments: (_, { type, value }) => type === 'comment2' && value.trim().startsWith('[create-plugin]'),
+            },
+            compress: {
+              drop_console: ['log', 'info'],
+            },
+          },
+        }),
+      ],
+    },
+
     plugins: [
+      virtualPublicPath,
+      // Insert create plugin version information into the bundle so Grafana will load from cdn with script tags.
+      new BannerPlugin({
+        banner: '/* [create-plugin] version: 5.22.0 */',
+        raw: true,
+        entryOnly: true,
+      }),
       new CopyWebpackPlugin({
         patterns: [
           // To `compiler.options.output`
