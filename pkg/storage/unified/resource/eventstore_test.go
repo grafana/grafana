@@ -20,12 +20,7 @@ func setupTestEventStore(t *testing.T) *eventStore {
 
 func TestNewEventStore(t *testing.T) {
 	store := setupTestEventStore(t)
-
 	assert.NotNil(t, store.kv)
-	assert.NotNil(t, store.seenRVs)
-	assert.NotNil(t, store.rvHistory)
-	assert.Equal(t, 0, store.rvIndex)
-	assert.Len(t, store.rvHistory, 10000)
 }
 
 func TestEventStore_getKey(t *testing.T) {
