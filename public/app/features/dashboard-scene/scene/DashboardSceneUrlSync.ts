@@ -12,8 +12,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { containsCloneKey } from '../utils/clone';
-import { findEditPanel, findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
+import { findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -23,7 +22,6 @@ import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcesse
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _viewEventSub?: Unsubscribable;
-  private _inspectEventSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
 
@@ -79,14 +77,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.inspect === 'string') {
       let panel = findVizPanelByKey(this._scene, values.inspect);
       if (!panel) {
-        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        // Here we check if the key contains the clone key so we force the repeat processing
-        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.inspect)) {
-          this._handleInspectRepeatClone(values.inspect);
-          return;
-        }
-
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
         return;
@@ -124,7 +114,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
-      const panel = findEditPanel(this._scene, values.editPanel);
+      const panel = findVizPanelByKey(this._scene, values.editPanel);
 
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
@@ -183,21 +173,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
-    }
-  }
-
-  private _handleInspectRepeatClone(inspect: string) {
-    if (!this._inspectEventSub) {
-      this._inspectEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, inspect);
-        if (panel) {
-          this._inspectEventSub?.unsubscribe();
-          this._scene.setState({
-            inspectPanelKey: inspect,
-            overlay: new PanelInspectDrawer({ panelRef: panel.getRef() }),
-          });
-        }
-      });
     }
   }
 

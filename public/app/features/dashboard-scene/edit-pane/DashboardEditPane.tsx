@@ -6,8 +6,8 @@ import {
 } from '@grafana/ui';
 
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
-import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
-import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
+import { isInCloneChain } from '../utils/clone';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementSelection } from './ElementSelection';
 import {
@@ -195,12 +195,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     let obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
-      if (obj instanceof VizPanel && containsCloneKey(getLastKeyFromClone(element.id))) {
-        const sourceVizPanel = findEditPanel(this, element.id);
-        if (sourceVizPanel) {
-          obj = sourceVizPanel;
-        }
-      }
       this.selectObject(obj, element.id, options);
     }
   }
