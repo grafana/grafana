@@ -42,7 +42,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/src/index.d.ts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
