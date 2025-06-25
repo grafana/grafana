@@ -28,9 +28,7 @@ function setup(app: CoreApp): { onRunQuery: jest.Mock } {
     getQueryHints: jest.fn(() => []),
     languageProvider: {
       start: () => Promise.resolve([]),
-      syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();

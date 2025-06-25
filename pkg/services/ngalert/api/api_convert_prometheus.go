@@ -605,8 +605,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
 	}
 
+	sanitizedConfig, err := extraCfg.GetSanitizedAlertmanagerConfigYAML()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid Alertmanager configuration format", err)
+	}
+
 	respBody := apimodels.AlertmanagerUserConfig{
-		AlertmanagerConfig: extraCfg.AlertmanagerConfig,
+		AlertmanagerConfig: sanitizedConfig,
 		TemplateFiles:      extraCfg.TemplateFiles,
 	}
 
