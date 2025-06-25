@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack, Text, TextLink, Toggletip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -283,7 +283,7 @@ function RuleLabels({ labels }: { labels: Labels }) {
       placement="right"
       interactive
     >
-      <div className={styles.ruleLabels.text}>
+      <div>
         <Text variant="bodySmall" color="primary">
           {pluralize('label', labelsSize(labels), true)}
         </Text>
