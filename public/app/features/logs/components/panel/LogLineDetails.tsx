@@ -3,7 +3,7 @@ import { groupBy } from 'lodash';
 import { Resizable } from 're-resizable';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { DataFrameType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ControlledCollapse, getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 
@@ -18,11 +18,12 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 interface Props {
   containerElement: HTMLDivElement;
+  logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, logs, onResize }: Props) => {
+export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
   const { closeDetails, detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
@@ -55,22 +56,26 @@ export const LogLineDetails = ({ containerElement, logs, onResize }: Props) => {
             aria-label={t('logs.log-details.close', 'Close log details')}
             onClick={closeDetails}
           />
-          <LogDetailsComponent log={showDetails[0]} logs={logs} styles={styles} />
+          <LogDetailsComponent
+            log={showDetails[0]}
+            logOptionsStorageKey={logOptionsStorageKey}
+            logs={logs}
+            styles={styles}
+          />
         </div>
       </div>
     </Resizable>
   );
 };
 
-const LogDetailsComponent = ({
-  log,
-  logs,
-  styles,
-}: {
+interface LogDetailsComponentProps {
   log: LogListModel;
+  logOptionsStorageKey?: string;
   logs: LogListModel[];
   styles: LogLineDetailsStyles;
-}) => {
+}
+
+const LogDetailsComponent = ({ log, logOptionsStorageKey, logs, styles }: LogDetailsComponentProps) => {
   const extensionLinks = useAttributesExtensionLinks(log);
   const fieldsWithLinks = useMemo(() => {
     const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
@@ -102,21 +107,51 @@ const LogDetailsComponent = ({
   );
   const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
+  const logLineOpen = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
+    : false;
+  const linksOpen = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, false)
+    : false;
+  const fieldsOpen = logOptionsStorageKey
+    ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, false)
+    : false;
+
+  const handleToggle = useCallback(
+    (option: string, isOpen: boolean) => {
+      store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
+    },
+    [logOptionsStorageKey]
+  );
+
   return (
     <div className={styles.componentWrapper}>
-      <ControlledCollapse label={t('logs.log-line-details.log-line-section', 'Log line')} collapsible>
+      <ControlledCollapse
+        label={t('logs.log-line-details.log-line-section', 'Log line')}
+        collapsible
+        isOpen={logLineOpen}
+        onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
+      >
         {log.raw}
       </ControlledCollapse>
-      <ControlledCollapse label={t('logs.log-line-details.links-section', 'Links')} collapsible>
-        <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
-      </ControlledCollapse>
+      {fieldsWithLinks.length > 0 && (
+        <ControlledCollapse
+          label={t('logs.log-line-details.links-section', 'Links')}
+          collapsible
+          isOpen={linksOpen}
+          onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
+        >
+          <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
+        </ControlledCollapse>
+      )}
       {labelGroups.map((group) =>
         group === '' ? (
           <ControlledCollapse
             key={'fields'}
             label={t('logs.log-line-details.fields-section', 'Fields')}
             collapsible
-            isOpen={true}
+            isOpen={fieldsOpen}
+            onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
           >
             <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
             <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
@@ -132,7 +167,8 @@ const LogDetailsComponent = ({
           key={'fields'}
           label={t('logs.log-line-details.fields-section', 'Fields')}
           collapsible
-          isOpen={true}
+          isOpen={fieldsOpen}
+          onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
         >
           <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
         </ControlledCollapse>

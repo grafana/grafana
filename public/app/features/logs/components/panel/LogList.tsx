@@ -191,6 +191,7 @@ export const LogList = ({
           initialScrollPosition={initialScrollPosition}
           loading={loading}
           loadMore={loadMore}
+          logOptionsStorageKey={logOptionsStorageKey}
           logs={logs}
           showControls={showControls}
           timeRange={timeRange}
@@ -209,6 +210,7 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   loading,
   loadMore,
+  logOptionsStorageKey,
   logs,
   showControls,
   timeRange,
@@ -457,7 +459,12 @@ const LogListComponent = ({
         </InfiniteScroll>
       </div>
       {showDetails.length > 0 && (
-        <LogLineDetails containerElement={containerElement} logs={filteredLogs} onResize={handleLogDetailsResize} />
+        <LogLineDetails
+          containerElement={containerElement}
+          logOptionsStorageKey={logOptionsStorageKey}
+          logs={filteredLogs}
+          onResize={handleLogDetailsResize}
+        />
       )}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
