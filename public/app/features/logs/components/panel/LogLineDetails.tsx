@@ -102,7 +102,7 @@ const LogDetailsComponent = ({ log, logOptionsStorageKey, logs, styles }: LogDet
     [extensionLinks, log.labels]
   );
   const groupedLabels = useMemo(
-    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log) ?? ''),
+    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
     [labelsWithLinks, log]
   );
   const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
