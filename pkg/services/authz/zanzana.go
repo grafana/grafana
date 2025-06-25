@@ -178,7 +178,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	var authenticatorInterceptor interceptors.Authenticator
-	if z.cfg.ZanzanaServer.AllowInsecure {
+	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
 		z.logger.Info("Allowing insecure connections to OpenFGA HTTP server")
 		authenticatorInterceptor = noopAuthenticator{}
 	} else {
