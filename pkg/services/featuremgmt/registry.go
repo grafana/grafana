@@ -963,8 +963,8 @@ var (
 		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
+			Stage:          FeatureStagePrivatePreview,
+			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
