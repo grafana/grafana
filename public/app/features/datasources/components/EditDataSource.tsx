@@ -121,6 +121,7 @@ export function EditDataSourceView({
   // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
   // (which provides the `datasource` object) won't be updated yet, and they override each others `jsonData` value.
   let currentJsonData = dataSource.jsonData;
+  let currentSecureJsonData = dataSource.secureJsonData;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
@@ -209,14 +210,16 @@ export function EditDataSourceView({
                   currentJsonData = { ...currentJsonData, ...jsonData };
                   onOptionsChange({
                     ...dataSource,
+                    secureJsonData: { ...currentSecureJsonData },
                     jsonData: currentJsonData,
                   });
                 },
                 setSecureJsonData: (secureJsonData) => {
+                  currentSecureJsonData = { ...currentSecureJsonData, ...secureJsonData };
                   onOptionsChange({
                     ...dataSource,
                     jsonData: { ...currentJsonData },
-                    secureJsonData: { ...dataSource.secureJsonData, ...secureJsonData },
+                    secureJsonData: currentSecureJsonData,
                   });
                 },
               }}

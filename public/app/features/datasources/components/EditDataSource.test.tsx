@@ -364,12 +364,57 @@ describe('<EditDataSource>', () => {
     });
   });
 
-  it('should be possible to update the `jsonData` and `secureJsonData` at the same time from the extension component', () => {
+  it('should be possible to update the `jsonData` first and `secureJsonData` directly afterwards from the extension component', () => {
     const message = "I'm a UI extension component!";
     const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
       useEffect(() => {
         context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
         context.setSecureJsonData({ test: 'test' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      return <div>{message}</div>;
+    };
+
+    setPluginComponentsHook(
+      jest.fn().mockReturnValue({
+        isLoading: false,
+        components: [
+          createComponentWithMeta(
+            {
+              pluginId: 'grafana-pdc-app',
+              title: 'Example component',
+              description: 'Example description',
+              component: component as unknown as React.ComponentType<{}>,
+            },
+            '1'
+          ),
+        ],
+      })
+    );
+
+    setup({
+      dataSourceRights: {
+        readOnly: false,
+        hasDeleteRights: true,
+        hasWriteRights: true,
+      },
+    });
+
+    expect(onOptionsChange).toHaveBeenCalledTimes(2);
+    expect(onOptionsChange).toHaveBeenCalledWith({
+      ...getMockDataSource(),
+      jsonData: { ...getMockDataSource().jsonData, test: 'test' },
+      secureJsonData: { test: 'test' },
+    });
+  });
+
+  it('should be possible to update the `secureJsonData` first and `jsonData` directly afterwards from the extension component', () => {
+    const message = "I'm a UI extension component!";
+    const component = ({ context }: { context: PluginExtensionDataSourceConfigContext }) => {
+      useEffect(() => {
+        context.setSecureJsonData({ test: 'test' });
+        context.setJsonData({ test: 'test' } as unknown as DataSourceJsonData);
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
 
