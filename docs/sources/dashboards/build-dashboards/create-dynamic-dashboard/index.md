@@ -325,6 +325,24 @@ To edit dashboards, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
+### Undo and redo
+
+When the dashboard is in edit mode, you can undo and redo changes you've made using the buttons on the toolbar:
+
+<!-- image here -->
+
+This only applies when you're on the dashboard, not when you're in panel configuration.
+When you've made a change and hover over the buttons, the tooltip displays the change you're about to undo or redo so it's always clear what action you're about to take:
+
+<!-- image here -->
+
+These buttons are only available at the dashboard level and only apply to changes made there.
+They don't apply to panel configuration.
+
+{{< admonition type="note" >}}
+Not all dashboard edit actions can be undone or redone yet.
+{{< /admonition >}}
+
 ## Move or resize a panel
 
 <!-- previous headings Move a panel & Resize a panel -->
