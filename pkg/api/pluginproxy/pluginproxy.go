@@ -130,8 +130,8 @@ func (proxy *PluginProxy) HandleRequest() {
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	// action-based check
-	if route.HasReqAction() {
-		actions := route.GetReqActions()
+	if route.HasReqAction(proxy.ctx.Logger) {
+		actions := route.GetReqActions(proxy.ctx.Logger)
 		routeEval := pluginac.GetPluginRouteMultiActionEvaluator(proxy.ps.PluginID, actions)
 
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)

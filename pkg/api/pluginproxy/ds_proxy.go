@@ -340,8 +340,8 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 
 	// action-based check
-	if route.HasReqAction() {
-		actions := route.GetReqActions()
+	if route.HasReqAction(ctxLogger) {
+		actions := route.GetReqActions(ctxLogger)
 		routeEval := pluginac.GetDataSourceRouteMultiActionEvaluator(proxy.ds.UID, actions)
 		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !hasAccess {

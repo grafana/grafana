@@ -150,10 +150,6 @@ func getPluginRouteEvaluator(pluginID, action string) ac.Evaluator {
 
 // GetPluginRouteMultiActionEvaluator returns an evaluator for multiple actions (OR logic)
 func GetPluginRouteMultiActionEvaluator(pluginID string, actions []string) ac.Evaluator {
-	if len(actions) == 0 {
-		return ac.EvalPermission("") // Always deny
-	}
-
 	if len(actions) == 1 {
 		return getPluginRouteEvaluator(pluginID, actions[0])
 	}

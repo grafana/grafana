@@ -296,7 +296,7 @@
             "oneOf": [
               {
                 "type": "string",
-                "description": "Single RBAC action required to see this page in the navigation menu. Supports wildcards (e.g., 'plugin.write.*')"
+                "description": "Single RBAC action required to see this page in the navigation menu."
               },
               {
                 "type": "array",
@@ -306,7 +306,7 @@
                 }
               }
             ],
-            "description": "The RBAC action(s) a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to. Supports multiple actions (OR logic) and wildcards."
+            "description": "The RBAC action(s) a user must have to see this page in the navigation menu. Supports multiple OR action checks."
           },
           "path": {
             "type": "string",

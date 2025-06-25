@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	infralog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
@@ -231,7 +232,7 @@ type Route struct {
 }
 
 // GetReqActions returns all required actions for this route
-func (r *Route) GetReqActions() []string {
+func (r *Route) GetReqActions(logger infralog.Logger) []string {
 	if r.ReqAction == nil {
 		return nil
 	}
@@ -249,6 +250,8 @@ func (r *Route) GetReqActions() []string {
 		for _, action := range v {
 			if str, ok := action.(string); ok && str != "" {
 				actions = append(actions, str)
+			} else if !ok {
+				logger.Debug("action in plugin is a non-string", "action", str)
 			}
 		}
 		return actions
@@ -258,8 +261,8 @@ func (r *Route) GetReqActions() []string {
 }
 
 // HasReqAction returns true if the route has any required actions
-func (r *Route) HasReqAction() bool {
-	actions := r.GetReqActions()
+func (r *Route) HasReqAction(logger infralog.Logger) bool {
+	actions := r.GetReqActions(logger)
 	return len(actions) > 0
 }
 
