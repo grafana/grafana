@@ -20,6 +20,7 @@ const uf = new uFuzzy({ intraMode: 1 });
 /**
  * Fuzzy search utility that returns matching indices for a given search term
  * Uses intelligent fallback strategies for different types of input
+ * @internal
  */
 export function fuzzySearch(haystack: string[], needle: string): number[] {
   if (needle === '') {
