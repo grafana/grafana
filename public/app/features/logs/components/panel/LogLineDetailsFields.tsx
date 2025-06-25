@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { CoreApp, Field, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
@@ -23,9 +23,13 @@ interface LogDetailsFieldsProps {
 }
 
 export const LogDetailsFields = ({ log, logs, fields }: LogDetailsFieldsProps) => {
+  if (!fields.length) {
+    return null;
+  }
+  const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   return (
-    <table>
+    <table className={styles.fieldsTable}>
       <tbody>
         {fields.map((field, i) => (
           <LogDetailsField
@@ -63,9 +67,10 @@ export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFiel
   if (!fields.length) {
     return null;
   }
+  const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   return (
-    <table>
+    <table className={styles.fieldsTable}>
       <tbody>
         {fields.map((field, i) => (
           <LogDetailsField
@@ -82,6 +87,14 @@ export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFiel
     </table>
   );
 };
+
+const getFieldsStyles = (theme: GrafanaTheme2) => ({
+  fieldsTable: css({
+    '& td:not(:last-child)': {
+      paddingRight: theme.spacing(1),
+    },
+  }),
+});
 
 interface LogDetailsFieldProps {
   keys: string[];
@@ -120,7 +133,7 @@ export const LogDetailsField = ({
     pinLineButtonTooltipTitle,
   } = useLogListContext();
 
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getFieldStyles);
 
   const getStats = useCallback(() => {
     if (isLabel) {
@@ -281,9 +294,13 @@ export const LogDetailsField = ({
             </div>
           </td>
         )}
-        <td>{singleKey ? keys[0] : <MultipleValue values={keys} />}</td>
-        <td>{singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}</td>
-        <td>{singleValue && <ClipboardButtonWrapper value={values[0]} />}</td>
+        <td className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</td>
+        <td className={styles.value}>
+          <div className={styles.valueContainer}>
+            {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
+            {singleValue && <ClipboardButtonWrapper value={values[0]} />}
+          </div>
+        </td>
         <td>
           <div>
             <div>
@@ -332,7 +349,7 @@ export const LogDetailsField = ({
               onClick={showStats}
             />
           </td>
-          <td colSpan={4}>
+          <td colSpan={3}>
             <LogLabelStats
               stats={fieldStats}
               label={keys[0]}
@@ -347,24 +364,71 @@ export const LogDetailsField = ({
   );
 };
 
-const getStyles = () => ({
+const getFieldStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     whiteSpace: 'nowrap',
+  }),
+  label: css({
+    maxWidth: '25%',
+    overflowWrap: 'break-word',
+  }),
+  value: css({
+    button: {
+      visibility: 'hidden',
+    },
+    '&:hover': {
+      button: {
+        visibility: 'visible',
+      },
+    },
+  }),
+  valueContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+    lineHeight: theme.typography.body.lineHeight,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-all',
   }),
 });
 
 const ClipboardButtonWrapper = ({ value }: { value: string }) => {
+  const styles = useStyles2(getClipboardButtonStyles);
   return (
-    <ClipboardButton
-      getText={() => value}
-      title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
-      fill="text"
-      variant="secondary"
-      icon="copy"
-      size="md"
-    />
+    <div className={styles.button}>
+      <ClipboardButton
+        getText={() => value}
+        title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
+        fill="text"
+        variant="secondary"
+        icon="copy"
+        size="md"
+      />
+    </div>
   );
 };
+
+const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    '& > button': {
+      color: theme.colors.text.secondary,
+      padding: 0,
+      justifyContent: 'center',
+      borderRadius: theme.shape.radius.circle,
+      height: theme.spacing(theme.components.height.sm),
+      width: theme.spacing(theme.components.height.sm),
+      svg: {
+        margin: 0,
+      },
+
+      'span > div': {
+        top: '-5px',
+        '& button': {
+          color: theme.colors.success.main,
+        },
+      },
+    },
+  }),
+});
 
 const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
   if (values.every((val) => val === '')) {
