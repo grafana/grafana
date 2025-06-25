@@ -148,7 +148,7 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 ## Snapshots created by the migration assistant
 
-The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#supported-resources) for more details.
+The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/#supported-resources) for more details.
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
@@ -156,7 +156,7 @@ When you create a snapshot, the migration assistant makes a copy of all the reso
 In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
 {{< /admonition >}}
 
-Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
+Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/migration-guide/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
 
 ## Resource migration details
 
