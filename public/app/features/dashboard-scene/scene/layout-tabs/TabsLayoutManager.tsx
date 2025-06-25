@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObjectBase,
@@ -9,11 +9,7 @@ import {
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
-import {
-  NewObjectAddedToCanvasEvent,
-  ObjectRemovedFromCanvasEvent,
-  ObjectsReorderedOnCanvasEvent,
-} from '../../edit-pane/shared';
+import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -146,8 +142,23 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       newTab.setState({ title: newTitle });
     }
 
-    this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newTab), true);
+    dashboardEditActions.addElement({
+      addedObject: newTab,
+      source: this,
+      perform: () => this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.state.tabs.length }),
+      undo: () => {
+        const indexOfNewTab = this.state.tabs.findIndex((t) => t === newTab);
+        this.setState({
+          tabs: this.state.tabs.filter((t) => t !== newTab),
+          // if the new tab was the current tab, set the current tab to the previous tab
+          currentTabIndex:
+            this.state.currentTabIndex === indexOfNewTab
+              ? Math.max(0, this.state.currentTabIndex - 1)
+              : this.state.currentTabIndex,
+        });
+      },
+    });
+
     return newTab;
   }
 
@@ -191,9 +202,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const currentTab = this.getCurrentTab();
 
     if (currentTab === tabToRemove) {
-      const nextTabIndex = this.state.currentTabIndex > 0 ? this.state.currentTabIndex - 1 : 0;
-      this.setState({ tabs: this.state.tabs.filter((t) => t !== tabToRemove), currentTabIndex: nextTabIndex });
-      this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
+      const currentTabIndex = this.state.currentTabIndex;
+      const indexOfTabToRemove = this.state.tabs.findIndex((t) => t === tabToRemove);
+      const nextTabIndex = currentTabIndex > 0 ? currentTabIndex - 1 : 0;
+
+      dashboardEditActions.removeElement({
+        removedObject: tabToRemove,
+        source: this,
+        perform: () =>
+          this.setState({
+            tabs: this.state.tabs.filter((t) => t !== tabToRemove),
+            currentTabIndex: currentTabIndex === indexOfTabToRemove ? nextTabIndex : currentTabIndex,
+          }),
+        undo: () => {
+          const tabs = [...this.state.tabs];
+          tabs.splice(indexOfTabToRemove, 0, tabToRemove);
+          this.setState({ tabs, currentTabIndex });
+        },
+      });
+
       return;
     }
 
@@ -201,10 +228,24 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const tabs = filteredTab.length === 0 ? [new TabItem()] : filteredTab;
 
     this.setState({ tabs, currentTabIndex: 0 });
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(tabToRemove), true);
   }
 
-  public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
+  public moveTab(fromIndex: number, toIndex: number) {
+    const objectToMove = this.state.tabs[fromIndex];
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: objectToMove,
+      perform: () => {
+        this.rearrangeTabs(fromIndex, toIndex);
+      },
+      undo: () => {
+        this.rearrangeTabs(toIndex, fromIndex);
+      },
+    });
+  }
+
+  private rearrangeTabs(fromIndex: number, toIndex: number) {
     const tabs = [...this.state.tabs];
     const [removed] = tabs.splice(fromIndex, 1);
     tabs.splice(toIndex, 0, removed);

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
@@ -23,7 +24,9 @@ export const DocsCard = ({ card }: Props) => {
           className={styles.url}
           onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.href })}
         >
-          <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
+          <div className={styles.heading}>
+            {card.done ? t('gettingstarted.docs-card.complete', 'complete') : card.heading}
+          </div>
           <h4 className={styles.title}>{card.title}</h4>
         </a>
       </div>
@@ -34,7 +37,8 @@ export const DocsCard = ({ card }: Props) => {
         rel="noreferrer"
         onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.learnHref })}
       >
-        Learn how in the docs <Icon name="external-link-alt" />
+        <Trans i18nKey="gettingstarted.docs-card.learn-how">Learn how in the docs</Trans>{' '}
+        <Icon name="external-link-alt" />
       </a>
     </div>
   );

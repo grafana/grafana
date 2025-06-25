@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import {
@@ -55,7 +56,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     dashboard: {
       ...defaultDashboard,
       uid: '',
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
       timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
     },
@@ -112,7 +113,7 @@ export async function buildNewDashboardSaveModelV2(
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),
         timezone: config.bootData.user?.timezone || defaultTimeSettingsSpec().timezone,

@@ -62,11 +62,18 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval  = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled     = true
-	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
-	defaultRecordingRequestTimeout = 10 * time.Second
-	lokiDefaultMaxQuerySize        = 65536 // 64kb
+	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled             = true
+	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
+	defaultRecordingRequestTimeout         = 10 * time.Second
+	lokiDefaultMaxQuerySize                = 65536 // 64kb
+	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
+	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
+)
+
+var (
+	errHARedisBothClusterAndSentinel     = fmt.Errorf("'ha_redis_cluster_mode_enabled' and 'ha_redis_sentinel_mode_enabled' are mutually exclusive")
+	errHARedisSentinelMasterNameRequired = fmt.Errorf("'ha_redis_sentinel_master_name' is required when 'ha_redis_sentinel_mode_enabled' is true")
 )
 
 type UnifiedAlertingSettings struct {
@@ -83,6 +90,10 @@ type UnifiedAlertingSettings struct {
 	HAPushPullInterval              time.Duration
 	HALabel                         string
 	HARedisClusterModeEnabled       bool
+	HARedisSentinelModeEnabled      bool
+	HARedisSentinelMasterName       string
+	HARedisSentinelUsername         string
+	HARedisSentinelPassword         string
 	HARedisAddr                     string
 	HARedisPeerName                 string
 	HARedisPrefix                   string
@@ -138,9 +149,6 @@ type UnifiedAlertingSettings struct {
 
 type RecordingRuleSettings struct {
 	Enabled              bool
-	URL                  string
-	BasicAuthUsername    string
-	BasicAuthPassword    string
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
@@ -182,13 +190,16 @@ type UnifiedAlertingStateHistorySettings struct {
 	LokiTenantID  string
 	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
 	// if one of them is set.
-	LokiBasicAuthPassword string
-	LokiBasicAuthUsername string
-	LokiMaxQueryLength    time.Duration
-	LokiMaxQuerySize      int
-	MultiPrimary          string
-	MultiSecondaries      []string
-	ExternalLabels        map[string]string
+	LokiBasicAuthPassword         string
+	LokiBasicAuthUsername         string
+	LokiMaxQueryLength            time.Duration
+	LokiMaxQuerySize              int
+	PrometheusMetricName          string
+	PrometheusTargetDatasourceUID string
+	PrometheusWriteTimeout        time.Duration
+	MultiPrimary                  string
+	MultiSecondaries              []string
+	ExternalLabels                map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -279,6 +290,16 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	uaCfg.HALabel = ua.Key("ha_label").MustString("")
 	uaCfg.HARedisClusterModeEnabled = ua.Key("ha_redis_cluster_mode_enabled").MustBool(false)
+	uaCfg.HARedisSentinelModeEnabled = ua.Key("ha_redis_sentinel_mode_enabled").MustBool(false)
+	if uaCfg.HARedisClusterModeEnabled && uaCfg.HARedisSentinelModeEnabled {
+		return errHARedisBothClusterAndSentinel
+	}
+	uaCfg.HARedisSentinelMasterName = ua.Key("ha_redis_sentinel_master_name").MustString("")
+	if uaCfg.HARedisSentinelModeEnabled && uaCfg.HARedisSentinelMasterName == "" {
+		return errHARedisSentinelMasterNameRequired
+	}
+	uaCfg.HARedisSentinelUsername = ua.Key("ha_redis_sentinel_username").MustString("")
+	uaCfg.HARedisSentinelPassword = ua.Key("ha_redis_sentinel_password").MustString("")
 	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
 	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
 	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
@@ -432,19 +453,22 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	stateHistory := iniFile.Section("unified_alerting.state_history")
 	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
 	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
-		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
-		Backend:               stateHistory.Key("backend").MustString("annotations"),
-		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
-		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
-		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
-		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
-		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
-		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
-		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
-		LokiMaxQuerySize:      stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
-		MultiPrimary:          stateHistory.Key("primary").MustString(""),
-		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
-		ExternalLabels:        stateHistoryLabels.KeysHash(),
+		Enabled:                       stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend:                       stateHistory.Key("backend").MustString("annotations"),
+		LokiRemoteURL:                 stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:                   stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:                  stateHistory.Key("loki_remote_write_url").MustString(""),
+		LokiTenantID:                  stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername:         stateHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword:         stateHistory.Key("loki_basic_auth_password").MustString(""),
+		LokiMaxQueryLength:            stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+		LokiMaxQuerySize:              stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
+		MultiPrimary:                  stateHistory.Key("primary").MustString(""),
+		MultiSecondaries:              splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+		PrometheusMetricName:          stateHistory.Key("prometheus_metric_name").MustString(defaultHistorianPrometheusMetricName),
+		PrometheusTargetDatasourceUID: stateHistory.Key("prometheus_target_datasource_uid").MustString(""),
+		PrometheusWriteTimeout:        stateHistory.Key("prometheus_write_timeout").MustDuration(defaultHistorianPrometheusWriteTimeout),
+		ExternalLabels:                stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
@@ -455,10 +479,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:              rr.Key("enabled").MustBool(false),
-		URL:                  rr.Key("url").MustString(""),
-		BasicAuthUsername:    rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword:    rr.Key("basic_auth_password").MustString(""),
+		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 	}

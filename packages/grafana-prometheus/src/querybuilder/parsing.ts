@@ -26,6 +26,8 @@ import {
   Without,
 } from '@prometheus-io/lezer-promql';
 
+import { t } from '@grafana/i18n';
+
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
   ErrorId,
@@ -225,7 +227,10 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   // Visual query builder doesn't support nested queries and so info function.
   if (funcName === 'info') {
     context.errors.push({
-      text: 'Query parsing is ambiguous.',
+      text: t(
+        'grafana-prometheus.querybuilder.handle-function.text.query-parsing-is-ambiguous',
+        'Query parsing is ambiguous.'
+      ),
       from: node.from,
       to: node.to,
     });
@@ -329,7 +334,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 
         if (binaryExpressionWithinFunctionArgs) {
           context.errors.push({
-            text: 'Query parsing is ambiguous.',
+            text: t(
+              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
+              'Query parsing is ambiguous.'
+            ),
             from: binaryExpressionWithinFunctionArgs.from,
             to: binaryExpressionWithinFunctionArgs.to,
           });

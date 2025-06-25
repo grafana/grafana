@@ -2,7 +2,7 @@ import { ChangeEvent } from 'react';
 
 import { AzureClientSecretCredentials, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Select, Input, Button } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -16,7 +16,6 @@ export interface AppRegistrationCredentialsProps {
 
 export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProps) => {
   const { azureCloudOptions, disabled, credentials, onCredentialsChange } = props;
-  const { t } = useTranslate();
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     const updated: AzureCredentials = {
@@ -88,7 +87,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         <Input
           aria-label={t('components.app-registration-credentials.aria-label-tenant-id', 'Tenant ID')}
           className="width-30"
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
           value={credentials.tenantId || ''}
           onChange={onTenantIdChange}
@@ -106,7 +105,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
         <Input
           className="width-30"
           aria-label={t('components.app-registration-credentials.aria-label-client-id', 'Client ID')}
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
           value={credentials.clientId || ''}
           onChange={onClientIdChange}
@@ -150,7 +149,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
             <Input
               className="width-30"
               aria-label={t('components.app-registration-credentials.aria-label-client-secret', 'Client Secret')}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientSecret || ''}
               onChange={onClientSecretChange}

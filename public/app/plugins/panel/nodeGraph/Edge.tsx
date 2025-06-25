@@ -1,5 +1,7 @@
 import { MouseEvent, memo } from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { EdgeDatumLayout, NodeDatum } from './types';
@@ -60,7 +62,10 @@ export const Edge = memo(function Edge(props: Props) {
         key={`${edge.id}-${edge.source.y ?? ''}-${processedNodesLength}-g`}
         onClick={(event) => onClick(event, edge)}
         style={{ cursor: 'pointer' }}
-        aria-label={`Edge from: ${source.id} to: ${target.id}`}
+        aria-label={t('nodeGraph.edge.aria-label-from-to', 'Edge from: {{from}} to: {{to}}', {
+          from: source.id,
+          to: target.id,
+        })}
       >
         <line
           strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}

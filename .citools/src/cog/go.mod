@@ -1,6 +1,6 @@
 module cog
 
-go 1.24.3
+go 1.24.4
 
 tool github.com/grafana/cog/cmd/cli
 
@@ -17,7 +17,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d // indirect
-	github.com/grafana/cog v0.0.28 // indirect
+	github.com/grafana/cog v0.0.34 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect

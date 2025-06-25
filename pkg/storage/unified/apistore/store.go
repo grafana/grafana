@@ -163,6 +163,13 @@ func NewStorage(
 	return s, func() {}, nil
 }
 
+// GetCurrentResourceVersion implements storage.Interface.
+// See: https://github.com/kubernetes/kubernetes/blob/v1.33.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L647
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	// Although not totally accurate, this is sufficient
+	return uint64(time.Now().UnixMicro()), nil
+}
+
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
 }

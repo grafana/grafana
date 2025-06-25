@@ -63,3 +63,4 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RegexMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,SpecialValueMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,ValueMap
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardList,ListMeta

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -21,7 +21,7 @@ export function DeletedRules({ deletedRules }: DeletedRulesProps) {
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreRule, setRestoreRule] = useState<RulerGrafanaRuleDTO | undefined>();
   const [guidToDelete, setGuidToDelete] = useState<string | undefined>();
-  const { t } = useTranslate();
+
   const confirmDeletePermanently = guidToDelete !== undefined;
   const unknown = t('alerting.deleted-rules.unknown', 'Unknown');
 
