@@ -12,6 +12,8 @@ on:
   pull_request:
     paths:
       - 'packages/**'
+      - '.nvmrc'
+      - '.github/workflows/detect-breaking-changes-levitate.yml'
     branches:
       - 'main'
 
