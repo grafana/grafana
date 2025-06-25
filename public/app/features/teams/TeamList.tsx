@@ -289,8 +289,7 @@ export const TeamList = ({
             )}
           </>
         )}
-
-        <EnterpriseAuthFeaturesCard page="teams" />
+        {!query && <EnterpriseAuthFeaturesCard page="teams" />}
       </Page.Contents>
     </Page>
   );

@@ -15,7 +15,6 @@ export interface Props {
 
 export function EnterpriseAuthFeaturesCard({ page }: Props) {
   const styles = useStyles2(getStyles);
-  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
   const helpFlags = contextSrv.user.helpFlags1;
   const HELP_FLAG_ENTERPRISE_AUTH = 0x0004;
   const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & HELP_FLAG_ENTERPRISE_AUTH));
@@ -30,7 +29,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
   };
 
   // This card is only visible in oss
-  if (!isOpenSource || isDismissed) {
+  if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 
@@ -102,4 +101,16 @@ function getStyles(theme: GrafanaTheme2) {
       top: -1,
     }),
   };
+}
+
+export function isOpenSourceBuildOrUnlicenced() {
+  if (config.buildInfo.edition === GrafanaEdition.OpenSource) {
+    return true;
+  }
+
+  if (config.licenseInfo.stateInfo !== 'Licensed') {
+    return true;
+  }
+
+  return false;
 }
