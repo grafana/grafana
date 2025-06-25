@@ -52,9 +52,12 @@ export function ProviderSAMLCard() {
           color="secondary"
           href="https://grafana.com/contact/enterprise-stack/?utm_source=oss-grafana-saml"
         >
-          {t('auth-config.provider-card.enterprise-learn-more', 'Learn more about SAML support.')}
+          {t('auth-config.provider-card.saml-learn-more', 'Learn more about SAML support.')}
         </TextLink>
       </Card.Meta>
+      <Card.Figure>
+        <Icon name="lock" size={'xxxl'} />
+      </Card.Figure>
       <Card.Actions>
         <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
         <Badge
@@ -83,10 +86,13 @@ export function ProviderSCIMCard() {
             color="secondary"
             href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/"
           >
-            {t('auth-config.provider-card.enterprise-learn-more', ' Sync users and teams with SCIM.')}
+            {t('auth-config.provider-card.scim-learn-more', ' Sync users and teams with SCIM.')}
           </TextLink>
         </div>
       </Card.Meta>
+      <Card.Figure>
+        <Icon name="sync" size={'xxxl'} />
+      </Card.Figure>
       <Card.Actions>
         <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
         <Badge

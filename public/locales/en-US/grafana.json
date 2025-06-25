@@ -3222,8 +3222,12 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Learn more about SAML support.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
-      "text-badge-not-enabled": "Not enabled"
+      "text-badge-not-enabled": "Not enabled",
+      "text-enterprise-only": "Enterprise only",
+      "text-enterprise-only-tooltip": "Only available in Grafana Cloud and Enterprise"
     },
     "provider-config-form": {
       "additional-actions-menu": {
