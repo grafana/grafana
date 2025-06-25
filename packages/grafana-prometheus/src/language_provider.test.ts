@@ -754,21 +754,64 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const result = await provider.start();
       expect(result).toEqual([]);
     });
+  });
 
-    it('should use resource client and metricsMetadata is available', async () => {
-      const provider = new PrometheusLanguageProvider(defaultDatasource);
-      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+  describe('initializeResourceClient', () => {
+    it('should use SeriesApiClient when labels match API is not supported', async () => {
+      const datasourceWithoutLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => false,
+        metadataRequest: jest.fn(), // Mock to ensure it's not called
+      } as unknown as PrometheusDatasource;
 
-      // Mock the resource client's start method
-      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start');
-      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
+      const provider = new PrometheusLanguageProvider(datasourceWithoutLabelsAPI);
 
-      await provider.start();
+      await provider.initializeResourceClient();
 
-      expect(resourceClientStartSpy).toHaveBeenCalled();
-      expect(queryMetadataSpy).toHaveBeenCalled();
-      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
-      expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
+      expect(provider['_resourceClient']).toBeDefined();
+      expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
+      expect(datasourceWithoutLabelsAPI.metadataRequest).not.toHaveBeenCalled();
+    });
+
+    it('should use LabelsApiClient when labels API test call succeeds', async () => {
+      const datasourceWithLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+        metadataRequest: jest.fn().mockResolvedValue({ data: { data: [] } }),
+      } as unknown as PrometheusDatasource;
+
+      const provider = new PrometheusLanguageProvider(datasourceWithLabelsAPI);
+
+      await provider.initializeResourceClient();
+
+      expect(datasourceWithLabelsAPI.metadataRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        { limit: 1 },
+        { showErrorAlert: false }
+      );
+      expect(provider['_resourceClient']!.constructor.name).toBe('LabelsApiClient');
+    });
+
+    it('should fallback to SeriesApiClient when labels API test call fails', async () => {
+      const datasourceWithFailingLabelsAPI = {
+        ...defaultDatasource,
+        hasLabelsMatchAPISupport: () => true,
+        metadataRequest: jest.fn().mockRejectedValue({ status: 404, message: '404 Not Found' }),
+      } as unknown as PrometheusDatasource;
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const provider = new PrometheusLanguageProvider(datasourceWithFailingLabelsAPI);
+
+      await provider.initializeResourceClient();
+
+      expect(datasourceWithFailingLabelsAPI.metadataRequest).toHaveBeenCalledWith(
+        '/api/v1/labels',
+        { limit: 1 },
+        { showErrorAlert: false }
+      );
+      expect(provider['_resourceClient']!.constructor.name).toBe('SeriesApiClient');
+      expect(consoleSpy).toHaveBeenCalledWith('Labels endpoint is not available (404). Using series endpoint.');
+      consoleSpy.mockRestore();
     });
   });
 
@@ -815,8 +858,9 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelKeys', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
+      await provider.initializeResourceClient();
       const resourceClientSpy = jest
-        .spyOn(provider['resourceClient'], 'queryLabelKeys')
+        .spyOn(provider['_resourceClient']!, 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
 
       const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
@@ -827,8 +871,9 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
+      await provider.initializeResourceClient();
       const resourceClientSpy = jest
-        .spyOn(provider['resourceClient'], 'queryLabelValues')
+        .spyOn(provider['_resourceClient']!, 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
 
       const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');

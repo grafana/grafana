@@ -18,7 +18,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, MATCH_ALL_LABELS_STR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
@@ -522,6 +522,7 @@ export interface PrometheusLanguageProviderInterface
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
 
+  initializeResourceClient: () => Promise<void>;
   queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
   queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
@@ -541,6 +542,7 @@ export interface PrometheusLanguageProviderInterface
  * @see SeriesApiClient For legacy Prometheus versions using the series API
  */
 export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
+  public _isInitialized = false;
   private _metricsMetadata?: PromMetricsMetadata;
   private _resourceClient?: ResourceApiClient;
 
@@ -552,34 +554,81 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * Lazily initializes and returns the appropriate resource client based on Prometheus version.
    *
    * The client selection logic:
-   * - For Prometheus v2.6+ with labels API: Uses LabelsApiClient for efficient label-based queries
-   * - For older versions: Falls back to SeriesApiClient for backward compatibility
+   * - Tests actual API availability with /api/v1/labels?limit=1 call
+   * - If labels API works: Uses LabelsApiClient for efficient label-based queries
+   * - If labels API fails: Falls back to SeriesApiClient for backward compatibility
    *
-   * The client instance is cached after first initialization to avoid repeated creation.
-   *
-   * @returns {ResourceApiClient} An instance of either LabelsApiClient or SeriesApiClient
+   * @returns The type of client that was initialized
    */
-  private get resourceClient(): ResourceApiClient {
-    if (!this._resourceClient) {
-      this._resourceClient = this.datasource.hasLabelsMatchAPISupport()
-        ? new LabelsApiClient(this.request, this.datasource)
-        : new SeriesApiClient(this.request, this.datasource);
+  initializeResourceClient = async (): Promise<void> => {
+    if (this._resourceClient) {
+      return;
     }
 
-    return this._resourceClient;
-  }
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      // If there is no support for labels api just use Series API Client
+      this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+      return;
+    }
+
+    // At this point we know data source has support for labels API
+    // Assume labels API works and set LabelsApiClient
+    this._resourceClient = new LabelsApiClient(this.request, this.datasource);
+
+    // Try to make a test call to verify labels API actually works
+    try {
+      await this.datasource.metadataRequest(API_V1.LABELS, { limit: 1 }, { showErrorAlert: false });
+    } catch (err) {
+      // Only fallback to series API for 404 errors (endpoint not implemented)
+      if (is404Error(err)) {
+        console.log('Labels endpoint is not available (404). Using series endpoint.');
+        this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+      } else {
+        console.log('Labels endpoint test failed but not 404. Using labels client anyway.');
+      }
+    }
+  };
 
   /**
    * Same start logic but it uses resource clients. Backward compatibility it calls _backwardCompatibleStart.
    * Some places still relies on deprecated fields. Until we replace them we need _backwardCompatibleStart method
    */
   start = async (timeRange: TimeRange = getDefaultTimeRange()): Promise<any[]> => {
-    if (this.datasource.lookupsDisabled) {
+    if (this.datasource.lookupsDisabled || this._isInitialized) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
-    return this._backwardCompatibleStart();
+
+    // Ensure resource client is initialized before proceeding
+    await this.initializeResourceClient();
+
+    await Promise.all([this._resourceClient!.start(timeRange), this.queryMetricsMetadata()]);
+    await this._backwardCompatibleStart();
+    this._isInitialized = true;
+    return [];
   };
+
+  /**
+   * Ensures resource client is available for synchronous operations.
+   * Logs warning if not initialized.
+   */
+  private _ensureResourceClient(): ResourceApiClient | null {
+    if (!this._resourceClient) {
+      console.warn('Resource client not initialized. Call start() or initializeResourceClient() first.');
+      return null;
+    }
+    return this._resourceClient;
+  }
+
+  /**
+   * Ensures resource client is available for asynchronous operations.
+   * Auto-initializes if needed.
+   */
+  private async _ensureResourceClientAsync(): Promise<ResourceApiClient> {
+    if (!this._resourceClient) {
+      await this.initializeResourceClient();
+    }
+    return this._resourceClient!;
+  }
 
   /**
    * This private method exists to make sure the old class will be functional until we remove it.
@@ -630,7 +679,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of histogram metric names
    */
   public retrieveHistogramMetrics = (): string[] => {
-    return this.resourceClient?.histogramMetrics;
+    const client = this._ensureResourceClient();
+    return client?.histogramMetrics ?? [];
   };
 
   /**
@@ -640,7 +690,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of all metric names
    */
   public retrieveMetrics = (): string[] => {
-    return this.resourceClient?.metrics;
+    const client = this._ensureResourceClient();
+    return client?.metrics ?? [];
   };
 
   /**
@@ -650,7 +701,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {string[]} Array of label key names
    */
   public retrieveLabelKeys = (): string[] => {
-    return this.resourceClient?.labelKeys;
+    const client = this._ensureResourceClient();
+    return client?.labelKeys ?? [];
   };
 
   /**
@@ -682,7 +734,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+    const client = await this._ensureResourceClientAsync();
+    return (await client.queryLabelKeys(timeRange, match, limit)) ?? [];
   };
 
   /**
@@ -716,7 +769,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    const client = await this._ensureResourceClientAsync();
+    return (await client.queryLabelValues(timeRange, labelKey, match, limit)) ?? [];
   };
 }
 
@@ -810,4 +864,8 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
   }, []);
 
   return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
+};
+
+export const is404Error = (err: unknown) => {
+  return typeof err === 'object' && err !== null && 'status' in err && err.status === 404;
 };
