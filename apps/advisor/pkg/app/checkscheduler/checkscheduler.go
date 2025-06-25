@@ -85,7 +85,10 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
-	lastCreated, err := r.checkLastCreated(context.WithoutCancel(ctx), logger)
+	// We still need the context to eventually be cancelled to exit this function
+	// but we don't want the requests to fail because of it
+	ctxWithoutCancel := context.WithoutCancel(ctx)
+	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		// Wait for interval to create the next scheduled check
@@ -93,7 +96,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	} else {
 		// do an initial creation if necessary
 		if lastCreated.IsZero() {
-			err = r.createChecks(context.WithoutCancel(ctx), logger)
+			err = r.createChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			} else {
@@ -109,12 +112,12 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err = r.createChecks(context.WithoutCancel(ctx), logger)
+			err = r.createChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			}
 
-			err = r.cleanupChecks(context.WithoutCancel(ctx), logger)
+			err = r.cleanupChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error cleaning up old check reports", "error", err)
 			}
