@@ -188,7 +188,7 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		}
 
 		// Default to app access for app plugins
-		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && (include.Action == nil || include.Action == "") {
 			include.Action = ActionAppAccess
 		}
 	}
@@ -220,7 +220,7 @@ type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
 	ReqRole      org.RoleType    `json:"reqRole"`
-	ReqAction    string          `json:"reqAction"`
+	ReqAction    any             `json:"reqAction"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -228,6 +228,39 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
+}
+
+// GetReqActions returns all required actions for this route
+func (r *Route) GetReqActions() []string {
+	if r.ReqAction == nil {
+		return nil
+	}
+
+	switch v := r.ReqAction.(type) {
+	case string:
+		if v == "" {
+			return nil
+		}
+		return []string{v}
+	case []string:
+		return v
+	case []any:
+		actions := make([]string, 0, len(v))
+		for _, action := range v {
+			if str, ok := action.(string); ok && str != "" {
+				actions = append(actions, str)
+			}
+		}
+		return actions
+	default:
+		return nil
+	}
+}
+
+// HasReqAction returns true if the route has any required actions
+func (r *Route) HasReqAction() bool {
+	actions := r.GetReqActions()
+	return len(actions) > 0
 }
 
 // Header describes an HTTP header that is forwarded with

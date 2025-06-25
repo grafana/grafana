@@ -129,14 +129,21 @@ func (proxy *PluginProxy) HandleRequest() {
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
-	if route.ReqAction != "" {
-		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
+	// action-based check
+	if route.HasReqAction() {
+		actions := route.GetReqActions()
+		routeEval := pluginac.GetPluginRouteMultiActionEvaluator(proxy.ps.PluginID, actions)
+
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
 		if !hasAccess {
-			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)
+			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access",
+				"route", proxy.ctx.Req.URL.Path,
+				"actions", actions)
 		}
 		return hasAccess
 	}
+
+	// role-based check
 	if route.ReqRole.IsValid() {
 		return proxy.ctx.HasUserRole(route.ReqRole)
 	}
