@@ -1041,4 +1041,9 @@ export interface FeatureToggles {
   * @default true
   */
   tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
 }

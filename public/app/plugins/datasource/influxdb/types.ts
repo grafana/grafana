@@ -15,6 +15,8 @@ export interface InfluxOptions extends DataSourceJsonData {
   httpMode?: string;
 
   dbName?: string;
+  product?: string;
+  pdcInjected?: boolean;
 
   // With Flux
   organization?: string;

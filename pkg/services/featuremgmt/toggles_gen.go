@@ -942,4 +942,8 @@ const (
 	// FlagTabularNumbers
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
+
+	// FlagNewInfluxDSConfigPageDesign
+	// Enables new design for the InfluxDB data source configuration page
+	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 )
