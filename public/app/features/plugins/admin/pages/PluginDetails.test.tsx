@@ -9,6 +9,7 @@ import {
   dateTimeFormatTimeAgo,
   WithAccessControlMetadata,
 } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
@@ -354,6 +355,7 @@ describe('Plugin details page', () => {
 
     it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
+      config.buildInfo.edition = GrafanaEdition.Enterprise;
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
