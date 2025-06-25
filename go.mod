@@ -577,7 +577,10 @@ require (
 
 require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
 
+require cloud.google.com/go/spanner v1.76.1
+
 require (
+	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.2 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
