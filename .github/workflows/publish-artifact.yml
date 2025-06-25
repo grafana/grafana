@@ -65,4 +65,4 @@ jobs:
           parent: false
           path: out
           bucket_path: ${{ inputs.bucket-path }}
-          service_account: ${{ input.service-account }}
+          service_account: ${{ inputs.service-account }}
