@@ -452,10 +452,11 @@ const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 
 export function useColumnResize(
   onColumnResize: TableColumnResizeActionCallback = () => {}
 ): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
-  // these must be refs. if we used setState, we would run into race conditions with these event listeners.
+  // these must be refs. if we used setState, we would run into race conditions with these event listeners
   const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
   const pointerIsDown = useRef(false);
 
+  // to detect whether we got a double-click resize, we track whether the pointer is currently down
   useLayoutEffect(() => {
     function pointerDown(_event: PointerEvent) {
       pointerIsDown.current = true;
@@ -474,30 +475,32 @@ export function useColumnResize(
     };
   });
 
-  const flush = useCallback(() => {
+  const dispatchEvent = useCallback(() => {
     if (colResizeState.current.columnKey) {
       onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width));
       colResizeState.current = { ...INITIAL_COL_RESIZE_STATE };
     }
-    window.removeEventListener('click', flush, { capture: true });
+    window.removeEventListener('click', dispatchEvent, { capture: true });
   }, [onColumnResize]);
 
-  const dataGridHandler = useCallback(
+  // this is the callback that gets passed to react-data-grid
+  const dataGridResizeHandler = useCallback(
     (column: Column<TableRow, TableSummaryRow>, width: number) => {
       if (!colResizeState.current.columnKey) {
-        window.addEventListener('click', flush, { capture: true });
+        window.addEventListener('click', dispatchEvent, { capture: true });
       }
 
       colResizeState.current.columnKey = column.key;
       colResizeState.current.width = width;
 
-      // when double clicking to resize, the columnResize will fire while the pointer is still down.
+      // when double clicking to resize, this handler will fire, but the pointer will not be down,
+      // meaning that we should immediately flush the new width
       if (!pointerIsDown.current) {
-        flush();
+        dispatchEvent();
       }
     },
-    [flush]
+    [dispatchEvent]
   );
 
-  return dataGridHandler;
+  return dataGridResizeHandler;
 }
