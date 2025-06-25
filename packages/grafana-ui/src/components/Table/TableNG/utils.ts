@@ -521,6 +521,8 @@ export function getColumnTypes(fields: Field[]): ColumnTypes {
  * calculates the width of each field, with the following logic:
  * 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
  * 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
+ *
+ * structuredRev is just passed in here to force the recalculation of column widths when the structure changes.
  */
 export function computeColWidths(fields: Field[], availWidth: number) {
   let autoCount = 0;

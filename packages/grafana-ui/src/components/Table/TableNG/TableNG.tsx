@@ -1,12 +1,11 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Key, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
   DataGrid,
-  DataGridHandle,
   DataGridProps,
   RenderCellProps,
   RenderRowProps,
@@ -446,6 +445,10 @@ export function TableNG(props: TableNGProps) {
     widths,
   ]);
 
+  // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const structureRevColumns = useMemo(() => [...columns], [columns, structureRev]);
+
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
@@ -455,9 +458,8 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
-        key={structureRev} // forces re-render when editing the panel
         className={styles.grid}
-        columns={columns}
+        columns={structureRevColumns}
         rows={paginatedRows}
         onCellKeyDown={
           hasNestedFrames
