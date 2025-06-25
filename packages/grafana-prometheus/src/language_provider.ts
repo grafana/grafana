@@ -682,7 +682,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelKeys(timeRange, interpolatedMatch, limit);
   };
 
   /**
@@ -716,7 +717,13 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelValues(
+      timeRange,
+      this.datasource.interpolateString(labelKey),
+      interpolatedMatch,
+      limit
+    );
   };
 }
 
