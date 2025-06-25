@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: './pr/.nvmrc'
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -86,7 +86,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: './base/.nvmrc'
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
