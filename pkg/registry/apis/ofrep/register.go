@@ -121,7 +121,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := stackIdFromEvalCtx(body)
-	if removeStackPrefix(ctx.SignedInUser.Namespace) != stackID {
+	if removeStackPrefix(ctx.Namespace) != stackID {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
