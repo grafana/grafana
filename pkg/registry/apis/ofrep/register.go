@@ -1,18 +1,20 @@
 package ofrep
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -111,6 +113,22 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := contexthandler.FromContext(r.Context())
+	isAuthedUser := ctx.IsSignedIn
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read request body", http.StatusBadRequest)
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	stackID := stackIdFromEvalCtx(body)
+	if removeStackPrefix(ctx.SignedInUser.Namespace) != stackID {
+		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
+		return
+	}
+
 	vars := mux.Vars(r)
 	flagKey := vars["flagKey"]
 	if flagKey == "" {
@@ -118,8 +136,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx.IsSignedIn
 	publicFlag := isPublicFlag(flagKey)
 
 	if !isAuthedUser && !publicFlag {
@@ -167,9 +183,17 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := contexthandler.FromContext(r.Context())
 	isAuthedUser := ctx.IsSignedIn
 
-	user, err := identity.GetRequester(r.Context())
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		b.logger.Warn("failed to fetch user from identity provider", "error", err)
+		http.Error(w, "failed to read request body", http.StatusBadRequest)
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	stackID := stackIdFromEvalCtx(body)
+	if removeStackPrefix(ctx.SignedInUser.Namespace) != stackID {
+		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
+		return
 	}
 
 	if b.providerType == setting.GOFFProviderType {
@@ -177,7 +201,6 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = user
 	b.evalAllFlagsStatic(isAuthedUser, w, r)
 }
 
@@ -294,4 +317,22 @@ func getCARoot(caFile string) (*x509.CertPool, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 	return caCertPool, nil
+}
+
+func stackIdFromEvalCtx(b []byte) string {
+	// Extract stackID from request body without consuming it
+	var evalCtx struct {
+		Context struct {
+			StackID string `json:"stackId"`
+		} `json:"context"`
+	}
+
+	if err := json.Unmarshal(b, &evalCtx); err != nil {
+		return ""
+	}
+	return evalCtx.Context.StackID
+}
+
+func removeStackPrefix(tenant string) string {
+	return strings.TrimPrefix(tenant, "stacks-")
 }
