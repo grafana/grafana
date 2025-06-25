@@ -1,3 +1,5 @@
+import { HttpResponse } from 'msw';
+
 import {
   ContactPointFactory,
   EmailIntegrationFactory,
@@ -30,5 +32,4 @@ export const simpleContactPointsList = ListReceiverApiResponseFactory.build({
 // export the simple contact points list as a separate list of handlers (scenario) so we can load it in the front-end
 export const simpleContactPointsListScenario = [listReceiverHandler(simpleContactPointsList)];
 
-// the default export will allow us to load this scenario on the front-end using the MSW web worker
-export default simpleContactPointsListScenario;
+export const withErrorScenario = [listReceiverHandler(() => new HttpResponse(null, { status: 500 }))];
