@@ -90,6 +90,15 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			msg := fmt.Sprintf("Failed to migrate legacy resources: %+v", err)
 			return cli.Exit(msg, 1)
 		}
+
+		if rsp != nil && rsp.Error != nil {
+			msg := fmt.Sprintf("Failed to migrate legacy resources: %s", rsp.Error.Message)
+			if rsp.Error.Reason != "" {
+				msg += fmt.Sprintf(" (%s)", rsp.Error.Reason)
+			}
+			return cli.Exit(msg, 1)
+		}
+
 		logger.Info("Migrated legacy resources successfully in", time.Since(start))
 		if rsp != nil {
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
