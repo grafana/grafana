@@ -132,7 +132,7 @@ function RowRepeatSelect({ row }: { row: RowItem }) {
     <>
       <RepeatRowSelect2
         sceneContext={dashboard}
-        repeat={row.getRepeatVariable()}
+        repeat={row.state.repeatByVariable}
         onChange={(repeat) => row.onChangeRepeat(repeat)}
       />
       {isAnyPanelUsingDashboardDS ? (

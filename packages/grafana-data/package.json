@@ -57,7 +57,7 @@
   "dependencies": {
     "@braintree/sanitize-url": "7.0.1",
     "@grafana/schema": "12.1.0-pre",
-    "@leeoniya/ufuzzy": "^1.0.18",
+    "@leeoniya/ufuzzy": "1.0.18",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.3",
     "@types/systemjs": "6.15.1",
