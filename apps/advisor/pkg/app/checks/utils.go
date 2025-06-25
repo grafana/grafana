@@ -2,7 +2,6 @@ package checks
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"strconv"
@@ -88,8 +87,4 @@ func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resour
 			Value:     annotations,
 		}},
 	}, resource.PatchOptions{}, obj)
-}
-
-func IsRetryableError(err error) bool {
-	return !errors.Is(err, context.Canceled) && err.Error() != "apiserver is shutting down"
 }

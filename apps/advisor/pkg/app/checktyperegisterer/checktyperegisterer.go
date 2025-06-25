@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -123,9 +124,9 @@ func (r *Runner) Run(ctx context.Context) error {
 		for i := 0; i < r.retryAttempts; i++ {
 			err := r.createOrUpdate(context.WithoutCancel(ctx), logger, obj)
 			if err != nil {
-				if !checks.IsRetryableError(err) {
+				if strings.Contains(err.Error(), "apiserver is shutting down") {
 					logger.Debug("Error creating check type, not retrying", "error", err)
-					return err
+					return nil
 				}
 				logger.Debug("Error creating check type, retrying", "error", err, "attempt", i+1)
 				if i == r.retryAttempts-1 {
