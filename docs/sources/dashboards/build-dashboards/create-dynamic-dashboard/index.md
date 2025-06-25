@@ -327,19 +327,17 @@ To edit dashboards, follow these steps:
 
 ### Undo and redo
 
-When the dashboard is in edit mode, you can undo and redo changes you've made using the buttons on the toolbar:
+When a dashboard is in edit mode, you can undo and redo changes you've made using the buttons on the toolbar:
 
-![Undo and redo buttons](screenshot-undo-redo-icons-v12.0.png)
+{{< figure src="screenshot-undo-redo-icons-v12.0.png" max-width="500px" alt="Undo and redo buttons" >}}
 
-This only applies when you're on the dashboard, not when you're in panel configuration.
-When you've made a change and hover over the buttons, the tooltip displays the change you're about to undo or redo so it's always clear what action you're about to take:
+When you've made a change and hover the cursor over the buttons, the tooltip displays the change you're about to undo or redo.
+Also, you can continue undoing or redoing as many changes as you need:
 
 {{< video-embed src="screenrecord-undo-redo-v12.0.mp4" >}}
 
-You can keep undoing and redoing until you get back to your first change.
-
-These buttons are only available at the dashboard level and only apply to changes made there.
-They don't apply to panel configuration.
+The undo and redo buttons are only available at the dashboard level and only apply to changes made there, such as dashboard layout and grouping and high-level dashboard or panel updates.
+They aren't visible and don't apply when you're configuring a panel or making changes in the dashboard settings.
 
 {{< admonition type="note" >}}
 Not all dashboard edit actions can be undone or redone yet.
