@@ -37,7 +37,7 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -46,7 +46,7 @@ var (
 			Description:  "Enables public dashboard rendering using scenes",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaSharingSquad,
+			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -231,7 +231,7 @@ var (
 			Name:              "renderAuthJWT",
 			Description:       "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -425,7 +425,7 @@ var (
 			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaSharingSquad,
+			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
 		{
@@ -681,7 +681,7 @@ var (
 			Description:  "Enables generating table data as PDF in reporting",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
-			Owner:        grafanaSharingSquad,
+			Owner:        grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:           "ssoSettingsApi",
@@ -857,7 +857,7 @@ var (
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
+			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true", // enabled by default,
 		},
 		{
@@ -1523,7 +1523,7 @@ var (
 			Name:              "newShareReportDrawer",
 			Description:       "Enables the report creation drawer in a dashboard",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
@@ -1531,7 +1531,7 @@ var (
 			Name:              "rendererDisableAppPluginsPreload",
 			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
 			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -1779,6 +1779,14 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "newInfluxDSConfigPageDesign",
+			Description:  "Enables new design for the InfluxDB data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
 		},
 	}
 )
