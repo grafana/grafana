@@ -6,10 +6,6 @@ on:
       - release-*.*.*
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -187,20 +183,6 @@ jobs:
     with:
       bucket: grafana-prerelease
       pattern: artifacts-*
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}
-      environment: prod
-  publish-artifact-lists:
-    name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-*
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}
       environment: prod
