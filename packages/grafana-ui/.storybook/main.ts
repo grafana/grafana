@@ -14,7 +14,7 @@ const alertingComponentsGlobs: StorybookConfig['stories'] = [
   {
     titlePrefix: 'Alerting',
     directory: '../../grafana-alerting/src',
-    files: '**/*.mdx',
+    files: 'Intro.mdx',
   },
   {
     titlePrefix: 'Alerting',
