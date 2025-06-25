@@ -27,14 +27,14 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             <Label>
               <Stack gap={0.5}>
                 <span>
-                  <Trans i18nKey="components.tlssecrets-config.tlsssl-client-certificate">
+                  <Trans i18nKey="grafana-sql.components.tlssecrets-config.tlsssl-client-certificate">
                     TLS/SSL Client Certificate
                   </Trans>
                 </span>
                 <Tooltip
                   content={
                     <span>
-                      <Trans i18nKey="components.tlssecrets-config.content-tlsssl-client-certificate">
+                      <Trans i18nKey="grafana-sql.components.tlssecrets-config.content-tlsssl-client-certificate">
                         To authenticate with an TLS/SSL client certificate, provide the client certificate here.
                       </Trans>
                     </span>
@@ -65,12 +65,14 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             <Label>
               <Stack gap={0.5}>
                 <span>
-                  <Trans i18nKey="components.tlssecrets-config.tlsssl-root-certificate">TLS/SSL Root Certificate</Trans>
+                  <Trans i18nKey="grafana-sql.components.tlssecrets-config.tlsssl-root-certificate">
+                    TLS/SSL Root Certificate
+                  </Trans>
                 </span>
                 <Tooltip
                   content={
                     <span>
-                      <Trans i18nKey="components.tlssecrets-config.content-tlsssl-root-certificate">
+                      <Trans i18nKey="grafana-sql.components.tlssecrets-config.content-tlsssl-root-certificate">
                         If the selected TLS/SSL mode requires a server root certificate, provide it here
                       </Trans>
                     </span>
@@ -101,12 +103,12 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             <Label>
               <Stack gap={0.5}>
                 <span>
-                  <Trans i18nKey="components.tlssecrets-config.tlsssl-client-key">TLS/SSL Client Key</Trans>
+                  <Trans i18nKey="grafana-sql.components.tlssecrets-config.tlsssl-client-key">TLS/SSL Client Key</Trans>
                 </span>
                 <Tooltip
                   content={
                     <span>
-                      <Trans i18nKey="components.tlssecrets-config.content-tlsssl-client-key">
+                      <Trans i18nKey="grafana-sql.components.tlssecrets-config.content-tlsssl-client-key">
                         To authenticate with a client TLS/SSL certificate, provide the key here.
                       </Trans>
                     </span>

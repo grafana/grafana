@@ -87,7 +87,7 @@ export function SelectCustomFunctionParameters({
             onChange={(e) => onParameterChange(index)(e.currentTarget.value)}
             value={param.name}
             aria-label={t(
-              'components.select-custom-function-parameters.aria-label-parameter',
+              'grafana-sql.components.select-custom-function-parameters.aria-label-parameter',
               'Parameter {{index}} for column {{columnIndex}}',
               { index, columnIndex }
             )}
@@ -95,7 +95,7 @@ export function SelectCustomFunctionParameters({
             addonAfter={
               <Button
                 title={t(
-                  'components.select-custom-function-parameters.render-parameters.params.title-remove-parameter',
+                  'grafana-sql.components.select-custom-function-parameters.render-parameters.params.title-remove-parameter',
                   'Remove parameter'
                 )}
                 type="button"
@@ -127,7 +127,7 @@ export function SelectCustomFunctionParameters({
         variant="secondary"
         size="md"
         icon="plus"
-        title={t('components.select-custom-function-parameters.title-add-parameter', 'Add parameter')}
+        title={t('grafana-sql.components.select-custom-function-parameters.title-add-parameter', 'Add parameter')}
       />
       <InlineLabel className={styles.label}>)</InlineLabel>
     </>
