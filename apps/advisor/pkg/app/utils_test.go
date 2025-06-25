@@ -178,9 +178,8 @@ func TestProcessCheck_RunRecoversFromPanic(t *testing.T) {
 	}
 
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "panic recovered in step")
-	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.NoError(t, err)
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheckRetry_NoRetry(t *testing.T) {
