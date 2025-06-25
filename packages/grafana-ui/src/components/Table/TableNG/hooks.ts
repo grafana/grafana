@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, MutableRefObject } from 'react';
-import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
+import { Column, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
@@ -440,72 +440,64 @@ export function useRowHeight(
  *   - double-clicking the handle (sets the column to the minimum width to fit content)
  * `onColumnResize` dispatches events throughout a dragged resize, and `onColumnWidthsChanged` doesn't
  * emit an event when double-click resizing occurs, so we have to build something custom on top of these
- * behaviors in order to get everything.
+ * behaviors in order to get everything working.
  */
+interface UseColumnResizeState {
+  columnKey: string | undefined;
+  width: number;
+}
+
+const INITIAL_COL_RESIZE_STATE = Object.freeze({ columnKey: undefined, width: 0 }) satisfies UseColumnResizeState;
+
 export function useColumnResize(
-  tableRef: MutableRefObject<DataGridHandle | null>,
   onColumnResize: TableColumnResizeActionCallback = () => {}
 ): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
-  // this state must be managed as refs so that we avoid race conditions in our event handlers.
-  const resizeBuffer = useRef<Record<string, number>>({});
-  const draggingResizeHandle = useRef(false);
+  // these must be refs. if we used setState, we would run into race conditions with these event listeners.
+  const colResizeState = useRef<UseColumnResizeState>({ ...INITIAL_COL_RESIZE_STATE });
+  const pointerIsDown = useRef(false);
 
-  // when we have a double click on a resize handle, we actually call this method three times.
-  const flushResize = useCallback(() => {
-    let hadValues = false;
-    for (const columnKey in resizeBuffer.current) {
-      hadValues = true;
-      const newWidth = resizeBuffer.current[columnKey];
-      onColumnResize?.(columnKey, Math.floor(newWidth));
-    }
-    if (hadValues) {
-      resizeBuffer.current = {};
-    }
-  }, [onColumnResize]);
-
-  function inScope(event: Event, tableEl?: HTMLElement | null): boolean {
-    const headers = Array.from(tableEl?.querySelectorAll('[role="columnheader"]') ?? []);
-    return headers.some((n) => event.target instanceof Node && n.lastElementChild === event.target);
-  }
-
-  // attach pointer events to the table element, specifically looking at events whose targets are the resize handles.
   useLayoutEffect(() => {
-    const tableEl = tableRef?.current?.element;
-    if (!tableEl) {
-      return;
+    function pointerDown(_event: PointerEvent) {
+      pointerIsDown.current = true;
     }
 
-    function pointerDown(event: PointerEvent) {
-      if (inScope(event, tableEl)) {
-        draggingResizeHandle.current = true;
-      }
+    function pointerUp(_event: PointerEvent) {
+      pointerIsDown.current = false;
     }
 
-    function pointerUp(event: PointerEvent) {
-      if (inScope(event, tableEl)) {
-        draggingResizeHandle.current = false;
-        flushResize();
-      }
-    }
-
-    tableEl.addEventListener('pointerdown', pointerDown);
-    tableEl.addEventListener('pointerup', pointerUp);
+    window.addEventListener('pointerdown', pointerDown);
+    window.addEventListener('pointerup', pointerUp);
 
     return () => {
-      tableEl.removeEventListener('pointerdown', pointerDown);
-      tableEl.removeEventListener('pointerup', pointerUp);
+      window.removeEventListener('pointerdown', pointerDown);
+      window.removeEventListener('pointerup', pointerUp);
     };
-  }, [tableRef, flushResize]);
+  });
 
-  const resizeHandler = useCallback(
-    (column: Column<TableRow, TableSummaryRow>, newWidth: number) => {
-      resizeBuffer.current[column.key] = newWidth;
-      if (!draggingResizeHandle.current) {
-        flushResize();
+  const flush = useCallback(() => {
+    if (colResizeState.current.columnKey) {
+      onColumnResize(colResizeState.current.columnKey, Math.floor(colResizeState.current.width));
+      colResizeState.current = { ...INITIAL_COL_RESIZE_STATE };
+    }
+    window.removeEventListener('click', flush, { capture: true });
+  }, [onColumnResize]);
+
+  const dataGridHandler = useCallback(
+    (column: Column<TableRow, TableSummaryRow>, width: number) => {
+      if (!colResizeState.current.columnKey) {
+        window.addEventListener('click', flush, { capture: true });
+      }
+
+      colResizeState.current.columnKey = column.key;
+      colResizeState.current.width = width;
+
+      // when double clicking to resize, the columnResize will fire while the pointer is still down.
+      if (!pointerIsDown.current) {
+        flush();
       }
     },
-    [flushResize]
+    [flush]
   );
 
-  return resizeHandler;
+  return dataGridHandler;
 }

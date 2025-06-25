@@ -95,9 +95,8 @@ export function TableNG(props: TableNGProps) {
 
   const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-  const tableRef = useRef<DataGridHandle | null>(null);
 
-  const resizeHandler = useColumnResize(tableRef, onColumnResize);
+  const resizeHandler = useColumnResize(onColumnResize);
 
   useLayoutEffect(() => {
     if (!isContextMenuOpen) {
@@ -456,7 +455,6 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
-        ref={tableRef}
         key={structureRev} // forces re-render when editing the panel
         className={styles.grid}
         columns={columns}
