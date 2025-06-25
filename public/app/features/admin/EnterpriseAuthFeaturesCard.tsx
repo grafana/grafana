@@ -64,8 +64,8 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
         </Text>
         <Text variant="body" color="secondary">
           <Trans i18nKey="admin.enterprise-auth-features-card.text">
-            You can sync users and teams with <strong>SCIM</strong>, authenticate using <strong>SAML</strong> and sync
-            teams with <strong>LDAP</strong>.
+            Manage users, teams, and permissions automatically with <strong>SAML</strong>, <strong>SCIM</strong>,{' '}
+            <strong>LDAP</strong>, and <strong>RBAC</strong> — available in Grafana Cloud and Enterprise.
           </Trans>
         </Text>
       </Stack>
@@ -77,7 +77,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Trans i18nKey="admin.enterprise-auth-features-card.learn-more-link">Learn more.</Trans>
+          <Trans i18nKey="admin.enterprise-auth-features-card.learn-more-link">Learn more</Trans>
         </LinkButton>
       </div>
     </Box>
