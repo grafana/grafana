@@ -60,6 +60,9 @@ interface LogDetailsLabelFieldsProps {
 }
 
 export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFieldsProps) => {
+  if (!fields.length) {
+    return null;
+  }
   const getLogs = useCallback(() => logs, [logs]);
   return (
     <table>
@@ -68,6 +71,7 @@ export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFiel
           <LogDetailsField
             key={`${field.key}=${field.value}-${i}`}
             getLogs={getLogs}
+            isLabel
             keys={[field.key]}
             links={field.links}
             log={log}
@@ -122,20 +126,20 @@ export const LogDetailsField = ({
     if (isLabel) {
       return calculateLogsLabelStats(getLogs(), keys[0]);
     }
-    if (fieldIndex) {
+    if (fieldIndex !== undefined) {
       return calculateStats(log.dataFrame.fields[fieldIndex].values);
     }
     return [];
   }, [fieldIndex, getLogs, isLabel, keys, log.dataFrame.fields]);
 
   const updateStats = useCallback(() => {
-    const fieldStats = getStats();
-    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
-    if (!isEqual(fieldStats, fieldStats) || fieldCount !== fieldCount) {
-      setFieldStats(fieldStats);
-      setFieldCount(fieldCount);
+    const newStats = getStats();
+    const newCount = newStats.reduce((sum, stat) => sum + stat.count, 0);
+    if (!isEqual(fieldStats, newStats) || fieldCount !== newCount) {
+      setFieldStats(newStats);
+      setFieldCount(newCount);
     }
-  }, [getStats]);
+  }, [fieldCount, fieldStats, getStats]);
 
   useEffect(() => {
     if (showFieldsStats) {
@@ -199,9 +203,6 @@ export const LogDetailsField = ({
   }, [isLabelFilterActive, keys, values, log.dataFrame?.refId]);
 
   const showStats = useCallback(() => {
-    if (!showFieldsStats) {
-      updateStats();
-    }
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
 
     reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
@@ -211,7 +212,7 @@ export const LogDetailsField = ({
       logRowUid: log.uid,
       app,
     });
-  }, [app, isLabel, log.datasourceType, log.uid, showFieldsStats, updateStats]);
+  }, [app, isLabel, log.datasourceType, log.uid, showFieldsStats]);
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
@@ -219,7 +220,6 @@ export const LogDetailsField = ({
   );
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
-  const emtpyValues = values.every((val) => val === '');
 
   return (
     <>
@@ -322,9 +322,9 @@ export const LogDetailsField = ({
           </div>
         </td>
       </tr>
-      {showFieldsStats && singleKey && singleValue && (
+      {showFieldsStats && fieldStats && (
         <tr>
-          <td colSpan={2}>
+          <td>
             <IconButton
               variant={showFieldsStats ? 'primary' : 'secondary'}
               name="signal"
@@ -332,9 +332,9 @@ export const LogDetailsField = ({
               onClick={showStats}
             />
           </td>
-          <td colSpan={2}>
+          <td colSpan={4}>
             <LogLabelStats
-              stats={fieldStats!}
+              stats={fieldStats}
               label={keys[0]}
               value={values[0]}
               rowCount={fieldCount}
@@ -367,6 +367,9 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
 };
 
 const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+  if (values.every((val) => val === '')) {
+    return null;
+  }
   return (
     <table>
       <tbody>
