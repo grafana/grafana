@@ -28,6 +28,15 @@ export const formatDuration = deepMemoize(
   }
 );
 
+const memoizedLocalTimeFormat = deepMemoize(localTimeFormat);
+
+export const parseFormat = (formatOptions: Intl.DateTimeFormatOptions = {}): string | undefined => {
+  if (regionalFormat == null) {
+    return undefined;
+  }
+  return memoizedLocalTimeFormat(formatOptions, regionalFormat);
+};
+
 export const formatDateRange = (
   _from: number | Date | string,
   _to: number | Date | string,
@@ -40,6 +49,46 @@ export const formatDateRange = (
   return dateFormatter.formatRange(from, to);
 };
 
+/**
+ *
+ * @param regionalFormatArg locale string such as en-US or fr-FR
+ */
 export const initRegionalFormat = (regionalFormatArg: string) => {
   regionalFormat = regionalFormatArg;
 };
+
+// @ts-expect-error this is copied (and slightly modified) from @grafana/data, because this is the functionality needed
+// for getting the date format itself to use with moment for parsing.
+// TODO re-organize in a way that makes sense.
+/**
+ * localTimeFormat helps to generate date formats for momentjs based on browser's locale
+ *
+ * @param locale browser locale, or default
+ * @param options DateTimeFormatOptions to format date
+ * @param fallback default format if Intl API is not present
+ */
+export function localTimeFormat(options: Intl.DateTimeFormatOptions, locale: string | string[]): string {
+  if (!locale && navigator) {
+    locale = [...navigator.languages];
+  }
+
+  // https://momentjs.com/docs/#/displaying/format/
+  const dateTimeFormat = new Intl.DateTimeFormat(locale || undefined, options);
+  const parts = dateTimeFormat.formatToParts(new Date());
+  const hour12 = dateTimeFormat.resolvedOptions().hour12;
+
+  const mapping: { [key: string]: string } = {
+    year: 'YYYY',
+    month: 'MM',
+    day: 'DD',
+    hour: hour12 ? 'hh' : 'HH',
+    minute: 'mm',
+    second: 'ss',
+    weekday: 'ddd',
+    era: 'N',
+    dayPeriod: 'A',
+    timeZoneName: 'Z',
+  };
+
+  return parts.map((part) => mapping[part.type] || part.value).join('');
+}
