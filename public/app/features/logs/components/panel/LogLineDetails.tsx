@@ -50,12 +50,14 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <IconButton
-            name="times"
-            className={styles.closeIcon}
-            aria-label={t('logs.log-details.close', 'Close log details')}
-            onClick={closeDetails}
-          />
+          <div className={styles.closeIconContainer}>
+            <IconButton
+              name="times"
+              className={styles.closeIcon}
+              aria-label={t('logs.log-details.close', 'Close log details')}
+              onClick={closeDetails}
+            />
+          </div>
           <LogDetailsComponent
             log={showDetails[0]}
             logOptionsStorageKey={logOptionsStorageKey}
@@ -185,14 +187,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   scrollContainer: css({
     overflow: 'auto',
-    position: 'relative',
     height: '100%',
   }),
-  closeIcon: css({
-    position: 'absolute',
-    top: theme.spacing(1),
-    right: theme.spacing(1.5),
+  closeIconContainer: css({
+    textAlign: 'right',
+    position: 'sticky',
+    zIndex: theme.zIndex.modal,
+    paddingBottom: theme.spacing(0.5),
+    top: 0,
   }),
+  closeIcon: css({}),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
   }),
