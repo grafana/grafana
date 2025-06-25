@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,7 +36,7 @@ var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
 type APIBuilder struct {
-	providerType    string // TODO: is it really needed
+	providerType    string
 	url             *url.URL
 	insecure        bool
 	caFile          string
@@ -92,7 +93,6 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				// http://localhost:3000/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags
 				Path: "ofrep/v1/evaluate/flags/",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{},
@@ -100,25 +100,11 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				Handler: b.allFlagsHandler,
 			},
 			{
-				// http://localhost:3000/apis/features.grafana.app/v0alpha1/namespaces/default/ofrep/v1/evaluate/flags/{flagKey}
 				Path: "ofrep/v1/evaluate/flags/{flagKey}",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{},
 				},
 				Handler: b.oneFlagHandler,
-			},
-			{
-				// TODO: Remove, this is just for testing
-				// http://localhost:6446/apis/features.grafana.app/v0alpha1/namespaces/default/test
-				Path: "test",
-				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{},
-				},
-				Handler: func(writer http.ResponseWriter, request *http.Request) {
-					writer.WriteHeader(http.StatusOK)
-					writer.Header().Set("Content-Type", "application/json")
-					writer.Write([]byte(`test passed`))
-				},
 			},
 		},
 	}
@@ -132,9 +118,8 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: replace with identity check ?
 	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx != nil && ctx.IsSignedIn
+	isAuthedUser := ctx.IsSignedIn
 	publicFlag := isPublicFlag(flagKey)
 
 	if !isAuthedUser && !publicFlag {
@@ -143,7 +128,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		// TODO: compare stackID in evalCtx and identity
 		b.proxyFlagReq(flagKey, isAuthedUser, w, r)
 		return
 	}
@@ -180,16 +164,20 @@ func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.Re
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: replace with identity check ?
 	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx != nil && ctx.IsSignedIn
+	isAuthedUser := ctx.IsSignedIn
+
+	user, err := identity.GetRequester(r.Context())
+	if err != nil {
+		b.logger.Warn("failed to fetch user from identity provider", "error", err)
+	}
 
 	if b.providerType == setting.GOFFProviderType {
-		// TODO: compare stackID in evalCtx and identity
 		b.proxyAllFlagReq(isAuthedUser, w, r)
 		return
 	}
 
+	_ = user
 	b.evalAllFlagsStatic(isAuthedUser, w, r)
 }
 
@@ -288,7 +276,7 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-// TODO: public can be a property in pkg/services/featuremgmt/registry.go
+// publicFlags contains the list of flags that can be evaluated by unauthenticated users
 var publicFlags = map[string]bool{
 	"testflag": true,
 }
