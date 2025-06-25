@@ -91,3 +91,16 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 
 	return nil
 }
+
+func (l *LibraryElementService) requireViewPermissionsOnFolderUID(ctx context.Context, user identity.Requester, folderUID string) error {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+	canView, err := l.AccessControl.Evaluate(ctx, user, evaluator)
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return dashboards.ErrFolderAccessDenied
+	}
+
+	return nil
+}

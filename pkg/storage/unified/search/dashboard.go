@@ -24,6 +24,7 @@ const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
+const DASHBOARD_LIBRARY_PANEL_REFERENCE = "reference.LibraryPanel"
 
 //------------------------------------------------------------
 // The following fields are added in enterprise
