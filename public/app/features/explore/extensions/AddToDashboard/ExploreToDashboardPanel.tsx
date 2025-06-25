@@ -1,7 +1,7 @@
 import { type ReactElement } from 'react';
 
 import { TimeRange } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Panel } from '@grafana/schema';
 import { AddToDashboardForm } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardForm';
 import { useSelector } from 'app/types';
