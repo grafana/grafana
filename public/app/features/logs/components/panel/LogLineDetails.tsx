@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { groupBy } from 'lodash';
 import { Resizable } from 're-resizable';
 import { useCallback, useMemo, useRef } from 'react';
 
@@ -6,6 +7,7 @@ import { DataFrameType, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ControlledCollapse, getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
 
+import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -13,8 +15,6 @@ import { LabelWithLinks, LogDetailsFields, LogDetailsLabelFields } from './LogLi
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
-import { getLabelTypeFromRow } from '../../utils';
-import { groupBy } from 'lodash';
 
 interface Props {
   containerElement: HTMLDivElement;
