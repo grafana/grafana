@@ -25,30 +25,27 @@ import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
 export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromOptions> implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
-  // DATA SOURCE PROPERTIES
-  cache: QueryCache<PromQuery>;
-  exemplarsAvailable: boolean;
-  languageProvider: PrometheusLanguageProviderInterface;
-  ruleMappings: RuleQueryMapping;
-  type: string;
-
-  // CONFIGURATION PROPERTIES
   access: 'direct' | 'proxy';
   basicAuth: any;
+  cache: QueryCache<PromQuery>;
   cacheLevel: PrometheusCacheLevel;
   customQueryParameters: URLSearchParams;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
   disableRecordingRules: boolean;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
+  exemplarsAvailable: boolean;
   hasIncrementalQuery: boolean;
   httpMethod: string;
   id: number;
   interval: string;
+  languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
   metricNamesAutocompleteSuggestionLimit: number;
+  ruleMappings: RuleQueryMapping;
   seriesEndpoint: boolean;
   seriesLimit: number;
+  type: string;
   url: string;
   withCredentials: boolean;
   defaultEditor?: QueryEditorMode;
@@ -56,29 +53,27 @@ export class PrometheusDatasource extends DataSourceWithBackend<PromQuery, PromO
   constructor(instanceSettings: DataSourceInstanceSettings<PromOptions>, private readonly templateSrv: TemplateSrv = getTemplateSrv(), languageProvider?: PrometheusLanguageProviderInterface) {
     super(instanceSettings);
 
-    // DATA SOURCE PROPERTIES
-    this.cache = new QueryCache({ getTargetSignature: this.getPrometheusTargetSignature.bind(this), overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow, applyInterpolation: this.interpolateString.bind(this) });
-    this.exemplarsAvailable = true;
-    this.ruleMappings = {};
-    this.type = 'prometheus';
-
-    // CONFIGURATION PROPERTIES
+    // DATASOURCE CONFIGURATION PROPERTIES
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
+    this.cache = new QueryCache({ getTargetSignature: this.getPrometheusTargetSignature.bind(this), overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow, applyInterpolation: this.interpolateString.bind(this) });
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
+    this.exemplarsAvailable = true;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.metricNamesAutocompleteSuggestionLimit = instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
+    this.ruleMappings = {};
     this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.seriesLimit = instanceSettings.jsonData.seriesLimit ?? DEFAULT_SERIES_LIMIT;
+    this.type = 'prometheus';
     this.url = instanceSettings.url!;
     this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
