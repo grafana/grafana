@@ -1,4 +1,5 @@
 import { isNumber, isString } from 'lodash';
+import { CSSProperties } from 'react';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
@@ -405,4 +406,17 @@ export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions
   });
 
   return [...fields];
+}
+
+export function applyStyles(style: React.CSSProperties, target: HTMLDivElement) {
+  let key: keyof CSSProperties;
+  for (key in style) {
+    target.style.setProperty(key, String(style[key]));
+  }
+}
+
+export function removeStyles(style: React.CSSProperties, target: HTMLDivElement) {
+  for (const key in style) {
+    target.style.removeProperty(key);
+  }
 }

@@ -24,7 +24,13 @@ import {
   Placement,
   VerticalConstraint,
 } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
+import {
+  applyStyles,
+  getConnectionsByTarget,
+  getRowIndex,
+  isConnectionTarget,
+  removeStyles,
+} from 'app/plugins/panel/canvas/utils';
 
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
@@ -219,29 +225,20 @@ export class ElementState implements LayerElement {
     this.sizeStyle = style;
 
     if (this.div) {
-      for (const key in this.sizeStyle) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-        this.div.style[key as any] = (this.sizeStyle as any)[key];
-      }
+      applyStyles(this.sizeStyle, this.div);
 
       // TODO: This is a hack, we should have a better way to handle this
       const elementType = this.options.type;
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
-        for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-          this.div.style[key as any] = (this.dataStyle as any)[key];
-        }
+        applyStyles(this.dataStyle, this.div);
       } else {
         // ELEMENT IS SVG
         // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
         // this is necessary for changing type of element cases;
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
-        for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-          this.div.style[key as any] = '';
-        }
+        removeStyles(this.dataStyle, this.div);
       }
     }
   }
@@ -354,29 +351,20 @@ export class ElementState implements LayerElement {
     this.sizeStyle = style;
 
     if (this.div) {
-      for (const key in this.sizeStyle) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-        this.div.style[key as any] = (this.sizeStyle as any)[key];
-      }
+      applyStyles(this.sizeStyle, this.div);
 
       // TODO: This is a hack, we should have a better way to handle this
       const elementType = this.options.type;
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
-        for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-          this.div.style[key as any] = (this.dataStyle as any)[key];
-        }
+        applyStyles(this.dataStyle, this.div);
       } else {
         // ELEMENT IS SVG
         // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
         // this is necessary for changing type of element cases;
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
-        for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-          this.div.style[key as any] = '';
-        }
+        removeStyles(this.dataStyle, this.div);
       }
     }
   }
