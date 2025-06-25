@@ -16,11 +16,13 @@
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "11.0.1",
+    "imports-loader": "^5.0.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
     "typescript": "5.8.3",
     "webpack": "5.97.1",
-    "webpack-bundle-analyzer": "^4.10.2"
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-virtual-modules": "^0.6.2"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.2"
 }

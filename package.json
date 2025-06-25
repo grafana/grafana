@@ -259,7 +259,8 @@
     "webpack-subresource-integrity": "^5.2.0-rc.1",
     "webpackbar": "^7.0.0",
     "yaml": "^2.0.0",
-    "yargs": "^17.5.1"
+    "yargs": "^17.5.1",
+    "zod": "^3.25.55"
   },
   "dependencies": {
     "@bsull/augurs": "^0.10.0",
@@ -287,12 +288,12 @@
     "@grafana/plugin-ui": "0.10.7",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^6.20.1",
-    "@grafana/scenes-react": "^6.20.1",
+    "@grafana/scenes": "^6.22.1",
+    "@grafana/scenes-react": "^6.22.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "@hello-pangea/dnd": "17.0.0",
+    "@hello-pangea/dnd": "18.0.1",
     "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
@@ -454,7 +455,7 @@
   "engines": {
     "node": ">= 22 <23"
   },
-  "packageManager": "yarn@4.6.0",
+  "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
     "prettier@3.4.2": {
       "unplugged": true
