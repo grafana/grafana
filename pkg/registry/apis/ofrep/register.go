@@ -121,7 +121,8 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := stackIdFromEvalCtx(body)
-	if removeStackPrefix(ctx.Namespace) != stackID {
+	// assume that "default" namespace case can only occure in ST grafana
+	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
@@ -160,7 +161,8 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := stackIdFromEvalCtx(body)
-	if removeStackPrefix(ctx.Namespace) != stackID {
+	// assume that "default" namespace case can only occure in ST grafana
+	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
