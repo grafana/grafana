@@ -17,11 +17,12 @@ import (
 // Unified storage backend
 
 type KVStorageBackend struct {
-	snowflake *snowflake.Node
-	kv        KV
-	dataStore *dataStore
-	metaStore *metadataStore
-	notifier  *kvNotifier
+	snowflake  *snowflake.Node
+	kv         KV
+	dataStore  *dataStore
+	metaStore  *metadataStore
+	eventStore *eventStore
+	notifier   *notifier
 }
 
 var _ StorageBackend = &KVStorageBackend{}
@@ -31,12 +32,14 @@ func NewKVStorageBackend(kv KV) *KVStorageBackend {
 	if err != nil {
 		panic(err)
 	}
+	eventStore := newEventStore(kv)
 	return &KVStorageBackend{
-		kv:        kv,
-		dataStore: newDataStore(kv),
-		metaStore: newMetadataStore(kv),
-		notifier:  newKVNotifier(kv, KVNotifierOptions{}),
-		snowflake: s,
+		kv:         kv,
+		dataStore:  newDataStore(kv),
+		metaStore:  newMetadataStore(kv),
+		eventStore: eventStore,
+		notifier:   newnotifier(eventStore, notifierOptions{}),
+		snowflake:  s,
 	}
 }
 
@@ -84,8 +87,8 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	if err != nil {
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
-	// TODO: Emit an event
-	err = k.notifier.Send(ctx, Event{
+
+	err = k.eventStore.Save(ctx, Event{
 		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
@@ -96,7 +99,7 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		PreviousRV:      event.PreviousRV,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to send event: %w", err)
+		return 0, fmt.Errorf("failed to save event: %w", err)
 	}
 	return rv, nil
 }
@@ -667,10 +670,7 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
-	notifierEvents, err := k.notifier.Notify(ctx)
-	if err != nil {
-		return nil, err
-	}
+	notifierEvents := k.notifier.Watch(ctx, defaultWatchOptions())
 	go func() {
 		for event := range notifierEvents {
 			// fetch the data
