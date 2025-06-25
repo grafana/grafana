@@ -641,6 +641,20 @@ func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn fu
 	return nil
 }
 
+func (g *GrafanaLive) checkIDTokenExpirationAndRefresh(user identity.Requester, client *centrifuge.Client) bool {
+	if !identity.IsIDTokenExpired(user) {
+		return false
+	}
+
+	logger.Debug("ID token expired, triggering refresh", "user", client.UserID(), "client", client.ID())
+	err := g.node.Refresh(client.UserID(), centrifuge.WithRefreshExpired(true))
+	if err != nil {
+		logger.Error("Failed to refresh expired ID token", "user", client.UserID(), "client", client.ID(), "error", err)
+	}
+
+	return true
+}
+
 func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
 	if g.runStreamManager == nil {
 		return
@@ -676,6 +690,12 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "method", e.Method)
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
+		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+	}
+
 	var req dtos.MetricRequest
 	err := json.Unmarshal(e.Data, &req)
 	if err != nil {
@@ -709,6 +729,11 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 	user, ok := livecontext.GetContextSignedUser(clientContextWithSpan)
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 
@@ -810,6 +835,11 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 	user, ok := livecontext.GetContextSignedUser(clientCtxWithSpan)
 	if !ok {
 		logger.Error("No user found in context", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+	}
+
+	// Check if ID token is expired and trigger refresh if needed
+	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
 
