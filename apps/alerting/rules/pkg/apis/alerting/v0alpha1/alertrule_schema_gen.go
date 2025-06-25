@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaAlertRule = resource.NewSimpleSchema("rules.alerting.grafana.app", "v0alpha1", &AlertRule{}, &AlertRuleList{}, resource.WithKind("AlertRule"),
-		resource.WithPlural("alertrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+		resource.WithPlural("alertrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*AlertRule)

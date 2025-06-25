@@ -39,22 +39,6 @@ type AlertRuleDatasourceUID string
 // +k8s:openapi-gen=true
 type AlertRulePromDuration string
 
-// +k8s:openapi-gen=true
-type AlertRuleNotificationSettings struct {
-	Receiver            string                           `json:"receiver"`
-	GroupBy             []string                         `json:"groupBy,omitempty"`
-	GroupWait           *string                          `json:"groupWait,omitempty"`
-	GroupInterval       *string                          `json:"groupInterval,omitempty"`
-	RepeatInterval      *string                          `json:"repeatInterval,omitempty"`
-	MuteTimeIntervals   []AlertRuleMuteTimeIntervalRef   `json:"muteTimeIntervals,omitempty"`
-	ActiveTimeIntervals []AlertRuleActiveTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
-}
-
-// NewAlertRuleNotificationSettings creates a new AlertRuleNotificationSettings object.
-func NewAlertRuleNotificationSettings() *AlertRuleNotificationSettings {
-	return &AlertRuleNotificationSettings{}
-}
-
 // TODO(@moustafab): validate regex for mute time interval ref
 // +k8s:openapi-gen=true
 type AlertRuleMuteTimeIntervalRef string
@@ -69,20 +53,20 @@ type AlertRuleTemplateString string
 
 // +k8s:openapi-gen=true
 type AlertRuleSpec struct {
-	Title                       string                             `json:"title"`
-	Paused                      *bool                              `json:"paused,omitempty"`
-	Data                        map[string]AlertRuleQuery          `json:"data"`
-	Interval                    AlertRulePromDuration              `json:"interval"`
-	NoDataState                 string                             `json:"noDataState"`
-	ExecErrState                string                             `json:"execErrState"`
-	NotificationSettings        []AlertRuleNotificationSettings    `json:"notificationSettings,omitempty"`
-	For                         string                             `json:"for"`
-	KeepFiringFor               string                             `json:"keepFiringFor"`
-	MissingSeriesEvalsToResolve *int64                             `json:"missingSeriesEvalsToResolve,omitempty"`
-	Annotations                 map[string]AlertRuleTemplateString `json:"annotations"`
-	DashboardUID                *string                            `json:"dashboardUID,omitempty"`
-	Labels                      map[string]AlertRuleTemplateString `json:"labels"`
-	PanelID                     *int64                             `json:"panelID,omitempty"`
+	Title                       string                                     `json:"title"`
+	Paused                      *bool                                      `json:"paused,omitempty"`
+	Data                        map[string]AlertRuleQuery                  `json:"data"`
+	Interval                    AlertRulePromDuration                      `json:"interval"`
+	NoDataState                 string                                     `json:"noDataState"`
+	ExecErrState                string                                     `json:"execErrState"`
+	NotificationSettings        *AlertRuleV0alpha1SpecNotificationSettings `json:"notificationSettings,omitempty"`
+	For                         string                                     `json:"for"`
+	KeepFiringFor               string                                     `json:"keepFiringFor"`
+	MissingSeriesEvalsToResolve *int64                                     `json:"missingSeriesEvalsToResolve,omitempty"`
+	Annotations                 map[string]AlertRuleTemplateString         `json:"annotations"`
+	DashboardUID                *string                                    `json:"dashboardUID,omitempty"`
+	Labels                      map[string]AlertRuleTemplateString         `json:"labels"`
+	PanelID                     *int64                                     `json:"panelID,omitempty"`
 }
 
 // NewAlertRuleSpec creates a new AlertRuleSpec object.
@@ -94,4 +78,20 @@ func NewAlertRuleSpec() *AlertRuleSpec {
 		Annotations:  map[string]AlertRuleTemplateString{},
 		Labels:       map[string]AlertRuleTemplateString{},
 	}
+}
+
+// +k8s:openapi-gen=true
+type AlertRuleV0alpha1SpecNotificationSettings struct {
+	Receiver            string                           `json:"receiver"`
+	GroupBy             []string                         `json:"groupBy,omitempty"`
+	GroupWait           *string                          `json:"groupWait,omitempty"`
+	GroupInterval       *string                          `json:"groupInterval,omitempty"`
+	RepeatInterval      *string                          `json:"repeatInterval,omitempty"`
+	MuteTimeIntervals   []AlertRuleMuteTimeIntervalRef   `json:"muteTimeIntervals,omitempty"`
+	ActiveTimeIntervals []AlertRuleActiveTimeIntervalRef `json:"activeTimeIntervals,omitempty"`
+}
+
+// NewAlertRuleV0alpha1SpecNotificationSettings creates a new AlertRuleV0alpha1SpecNotificationSettings object.
+func NewAlertRuleV0alpha1SpecNotificationSettings() *AlertRuleV0alpha1SpecNotificationSettings {
+	return &AlertRuleV0alpha1SpecNotificationSettings{}
 }

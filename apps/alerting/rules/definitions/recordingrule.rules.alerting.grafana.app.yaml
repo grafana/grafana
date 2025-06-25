@@ -15,6 +15,9 @@ spec:
                         properties:
                             data:
                                 additionalProperties:
+                                    description: |-
+                                        TODO: validate that only one can specify source=true
+                                        Note: any issues with go hash map key sorting?
                                     properties:
                                         datasourceUID:
                                             pattern: ^[a-zA-Z0-9_]+$

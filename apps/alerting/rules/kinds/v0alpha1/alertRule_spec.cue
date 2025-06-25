@@ -8,9 +8,9 @@ ExecErrState: *"Error" | "Ok" | "Alerting" | "KeepLast"
 #ActiveTimeIntervalRef: string // TODO(@moustafab): validate regex for active time interval ref
 
 AlertRuleSpec: #RuleSpec & {
-	noDataState:  NoDataState
-	execErrState: ExecErrState
-	notificationSettings?: [...#NotificationSettings]
+	noDataState:                  NoDataState
+	execErrState:                 ExecErrState
+	notificationSettings?:        #NotificationSettings
 	"for":                        string & #PromDuration
 	keepFiringFor:                string & #PromDuration
 	missingSeriesEvalsToResolve?: int

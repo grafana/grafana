@@ -38,20 +38,6 @@ export type PromDuration = string;
 
 export const defaultPromDuration = (): PromDuration => ("");
 
-export interface NotificationSettings {
-	receiver: string;
-	groupBy?: string[];
-	groupWait?: string;
-	groupInterval?: string;
-	repeatInterval?: string;
-	muteTimeIntervals?: MuteTimeIntervalRef[];
-	activeTimeIntervals?: ActiveTimeIntervalRef[];
-}
-
-export const defaultNotificationSettings = (): NotificationSettings => ({
-	receiver: "",
-});
-
 // TODO(@moustafab): validate regex for mute time interval ref
 export type MuteTimeIntervalRef = string;
 
@@ -74,7 +60,15 @@ export interface Spec {
 	interval: PromDuration;
 	noDataState: string;
 	execErrState: string;
-	notificationSettings?: NotificationSettings[];
+	notificationSettings?: {
+		receiver: string;
+		groupBy?: string[];
+		groupWait?: string;
+		groupInterval?: string;
+		repeatInterval?: string;
+		muteTimeIntervals?: MuteTimeIntervalRef[];
+		activeTimeIntervals?: ActiveTimeIntervalRef[];
+	};
 	for: string;
 	keepFiringFor: string;
 	missingSeriesEvalsToResolve?: number;

@@ -21,6 +21,9 @@ spec:
                                 type: string
                             data:
                                 additionalProperties:
+                                    description: |-
+                                        TODO: validate that only one can specify source=true
+                                        Note: any issues with go hash map key sorting?
                                     properties:
                                         datasourceUID:
                                             pattern: ^[a-zA-Z0-9_]+$
@@ -81,32 +84,30 @@ spec:
                                     - KeepLast
                                 type: string
                             notificationSettings:
-                                items:
-                                    properties:
-                                        activeTimeIntervals:
-                                            items:
-                                                type: string
-                                            type: array
-                                        groupBy:
-                                            items:
-                                                type: string
-                                            type: array
-                                        groupInterval:
+                                properties:
+                                    activeTimeIntervals:
+                                        items:
                                             type: string
-                                        groupWait:
+                                        type: array
+                                    groupBy:
+                                        items:
                                             type: string
-                                        muteTimeIntervals:
-                                            items:
-                                                type: string
-                                            type: array
-                                        receiver:
+                                        type: array
+                                    groupInterval:
+                                        type: string
+                                    groupWait:
+                                        type: string
+                                    muteTimeIntervals:
+                                        items:
                                             type: string
-                                        repeatInterval:
-                                            type: string
-                                    required:
-                                        - receiver
-                                    type: object
-                                type: array
+                                        type: array
+                                    receiver:
+                                        type: string
+                                    repeatInterval:
+                                        type: string
+                                required:
+                                    - receiver
+                                type: object
                             panelID:
                                 type: integer
                             paused:
