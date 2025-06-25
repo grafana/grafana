@@ -64,7 +64,7 @@ func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features
 	})
 }
 
-func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
+func newResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
@@ -75,16 +75,13 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	}
 }
 
+func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
+	return newResourceClient(cc)
+}
+
 func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
-	}
+	return newResourceClient(cc)
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
@@ -117,14 +114,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
-	}
+	return newResourceClient(cc)
 }
 
 type RemoteResourceClientConfig struct {

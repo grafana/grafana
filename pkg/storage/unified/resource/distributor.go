@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
+func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
 	var err error
 	grpcHandler, err := grpcserver.ProvideService(cfg, features, nil, tracer, registerer)
 	if err != nil {
