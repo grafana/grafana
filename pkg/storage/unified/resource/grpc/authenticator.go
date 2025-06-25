@@ -140,14 +140,14 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
-	ctx = metadata.AppendToOutgoingContext(ctx, encodeIdentityInMetadata(user)...)
+	ctx = metadata.AppendToOutgoingContext(ctx, encodeIdentityInMetadataPairs(user)...)
 	return ctx, nil
 }
 
-func encodeIdentityInMetadata(user identity.Requester) []string {
+func encodeIdentityInMetadataPairs(user identity.Requester) []string {
 	id, _ := user.GetInternalID()
 
-	logger.Debug("encodeIdentityInMetadata", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
+	logger.Debug("encodeIdentityInMetadataPairs", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
 
 	return []string{
 		// This should be everything needed to recreate the user
