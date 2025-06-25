@@ -1,25 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { getDefaultWrapper } from '../../../../../tests/provider';
+import { defaultDecorators } from '../../../../../tests/story-utils';
 
 import { ContactPointSelector } from './ContactPointSelector';
 import mdx from './ContactPointSelector.mdx';
 import { simpleContactPointsListScenario, withErrorScenario } from './ContactPointSelector.test.scenario';
 
-const Wrapper = getDefaultWrapper();
-
-const decorators: Meta['decorators'] = [
-  (Story) => (
-    <Wrapper>
-      <Story />
-    </Wrapper>
-  ),
-];
-
 const meta: Meta<typeof ContactPointSelector> = {
   component: ContactPointSelector,
   title: 'ContactPointSelector',
-  decorators,
+  decorators: defaultDecorators,
   parameters: {
     docs: {
       page: mdx,
