@@ -6,7 +6,7 @@ import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 
 import { PromOptions } from '../types';
 
-import { docsTip, overhaulStyles } from './ConfigEditor';
+import { docsTip, overhaulStyles } from './shared/utils';
 
 export type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;
@@ -35,7 +35,7 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
     case 'direct':
       urlTooltip = (
         <>
-          <Trans i18nKey="configuration.data-source-http-settings-overhaul.tooltip-browser-access-mode">
+          <Trans i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-browser-access-mode">
             Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
           </Trans>
           {docsTip()}
@@ -45,7 +45,7 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
     case 'proxy':
       urlTooltip = (
         <>
-          <Trans i18nKey="configuration.data-source-http-settings-overhaul.tooltip-server-access-mode">
+          <Trans i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-server-access-mode">
             Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
             backend/server.
           </Trans>
@@ -57,7 +57,7 @@ export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProp
       urlTooltip = (
         <>
           <Trans
-            i18nKey="configuration.data-source-http-settings-overhaul.tooltip-http-url"
+            i18nKey="grafana-prometheus.configuration.data-source-http-settings-overhaul.tooltip-http-url"
             values={{ exampleURL: 'http://your_server:8080' }}
           >
             Specify a complete HTTP URL (for example {'{{exampleURL}}'})

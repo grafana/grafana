@@ -80,6 +80,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		),
 		grpc.ChainStreamInterceptor(
 			interceptors.TracingStreamInterceptor(tracer),
+			interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),

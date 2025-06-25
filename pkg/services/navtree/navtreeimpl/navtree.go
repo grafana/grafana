@@ -212,7 +212,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	} else {
 		homePage := s.cfg.HomePage
 
-		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
 		}
 	}
@@ -224,17 +224,19 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	ctx := c.Req.Context()
-	if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-		var children []*navtree.NavLink
-		// setup guide (a submenu item under Home)
-		children = append(children, &navtree.NavLink{
-			Id:         "home-setup-guide",
-			Text:       "Getting started guide",
-			Url:        "/a/grafana-setupguide-app/getting-started",
-			SortWeight: navtree.WeightHome,
-		})
-		homeNode.Children = children
+	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
+		ctx := c.Req.Context()
+		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
+			var children []*navtree.NavLink
+			// setup guide (a submenu item under Home)
+			children = append(children, &navtree.NavLink{
+				Id:         "home-setup-guide",
+				Text:       "Getting started guide",
+				Url:        "/a/grafana-setupguide-app/getting-started",
+				SortWeight: navtree.WeightHome,
+			})
+			homeNode.Children = children
+		}
 	}
 	return homeNode
 }

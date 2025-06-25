@@ -23,18 +23,18 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 
 ### Alert rules
 
-| Method | URI                                                              | Name                                                                    | Summary                                                               |
-| ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                                  |
-| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                                     |
-| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                              |
-| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                                        |
-| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.                     |
-| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                                     |
-| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group or modify the rules of the group. |
-| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format.               |
-| GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
-| GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
+| Method | URI                                                              | Name                                                                    | Summary                                                 |
+| ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
+| GET    | /api/v1/provisioning/alert-rules/:uid                            | [route get alert rule](#route-get-alert-rule)                           | Get a specific alert rule by UID.                       |
+| POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
+| PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
+| GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
+| PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Create or update a rule group.                          |
+| GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
+| GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                |
+| GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.     |
 
 **Example request for new alert rule:**
 
@@ -397,9 +397,9 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/), consider the following tools:
 
-- [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
+- [mimirtool](https://grafana.com/docs/mimir/<MIMIR_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
 - [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
-- [lokitool](https://grafana.com/docs/loki/<GRAFANA_VERSION>/alert/#lokitool): to configure the Loki Ruler.
+- [lokitool](https://grafana.com/docs/loki/<LOKI_VERSION>/alert/#lokitool): to configure the Loki Ruler.
 
 Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
 
@@ -1248,7 +1248,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-put-alert-rule-group"></span> Update the interval or alert rules of a rule group. (_RoutePutAlertRuleGroup_)
+### <span id="route-put-alert-rule-group"></span> Create or update a rule group. (_RoutePutAlertRuleGroup_)
 
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
