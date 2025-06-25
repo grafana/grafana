@@ -3366,7 +3366,7 @@
       "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
-      "delete-provisioned-folder": "Delete Provisioned Folder",
+      "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
