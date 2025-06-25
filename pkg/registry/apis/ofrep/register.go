@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -120,7 +121,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	stackID := stackIdFromEvalCtx(body)
+	stackID := b.stackIdFromEvalCtx(body)
 	// assume that "default" namespace case can only occure in ST grafana
 	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
@@ -160,7 +161,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	stackID := stackIdFromEvalCtx(body)
+	stackID := b.stackIdFromEvalCtx(body)
 	// assume that "default" namespace case can only occure in ST grafana
 	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
@@ -184,18 +185,25 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-func stackIdFromEvalCtx(b []byte) string {
+func (b *APIBuilder) stackIdFromEvalCtx(body []byte) string {
 	// Extract stackID from request body without consuming it
 	var evalCtx struct {
 		Context struct {
-			StackID string `json:"stackId"`
+			StackID int32 `json:"stackId"`
 		} `json:"context"`
 	}
 
-	if err := json.Unmarshal(b, &evalCtx); err != nil {
+	if err := json.Unmarshal(body, &evalCtx); err != nil {
+		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
 		return ""
 	}
-	return evalCtx.Context.StackID
+
+	if evalCtx.Context.StackID <= 0 {
+		b.logger.Debug("Invalid or missing stackId in evaluation context", "stackId", evalCtx.Context.StackID)
+		return ""
+	}
+
+	return strconv.Itoa(int(evalCtx.Context.StackID))
 }
 
 func removeStackPrefix(tenant string) string {
