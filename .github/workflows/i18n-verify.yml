@@ -1,4 +1,4 @@
-name: Verify i18n markup has been committed
+name: Verify i18n
 
 permissions:
   contents: read
