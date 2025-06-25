@@ -581,6 +581,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.0 // indirect
+	github.com/spyzhov/ajson v0.9.6 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.61.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.61.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2 // indirect
