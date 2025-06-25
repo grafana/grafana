@@ -32,15 +32,15 @@ export interface OptionsPaneItemInfo {
  */
 export class OptionsPaneItemDescriptor {
   parent!: OptionsPaneCategoryDescriptor;
-  props: OptionsPaneItemInfo
+  props: OptionsPaneItemInfo;
 
   constructor(props: OptionsPaneItemInfo) {
     if (!isEmpty(props.title)) {
-      this.props = {...props, id: props.title};
+      this.props = { ...props, id: props.title };
     } else if (!isEmpty(props.id)) {
-      this.props = {...props, id: props.id};
+      this.props = { ...props, id: props.id };
     } else {
-      this.props = {...props, id: uniqueId()};
+      this.props = { ...props, id: uniqueId() };
     }
   }
 
