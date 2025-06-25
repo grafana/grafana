@@ -89,6 +89,7 @@ jobs:
           BUILD_ID: ${{ github.run_number }}
           BUCKET: grafana-prerelease
         with:
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
 
