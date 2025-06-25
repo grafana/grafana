@@ -33,7 +33,7 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
   if (!annotation || !onAnnotationChange) {
     return (
       <h3>
-        <Trans i18nKey="components.annotation-query-editor.annotation-data-load-error">
+        <Trans i18nKey="grafana-prometheus.components.annotation-query-editor.annotation-data-load-error">
           Annotation data load error!
         </Trans>
       </h3>
@@ -78,10 +78,10 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
         <PromQueryCodeEditor {...props} query={query} showExplain={false} onRunQuery={onRunQuery} onChange={onChange} />
         <EditorRow>
           <EditorField
-            label={t('components.annotation-query-editor.label-min-step', 'Min step')}
+            label={t('grafana-prometheus.components.annotation-query-editor.label-min-step', 'Min step')}
             tooltip={
               <Trans
-                i18nKey="components.annotation-query-editor.tooltip-min-step"
+                i18nKey="grafana-prometheus.components.annotation-query-editor.tooltip-min-step"
                 values={{ intervalVar: '$__interval', rateIntervalVar: '$__rate_interval' }}
               >
                 An additional lower limit for the step parameter of the Prometheus query and for the{' '}
@@ -92,10 +92,10 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
             <AutoSizeInput
               type="text"
               aria-label={t(
-                'components.annotation-query-editor.aria-label-lower-limit-parameter',
+                'grafana-prometheus.components.annotation-query-editor.aria-label-lower-limit-parameter',
                 'Set lower limit for the step parameter'
               )}
-              placeholder={t('components.annotation-query-editor.placeholder-auto', 'auto')}
+              placeholder={t('grafana-prometheus.components.annotation-query-editor.placeholder-auto', 'auto')}
               minWidth={10}
               value={query.interval ?? ''}
               onChange={(e) => handleMinStepChange(e.currentTarget.value)}
@@ -107,9 +107,9 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
       <Space v={0.5} />
       <EditorRow>
         <EditorField
-          label={t('components.annotation-query-editor.label-title', 'Title')}
+          label={t('grafana-prometheus.components.annotation-query-editor.label-title', 'Title')}
           tooltip={t(
-            'components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
+            'grafana-prometheus.components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
             'Use either the name or a pattern. For example, {{labelTemplate}} is replaced with label value for the label {{labelName}}.',
             { labelName: 'instance', labelTemplate: '{{instance}}' }
           )}
@@ -122,7 +122,7 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
             data-testid={selectors.components.DataSource.Prometheus.annotations.title}
           />
         </EditorField>
-        <EditorField label={t('components.annotation-query-editor.label-tags', 'Tags')}>
+        <EditorField label={t('grafana-prometheus.components.annotation-query-editor.label-tags', 'Tags')}>
           <Input
             type="text"
             placeholder={PLACEHOLDER_TAGS}
@@ -132,9 +132,9 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
           />
         </EditorField>
         <EditorField
-          label={t('components.annotation-query-editor.label-text', 'Text')}
+          label={t('grafana-prometheus.components.annotation-query-editor.label-text', 'Text')}
           tooltip={t(
-            'components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
+            'grafana-prometheus.components.annotation-query-editor.tooltip-either-pattern-example-instance-replaced-label',
             'Use either the name or a pattern. For example, {{labelTemplate}} is replaced with label value for the label {{labelName}}.',
             { labelName: 'instance', labelTemplate: '{{instance}}' }
           )}
@@ -148,9 +148,12 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
           />
         </EditorField>
         <EditorField
-          label={t('components.annotation-query-editor.label-series-value-as-timestamp', 'Series value as timestamp')}
+          label={t(
+            'grafana-prometheus.components.annotation-query-editor.label-series-value-as-timestamp',
+            'Series value as timestamp'
+          )}
           tooltip={t(
-            'components.annotation-query-editor.tooltip-timestamp-milliseconds-series-value-seconds-multiply',
+            'grafana-prometheus.components.annotation-query-editor.tooltip-timestamp-milliseconds-series-value-seconds-multiply',
             'The unit of timestamp is milliseconds. If the unit of the series value is seconds, multiply its range vector by 1000.'
           )}
         >

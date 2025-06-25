@@ -81,9 +81,9 @@ You can then [view the alert state on the panel](ref:view-alert-state-on-panels)
 
 By default, notification messages include a link to the dashboard panel. Additionally, you can [enable displaying panel screenshots in notifications](ref:images-in-notifications).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Access linked alert rules from panels
 
@@ -95,4 +95,4 @@ This option is available only in [time series panels](ref:time-series-visualizat
 
 {{< admonition type="tip" >}}
 For a practical example, refer to our [Getting started: Link alerts to visualizations tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt6/).
-{{% /admonition %}}
+{{< /admonition >}}
