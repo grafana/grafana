@@ -30,7 +30,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
     <Select
       className={className}
       disabled={state.loading}
-      aria-label={t('components.table-selector.aria-label-table-selector', 'Table selector')}
+      aria-label={t('grafana-sql.components.table-selector.aria-label-table-selector', 'Table selector')}
       inputId={inputId}
       data-testid={selectors.components.SQLQueryEditor.headerTableSelector}
       value={table}
@@ -40,8 +40,8 @@ export const TableSelector = ({ db, dataset, table, className, onChange, inputId
       menuShouldPortal={true}
       placeholder={
         state.loading
-          ? t('components.table-selector.placeholder-loading', 'Loading tables')
-          : t('components.table-selector.placeholder-select-table', 'Select table')
+          ? t('grafana-sql.components.table-selector.placeholder-loading', 'Loading tables')
+          : t('grafana-sql.components.table-selector.placeholder-select-table', 'Select table')
       }
       allowCustomValue={true}
     />

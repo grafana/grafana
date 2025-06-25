@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorList, AccessoryButton } from '@grafana/plugin-ui';
-import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
+import { Select, Stack, MultiSelect } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../shared/Field';
@@ -148,7 +148,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
     onDelete: () => void
   ) => {
     return (
-      <HorizontalGroup spacing="none">
+      <Stack gap={0}>
         <Select
           menuShouldPortal
           placeholder={t('components.dimension-fields.placeholder-field', 'Field')}
@@ -200,7 +200,7 @@ const DimensionFields = ({ data, query, dimensionOptions, onQueryChange }: Dimen
           onClick={onDelete}
           type="button"
         />
-      </HorizontalGroup>
+      </Stack>
     );
   };
 

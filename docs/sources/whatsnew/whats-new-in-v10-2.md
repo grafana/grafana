@@ -29,9 +29,9 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Name of contributor -->
 <!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Use full URLs for links. When linking to versioned docs, replace the version with the version interpolation placeholder (for example, <GRAFANA_VERSION>, <TEMPO_VERSION>, <MIMIR_VERSION>) so the system can determine the correct set of docs to point to. For example, "https://grafana.com/docs/grafana/latest/administration/" becomes "https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/".
-{{% /admonition %}}
+{{< /admonition >}}
 -->
 <!-- Add an image, GIF or video  as below
 
@@ -473,11 +473,11 @@ With the current release, we've introduced a new configuration option for each O
 
 For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/). If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
 
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Permission validation on custom role creation and update
 

@@ -55,6 +55,17 @@ jest.mock('@grafana/runtime', () => {
                 aliasIDs: ['testdata'],
               },
             },
+            '-- Grafana --': {
+              id: -1,
+              uid: 'grafana',
+              type: 'datasource',
+              name: '-- Grafana --',
+              meta: {
+                id: 'grafana',
+                type: 'datasource',
+                name: '-- Grafana --',
+              },
+            },
           },
           defaultDatasource: 'gdev-testdata',
         },

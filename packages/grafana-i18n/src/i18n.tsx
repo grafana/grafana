@@ -11,6 +11,14 @@ import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './t
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
+const VALID_LANGUAGES = [
+  ...LANGUAGES,
+  {
+    name: 'Pseudo',
+    code: PSEUDO_LOCALE,
+  },
+];
+
 function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } = {}) {
   if (id) {
     tFunc = getI18nInstance().getFixedT(null, id);
@@ -22,19 +30,20 @@ function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } =
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 }
 
-// exported for testing
-export async function loadPluginResources(id: string, language: string, loaders?: ResourceLoader[]) {
+export async function loadNamespacedResources(namespace: string, language: string, loaders?: ResourceLoader[]) {
   if (!loaders?.length) {
     return;
   }
 
+  const resolvedLanguage = language === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : language;
+
   return Promise.all(
     loaders.map(async (loader) => {
       try {
-        const resources = await loader(language);
-        addResourceBundle(language, id, resources);
+        const resources = await loader(resolvedLanguage);
+        addResourceBundle(resolvedLanguage, namespace, resources);
       } catch (error) {
-        console.error(`Error loading resources for plugin ${id} and language: ${language}`, error);
+        console.error(`Error loading resources for namespace ${namespace} and language: ${resolvedLanguage}`, error);
       }
     })
   );
@@ -75,7 +84,7 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
   const language = getResolvedLanguage();
   initTFuncAndTransComponent({ id });
 
-  await loadPluginResources(id, language, loaders);
+  await loadNamespacedResources(id, language, loaders);
 
   return { language };
 }
@@ -108,7 +117,7 @@ async function initTranslations({
     returnEmptyString: false,
 
     // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
-    supportedLngs: LANGUAGES.map((language) => language.code),
+    supportedLngs: VALID_LANGUAGES.map((lang) => lang.code),
     fallbackLng: DEFAULT_LANGUAGE,
 
     ns,
@@ -123,7 +132,7 @@ async function initTranslations({
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
     options.detection = detection;
   } else {
-    options.lng = LANGUAGES.find((lang) => lang.code === language)?.code ?? undefined;
+    options.lng = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? undefined;
   }
 
   if (module) {
@@ -132,7 +141,7 @@ async function initTranslations({
     getI18nInstance().use(initReactI18next); // passes i18n down to react-i18next
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  if (language === PSEUDO_LOCALE) {
     const { default: Pseudo } = await import('i18next-pseudo');
     getI18nInstance().use(
       new Pseudo({
@@ -165,7 +174,7 @@ export function getNamespaces() {
 }
 
 export async function changeLanguage(language?: string) {
-  const validLanguage = LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
+  const validLanguage = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
   await getI18nInstance().changeLanguage(validLanguage);
 }
 
