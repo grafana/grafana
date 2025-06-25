@@ -3,23 +3,16 @@ package ofrep
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
-	"os"
-	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -149,34 +142,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b.evalFlagStatic(flagKey, isAuthedUser, w, r)
-
-}
-
-func (b *APIBuilder) proxyFlagReq(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser && !isPublicFlag(flagKey) {
-			writeResponse(http.StatusUnauthorized, struct{}{}, b.logger, w)
-		}
-		return nil
-	}
-
-	proxy.ServeHTTP(w, r)
-}
-
-func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	result, err := b.staticEvaluator.EvalFlag(r.Context(), flagKey)
-	if err != nil {
-		http.Error(w, "failed to evaluate flag", http.StatusInternalServerError)
-		return
-	}
-
-	writeResponse(http.StatusOK, result, b.logger, w)
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +156,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := stackIdFromEvalCtx(body)
-	if removeStackPrefix(ctx.SignedInUser.Namespace) != stackID {
+	if removeStackPrefix(ctx.Namespace) != stackID {
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
@@ -204,92 +169,6 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	b.evalAllFlagsStatic(isAuthedUser, w, r)
 }
 
-func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	result, err := b.staticEvaluator.EvalAllFlags(r.Context())
-	if err != nil {
-		http.Error(w, "failed to evaluate flags", http.StatusInternalServerError)
-		return
-	}
-
-	if !isAuthedUser {
-		var publicOnly []featuremgmt.OFREPFlag
-
-		for _, flag := range result.Flags {
-			if isPublicFlag(flag.Key) {
-				publicOnly = append(publicOnly, flag)
-			}
-		}
-
-		result.Flags = publicOnly
-	}
-
-	writeResponse(http.StatusOK, result, b.logger, w)
-}
-
-func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
-	proxy, err := b.newProxy(ofrepPath)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result map[string]interface{}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				return err
-			}
-			resp.Body.Close()
-
-			filtered := make(map[string]any)
-			for k, v := range result {
-				if isPublicFlag(k) {
-					filtered[k] = v
-				}
-			}
-
-			writeResponse(http.StatusOK, filtered, b.logger, w)
-		}
-
-		return nil
-	}
-
-	proxy.ServeHTTP(w, r)
-}
-func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) {
-	if proxyPath == "" {
-		return nil, fmt.Errorf("proxy path is required")
-	}
-
-	if b.url == nil {
-		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
-	}
-
-	var caRoot *x509.CertPool
-	if b.caFile != "" {
-		var err error
-		caRoot, err = getCARoot(b.caFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	director := func(req *http.Request) {
-		req.URL.Scheme = b.url.Scheme
-		req.URL.Host = b.url.Host
-		req.URL.Path = proxyPath
-	}
-
-	proxy := proxyutil.NewReverseProxy(b.logger, director)
-	proxy.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: b.insecure,
-			RootCAs:            caRoot,
-		},
-	}
-	return proxy, nil
-}
-
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -297,26 +176,6 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	if err := json.NewEncoder(w).Encode(result); err != nil {
 		logger.Error("Failed to encode flag evaluation result", "error", err)
 	}
-}
-
-// publicFlags contains the list of flags that can be evaluated by unauthenticated users
-var publicFlags = map[string]bool{
-	"testflag": true,
-}
-
-func isPublicFlag(flagKey string) bool {
-	_, exists := publicFlags[flagKey]
-	return exists
-}
-
-func getCARoot(caFile string) (*x509.CertPool, error) {
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-	return caCertPool, nil
 }
 
 func stackIdFromEvalCtx(b []byte) string {
