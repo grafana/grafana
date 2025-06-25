@@ -14,7 +14,7 @@ export const LeftSideBar = ({ pdcInjected }: LeftSideBarProps) => {
         <Text element="h4">InfluxDB</Text>
         <Box paddingTop={2}>
           {headers.map((header, index) => (
-            <div key={index}>
+            <div key={index} data-testid={`${header.label}-sidebar`}>
               <InlineField label={`${index + 1}`} style={{ display: 'flex', alignItems: 'center' }} grow>
                 <LinkButton
                   variant="secondary"

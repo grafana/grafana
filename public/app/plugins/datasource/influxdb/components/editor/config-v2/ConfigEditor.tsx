@@ -12,7 +12,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
   return (
     <Stack justifyContent="space-between">
       <Box width="250px" flex="0 0 250px">
-        <LeftSideBar pdcInjected={options?.jsonData?._pdcInjected!!} />
+        <LeftSideBar pdcInjected={options?.jsonData?.pdcInjected!!} />
       </Box>
       <Box width="60%" flex="1 1 auto">
         <Stack direction="column">

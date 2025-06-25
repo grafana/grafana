@@ -39,8 +39,9 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
   // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
   const requiresDrbpMapping =
-    (options.jsonData.product && options.jsonData.product === 'InfluxDB OSS 1.x') ||
-    options.jsonData.product === 'InfluxDB OSS 2.x';
+    options.jsonData.product &&
+    options.jsonData.version === InfluxVersion.InfluxQL &&
+    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
 
   const onProductChange = ({ value }: ComboboxOption) =>
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });

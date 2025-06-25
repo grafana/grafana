@@ -124,7 +124,7 @@ export function EditDataSourceView({
     ...dataSource,
     jsonData: {
       ...dataSource.jsonData,
-      _pdcInjected: isPDCInjected,
+      pdcInjected: isPDCInjected,
     },
   };
 
