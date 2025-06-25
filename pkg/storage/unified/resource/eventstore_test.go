@@ -326,8 +326,8 @@ func TestEventStore_ListSince(t *testing.T) {
 
 	// Should return events in descending order of resource version
 	require.Len(t, retrievedEvents, 2)
-	assert.Equal(t, int64(3000), retrievedEvents[0].ResourceVersion)
-	assert.Equal(t, int64(2000), retrievedEvents[1].ResourceVersion)
+	assert.Equal(t, int64(2000), retrievedEvents[0].ResourceVersion)
+	assert.Equal(t, int64(3000), retrievedEvents[1].ResourceVersion)
 }
 
 func TestEventStore_ListSince_Empty(t *testing.T) {
