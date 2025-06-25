@@ -456,7 +456,6 @@ export function useColumnResize(
     for (const columnKey in resizeBuffer.current) {
       hadValues = true;
       const newWidth = resizeBuffer.current[columnKey];
-      console.log('flush resize', columnKey, Math.floor(newWidth));
       onColumnResize?.(columnKey, Math.floor(newWidth));
     }
     if (hadValues) {
