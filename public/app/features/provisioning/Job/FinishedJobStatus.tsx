@@ -1,21 +1,21 @@
 import { useEffect, useRef } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
+import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../Wizard/types';
+import { useStepStatus } from '../Wizard/StepStatusContext';
 
 import { JobContent } from './JobContent';
 
 export interface FinishedJobProps {
   jobUid: string;
   repositoryName: string;
-  onStatusChange: (status: StepStatusInfo, error?: string) => void;
 }
 
-export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: FinishedJobProps) {
+export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) {
   const hasRetried = useRef(false);
+  const { setStepStatusInfo } = useStepStatus();
   const finishedQuery = useGetRepositoryJobsWithPathQuery({
     name: repositoryName,
     uid: jobUid,
@@ -35,8 +35,8 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
       }, 1000);
     }
 
-    if (finishedQuery.isSuccess) {
-      onStatusChange({ status: 'success' });
+    if (finishedQuery.isSuccess && job?.status?.state !== 'error') {
+      setStepStatusInfo({ status: 'success' });
     }
 
     return () => {
@@ -44,12 +44,10 @@ export function FinishedJobStatus({ jobUid, repositoryName, onStatusChange }: Fi
         clearTimeout(timeoutId);
       }
     };
-  }, [finishedQuery, job, onStatusChange]);
-
-  const { t } = useTranslate();
+  }, [finishedQuery, job, setStepStatusInfo]);
 
   if (retryFailed) {
-    onStatusChange({ status: 'error' });
+    setStepStatusInfo({ status: 'error' });
     return (
       <Alert severity="error" title={t('provisioning.job-status.no-job-found', 'No job found')}>
         <Trans i18nKey="provisioning.job-status.no-job-found-message">

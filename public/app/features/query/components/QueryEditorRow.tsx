@@ -19,8 +19,7 @@ import {
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
@@ -542,7 +541,7 @@ function ReplaceQueryFromLibrary<TQuery extends DataQuery>({
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onReplaceQueryFromLibrary = () => {
-    openDrawer(datasourceFilters, onSelectQuery);
+    openDrawer(datasourceFilters, onSelectQuery, { isReplacingQuery: true });
   };
 
   return queryLibraryEnabled ? (

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
 import {
@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 function PluginEnterpriseBadgeWithoutSignature() {
   const customBadgeStyles = useStyles2(getBadgeColor);
-  const { t } = useTranslate();
+
   if (featureEnabled('enterprise.plugins')) {
     return <Badge text={t('get-enterprise.title', 'Enterprise')} color="blue" />;
   }

@@ -15,7 +15,7 @@ jobs:
       pull-requests: write
       security-events: write
     container:
-      image: grafana/vale:latest
+      image: grafana/vale:latest # zizmor: ignore[unpinned-images]
     steps:
       - uses: actions/checkout@v4
         with:

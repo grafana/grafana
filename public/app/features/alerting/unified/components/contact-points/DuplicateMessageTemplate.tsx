@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
@@ -35,7 +35,6 @@ const DuplicateMessageTemplateComponent = () => {
     isLoading: templatesLoading,
     error: templatesFetchError,
   } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
-  const { t } = useTranslate();
 
   const isLoading = isLoadingTemplate || templatesLoading;
   const error = templateFetchError || templatesFetchError;
@@ -90,8 +89,6 @@ const DuplicateMessageTemplateComponent = () => {
 };
 
 function DuplicateMessageTemplate() {
-  const { t } = useTranslate();
-
   return (
     <AlertmanagerPageWrapper
       navId="receivers"

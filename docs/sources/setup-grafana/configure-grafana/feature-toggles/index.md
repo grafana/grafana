@@ -1,6 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
+  - ../../administration/feature-toggles/ # /docs/grafana/latest/administration/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
@@ -41,6 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                  | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                           | Yes                |
+| `libraryPanelRBAC`                     | Enables RBAC support for library panels                                                                                            | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                        | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                             | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                   | Yes                |
@@ -66,6 +68,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                              |                    |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                       | Yes                |
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                       | Yes                |
+| `ssoSettingsLDAP`                      | Use the new SSO Settings API to configure LDAP                                                                                     | Yes                |
 | `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
@@ -78,9 +81,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                          | Yes                |
 | `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
+| `teamHttpHeadersMimir`                 | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                            |                    |
+| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                         | Yes                |
 
 ## Public preview feature toggles
 
@@ -102,12 +107,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`                  | Allow pan and zoom in canvas panel                                                                                                                            |
 | `regressionTransformation`            | Enables regression analysis transformation                                                                                                                    |
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
-| `ssoSettingsLDAP`                     | Use the new SSO Settings API to configure LDAP                                                                                                                |
 | `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
-| `teamHttpHeadersMimir`                | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                           |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
 | `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                               |
 | `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                     |

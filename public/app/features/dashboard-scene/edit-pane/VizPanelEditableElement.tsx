@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Stack, Button } from '@grafana/ui';
@@ -55,22 +54,27 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
+            id: 'PanelFrameTitle',
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
+            render: (descriptor) => (
+              <PanelFrameTitleInput id={descriptor.props.id} panel={panel} isNewElement={isNewElement} />
+            ),
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.description', 'Description'),
+            id: 'description-text-area',
             value: panel.state.description,
-            render: () => <PanelDescriptionTextArea panel={panel} />,
+            render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
-            render: () => <PanelBackgroundSwitch panel={panel} />,
+            id: 'transparent-background',
+            render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
           })
         );
     }, [panel, isNewElement]);

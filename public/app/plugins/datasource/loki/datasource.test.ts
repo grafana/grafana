@@ -31,7 +31,6 @@ import {
   setBackendSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
@@ -1806,46 +1805,6 @@ describe('LokiDatasource', () => {
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('query', () => {
-    let featureToggleVal = config.featureToggles.lokiSendDashboardPanelNames;
-    beforeEach(() => {
-      setDashboardSrv({
-        getCurrent: () => ({
-          title: 'dashboard_title',
-          panels: [{ title: 'panel_title', id: 0 }],
-        }),
-      } as unknown as DashboardSrv);
-      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
-      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
-      config.featureToggles.lokiSendDashboardPanelNames = true;
-    });
-    afterEach(() => {
-      config.featureToggles.lokiSendDashboardPanelNames = featureToggleVal;
-    });
-
-    it('adds dashboard headers', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      jest.spyOn(ds, 'runQuery');
-      const query: DataQueryRequest<LokiQuery> = {
-        ...baseRequestOptions,
-        panelId: 0,
-        targets: [{ expr: '{a="b"}', refId: 'A' }],
-        app: CoreApp.Dashboard,
-      };
-
-      await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(ds.runQuery).toHaveBeenCalledWith(
-          expect.objectContaining({
-            headers: expect.objectContaining({
-              'X-Dashboard-Title': 'dashboard_title',
-              'X-Panel-Title': 'panel_title',
-            }),
-          })
-        );
       });
     });
   });

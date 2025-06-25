@@ -12,8 +12,7 @@ import {
   locationUtil,
   PanelProps,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';

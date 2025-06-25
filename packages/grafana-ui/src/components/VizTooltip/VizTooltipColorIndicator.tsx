@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
@@ -56,9 +56,11 @@ export const VizTooltipColorIndicator = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   leading: css({
     marginRight: theme.spacing(0.5),
+    flex: 'none',
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
+    flex: 'none',
   }),
   value: css({
     width: '12px',

@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
@@ -35,7 +35,7 @@ const PanelTypeCardComponent = ({
   children,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const isDisabled = disabled || plugin.state === PluginState.deprecated;
   const cssClass = cx({
     [styles.item]: true,

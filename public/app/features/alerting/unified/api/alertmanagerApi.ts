@@ -14,7 +14,7 @@ import {
   GrafanaAlertingConfiguration,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../types';
+import { NotificationChannelOption, NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
 import {
@@ -106,6 +106,25 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
     grafanaNotifiers: build.query<NotifierDTO[], void>({
       query: () => ({ url: '/api/alert-notifiers' }),
+      transformResponse: (response: NotifierDTO[]) => {
+        const populateSecureFieldKey = (
+          option: NotificationChannelOption,
+          prefix: string
+        ): NotificationChannelOption => ({
+          ...option,
+          secureFieldKey: option.secure && !option.secureFieldKey ? `${prefix}${option.propertyName}` : undefined,
+          subformOptions: option.subformOptions?.map((suboption) =>
+            populateSecureFieldKey(suboption, `${prefix}${option.propertyName}.`)
+          ),
+        });
+
+        return response.map((notifier) => ({
+          ...notifier,
+          options: notifier.options.map((option) => {
+            return populateSecureFieldKey(option, '');
+          }),
+        }));
+      },
     }),
 
     // this endpoint requires administrator privileges
