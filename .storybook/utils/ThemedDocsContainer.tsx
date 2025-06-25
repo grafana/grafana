@@ -4,8 +4,8 @@ import * as React from 'react';
 
 import { getThemeById } from '@grafana/data';
 
-import { createStorybookTheme } from '../../../.storybook/storybookTheme';
-import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
+import { createStorybookTheme } from '../storybookTheme';
+import { GlobalStyles } from '../../packages/grafana-ui/src/themes/GlobalStyles/GlobalStyles';
 
 type Props = {
   context: DocsContextProps;

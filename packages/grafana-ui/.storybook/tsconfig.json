@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "declarationDir": "dist",
-    "noUnusedLocals": false,
-    "outDir": "compiled"
-  },
-  "extends": "../tsconfig.json",
-  "include": ["../src/**/*.ts*", "../../../public/app/types/svg.d.ts"]
-}
