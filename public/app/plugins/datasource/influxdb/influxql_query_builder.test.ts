@@ -217,9 +217,7 @@ describe('influxql-query-builder', () => {
         tags: [],
         withTimeFilter: '2h',
       });
-      expect(query).toBe(
-        'SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\' AND time > now() - 2h'
-      );
+      expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE time > now() - 2h');
     });
 
     it('should add time filter if with time filter and tags', () => {
