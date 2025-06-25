@@ -58,5 +58,4 @@ describe('Dashboard edit - delete variable', () => {
         cy.get('.markdown-html').should('include.text', `VariableUnderTest: $${variable.name}`);
       });
   });
-
 });
