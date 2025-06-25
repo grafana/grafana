@@ -173,20 +173,20 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Text'];
+    const category = [t('canvas.text-item.category-text', 'Text')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.text-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.text-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -194,7 +194,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.text-item.name-align-text', 'Align text'),
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.text-item.label.left', 'Left') },
@@ -207,7 +207,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.text-item.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.text-item.label.top', 'Top') },
@@ -220,7 +220,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.text-item.name-text-size', 'Text size'),
         settings: {
           placeholder: t('canvas.text-item.placeholder.auto', 'Auto'),
         },
