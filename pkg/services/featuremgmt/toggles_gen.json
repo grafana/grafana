@@ -2348,29 +2348,32 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-02-08T12:09:34Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2024-02-08T12:09:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "New implementation for the dashboard-to-PDF rendering",
         "stage": "GA",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "newShareReportDrawer",
-        "resourceVersion": "1750056712608",
+        "resourceVersion": "1750821734038",
         "creationTimestamp": "2025-02-17T19:05:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-06-16 06:51:52.608239 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
         "stage": "preview",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -2492,13 +2495,16 @@
     {
       "metadata": {
         "name": "pdfTables",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-11-06T13:39:22Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2023-11-06T13:39:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables generating table data as PDF in reporting",
         "stage": "preview",
-        "codeowner": "@grafana/sharing-squad"
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {
@@ -2785,13 +2791,16 @@
     {
       "metadata": {
         "name": "publicDashboardsEmailSharing",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-01-03T19:45:15Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2023-01-03T19:45:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables public dashboard sharing to be restricted to only allowed emails",
         "stage": "preview",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -2799,13 +2808,16 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",
         "stage": "GA",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "true"
       }
@@ -2946,29 +2958,32 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1746651535573",
+        "resourceVersion": "1750821734038",
         "creationTimestamp": "2023-04-03T16:53:38Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
         }
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
         "stage": "preview",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true
       }
     },
     {
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-02-24T14:43:06Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2025-02-24T14:43:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
         "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
@@ -2977,13 +2992,16 @@
     {
       "metadata": {
         "name": "reportingRetries",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-08-31T07:47:47Z"
+        "resourceVersion": "1750821734038",
+        "creationTimestamp": "2023-08-31T07:47:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 03:22:14.038814 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables rendering retries for the reporting feature",
         "stage": "preview",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true
       }
     },
