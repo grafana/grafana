@@ -24,5 +24,8 @@ type RoleBindingMetadata struct {
 
 // NewRoleBindingMetadata creates a new RoleBindingMetadata object.
 func NewRoleBindingMetadata() *RoleBindingMetadata {
-	return &RoleBindingMetadata{}
+	return &RoleBindingMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

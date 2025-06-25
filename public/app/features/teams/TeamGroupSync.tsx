@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { FormEventHandler, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
@@ -167,7 +166,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 &&
           !isAdding &&
           (highlightTrial() ? (
-            <TeamSyncUpgradeContent action={{ onClick: this.onToggleAdding, text: 'Add group' }} />
+            <TeamSyncUpgradeContent
+              action={{ onClick: this.onToggleAdding, text: t('teams.team-group-sync.text.add-group', 'Add group') }}
+            />
           ) : (
             <EmptyListCTA
               onClick={this.onToggleAdding}

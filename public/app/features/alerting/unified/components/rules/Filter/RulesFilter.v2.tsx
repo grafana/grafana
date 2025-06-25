@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
   Button,
@@ -31,7 +31,7 @@ type ActiveTab = 'custom' | 'saved';
 export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
-  const { t } = useTranslate();
+
   const filterOptions = useMemo(() => {
     return (
       <PopupCard
@@ -66,7 +66,7 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
         />
       </PopupCard>
     );
-  }, [activeTab, styles.content, styles.fixTabsMargin, t]);
+  }, [activeTab, styles.content, styles.fixTabsMargin]);
 
   return (
     <Stack direction="column" gap={0}>
@@ -110,11 +110,11 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'Normal', value: 'normal' },
-            { label: 'Pending', value: 'pending' },
-            { label: 'Recovering', value: 'recovering' },
-            { label: 'Firing', value: 'firing' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.normal', 'Normal'), value: 'normal' },
+            { label: t('alerting.filter-options.label.pending', 'Pending'), value: 'pending' },
+            { label: t('alerting.filter-options.label.recovering', 'Recovering'), value: 'recovering' },
+            { label: t('alerting.filter-options.label.firing', 'Firing'), value: 'firing' },
           ]}
         />
         <Label>
@@ -123,9 +123,9 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'Alert rule', value: 'alerting' },
-            { label: 'Recording rule', value: 'recording' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.alert-rule', 'Alert rule'), value: 'alerting' },
+            { label: t('alerting.filter-options.label.recording-rule', 'Recording rule'), value: 'recording' },
           ]}
         />
         <Label>
@@ -134,10 +134,10 @@ const FilterOptions = () => {
         <RadioButtonGroup
           value={'*'}
           options={[
-            { label: 'All', value: '*' },
-            { label: 'OK', value: 'ok' },
-            { label: 'No data', value: 'no_data' },
-            { label: 'Error', value: 'error' },
+            { label: t('alerting.filter-options.label.all', 'All'), value: '*' },
+            { label: t('alerting.filter-options.label.ok', 'OK'), value: 'ok' },
+            { label: t('alerting.filter-options.label.no-data', 'No data'), value: 'no_data' },
+            { label: t('alerting.filter-options.label.error', 'Error'), value: 'error' },
           ]}
         />
       </Grid>
@@ -160,7 +160,6 @@ type TableColumns = {
 
 const SavedSearches = () => {
   const applySearch = useCallback((name: string) => {}, []);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-end">

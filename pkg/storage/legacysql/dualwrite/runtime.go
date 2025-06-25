@@ -11,8 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
@@ -22,15 +20,13 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy grafanarest.Storage
 		return nil, err
 	}
 
-	log := logging.DefaultLogger.With("gr", gr.String())
-
 	if m.enabled && status.Runtime {
 		// Dynamic storage behavior
 		return &runtimeDualWriter{
 			service:   m,
 			legacy:    legacy,
 			unified:   unified,
-			dualwrite: &dualWriter{legacy: legacy, unified: unified, log: log}, // not used for read
+			dualwrite: &dualWriter{legacy: legacy, unified: unified}, // not used for read
 			gr:        gr,
 		}, nil
 	}
@@ -38,13 +34,13 @@ func (m *service) NewStorage(gr schema.GroupResource, legacy grafanarest.Storage
 	if status.ReadUnified {
 		if status.WriteLegacy {
 			// Write both, read unified
-			return &dualWriter{legacy: legacy, unified: unified, log: log, readUnified: true}, nil
+			return &dualWriter{legacy: legacy, unified: unified, readUnified: true}, nil
 		}
 		return unified, nil
 	}
 	if status.WriteUnified {
 		// Write both, read legacy
-		return &dualWriter{legacy: legacy, unified: unified, log: log}, nil
+		return &dualWriter{legacy: legacy, unified: unified}, nil
 	}
 	return legacy, nil
 }

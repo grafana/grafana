@@ -83,10 +83,13 @@ func TestIntegrationIdentity(t *testing.T) {
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
-			{},
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"email": "admin@localhost",
+				"login": "admin"
+			},
+			{
+				"email": "admin2-1",
+				"login": "admin2-1"
 			},
 			{
 				"email": "editor-1",
@@ -111,20 +114,20 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"email": "admin2-1",
+				"login": "admin2-1"
 			},
 			{
-				"email": "admin-3",
-				"login": "admin-3"
+				"email": "admin2-2",
+				"login": "admin2-2"
 			},
 			{
-				"email": "editor-3",
-				"login": "editor-3"
+				"email": "editor-2",
+				"login": "editor-2"
 			},
 			{
-				"email": "viewer-3",
-				"login": "viewer-3"
+				"email": "viewer-2",
+				"login": "viewer-2"
 			}
 		]`, found)
 	})

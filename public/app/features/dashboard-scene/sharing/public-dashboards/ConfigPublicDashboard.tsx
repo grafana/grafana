@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -45,7 +45,7 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
         dashboard.showModal(
           new ConfirmModal({
             isOpen: true,
-            title: 'Revoke public URL',
+            title: t('dashboard-scene.config-public-dashboard.title.revoke-public-url', 'Revoke public URL'),
             icon: 'trash-alt',
             confirmText: 'Revoke public URL',
             body: (

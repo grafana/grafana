@@ -2,7 +2,7 @@ import { ChangeEvent } from 'react';
 
 import { AzureCredentials, AzureAuthType } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Select, Input } from '@grafana/ui';
 
 export interface Props {
@@ -23,7 +23,6 @@ export const AzureCredentialsForm = (props: Props) => {
     onCredentialsChange,
     disabled,
   } = props;
-  const { t } = useTranslate();
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
@@ -180,7 +179,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.tenantId || ''}
               onChange={onTenantIdChange}
@@ -197,7 +196,7 @@ export const AzureCredentialsForm = (props: Props) => {
           >
             <Input
               width={45}
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
               value={credentials.clientId || ''}
               onChange={onClientIdChange}
@@ -242,7 +241,7 @@ export const AzureCredentialsForm = (props: Props) => {
                 <Input
                   width={45}
                   aria-label={t('azureauth.azure-credentials-form.aria-label-client-secret', 'Client Secret')}
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
                   onChange={onClientSecretChange}

@@ -129,6 +129,10 @@ var _ ac.AccessControl = &recordingAccessControlFake{}
 type fakeRuleAccessControlService struct {
 }
 
+func (f *fakeRuleAccessControlService) HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
+	return true, nil
+}
+
 func (f fakeRuleAccessControlService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
 	return true, nil
 }

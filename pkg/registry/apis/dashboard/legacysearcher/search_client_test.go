@@ -44,8 +44,8 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db", // should set type based off of key
 			Sort:         sorter,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Term: "term"},
-			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2"},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder1", Tags: []string{"term"}},
+			{ID: 2, UID: "uid2", Title: "Test Dashboard2", FolderUID: "folder2", Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
@@ -121,7 +121,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(50), Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
@@ -186,7 +186,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 			Type:         "dash-db",
 			Sort:         sortOptionAsc,
 		}).Return([]dashboards.DashboardSearchProjection{
-			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2)},
+			{ID: 1, UID: "uid", Title: "Test Dashboard", FolderUID: "folder", SortMeta: int64(2), Tags: []string{}},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{
@@ -309,6 +309,38 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		}
 	})
 
+	t.Run("When searching for SEARCH_FIELD_TITLE_PHRASE, value should be set as title, and ExactMatch should be enabled", func(t *testing.T) {
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			Title:           "test",
+			TitleExactMatch: true,
+			SignedInUser:    user,      // user from context should be used
+			Type:            "dash-db", // should set type based off of key
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+						Operator: string(selection.Equals),
+						Values:   []string{"test"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+	})
+
 	t.Run("Should read labels for the dashboard ids", func(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{1, 2},
@@ -420,8 +452,12 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 	})
 
 	t.Run("Should retrieve dashboards by provisioner name through a different function", func(t *testing.T) {
-		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.Dashboard{
-			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		mockStore.On("GetProvisionedDashboardsByName", mock.Anything, "test", mock.Anything).Return([]*dashboards.DashboardProvisioningSearchResults{
+			{
+				Dashboard:   dashboards.Dashboard{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+				ExternalID:  "test",
+				Provisioner: string(utils.ManagerKindClassicFP), // nolint:staticcheck
+			},
 		}, nil).Once()
 
 		req := &resourcepb.ResourceSearchRequest{

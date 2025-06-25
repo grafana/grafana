@@ -569,10 +569,6 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 		return 0, fmt.Errorf("missing group or resource")
 	}
 
-	if req.Source != resourcepb.ListRequest_STORE {
-		return b.getHistory(ctx, req, cb)
-	}
-
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
 
 	// TODO: add support for RemainingItemCount
@@ -581,6 +577,13 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 		return b.listAtRevision(ctx, req, cb)
 	}
 	return b.listLatest(ctx, req, cb)
+}
+
+func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"ListHistory")
+	defer span.End()
+
+	return b.getHistory(ctx, req, cb)
 }
 
 // listLatest fetches the resources from the resource table.
@@ -637,7 +640,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		iter.listRV = continueToken.ResourceVersion
 		iter.offset = continueToken.StartOffset
@@ -733,11 +736,13 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	// for Unset (default) and Exact matching.
 	listReq.SortAscending = req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
 
-	iter := &listIter{}
+	iter := &listIter{
+		useCurrentRV: true, // use the current RV for the continue token instead of the listRV
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := resource.GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("get continue token: %w", err)
+			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
 		}
 		listReq.StartRV = continueToken.ResourceVersion
 		listReq.SortAscending = continueToken.SortAscending
@@ -775,7 +780,14 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 			listReq.MinRV = latestDeletedRV + 1
 		}
 
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		var rows db.Rows
+		if listReq.Trash {
+			// unlike history, trash will not return an object if an object of the same name is live
+			// (i.e. in the resource table)
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceTrash, listReq)
+		} else {
+			rows, err = dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		}
 		if rows != nil {
 			defer func() {
 				if err := rows.Close(); err != nil {
