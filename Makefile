@@ -1,6 +1,7 @@
 ## This is a self-documented Makefile. For usage information, run `make help`:
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
+# test
 
 WIRE_TAGS = "oss"
 
