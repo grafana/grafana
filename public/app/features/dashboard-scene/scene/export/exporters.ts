@@ -9,6 +9,7 @@ import {
   AnnotationQueryKind,
   QueryVariableKind,
   LibraryPanelRef,
+  LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -20,8 +21,6 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
-
-import { removePanelRefFromLayout } from './utils';
 
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
@@ -331,7 +330,111 @@ export async function makeExportableV1(dashboard: DashboardModel) {
   }
 }
 
-export async function makeExportableV2(dashboard: DashboardV2Spec) {
+/**
+ * Converts a LibraryPanelKind to a PanelKind with embedded panel configuration
+ */
+async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPanelKind): Promise<PanelKind> {
+  const { libraryPanel, id, title } = libraryPanelElement.spec;
+
+  try {
+    // Load the full library panel definition
+    const fullLibraryPanel = await getLibraryPanel(libraryPanel.uid, true);
+    const panelModel = fullLibraryPanel.model;
+
+    // Convert the library panel model to V2 PanelKind format
+    const inlinePanel: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        id,
+        title: title || panelModel.title || libraryPanel.name,
+        description: panelModel.description || '',
+        links: (panelModel.links || [])
+          .filter((link: any) => link.url)
+          .map((link: any) => ({
+            ...link,
+            url: link.url as string,
+          })),
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries:
+              panelModel.targets?.map((target: any, index: number) => ({
+                kind: 'PanelQuery',
+                spec: {
+                  query: {
+                    kind: target.queryType || 'grafana',
+                    spec: target,
+                  },
+                  datasource: target.datasource,
+                  refId: target.refId || String.fromCharCode(65 + index), // A, B, C...
+                  hidden: target.hide || false,
+                },
+              })) || [],
+            transformations:
+              panelModel.transformations?.map((transform: any) => ({
+                kind: 'Transformation',
+                spec: transform,
+              })) || [],
+            queryOptions: {
+              maxDataPoints: panelModel.maxDataPoints,
+              interval: panelModel.interval,
+              timeFrom: panelModel.timeFrom,
+              timeShift: panelModel.timeShift,
+              hideTimeOverride: panelModel.hideTimeOverride,
+            },
+          },
+        },
+        vizConfig: {
+          kind: panelModel.type || 'text',
+          spec: {
+            pluginVersion: panelModel.pluginVersion || '',
+            options: panelModel.options || {},
+            fieldConfig: panelModel.fieldConfig
+              ? JSON.parse(JSON.stringify(panelModel.fieldConfig))
+              : { defaults: {}, overrides: [] },
+          },
+        },
+        transparent: panelModel.transparent,
+      },
+    };
+
+    return inlinePanel;
+  } catch (error) {
+    console.error(`Failed to load library panel ${libraryPanel.uid}:`, error);
+
+    // Return a placeholder panel if library panel can't be loaded
+    return {
+      kind: 'Panel',
+      spec: {
+        id,
+        title: title || `Library Panel: ${libraryPanel.name}`,
+        description: '',
+        links: [],
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [],
+            transformations: [],
+            queryOptions: {},
+          },
+        },
+        vizConfig: {
+          kind: 'text',
+          spec: {
+            pluginVersion: '',
+            options: {
+              content: `**Library Panel Load Error**\n\nUnable to load library panel: ${libraryPanel.name} (${libraryPanel.uid})\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              mode: 'markdown',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+          },
+        },
+      },
+    };
+  }
+}
+
+export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
   const variableLookup: { [key: string]: any } = {};
 
   // get all datasource variables
@@ -367,17 +470,26 @@ export async function makeExportableV2(dashboard: DashboardV2Spec) {
 
   try {
     const elements = dashboard.elements;
-    const layout = dashboard.layout;
 
     // process elements
     for (const [key, element] of Object.entries(elements)) {
       if (element.kind === 'Panel') {
         processPanel(element);
       } else if (element.kind === 'LibraryPanel') {
-        // just remove the library panel
-        delete elements[key];
-        // remove reference from layout
-        removePanelRefFromLayout(layout, key);
+        if (isSharingExternally) {
+          // Convert library panel to inline panel for external sharing
+          try {
+            const inlinePanel = await convertLibraryPanelToInlinePanel(element);
+            // Apply datasource templating to the converted panel
+            processPanel(inlinePanel);
+            // Replace the library panel with the inline panel
+            elements[key] = inlinePanel;
+          } catch (error) {
+            console.error(`Failed to convert library panel ${key}:`, error);
+            // Keep the library panel reference if conversion fails
+          }
+        }
+        // For internal exports, keep library panels as-is
       }
     }
 
