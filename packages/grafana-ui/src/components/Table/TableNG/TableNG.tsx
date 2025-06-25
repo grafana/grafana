@@ -447,7 +447,7 @@ export function TableNG(props: TableNGProps) {
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const structureRevColumns = useMemo(() => [...columns], [columns, structureRev]);
+  const structureRevColumns = useMemo(() => columns, [columns, structureRev]);
 
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
