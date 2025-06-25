@@ -32,6 +32,9 @@ func AddCustomDataLink(frame data.Frame, dataLink data.DataLink, singleField boo
 	return frame
 }
 
+const SingleField bool = true
+const MultiField bool = false
+
 func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	linkTitle := "View query in Azure Portal"
 	if title != nil {
@@ -44,7 +47,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 		URL:         dl,
 	}
 
-	frame = AddCustomDataLink(frame, deepLink, false)
+	frame = AddCustomDataLink(frame, deepLink, MultiField)
 
 	return frame
 }
