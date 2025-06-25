@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "",
         "label-allow-as-recording-rules-target": "",
+        "label-manage-alerts-via-alerting-ui": "",
         "title-alerting": "Uyarı sistemi",
-        "tooltip-manage-alerts-via-alerting-ui": "Bu veri kaynağı için uyarı kurallarını yönetin. Diğer Alerting kaynaklarını yönetmek için bir Alertmanager veri kaynağı ekleyin.",
-        "tooltip-allow-as-recording-rules-target": ""
+        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-manage-alerts-via-alerting-ui": "Bu veri kaynağı için uyarı kurallarını yönetin. Diğer Alerting kaynaklarını yönetmek için bir Alertmanager veri kaynağı ekleyin."
       },
       "config-editor": {
         "browser-access-mode-error": "",
@@ -170,6 +170,7 @@
         "label-query-overlap-window": "",
         "label-query-timeout": "",
         "label-scrape-interval": "",
+        "label-series-limit": "",
         "label-use-series-endpoint": "",
         "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "",
@@ -190,6 +191,7 @@
         "tooltip-query-overlap-window": "",
         "tooltip-query-timeout": "",
         "tooltip-scrape-interval": "",
+        "tooltip-series-limit": "",
         "tooltip-use-series-endpoint": ""
       }
     },
