@@ -2486,14 +2486,17 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1750434297879",
+        "resourceVersion": "1750876431546",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-25 18:33:51.546111 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "privatePreview",
+        "codeowner": "@grafana/sharing-squad"
       }
     },
     {
