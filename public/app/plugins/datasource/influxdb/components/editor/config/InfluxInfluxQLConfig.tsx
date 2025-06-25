@@ -50,6 +50,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>Database</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-db`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-db`}
@@ -72,6 +73,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>User</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-user`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-user`}
@@ -84,6 +86,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         horizontal
         label={<InlineLabel width={WIDTH_SHORT}>Password</InlineLabel>}
         className={styles.horizontalField}
+        noMargin
       >
         <SecretInput
           isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
@@ -109,6 +112,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         }
         htmlFor={`${htmlPrefix}-http-method`}
         className={styles.horizontalField}
+        noMargin
       >
         <Select
           inputId={`${htmlPrefix}-http-method`}
@@ -131,6 +135,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           </InlineLabel>
         }
         className={styles.horizontalField}
+        noMargin
       >
         <Input
           className="width-20"
@@ -151,6 +156,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           </InlineLabel>
         }
         className={styles.horizontalField}
+        noMargin
       >
         <Input
           className="width-20"
