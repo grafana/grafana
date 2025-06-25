@@ -122,12 +122,7 @@ const LogDetailsComponent = ({
             <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
           </ControlledCollapse>
         ) : (
-          <ControlledCollapse
-            key={group}
-            label={t('logs.log-line-details.fields-section', 'Fields')}
-            collapsible
-            isOpen={true}
-          >
+          <ControlledCollapse key={group} label={group} collapsible isOpen={true}>
             <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
           </ControlledCollapse>
         )
