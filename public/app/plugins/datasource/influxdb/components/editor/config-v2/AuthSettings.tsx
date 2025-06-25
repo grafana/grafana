@@ -113,7 +113,7 @@ export const AuthSettings = (props: Props) => {
   const toggleOption = useCallback((key: keyof AuthOptionState, onToggle: (value: boolean) => void) => {
     setAuthOptions((prev) => {
       const nextValue = !prev[key];
-      const next = { ...prev, [key]: nextValue } as AuthOptionState;
+      const next = { ...prev, [key]: nextValue };
       onToggle(nextValue);
       return next;
     });
