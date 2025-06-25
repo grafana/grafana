@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -75,6 +76,8 @@ type Identity struct {
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
+	// ExternalUID is the unique identifier for the entity in the external system.
+	ExternalUID string
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]

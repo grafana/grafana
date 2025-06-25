@@ -47,15 +47,21 @@ composableKinds: DataQuery: {
 					// Defines the maximum number of spans per spanset that are returned from Tempo
 					spss?: int64
 					filters: [...#TraceqlFilter]
-					// Filters that are used to query the metrics summary
+					// deprecated Filters that are used to query the metrics summary	
 					groupBy?: [...#TraceqlFilter]
 					// The type of the table that is used to display the search results
 					tableType?: #SearchTableType
 					// For metric queries, the step size to use
 					step?: string
+					// For metric queries, how many exemplars to request, 0 means no exemplars
+					exemplars?: int64
+					// For metric queries, whether to run instant or range queries
+					metricsQueryType?: #MetricsQueryType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+
+				#MetricsQueryType: "range" | "instant" @cuetsy(kind="enum")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
@@ -78,6 +84,8 @@ composableKinds: DataQuery: {
 					valueType?: string
 					// The scope of the filter, can either be unscoped/all scopes, resource or span
 					scope?: #TraceqlSearchScope
+					// Whether the value is a custom value typed by the user
+					isCustomValue?: bool
 				} @cuetsy(kind="interface")
 			}
 		}]

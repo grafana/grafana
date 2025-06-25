@@ -5,13 +5,13 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	apisservicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	versioned "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/grafana/grafana/pkg/generated/informers/externalversions/internalinterfaces"
-	v0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/listers/service/v0alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -22,7 +22,7 @@ import (
 // ExternalNames.
 type ExternalNameInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v0alpha1.ExternalNameLister
+	Lister() servicev0alpha1.ExternalNameLister
 }
 
 type externalNameInformer struct {
@@ -48,16 +48,28 @@ func NewFilteredExternalNameInformer(client versioned.Interface, namespace strin
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ServiceV0alpha1().ExternalNames(namespace).List(context.TODO(), options)
+				return client.ServiceV0alpha1().ExternalNames(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(context.TODO(), options)
+				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ServiceV0alpha1().ExternalNames(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ServiceV0alpha1().ExternalNames(namespace).Watch(ctx, options)
 			},
 		},
-		&servicev0alpha1.ExternalName{},
+		&apisservicev0alpha1.ExternalName{},
 		resyncPeriod,
 		indexers,
 	)
@@ -68,9 +80,9 @@ func (f *externalNameInformer) defaultInformer(client versioned.Interface, resyn
 }
 
 func (f *externalNameInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&servicev0alpha1.ExternalName{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisservicev0alpha1.ExternalName{}, f.defaultInformer)
 }
 
-func (f *externalNameInformer) Lister() v0alpha1.ExternalNameLister {
-	return v0alpha1.NewExternalNameLister(f.Informer().GetIndexer())
+func (f *externalNameInformer) Lister() servicev0alpha1.ExternalNameLister {
+	return servicev0alpha1.NewExternalNameLister(f.Informer().GetIndexer())
 }

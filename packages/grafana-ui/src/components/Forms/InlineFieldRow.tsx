@@ -3,7 +3,7 @@ import { HTMLProps, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'css'> {
   children: ReactNode | ReactNode[];
@@ -27,7 +27,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       alignContent: 'flex-start',
       rowGap: theme.spacing(0.5),
-      maxWidth: '100%',
     }),
   };
 };

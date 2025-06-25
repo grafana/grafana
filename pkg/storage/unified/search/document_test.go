@@ -1,4 +1,4 @@
-package search
+package search_test
 
 import (
 	"context"
@@ -13,9 +13,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
-func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string, key *resource.ResourceKey, names []string) {
+func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string, key *resourcepb.ResourceKey, names []string) {
 	t.Helper()
 
 	for _, name := range names {
@@ -46,22 +48,22 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 }
 
 func TestDashboardDocumentBuilder(t *testing.T) {
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 
-	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &DashboardDocumentBuilder{
+	info, err := search.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &search.DashboardDocumentBuilder{
 			Namespace: namespace,
 			Blob:      blob,
-			Stats: NewDashboardStatsLookup(map[string]map[string]int64{
+			Stats: map[string]map[string]int64{
 				"aaa": {
-					DASHBOARD_ERRORS_LAST_1_DAYS: 1,
-					DASHBOARD_ERRORS_LAST_7_DAYS: 1,
+					search.DASHBOARD_ERRORS_LAST_1_DAYS: 1,
+					search.DASHBOARD_ERRORS_LAST_7_DAYS: 1,
 				},
-			}),
+			},
 			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{
 				Name: "TheDisplayName", // used to be the unique ID!
 				Type: "my-custom-plugin",
@@ -81,14 +83,26 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 
 	// Standard
 	builder = resource.StandardDocumentBuilder()
-	doSnapshotTests(t, builder, "folder", key, []string{
+	doSnapshotTests(t, builder, "folder", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+	}, []string{
 		"aaa",
 		"bbb",
 	})
-	doSnapshotTests(t, builder, "playlist", key, []string{
+	doSnapshotTests(t, builder, "playlist", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+	}, []string{
 		"aaa",
 	})
-	doSnapshotTests(t, builder, "report", key, []string{
+	doSnapshotTests(t, builder, "report", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "reporting.grafana.app",
+		Resource:  "reports",
+	}, []string{
 		"aaa",
 	})
 }

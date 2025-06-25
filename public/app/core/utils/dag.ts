@@ -252,7 +252,7 @@ export class Graph {
     return new Edge();
   }
 
-  getNode(name: string): Node {
+  getNode(name: string): Node | undefined {
     return this.nodes[name];
   }
 }

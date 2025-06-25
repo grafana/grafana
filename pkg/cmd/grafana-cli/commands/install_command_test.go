@@ -106,7 +106,8 @@ func TestValidatePluginRepoConfig(t *testing.T) {
 			t.Skip("skipping integration test")
 		}
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			GrafanaComAPIURL: "https://grafana-dev.com",
+			GrafanaComAPIURL:      "https://grafana-dev.com",
+			GrafanaComSSOAPIToken: "token3",
 		})
 
 		c, err := commandstest.NewCliContext(map[string]string{
@@ -116,6 +117,9 @@ func TestValidatePluginRepoConfig(t *testing.T) {
 		require.NoError(t, err)
 		repoURL := c.PluginRepoURL()
 		require.Equal(t, "https://grafana-dev.com/plugins", repoURL)
+
+		token := c.GcomToken()
+		require.Equal(t, "token3", token)
 	})
 
 	t.Run("Should use config overrides parameter if it is set alongside config parameter", func(t *testing.T) {

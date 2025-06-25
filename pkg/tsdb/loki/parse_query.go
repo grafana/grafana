@@ -77,7 +77,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 		case "range":
 			return QueryTypeRange, nil
 		default:
-			return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
+			return QueryTypeRange, backend.DownstreamError(fmt.Errorf("invalid queryType: %s", jsonValue))
 		}
 	}
 }
@@ -97,7 +97,7 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 		case "scan":
 			return DirectionBackward, nil
 		default:
-			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
+			return DirectionBackward, backend.DownstreamError(fmt.Errorf("invalid queryDirection: %s", jsonValue))
 		}
 	}
 }
@@ -154,7 +154,7 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			return nil, err
 		}
 
-		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
+		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -196,13 +196,4 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 	}
 
 	return qs, nil
-}
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
 }

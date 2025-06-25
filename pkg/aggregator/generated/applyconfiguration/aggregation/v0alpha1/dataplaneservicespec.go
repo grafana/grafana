@@ -5,17 +5,17 @@
 package v0alpha1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 )
 
 // DataPlaneServiceSpecApplyConfiguration represents a declarative configuration of the DataPlaneServiceSpec type for use
 // with apply.
 type DataPlaneServiceSpecApplyConfiguration struct {
-	PluginID   *string                     `json:"pluginID,omitempty"`
-	PluginType *v0alpha1.PluginType        `json:"pluginType,omitempty"`
-	Group      *string                     `json:"group,omitempty"`
-	Version    *string                     `json:"version,omitempty"`
-	Services   []ServiceApplyConfiguration `json:"services,omitempty"`
+	PluginID   *string                         `json:"pluginID,omitempty"`
+	PluginType *aggregationv0alpha1.PluginType `json:"pluginType,omitempty"`
+	Group      *string                         `json:"group,omitempty"`
+	Version    *string                         `json:"version,omitempty"`
+	Services   []ServiceApplyConfiguration     `json:"services,omitempty"`
 }
 
 // DataPlaneServiceSpecApplyConfiguration constructs a declarative configuration of the DataPlaneServiceSpec type for use with
@@ -35,7 +35,7 @@ func (b *DataPlaneServiceSpecApplyConfiguration) WithPluginID(value string) *Dat
 // WithPluginType sets the PluginType field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the PluginType field is set to the value of the last call.
-func (b *DataPlaneServiceSpecApplyConfiguration) WithPluginType(value v0alpha1.PluginType) *DataPlaneServiceSpecApplyConfiguration {
+func (b *DataPlaneServiceSpecApplyConfiguration) WithPluginType(value aggregationv0alpha1.PluginType) *DataPlaneServiceSpecApplyConfiguration {
 	b.PluginType = &value
 	return b
 }

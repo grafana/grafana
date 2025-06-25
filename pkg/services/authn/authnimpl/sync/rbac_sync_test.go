@@ -2,11 +2,13 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +17,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	permreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authn"
+	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -364,6 +367,190 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 	}
 }
 
+func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
+	type testCase struct {
+		desc           string
+		identityType   claims.IdentityType
+		loginErr       error
+		expectedCalled bool
+	}
+
+	tests := []testCase{
+		{
+			desc:           "should clear the permission cache when the user logged in successfully",
+			identityType:   claims.TypeUser,
+			loginErr:       nil,
+			expectedCalled: true,
+		},
+		{
+			desc:           "should skip clearing the permission cache when the user failed to log in",
+			identityType:   claims.TypeUser,
+			loginErr:       errors.New("failed to log in"),
+			expectedCalled: false,
+		},
+		{
+			desc:           "should skip clearing the permission cache when the identity is not a user",
+			identityType:   claims.TypeServiceAccount,
+			loginErr:       nil,
+			expectedCalled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var called bool
+			s := &RBACSync{
+				ac: &acmock.Mock{
+					ClearUserPermissionCacheFunc: func(_ identity.Requester) {
+						called = true
+					},
+				},
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
+			}
+			identity := &authn.Identity{
+				ID:       "1",
+				Type:     tt.identityType,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			}
+			req := &authn.Request{}
+
+			s.ClearUserPermissionCacheHook(context.Background(), identity, req, tt.loginErr)
+			assert.Equal(t, tt.expectedCalled, called)
+		})
+	}
+}
+
+func TestRBACSync_translateK8sPermissions(t *testing.T) {
+	type testCase struct {
+		name          string
+		k8sPerms      []string
+		expectedPerms []accesscontrol.Permission
+		expectedError error
+	}
+
+	tests := []testCase{
+		{
+			name: "should translate folder.grafana.app/folders:get to folders:read",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should translate resource with wildcard verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:write", Scope: "folders:uid:*"},
+				{Action: "folders:delete", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:read", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:write", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle invalid permission format",
+			k8sPerms: []string{
+				"invalid-format",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown resource",
+			k8sPerms: []string{
+				"folder.grafana.app/unknown:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folders:unknown",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle group:verb format",
+			k8sPerms: []string{
+				"folder.grafana.app:get",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle group:* format",
+			k8sPerms: []string{
+				"folder.grafana.app:*",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:write", Scope: "folders:uid:*"},
+				{Action: "folders:delete", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:read", Scope: "folders:uid:*"},
+				{Action: "folders.permissions:write", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown group in group:verb format",
+			k8sPerms: []string{
+				"unknown.grafana.app:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle unknown verb in group:verb format",
+			k8sPerms: []string{
+				"folder.grafana.app:unknownverb",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+			expectedError: nil,
+		},
+		{
+			name: "should handle multiple group:verb permissions",
+			k8sPerms: []string{
+				"folder.grafana.app:get",
+				"folder.grafana.app:create",
+			},
+			expectedPerms: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:*"},
+				{Action: "folders:create", Scope: "folders:uid:*"},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "should skip invalid permissions group/resource/additional/part:verb",
+			k8sPerms: []string{
+				"folder.grafana.app/folder/fold1/subresource:get",
+			},
+			expectedPerms: []accesscontrol.Permission{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setupTestEnv(t)
+			perms := s.translateK8sPermissions(context.Background(), tt.k8sPerms)
+			assert.ElementsMatch(t, tt.expectedPerms, perms)
+		})
+	}
+}
+
 func setupTestEnv(t *testing.T) *RBACSync {
 	acMock := &acmock.Mock{
 		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -389,11 +576,19 @@ func setupTestEnv(t *testing.T) *RBACSync {
 		},
 	}
 	permRegistry := permreg.ProvidePermissionRegistry(t)
+
+	require.NoError(t, permRegistry.RegisterPermission("folders:write", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders:create", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders:delete", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:read", "folders:uid:"))
+	require.NoError(t, permRegistry.RegisterPermission("folders.permissions:write", "folders:uid:"))
+
 	s := &RBACSync{
 		ac:           acMock,
 		log:          log.NewNopLogger(),
 		tracer:       tracing.InitializeTracerForTest(),
 		permRegistry: permRegistry,
+		mapper:       rbac.NewMapperRegistry(),
 	}
 	return s
 }

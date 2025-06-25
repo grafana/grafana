@@ -18,6 +18,7 @@ import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -41,10 +42,6 @@ export type TracePageHeaderProps = {
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  showSpanFilterMatchesOnly: boolean;
-  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  showCriticalPathSpansOnly: boolean;
-  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -61,10 +58,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setShowSpanFilters,
-    showSpanFilterMatchesOnly,
-    setShowSpanFilterMatchesOnly,
-    showCriticalPathSpansOnly,
-    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -121,7 +114,18 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const urlTooltip = (url: string) => {
     return (
       <>
-        <div>http.url or http.target or http.path</div>
+        <div>
+          <Trans
+            i18nKey="explore.trace-page-header.tooltip-url"
+            values={{
+              url: 'http.url',
+              target: 'http.target',
+              path: 'http.path',
+            }}
+          >
+            {'{{url}}'} or {'{{target}}'} or {'{{path}}'}
+          </Trans>
+        </div>
         <div>({url})</div>
       </>
     );
@@ -141,19 +145,31 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           {data.meta?.custom?.partial && (
             <Tooltip content={data.meta?.custom?.message} interactive={true}>
               <span className={styles.tag}>
-                <Badge icon={'info-circle'} text={'Partial trace'} color={'orange'} />
+                <Badge
+                  icon={'info-circle'}
+                  text={t('explore.trace-page-header.text-partial-trace', 'Partial trace')}
+                  color={'orange'}
+                />
               </span>
             </Tooltip>
           )}
           {method && method.length > 0 && (
-            <Tooltip content={'http.method'} interactive={true}>
+            <Tooltip
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              content="http.method"
+              interactive={true}
+            >
               <span className={styles.tag}>
                 <Badge text={method[0].value} color="blue" />
               </span>
             </Tooltip>
           )}
           {status && status.length > 0 && (
-            <Tooltip content={'http.status_code'} interactive={true}>
+            <Tooltip
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              content="http.status_code"
+              interactive={true}
+            >
               <span className={styles.tag}>
                 <Badge text={status[0].value} color={statusColor} />
               </span>
@@ -171,10 +187,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         trace={trace}
         showSpanFilters={showSpanFilters}
         setShowSpanFilters={setShowSpanFilters}
-        showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-        setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-        showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-        setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
         search={search}
         setSearch={setSearch}
         spanFilterMatches={spanFilterMatches}

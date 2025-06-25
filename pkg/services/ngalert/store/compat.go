@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -17,22 +18,29 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 	}
 
 	result := models.AlertRule{
-		ID:              ar.ID,
-		OrgID:           ar.OrgID,
-		Title:           ar.Title,
-		Condition:       ar.Condition,
-		Data:            data,
-		Updated:         ar.Updated,
-		IntervalSeconds: ar.IntervalSeconds,
-		Version:         ar.Version,
-		UID:             ar.UID,
-		NamespaceUID:    ar.NamespaceUID,
-		DashboardUID:    ar.DashboardUID,
-		PanelID:         ar.PanelID,
-		RuleGroup:       ar.RuleGroup,
-		RuleGroupIndex:  ar.RuleGroupIndex,
-		For:             ar.For,
-		IsPaused:        ar.IsPaused,
+		ID:                          ar.ID,
+		OrgID:                       ar.OrgID,
+		GUID:                        ar.GUID,
+		Title:                       ar.Title,
+		Condition:                   ar.Condition,
+		Data:                        data,
+		Updated:                     ar.Updated,
+		IntervalSeconds:             ar.IntervalSeconds,
+		Version:                     ar.Version,
+		UID:                         ar.UID,
+		NamespaceUID:                ar.NamespaceUID,
+		DashboardUID:                ar.DashboardUID,
+		PanelID:                     ar.PanelID,
+		RuleGroup:                   ar.RuleGroup,
+		RuleGroupIndex:              ar.RuleGroupIndex,
+		For:                         ar.For,
+		KeepFiringFor:               ar.KeepFiringFor,
+		IsPaused:                    ar.IsPaused,
+		MissingSeriesEvalsToResolve: ar.MissingSeriesEvalsToResolve,
+	}
+
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
 	}
 
 	if ar.NoDataState != "" {
@@ -101,23 +109,30 @@ func parseNotificationSettings(s string) ([]models.NotificationSettings, error) 
 
 func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 	result := alertRule{
-		ID:              ar.ID,
-		OrgID:           ar.OrgID,
-		Title:           ar.Title,
-		Condition:       ar.Condition,
-		Updated:         ar.Updated,
-		IntervalSeconds: ar.IntervalSeconds,
-		Version:         ar.Version,
-		UID:             ar.UID,
-		NamespaceUID:    ar.NamespaceUID,
-		DashboardUID:    ar.DashboardUID,
-		PanelID:         ar.PanelID,
-		RuleGroup:       ar.RuleGroup,
-		RuleGroupIndex:  ar.RuleGroupIndex,
-		NoDataState:     ar.NoDataState.String(),
-		ExecErrState:    ar.ExecErrState.String(),
-		For:             ar.For,
-		IsPaused:        ar.IsPaused,
+		ID:                          ar.ID,
+		GUID:                        ar.GUID,
+		OrgID:                       ar.OrgID,
+		Title:                       ar.Title,
+		Condition:                   ar.Condition,
+		Updated:                     ar.Updated,
+		IntervalSeconds:             ar.IntervalSeconds,
+		Version:                     ar.Version,
+		UID:                         ar.UID,
+		NamespaceUID:                ar.NamespaceUID,
+		DashboardUID:                ar.DashboardUID,
+		PanelID:                     ar.PanelID,
+		RuleGroup:                   ar.RuleGroup,
+		RuleGroupIndex:              ar.RuleGroupIndex,
+		NoDataState:                 ar.NoDataState.String(),
+		ExecErrState:                ar.ExecErrState.String(),
+		For:                         ar.For,
+		KeepFiringFor:               ar.KeepFiringFor,
+		IsPaused:                    ar.IsPaused,
+		MissingSeriesEvalsToResolve: ar.MissingSeriesEvalsToResolve,
+	}
+
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(string(*ar.UpdatedBy))
 	}
 
 	// Serialize complex types to JSON strings
@@ -170,27 +185,65 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 
 func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 	return alertRuleVersion{
-		RuleOrgID:            rule.OrgID,
-		RuleUID:              rule.UID,
-		RuleNamespaceUID:     rule.NamespaceUID,
-		RuleGroup:            rule.RuleGroup,
-		RuleGroupIndex:       rule.RuleGroupIndex,
-		ParentVersion:        0,
-		RestoredFrom:         0,
-		Version:              rule.Version,
-		Created:              rule.Updated, // assuming the Updated time as the creation time
-		Title:                rule.Title,
-		Condition:            rule.Condition,
-		Data:                 rule.Data,
-		IntervalSeconds:      rule.IntervalSeconds,
-		Record:               rule.Record,
-		NoDataState:          rule.NoDataState,
-		ExecErrState:         rule.ExecErrState,
-		For:                  rule.For,
-		Annotations:          rule.Annotations,
-		Labels:               rule.Labels,
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: rule.NotificationSettings,
-		Metadata:             rule.Metadata,
+		RuleOrgID:                   rule.OrgID,
+		RuleGUID:                    rule.GUID,
+		RuleUID:                     rule.UID,
+		RuleNamespaceUID:            rule.NamespaceUID,
+		RuleGroup:                   rule.RuleGroup,
+		RuleGroupIndex:              rule.RuleGroupIndex,
+		ParentVersion:               0,
+		RestoredFrom:                0,
+		Version:                     rule.Version,
+		Created:                     rule.Updated, // assuming the Updated time as the creation time
+		CreatedBy:                   rule.UpdatedBy,
+		Title:                       rule.Title,
+		Condition:                   rule.Condition,
+		Data:                        rule.Data,
+		IntervalSeconds:             rule.IntervalSeconds,
+		Record:                      rule.Record,
+		NoDataState:                 rule.NoDataState,
+		ExecErrState:                rule.ExecErrState,
+		For:                         rule.For,
+		KeepFiringFor:               rule.KeepFiringFor,
+		Annotations:                 rule.Annotations,
+		Labels:                      rule.Labels,
+		IsPaused:                    rule.IsPaused,
+		NotificationSettings:        rule.NotificationSettings,
+		Metadata:                    rule.Metadata,
+		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
+	}
+}
+
+func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
+	return alertRule{
+		ID:              version.ID,
+		GUID:            version.RuleGUID,
+		OrgID:           version.RuleOrgID,
+		Title:           version.Title,
+		Condition:       version.Condition,
+		Data:            version.Data,
+		Updated:         version.Created,
+		UpdatedBy:       version.CreatedBy,
+		IntervalSeconds: version.IntervalSeconds,
+		Version:         version.Version,
+		UID:             version.RuleUID,
+		NamespaceUID:    version.RuleNamespaceUID,
+		// Versions do not store Dashboard\Panel as separate column.
+		// However, these fields are part of annotations and information in these fields is redundant
+		DashboardUID:                nil,
+		PanelID:                     nil,
+		RuleGroup:                   version.RuleGroup,
+		RuleGroupIndex:              version.RuleGroupIndex,
+		Record:                      version.Record,
+		NoDataState:                 version.NoDataState,
+		ExecErrState:                version.ExecErrState,
+		For:                         version.For,
+		KeepFiringFor:               version.KeepFiringFor,
+		Annotations:                 version.Annotations,
+		Labels:                      version.Labels,
+		IsPaused:                    version.IsPaused,
+		NotificationSettings:        version.NotificationSettings,
+		Metadata:                    version.Metadata,
+		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}
 }

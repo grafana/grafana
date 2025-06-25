@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -273,6 +272,14 @@ func (r *FakePluginRepo) PluginVersion(ctx context.Context, pluginID, version st
 	return repo.VersionData{}, nil
 }
 
+func (r *FakePluginRepo) PluginInfo(ctx context.Context, pluginID string, compatOpts repo.CompatOpts) (*repo.PluginInfo, error) {
+	return &repo.PluginInfo{}, nil
+}
+
+func (r *FakePluginRepo) GetPluginsInfo(ctx context.Context, options repo.GetPluginsInfoOptions, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+	return []repo.PluginInfo{}, nil
+}
+
 type fakeTracerProvider struct {
 	noop.TracerProvider
 }
@@ -473,7 +480,7 @@ func (s *FakeSourceRegistry) List(ctx context.Context) []plugins.PluginSource {
 
 type FakePluginSource struct {
 	PluginClassFunc      func(ctx context.Context) plugins.Class
-	PluginURIsFunc       func(ctx context.Context) []string
+	DiscoverFunc         func(ctx context.Context) ([]*plugins.FoundBundle, error)
 	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
 }
 
@@ -484,14 +491,14 @@ func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
 	return ""
 }
 
-func (s *FakePluginSource) PluginURIs(ctx context.Context) []string {
-	if s.PluginURIsFunc != nil {
-		return s.PluginURIsFunc(ctx)
+func (s *FakePluginSource) Discover(ctx context.Context) ([]*plugins.FoundBundle, error) {
+	if s.DiscoverFunc != nil {
+		return s.DiscoverFunc(ctx)
 	}
-	return []string{}
+	return []*plugins.FoundBundle{}, nil
 }
 
-func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signature, bool) {
+func (s *FakePluginSource) DefaultSignature(ctx context.Context, _ string) (plugins.Signature, bool) {
 	if s.DefaultSignatureFunc != nil {
 		return s.DefaultSignatureFunc(ctx)
 	}
@@ -517,7 +524,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType string, svc *auth.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 

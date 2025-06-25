@@ -1,20 +1,24 @@
-import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, LanguageProvider, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import {
+  filterToQuerySection,
   getAllTags,
   getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
-  scopeHelper,
-  tagHelper,
-  valueHelper,
 } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
-import { intrinsicsV1 } from './traceql/traceql';
+import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
+
+// Limit maximum tags retrieved from the backend
+export const TAGS_LIMIT = 5000;
+
+// Limit maximum options in select dropdowns
+export const OPTIONS_LIMIT = 1000;
 
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
@@ -42,10 +46,14 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  getTagsLimit = () => {
+    return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
+  };
+
   async fetchTags() {
     let v1Resp, v2Resp;
     try {
-      v2Resp = await this.request('/api/v2/search/tags', []);
+      v2Resp = await this.request('/api/v2/search/tags', { limit: this.getTagsLimit() });
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -84,18 +92,6 @@ export default class TempoLanguageProvider extends LanguageProvider {
       if (!this.tagsV1.find((t) => t === 'status')) {
         this.tagsV1.push('status');
       }
-      return this.tagsV1;
-    }
-    return [];
-  };
-
-  getMetricsSummaryTags = (scope?: TraceqlSearchScope) => {
-    if (this.tagsV2 && scope) {
-      if (scope === TraceqlSearchScope.Unscoped) {
-        return getUnscopedTags(this.tagsV2);
-      }
-      return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
       return this.tagsV1;
     }
     return [];
@@ -152,7 +148,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     const encodedTag = this.encodeTag(tag);
     const response = await this.request(
       `/api/v2/search/tag/${encodedTag}/values`,
-      query ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe) } : {}
+      query
+        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: this.getTagsLimit() }
+        : { limit: this.getTagsLimit() }
     );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
@@ -181,14 +179,48 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return encodeURIComponent(encodeURIComponent(tag));
   };
 
-  generateQueryFromFilters(filters: TraceqlFilter[]) {
+  generateQueryFromFilters({
+    traceqlFilters,
+    adhocFilters,
+  }: {
+    traceqlFilters?: TraceqlFilter[];
+    adhocFilters?: AdHocVariableFilter[];
+  }) {
+    if (!traceqlFilters && !adhocFilters) {
+      return '';
+    }
+
+    const allFilters = [
+      ...this.generateQueryFromTraceQlFilters(traceqlFilters || []),
+      ...this.generateQueryFromAdHocFilters(adhocFilters || []),
+    ];
+
+    return `{${allFilters.join(' && ')}}`;
+  }
+
+  private generateQueryFromTraceQlFilters(filters: TraceqlFilter[]) {
     if (!filters) {
       return '';
     }
 
-    return `{${filters
+    return filters
       .filter((f) => f.tag && f.operator && f.value?.length)
-      .map((f) => `${scopeHelper(f, this)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
-      .join(' && ')}}`;
+      .map((f) => filterToQuerySection(f, filters, this));
   }
+
+  private generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
+    return filters
+      .filter((f) => f.key && f.operator && f.value)
+      .map((f) => `${f.key}${f.operator}${this.adHocValueHelper(f)}`);
+  };
+
+  adHocValueHelper = (f: AdHocVariableFilter) => {
+    if (this.getIntrinsics().find((t) => t === f.key) && enumIntrinsics.includes(f.key)) {
+      return f.value;
+    }
+    if (parseInt(f.value, 10).toString() === f.value) {
+      return f.value;
+    }
+    return `"${f.value}"`;
+  };
 }

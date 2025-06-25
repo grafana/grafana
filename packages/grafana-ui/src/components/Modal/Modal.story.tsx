@@ -3,11 +3,13 @@ import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import { useState } from 'react';
 
-import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { getAvailableIcons } from '../../types/icon';
+import { Button } from '../Button/Button';
+import { TabContent } from '../Tabs/TabContent';
 
-import { getAvailableIcons } from '../../types';
-
+import { Modal } from './Modal';
 import mdx from './Modal.mdx';
+import { ModalTabsHeader } from './ModalTabsHeader';
 
 const meta: Meta = {
   title: 'Overlays/Modal',

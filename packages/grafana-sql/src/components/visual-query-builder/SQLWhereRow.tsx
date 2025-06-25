@@ -1,4 +1,4 @@
-import useAsync from 'react-use/lib/useAsync';
+import { useAsync } from 'react-use';
 
 import { SelectableValue, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';

@@ -41,9 +41,9 @@ refs:
 
 # Plan your RBAC rollout strategy
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.
 
@@ -92,13 +92,13 @@ Consider the following guidelines when you determine if you should modify basic 
 
 - **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove permissions from any basic role.
 
-  {{% admonition type="note" %}}
+  {{< admonition type="note" >}}
   Changes that you make to basic roles impact the role definition for all [organizations](/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
-  {{% /admonition %}}
+  {{< /admonition >}}
 
-  {{% admonition type="note" %}}
+  {{< admonition type="note" >}}
   You cannot modify the `No Basic Role` permissions.
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
 
@@ -115,9 +115,9 @@ Use any of the following methods to assign RBAC roles to users and teams.
 
 We've compiled the following permissions rollout scenarios based on current Grafana implementations.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have a use case that you'd like to share, feel free to contribute to this docs page. We'd love to hear from you!
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provide internal viewer employees with the ability to use Explore, but prevent external viewer contractors from using Explore
 
@@ -369,8 +369,10 @@ Here are two ways to achieve this:
 
   # Update the role
   curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
-    -X PUT-d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
+    -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
+
+  The token that is used in this request is the [service account token](ref:service-accounts).
 
 - Or use the `role > from` list and `permission > state` option of your provisioning file:
 
@@ -392,6 +394,20 @@ Here are two ways to achieve this:
         - action: 'plugins.app:access'
           scope: 'plugins:id:kentik-connect-app'
           state: 'present'
+  ```
+
+  If your goal is to remove an access to an app you should remove it from the role and update it. For example:
+
+  ```bash
+  # Fetch the role, modify it to remove permissions to kentik-connect-app and increment role version
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
+    -X GET '<grafana_url>/api/access-control/roles/basic_viewer' | \
+    jq 'del(.created)| del(.updated) | del(.permissions[].created) | del(.permissions[].updated) | .version += 1' | \
+    jq 'del(.permissions[] | select (.action == "plugins.app:access" and .scope == "plugins:id:kentik-connect-app"))'
+
+  # Update the role
+  curl -H 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' -H 'Content-Type: application/json' \
+    -X PUT -d @/tmp/basic_viewer.json '<grafana_url>/api/access-control/roles/basic_viewer'
   ```
 
 ### Manage user permissions through teams

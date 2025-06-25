@@ -16,7 +16,7 @@ import {
   FieldConfigSource,
   SpecialValueMatch,
   ThresholdsMode,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 export function transformVariableRefreshToEnumV1(refresh?: VariableRefresh): VariableRefreshV1 {
   switch (refresh) {
@@ -113,44 +113,52 @@ export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConf
     }
   };
 
+  const transformedDefaults: any = {
+    ...fieldConfig.defaults,
+  };
+
+  if (fieldConfig.defaults.mappings) {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+      switch (mapping.type) {
+        case 'value':
+          return {
+            ...mapping,
+            type: MappingTypeV1.ValueToText,
+          };
+        case 'range':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RangeToText,
+          };
+        case 'regex':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RegexToText,
+          };
+        case 'special':
+          return {
+            ...mapping,
+            options: {
+              ...mapping.options,
+              match: transformSpecialValueMatchToV1(mapping.options.match),
+            },
+            type: MappingTypeV1.SpecialValue,
+          };
+        default:
+          return mapping;
+      }
+    });
+  }
+
+  if (fieldConfig.defaults.thresholds) {
+    transformedDefaults.thresholds = {
+      ...fieldConfig.defaults.thresholds,
+      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
+    };
+  }
+
   return {
     ...fieldConfig,
-    defaults: {
-      ...fieldConfig.defaults,
-      mappings: fieldConfig.defaults.mappings?.map((mapping) => {
-        switch (mapping.type) {
-          case 'value':
-            return {
-              ...mapping,
-              type: MappingTypeV1.ValueToText,
-            };
-          case 'range':
-            return {
-              ...mapping,
-              type: MappingTypeV1.RangeToText,
-            };
-          case 'regex':
-            return {
-              ...mapping,
-              type: MappingTypeV1.RegexToText,
-            };
-          case 'special':
-            return {
-              ...mapping,
-              options: {
-                ...mapping.options,
-                match: transformSpecialValueMatchToV1(mapping.options.match),
-              },
-              type: MappingTypeV1.SpecialValue,
-            };
-          default:
-            return mapping;
-        }
-      }),
-      thresholds: fieldConfig.defaults.thresholds && {
-        ...fieldConfig.defaults.thresholds,
-        mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
-      },
-    },
+    defaults: transformedDefaults,
   };
 }

@@ -5,7 +5,6 @@ import { catchError, map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateMath,
@@ -14,10 +13,18 @@ import {
   getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
+  toDataFrame,
   urlUtil,
 } from '@grafana/data';
-import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
@@ -32,7 +39,7 @@ export interface JaegerJsonData extends DataSourceJsonData {
   traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
-export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
+export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   traceIdTimeParams?: TraceIdTimeParamsOptions;
@@ -46,8 +53,15 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await this.getResource(url, params);
+    }
+
+    const res = await lastValueFrom(this._request('/api/' + url, params, { hideFromInspector: true }));
     return res.data.data;
   }
 
@@ -55,13 +69,27 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return !!query.service;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
-
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    if (config.featureToggles.jaegerBackendMigration && target.queryType !== 'upload') {
+      return super.query({ ...options, targets: [target] }).pipe(
+        map((response) => {
+          // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
+          if (this.nodeGraph?.enabled && !target.queryType) {
+            return addNodeGraphFramesToResponse(response);
+          }
+          return response;
+        })
+      );
     }
 
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
@@ -118,7 +146,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       }
     }
 
-    let jaegerInterpolated = pick(this.applyVariables(target, options.scopedVars), [
+    let jaegerInterpolated = pick(this.applyTemplateVariables(target, options.scopedVars), [
       'service',
       'operation',
       'tags',
@@ -163,12 +191,12 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: JaegerQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: JaegerQuery, scopedVars: ScopedVars) {
     let expandedQuery = { ...query };
 
     if (query.tags && this.templateSrv.containsTemplate(query.tags)) {
@@ -187,7 +215,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     };
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   async testDatasource() {
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._request('/api/services').pipe(
         map((res) => {
@@ -274,3 +309,18 @@ const emptyTraceDataFrame = new MutableDataFrame({
     },
   },
 });
+
+export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQueryResponse {
+  if (!response.data || response.data.length === 0) {
+    return response;
+  }
+
+  // Convert the first frame to a DataFrame for node graph processing
+  const frame = toDataFrame(response.data[0]);
+  // Add the node graph frames to the response
+  const data = response.data.concat(createNodeGraphFrames(frame));
+  return {
+    ...response,
+    data,
+  };
+}

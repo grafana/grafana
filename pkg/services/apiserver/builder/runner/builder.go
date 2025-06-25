@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -18,7 +21,7 @@ import (
 
 var _ AppBuilder = (*appBuilder)(nil)
 
-type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.LegacyStorage
+type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.Storage
 
 type AppBuilderConfig struct {
 	Authorizer          authorizer.Authorizer
@@ -26,6 +29,10 @@ type AppBuilderConfig struct {
 	OpenAPIDefGetter    common.GetOpenAPIDefinitions
 	ManagedKinds        map[schema.GroupVersion][]resource.Kind
 	CustomConfig        any
+	// Do not set anything here unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1,
+	// to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources []string
 
 	groupVersion schema.GroupVersion
 }
@@ -72,11 +79,43 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 				Group:   gv.Group,
 				Version: runtime.APIVersionInternal,
 			}
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
+			// only register internal kind once
+			if _, ok := scheme.KnownTypes(gvInternal)[kind.Kind()]; !ok {
+				scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
+				scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+			}
+
+			if len(kind.SelectableFields()) == 0 {
+				continue
+			}
+			gvk := gv.WithKind(kind.Kind())
+			err := scheme.AddFieldLabelConversionFunc(
+				gvk,
+				func(label, value string) (string, string, error) {
+					if label == "metadata.name" || label == "metadata.namespace" {
+						return label, value, nil
+					}
+					fields := kind.SelectableFields()
+					for _, field := range fields {
+						if field.FieldSelector == label {
+							return label, value, nil
+						}
+					}
+					return "", "", fmt.Errorf("field label not supported for %s: %s", gvk, label)
+				},
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return scheme.SetVersionPriority(gv)
+}
+
+// AllowedV0Alpha1Resources returns the list of resources that are allowed to be accessed in v0alpha1
+func (b *appBuilder) AllowedV0Alpha1Resources() []string {
+	return b.config.AllowedV0Alpha1Resources
 }
 
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo

@@ -10,6 +10,7 @@ type FakeDashboardVersionService struct {
 	ExpectedDashboardVersion     *dashver.DashboardVersionDTO
 	ExpectedDashboardVersions    []*dashver.DashboardVersionDTO
 	ExpectedListDashboarVersions []*dashver.DashboardVersionDTO
+	ExpectedContinueToken        string
 	counter                      int
 	ExpectedError                error
 }
@@ -30,6 +31,9 @@ func (f *FakeDashboardVersionService) DeleteExpired(ctx context.Context, cmd *da
 	return f.ExpectedError
 }
 
-func (f *FakeDashboardVersionService) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	return f.ExpectedListDashboarVersions, f.ExpectedError
+func (f *FakeDashboardVersionService) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) (*dashver.DashboardVersionResponse, error) {
+	return &dashver.DashboardVersionResponse{
+		ContinueToken: f.ExpectedContinueToken,
+		Versions:      f.ExpectedListDashboarVersions,
+	}, f.ExpectedError
 }

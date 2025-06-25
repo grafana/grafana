@@ -1,8 +1,14 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
+import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
-import { histogramTransformer, buildHistogram, histogramFieldsToFrame } from './histogram';
+import {
+  histogramTransformer,
+  buildHistogram,
+  histogramFieldsToFrame,
+  HistogramFields,
+  joinHistograms,
+} from './histogram';
 
 describe('histogram frames frames', () => {
   beforeAll(() => {
@@ -278,5 +284,112 @@ describe('histogram frames frames', () => {
         },
       ]
     `);
+  });
+});
+
+describe('joinHistograms', () => {
+  type TestHistogram = {
+    xMin: number[];
+    xMax: number[];
+    counts: number[][];
+  };
+
+  function toField(name: string, values: number[]): Field {
+    return {
+      config: {},
+      name,
+      type: FieldType.number,
+      values,
+    };
+  }
+
+  function testHistogramToHistogram(test: TestHistogram): HistogramFields {
+    return {
+      xMin: toField('xMin', test.xMin),
+      xMax: toField('xMax', test.xMax),
+      counts: test.counts.map((values) => toField(`count`, values)),
+    };
+  }
+
+  type TestCase = {
+    name: string;
+    histograms: TestHistogram[];
+    expected: TestHistogram;
+  };
+
+  const testCases: TestCase[] = [
+    {
+      name: 'just one histogram',
+      histograms: [
+        {
+          xMin: [1, 2, 3],
+          xMax: [2, 3, 4],
+          counts: [[1, 2, 3]],
+        },
+      ],
+      expected: {
+        xMin: [1, 2, 3],
+        xMax: [2, 3, 4],
+        counts: [[1, 2, 3]],
+      },
+    },
+    {
+      name: 'two histograms with same bucket sizes',
+      histograms: [
+        {
+          xMin: [1, 3, 4],
+          xMax: [2, 4, 5],
+          counts: [[1, 2, 3]],
+        },
+        {
+          xMin: [1, 3, 4],
+          xMax: [2, 4, 5],
+          counts: [[4, 5, 6]],
+        },
+      ],
+      expected: {
+        xMin: [1, 3, 4],
+        xMax: [2, 4, 5],
+        counts: [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+      },
+    },
+    {
+      name: 'two histograms with same bucket sizes but counts in some different buckets',
+      histograms: [
+        {
+          xMin: [1, 3, 4],
+          xMax: [2, 4, 5],
+          counts: [[1, 2, 3]],
+        },
+        {
+          xMin: [2, 3, 6],
+          xMax: [3, 4, 7],
+          counts: [[4, 5, 6]],
+        },
+      ],
+      expected: {
+        xMin: [1, 2, 3, 4, 6],
+        xMax: [2, 3, 4, 5, 7],
+        counts: [
+          [1, 0, 2, 3, 0],
+          [0, 4, 5, 0, 6],
+        ],
+      },
+    },
+  ];
+
+  testCases.forEach((tc) => {
+    it(tc.name, () => {
+      const result = joinHistograms(tc.histograms.map(testHistogramToHistogram));
+
+      expect({
+        xMin: result.xMin.values,
+        xMax: result.xMax.values,
+        counts: result.counts.map((f) => f.values),
+      }).toEqual(tc.expected);
+    });
   });
 });

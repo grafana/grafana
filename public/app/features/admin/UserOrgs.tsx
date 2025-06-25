@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { createRef, PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ConfirmButton,
@@ -19,7 +20,6 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
 
 import { OrgRolePicker } from './OrgRolePicker';
@@ -363,14 +363,14 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
       <Modal
         className={styles.modal}
         contentClassName={styles.modalContent}
-        title="Add to an organization"
+        title={t('admin.add-to-org-modal.title-add-to-an-organization', 'Add to an organization')}
         isOpen={isOpen}
         onDismiss={this.onCancel}
       >
-        <Field label="Organization">
+        <Field label={t('admin.add-to-org-modal.label-organization', 'Organization')}>
           <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
         </Field>
-        <Field label="Role" disabled={selectedOrg === null}>
+        <Field label={t('admin.add-to-org-modal.label-role', 'Role')} disabled={selectedOrg === null}>
           <UserRolePicker
             userId={user?.id || 0}
             orgId={selectedOrg?.id}

@@ -1,3 +1,5 @@
+import { first } from 'rxjs';
+
 import {
   arrayToDataFrame,
   DataQueryResponse,
@@ -6,7 +8,7 @@ import {
   LoadingState,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
@@ -19,8 +21,18 @@ import {
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
+import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
+
 import { DashboardDatasource } from './datasource';
 import { DashboardQuery } from './types';
+
+jest.mock('rxjs', () => {
+  const original = jest.requireActual('rxjs');
+  return {
+    ...original,
+    first: jest.fn(original.first),
+  };
+});
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 setPluginImportUtils({
@@ -29,6 +41,10 @@ setPluginImportUtils({
 });
 
 describe('DashboardDatasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("should look up the other panel and subscribe to it's data", async () => {
     const { observable } = setup({ refId: 'A', panelId: 1 });
 
@@ -50,11 +66,15 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
+    jest.useFakeTimers();
+
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
 
     observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
@@ -70,9 +90,50 @@ describe('DashboardDatasource', () => {
 
     expect(sourceData.isActive).toBe(false);
   });
+
+  it('Should emit only the first value and complete if used within MixedDS', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 }, `${MIXED_REQUEST_PREFIX}1`);
+
+    observable.subscribe({ next: () => {} });
+
+    expect(first).toHaveBeenCalled();
+  });
+
+  it('Should not get the first emission if requestId does not contain the MixedDS prefix', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 });
+
+    observable.subscribe({ next: () => {} });
+
+    expect(first).not.toHaveBeenCalled();
+  });
+
+  it('Should not mutate field state in dataframe', () => {
+    jest.useFakeTimers();
+    const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
+
+    let rsp: DataQueryResponse | undefined;
+
+    const test = observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
+
+    // modifying series in dashboard DS should not affect the original dataframe
+    rsp!.data[0].fields[0].state = {
+      calcs: { sum: 3 },
+    };
+
+    test.unsubscribe();
+
+    observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
+
+    // on further emissions the result should be the unmodified original dataframe
+    expect(rsp!.data[0].fields[0].state).toEqual({});
+  });
 });
 
-function setup(query: DashboardQuery) {
+function setup(query: DashboardQuery, requestId?: string) {
   const sourceData = new SceneDataTransformer({
     $data: new SceneDataNode({
       data: {
@@ -101,7 +162,7 @@ function setup(query: DashboardQuery) {
   const observable = ds.query({
     timezone: 'utc',
     targets: [query],
-    requestId: '',
+    requestId: requestId ?? '',
     interval: '',
     intervalMs: 0,
     range: getDefaultTimeRange(),

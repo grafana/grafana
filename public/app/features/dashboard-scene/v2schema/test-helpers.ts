@@ -1,7 +1,7 @@
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   QueryVariable,
   SceneDataTransformer,
   SceneObject,
@@ -10,12 +10,13 @@ import {
   SceneVariableState,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { getQueryRunnerFor } from '../utils/utils';
+import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>
@@ -52,43 +53,53 @@ export function validateVariable<
   }
   if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
     expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
-    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
+    expect(sceneVariable?.state.query).toEqual(variableKind.spec.query.spec);
   }
-  if (sceneVariable instanceof GroupByVariable && variableKind.kind === 'CustomVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.query);
+  if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
+    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
   }
 }
 
 export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
-  expect(vizPanel.state.title).toBe(dash.elements['test-panel-uid'].spec.title);
-  expect(vizPanel.state.description).toBe(dash.elements['test-panel-uid'].spec.description);
-  expect(vizPanel.state.pluginId).toBe(dash.elements['test-panel-uid'].spec.vizConfig.kind);
-  expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
-  expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
-  expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
-  expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
+  const panel = dash.elements[vizPanel.state.key!];
 
-  expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
-  const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-  expect(dataTransformer.state.transformations[0]).toEqual(
-    dash.elements['test-panel-uid'].spec.data.spec.transformations[0].spec
-  );
+  if (panel.kind === 'Panel') {
+    expect(vizPanel.state.title).toBe(panel.spec.title);
+    expect(vizPanel.state.description).toBe(panel.spec.description);
+    expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.kind);
+    expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.spec.pluginVersion);
+    expect(vizPanel.state.options).toEqual(panel.spec.vizConfig.spec.options);
+    expect(vizPanel.state.fieldConfig).toEqual(panel.spec.vizConfig.spec.fieldConfig);
+    expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);
+    expect(vizPanel.state.displayMode).toBe(panel.spec.transparent ? 'transparent' : 'default');
 
-  expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
-  const queryRunner = getQueryRunnerFor(vizPanel)!;
-  expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
-  expect(queryRunner.state.queries).toEqual([
-    { datasource: { type: 'prometheus', uid: 'datasource1' }, expr: 'test-query', hide: false, refId: 'A' },
-  ]);
-  expect(queryRunner.state.maxDataPoints).toBe(100);
-  expect(queryRunner.state.cacheTimeout).toBe('1m');
-  expect(queryRunner.state.queryCachingTTL).toBe(60);
-  expect(queryRunner.state.minInterval).toBe('1m');
-  const titleItems = vizPanel.state.titleItems as SceneObject[];
-  const vizPanelLinks = titleItems[0] as VizPanelLinks;
-  expect(vizPanelLinks.state.rawLinks).toHaveLength(dash.elements['test-panel-uid'].spec.links.length);
-  expect(vizPanelLinks.state.rawLinks).toEqual(dash.elements['test-panel-uid'].spec.links);
-  // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-  // will be fixed once scenes package is updated to support string panel ID
-  // expect(queryRunner.state.dataLayerFilter?.panelId).toBe(0);
+    expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
+    const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
+    expect(dataTransformer.state.transformations[0]).toEqual(panel.spec.data.spec.transformations[0].spec);
+
+    expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
+    const queryRunner = getQueryRunnerFor(vizPanel)!;
+    expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
+    expect(queryRunner.state.queries).toEqual([
+      { datasource: { type: 'prometheus', uid: 'datasource1' }, expr: 'test-query', hide: false, refId: 'A' },
+    ]);
+    expect(queryRunner.state.maxDataPoints).toBe(100);
+    expect(queryRunner.state.cacheTimeout).toBe('1m');
+    expect(queryRunner.state.queryCachingTTL).toBe(60);
+    expect(queryRunner.state.minInterval).toBe('1m');
+    const titleItems = vizPanel.state.titleItems as SceneObject[];
+    const vizPanelLinks = titleItems[0] as VizPanelLinks;
+
+    expect(vizPanelLinks.state.rawLinks).toHaveLength(panel.spec.links.length);
+    expect(vizPanelLinks.state.rawLinks).toEqual(panel.spec.links);
+    expect(queryRunner.state.dataLayerFilter?.panelId).toBe(panel.spec.id);
+  } else if (panel.kind === 'LibraryPanel') {
+    expect(getLibraryPanelBehavior(vizPanel)?.state.name).toBe(panel.spec.libraryPanel.name);
+    expect(getLibraryPanelBehavior(vizPanel)?.state.uid).toBe(panel.spec.libraryPanel.uid);
+    expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);
+    expect(vizPanel.state.title).toBe(panel.spec.title);
+    expect(vizPanel.state.pluginId).toBe(LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID);
+  } else {
+    throw new Error('vizPanel is not a valid element kind');
+  }
 }

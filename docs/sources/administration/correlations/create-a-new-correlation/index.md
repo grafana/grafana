@@ -15,7 +15,7 @@ Make sure you have permission to add new correlations. Only users with write per
 
 ## Create a correlation in Explore's correlations editor
 
-To learn more, refer to Explore's [documentation]({{< relref "../../../explore/correlations-editor-in-explore" >}}) about building correlations in Explore.
+To learn more, refer to Explore's [documentation](../../../explore/correlations-editor-in-explore/) about building correlations in Explore.
 
 ## Create a correlation in Administration page
 
@@ -81,7 +81,7 @@ Description of provisioning properties:
 : Config object
 
 **config.type**
-: Correlation type. “query” is the only supported type at the moment
+: Correlation type. Valid values are "query" for linking to a data source query and "external" for linking to an external URL.
 
 **config.target**
 : [Target query model](#determine-target-query-model-structure)

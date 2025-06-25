@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -26,13 +27,15 @@ export const MuteTimingTimeInterval = () => {
   const { isGrafanaAlertmanager } = useAlertmanager();
 
   return (
-    <FieldSet label="Time intervals">
+    <FieldSet label={t('alerting.mute-timing-time-interval.label-time-intervals', 'Time intervals')}>
       <>
         <p>
-          A time interval is a definition for a moment in time. All fields are lists, and at least one list element must
-          be satisfied to match the field. If a field is left blank, any moment of time will match the field. For an
-          instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple
-          time intervals.
+          <Trans i18nKey="alerting.mute-timing-time-interval.description">
+            A time interval item is a definition for a moment in time. All fields are lists, and at least one list
+            element must be satisfied to match the field. If a field is left blank, any moment of time will match the
+            field. For an instant of time to match a complete time interval, all fields must match. A time interval can
+            contain multiple time interval items.
+          </Trans>
         </p>
         <Stack direction="column" gap={2}>
           {timeIntervals.map((timeInterval, timeIntervalIndex) => {
@@ -46,7 +49,7 @@ export const MuteTimingTimeInterval = () => {
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
                 <Field
-                  label="Location"
+                  label={t('alerting.mute-timing-time-interval.label-location', 'Location')}
                   invalid={Boolean(errors.time_intervals?.[timeIntervalIndex]?.location)}
                   error={errors.time_intervals?.[timeIntervalIndex]?.location?.message}
                 >
@@ -61,7 +64,7 @@ export const MuteTimingTimeInterval = () => {
                     data-testid="mute-timing-location"
                   />
                 </Field>
-                <Field label="Days of the week">
+                <Field label={t('alerting.mute-timing-time-interval.label-days-of-the-week', 'Days of the week')}>
                   <DaysOfTheWeek
                     onChange={(daysOfWeek) => {
                       setValue(`time_intervals.${timeIntervalIndex}.weekdays`, daysOfWeek);
@@ -71,33 +74,34 @@ export const MuteTimingTimeInterval = () => {
                   />
                 </Field>
                 <Field
-                  label="Days of the month"
-                  description="The days of the month, 1-31, of a month. Negative values can be used to represent days which begin at the end of the month"
+                  label={t('alerting.mute-timing-time-interval.label-days-of-the-month', 'Days of the month')}
+                  description={t(
+                    'alerting.mute-timing-time-interval.description-dats-of-the-month',
+                    'The days of the month, 1:31, of a month. Negative values can be used to represent days which begin at the end of the month'
+                  )}
                   invalid={!!errors.time_intervals?.[timeIntervalIndex]?.days_of_month}
                   error={errors.time_intervals?.[timeIntervalIndex]?.days_of_month?.message}
                 >
                   <Input
                     {...register(`time_intervals.${timeIntervalIndex}.days_of_month`, {
-                      validate: (value) =>
-                        validateArrayField(
-                          value,
-                          (day) => {
-                            const parsedDay = parseInt(day, 10);
-                            return (parsedDay > -31 && parsedDay < 0) || (parsedDay > 0 && parsedDay < 32);
-                          },
-                          'Invalid day'
-                        ),
+                      validate: validateDaysOfMonth,
                     })}
                     width={50}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.days_of_month}
-                    placeholder="Example: 1, 14:16, -1"
+                    placeholder={t(
+                      'alerting.mute-timing-time-interval.mute-timing-days-placeholder-example',
+                      'Example: 1, 14:16, -1'
+                    )}
                     data-testid="mute-timing-days"
                   />
                 </Field>
                 <Field
-                  label="Months"
-                  description="The months of the year in either numerical or the full calendar month"
+                  label={t('alerting.mute-timing-time-interval.label-months', 'Months')}
+                  description={t(
+                    'alerting.mute-timing-time-interval.description-months',
+                    'The months of the year in either numerical or the full calendar month'
+                  )}
                   invalid={!!errors.time_intervals?.[timeIntervalIndex]?.months}
                   error={errors.time_intervals?.[timeIntervalIndex]?.months?.message}
                 >
@@ -111,14 +115,17 @@ export const MuteTimingTimeInterval = () => {
                         ),
                     })}
                     width={50}
-                    placeholder="Example: 1:3, may:august, december"
+                    placeholder={t(
+                      'alerting.mute-timing-time-interval.mute-timing-months-placeholder-example-mayaugust-december',
+                      'Example: 1:3, may:august, december'
+                    )}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.months}
                     data-testid="mute-timing-months"
                   />
                 </Field>
                 <Field
-                  label="Years"
+                  label={t('alerting.mute-timing-time-interval.label-years', 'Years')}
                   invalid={!!errors.time_intervals?.[timeIntervalIndex]?.years}
                   error={errors.time_intervals?.[timeIntervalIndex]?.years?.message ?? ''}
                 >
@@ -127,7 +134,10 @@ export const MuteTimingTimeInterval = () => {
                       validate: (value) => validateArrayField(value, (year) => /^\d{4}$/.test(year), 'Invalid year'),
                     })}
                     width={50}
-                    placeholder="Example: 2021:2022, 2030"
+                    placeholder={t(
+                      'alerting.mute-timing-time-interval.mute-timing-years-placeholder-example',
+                      'Example: 2021:2022, 2030'
+                    )}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.years}
                     data-testid="mute-timing-years"
@@ -141,7 +151,9 @@ export const MuteTimingTimeInterval = () => {
                     icon="trash-alt"
                     onClick={() => removeTimeInterval(timeIntervalIndex)}
                   >
-                    Remove time interval
+                    <Trans i18nKey="alerting.mute-timing-time-interval.remove-time-interval">
+                      Remove time interval
+                    </Trans>
                   </Button>
                   {/*
                     This switch is only available for Grafana Alertmanager, as for now, Grafana alert manager doesn't support this feature
@@ -150,7 +162,7 @@ export const MuteTimingTimeInterval = () => {
                   {!isGrafanaAlertmanager && (
                     <InlineSwitch
                       id={`time_intervals.${timeIntervalIndex}.disable`}
-                      label="Disable"
+                      label={t('alerting.mute-timing-time-interval.label-disable', 'Disable')}
                       showLabel
                       transparent
                       {...register(`time_intervals.${timeIntervalIndex}.disable`)}
@@ -170,7 +182,9 @@ export const MuteTimingTimeInterval = () => {
           }}
           icon="plus"
         >
-          Add another time interval
+          <Trans i18nKey="alerting.mute-timing-time-interval.add-another-time-interval-item">
+            Add another time interval item
+          </Trans>
         </Button>
       </>
     </FieldSet>
@@ -194,6 +208,22 @@ const parseDays = (input: string): string[] => {
 
   return uniq(parsedDays);
 };
+
+export function validateDaysOfMonth(value: string | undefined) {
+  return validateArrayField(
+    value,
+    (day) => {
+      // Ensure the value contains ONLY digits with an optional negative sign
+      // This rejects any non-numeric characters or mixed inputs like "3-10"
+      if (!/^-?\d+$/.test(day)) {
+        return false;
+      }
+      const parsedDay = parseInt(day, 10);
+      return (parsedDay > -31 && parsedDay < 0) || (parsedDay > 0 && parsedDay < 32);
+    },
+    'Invalid day'
+  );
+}
 
 // parse monday:wednesday to ["monday", "tuesday", "wednesday"]
 function parseWeekdayRange(input: string): string[] {

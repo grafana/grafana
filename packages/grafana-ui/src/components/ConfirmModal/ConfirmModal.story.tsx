@@ -1,8 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 
-import { ConfirmModal } from '@grafana/ui';
-
+import { ConfirmModal } from './ConfirmModal';
 import mdx from './ConfirmModal.mdx';
 
 const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];

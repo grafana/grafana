@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/influxdata/influxql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
@@ -34,11 +36,13 @@ func readJsonFile(filePath string) io.ReadCloser {
 }
 
 func generateQuery(query, resFormat, alias string) *models.Query {
+	statement, _ := influxql.ParseStatement(query)
 	return &models.Query{
 		RawQuery:     query,
 		UseRawQuery:  true,
 		Alias:        alias,
 		ResultFormat: resFormat,
+		Statement:    statement,
 	}
 }
 
@@ -331,6 +335,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		})
 	})
 
+	t.Run("create frames for tag values and without time column even the query string has cardinality as string", func(t *testing.T) {
+		res := ResponseParse(readJsonFile("show_tag_values_response"), 200, generateQuery("SHOW TAG VALUES FROM custom_influxdb_cardinality WITH KEY = \"database\"", "time_series", ""))
+		require.NoError(t, res.Error)
+		require.Equal(t, "Value", res.Frames[0].Fields[0].Name)
+		require.Equal(t, "cpu-total", *res.Frames[0].Fields[0].At(0).(*string))
+	})
+
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
 		result := ResponseParse(readJsonFile("error_response"), 200, generateQuery("Test raw query", "time_series", ""))
 
@@ -341,12 +352,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		result := ResponseParse(readJsonFile("error_on_top_level_response"), 400, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
 		require.EqualError(t, result.Error, "InfluxDB returned error: error parsing query: found THING")
+		require.Equal(t, backend.ErrorSourceDownstream, result.ErrorSource)
 	})
 
 	t.Run("Influxdb response parser with error message", func(t *testing.T) {
 		result := ResponseParse(readJsonFile("invalid_response"), 400, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
 		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
+		require.Equal(t, backend.ErrorSourceDownstream, result.ErrorSource)
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {

@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';

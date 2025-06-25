@@ -45,7 +45,7 @@ describe('Team settings', () => {
     await userEvent.clear(screen.getByRole('textbox', { name: /Name/ }));
     await userEvent.type(screen.getByLabelText(/Email/i), 'team@test.com');
     // Submitting with userEvent doesn't work here
-    fireEvent.submit(screen.getByRole('button', { name: 'Update' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Name is required')).toBeInTheDocument();
     await waitFor(() => expect(mockUpdate).not.toHaveBeenCalled());
   });
@@ -58,7 +58,7 @@ describe('Team settings', () => {
     await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'New team');
     await userEvent.type(screen.getByLabelText(/Email/i), 'team@test.com');
     // Submitting with userEvent doesn't work here
-    fireEvent.submit(screen.getByRole('button', { name: 'Update' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith('New team', 'team@test.com'));
   });
 });

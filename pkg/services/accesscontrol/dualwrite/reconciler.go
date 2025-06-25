@@ -6,41 +6,46 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
+var reconcilerLogger = log.New("zanzana.reconciler")
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
 // into our schema.
 type ZanzanaReconciler struct {
-	cfg *setting.Cfg
-	log log.Logger
-
-	store  db.DB
-	client zanzana.Client
-	lock   *serverlock.ServerLockService
+	cfg      *setting.Cfg
+	log      log.Logger
+	features featuremgmt.FeatureToggles
+	store    db.DB
+	client   zanzana.Client
+	lock     *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
+func ProvideZanzanaReconciler(cfg *setting.Cfg, features featuremgmt.FeatureToggles, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
 	zanzanaReconciler := &ZanzanaReconciler{
-		cfg:    cfg,
-		log:    log.New("zanzana.reconciler"),
-		client: client,
-		lock:   lock,
-		store:  store,
+		cfg:      cfg,
+		log:      reconcilerLogger,
+		features: features,
+		client:   client,
+		lock:     lock,
+		store:    store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
@@ -50,7 +55,7 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 			),
 			newResourceReconciler(
 				"folder tree",
-				folderTreeCollector(store),
+				folderTreeCollector(folderService),
 				zanzanaCollector([]string{zanzana.RelationParent}),
 				client,
 			),
@@ -79,14 +84,8 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				client,
 			),
 			newResourceReconciler(
-				"team role bindings",
-				teamRoleBindingsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
-				client,
-			),
-			newResourceReconciler(
-				"user role bindings",
-				userRoleBindingsCollector(store),
+				"role bindings",
+				roleBindingsCollector(store),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
@@ -107,6 +106,14 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 	return zanzanaReconciler
 }
 
+// Run implements registry.BackgroundService
+func (r *ZanzanaReconciler) Run(ctx context.Context) error {
+	if r.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return r.Reconcile(ctx)
+	}
+	return nil
+}
+
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
@@ -125,16 +132,11 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
-// ReconcileSync runs reconciliation and returns. Useful for tests to perform
-// reconciliation in a synchronous way.
-func (r *ZanzanaReconciler) ReconcileSync(ctx context.Context) error {
-	r.reconcile(ctx)
-	return nil
-}
-
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
+		r.log.Debug("Started reconciliation")
+
 		for _, reconciler := range r.reconcilers {
 			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
 			if err := reconciler.reconcile(ctx, namespace); err != nil {

@@ -106,9 +106,9 @@ Some visualizations, for example [candlestick](ref:candlestick) and [flame graph
 
 You can find the following options under the **Tooltip** section in the panel edit pane.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with tooltips.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Tooltip mode
 
@@ -127,6 +127,10 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 - **None** - Grafana automatically sorts the values displayed in a tooltip.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
+
+### Hide zeros
+
+When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip.
 
 ### Hover proximity
 

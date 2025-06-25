@@ -572,7 +572,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
@@ -629,7 +629,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 	})
 	t.Run("Should preserve LBAC rules when not updating from API", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
 			map[string]interface{}{
@@ -680,7 +680,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should not remove stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with existing LBAC rules
 		existingRules := []interface{}{
@@ -720,7 +720,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 
 	t.Run("Should not populate empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
-		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		dsService.features = featuremgmt.WithFeatures()
 
 		// Create a datasource with empty LBAC rules
 		jsonData := simplejson.New()
@@ -1001,6 +1001,11 @@ func TestService_awsServiceNamespace(t *testing.T) {
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
 			want:      "aps",
 		}, {
+			desc:      "amazon prometheus",
+			givenDs:   datasources.DS_AMAZON_PROMETHEUS,
+			givenJson: `{ "sigV4Auth": true }`,
+			want:      "aps",
+		}, {
 			desc:      "alertmanager",
 			givenDs:   datasources.DS_ALERTMANAGER,
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
@@ -1009,6 +1014,12 @@ func TestService_awsServiceNamespace(t *testing.T) {
 			desc:      "panic",
 			givenDs:   "panic",
 			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aps",
+			panic:     true,
+		}, {
+			desc:      "azure prometheus",
+			givenDs:   datasources.DS_AZURE_PROMETHEUS,
+			givenJson: `{ "sigV4Auth": true }`,
 			want:      "aps",
 			panic:     true,
 		},

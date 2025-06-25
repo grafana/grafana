@@ -13,6 +13,7 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -25,7 +26,6 @@ import {
   Stack,
   TextArea,
   useStyles2,
-  withErrorBoundary,
 } from '@grafana/ui';
 import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -37,6 +37,7 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
@@ -75,20 +76,44 @@ const ExistingSilenceEditor = () => {
   }, [silence]);
 
   if (silenceId && getSilenceIsLoading) {
-    return <LoadingPlaceholder text="Loading existing silence information..." />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.existing-silence-editor.text-loading-existing-silence-information',
+          'Loading existing silence information...'
+        )}
+      />
+    );
   }
 
   const existingSilenceNotFound =
     isFetchError(errorGettingExistingSilence) && errorGettingExistingSilence.status === 404;
 
   if (existingSilenceNotFound) {
-    return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.existing-silence-editor.title-silence-not-found',
+          'Existing silence "{{silenceId}}" not found',
+          { silenceId }
+        )}
+        severity="warning"
+      />
+    );
   }
 
   const canEditSilence = isGrafanaAlertManager ? silence?.accessControl?.write : true;
 
   if (!canEditSilence) {
-    return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.existing-silence-editor.title-permission-editrecreate-silence',
+          'You do not have permission to edit/recreate this silence'
+        )}
+        severity="error"
+      />
+    );
   }
 
   return (
@@ -190,6 +215,7 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
   return (
@@ -199,7 +225,7 @@ export const SilencesEditor = ({
           <div className={styles.silencePeriod}>
             <SilencePeriod />
             <Field
-              label="Duration"
+              label={t('alerting.silences-editor.label-duration', 'Duration')}
               invalid={!!formState.errors.duration}
               error={
                 formState.errors.duration &&
@@ -221,28 +247,38 @@ export const SilencesEditor = ({
           <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
 
           <Field
-            label="Comment"
+            label={t('alerting.silences-editor.label-comment', 'Comment')}
             required
             error={formState.errors.comment?.message}
             invalid={!!formState.errors.comment}
           >
             <TextArea
-              {...register('comment', { required: { value: true, message: 'Required.' } })}
+              {...register('comment', {
+                required: { value: true, message: t('alerting.silences-editor.message.required', 'Required.') },
+              })}
               rows={5}
-              placeholder="Details about the silence"
+              placeholder={t(
+                'alerting.silences-editor.comment-placeholder-details-about-the-silence',
+                'Details about the silence'
+              )}
               id="comment"
             />
           </Field>
           {!userLogged && (
             <Field
-              label="Created By"
+              label={t('alerting.silences-editor.label-created-by', 'Created By')}
               required
               error={formState.errors.createdBy?.message}
               invalid={!!formState.errors.createdBy}
             >
               <Input
-                {...register('createdBy', { required: { value: true, message: 'Required.' } })}
-                placeholder="Who's creating the silence"
+                {...register('createdBy', {
+                  required: { value: true, message: t('alerting.silences-editor.message.required', 'Required.') },
+                })}
+                placeholder={t(
+                  'alerting.silences-editor.placeholder-whos-creating-the-silence',
+                  "Who's creating the silence"
+                )}
               />
             </Field>
           )}
@@ -253,12 +289,16 @@ export const SilencesEditor = ({
         <Stack gap={1}>
           {isLoading && (
             <Button disabled={true} icon="spinner" variant="primary">
-              Saving...
+              <Trans i18nKey="alerting.silences-editor.saving">Saving...</Trans>
             </Button>
           )}
-          {!isLoading && <Button type="submit">Save silence</Button>}
+          {!isLoading && (
+            <Button type="submit">
+              <Trans i18nKey="alerting.silences-editor.save-silence">Save silence</Trans>
+            </Button>
+          )}
           <LinkButton onClick={onCancelHandler} variant={'secondary'}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </LinkButton>
         </Stack>
       </form>
@@ -286,7 +326,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function ExistingSilenceEditorPage() {
   const pageNav = {
     id: 'silence-edit',
-    text: 'Edit silence',
+    text: t('alerting.existing-silence-editor-page.page-nav.text.edit-silence', 'Edit silence'),
     subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
   };
   return (
@@ -295,4 +335,5 @@ function ExistingSilenceEditorPage() {
     </AlertmanagerPageWrapper>
   );
 }
-export default withErrorBoundary(ExistingSilenceEditorPage, { style: 'page' });
+
+export default withPageErrorBoundary(ExistingSilenceEditorPage);

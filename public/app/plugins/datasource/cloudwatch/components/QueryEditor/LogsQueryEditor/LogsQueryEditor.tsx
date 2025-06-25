@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineSelect } from '@grafana/experimental';
+import { InlineSelect } from '@grafana/plugin-ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_PPL_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../../defaultQueries';

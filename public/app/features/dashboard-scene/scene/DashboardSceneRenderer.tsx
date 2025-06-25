@@ -1,19 +1,17 @@
-import { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useContext, useEffect, useMemo } from 'react';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import { ScopesContext } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
-import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -21,18 +19,19 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     overlay,
     editview,
     editPanel,
-    isEmpty,
-    meta,
     viewPanelScene,
     panelSearch,
     panelsPerRow,
     isEditing,
+    layoutOrchestrator,
   } = model.useState();
+  const { type } = useParams();
   const location = useLocation();
+  const scopesContext = useContext(ScopesContext);
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
-  const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const navModel = getNavModel(navIndex, `dashboards/${type === 'snapshot' ? 'snapshots' : 'browse'}`);
   const isSettingsOpen = editview !== undefined;
 
   // Remember scroll pos when going into view panel, edit panel or settings
@@ -49,6 +48,18 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
   }, [isSettingsOpen, editPanel, viewPanelScene, model]);
 
+  useEffect(() => {
+    if (scopesContext && isEditing) {
+      scopesContext.setReadOnly(true);
+
+      return () => {
+        scopesContext.setReadOnly(false);
+      };
+    }
+
+    return;
+  }, [scopesContext, isEditing]);
+
   if (editview) {
     return (
       <>
@@ -59,37 +70,28 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
-    if (meta.dashboardNotFound) {
-      return <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
-    }
-
-    if (panelSearch || panelsPerRow) {
+    if (!viewPanelScene && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
-    return (
-      <>
-        <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />
-        {isEmpty && (
-          <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
-        )}
-        <bodyToRender.Component model={bodyToRender} />
-      </>
-    );
+    return <bodyToRender.Component model={bodyToRender} />;
   }
 
   return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {editPanel && <editPanel.Component model={editPanel} />}
-      {!editPanel && (
-        <DashboardEditPaneSplitter
-          dashboard={model}
-          isEditing={isEditing}
-          controls={controls && <controls.Component model={controls} />}
-          body={renderBody()}
-        />
-      )}
-      {overlay && <overlay.Component model={overlay} />}
-    </Page>
+    <>
+      {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+        {editPanel && <editPanel.Component model={editPanel} />}
+        {!editPanel && (
+          <DashboardEditPaneSplitter
+            dashboard={model}
+            isEditing={isEditing}
+            controls={controls && <controls.Component model={controls} />}
+            body={renderBody()}
+          />
+        )}
+        {overlay && <overlay.Component model={overlay} />}
+      </Page>
+    </>
   );
 }

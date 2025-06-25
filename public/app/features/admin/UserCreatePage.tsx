@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Input, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 
 interface UserDTO {
   name: string;
@@ -45,19 +45,24 @@ const UserCreatePage = () => {
     <Page navId="global-users" pageNav={pageNav}>
       <Page.Contents>
         <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
-          <Field label="Name" required invalid={!!errors.name} error={errors.name ? 'Name is required' : undefined}>
+          <Field
+            label={t('admin.user-create-page.label-name', 'Name')}
+            required
+            invalid={!!errors.name}
+            error={errors.name ? 'Name is required' : undefined}
+          >
             <Input id="name-input" {...register('name', { required: true })} />
           </Field>
 
-          <Field label="Email">
+          <Field label={t('admin.user-create-page.label-email', 'Email')}>
             <Input id="email-input" {...register('email')} />
           </Field>
 
-          <Field label="Username">
+          <Field label={t('admin.user-create-page.label-username', 'Username')}>
             <Input id="username-input" {...register('login')} />
           </Field>
           <Field
-            label="Password"
+            label={t('admin.user-create-page.label-password', 'Password')}
             required
             invalid={!!errors.password}
             error={errors.password ? 'Password is required and must contain at least 4 characters' : undefined}

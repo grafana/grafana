@@ -1,0 +1,76 @@
+# config file version
+apiVersion: 1
+
+# ONLY THESE PATHS ARE NOT TEMPLATED and therefore don't need escaping:
+# Alert rule annotations: groups[].rules[].annotations
+# Alert rule time range: groups[].rules[].relativeTimeRange
+# Alert rule query model: groups[].rules[].data.model
+groups:
+  # <int> organization ID, default = 1
+  - orgId: 1
+    # <string, required> name of the rule group
+    name: my_rule_group
+    # <string, required> name of the folder the rule group will be stored in
+    folder: my_first_folder_with_$$escaped_symbols
+    # <duration, required> interval that the rule group should evaluated at
+    interval: 60s
+    # <list, required> list of rules that are part of the rule group
+    rules:
+      # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
+      - uid: my_id_1
+        # <string, required> title of the rule that will be displayed in the UI
+        title: my_first_rule_with_$$escaped_symbols
+        # <string, required> which query should be used for the condition
+        condition: A
+        # <list, required> list of query objects that should be executed on each
+        #                  evaluation - should be obtained through the API
+        data:
+          - refId: A
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 3
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: "__expr__"
+              expression: 1==0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+              type: math
+        # <string> UID of a dashboard that the alert rule should be linked to
+        dashboardUid: my_dashboard
+        # <int> ID of the panel that the alert rule should be linked to
+        panelId: 123
+        # <string> the state the alert rule will have when no data is returned
+        #          possible values: "NoData", "Alerting", "OK", default = NoData
+        noDataState: Alerting
+        # <string> the state the alert rule will have when the query execution
+        #          failed - possible values: "Error", "Alerting", "OK"
+        #          default = Alerting
+        execErrState: Alerting
+        # <duration, required> for how long should the alert fire before alerting
+        for: 60s
+        # <map<string, string>> a map of strings to pass around any data
+        annotations:
+          some_key: some_value
+          $no_escaping_needed: $no_escaping_needed
+        # <map<string, string> a map of strings that can be used to filter and
+        #                      route alerts
+        labels:
+          team: sre_team_1
+          label_keys_not_$escaped: $$escaped_value
+          something: "escaped in the middle of things $$value"
+          templated: "{{ $$labels.team }}"
+          middle: "u$$ing_escaped_symbols"

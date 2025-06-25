@@ -6,7 +6,9 @@ package parse
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
+	"time"
 )
 
 // Make the types prettyprint.
@@ -165,5 +167,72 @@ func TestLex(t *testing.T) {
 		if !equal(items, test.items, false) {
 			t.Errorf("%s: got\n\t%+v\nexpected\n\t%v", test.name, items, test.items)
 		}
+	}
+}
+
+// TestLexerClose verifies that a lexer can be explicitly closed
+func TestLexerClose(t *testing.T) {
+	// Create a lexer with some input
+	lexer := lex("1 + 2")
+
+	// Read one item to verify it's working
+	item := lexer.nextItem()
+	if item.typ != itemNumber || item.val != "1" {
+		t.Errorf("unexpected first item: %v", item)
+	}
+
+	// Close the lexer explicitly
+	lexer.Close()
+
+	// Verify the lexer's channel closes
+	select {
+	case _, ok := <-lexer.items:
+		if ok {
+			t.Fatal("lexer.items channel should be closed after lexer.Close()")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("timed out waiting for lexer.items channel to close")
+	}
+}
+
+// TestParseErrorNoLeak verifies that lexer goroutines are properly terminated when Parse encounters errors
+func TestParseErrorNoLeak(t *testing.T) {
+	// Count initial goroutines
+	initialGoroutines := runtime.NumGoroutine()
+
+	// Create several trees with parsing errors to check for leaks
+	for i := 0; i < 10; i++ {
+		tree := New()
+		input := "invalid expression with $"
+		err := tree.Parse(input)
+
+		// Verify that Parse returned an error
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+
+		// Verify that tree.lex is nil after an error
+		if tree.lex != nil {
+			t.Fatal("tree.lex was not set to nil after error")
+		}
+	}
+
+	// Poll for goroutine count to stabilize
+	deadline := time.Now().Add(500 * time.Millisecond)
+	var finalGoroutines int
+
+	for time.Now().Before(deadline) {
+		finalGoroutines = runtime.NumGoroutine()
+		// If we're close to the initial count, we can exit early
+		if finalGoroutines <= initialGoroutines+2 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Check if we've leaked goroutines (with a small buffer for normal variations)
+	if finalGoroutines > initialGoroutines+5 {
+		t.Fatalf("Goroutine leak detected: started with %d goroutines, ended with %d (difference of %d)",
+			initialGoroutines, finalGoroutines, finalGoroutines-initialGoroutines)
 	}
 }

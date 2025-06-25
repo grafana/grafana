@@ -1,417 +1,229 @@
-// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/metric_find_query.test.ts
-import { Observable, of } from 'rxjs';
-
-import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
-import { BackendDataSourceResponse, BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
+import { getDefaultTimeRange, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
-import { getPrometheusTime } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
-import { PromApplication, PromOptions } from './types';
 
-const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
-  return of({} as unknown as FetchResponse);
-});
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => {
-    return {
-      fetch: fetchMock,
-    };
-  },
-}));
-
-const instanceSettings = {
-  url: 'proxied',
-  id: 1,
-  uid: 'ABCDEF',
-  user: 'test',
-  password: 'mupp',
-  jsonData: {
-    httpMethod: 'GET',
-    prometheusVersion: '2.20.0',
-    prometheusType: PromApplication.Prometheus,
-  },
-} as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
-const raw: TimeRange = {
-  from: toUtc('2018-04-25 10:00'),
-  to: toUtc('2018-04-25 11:00'),
-  raw: {
-    from: '2018-04-25 10:00',
-    to: '2018-04-25 11:00',
-  },
-};
-
-const templateSrvStub = {
-  getAdhocFilters: jest.fn().mockImplementation(() => []),
-  replace: jest.fn().mockImplementation((a: string) => a),
-} as unknown as TemplateSrv;
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
+jest.mock('./datasource');
 
 describe('PrometheusMetricFindQuery', () => {
-  let legacyPrometheusDatasource: PrometheusDatasource;
-  let prometheusDatasource: PrometheusDatasource;
+  let datasource: jest.Mocked<PrometheusDatasource>;
+  let timeRange: TimeRange;
+
   beforeEach(() => {
-    legacyPrometheusDatasource = new PrometheusDatasource(instanceSettings, templateSrvStub);
-    prometheusDatasource = new PrometheusDatasource(
-      {
-        ...instanceSettings,
-        jsonData: { ...instanceSettings.jsonData, prometheusVersion: '2.2.0', prometheusType: PromApplication.Mimir },
+    datasource = {
+      metadataRequest: jest.fn(),
+      languageProvider: {
+        start: jest.fn(),
+        queryLabelKeys: jest.fn().mockResolvedValue([]),
+        queryLabelValues: jest.fn().mockResolvedValue([]),
       },
-      templateSrvStub
-    );
+      getTagKeys: jest.fn(),
+    } as unknown as jest.Mocked<PrometheusDatasource>;
+
+    timeRange = getDefaultTimeRange();
   });
 
-  const setupMetricFindQuery = (
-    data: {
-      query: string;
-      response: {
-        data: unknown;
-      };
-    },
-    datasource?: PrometheusDatasource
-  ) => {
-    fetchMock.mockImplementation(() => of({ status: 'success', data: data.response } as unknown as FetchResponse));
-    return new PrometheusMetricFindQuery(datasource ?? legacyPrometheusDatasource, data.query);
-  };
+  describe('Label Names Query', () => {
+    it('should call getTagKeys for simple label_names query', async () => {
+      const expectedLabelNames = [{ text: 'label1' }, { text: 'label2' }, { text: 'label3' }];
+      datasource.getTagKeys.mockResolvedValue(expectedLabelNames);
 
-  describe('When performing metricFindQuery', () => {
-    it('label_names() should generate label name search query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_names()',
-        response: {
-          data: ['name1', 'name2', 'name3'],
-        },
-      });
-      const results = await query.process(raw);
+      const query = new PrometheusMetricFindQuery(datasource, 'label_names()');
+      const results = await query.process(timeRange);
 
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        showErrorAlert: false,
-        headers: {
-          'X-Grafana-Cache': 'private, max-age=60',
-        },
-      });
+      expect(results).toEqual(expectedLabelNames);
+      expect(datasource.getTagKeys).toHaveBeenCalledWith({ filters: [], timeRange });
     });
 
-    it('label_values(resource) should generate label search query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_values(resource)',
-        response: {
-          data: ['value1', 'value2', 'value3'],
-        },
-      });
-      const results = await query.process(raw);
+    it('should call queryLabelKeys with correct parameters', async () => {
+      const query = new PrometheusMetricFindQuery(datasource, 'label_names(metric_name) ');
+      await query.process(timeRange);
+      expect(datasource.languageProvider.queryLabelKeys).toHaveBeenCalledWith(
+        timeRange,
+        '{__name__=~".*metric_name.*"}'
+      );
+    });
+  });
 
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        headers: {},
-      });
+  describe('Label Values Query', () => {
+    it('should call queryLabelValues with correct parameters without metric filter', async () => {
+      const query = new PrometheusMetricFindQuery(datasource, 'label_values(label1)');
+      await query.process(timeRange);
+
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(timeRange, 'label1', undefined);
     });
 
-    const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
+    it('should call queryLabelValues with correct parameters with metric filter', async () => {
+      const query = new PrometheusMetricFindQuery(datasource, 'label_values(metric{label="value"}, label1)');
+      await query.process(timeRange);
 
-    emptyFilters.forEach((emptyFilter) => {
-      const queryString = `label_values(${emptyFilter}, resource)`;
-      it(`Empty filter, query, ${queryString} should just generate label search query`, async () => {
-        const query = setupMetricFindQuery({
-          query: queryString,
-          response: {
-            data: ['value1', 'value2', 'value3'],
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
+        timeRange,
+        'label1',
+        'metric{label="value"}'
+      );
+    });
+  });
+
+  describe('Metric Names Query', () => {
+    it('should call queryLabelValues with correct parameters', async () => {
+      const query = new PrometheusMetricFindQuery(datasource, 'metrics(.*metric.*)');
+      await query.process(timeRange);
+
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
+        timeRange,
+        '__name__',
+        '{__name__=~".*metric.*"}'
+      );
+    });
+  });
+
+  describe('Query Result', () => {
+    it('should handle scalar result', async () => {
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
+          data: {
+            resultType: 'scalar',
+            result: [1234567, '42'],
           },
-        });
-        const results = await query.process(raw);
-
-        expect(results).toHaveLength(3);
-        expect(fetchMock).toHaveBeenCalledTimes(1);
-        expect(fetchMock).toHaveBeenCalledWith({
-          method: 'GET',
-          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
-          hideFromInspector: true,
-          headers: {},
-        });
-      });
-    });
-
-    // <LegacyPrometheus>
-    it('label_values(metric, resource) should generate series query with correct time', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_values(metric, resource)',
-        response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
         },
       });
-      const results = await query.process(raw);
 
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        showErrorAlert: false,
-        headers: {},
-      });
+      const query = new PrometheusMetricFindQuery(datasource, 'query_result(sum(metric))');
+      const results = await query.process(timeRange);
+
+      expect(results).toEqual([{ text: '42', expandable: false }]);
     });
 
-    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate series query with correct time', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_values(metric{label1="foo", label2="bar", label3="baz"}, resource)',
-        response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
-        },
-      });
-      const results = await query.process(raw);
-
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: '/api/datasources/uid/ABCDEF/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
-        hideFromInspector: true,
-        showErrorAlert: false,
-        headers: {},
-      });
-    });
-
-    it('label_values(metric, resource) result should not contain empty string', async () => {
-      const query = setupMetricFindQuery({
-        query: 'label_values(metric, resource)',
-        response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: '' },
-          ],
-        },
-      });
-      const results = await query.process(raw);
-
-      expect(results).toHaveLength(2);
-      expect(results[0].text).toBe('value1');
-      expect(results[1].text).toBe('value2');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
-          '[]'
-        )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        showErrorAlert: false,
-        headers: {},
-      });
-    });
-    // </LegacyPrometheus>
-
-    it('metrics(metric.*) should generate metric name query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'metrics(metric.*)',
-        response: {
-          data: ['metric1', 'metric2', 'metric3', 'nomatch'],
-        },
-      });
-      const results = await query.process(raw);
-
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        headers: {},
-      });
-    });
-
-    it('query_result(metric) should generate metric name query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'query_result(metric)',
-        response: {
+    it('should handle vector result', async () => {
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
           data: {
             resultType: 'vector',
             result: [
               {
-                metric: { __name__: 'metric', job: 'testjob' },
-                value: [1443454528.0, '3846'],
+                metric: { __name__: 'metric', label: 'value' },
+                value: [1234567, '42'],
               },
             ],
           },
         },
       });
-      const results = await query.process(raw);
 
-      expect(results).toHaveLength(1);
-      expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        headers: {},
-        hideFromInspector: true,
-        showErrorAlert: false,
-      });
-    });
+      const query = new PrometheusMetricFindQuery(datasource, 'query_result(metric)');
+      const results = await query.process(timeRange);
 
-    it('query_result(metric) should pass time parameter to datasource.metric_find_query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'query_result(metric)',
-        response: {
-          data: {
-            resultType: 'vector',
-            result: [
-              {
-                metric: { __name__: 'metric', job: 'testjob' },
-                value: [1443454528.0, '3846'],
-              },
-            ],
-          },
+      expect(results).toEqual([
+        {
+          text: 'metric{label="value"} 42 1234567000',
+          expandable: true,
         },
-      });
-      const results = await query.process(raw);
-
-      const expectedTime = getPrometheusTime(raw.to, true);
-
-      expect(results).toHaveLength(1);
-      expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${expectedTime}`,
-        headers: {},
-        hideFromInspector: true,
-        showErrorAlert: false,
-      });
+      ]);
     });
 
-    it('query_result(metric) should handle scalar resultTypes separately', async () => {
-      const query = setupMetricFindQuery({
-        query: 'query_result(1+1)',
-        response: {
+    it('should handle scalar result with timestamp', async () => {
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
           data: {
             resultType: 'scalar',
             result: [1443454528.0, '2'],
           },
         },
       });
-      const results = await query.process(raw);
-      expect(results).toHaveLength(1);
-      expect(results[0].text).toBe('2');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        headers: {},
-        hideFromInspector: true,
-        showErrorAlert: false,
-      });
+
+      const query = new PrometheusMetricFindQuery(datasource, 'query_result(1+1)');
+      const results = await query.process(timeRange);
+
+      expect(results).toEqual([{ text: '2', expandable: false }]);
     });
 
-    it('up{job="job1"} should fallback using generate series query', async () => {
-      const query = setupMetricFindQuery({
-        query: 'up{job="job1"}',
-        response: {
-          data: [
-            { __name__: 'up', instance: '127.0.0.1:1234', job: 'job1' },
-            { __name__: 'up', instance: '127.0.0.1:5678', job: 'job1' },
-            { __name__: 'up', instance: '127.0.0.1:9102', job: 'job1' },
-          ],
-        },
-      });
-      const results = await query.process(raw);
-
-      expect(results).toHaveLength(3);
-      expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
-      expect(results[1].text).toBe('up{instance="127.0.0.1:5678",job="job1"}');
-      expect(results[2].text).toBe('up{instance="127.0.0.1:9102",job="job1"}');
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
-          'up{job="job1"}'
-        )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        showErrorAlert: false,
-        headers: {},
-      });
-    });
-
-    // <ModernPrometheus>
-    it('label_values(metric, resource) should generate label values query with correct time', async () => {
-      const metricName = 'metricName';
-      const resourceName = 'resourceName';
-      const query = setupMetricFindQuery(
-        {
-          query: `label_values(${metricName}, ${resourceName})`,
-          response: {
-            data: [
-              { __name__: `${metricName}`, resourceName: 'value1' },
-              { __name__: `${metricName}`, resourceName: 'value2' },
-              { __name__: `${metricName}`, resourceName: 'value3' },
+    it('should handle vector result with metric name and labels', async () => {
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
+          data: {
+            resultType: 'vector',
+            result: [
+              {
+                metric: { __name__: 'metric', job: 'testjob' },
+                value: [1443454528.0, '3846'],
+              },
             ],
           },
         },
-        prometheusDatasource
-      );
-      const results = await query.process(raw);
-
-      expect(results).toHaveLength(3);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match${encodeURIComponent(
-          '[]'
-        )}=${metricName}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        hideFromInspector: true,
-        headers: {},
       });
+
+      const query = new PrometheusMetricFindQuery(datasource, 'query_result(metric)');
+      const results = await query.process(timeRange);
+
+      expect(results).toEqual([{ text: 'metric{job="testjob"} 3846 1443454528000', expandable: true }]);
     });
 
-    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate label values query with correct time', async () => {
-      const metricName = 'metricName';
-      const resourceName = 'resourceName';
-      const label1Name = 'label1';
-      const label1Value = 'label1Value';
-      const query = setupMetricFindQuery(
-        {
-          query: `label_values(${metricName}{${label1Name}="${label1Value}"}, ${resourceName})`,
-          response: {
-            data: [{ __name__: metricName, resourceName: label1Value }],
+    it('should throw error for unknown result type', async () => {
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
+          data: {
+            resultType: 'unknown',
           },
         },
-        prometheusDatasource
-      );
-      const results = await query.process(raw);
+      });
 
-      expect(results).toHaveLength(1);
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith({
-        method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${resourceName}/values?match%5B%5D=${metricName}%7B${label1Name}%3D%22${label1Value}%22%7D&start=1524650400&end=1524654000`,
-        hideFromInspector: true,
-        headers: {},
+      const query = new PrometheusMetricFindQuery(datasource, 'query_result(metric)');
+      await expect(query.process(timeRange)).rejects.toThrow('Unknown/Unhandled result type: [unknown]');
+    });
+  });
+
+  describe('Series Query', () => {
+    it('should return series', async () => {
+      const metric = { __name__: 'metric', label: 'value' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
+          data: [metric],
+        },
+      });
+
+      const query = new PrometheusMetricFindQuery(datasource, 'metric{label="value"}');
+      const results = await query.process(timeRange);
+
+      expect(results).toEqual([{ text: 'metric{label="value"}', expandable: true }]);
+      expect(datasource.metadataRequest).toHaveBeenCalledWith('/api/v1/series', {
+        'match[]': 'metric{label="value"}',
+        start: expect.any(String),
+        end: expect.any(String),
       });
     });
-    // </ ModernPrometheus>
+
+    it('should return series with metric name and labels', async () => {
+      const metric = { __name__: 'up', instance: '127.0.0.1:1234', job: 'job1' };
+      datasource.metadataRequest = jest.fn().mockResolvedValue({
+        data: {
+          data: [metric],
+        },
+      });
+
+      const query = new PrometheusMetricFindQuery(datasource, 'up{job="job1"}');
+      const results = await query.process(timeRange);
+
+      expect(results).toEqual([{ text: 'up{instance="127.0.0.1:1234",job="job1"}', expandable: true }]);
+    });
+  });
+
+  describe('UTF-8 Support', () => {
+    it('should handle UTF-8 label names in label_values query', async () => {
+      datasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['value1', 'value2']);
+
+      const query = new PrometheusMetricFindQuery(datasource, 'label_values(metric,instance.test)');
+      await query.process(timeRange);
+
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(timeRange, 'instance.test', 'metric');
+    });
+
+    it('should handle UTF-8 metric names in label_values query', async () => {
+      datasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['value1', 'value2']);
+
+      const query = new PrometheusMetricFindQuery(datasource, 'label_values(utf8.metric,label)');
+      await query.process(timeRange);
+
+      expect(datasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(timeRange, 'label', 'utf8.metric');
+    });
   });
 });

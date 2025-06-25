@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { UrlSyncContextProvider } from '@grafana/scenes';
+import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -23,30 +25,50 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
  */
 export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard } = stateManager.useState();
-  const { uid = '' } = useParams();
+  const { dashboard, loadError } = stateManager.useState();
+  const { uid = '', type, slug } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, queryParams, uid]);
+  }, [stateManager, queryParams, uid, type, slug]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
+  }
+
+  if (loadError) {
+    return (
+      <Box justifyContent={'center'} alignItems={'center'} display={'flex'} height={'100%'}>
+        <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
+          {loadError.message}
+        </Alert>
+      </Box>
+    );
   }
 
   if (!dashboard) {
     return <PageLoader />;
   }
 
-  return <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />;
+  return (
+    <UrlSyncContextProvider scene={dashboard}>
+      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />
+    </UrlSyncContextProvider>
+  );
 }
 
 export default SoloPanelPage;
 
 export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
   const [panel, error] = useSoloPanel(dashboard, panelId);
+  const { controls } = dashboard.useState();
+  const refreshPicker = controls?.useState()?.refreshPicker;
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    return refreshPicker?.activate();
+  }, [refreshPicker]);
 
   if (error) {
     return <Alert title={error} />;
@@ -55,7 +77,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   if (!panel) {
     return (
       <span>
-        Loading <Spinner />
+        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
       </span>
     );
   }

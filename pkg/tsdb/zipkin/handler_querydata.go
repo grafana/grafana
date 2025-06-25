@@ -39,7 +39,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			traces, err := dsInfo.ZipkinClient.Trace(query.Query)
 			if err != nil {
 				es := backend.ErrorSourcePlugin
-				if backend.IsDownstreamHTTPError(err) {
+				if backend.IsDownstreamError(err) {
 					es = backend.ErrorSourceDownstream
 				}
 				response.Responses[q.RefID] = backend.DataResponse{

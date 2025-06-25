@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   createDatasourcesList,
   SortOrder,

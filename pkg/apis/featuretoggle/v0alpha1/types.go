@@ -47,7 +47,7 @@ type FeatureSpec struct {
 	// Do not show the value in docs
 	HideFromDocs bool `json:"hideFromDocs,omitempty"`
 
-	// Expression to determine if the flag is enabled by default
+	// Expression to determine if the flag is enabled by default -- can only be "true" for toggles that are public preview, generally available, or deprecated
 	Expression string `json:"expression,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type FeatureList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Feature `json:"items,omitempty"`
+	Items []Feature `json:"items"`
 }
 
 // FeatureToggles define the feature state
@@ -74,7 +74,7 @@ type FeatureTogglesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []FeatureToggles `json:"items,omitempty"`
+	Items []FeatureToggles `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

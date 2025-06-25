@@ -1,8 +1,7 @@
-import { capitalize, get as lodashGet } from 'lodash';
+import { get as lodashGet } from 'lodash';
 
-import { OneClickMode } from '@grafana/data';
-import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { config } from '@grafana/runtime';
+import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
   canvasElementRegistry,
@@ -68,8 +67,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
       const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
 
-      const actionsEnabled = config.featureToggles.vizActions;
-
       const isUnsupported =
         !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;
 
@@ -81,7 +78,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
           options: layerTypes,
         },
         description: isUnsupported
-          ? 'Selected element type is not supported by current settings. Please enable advanced element types.'
+          ? t(
+              'canvas.element-editor.description-unsupported',
+              'Selected element type is not supported by current settings. Please enable advanced element types.'
+            )
           : '',
       });
 
@@ -104,10 +104,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const shouldAddLayoutEditor = opts.element.item.standardEditorConfig?.layout ?? true;
       if (shouldAddLayoutEditor) {
         builder.addCustomEditor({
-          category: ['Layout'],
+          category: [t('canvas.element-editor.category-layout', 'Layout')],
           id: 'content',
           path: '__', // not used
-          name: 'Quick placement',
+          name: t('canvas.element-editor.name-quick-placement', 'Quick placement'),
           editor: PlacementEditor,
           settings: opts,
         });
@@ -122,34 +122,6 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       if (shouldAddBorderEditor) {
         optionBuilder.addBorder(builder, ctx);
       }
-
-      const oneClickModeOptions: Array<{
-        value: OneClickMode;
-        label: string;
-      }> = [
-        { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
-        { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
-      ];
-
-      let oneClickCategory = 'Data links';
-      let oneClickDescription = 'When enabled, a single click opens the first link';
-
-      if (actionsEnabled) {
-        oneClickModeOptions.push({ value: OneClickMode.Action, label: capitalize(OneClickMode.Action) });
-        oneClickCategory += ' and actions';
-        oneClickDescription += ' or action';
-      }
-
-      builder.addRadio({
-        category: [oneClickCategory],
-        path: 'oneClickMode',
-        name: 'One-click',
-        description: oneClickDescription,
-        settings: {
-          options: oneClickModeOptions,
-        },
-        defaultValue: OneClickMode.Off,
-      });
 
       optionBuilder.addDataLinks(builder, ctx);
       optionBuilder.addActions(builder, ctx);

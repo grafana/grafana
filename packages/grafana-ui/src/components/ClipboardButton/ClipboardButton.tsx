@@ -3,10 +3,10 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { Trans } from '../../../src/utils/i18n';
-import { useStyles2 } from '../../themes';
-import { Button, ButtonProps } from '../Button';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Button, ButtonProps } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { InlineToast } from '../InlineToast/InlineToast';
 
@@ -60,11 +60,12 @@ export function ClipboardButton({
     }
   }, [getText, onClipboardCopy, onClipboardError]);
 
+  const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (
     <>
       {showCopySuccess && (
         <InlineToast placement="top" referenceElement={buttonRef.current}>
-          <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+          {copiedText}
         </InlineToast>
       )}
 
@@ -72,7 +73,7 @@ export function ClipboardButton({
         onClick={copyTextCallback}
         icon={icon}
         variant={showCopySuccess ? 'success' : variant}
-        aria-label={showCopySuccess ? 'Copied' : undefined}
+        aria-label={showCopySuccess ? copiedText : undefined}
         {...buttonProps}
         className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}

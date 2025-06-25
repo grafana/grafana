@@ -4,8 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -41,14 +40,14 @@ type ListResponse[T Resource] struct {
 	Continue int64
 }
 
-type ListFunc[T Resource] func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[T], error)
+type ListFunc[T Resource] func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[T], error)
 
 // List is a helper function that will perform access check on resources if
-// prvovided with a claims.AccessClient.
+// prvovided with a authlib.AccessClient.
 func List[T Resource](
 	ctx context.Context,
 	resourceName string,
-	ac authz.AccessClient,
+	ac authlib.AccessClient,
 	p Pagination,
 	fn ListFunc[T],
 ) (*ListResponse[T], error) {
@@ -62,10 +61,10 @@ func List[T Resource](
 		return nil, err
 	}
 
-	check := func(_, _, _ string) bool { return true }
+	check := func(_, _ string) bool { return true }
 	if ac != nil {
 		var err error
-		check, err = ac.Compile(ctx, ident, authz.ListRequest{
+		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
 			Resource:  resourceName,
 			Namespace: ns.Value,
 		})
@@ -83,7 +82,7 @@ func List[T Resource](
 	}
 
 	for _, item := range first.Items {
-		if !check(ns.Value, item.AuthID(), "") {
+		if !check(item.AuthID(), "") {
 			continue
 		}
 		res.Items = append(res.Items, item)
@@ -106,7 +105,7 @@ outer:
 				break outer
 			}
 
-			if !check(ns.Value, item.AuthID(), "") {
+			if !check(item.AuthID(), "") {
 				continue
 			}
 

@@ -2,7 +2,6 @@
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '@grafana/prometheus';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
@@ -39,6 +38,8 @@ interface RuleBase {
   lastEvaluation?: string;
   evaluationTime?: number;
   lastError?: string;
+  uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {
@@ -71,6 +72,18 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
+export interface GrafanaAlertingRule extends AlertingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export interface GrafanaRecordingRule extends RecordingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
+
 export type BaseRuleGroup = { name: string };
 
 type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
@@ -83,6 +96,18 @@ export interface RuleGroup {
   rules: Rule[];
   // totals only exist for Grafana Managed rules
   totals?: Partial<Record<TotalsWithoutAlerting | FiringTotal, number>>;
+}
+
+export interface DataSourceRuleGroup {
+  id: DataSourceRuleGroupIdentifier;
+  interval: number;
+  rules: Rule[];
+}
+
+export interface DataSourceRuleNamespace {
+  rulesSource: DataSourceRulesSourceIdentifier;
+  id: DataSourceNamespaceIdentifier;
+  groups: DataSourceRuleGroup[];
 }
 
 export interface RuleNamespace {
@@ -112,12 +137,14 @@ export interface CombinedRule {
   namespace: CombinedRuleNamespace;
   instanceTotals: AlertInstanceTotals;
   filteredInstanceTotals: AlertInstanceTotals;
+  uid?: string;
 }
 
 // export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
 export enum AlertInstanceTotalState {
   Alerting = 'alerting',
   Pending = 'pending',
+  Recovering = 'recovering',
   Normal = 'inactive',
   NoData = 'nodata',
   Error = 'error',
@@ -154,16 +181,20 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
 export const GrafanaRulesSourceSymbol = Symbol('grafana');
 export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
 
-export interface ExternalRulesSourceIdentifier {
+export interface DataSourceRulesSourceIdentifier {
   uid: string;
   name: string;
+  // discriminator
+  ruleSourceType: 'datasource';
 }
 export interface GrafanaRulesSourceIdentifier {
   uid: typeof GrafanaRulesSourceSymbol;
-  name: typeof GRAFANA_RULES_SOURCE_NAME;
+  name: 'grafana';
+  // discriminator
+  ruleSourceType: 'grafana';
 }
 
-export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
+export type RulesSourceIdentifier = DataSourceRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
 
 /** @deprecated use RuleGroupIdentifierV2 instead */
 export interface RuleGroupIdentifier {
@@ -182,14 +213,13 @@ export interface DataSourceNamespaceIdentifier {
 }
 
 export interface GrafanaRuleGroupIdentifier {
-  rulesSource: GrafanaRulesSourceIdentifier;
   groupName: string;
   namespace: GrafanaNamespaceIdentifier;
   groupOrigin: 'grafana';
 }
 
 export interface DataSourceRuleGroupIdentifier {
-  rulesSource: ExternalRulesSourceIdentifier;
+  rulesSource: DataSourceRulesSourceIdentifier;
   groupName: string;
   namespace: DataSourceNamespaceIdentifier;
   groupOrigin: 'datasource';
@@ -283,6 +313,7 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
 }
 

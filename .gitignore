@@ -16,6 +16,7 @@ vendor/
 /requests
 tsconfig.tsbuildinfo
 __debug_bin*
+*.cov
 
 # yarn
 .yarn/cache
@@ -40,6 +41,7 @@ __debug_bin*
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
@@ -66,6 +68,9 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+.devcontainer/
+
 .eslintcache
 .stylelintcache
 
@@ -93,6 +98,9 @@ conf/custom.ini
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
 
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
@@ -103,14 +111,19 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
-/pkg/extensions/*
-/pkg/build/cmd/artifactspage.go
-/pkg/build/cmd/artifactspage.tmpl.html
-/pkg/build/cmd/exportversion.go
-/pkg/server/wireexts_enterprise.go
+
+# Extensions
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
+/pkg/server/wireexts_enterprise.go
+/pkg/build/cmd/enterprise.go
+/pkg/extensions/*
+!/pkg/extensions/.keep
 !/pkg/extensions/main.go
+!/pkg/extensions/enterprise_imports.go
 /public/app/extensions
+!/public/app/extensions/.keep
+
+
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
@@ -141,6 +154,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -170,13 +184,13 @@ compilation-stats.json
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
 /e2e/extensions
+!/e2e/extensions/.keep
 /e2e/extensions-suite
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
 # grafana server
 /scripts/grafana-server/server.log
 

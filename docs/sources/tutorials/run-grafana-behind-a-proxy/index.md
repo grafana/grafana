@@ -177,6 +177,41 @@ This is the rewrite rule that's generated in the `web.config`:
 
 For more detailed instruction, refer to the [tutorial on IIS URL Rewrites](/tutorials/iis/).
 
+### Configure Apache
+
+To use Apache as a proxy, ensure its proper installation and configuration.
+
+1.  Ensure that the Apache proxy module [`mod_proxy`](https://httpd.apache.org/docs/current/mod/mod_proxy.html) is installed and enabled. To enable, run the following commands:
+
+```bash
+a2enmod proxy
+a2enmod proxy_http
+```
+
+2. To configure the proxy, edit the site configuration file. To do so, inside the `<VirtualHost>` section, add the following code:
+
+```bash
+  ProxyPreserveHost on
+  ProxyPass / http://your_grafana_server:3000
+  ProxyPassReverse / http://your_grafana_server:3000
+```
+
+3. Finally, restart Apache for the settings to take effect.
+
+After you've restarted, navigate to your Apache server on port 80 and you will be redirected to Grafana.
+
+To configure Grafana hosted in a sub path, replace the sub path with the following code (assuming your Grafana instance is on the sub path `your_path`):
+
+```bash
+  ProxyPreserveHost on
+  ProxyPass /your_path http://your_grafana_server:3000
+  ProxyPassReverse /your_path http://your_grafana_server:3000
+  ProxyPass / http://your_grafana_server:3000/your_path
+  ProxyPassReverse / http://192.168.250.5:3000/your_path
+```
+
+Note that the lines containing `your_path` _must_ come before the lines referencing root path (`/`) in order for this to work correctly.
+
 ### Configure Traefik
 
 [Traefik](https://traefik.io/traefik/) Cloud Native application proxy.

@@ -52,7 +52,12 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
     // Load plugin from CDN, no need for "resolveWithCache" as CDN URLs already include the version
     const url = meta.module;
     const response = await fetch(url);
+
     let pluginCode = await response.text();
+    if (!verifySRI(pluginCode, meta.moduleHash)) {
+      throw new Error('Invalid SRI for plugin module file');
+    }
+
     pluginCode = transformPluginSourceForCDN({
       url,
       source: pluginCode,
@@ -66,7 +71,12 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
     // to ensure correct cached version is served for local plugins
     const pluginCodeUrl = resolveWithCache(modulePath);
     const response = await fetch(pluginCodeUrl);
+
     let pluginCode = await response.text();
+    if (!verifySRI(pluginCode, meta.moduleHash)) {
+      throw new Error('Invalid SRI for plugin module file');
+    }
+
     pluginCode = transformPluginSourceForCDN({
       url: pluginCodeUrl,
       source: pluginCode,
@@ -76,6 +86,27 @@ export async function getPluginCode(meta: SandboxPluginMeta): Promise<string> {
     pluginCode = patchPluginAPIs(pluginCode);
     return pluginCode;
   }
+}
+
+async function verifySRI(pluginCode: string, moduleHash?: string): Promise<boolean> {
+  if (!config.featureToggles.pluginsSriChecks) {
+    return true;
+  }
+
+  if (!moduleHash || moduleHash.length === 0) {
+    return true;
+  }
+
+  const [algorithm, _] = moduleHash.split('-');
+  const cleanAlgorithm = algorithm.replace('sha', 'SHA-');
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pluginCode);
+
+  const digest = await crypto.subtle.digest(cleanAlgorithm, data);
+  const actualHash = btoa(String.fromCharCode(...new Uint8Array(digest)));
+
+  return `${algorithm}-${actualHash}` === moduleHash;
 }
 
 function patchPluginAPIs(pluginCode: string): string {
@@ -113,6 +144,7 @@ export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
         id: pluginId,
         type: PluginType.app,
         module: app.path,
+        moduleHash: app.moduleHash,
       };
     }
   }

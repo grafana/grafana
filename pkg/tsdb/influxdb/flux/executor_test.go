@@ -61,8 +61,11 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 	runner := &MockRunner{
 		testDataPath: name + ".csv",
 	}
+	if query.MaxSeries == 0 {
+		query.MaxSeries = 50
+	}
 
-	dr := executeQuery(context.Background(), glog, query, runner, 50)
+	dr := executeQuery(context.Background(), glog, query, runner, query.MaxSeries)
 	return &dr
 }
 
@@ -243,6 +246,16 @@ func assertDataResponseDimensions(t *testing.T, dr *backend.DataResponse, rows i
 	require.Equal(t, fields[1].Len(), columns)
 }
 
+func TestMaxSeriesExceeded(t *testing.T) {
+	// unfortunately the golden-response style tests do not support
+	// responses that contain errors, so we can only do manual checks
+	// on the DataResponse
+	dr := executeMockedQuery(t, "multiple", queryModel{MaxSeries: 1, MaxDataPoints: 100})
+
+	require.ErrorAs(t, dr.Error, &maxSeriesExceededError{})
+	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
+}
+
 func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
 	// unfortunately the golden-response style tests do not support
 	// responses that contain errors, so we can only do manual checks
@@ -251,6 +264,7 @@ func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
 
 	// it should contain the error-message
 	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2. Try using the aggregateWindow() function in your query to reduce the number of points returned.")
+	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
 	assertDataResponseDimensions(t, dr, 2, 21)
 }
 
@@ -262,6 +276,7 @@ func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
 
 	// it should contain the error-message
 	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
+	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
 	assertDataResponseDimensions(t, dr, 2, 21)
 }
 

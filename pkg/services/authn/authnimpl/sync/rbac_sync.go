@@ -3,16 +3,18 @@ package sync
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"golang.org/x/exp/maps"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/authn"
+	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -28,6 +30,7 @@ func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer, per
 		log:          log.New("permissions.sync"),
 		permRegistry: permRegistry,
 		tracer:       tracer,
+		mapper:       rbac.NewMapperRegistry(),
 	}
 }
 
@@ -36,6 +39,7 @@ type RBACSync struct {
 	permRegistry permreg.PermissionRegistry
 	log          log.Logger
 	tracer       tracing.Tracer
+	mapper       rbac.MapperRegistry
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
@@ -81,7 +85,8 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	permissions := make([]accesscontrol.Permission, 0, 8)
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
-	if len(roles) > 0 || len(actions) > 0 {
+	k8s := ident.ClientParams.FetchPermissionsParams.K8s
+	if len(roles) > 0 || len(actions) > 0 || len(k8s) > 0 {
 		for _, role := range roles {
 			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
 			if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
@@ -93,19 +98,11 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 			}
 		}
 		for _, action := range actions {
-			scopes, ok := s.permRegistry.GetScopePrefixes(action)
-			if !ok {
-				s.log.Warn("Unknown action scopes", "action", action)
-				continue
-			}
-			if len(scopes) == 0 {
-				permissions = append(permissions, accesscontrol.Permission{Action: action})
-				continue
-			}
-			for scope := range scopes {
-				permissions = append(permissions, accesscontrol.Permission{Action: action, Scope: scope + "*"})
-			}
+			s.addPermissionsForAction(action, &permissions)
 		}
+		// Add K8s permissions
+		k8sPermissions := s.translateK8sPermissions(ctx, k8s)
+		permissions = append(permissions, k8sPermissions...)
 		return permissions, nil
 	}
 
@@ -115,6 +112,88 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 		return nil, errSyncPermissionsForbidden
 	}
 	return permissions, nil
+}
+
+// addPermissionsForAction is a helper method that handles the common pattern of:
+// 1. Getting scope prefixes for an action
+// 2. Adding permissions with appropriate scopes
+// 3. Logging warnings for unknown actions
+func (s *RBACSync) addPermissionsForAction(action string, permissions *[]accesscontrol.Permission) {
+	scopes, ok := s.permRegistry.GetScopePrefixes(action)
+	if !ok {
+		s.log.Warn("Unknown action scopes", "action", action)
+		return
+	}
+	if len(scopes) == 0 {
+		*permissions = append(*permissions, accesscontrol.Permission{Action: action})
+		return
+	}
+	for scope := range scopes {
+		*permissions = append(*permissions, accesscontrol.Permission{Action: action, Scope: scope + "*"})
+	}
+}
+
+func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string) []accesscontrol.Permission {
+	permissions := make([]accesscontrol.Permission, 0, len(k8sPerms))
+	for _, k8sPerm := range k8sPerms {
+		parts := strings.Split(k8sPerm, ":")
+		if len(parts) != 2 {
+			s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+			continue
+		}
+		groupResource := strings.Split(parts[0], "/")
+		group := groupResource[0]
+		verb := parts[1]
+		switch {
+		case len(groupResource) == 1:
+			// Case group:verb
+			resourceMappings := s.mapper.GetAll(group)
+			if len(resourceMappings) == 0 {
+				s.log.Warn("No mappings found for group", "group", group)
+				continue
+			}
+			for _, mapping := range resourceMappings {
+				if verb == "*" {
+					actions := mapping.AllActions()
+					for _, action := range actions {
+						s.addPermissionsForAction(action, &permissions)
+					}
+					continue
+				}
+				action, ok := mapping.Action(verb)
+				if !ok {
+					s.log.Warn("Unknown K8s verb for group", "group", group, "verb", verb)
+					continue
+				}
+				s.addPermissionsForAction(action, &permissions)
+			}
+		case len(groupResource) == 2:
+			// Case group/resource:verb
+			resource := groupResource[1]
+			resourceMappings, ok := s.mapper.Get(group, resource)
+			if !ok {
+				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
+				continue
+			}
+			if verb == "*" {
+				actions := resourceMappings.AllActions()
+				for _, action := range actions {
+					s.addPermissionsForAction(action, &permissions)
+				}
+				continue
+			}
+			action, ok := resourceMappings.Action(verb)
+			if !ok {
+				s.log.Warn("Unknown K8s verb", "group", group, "resource", resource, "verb", verb)
+				continue
+			}
+			s.addPermissionsForAction(action, &permissions)
+		default:
+			s.log.Warn("Invalid K8s permission format", "permission", k8sPerm)
+			continue
+		}
+	}
+	return permissions
 }
 
 func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {
@@ -185,4 +264,23 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		RolesToAdd:    rolesToAdd,
 		RolesToRemove: rolesToRemove,
 	})
+}
+
+// ClearUserPermissionCacheHook clears a user's permission cache if user Login succeeded. Necessary so that if a user logs in
+// through different SSO providers with different roles assigned in each, they do not get the wrong permissions.
+func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *authn.Identity, r *authn.Request, err error) {
+	ctx, span := s.tracer.Start(ctx, "rbac.sync.ClearUserPermissionCacheHook")
+	defer span.End()
+
+	if err != nil {
+		return
+	}
+
+	ctxLogger := s.log.FromContext(ctx)
+	if !ident.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Debug("Skipping user permission cache clear, not a user", "type", ident.GetIdentityType())
+		return
+	}
+
+	s.ac.ClearUserPermissionCache(ident)
 }

@@ -20,6 +20,11 @@ labels:
 title: Configure data source-managed alert rules
 weight: 200
 refs:
+  shared-configure-prometheus-data-source-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/
   configure-grafana-managed-rules:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
@@ -74,17 +79,23 @@ refs:
 
 # Configure data source-managed alert rules
 
-Data source-managed alert rules can only query Prometheus-based data sources, such as Prometheus, Grafana Mimir, or Grafana Loki. They are one of the two [alert rule types](ref:alert-rules) supported in Grafana.
+Data source-managed alert rules can only be created using Grafana Mimir or Grafana Loki data sources.
 
-Data source-managed alert rules are stored within the data source. In a distributed architecture, they can scale horizontally to provide high-availability.
+The rules are stored within the data source. In a distributed architecture, they can scale horizontally to provide high-availability. For more details, refer to [alert rule types](ref:alert-rules).
 
 We recommend using [Grafana-managed alert rules](ref:configure-grafana-managed-rules) whenever possible and opting for data source-managed alert rules when scaling your alerting setup is necessary.
+
+> Rules from a Prometheus data source appear in the **Data source-managed** section of the **Alert rules** page when [Manage alerts via Alerting UI](ref:shared-configure-prometheus-data-source-alerting) is enabled.
+>
+> However, Grafana can only create and edit data source-managed rules for Mimir and Loki, not for a Prometheus instance.
+
+[//]: <> ({{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 To create or edit data source-managed alert rules, follow these instructions.
 
 ## Before you begin
 
-Verify that you have write permission to the Prometheus, Mimir, or Loki data source. Otherwise, you cannot create or update data source-managed alert rules.
+Verify that you have write permission to the Mimir or Loki data source. Otherwise, you cannot create or update data source-managed alert rules.
 
 ### Enable the Ruler API
 
@@ -96,11 +107,17 @@ For more information, refer to the [Mimir Ruler API](/docs/mimir/latest/referenc
 
 ### Permissions
 
-Alert rules for Prometheus, Mimir, or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
+Alert rules for Mimir or Loki instances can be edited or deleted by users with **Editor** or **Admin** roles.
 
 If you do not want to manage alert rules for a particular data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 
-{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+### Provisioning
+
+Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
+
+To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -108,9 +125,9 @@ If you do not want to manage alert rules for a particular data source, go to its
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 By default, new alert rules are Grafana-managed. To switch to **Data source-managed**, follow these instructions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Select a Prometheus-based data source from the drop-down list.
 
@@ -129,7 +146,7 @@ Use [alert rule evaluation](ref:alert-rule-evaluation) to determine how frequent
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated sequentially over the same time interval.
+   All rules within the same group are evaluated sequentially over the same time interval. You can reorder them from the **Alert rules** page.
 
 1. Enter a pending period.
 

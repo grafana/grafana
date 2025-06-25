@@ -1257,7 +1257,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `licensing:update`.",
+        "description": "You need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -1325,7 +1325,7 @@
     },
     "/licensing/token/renew": {
       "post": {
-        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:write`.",
         "tags": [
           "licensing",
           "enterprise"
@@ -1697,6 +1697,39 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/dashboards/{uid}": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "List reports by dashboard uid.",
+        "operationId": "getReportsByDashboardUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getReportsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2336,6 +2369,69 @@
           }
         }
       }
+    },
+    "/teams/{teamId}/groups/search": {
+      "get": {
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ],
+        "summary": "Search for team groups with optional filtering and pagination.",
+        "operationId": "searchTeamGroups",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1000,
+            "description": "Number of items per page",
+            "name": "perpage",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by exact name match",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchTeamGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -2722,6 +2818,7 @@
           "format": "int64"
         },
         "dashboardId": {
+          "description": "Deprecated: Use DashboardUID and OrgID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -2779,6 +2876,7 @@
       }
     },
     "AnnotationActions": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "canAdd": {
@@ -2801,6 +2899,9 @@
         "dashboardId": {
           "type": "integer",
           "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
         },
         "id": {
           "type": "integer",
@@ -2837,7 +2938,6 @@
     },
     "AnnotationPanelFilter": {
       "type": "object",
-      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
       "properties": {
         "exclude": {
           "description": "Should the specified panels be included or excluded",
@@ -2848,12 +2948,13 @@
           "type": "array",
           "items": {
             "type": "integer",
-            "format": "int64"
+            "format": "uint8"
           }
         }
       }
     },
     "AnnotationPermission": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "dashboard": {
@@ -2871,7 +2972,7 @@
         "builtIn": {
           "description": "Set to 1 for the standard annotation query all dashboards have by default.",
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "datasource": {
           "$ref": "#/definitions/DataSourceRef"
@@ -2927,38 +3028,6 @@
         "type": {
           "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
           "type": "string"
-        }
-      }
-    },
-    "ApiKeyDTO": {
-      "type": "object",
-      "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
-        "expiration": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "lastUsedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
         }
       }
     },
@@ -3207,6 +3276,24 @@
             "type": "string"
           }
         },
+        "InhibitAnyPolicy": {
+          "description": "InhibitAnyPolicy and InhibitAnyPolicyZero indicate the presence and value\nof the inhibitAnyPolicy extension.\n\nThe value of InhibitAnyPolicy indicates the number of additional\ncertificates in the path after this certificate that may use the\nanyPolicy policy OID to indicate a match with any other policy.\n\nWhen parsing a certificate, a positive non-zero InhibitAnyPolicy means\nthat the field was specified, -1 means it was unset, and\nInhibitAnyPolicyZero being true mean that the field was explicitly set to\nzero. The case of InhibitAnyPolicy==0 with InhibitAnyPolicyZero==false\nshould be treated equivalent to -1 (unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitAnyPolicyZero": {
+          "description": "InhibitAnyPolicyZero indicates that InhibitAnyPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
+        "InhibitPolicyMapping": {
+          "description": "InhibitPolicyMapping and InhibitPolicyMappingZero indicate the presence\nand value of the inhibitPolicyMapping field of the policyConstraints\nextension.\n\nThe value of InhibitPolicyMapping indicates the number of additional\ncertificates in the path after this certificate that may use policy\nmapping.\n\nWhen parsing a certificate, a positive non-zero InhibitPolicyMapping\nmeans that the field was specified, -1 means it was unset, and\nInhibitPolicyMappingZero being true mean that the field was explicitly\nset to zero. The case of InhibitPolicyMapping==0 with\nInhibitPolicyMappingZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitPolicyMappingZero": {
+          "description": "InhibitPolicyMappingZero indicates that InhibitPolicyMapping==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
         "IsCA": {
           "type": "boolean"
         },
@@ -3271,17 +3358,24 @@
           }
         },
         "Policies": {
-          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+          "description": "Policies contains all policy identifiers included in the certificate.\nSee CreateCertificate for context about how this field and the PolicyIdentifiers field\ninteract.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "PolicyIdentifiers": {
-          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
+          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.\nSee CreateCertificate for context about how this field and the Policies field\ninteract.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "PolicyMappings": {
+          "description": "PolicyMappings contains a list of policy mappings included in the certificate.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PolicyMapping"
           }
         },
         "PublicKey": {},
@@ -3322,6 +3416,15 @@
             "type": "integer",
             "format": "uint8"
           }
+        },
+        "RequireExplicitPolicy": {
+          "description": "RequireExplicitPolicy and RequireExplicitPolicyZero indicate the presence\nand value of the requireExplicitPolicy field of the policyConstraints\nextension.\n\nThe value of RequireExplicitPolicy indicates the number of additional\ncertificates in the path after this certificate before an explicit policy\nis required for the rest of the path. When an explicit policy is required,\neach subsequent certificate in the path must contain a required policy OID,\nor a policy OID which has been declared as equivalent through the policy\nmapping extension.\n\nWhen parsing a certificate, a positive non-zero RequireExplicitPolicy\nmeans that the field was specified, -1 means it was unset, and\nRequireExplicitPolicyZero being true mean that the field was explicitly\nset to zero. The case of RequireExplicitPolicy==0 with\nRequireExplicitPolicyZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "RequireExplicitPolicyZero": {
+          "description": "RequireExplicitPolicyZero indicates that RequireExplicitPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
         },
         "SerialNumber": {
           "type": "string"
@@ -3438,20 +3541,10 @@
     },
     "CookiePreferences": {
       "type": "object",
-      "title": "CookiePreferences defines model for CookiePreferences.",
       "properties": {
-        "analytics": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "functional": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "performance": {
-          "type": "object",
-          "additionalProperties": {}
-        }
+        "analytics": {},
+        "functional": {},
+        "performance": {}
       }
     },
     "CookieType": {
@@ -3699,12 +3792,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -3765,6 +3857,9 @@
         },
         "state": {
           "$ref": "#/definitions/State"
+        },
+        "subject": {
+          "type": "string"
         }
       }
     },
@@ -3866,6 +3961,30 @@
             "Admin"
           ],
           "example": "Admin"
+        }
+      }
+    },
+    "CreateSnapshotRequestDTO": {
+      "type": "object",
+      "properties": {
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
         }
       }
     },
@@ -4054,6 +4173,9 @@
       "properties": {
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
+        },
+        "apiVersion": {
+          "type": "string"
         },
         "canAdmin": {
           "type": "boolean"
@@ -4745,6 +4867,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -4788,6 +4913,9 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
         },
         "parentUid": {
           "type": "string"
@@ -5061,6 +5189,10 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
         },
         "permanentlyDeleteDate": {
           "type": "string",
@@ -5460,7 +5592,6 @@
     },
     "LibraryElementDTOMetaUser": {
       "type": "object",
-      "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
       "properties": {
         "avatarUrl": {
           "type": "string"
@@ -5532,6 +5663,11 @@
           "$ref": "#/definitions/SupportedTransformationTypes"
         }
       }
+    },
+    "ManagerKind": {
+      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "type": "string",
+      "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
     },
     "MassDeleteAnnotationsCmd": {
       "type": "object",
@@ -5637,7 +5773,6 @@
             "RESOURCE_CONFLICT",
             "UNEXPECTED_STATUS_CODE",
             "INTERNAL_SERVICE_ERROR",
-            "ONLY_CORE_DATA_SOURCES",
             "GENERIC_ERROR"
           ]
         },
@@ -5671,10 +5806,12 @@
             "FOLDER",
             "LIBRARY_ELEMENT",
             "ALERT_RULE",
+            "ALERT_RULE_GROUP",
             "CONTACT_POINT",
             "NOTIFICATION_POLICY",
             "NOTIFICATION_TEMPLATE",
-            "MUTE_TIMING"
+            "MUTE_TIMING",
+            "PLUGIN"
           ]
         }
       }
@@ -5739,7 +5876,6 @@
     },
     "NavbarPreference": {
       "type": "object",
-      "title": "NavbarPreference defines model for NavbarPreference.",
       "properties": {
         "bookmarkUrls": {
           "type": "array",
@@ -5868,6 +6004,9 @@
         "isExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -5943,12 +6082,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -5988,6 +6126,9 @@
           "type": "string"
         },
         "language": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -6172,6 +6313,20 @@
         "$ref": "#/definitions/Playlist"
       }
     },
+    "PolicyMapping": {
+      "type": "object",
+      "title": "PolicyMapping represents a policy mapping entry in the policyMappings extension.",
+      "properties": {
+        "IssuerDomainPolicy": {
+          "description": "IssuerDomainPolicy contains a policy OID the issuing certificate considers\nequivalent to SubjectDomainPolicy in the subject certificate.",
+          "type": "string"
+        },
+        "SubjectDomainPolicy": {
+          "description": "SubjectDomainPolicy contains a OID the issuing certificate considers\nequivalent to IssuerDomainPolicy in the subject certificate.",
+          "type": "string"
+        }
+      }
+    },
     "PostAnnotationsCmd": {
       "type": "object",
       "required": [
@@ -6242,6 +6397,10 @@
           "description": "Selected language (beta)",
           "type": "string"
         },
+        "locale": {
+          "description": "Selected locale (beta)",
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -6249,7 +6408,7 @@
           "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
-          "description": "Theme light, dark, empty is default",
+          "description": "light, dark, empty is default",
           "type": "string"
         },
         "timezone": {
@@ -6257,7 +6416,7 @@
           "type": "string"
         },
         "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "description": "day of the week (sunday, monday, etc)",
           "type": "string"
         }
       }
@@ -6450,10 +6609,9 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
-      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
-          "description": "HomeTab one of: '' | 'query' | 'starred';",
+          "description": "one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6709,6 +6867,9 @@
         "state": {
           "$ref": "#/definitions/State"
         },
+        "subject": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         },
@@ -6875,6 +7036,57 @@
         },
         "to": {
           "type": "string"
+        }
+      }
+    },
+    "ResourceDependenciesResponseDTO": {
+      "type": "object",
+      "properties": {
+        "resourceDependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourceDependencyDTO"
+          }
+        }
+      }
+    },
+    "ResourceDependencyDTO": {
+      "type": "object",
+      "properties": {
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
+        },
+        "resourceType": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "ALERT_RULE_GROUP",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING",
+            "PLUGIN"
+          ]
         }
       }
     },
@@ -7186,6 +7398,29 @@
           "format": "int64"
         },
         "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchTeamGroupsQueryResult": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "teamGroups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamGroupDTO"
+          }
+        },
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -7618,9 +7853,15 @@
         "email": {
           "type": "string"
         },
+        "externalUID": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "isProvisioned": {
+          "type": "boolean"
         },
         "memberCount": {
           "type": "integer",
@@ -7734,6 +7975,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -8315,6 +8559,9 @@
         "language": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -8355,6 +8602,11 @@
     },
     "UpdateRoleCommand": {
       "type": "object",
+      "required": [
+        "displayName",
+        "description",
+        "group"
+      ],
       "properties": {
         "description": {
           "type": "string"
@@ -8414,6 +8666,9 @@
       "type": "object",
       "properties": {
         "Email": {
+          "type": "string"
+        },
+        "ExternalUID": {
           "type": "string"
         },
         "ID": {
@@ -8544,6 +8799,9 @@
         "isGrafanaAdminExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "login": {
           "type": "string"
         },
@@ -8589,6 +8847,9 @@
           "type": "boolean"
         },
         "isDisabled": {
+          "type": "boolean"
+        },
+        "isProvisioned": {
           "type": "boolean"
         },
         "lastSeenAt": {
@@ -9282,15 +9543,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "getAPIkeyResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/ApiKeyDTO"
-        }
-      }
-    },
     "getAccessControlStatusResponse": {
       "description": "",
       "schema": {
@@ -9941,6 +10193,12 @@
         "type": "object"
       }
     },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
@@ -10078,6 +10336,12 @@
         "$ref": "#/definitions/ActiveUserStats"
       }
     },
+    "resourceDependenciesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ResourceDependenciesResponseDTO"
+      }
+    },
     "resourcePermissionsDescription": {
       "description": "",
       "schema": {
@@ -10136,6 +10400,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/SearchResult"
+      }
+    },
+    "searchTeamGroupsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
       }
     },
     "searchTeamsResponse": {

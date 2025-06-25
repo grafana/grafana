@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	servicev0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	applyconfigurationservicev0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	scheme "github.com/grafana/grafana/pkg/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -24,32 +24,33 @@ type ExternalNamesGetter interface {
 
 // ExternalNameInterface has methods to work with ExternalName resources.
 type ExternalNameInterface interface {
-	Create(ctx context.Context, externalName *v0alpha1.ExternalName, opts v1.CreateOptions) (*v0alpha1.ExternalName, error)
-	Update(ctx context.Context, externalName *v0alpha1.ExternalName, opts v1.UpdateOptions) (*v0alpha1.ExternalName, error)
+	Create(ctx context.Context, externalName *servicev0alpha1.ExternalName, opts v1.CreateOptions) (*servicev0alpha1.ExternalName, error)
+	Update(ctx context.Context, externalName *servicev0alpha1.ExternalName, opts v1.UpdateOptions) (*servicev0alpha1.ExternalName, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v0alpha1.ExternalName, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v0alpha1.ExternalNameList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*servicev0alpha1.ExternalName, error)
+	List(ctx context.Context, opts v1.ListOptions) (*servicev0alpha1.ExternalNameList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.ExternalName, err error)
-	Apply(ctx context.Context, externalName *servicev0alpha1.ExternalNameApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.ExternalName, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *servicev0alpha1.ExternalName, err error)
+	Apply(ctx context.Context, externalName *applyconfigurationservicev0alpha1.ExternalNameApplyConfiguration, opts v1.ApplyOptions) (result *servicev0alpha1.ExternalName, err error)
 	ExternalNameExpansion
 }
 
 // externalNames implements ExternalNameInterface
 type externalNames struct {
-	*gentype.ClientWithListAndApply[*v0alpha1.ExternalName, *v0alpha1.ExternalNameList, *servicev0alpha1.ExternalNameApplyConfiguration]
+	*gentype.ClientWithListAndApply[*servicev0alpha1.ExternalName, *servicev0alpha1.ExternalNameList, *applyconfigurationservicev0alpha1.ExternalNameApplyConfiguration]
 }
 
 // newExternalNames returns a ExternalNames
 func newExternalNames(c *ServiceV0alpha1Client, namespace string) *externalNames {
 	return &externalNames{
-		gentype.NewClientWithListAndApply[*v0alpha1.ExternalName, *v0alpha1.ExternalNameList, *servicev0alpha1.ExternalNameApplyConfiguration](
+		gentype.NewClientWithListAndApply[*servicev0alpha1.ExternalName, *servicev0alpha1.ExternalNameList, *applyconfigurationservicev0alpha1.ExternalNameApplyConfiguration](
 			"externalnames",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v0alpha1.ExternalName { return &v0alpha1.ExternalName{} },
-			func() *v0alpha1.ExternalNameList { return &v0alpha1.ExternalNameList{} }),
+			func() *servicev0alpha1.ExternalName { return &servicev0alpha1.ExternalName{} },
+			func() *servicev0alpha1.ExternalNameList { return &servicev0alpha1.ExternalNameList{} },
+		),
 	}
 }

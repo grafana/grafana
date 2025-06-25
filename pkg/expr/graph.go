@@ -77,8 +77,6 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
-	s.allowLongFrames = hasSqlExpression(*dp)
-
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
@@ -213,19 +211,29 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.
 // Note: During execution, Datasource query nodes for the same datasource will
-// be grouped into one request and executed first as phase after this call.
+// be grouped into one request and executed first as phase after this call
+// If the groupByDSFlag is enabled.
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
 	sortedNodes, err := topo.SortStabilized(graph, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := make([]Node, len(sortedNodes))
-	for i, v := range sortedNodes {
-		nodes[i] = v.(Node)
+	var dsNodes []Node
+	var otherNodes []Node
+
+	for _, v := range sortedNodes {
+		n := v.(Node)
+		switch n.NodeType() {
+		case TypeDatasourceNode, TypeMLNode:
+			dsNodes = append(dsNodes, n)
+		default:
+			otherNodes = append(otherNodes, n)
+		}
 	}
 
-	return nodes, nil
+	// Datasource/ML nodes come first, followed by all others, in original topo order
+	return append(dsNodes, otherNodes...), nil
 }
 
 // buildNodeRegistry returns a lookup table for reference IDs to respective node.
@@ -279,7 +287,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(rn, s.features)
+			node, err = buildCMDNode(rn, s.features, s.cfg)
 		case TypeMLNode:
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
@@ -320,11 +328,17 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
-				_, ok := cmdNode.Command.(*SQLCommand)
-				if ok {
-					continue
-				}
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+			}
+
+			// If the input is SQL, conversion is handled differently
+			if _, ok := cmdNode.Command.(*SQLCommand); ok {
+				if dsNode, ok := neededNode.(*DSNode); ok {
+					dsNode.isInputToSQLExpr = true
+				} else {
+					// Only allow data source nodes as SQL expression inputs for now
+					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
+				}
 			}
 
 			if neededNode.ID() == cmdNode.ID() {
@@ -340,6 +354,13 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
 					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeSQL {
+					// Do not allow SQL expressions to be inputs for other expressions for now
+					return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
 				}
 			}
 
@@ -370,37 +391,3 @@ func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 	}
 	return results
 }
-
-func hasSqlExpression(dp DataPipeline) bool {
-	for _, node := range dp {
-		if node.NodeType() == TypeCMDNode {
-			cmdNode := node.(*CMDNode)
-			_, ok := cmdNode.Command.(*SQLCommand)
-			if ok {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// func graphHasSqlExpresssion(dp *simple.DirectedGraph) bool {
-// 	node := dp.Nodes()
-// 	for node.Next() {
-// 		if cmdNode, ok := node.Node().(*CMDNode); ok {
-// 			// res[dpNode.RefID()] = dpNode
-// 			_, ok := cmdNode.Command.(*SQLCommand)
-// 			if ok {
-// 				return true
-// 			}
-// 		}
-// 		// if node.NodeType() == TypeCMDNode {
-// 		// 	cmdNode := node.(*CMDNode)
-// 		// 	_, ok := cmdNode.Command.(*SQLCommand)
-// 		// 	if ok {
-// 		// 		return true
-// 		// 	}
-// 		// }
-// 	}
-// 	return false
-// }

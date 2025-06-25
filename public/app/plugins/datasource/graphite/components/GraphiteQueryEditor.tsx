@@ -53,6 +53,7 @@ function GraphiteQueryEditorContent() {
         icon="pen"
         variant="secondary"
         aria-label="Toggle editor mode"
+        tooltip={state?.queryModel?.error}
         onClick={() => {
           dispatch(actions.toggleEditorMode());
         }}

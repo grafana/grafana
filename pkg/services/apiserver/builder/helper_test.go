@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -60,7 +59,11 @@ func TestAddPostStartHooks(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := server.NewRecommendedConfig(apiserver.Codecs)
+			t.Parallel()
+
+			scheme := builder.ProvideScheme()
+			codecs := builder.ProvideCodecFactory(scheme)
+			config := server.NewRecommendedConfig(codecs)
 			err := builder.AddPostStartHooks(config, tt.builders)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -93,6 +96,10 @@ func (m *mockAPIGroupPostStartHookProvider) GetGroupVersion() schema.GroupVersio
 }
 
 func (m *mockAPIGroupPostStartHookProvider) InstallSchema(scheme *runtime.Scheme) error {
+	return nil
+}
+
+func (m *mockAPIGroupPostStartHookProvider) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 

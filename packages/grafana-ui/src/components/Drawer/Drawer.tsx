@@ -8,9 +8,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -45,9 +45,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  // TODO remove this prop next major version
   /**
-   * @deprecated this is now default behaviour. content is always scrollable.
+   * Whether the content should be wrapped in a ScrollContainer
+   * Only change this if you intend to manage scroll behaviour yourself
+   * (e.g. having a split pane with independent scrolling)
    **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
@@ -142,17 +143,17 @@ export function Drawer({
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
           />
-          {typeof title === 'string' && (
-            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
-              <div className={styles.actions}>
-                <IconButton
-                  name="times"
-                  variant="secondary"
-                  onClick={onClose}
-                  data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
-                />
-              </div>
+          <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
+            <div className={styles.actions}>
+              <IconButton
+                name="times"
+                variant="secondary"
+                onClick={onClose}
+                data-testid={selectors.components.Drawer.General.close}
+                tooltip={t(`grafana-ui.drawer.close`, 'Close')}
+              />
+            </div>
+            {typeof title === 'string' ? (
               <div className={styles.titleWrapper}>
                 <Text element="h3" {...titleProps}>
                   {title}
@@ -162,11 +163,12 @@ export function Drawer({
                     {subtitle}
                   </div>
                 )}
-                {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
-            </div>
-          )}
-          {typeof title !== 'string' && title}
+            ) : (
+              title
+            )}
+            {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
+          </div>
           {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
       </FocusScope>
@@ -291,7 +293,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
-        backdropFilter: 'blur(1px)',
         bottom: 0,
         content: '""',
         left: 0,
@@ -334,9 +335,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(1),
     }),
     content: css({
-      padding: theme.spacing(2),
+      padding: theme.spacing(theme.components.drawer?.padding ?? 2),
       height: '100%',
       flexGrow: 1,
+      minHeight: 0,
     }),
     tabsWrapper: css({
       label: 'drawer-tabs',

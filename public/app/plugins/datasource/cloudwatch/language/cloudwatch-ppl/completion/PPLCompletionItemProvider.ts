@@ -7,6 +7,7 @@ import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { CompletionItem, CompletionItemPriority, StatementPosition, SuggestionKind } from '../../monarch/types';
+import { fetchLogGroupFields } from '../../utils';
 import {
   BOOLEAN_LITERALS,
   CONDITION_FUNCTIONS,
@@ -252,7 +253,12 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
   ): Promise<void> {
     if (this.queryContext.logGroups && this.queryContext.logGroups.length > 0) {
       try {
-        let fields = await this.fetchFields(this.queryContext.logGroups, this.queryContext.region);
+        let fields = await fetchLogGroupFields(
+          this.queryContext.logGroups,
+          this.queryContext.region,
+          this.templateSrv,
+          this.resources
+        );
         fields.forEach((field) => {
           if (field !== '') {
             addSuggestion(field, {
@@ -268,17 +274,5 @@ export class PPLCompletionItemProvider extends CompletionItemProvider {
         return;
       }
     }
-  }
-
-  private async fetchFields(logGroups: LogGroup[], region: string): Promise<string[]> {
-    const results = await Promise.all(
-      logGroups.map((logGroup) =>
-        this.resources
-          .getLogGroupFields({ logGroupName: logGroup.name, arn: logGroup.arn, region })
-          .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
-      )
-    );
-    // Deduplicate fields
-    return [...new Set(results.flat())];
   }
 }

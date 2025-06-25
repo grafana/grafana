@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

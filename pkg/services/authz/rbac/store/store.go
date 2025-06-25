@@ -1,62 +1,37 @@
 package store
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
-	"golang.org/x/net/context"
+	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type Store struct {
-	sql legacysql.LegacyDatabaseProvider
+type Store interface {
+	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
+	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
 }
 
-func NewStore(sql legacysql.LegacyDatabaseProvider) *Store {
-	return &Store{
-		sql: sql,
+type StoreImpl struct {
+	sql    legacysql.LegacyDatabaseProvider
+	tracer tracing.Tracer
+}
+
+func NewStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *StoreImpl {
+	return &StoreImpl{
+		sql:    sql,
+		tracer: tracer,
 	}
 }
 
-func (s *Store) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (s *StoreImpl) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetUserIdentifiers")
+	defer span.End()
 
-	query.OrgID = ns.OrgID
-	req := newGetPermissions(sql, &query)
-	q, err := sqltemplate.Execute(sqlUserPerms, req)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if res != nil {
-			_ = res.Close()
-		}
-	}()
-
-	var perms []accesscontrol.Permission
-	for res.Next() {
-		var perm accesscontrol.Permission
-		if err := res.Scan(&perm.Action, &perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
-			return nil, err
-		}
-		perms = append(perms, perm)
-	}
-
-	return perms, nil
-}
-
-func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -90,7 +65,10 @@ func (s *Store) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuer
 	return &userIDs, nil
 }
 
-func (s *Store) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error) {
+func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetBasicRoles")
+	defer span.End()
+
 	sql, err := s.sql(ctx)
 	if err != nil {
 		return nil, err

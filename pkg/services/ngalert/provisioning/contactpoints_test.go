@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -424,6 +423,12 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["authorization_credentials"] = "test-authz-creds"
 		},
+		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["api_token"] = "test-token"
+		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
 	}
 
 	configs := notify.AllKnownConfigsForTesting
@@ -487,7 +492,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
 		legacy_storage.NewAlertmanagerConfigStore(configStore),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},

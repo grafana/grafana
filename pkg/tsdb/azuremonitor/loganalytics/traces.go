@@ -198,7 +198,7 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	resultFormat := ParseResultFormat(azureTracesTarget.ResultFormat, dataquery.AzureQueryTypeAzureTraces)
 
 	resources := azureTracesTarget.Resources
-	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		subscription, err := utils.GetFirstSubscriptionOrDefault(ctx, dsInfo, logger)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
@@ -234,7 +234,7 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	}
 	sort.Strings(queryResources)
 
-	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		resources = queryResources
 		resourceOrWorkspace = resources[0]
 	}

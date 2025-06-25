@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { memo, ReactNode, useMemo } from 'react';
 
-import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
+import { LogRowModel } from '@grafana/data';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogRowMenuCell } from './LogRowMenuCell';
@@ -12,7 +13,7 @@ export interface Props {
   row: LogRowModel;
   detectedFields: string[];
   wrapLogMessage: boolean;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   styles: LogRowStyles;
   showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
@@ -24,6 +25,7 @@ export interface Props {
   onBlur: () => void;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
+  preview?: boolean;
 }
 
 export const LogRowMessageDisplayedFields = memo((props: Props) => {
@@ -37,6 +39,7 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     pinned,
     logRowMenuIconsBefore,
     logRowMenuIconsAfter,
+    preview,
     ...rest
   } = props;
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
@@ -52,8 +55,7 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
       }
 
       const field = fields.find((field) => {
-        const { keys } = field;
-        return keys[0] === parsedKey;
+        return field.keys[0] === parsedKey;
       });
 
       if (field != null) {
@@ -67,7 +69,18 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     return line.trimStart();
   }, [detectedFields, fields, row.entry, row.labels]);
 
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const shouldShowMenu = mouseIsOver || pinned;
+
+  if (preview) {
+    return (
+      <>
+        <td>
+          <div>{line}</div>
+        </td>
+        <td></td>
+      </>
+    );
+  }
 
   return (
     <>

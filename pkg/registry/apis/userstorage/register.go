@@ -25,10 +25,6 @@ type UserStorageAPIBuilder struct {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *UserStorageAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagUserStorageAPI) {
-		return nil
-	}
-
 	builder := &UserStorageAPIBuilder{
 		registerer: registerer,
 	}
@@ -56,6 +52,10 @@ func (b *UserStorageAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// })
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
+}
+
+func (b *UserStorageAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
 }
 
 func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -98,7 +98,7 @@ func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			switch attr.GetVerb() {
 			case "create":
 				// Create requests are validated later since we don't have access to the resource name
-				return authorizer.DecisionNoOpinion, "", nil
+				return authorizer.DecisionAllow, "", nil
 			case "get", "delete", "patch", "update":
 				// Only allow the user to access their own settings
 				if !compareResourceNameAndUserUID(attr.GetName(), u) {

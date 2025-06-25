@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
 import { defaultDashboard } from '@grafana/schema';
 import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
@@ -34,7 +34,10 @@ const dashboardSlice = createSlice({
       state.initError = action.payload;
       state.getModel = () => {
         return new DashboardModel(
-          { ...defaultDashboard, title: 'Dashboard init failed' },
+          {
+            ...defaultDashboard,
+            title: t('dashboard.dashboard-slice.title.dashboard-init-failed', 'Dashboard init failed'),
+          },
           { canSave: false, canEdit: false }
         );
       };
@@ -56,11 +59,6 @@ const dashboardSlice = createSlice({
 export interface PanelModelAndPluginReadyPayload {
   panelId: number;
   plugin: PanelPlugin;
-}
-
-export interface SetPanelAngularComponentPayload {
-  panelId: number;
-  angularComponent: AngularComponent | null;
 }
 
 export interface SetPanelInstanceStatePayload {

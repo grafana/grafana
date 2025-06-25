@@ -11,9 +11,10 @@ import {
   SelectableValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
@@ -70,7 +71,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
         value={reducer.current}
         options={reducer.options}
         onChange={onSetReducer}
-        placeholder="Select field reducer"
+        placeholder={t('grafana-ui.field-value-matcher.select-field-placeholder', 'Select field reducer')}
       />
       {opts.reducer && !isBool && (
         <>
@@ -78,7 +79,7 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
             value={comparisonOperationOptions.find((v) => v.value === opts.op)}
             options={comparisonOperationOptions}
             onChange={onChangeOp}
-            aria-label={'Comparison operator'}
+            aria-label={t('grafana-ui.field-value-matcher.operator-label', 'Comparison operator')}
             width={19}
           />
 
@@ -101,11 +102,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const fieldValueMatcherItem: FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = {
+export const getFieldValueMatcherItem: () => FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = () => ({
   id: FieldMatcherID.byValue,
   component: FieldValueMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byValue),
-  name: 'Fields with values',
-  description: 'Set properties for fields with reducer condition',
+  name: t('grafana-ui.matchers-ui.name-fields-with-value', 'Fields with values'),
+  description: t(
+    'grafana-ui.matchers-ui.description-fields-with-value',
+    'Set properties for fields with reducer condition'
+  ),
   optionsToLabel: (options) => `${options?.reducer} ${options?.op} ${options?.value}`,
-};
+});

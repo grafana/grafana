@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
+import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
 
 import { Field } from './Field';
 
@@ -27,9 +27,13 @@ describe('Field', () => {
   });
 
   it('renders with the inputId of its children', () => {
+    const comboboxOptions = [
+      { label: 'Option 1', value: 'option-1' },
+      { label: 'Option 2', value: 'option-2' },
+    ];
     render(
       <Field label="My other label">
-        <Select inputId="my-select-input" onChange={() => {}} />
+        <Combobox id="my-select-input" options={comboboxOptions} onChange={() => {}} />
       </Field>
     );
 

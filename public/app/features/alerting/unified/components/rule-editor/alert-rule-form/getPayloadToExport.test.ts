@@ -1,15 +1,16 @@
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../../../mocks';
+import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
-import { getDefaultFormValues } from '../../../utils/rule-form';
 
 import { getPayloadToExport } from './ModifyExportRuleForm';
 
 const rule1 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'critical', region: 'region1' },
     annotations: { [Annotation.summary]: 'This grafana rule1' },
   },
@@ -19,6 +20,7 @@ const rule1 = mockRulerGrafanaRule(
 const rule2 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'notcritical', region: 'region2' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -28,6 +30,7 @@ const rule2 = mockRulerGrafanaRule(
 const rule3 = mockRulerGrafanaRule(
   {
     for: '1m',
+    keep_firing_for: '1m',
     labels: { severity: 'notcritical3', region: 'region3' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -38,6 +41,7 @@ const rule4 = mockRulerGrafanaRecordingRule(
   {
     labels: { severity: 'notcritical4', region: 'region4' },
     annotations: { [Annotation.summary]: 'This grafana rule4' },
+    keep_firing_for: '1m',
   },
   { uid: 'uid-rule-4', title: 'Rule4', data: [] }
 );
@@ -64,6 +68,7 @@ const formValuesForRule2Updated: RuleFormValues = {
   name: 'Rule2 updated',
   labels: [{ key: 'newLabel', value: 'newLabel' }],
   annotations: [{ key: 'summary', value: 'This grafana rule2 updated' }],
+  keepFiringFor: '1m',
 };
 const formValuesForRecordingRule4Updated: RuleFormValues = {
   ...defaultValues,
@@ -113,7 +118,9 @@ const expectedModifiedRule2 = (uid: string) => ({
     no_data_state: 'NoData',
     title: 'Rule2 updated',
     uid: uid,
+    missing_series_evals_to_resolve: 0,
   },
+  keep_firing_for: '1m',
   labels: {
     newLabel: 'newLabel',
   },
@@ -141,7 +148,6 @@ const expectedModifiedRule4 = (uid: string) => ({
       },
     ],
     is_paused: false,
-    notification_settings: undefined,
     record: {
       metric: 'Rule4 updated',
       from: 'A',

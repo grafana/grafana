@@ -1,3 +1,4 @@
+import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
 import { DataSourceRights } from '../types';
@@ -12,7 +13,7 @@ export type Props = {
 export function DataSourceLoadError({ dataSourceRights, onDelete }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
-  const navigateBack = () => history.back();
+  const navigateBack = () => window.history.back();
 
   return (
     <>
@@ -21,12 +22,12 @@ export function DataSourceLoadError({ dataSourceRights, onDelete }: Props) {
       <div className="gf-form-button-row">
         {canDelete && (
           <Button type="submit" variant="destructive" onClick={onDelete}>
-            Delete
+            <Trans i18nKey="datasources.data-source-load-error.delete">Delete</Trans>
           </Button>
         )}
 
         <Button variant="secondary" fill="outline" type="button" onClick={navigateBack}>
-          Back
+          <Trans i18nKey="datasources.data-source-load-error.back">Back</Trans>
         </Button>
       </div>
     </>

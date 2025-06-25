@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
@@ -35,6 +36,7 @@ func TestSearch_SortedResults(t *testing.T) {
 		sqlstore:         db,
 		starService:      ss,
 		dashboardService: ds,
+		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
@@ -76,6 +78,7 @@ func TestSearch_StarredResults(t *testing.T) {
 		sqlstore:         db,
 		starService:      ss,
 		dashboardService: ds,
+		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{

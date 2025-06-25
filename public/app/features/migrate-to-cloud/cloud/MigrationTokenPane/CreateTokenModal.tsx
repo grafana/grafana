@@ -1,7 +1,7 @@
 import { useId } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Modal, Button, Input, Stack, ClipboardButton, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
@@ -37,11 +37,12 @@ export const CreateTokenModal = ({ isOpen, hideModal, migrationToken }: Props) =
 
 function TokenSuccessContent({ migrationToken }: { migrationToken: string }) {
   const inputId = useId();
+
   return (
     <Field
       description={t(
         'migrate-to-cloud.migration-token.modal-field-description',
-        'Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.'
+        'Copy the token now, as you will not be able to see it again. Losing this token requires creating a new one.'
       )}
       htmlFor={inputId}
       label={t('migrate-to-cloud.migration-token.modal-field-label', 'Token')}

@@ -23,6 +23,7 @@ export async function listFolders(
 
   const backendSrv = getBackendSrv();
 
+  // TODO: what to do here for unified search?
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
@@ -38,6 +39,7 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
+    managedBy: item.managedBy,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
     url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),

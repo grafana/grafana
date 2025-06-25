@@ -4,7 +4,7 @@ import { memo, CSSProperties, ReactElement, useEffect, useRef, useState } from '
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { MenuItemProps } from './MenuItem';
@@ -77,7 +77,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
     }),
     itemsWrapper: css({
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
+      padding: theme.spacing(0.5),
       boxShadow: theme.shadows.z3,
       display: 'inline-block',
       borderRadius: theme.shape.radius.default,

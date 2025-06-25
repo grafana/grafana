@@ -7,7 +7,7 @@ import { createSpacing, ThemeSpacingOptions } from './createSpacing';
 import { createTransitions } from './createTransitions';
 import { createTypography, ThemeTypographyInput } from './createTypography';
 import { createV1Theme } from './createV1Theme';
-import { createVisualizationColors } from './createVisualizationColors';
+import { createVisualizationColors, ThemeVisualizationColorsInput } from './createVisualizationColors';
 import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
 
@@ -18,15 +18,18 @@ export interface NewThemeOptions {
   spacing?: ThemeSpacingOptions;
   shape?: ThemeShapeInput;
   typography?: ThemeTypographyInput;
+  visualization?: ThemeVisualizationColorsInput;
 }
 
 /** @internal */
 export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const {
+    name,
     colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
     typography: typographyInput = {},
+    visualization: visualizationInput = {},
   } = options;
 
   const colors = createColors(colorsInput);
@@ -37,10 +40,10 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const shadows = createShadows(colors);
   const transitions = createTransitions();
   const components = createComponents(colors, shadows);
-  const visualization = createVisualizationColors(colors);
+  const visualization = createVisualizationColors(colors, visualizationInput);
 
   const theme = {
-    name: colors.mode === 'dark' ? 'Dark' : 'Light',
+    name: name ?? (colors.mode === 'dark' ? 'Dark' : 'Light'),
     isDark: colors.mode === 'dark',
     isLight: colors.mode === 'light',
     colors,

@@ -41,15 +41,14 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
     card: css({
       cursor: 'pointer',
-      backgroundColor: theme.colors.background.primary,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: 'transparent',
       // Move to list component
       marginBottom: 0,
-      // set this to 0 to override the default card radius
-      // also need to disable our eslint rule
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: 0,
       padding: theme.spacing(1),
+
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
     }),
     heading: css({
       width: '100%',
@@ -98,7 +97,19 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       color: theme.colors.border.weak,
     }),
     selected: css({
-      backgroundColor: theme.colors.background.secondary,
+      background: theme.colors.action.selected,
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: 0,
+      },
     }),
     meta: css({
       display: 'block',

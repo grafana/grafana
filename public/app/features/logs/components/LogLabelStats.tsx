@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { stylesFactory, withTheme2, Themeable2 } from '@grafana/ui';
 
-//Components
 import { LogLabelStatsRow } from './LogLabelStatsRow';
 
 const STATS_ROW_LIMIT = 5;
@@ -76,7 +76,20 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
       <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
-            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
+            {isLabel
+              ? t(
+                  'logs.un-themed-log-label-stats.label-log-stats',
+                  '{{label}}: {{total}} of {{rowCount}} rows have that label',
+                  {
+                    label,
+                    total,
+                    rowCount,
+                  }
+                )
+              : t(
+                  'logs.un-themed-log-label-stats.field-log-stats',
+                  '{{label}}: {{total}} of {{rowCount}} rows have that field'
+                )}
           </div>
         </div>
         <div className={style.logsStatsBody}>

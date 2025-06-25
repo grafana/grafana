@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
@@ -141,6 +141,7 @@ function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      padding: theme.spacing(0.5),
       [`${selectedItemCssSelector}`]: {
         backgroundColor: theme.colors.background.secondary,
       },

@@ -1,5 +1,5 @@
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';

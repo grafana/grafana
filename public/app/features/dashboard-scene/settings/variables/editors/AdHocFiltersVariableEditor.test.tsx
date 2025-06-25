@@ -1,4 +1,4 @@
-import { render, act } from '@testing-library/react';
+import { render, act, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { of } from 'rxjs';
@@ -12,12 +12,13 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setRunRequest } from '@grafana/runtime/src';
+import { setRunRequest } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { AdHocFiltersVariableEditor } from './AdHocFiltersVariableEditor';
+import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './AdHocFiltersVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -31,8 +32,10 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+let getTagKeysMock: Function | undefined = () => [];
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -41,6 +44,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
+      getTagKeys: getTagKeysMock,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
@@ -62,24 +66,28 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('AdHocFiltersVariableEditor', () => {
+  beforeEach(() => {
+    getTagKeysMock = () => [];
+  });
+
   it('renders AdHocVariableForm with correct props', async () => {
+    getTagKeysMock = undefined;
+
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
     );
-    const infoText = renderer.getByTestId(
+    const infoText = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText
     );
-    const allowCustomValueCheckbox = renderer.getByTestId(
+    const allowCustomValueCheckbox = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
-    expect(allowCustomValueCheckbox).toBeInTheDocument();
-    expect(allowCustomValueCheckbox).toBeChecked();
+    expect(allowCustomValueCheckbox).not.toBeInTheDocument();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(infoText).toBeInTheDocument();
-    expect(infoText).toHaveTextContent('This data source does not support ad hoc filters yet.');
   });
 
   it('should update the variable data source when data source picker is changed', async () => {
@@ -104,6 +112,7 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 
   it('should update the variable default keys when the default keys option is disabled', async () => {
+    getTagKeysMock = () => Promise.resolve(['key1', 'key2']);
     const { renderer, variable, user } = await setup(undefined, true);
 
     // Simulate toggling default options off
@@ -112,6 +121,31 @@ describe('AdHocFiltersVariableEditor', () => {
     );
 
     expect(variable.state.defaultKeys).toEqual(undefined);
+  });
+
+  it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    });
+
+    const result = getAdHocFilterOptions(variable);
+
+    expect(result.length).toBe(1);
+    const descriptor = result[0];
+
+    // Mock the parent property that OptionsPaneItem expects
+    descriptor.parent = new OptionsPaneCategoryDescriptor({
+      id: 'mock-parent-id',
+      title: 'Mock Parent',
+    });
+
+    render(descriptor.render());
+
+    await waitFor(() => {
+      // Check that some part of the component renders
+      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
+    });
   });
 });
 

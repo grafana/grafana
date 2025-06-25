@@ -4,7 +4,9 @@ aliases:
   - /docs/grafana/v3.1/
   - guides/reference/admin/
 cascade:
+  LOKI_VERSION: latest
   TEMPO_VERSION: latest
+  ONCALL_VERSION: latest
   PYROSCOPE_VERSION: latest
 description: Find answers to your technical questions and learn how to use Grafana OSS and Enterprise products.
 keywords:
@@ -83,6 +85,10 @@ _Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, 
 
 _Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version. You also get 24x7x365 support and training from the core Grafana team.
 To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
+
+## Guidance and help
+
+{{< guide name="whichgrafana" title="Which Grafana is right for you?" text="Answer a few questions and Grot will help you decide." >}}
 
 ## Learn
 

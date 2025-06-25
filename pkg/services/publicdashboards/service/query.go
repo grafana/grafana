@@ -8,16 +8,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -37,8 +34,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dash, pd.features)
-
+	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the annotations.
+	svcCtx, svcIdent := identity.WithServiceIdentity(ctx, dash.OrgID)
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
 	for _, anno := range annoDto.Annotations.List {
 		// skip annotations that are not enabled or are not a grafana datasource
@@ -51,19 +48,20 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			OrgID:        dash.OrgID,
 			DashboardID:  dash.ID,
 			DashboardUID: dash.UID,
-			SignedInUser: anonymousUser,
+			SignedInUser: svcIdent,
 		}
 
 		if anno.Target != nil {
 			annoQuery.Limit = anno.Target.Limit
 			annoQuery.MatchAny = anno.Target.MatchAny
 			if anno.Target.Type == "tags" {
-				annoQuery.DashboardID = 0
+				annoQuery.DashboardID = 0 // nolint: staticcheck
+				annoQuery.DashboardUID = ""
 				annoQuery.Tags = anno.Target.Tags
 			}
 		}
 
-		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
+		annotationItems, err := pd.AnnotationsRepo.Find(svcCtx, annoQuery)
 		if err != nil {
 			return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to find annotations: %w", err)
 		}
@@ -71,7 +69,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		for _, item := range annotationItems {
 			event := models.AnnotationEvent{
 				Id:          item.ID,
-				DashboardId: item.DashboardID,
+				DashboardId: item.DashboardID, // nolint: staticcheck
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
@@ -79,6 +77,10 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
+			}
+
+			if item.DashboardUID != nil {
+				event.DashboardUID = *item.DashboardUID
 			}
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
@@ -139,8 +141,9 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dashboard, pd.features)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
+	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the datasource.
+	svcCtx, svcIdent := identity.WithServiceIdentity(ctx, dashboard.OrgID)
+	res, err := pd.QueryDataService.QueryData(svcCtx, svcIdent, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
@@ -178,92 +181,6 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 		To:      ts.To,
 		Queries: queries,
 	}, nil
-}
-
-// buildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard, features featuremgmt.FeatureToggles) *user.SignedInUser {
-	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
-
-	// Create a user with blank permissions
-	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgID, Permissions: make(map[int64]map[string][]string)}
-
-	// Scopes needed for Annotation queries
-	annotationScopes := []string{accesscontrol.ScopeAnnotationsTypeDashboard}
-	// Need to access all dashboards since tags annotations span across all dashboards
-	dashboardScopes := []string{dashboards.ScopeDashboardsProvider.GetResourceAllScope()}
-
-	// Scopes needed for datasource queries
-	queryScopes := make([]string, 0)
-	readScopes := make([]string, 0)
-	for _, uid := range datasourceUids {
-		scope := datasources.ScopeProvider.GetResourceScopeUID(uid)
-		queryScopes = append(queryScopes, scope)
-		readScopes = append(readScopes, scope)
-	}
-
-	// Apply all scopes to the actions we need the user to be able to perform
-	permissions := make(map[string][]string)
-	permissions[datasources.ActionQuery] = queryScopes
-	permissions[datasources.ActionRead] = readScopes
-	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
-	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
-
-	if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		permissions[accesscontrol.ActionAnnotationsRead] = dashboardScopes
-	}
-
-	anonymousUser.Permissions[dashboard.OrgID] = permissions
-
-	return anonymousUser
-}
-
-func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
-	var datasourceUids []string
-	exists := map[string]bool{}
-
-	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
-	flattenedPanels := getFlattenedPanels(dashboard)
-
-	for _, panelObj := range flattenedPanels {
-		panel := simplejson.NewFromAny(panelObj)
-		uid := getDataSourceUidFromJson(panel)
-
-		// if uid is for a mixed datasource, get the datasource uids from the targets
-		if uid == "-- Mixed --" {
-			for _, targetObj := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(targetObj)
-				datasourceUid := getDataSourceUidFromJson(target)
-				if _, ok := exists[datasourceUid]; !ok {
-					datasourceUids = append(datasourceUids, datasourceUid)
-					exists[datasourceUid] = true
-				}
-			}
-		} else {
-			if _, ok := exists[uid]; !ok {
-				datasourceUids = append(datasourceUids, uid)
-				exists[uid] = true
-			}
-		}
-	}
-
-	return datasourceUids
-}
-
-func getFlattenedPanels(dashboard *simplejson.Json) []any {
-	var flatPanels []any
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
-		panel := simplejson.NewFromAny(panelObj)
-		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
-		// if it is not collapsed, the row does not have any panels
-		if panel.Get("type").MustString() == "row" {
-			if panel.Get("collapsed").MustBool() {
-				flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
-			}
-		} else {
-			flatPanels = append(flatPanels, panelObj)
-		}
-	}
-	return flatPanels
 }
 
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {

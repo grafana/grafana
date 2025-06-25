@@ -11,6 +11,7 @@ import (
 	receiversTesting "github.com/grafana/alerting/receivers/testing"
 	"github.com/stretchr/testify/require"
 
+	apicompat "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -38,7 +39,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 					return string(d)
 				})
 			require.NoError(t, err)
-			ex, err := ReceiverExportFromEmbeddedContactPoint(emb)
+			ex, err := apicompat.ReceiverExportFromEmbeddedContactPoint(emb)
 			require.NoError(t, err)
 			export = append(export, ex)
 		}
@@ -62,7 +63,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 				},
 			}
 
-			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
 			})
 			require.NoError(t, err)
@@ -73,7 +74,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			back, err := ContactPointToContactPointExport(result)
 			require.NoError(t, err)
 
-			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return receiversTesting.DecryptForTesting(sjd)(key, fallback)
 			})
 			require.NoError(t, err)

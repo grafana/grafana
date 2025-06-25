@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -52,8 +53,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
-	profileTypeId := depointerizer(qm.ProfileTypeId)
-	labelSelector := depointerizer(qm.LabelSelector)
+	profileTypeId := qm.ProfileTypeId
+	labelSelector := qm.LabelSelector
 
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
@@ -94,7 +95,15 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
-			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+			withAnnotations := qm.Annotations != nil && *qm.Annotations
+			frames, err := seriesToDataFrames(seriesResp, withAnnotations)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				return err
+			}
+			response.Frames = append(response.Frames, frames...)
 			responseMutex.Unlock()
 			return nil
 		})
@@ -212,11 +221,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 	currentLevel := 1
 
 	// Cycle through each level
-	for {
-		if currentLevel >= len(levels) {
-			break
-		}
-
+	for currentLevel < len(levels) {
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
 			logger.Error("ParentsStack is empty but we are not at the last level", "currentLevel", currentLevel, "function", logEntrypoint())
@@ -231,11 +236,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 		offset := int64(0)
 
 		// Cycle through bar in a level
-		for {
-			if itemIndex >= len(levels[currentLevel].Values) {
-				break
-			}
-
+		for itemIndex < len(levels[currentLevel].Values) {
 			itemStart := levels[currentLevel].Values[itemIndex+START_OFFSET] + offset
 			itemValue := levels[currentLevel].Values[itemIndex+VALUE_OFFSET]
 			selfValue := levels[currentLevel].Values[itemIndex+SELF_OFFSET]
@@ -304,11 +305,11 @@ func (pt *ProfileTree) String() string {
 				if len(n.Nodes) > 0 {
 					remaining = append(remaining,
 						&branch{
-							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value)),
+							nodes: n.Nodes, Tree: current.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value)),
 						},
 					)
 				} else {
-					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
+					current.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
 				}
 			}
 		}
@@ -409,11 +410,7 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	fn(tree)
 	stack := tree.Nodes
 
-	for {
-		if len(stack) == 0 {
-			break
-		}
-
+	for len(stack) != 0 {
 		fn(stack[0])
 		if stack[0].Nodes != nil {
 			stack = append(stack[0].Nodes, stack[1:]...)
@@ -423,8 +420,22 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+type TimedAnnotation struct {
+	Timestamp  int64                      `json:"timestamp"`
+	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
+}
+
+func (ta *TimedAnnotation) getKey() string {
+	return ta.Annotation.Key
+}
+
+func (ta *TimedAnnotation) getValue() string {
+	return ta.Annotation.Value
+}
+
+func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
+	annotations := make([]*TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
@@ -442,24 +453,32 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 
 		valueField := data.NewField(resp.Label, labels, []float64{})
 		valueField.Config = &data.FieldConfig{Unit: resp.Units}
+		fields = append(fields, valueField)
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
+			if withAnnotations {
+				for _, a := range point.Annotations {
+					annotations = append(annotations, &TimedAnnotation{
+						Timestamp:  point.Timestamp,
+						Annotation: a,
+					})
+				}
+			}
 		}
 
-		fields = append(fields, valueField)
 		frame.Fields = fields
 		frames = append(frames, frame)
 	}
-	return frames
-}
 
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
+	if len(annotations) > 0 {
+		frame, err := createAnnotationFrame(annotations)
+		if err != nil {
+			return nil, err
+		}
+		frames = append(frames, frame)
 	}
 
-	return emptyValue
+	return frames, nil
 }

@@ -1,8 +1,9 @@
 package v0alpha1
 
 import (
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -25,10 +26,9 @@ type SSOSettingSpec struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SSOSettingList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []SSOSetting `json:"items,omitempty"`
+	Items []SSOSetting `json:"items"`
 }
 
 // Source for settings.

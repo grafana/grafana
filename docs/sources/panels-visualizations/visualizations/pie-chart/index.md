@@ -174,9 +174,9 @@ Use these settings to define how the legend appears in your visualization. For m
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Data links
+### Data links and actions
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Value mappings
 

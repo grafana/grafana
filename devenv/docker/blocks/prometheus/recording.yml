@@ -1,4 +1,18 @@
 groups:
+  - name: TESTING_RULES
+    rules:
+      - record: test:rate5m
+        expr: rate(ismail_prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+        labels:
+          identifier: special_idx
+      - record: agent:test:rate5m
+        expr: rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+        labels:
+          identifier: special_idx
+      - record: agent:test:rate5m_agg_
+        expr: rate(prometheus_tsdb_reloads_total_agg_{job="aggregated"}[5m])
+        labels:
+          identifier: special_idx
   - name: RECORDING_RULES
     rules:
       - record: instance_path:requests:rate5m
@@ -9,6 +23,14 @@ groups:
         expr: rate(prometheus_tsdb_reloads_failures_total{job="prometheus"}[5m])
       - record: instance_path:reloads:rate5m
         expr: rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+      - record: test:rate5m
+        expr: rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+      - record: test:rate5m_agg_
+        expr: rate(prometheus_tsdb_reloads_total_agg_{job="aggregated"}[5m])
+      - record: agent:test:rate5m
+        expr: rate(prometheus_tsdb_reloads_total{job="prometheus"}[5m])
+      - record: agent:test:rate5m_agg_
+        expr: rate(prometheus_tsdb_reloads_total_agg_{job="aggregated"}[5m])
       - record: instance_path:request_failures_per_requests:ratio_rate5m
         expr: |2
             instance_path:reloads_failures:rate5m{job="prometheus"}

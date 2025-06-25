@@ -2,6 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+import { ManagerKind } from '../../apiserver/types';
 import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 
@@ -83,12 +84,15 @@ export function setItemSelectionState(
 
   // SearchView doesn't use DashboardViewItemKind (yet), so we pick just the specific properties
   // we're interested in
-  action: PayloadAction<{ item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID'>; isSelected: boolean }>
+  action: PayloadAction<{
+    item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID' | 'managedBy'>;
+    isSelected: boolean;
+  }>
 ) {
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme from being selected
-  if (isSharedWithMe(item.uid)) {
+  if (isSharedWithMe(item.uid) || item.managedBy === ManagerKind.Repo) {
     return;
   }
 
@@ -169,8 +173,8 @@ export function setAllSelection(
       }
 
       for (const child of collection.items) {
-        // Don't traverse into the sharedwithme folder
-        if (isSharedWithMe(child.uid)) {
+        // Don't traverse into the sharedwithme/provisioned folders
+        if (isSharedWithMe(child.uid) || child.managedBy === ManagerKind.Repo) {
           continue;
         }
 

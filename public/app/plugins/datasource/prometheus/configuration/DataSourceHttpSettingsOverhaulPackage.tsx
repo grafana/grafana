@@ -1,22 +1,17 @@
 import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
-import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/experimental';
-import { PromOptions, docsTip, overhaulStyles } from '@grafana/prometheus';
+import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/plugin-ui';
+import { docsTip, overhaulStyles } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
-import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
+import { AzureAuthSettings } from '@grafana/ui/internal';
 
-import type { AzureCredentials } from './AzureCredentials';
-
-interface PromOptionsWithCloudAuth extends PromOptions {
-  azureCredentials?: AzureCredentials;
-}
+import { AzurePromDataSourceSettings } from './AzureCredentialsConfig';
 
 type Props = {
-  options: DataSourceSettings<PromOptionsWithCloudAuth, {}>;
-  onOptionsChange: (options: DataSourceSettings<PromOptionsWithCloudAuth, {}>) => void;
+  options: AzurePromDataSourceSettings;
+  onOptionsChange: (options: AzurePromDataSourceSettings) => void;
   azureAuthSettings: AzureAuthSettings;
   sigV4AuthToggleEnabled: boolean | undefined;
   renderSigV4Editor: React.ReactNode;
@@ -144,6 +139,12 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         <Alert title="Deprecation Notice" severity="warning">
           The SigV4 authentication in the core Prometheus data source is deprecated. Please use the Amazon Managed
           Service for Prometheus data source to authenticate with SigV4.
+        </Alert>
+      )}
+      {azureAuthSelected && (
+        <Alert title="Deprecation Notice" severity="warning">
+          Azure authentication in the core Prometheus data source is deprecated. Please use the Azure Monitor Managed
+          Service for Prometheus data source to authenticate using Azure authentication.
         </Alert>
       )}
       <Auth

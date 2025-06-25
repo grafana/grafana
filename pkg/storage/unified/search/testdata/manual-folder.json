@@ -42,21 +42,37 @@
       "format": "int64",
       "description": "created timestamp",
       "priority": 0
+    },
+    {
+      "name": "grafana.app/deprecatedInternalID",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the resource",
+      "priority": 0
+    },
+    {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
     }
   ],
   "rows": [
     {
       "cells": [
-        "ns/g/folder/yyy",
+        "ns/folder.grafana.app/folders/yyy",
         "yyy (folder)",
         null,
         null,
-        2,
-        0
+        null,
+        null,
+        321,
+        null
       ],
       "object": {
-        "kind": "folder",
-        "apiVersion": "g",
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "yyy",
           "namespace": "ns",
@@ -66,16 +82,18 @@
     },
     {
       "cells": [
-        "ns/g/folder/zzz",
+        "ns/folder.grafana.app/folders/zzz",
         "zzz (folder)",
         null,
         null,
-        1,
-        0
+        null,
+        null,
+        123,
+        "repo"
       ],
       "object": {
-        "kind": "folder",
-        "apiVersion": "g",
+        "kind": "folders",
+        "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "zzz",
           "namespace": "ns",

@@ -2,12 +2,14 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
-import { AsyncState } from 'react-use/lib/useAsync';
+import { type AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
-import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 
-import { SegmentAsyncProps } from './SegmentAsync';
+import { Icon } from '../Icon/Icon';
+
+import { SegmentAsync, SegmentAsyncProps } from './SegmentAsync';
+import { SegmentSection } from './SegmentSection';
 
 const AddButton = (
   <span className="gf-form-label query-part">

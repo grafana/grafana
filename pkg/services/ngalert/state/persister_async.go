@@ -13,25 +13,24 @@ import (
 )
 
 type AlertInstancesProvider interface {
-	GetAlertInstances(skipNormalState bool) []models.AlertInstance
+	GetAlertInstances() []models.AlertInstance
 }
 
 type AsyncStatePersister struct {
-	log log.Logger
-	// doNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods.
-	doNotSaveNormalState bool
-	store                InstanceStore
-	ticker               *clock.Ticker
-	metrics              *metrics.State
+	log       log.Logger
+	batchSize int
+	store     InstanceStore
+	ticker    *clock.Ticker
+	metrics   *metrics.State
 }
 
 func NewAsyncStatePersister(log log.Logger, ticker *clock.Ticker, cfg ManagerCfg) StatePersister {
 	return &AsyncStatePersister{
-		log:                  log,
-		store:                cfg.InstanceStore,
-		ticker:               ticker,
-		doNotSaveNormalState: cfg.DoNotSaveNormalState,
-		metrics:              cfg.Metrics,
+		log:       log,
+		store:     cfg.InstanceStore,
+		ticker:    ticker,
+		batchSize: cfg.StatePeriodicSaveBatchSize,
+		metrics:   cfg.Metrics,
 	}
 }
 
@@ -57,12 +56,12 @@ func (a *AsyncStatePersister) Async(ctx context.Context, instancesProvider Alert
 func (a *AsyncStatePersister) fullSync(ctx context.Context, instancesProvider AlertInstancesProvider) error {
 	startTime := time.Now()
 	a.log.Debug("Full state sync start")
-	instances := instancesProvider.GetAlertInstances(a.doNotSaveNormalState)
-	if err := a.store.FullSync(ctx, instances); err != nil {
+	instances := instancesProvider.GetAlertInstances()
+	if err := a.store.FullSync(ctx, instances, a.batchSize); err != nil {
 		a.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
 	}
-	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	a.log.Debug("Full state sync done", "duration", time.Since(startTime), "instances", len(instances), "batchSize", a.batchSize)
 	if a.metrics != nil {
 		a.metrics.StateFullSyncDuration.Observe(time.Since(startTime).Seconds())
 	}

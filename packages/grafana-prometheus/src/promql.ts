@@ -268,6 +268,13 @@ export const FUNCTIONS = [
       'Calculates the per-second derivative of the time series in a range vector `v`, using simple linear regression.',
   },
   {
+    insertText: 'double_exponential_smoothing',
+    label: 'double_exponential_smoothing',
+    detail: 'double_exponential_smoothing(v range-vector, sf scalar, tf scalar)',
+    documentation:
+      'Produces a smoothed value for time series based on the range in `v`. The lower the smoothing factor `sf`, the more importance is given to old data. The higher the trend factor `tf`, the more trends in the data is considered. Both `sf` and `tf` must be between 0 and 1.',
+  },
+  {
     insertText: 'drop_common_labels',
     label: 'drop_common_labels',
     detail: 'drop_common_labels(instant-vector)',
@@ -298,7 +305,7 @@ export const FUNCTIONS = [
     label: 'holt_winters',
     detail: 'holt_winters(v range-vector, sf scalar, tf scalar)',
     documentation:
-      'Produces a smoothed value for time series based on the range in `v`. The lower the smoothing factor `sf`, the more importance is given to old data. The higher the trend factor `tf`, the more trends in the data is considered. Both `sf` and `tf` must be between 0 and 1.',
+      'Renamed as double_exponential_smoothing in prometheus v3.x. For prometheus versions equal and greater than v3.0 please use double_exponential_smoothing. \n\nProduces a smoothed value for time series based on the range in `v`. The lower the smoothing factor `sf`, the more importance is given to old data. The higher the trend factor `tf`, the more trends in the data is considered. Both `sf` and `tf` must be between 0 and 1.',
   },
   {
     insertText: 'hour',
@@ -319,6 +326,13 @@ export const FUNCTIONS = [
     detail: 'increase(v range-vector)',
     documentation:
       'Calculates the increase in the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. The increase is extrapolated to cover the full time range as specified in the range vector selector, so that it is possible to get a non-integer result even if a counter increases only by integer increments.',
+  },
+  {
+    insertText: 'info',
+    label: 'info',
+    detail: 'info(v instant-vector, [data-label-selector instant-vector])',
+    documentation:
+      'Returns latest details and metadata about a group of metrics, such as their labels and current values, without doing any calculations',
   },
   {
     insertText: 'irate',

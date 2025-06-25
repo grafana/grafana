@@ -15,6 +15,7 @@ export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
+export const nativeHistogramMetric = 'traces_service_graph_request_server_seconds';
 
 export const rateMetric = {
   expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
@@ -28,6 +29,10 @@ export const errorRateMetric = {
 };
 export const durationMetric = {
   expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{}[$__range])) by (le))',
+  params: [],
+};
+export const nativeHistogramDurationMetric = {
+  expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency{}[$__range])) by (le))',
   params: [],
 };
 export const defaultTableFilter = 'span_kind="SPAN_KIND_SERVER"';
@@ -60,6 +65,10 @@ export function mapPromMetricsToServiceMap(
   collectMetricData(frames[totalsMetric], 'total', totalsMetric, nodesMap, edgesMap);
   collectMetricData(frames[secondsMetric], 'seconds', secondsMetric, nodesMap, edgesMap);
   collectMetricData(frames[failedMetric], 'failed', failedMetric, nodesMap, edgesMap);
+
+  collectIsInstrumented(frames[`${totalsMetric}_labels`], nodesMap);
+  collectIsInstrumented(frames[`${secondsMetric}_labels`], nodesMap);
+  collectIsInstrumented(frames[`${failedMetric}_labels`], nodesMap);
 
   return convertToDataFrames(nodesMap, edgesMap, range);
 }
@@ -95,6 +104,11 @@ function createServiceMapDataFrames() {
       name: Fields.arc + 'failed',
       type: FieldType.number,
       config: { displayName: 'Failed', color: { fixedColor: 'red', mode: FieldColorModeId.Fixed } },
+      values: [],
+    },
+    {
+      name: Fields.isInstrumented,
+      type: FieldType.boolean,
       values: [],
     },
   ]);
@@ -145,6 +159,7 @@ type ServiceMapStatistics = {
 type NodeObject = ServiceMapStatistics & {
   name: string;
   namespace?: string;
+  isInstrumented?: boolean;
 };
 
 type EdgeObject = ServiceMapStatistics & {
@@ -240,6 +255,21 @@ function collectMetricData(
   }
 }
 
+function collectIsInstrumented(frame: DataFrameView | undefined, nodesMap: Record<string, NodeObject>) {
+  if (!frame) {
+    return;
+  }
+
+  for (let i = 0; i < frame.length; i++) {
+    const row = frame.get(i);
+    const serverId = row.server_service_namespace ? `${row.server_service_namespace}/${row.server}` : row.server;
+
+    if (nodesMap[serverId] && nodesMap[serverId].isInstrumented !== true) {
+      nodesMap[serverId].isInstrumented = row.connection_type === '' || row.connection_type === 'messaging_system';
+    }
+  }
+}
+
 function convertToDataFrames(
   nodesMap: Record<string, NodeObject>,
   edgesMap: Record<string, EdgeObject>,
@@ -258,6 +288,7 @@ function convertToDataFrames(
       [Fields.secondaryStat]: node.total ? Math.round(node.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
       [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
       [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
+      [Fields.isInstrumented]: node.isInstrumented ?? true,
     });
   }
   for (const edgeId of Object.keys(edgesMap)) {

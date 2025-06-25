@@ -122,5 +122,9 @@ describe('Directed acyclic graph', () => {
       expect(() => dag.link('A', 'B')).toThrow('cannot link A to B since it would create a cycle');
       expect(() => dag.link('A', 'E')).toThrow('cannot link A to E since it would create a cycle');
     });
+
+    it('should return undefined for unknown node id', () => {
+      expect(dag.getNode('404')).toBeUndefined();
+    });
   });
 });

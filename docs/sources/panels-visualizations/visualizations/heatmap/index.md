@@ -208,7 +208,7 @@ Choose whether you want to display the heatmap legend on the visualization by to
 
 Set the color used to show exemplar data.
 
-### Data links
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 

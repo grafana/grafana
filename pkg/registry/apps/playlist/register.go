@@ -41,14 +41,15 @@ func RegisterApp(
 		LegacyStorageGetter: provider.legacyStorageGetter,
 		ManagedKinds:        playlistapp.GetKinds(),
 		CustomConfig: any(&playlistapp.PlaylistConfig{
-			EnableWatchers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsWatcher),
+			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 		}),
+		AllowedV0Alpha1Resources: []string{playlistv0alpha1.PlaylistKind().Plural()},
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
 	return provider
 }
 
-func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.LegacyStorage {
+func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    playlistv0alpha1.PlaylistKind().Group(),
 		Version:  playlistv0alpha1.PlaylistKind().Version(),

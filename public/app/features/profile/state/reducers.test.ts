@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole, TeamPermissionLevel } from '../../../types';
+import { OrgRole } from '../../../types';
 import { getMockTeam } from '../../teams/__mocks__/teamMocks';
 
 import {
@@ -92,13 +92,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+            teams: [getMockTeam(1, 'aaaaaa')],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+          teams: [getMockTeam(1, 'aaaaaa')],
         });
     });
   });

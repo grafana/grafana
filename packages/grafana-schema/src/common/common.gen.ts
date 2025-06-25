@@ -679,6 +679,7 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  hideZeros?: boolean;
   maxHeight?: number;
   maxWidth?: number;
   mode: TooltipDisplayMode;
@@ -861,6 +862,7 @@ export enum VariableFormatID {
   Glob = 'glob',
   HTML = 'html',
   JSON = 'json',
+  Join = 'join',
   Lucene = 'lucene',
   PercentEncode = 'percentencode',
   Pipe = 'pipe',

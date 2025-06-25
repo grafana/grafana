@@ -24,7 +24,8 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting"
+        "exec_err_state": "Alerting",
+        "missing_series_evals_to_resolve": 1
       }
     },
     {
@@ -49,7 +50,8 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting"
+        "exec_err_state": "Alerting",
+        "missing_series_evals_to_resolve": 2
       }
     }
   ]

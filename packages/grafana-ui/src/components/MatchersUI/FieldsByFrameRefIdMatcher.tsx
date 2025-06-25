@@ -1,6 +1,14 @@
 import { useMemo, useState, useCallback } from 'react';
 
-import { DataFrame, getFrameDisplayName, FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  getFrameDisplayName,
+  FieldMatcherID,
+  fieldMatchers,
+  SelectableValue,
+  toOption,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { MultiSelect, Select } from '../Select/Select';
 
@@ -129,6 +137,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
         } catch {
           extractedRefIds.add(value);
         }
+      } else if (value.includes('|')) {
+        // old format that was simply unescaped pipe-joined strings -> regexp
+        extractedRefIds = new Set(value.split('|'));
       } else {
         extractedRefIds.add(value);
       }
@@ -140,7 +151,9 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
       return matchedRefIds;
     }
 
-    return recoverMultiRefIdMissing(listOfRefIds, priorSelectionState.refIds, priorSelectionState.value);
+    const newRefIds = [...extractedRefIds].map(toOption);
+
+    return recoverMultiRefIdMissing(newRefIds, priorSelectionState.refIds, priorSelectionState.value);
   }, [value, listOfRefIds, priorSelectionState]);
 
   const onFilterChange = useCallback(
@@ -204,18 +217,20 @@ function getFramesDescription(frames: DataFrame[]): string {
 
 /**
  * Registry item for UI to configure "fields by frame refId"-matcher.
- * @public
  */
-export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
+export const getFieldsByFrameRefIdItem: () => FieldMatcherUIRegistryItem<string> = () => ({
   id: FieldMatcherID.byFrameRefID,
   component: (props: MatcherUIProps<string>) => {
     return <RefIDPicker value={props.options} data={props.data} onChange={props.onChange} />;
   },
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
-  name: 'Fields returned by query',
-  description: 'Set properties for fields from a specific query',
+  name: t('grafana-ui.matchers-ui.name-fields-by-query', 'Fields returned by query'),
+  description: t(
+    'grafana-ui.matchers-ui.description-fields-by-query',
+    'Set properties for fields from a specific query'
+  ),
   optionsToLabel: (options) => options,
-};
+});
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
 function escapeRegExp(string: string) {

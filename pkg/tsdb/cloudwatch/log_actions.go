@@ -141,8 +141,8 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logsQuery mod
 	}
 
 	region := instance.Settings.Region
-	if logsQuery.Region != nil {
-		region = *logsQuery.Region
+	if logsQuery.Region != "" {
+		region = logsQuery.Region
 	}
 
 	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
@@ -305,8 +305,8 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	dataFrame.RefID = refID
 
 	region := "default"
-	if logsQuery.Region != nil {
-		region = *logsQuery.Region
+	if logsQuery.Region != "" {
+		region = logsQuery.Region
 	}
 
 	dataFrame.Meta = &data.FrameMeta{
@@ -376,7 +376,7 @@ func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 		return nil, err
 	}
 
-	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
+	dataFrame, err := logsResultsToDataframes(getQueryResultsOutput, logsQuery.StatsGroups)
 	if err != nil {
 		return nil, err
 	}

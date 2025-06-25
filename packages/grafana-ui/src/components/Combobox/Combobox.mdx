@@ -4,53 +4,70 @@ import { Combobox } from './Combobox';
 
 <Meta title="MDX|Combobox" component={Combobox} />
 
-## Usage
+# Combobox
 
-**Do**
+A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
 
-- Use in inline query editors
-- Use when you require async calls from a select input
+**Use Combobox when you need:**
 
-**Don't**
+- A searchable dropdown with keyboard navigation
+- Asynchronous loading of options (e.g., API calls)
+- Support for large datasets (1000+ items)
+- Type-ahead filtering functionality
+- Custom value creation
+- Inline form usage (e.g., query editors)
 
-- Use the async functionality, when all items are only loaded on the initial load
-- Use when fewer than 4 items are needed, as a `RadioButtonGroup` may be more suitable (not for inline use cases)
-- Use this component if you need custom option styling
+**Consider alternatives when:**
 
-## ComboboxOption
+- You have fewer than 4 options (consider `RadioButtonGroup` instead)
+- You need complex custom option styling
 
-The `ComboboxOption` currently supports 3 properties:
+## Usage & Guidelines
 
-- `label` - The text that is visible in the menu.
-- `value` (required) - The value that is selected.
-- `description` - A longer description that describes the choice.
+### Options
 
-If no `label` is given, `value` will be used as a display value.
+Options are supplied through the `options` prop as either:
 
-## Sizing
+- An array of options for synchronous usage
+- An async function that returns a promise resolving to options for user input.
 
-The recommended way to set the width is by sizing the container element. This is so it may reflect a similar size as other inputs in the context.
+Options can be an array of objects with seperate label and values, or an array of strings which will be used as both the label and value.
 
-If that is not possible, the width can be set directly on the component, by setting a number, which is a multiple of `8px`.
+While Combobox can handle large sets of options, you should consider both the user experience of searching through many options, and the performance of loading many options from an API.
 
-For inline usage, such as in query editors, it may be useful to size the input based on the content. Set `width="auto"` to achieve this. In this case, it is also recommended to set `maxWidth` and `minWidth`.
+### Grouping
 
-## Async Usage
+Each option object may also have a `group` string property. Options with matching group names will be sorted together, as will options with undefined groups. Combobox will order these based on the first occurence of each `group` (or absence of `group`) in the `options` prop.
 
-The `options` prop can accept an async function:
+### Async behaviour
 
-- When the menu opens, the `options` function is called with `''`, to load all options.
-- When the user types, the `options` function is called with the current input value.
+When using Combobox with options from a remote source as the user types, you can supply the `options` prop as an function that is called on each keypress with the current input value and returns a promise resolving to an array of options matching the input.
 
-Note: The calls are debounced. Old calls are invalidated when a new call is made.
+Consider the following when implementing async behaviour:
 
-## Unit testing
+- Consumers should return filtered options matching the input. This is bested suited for APIs that support filtering/search.
+- When the menu is opened with blank input (e.g. initial click with no selected value) the function will be called with an empty string.
+- Consumers should only ever load top-n options from APIs using this async function. If your API does not support filtering, consider loading options yourself and just passing the sync options array in
+- Combobox does not cache calls to the async function. If you need this, implement your own caching.
+- Calls to the async function are debounced, so consumers should not need to implement this themselves.
 
-Writing unit tests with Combobox requires mocking the `getBoundingClientRect` method because of [the virtual list library](https://github.com/TanStack/virtual/issues/29#issuecomment-657519522)
+### Value
 
-This code sets up the mocking before all tests:
+The `value` prop is used to set the selected value of the combobox. A scalar value (the value of options) is preferred over a full option object.
 
-```js
+When using async options with seperate labels and values, the `value` prop can be a full option object to ensure the correct label is displayed.
+
+### Sizing
+
+Combobox defaults to filling the width of its container to match other inputs. If that's not desired, set the `width` prop to control the exact input width.
+
+For inline usage, such as in query editors, it may be useful to size the input based on the text content. Set width="auto" to achieve this. In this case, it is also recommended to set maxWidth and minWidth.
+
+### Unit tests
+
+The component requires mocking `getBoundingClientRect` because of virtualisation:
+
+```typescript
 beforeAll(() => {
   const mockGetBoundingClientRect = jest.fn(() => ({
     width: 120,
@@ -67,13 +84,9 @@ beforeAll(() => {
 });
 ```
 
-### Selecting an option
+#### Select an option by mouse
 
-To select an option, you can use any `*ByRole` methods, as Combobox has proper roles for accessibility.
-
-#### Selecting option by clicking
-
-```js
+```jsx
 render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
 
 const input = screen.getByRole('combobox');
@@ -84,9 +97,9 @@ await userEvent.click(item);
 expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
 ```
 
-#### Selecting option by typing
+#### Select an option by keyboard
 
-```js
+```jsx
 render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
 const input = screen.getByRole('combobox');
@@ -94,6 +107,31 @@ await userEvent.type(input, 'Option 3');
 await userEvent.keyboard('{ArrowDown}{Enter}');
 
 expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+```
+
+## Migrating from Select
+
+Combobox's API is similar to Select, but is greatly simplified. Any workarounds you may have implemented to workaround Select's slow performance are no longer necessary.
+
+Some differences to note:
+
+- Virtualisation is built in, so no separate `VirtualizedSelect` component is needed.
+- Async behaviour is built in so a seperate `AsyncSelect` component is not needed
+- `isLoading: boolean` has been renamed to `loading: boolean`
+- `allowCustomValue` has been renamed to `createCustomValue`.
+- When specifying `width="auto"`, `minWidth` is also required.
+- Many props used to control subtle behaviour have been removed to simplify the API and improve performance.
+  - Custom render props, or label as ReactNode is not supported at this time. Reach out if you have a hard requirement for this and we can discuss.
+
+For all async behaviour, pass in a function that returns `Promise<ComboboxOption[]>` that will be called when the menu is opened, and on keypress.
+
+```tsx
+const loadOptions = useCallback(async (input: string) => {
+  const response = await fetch(`/api/options?query=${input}`);
+  return response.json();
+}, []);
+
+<Combobox options={loadOptions} />;
 ```
 
 ## Props

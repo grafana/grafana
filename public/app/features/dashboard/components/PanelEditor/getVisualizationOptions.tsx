@@ -7,13 +7,10 @@ import {
   PanelPlugin,
   StandardEditorContext,
   VariableSuggestionsScope,
-} from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import {
-  NestedValueAccess,
   PanelOptionsEditorBuilder,
-  isNestedPanelOptions,
-} from '@grafana/data/src/utils/OptionsUIBuilders';
+} from '@grafana/data';
+import { NestedValueAccess, isNestedPanelOptions, PanelOptionsSupplier } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
@@ -52,6 +49,7 @@ export function getStandardEditorContext({
     eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(dataSeries, scope),
     instanceState,
+    annotations: data?.annotations,
   };
 
   return context;
@@ -102,11 +100,14 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
    */
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
     if (fieldOption.isCustom) {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)) {
+      if (
+        fieldOption.showIf &&
+        !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
+      ) {
         continue;
       }
     } else {
-      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series)) {
+      if (fieldOption.showIf && !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations)) {
         continue;
       }
     }
@@ -152,7 +153,10 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
 
 export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBehavior): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
-    title: 'Library panel options',
+    title: t(
+      'dashboard.get-library-viz-panel-options-category.descriptor.title.library-panel-options',
+      'Library panel options'
+    ),
     id: 'Library panel options',
     isOpenDefault: true,
   });
@@ -160,7 +164,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
   descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Name',
+        title: t('dashboard.get-library-viz-panel-options-category.title.name', 'Name'),
         value: libraryPanel,
         popularRank: 1,
         render: function renderName() {
@@ -177,7 +181,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Information',
+        title: t('dashboard.get-library-viz-panel-options-category.title.information', 'Information'),
         render: function renderLibraryPanelInformation() {
           return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
         },
@@ -240,8 +244,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     const hideOption =
       fieldOption.showIf &&
       (fieldOption.isCustom
-        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series)
-        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series));
+        ? !fieldOption.showIf(currentFieldConfig.defaults.custom, data?.series, data?.annotations)
+        : !fieldOption.showIf(currentFieldConfig.defaults, data?.series, data?.annotations));
     if (fieldOption.hideFromDefaults || hideOption) {
       continue;
     }
@@ -298,7 +302,7 @@ export function fillOptionsPaneItems(
   supplier(builder, context);
 
   for (const pluginOption of builder.getItems()) {
-    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data)) {
+    if (pluginOption.showIf && !pluginOption.showIf(context.options, context.data, context.annotations)) {
       continue;
     }
 

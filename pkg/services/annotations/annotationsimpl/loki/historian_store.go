@@ -12,8 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,8 +56,8 @@ type LokiHistorianStore struct {
 	ruleStore RuleStore
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
-	if !useStore(cfg, ft) {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
+	if !useStore(cfg) {
 		return nil
 	}
 	lokiCfg, err := historian.NewLokiConfig(cfg)
@@ -87,24 +85,27 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 
 	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
 	// since state history won't have tags for annotations
+	// nolint: staticcheck
 	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
-	rule := &ngmodels.AlertRule{}
-	if query.AlertID != 0 {
-		var err error
-		rule, err = r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
+	var ruleUID string
+	if query.AlertUID != "" {
+		ruleUID = query.AlertUID
+	} else if query.AlertID != 0 {
+		rule, err := r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
 		if err != nil {
 			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
 		}
+		ruleUID = rule.UID
 	}
 
 	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, ruleUID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {
@@ -178,7 +179,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 
 		items = append(items, &annotations.ItemDTO{
 			AlertID:      entry.RuleID,
-			DashboardID:  ac.Dashboards[entry.DashboardUID],
+			DashboardID:  ac.Dashboards[entry.DashboardUID], // nolint: staticcheck
 			DashboardUID: &entry.DashboardUID,
 			PanelID:      entry.PanelID,
 			NewState:     entry.Current,
@@ -280,8 +281,10 @@ func buildHistoryQuery(query *annotations.ItemQuery, dashboards map[string]int64
 		RuleUID:      ruleUID,
 	}
 
+	// nolint: staticcheck
 	if historyQuery.DashboardUID == "" && query.DashboardID != 0 {
 		for uid, id := range dashboards {
+			// nolint: staticcheck
 			if query.DashboardID == id {
 				historyQuery.DashboardUID = uid
 				break
@@ -292,15 +295,10 @@ func buildHistoryQuery(query *annotations.ItemQuery, dashboards map[string]int64
 	return historyQuery
 }
 
-func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles) bool {
+func useStore(cfg setting.UnifiedAlertingStateHistorySettings) bool {
 	if !cfg.Enabled {
 		return false
 	}
-
-	// Override config based on feature toggles.
-	// We pass in a no-op logger here since this function is also called during ngalert init,
-	// and we don't want to log the same info twice.
-	ngalert.ApplyStateHistoryFeatureToggles(&cfg, ft, log.NewNopLogger())
 
 	backend, err := historian.ParseBackendType(cfg.Backend)
 	if err != nil {
@@ -308,6 +306,5 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	// To be doubly sure, ensure that the feature toggle to only use Loki is enabled.
-	return backend == historian.BackendTypeLoki && ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly)
+	return backend == historian.BackendTypeLoki
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 const initialAlertPollPeriod = time.Second
@@ -39,9 +38,9 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			logsQuery.QueryString = *logsQuery.Expression
 		}
 
-		region := utils.Depointerizer(logsQuery.Region)
+		region := logsQuery.Region
 		if region == "" || region == defaultRegion {
-			logsQuery.Region = utils.Pointer(instance.Settings.Region)
+			logsQuery.Region = instance.Settings.Region
 		}
 
 		logsClient, err := e.getCWLogsClient(ctx, req.PluginContext, region)
@@ -64,7 +63,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			return nil, err
 		}
 
-		dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
+		dataframe, err := logsResultsToDataframes(getQueryResultsOutput, logsQuery.StatsGroups)
 		if err != nil {
 			return nil, err
 		}

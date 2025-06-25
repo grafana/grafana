@@ -42,8 +42,9 @@ func (l Labels) String() string {
 // Value contains the labels and value of a Reduce, Math or Threshold
 // expression for a series.
 type Value struct {
-	Labels Labels
-	Value  float64
+	Labels           Labels
+	Value            float64
+	isDatasourceNode bool
 }
 
 func (v Value) String() string {
@@ -63,8 +64,9 @@ func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
 			f = math.NaN()
 		}
 		values[refID] = Value{
-			Labels: Labels(capture.Labels),
-			Value:  f,
+			Labels:           Labels(capture.Labels),
+			Value:            f,
+			isDatasourceNode: capture.IsDatasourceNode,
 		}
 	}
 	return values
@@ -73,14 +75,43 @@ func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
 type Data struct {
 	Labels Labels
 	Values map[string]Value
-	Value  string
+
+	// Value is the .Value and $value variables in templates.
+	// For single datasource queries, this will be the numeric value of the query (float64).
+	// For multiple datasource queries, this will be the evaluation string (string).
+	Value any
 }
 
 func NewData(labels map[string]string, res eval.Result) Data {
+	values := NewValues(res.Values)
+
+	// By default, use the evaluation string as the Value
+	var value any = res.EvaluationString
+
+	// If there's exactly one datasource node, use its numeric value instead
+	// This makes the $value variable compatible with Prometheus templating
+	// where $value holds the numeric value of the alert query
+	datasourceNodeCount := 0
+	var datasourceNodeValue Value
+	for _, v := range values {
+		if v.isDatasourceNode {
+			datasourceNodeCount++
+			if datasourceNodeCount > 1 {
+				// Multiple datasource nodes found, we'll use the evaluation string
+				break
+			}
+			datasourceNodeValue = v
+		}
+	}
+
+	if datasourceNodeCount == 1 {
+		value = datasourceNodeValue.Value
+	}
+
 	return Data{
 		Labels: labels,
-		Values: NewValues(res.Values),
-		Value:  res.EvaluationString,
+		Values: values,
+		Value:  value,
 	}
 }
 

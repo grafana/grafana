@@ -72,8 +72,8 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
     '.rc-cascader': {
       '&-menus': {
         overflow: 'hidden',
-        background: theme.colors.background.canvas,
-        border: `1px solid ${theme.colors.border.weak}`,
+        background: theme.colors.background.elevated,
+        border: `none`,
         borderRadius: theme.shape.radius.default,
         boxShadow: theme.shadows.z3,
         whiteSpace: 'nowrap',
@@ -128,7 +128,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
         height: '192px',
         listStyle: 'none',
         margin: 0,
-        padding: 0,
+        padding: theme.spacing(0.5),
         borderRight: `1px solid ${theme.colors.border.weak}`,
         overflow: 'auto',
 
@@ -140,6 +140,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
           height: theme.spacing(4),
           lineHeight: theme.spacing(4),
           padding: theme.spacing(0, 4, 0, 2),
+          borderRadius: theme.shape.radius.default,
           cursor: 'pointer',
           whiteSpace: 'nowrap',
           overflow: 'hidden',

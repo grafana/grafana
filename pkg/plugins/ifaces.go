@@ -18,9 +18,12 @@ type Installer interface {
 }
 
 type PluginSource interface {
+	// PluginClass is the associated Class of plugin for this source
 	PluginClass(ctx context.Context) Class
-	PluginURIs(ctx context.Context) []string
-	DefaultSignature(ctx context.Context) (Signature, bool)
+	// DefaultSignature is the (optional) default signature information for this source
+	DefaultSignature(ctx context.Context, pluginID string) (Signature, bool)
+	// Discover finds and returns plugin bundles from this source
+	Discover(ctx context.Context) ([]*FoundBundle, error)
 }
 
 type FileStore interface {
@@ -96,11 +99,6 @@ type Client interface {
 // BackendFactoryProvider provides a backend factory for a provided plugin.
 type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
-}
-
-type SecretsPluginManager interface {
-	// SecretsManager returns a secretsmanager plugin
-	SecretsManager(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {

@@ -9,7 +9,7 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-import { BackendSrv } from '@grafana/runtime';
+import { BackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
@@ -305,6 +305,102 @@ describe('JaegerDatasource', () => {
     );
     expect(mock).toHaveBeenCalledWith({
       url: `${defaultSettings.url}/api/traces?service=interpolationText&operation=interpolationText&minDuration=interpolationText&maxDuration=interpolationText&${defaultSearchRangeParams}&lookback=custom`,
+    });
+  });
+
+  describe('when jaegerBackendMigration feature toggle is enabled', () => {
+    let originalFeatureToggleValue: boolean | undefined;
+
+    beforeEach(() => {
+      originalFeatureToggleValue = config.featureToggles.jaegerBackendMigration;
+      config.featureToggles.jaegerBackendMigration = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.jaegerBackendMigration = originalFeatureToggleValue;
+    });
+
+    it('should add node graph frames to response when nodeGraph is enabled and query is a trace ID query', async () => {
+      // Create a datasource with nodeGraph enabled
+      const settings = {
+        ...defaultSettings,
+        jsonData: {
+          ...defaultSettings.jsonData,
+          nodeGraph: { enabled: true },
+        },
+      };
+
+      const ds = new JaegerDatasource(settings);
+
+      // Mock the super.query method to return our mock response
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
+        return of({
+          data: [
+            {
+              fields: testResponseDataFrameFields,
+              values: testResponseDataFrameFields.values,
+            },
+          ],
+        });
+      });
+
+      // Create a query without queryType (trace ID query)
+      const query = {
+        ...defaultQuery,
+        targets: [
+          {
+            query: '12345',
+            refId: '1',
+          },
+        ],
+      };
+
+      // Execute the query
+      const response = await lastValueFrom(ds.query(query));
+      // Verify that the response contains the original data plus node graph frames
+      expect(response.data.length).toBe(3);
+    });
+
+    it('should not add node graph frames when nodeGraph is disabled', async () => {
+      // Create a datasource with nodeGraph disabled
+      const settings = {
+        ...defaultSettings,
+        jsonData: {
+          ...defaultSettings.jsonData,
+          nodeGraph: { enabled: false },
+        },
+      };
+
+      const ds = new JaegerDatasource(settings);
+
+      // Mock the super.query method to return our mock response
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
+        return of({
+          data: [
+            {
+              fields: testResponseDataFrameFields,
+              values: testResponseDataFrameFields.values,
+            },
+          ],
+        });
+      });
+
+      // Create a query without queryType (trace ID query)
+      const query = {
+        ...defaultQuery,
+        targets: [
+          {
+            query: '12345',
+            refId: '1',
+          },
+        ],
+      };
+
+      // Execute the query
+      const response = await lastValueFrom(ds.query(query));
+      // Verify that the response contains only the original data
+      expect(response.data.length).toBe(1);
+      expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
     });
   });
 });

@@ -93,8 +93,8 @@ const defaultPreferences: UserPreferencesDTO = {
   language: '',
 };
 
-const mockPrefsPatch = jest.fn();
-const mockPrefsUpdate = jest.fn();
+const mockPrefsPatch = jest.fn().mockResolvedValue(undefined);
+const mockPrefsUpdate = jest.fn().mockResolvedValue(undefined);
 const mockPrefsLoad = jest.fn().mockResolvedValue(mockPreferences);
 
 jest.mock('app/core/services/PreferencesService', () => ({
@@ -129,9 +129,6 @@ describe('SharedPreferences', () => {
   });
 
   beforeEach(async () => {
-    mockReload.mockReset();
-    mockPrefsUpdate.mockReset();
-
     render(<SharedPreferences {...props} />);
 
     await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
@@ -164,6 +161,24 @@ describe('SharedPreferences', () => {
     expect(langSelect).toHaveValue('Default');
   });
 
+  it('does not render the pseudo-locale', async () => {
+    const langSelect = await screen.findByRole('combobox', { name: /language/i });
+
+    // Open the combobox and wait for the options to be rendered
+    await userEvent.click(langSelect);
+
+    // TODO: The input value should be cleared when clicked, but for some reason it's not?
+    // checking langSelect.value beforehand indicates that it is cleared, but after using
+    // userEvent.type the default value comes back?
+    await userEvent.type(
+      langSelect,
+      '{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}{Backspace}Pseudo'
+    );
+
+    const option = screen.queryByRole('option', { name: 'Pseudo-locale' });
+    expect(option).not.toBeInTheDocument();
+  });
+
   it('saves the users new preferences', async () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Dark');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
@@ -188,9 +203,9 @@ describe('SharedPreferences', () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Default');
 
     // there's no default option in this dropdown - there's a clear selection button
-    // get the parent container, and find the "select-clear-value" button
+    // get the parent container, and find the "Clear value" button
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'select-clear-value' }));
+    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
 

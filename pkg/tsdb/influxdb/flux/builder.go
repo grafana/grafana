@@ -254,6 +254,14 @@ func (e maxPointsExceededError) Error() string {
 	return fmt.Sprintf("max data points limit exceeded (count is %d)", e.Count)
 }
 
+type maxSeriesExceededError struct {
+	Count int
+}
+
+func (e maxSeriesExceededError) Error() string {
+	return fmt.Sprintf("max series limit exceeded (count is %d)", e.Count)
+}
+
 func getColumnInfo(col *query.FluxColumn) (info *columnInfo, isTimestamp bool, err error) {
 	dataType := col.DataType()
 	isTimestamp = isTimestampType(dataType)
@@ -316,7 +324,7 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	if (fb.currentGroupKey == nil) || !isTableIDEqual(table, fb.currentGroupKey) {
 		fb.totalSeries++
 		if fb.totalSeries > fb.maxSeries {
-			return fmt.Errorf("results are truncated, max series reached (%d)", fb.maxSeries)
+			return maxSeriesExceededError{Count: fb.totalSeries}
 		}
 
 		// labels have the same value for every row in the same "table",

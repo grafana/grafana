@@ -6,7 +6,6 @@ aliases:
 description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
   aggregation system. OSS profiling solution from Grafana Labs.
 keywords:
-  - grafana
   - phlare
   - guide
   - profiling
@@ -39,11 +38,17 @@ refs:
       destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
     - pattern: /docs/grafana-cloud/
       destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+  flame-graph-panel:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
 ---
 
 # Grafana Pyroscope data source
 
-Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore](ref:explore).
+Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system.
+Add a Pyroscope data source to query your profiles in [Explore](ref:explore).
 
 Refer to [Introduction to Pyroscope](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/introduction/) to understand profiling and Pyroscope.
 
@@ -51,11 +56,38 @@ To use profiling data, you should:
 
 - [Configure your application to send profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/)
 - [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source/).
-- [View and query profiling data using Explore Profiles or the query editor ](./query-profile-data/)
+- [View and query profiling data using Profiles Drilldown or the query editor ](./query-profile-data/)
+
+## Continuous profiling
+
+While code profiling has been a long-standing practice, continuous profiling represents a modern and more advanced approach to performance monitoring.
+
+This technique adds two critical dimensions to traditional profiles:
+
+Time
+: Profiling data is collected _continuously_, providing a time-centric view that allows querying performance data from any point in the past.
+
+Metadata
+: Profiles are enriched with metadata, adding contextual depth to the performance data.
+
+These dimensions, coupled with the detailed nature of performance profiles, make continuous profiling a uniquely valuable tool.
+
+### Flame graphs
+
+<!-- vale Grafana.We = NO -->
+
+Flame graphs help you visualize resource allocation and performance bottlenecks, and you even get suggested recommendations and performance fixes via AI-driven flame graph analysis, as well as line-level insights from our GitHub integration.
+
+<!-- vale Grafana.We = YES -->
+
+On views with a flame graph, you can use **Explain flame graph** to provide an AI flame graph analysis that explains the performance bottleneck, root cause, and recommended fix.
+For more information, refer to [Flame graph AI](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/flamegraph-ai/).
 
 ## Integrate profiles into dashboards
 
 Using the Pyroscope data source, you can integrate profiles into your dashboards.
+For example, you can embed flame graphs using the [flame graph panel](ref:flame-graph-panel).
+
 In this case, the screenshot shows memory profiles alongside panels for logs and metrics to be able to debug out of memory (OOM) errors alongside the associated logs and metrics.
 
 ![dashboard](https://grafana.com/static/img/pyroscope/grafana-pyroscope-dashboard-2023-11-30.png)

@@ -4,13 +4,13 @@ import * as React from 'react';
 
 import { rangeUtil, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStartPicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStart, WeekStartPicker } from '@grafana/ui';
 
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
 interface Props {
-  onWeekStartChange: (weekStart: string) => void;
+  onWeekStartChange: (weekStart?: WeekStart) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
@@ -20,7 +20,7 @@ interface Props {
   timePickerHidden?: boolean;
   nowDelay?: string;
   timezone: TimeZone;
-  weekStart: string;
+  weekStart?: WeekStart;
   liveNow?: boolean;
 }
 
@@ -62,7 +62,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onTimeZoneChange(timeZone);
   };
 
-  onWeekStartChange = (weekStart: string) => {
+  onWeekStartChange = (weekStart?: WeekStart) => {
     this.props.onWeekStartChange(weekStart);
   };
 
@@ -106,6 +106,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           <Input
             id="now-delay-input"
             invalid={!this.state.isNowDelayValid}
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="0m"
             onChange={this.onNowDelayChange}
             defaultValue={this.props.nowDelay}
@@ -122,7 +123,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           label={t('dashboard-settings.time-picker.refresh-live-dashboards-label', 'Refresh live dashboards')}
           description={t(
             'dashboard-settings.time-picker.refresh-live-dashboards-description',
-            "Continuously re-draw panels where the time range references 'now'"
+            'Continuously update panels when the time range includes the current time'
           )}
         >
           <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />

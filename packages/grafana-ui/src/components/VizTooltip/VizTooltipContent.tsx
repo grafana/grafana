@@ -3,7 +3,7 @@ import { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { VizTooltipRow } from './VizTooltipRow';
 import { VizTooltipItem } from './types';
@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: 1,
     gap: 2,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
   }),
 });

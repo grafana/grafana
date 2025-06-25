@@ -12,21 +12,9 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "-- Grafana --",
         },
         "enable": true,
-        "filter": {
-          "exclude": false,
-          "ids": [],
-        },
         "hide": false,
         "iconColor": "red",
         "name": "query1",
-        "query": {
-          "kind": "grafana",
-          "spec": {
-            "enable": true,
-            "iconColor": "red",
-            "name": "query1",
-          },
-        },
       },
     },
     {
@@ -38,47 +26,19 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "abcdef",
         },
         "enable": true,
-        "filter": {
-          "exclude": false,
-          "ids": [],
-        },
         "hide": true,
         "iconColor": "blue",
         "name": "query2",
-        "query": {
-          "kind": "prometheus",
-          "spec": {
-            "enable": true,
-            "iconColor": "blue",
-            "name": "query2",
-          },
-        },
       },
     },
     {
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "loki",
-          "uid": "Loki",
-        },
         "enable": true,
-        "filter": {
-          "exclude": false,
-          "ids": [],
-        },
         "hide": true,
         "iconColor": "green",
         "name": "query3",
-        "query": {
-          "kind": "loki",
-          "spec": {
-            "enable": true,
-            "iconColor": "green",
-            "name": "query3",
-          },
-        },
       },
     },
   ],
@@ -86,7 +46,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   "description": "Test Description",
   "editable": true,
   "elements": {
-    "test-panel-uid": {
+    "panel-1": {
       "kind": "Panel",
       "spec": {
         "data": {
@@ -98,6 +58,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         },
         "description": "Test Description",
+        "id": 1,
         "links": [
           {
             "targetBlank": true,
@@ -110,7 +71,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         ],
         "title": "Test Panel",
-        "uid": "test-panel-uid",
+        "transparent": true,
         "vizConfig": {
           "kind": "timeseries",
           "spec": {
@@ -134,9 +95,9 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "spec": {
             "element": {
               "kind": "ElementReference",
-              "name": "test-panel-uid",
+              "name": "panel-1",
             },
-            "height": 0,
+            "height": 10,
             "width": 0,
             "x": 0,
             "y": 0,
@@ -161,7 +122,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   ],
   "liveNow": true,
   "preload": true,
-  "schemaVersion": 40,
   "tags": [
     "tag1",
     "tag2",
@@ -177,7 +137,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     "from": "now-1h",
     "hideTimepicker": false,
     "nowDelay": "1m",
-    "quickRanges": [],
     "timezone": "UTC",
     "to": "now",
     "weekStart": "monday",
@@ -188,6 +147,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "QueryVariable",
       "spec": {
         "allValue": "*",
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -204,7 +164,13 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "multi": true,
         "name": "queryVar",
         "options": [],
-        "query": "query1",
+        "query": {
+          "kind": "prometheus",
+          "spec": {
+            "expr": "label_values(node_boot_time_seconds)",
+            "refId": "A",
+          },
+        },
         "refresh": "onDashboardLoad",
         "regex": "regex1",
         "skipUrlSync": false,
@@ -215,6 +181,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "CustomVariable",
       "spec": {
         "allValue": "All",
+        "allowCustomValue": true,
         "current": {
           "text": "option1",
           "value": "option1",
@@ -244,12 +211,11 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "DatasourceVariable",
       "spec": {
-        "allValue": undefined,
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
         },
-        "defaultOptionEnabled": true,
         "description": "A datasource variable",
         "hide": "dontHide",
         "includeAll": false,
@@ -342,7 +308,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "description": "A group by variable",
         "hide": "dontHide",
-        "includeAll": false,
         "label": "Group By Variable",
         "multi": false,
         "name": "groupByVar",
@@ -362,6 +327,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "condition": "AND",

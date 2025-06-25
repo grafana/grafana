@@ -1,24 +1,19 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/ui';
+import { Select, Stack, useStyles2, InputActionMeta } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { OPTIONS_LIMIT } from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
-
-const getStyles = () => ({
-  dropdown: css({
-    boxShadow: 'none',
-  }),
-});
 
 interface Props {
   filter: TraceqlFilter;
@@ -57,11 +52,6 @@ const SearchField = ({
     () => filterScopedTag(filter, datasource.languageProvider),
     [datasource.languageProvider, filter]
   );
-  // We automatically change the operator to the regex op when users select 2 or more values
-  // However, they expect this to be automatically rolled back to the previous operator once
-  // there's only one value selected, so we store the previous operator and value
-  const [prevOperator, setPrevOperator] = useState(filter.operator);
-  const [prevValue, setPrevValue] = useState(filter.value);
   const [tagQuery, setTagQuery] = useState<string>('');
   const [tagValuesQuery, setTagValuesQuery] = useState<string>('');
 
@@ -94,25 +84,6 @@ const SearchField = ({
     options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
   }
 
-  useEffect(() => {
-    if (
-      Array.isArray(filter.value) &&
-      filter.value.length > 1 &&
-      filter.operator !== '=~' &&
-      filter.operator !== '!~'
-    ) {
-      setPrevOperator(filter.operator);
-      updateFilter({ ...filter, operator: '=~' });
-    }
-    if (Array.isArray(filter.value) && filter.value.length <= 1 && (prevValue?.length || 0) > 1) {
-      updateFilter({ ...filter, operator: prevOperator, value: filter.value[0] });
-    }
-  }, [prevValue, prevOperator, updateFilter, filter]);
-
-  useEffect(() => {
-    setPrevValue(filter.value);
-  }, [filter.value]);
-
   const scopeOptions = Object.values(TraceqlSearchScope)
     .filter((s) => {
       // only add scope if it has tags
@@ -143,11 +114,11 @@ const SearchField = ({
 
   const tagOptions = useMemo(() => {
     if (tagQuery.length === 0) {
-      return formatTagOptions(tags.slice(0, maxOptions), filter.tag);
+      return formatTagOptions(tags.slice(0, OPTIONS_LIMIT), filter.tag);
     }
 
     const queryLowerCase = tagQuery.toLowerCase();
-    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, OPTIONS_LIMIT);
     return formatTagOptions(filterdOptions, filter.tag);
   }, [filter.tag, tagQuery, tags]);
 
@@ -156,26 +127,42 @@ const SearchField = ({
       return;
     }
 
+    let currentOptions = options;
+
+    // Add custom value if it exists and isn't already in options
+    if (filter.isCustomValue && filter.value) {
+      const customValue = Array.isArray(filter.value) ? filter.value : [filter.value];
+
+      const newCustomOptions = customValue
+        .filter((val) => !options.some((opt) => opt.value === val))
+        .map((val) => ({ label: val, value: val, type: filter.valueType }));
+
+      if (newCustomOptions.length > 0) {
+        currentOptions = [...options, ...newCustomOptions];
+      }
+    }
+
     if (tagValuesQuery.length === 0) {
-      return options.slice(0, maxOptions);
+      return currentOptions.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
-    return options
+    return currentOptions
       .filter((tag) => {
         if (tag.value && tag.value.length > 0) {
           return tag.value.toLowerCase().includes(queryLowerCase);
         }
         return false;
       })
-      .slice(0, maxOptions);
-  }, [tagValuesQuery, options]);
+      .slice(0, OPTIONS_LIMIT);
+  }, [tagValuesQuery, options, filter.isCustomValue, filter.value, filter.valueType]);
 
   return (
     <>
-      <HorizontalGroup spacing={'none'} width={'auto'}>
+      <Stack gap={0} width="auto">
         {!hideScope && (
           <Select
+            width="auto"
             className={styles.dropdown}
             inputId={`${filter.id}-scope`}
             options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
@@ -187,6 +174,7 @@ const SearchField = ({
         )}
         {!hideTag && (
           <Select
+            width="auto"
             className={styles.dropdown}
             inputId={`${filter.id}-tag`}
             isLoading={isTagsLoading}
@@ -226,6 +214,7 @@ const SearchField = ({
              * For example the number of span names being returned can easily reach 10s of thousands,
              * which is enough to cause a user's web browser to seize up
              */
+            width="auto"
             virtualized
             className={styles.dropdown}
             inputId={`${filter.id}-value`}
@@ -244,10 +233,24 @@ const SearchField = ({
                   ...filter,
                   value: val.map((v) => v.value),
                   valueType: val[0]?.type || uniqueOptionType,
+                  isCustomValue: false,
                 });
               } else {
-                updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
+                updateFilter({
+                  ...filter,
+                  value: val?.value,
+                  valueType: val?.type || uniqueOptionType,
+                  isCustomValue: false,
+                });
               }
+            }}
+            onCreateOption={(val) => {
+              updateFilter({
+                ...filter,
+                value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
+                valueType: uniqueOptionType,
+                isCustomValue: true,
+              });
             }}
             placeholder="Select value"
             isClearable={true}
@@ -257,11 +260,13 @@ const SearchField = ({
             allowCreateWhileLoading
           />
         )}
-      </HorizontalGroup>
+      </Stack>
       {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };
+
+export default SearchField;
 
 /**
  * Add to a list of options the current template variables.
@@ -274,7 +279,8 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
 
-// Limit maximum options in select dropdowns for performance reasons
-export const maxOptions = 1000;
-
-export default SearchField;
+const getStyles = () => ({
+  dropdown: css({
+    boxShadow: 'none',
+  }),
+});

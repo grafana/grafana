@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -211,8 +210,8 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
 	queryMode := ""
-	if model.QueryMode != nil {
-		queryMode = string(*model.QueryMode)
+	if model.QueryMode != "" {
+		queryMode = string(model.QueryMode)
 	}
 	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
 	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
@@ -324,14 +323,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
 		if sess.Config.HTTPClient.Transport == nil {
-			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
-			// then we use http.DefaultTransport
-			defTransport, ok := http.DefaultTransport.(*http.Transport)
-			if !ok {
-				// this should not happen but validating just in case
-				return nil, errors.New("default http client transport is not of type http.Transport")
-			}
-			sess.Config.HTTPClient.Transport = defTransport.Clone()
+			sess.Config.HTTPClient.Transport = httpclient.NewHTTPTransport()
 		}
 		err = proxy.New(ds.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
 		if err != nil {

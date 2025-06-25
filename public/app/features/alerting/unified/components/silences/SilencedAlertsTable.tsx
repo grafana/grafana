@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAlertTableStyles } from '../../styles/table';
@@ -28,11 +28,11 @@ const SilencedAlertsTable = ({ silencedAlerts }: Props) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.state">State</Trans>
             </th>
-            <th></th>
+            <th />
             <th>
               <Trans i18nKey="silences-table.header.alert-name">Alert name</Trans>
             </th>

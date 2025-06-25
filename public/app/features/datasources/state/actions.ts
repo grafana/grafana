@@ -5,7 +5,9 @@ import {
   TestDataSourceResponse,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
+  DataSourceApi,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   config,
   DataSourceSrv,
@@ -125,6 +127,11 @@ export const initDataSourceSettings = (
   };
 };
 
+const getPluginVersion = (dsApi: DataSourceApi) => {
+  const isCorePlugin = (dsApi?.meta?.module || '').startsWith('core');
+  return isCorePlugin ? config?.buildInfo?.version : dsApi?.meta?.info?.version;
+};
+
 export const testDataSource = (
   dataSourceName: string,
   editRoute = DATASOURCES_ROUTES.Edit,
@@ -153,6 +160,7 @@ export const testDataSource = (
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
+          plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: true,
           path: editLink,
@@ -165,6 +173,7 @@ export const testDataSource = (
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
+          plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: false,
           path: editLink,
@@ -249,7 +258,7 @@ export function addDataSource(
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
-      path: location.pathname,
+      path: window.location.pathname,
     });
 
     locationService.push(editLink);
@@ -282,7 +291,15 @@ export function updateDataSource(dataSource: DataSourceSettings) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
-      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
+      const errorInfo = isFetchError(err)
+        ? err.data
+        : {
+            message: t(
+              'datasources.update-data-source.error-info.message.an-unexpected-error-occurred',
+              'An unexpected error occurred.'
+            ),
+            traceID: '',
+          };
       return Promise.reject(errorInfo);
     }
 

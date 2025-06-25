@@ -166,7 +166,7 @@ export function transformFromOTLP(
       for (const librarySpan of data.instrumentationLibrarySpans) {
         for (const span of librarySpan.spans) {
           frame.add({
-            traceID: span.traceId.length > 16 ? span.traceId.slice(16) : span.traceId,
+            traceID: span.traceId,
             spanID: span.spanId,
             parentSpanID: span.parentSpanId || '',
             operationName: span.name || '',
@@ -462,6 +462,42 @@ function transformToTraceData(data: TraceSearchMetadata) {
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
+}
+
+export function enhanceTraceQlMetricsResponse(
+  data: DataQueryResponse,
+  instanceSettings: DataSourceInstanceSettings
+): DataQueryResponse {
+  data.data
+    ?.filter((f) => f.name === 'exemplar' && f.meta?.dataTopic === 'annotations')
+    .map((frame) => {
+      const traceIDField = frame.fields.find((field: Field) => field.name === 'traceId');
+      if (traceIDField) {
+        const links = getDataLinks(instanceSettings);
+        traceIDField.config.links = traceIDField.config.links?.length
+          ? [...traceIDField.config.links, ...links]
+          : links;
+      }
+      return frame;
+    });
+  return data;
+}
+
+function getDataLinks(instanceSettings: DataSourceInstanceSettings): DataLink[] {
+  const dataLinks: DataLink[] = [];
+
+  if (instanceSettings.uid) {
+    dataLinks.push({
+      title: 'View trace',
+      url: '',
+      internal: {
+        query: { query: '${__value.raw}', queryType: 'traceql' },
+        datasourceUid: instanceSettings.uid,
+        datasourceName: instanceSettings?.name ?? 'Data source not found',
+      },
+    });
+  }
+  return dataLinks;
 }
 
 export function formatTraceQLResponse(

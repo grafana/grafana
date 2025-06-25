@@ -18,9 +18,10 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
+  maxHeight?: number;
 }
 
-export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: ExemplarsPluginProps) => {
+export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries, maxHeight }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
 
   const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
@@ -83,10 +84,11 @@ export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: 
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
           exemplarColor={markerColor}
+          maxHeight={maxHeight}
         />
       );
     },
-    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
+    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex, maxHeight]
   );
 
   return (

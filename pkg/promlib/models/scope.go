@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
+
+func init() {
+	// this is deprecated, we will fix that in a separate PR
+	model.NameValidationScheme = model.UTF8Validation //nolint:staticcheck
+}
 
 // ApplyFiltersAndGroupBy takes a raw promQL expression, converts the filters into PromQL matchers, and applies these matchers to the parsed expression. It also applies the group by clause to any aggregate expressions in the parsed expression.
 func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFilter, groupBy []string) (string, error) {

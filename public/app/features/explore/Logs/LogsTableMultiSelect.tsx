@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { useTheme2 } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { useTheme2 } from '@grafana/ui';
 
 import { LogsTableActiveFields } from './LogsTableActiveFields';
 import { LogsTableAvailableFields } from './LogsTableAvailableFields';
@@ -58,9 +59,9 @@ export const LogsTableMultiSelect = (props: {
       {/* Sidebar columns */}
       <>
         <div className={styles.columnHeader}>
-          Selected fields
+          <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
           <button onClick={props.clear} className={styles.columnHeaderButton}>
-            Reset
+            <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
           </button>
         </div>
         <LogsTableActiveFields
@@ -71,7 +72,9 @@ export const LogsTableMultiSelect = (props: {
           id={'selected-fields'}
         />
 
-        <div className={styles.columnHeader}>Fields</div>
+        <div className={styles.columnHeader}>
+          <Trans i18nKey="explore.logs-table-multi-select.fields">Fields</Trans>
+        </div>
         <LogsTableAvailableFields
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}

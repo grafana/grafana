@@ -1,9 +1,6 @@
 import { ReducerID, SelectableValue } from '@grafana/data';
-import {
-  CalculateFieldMode,
-  CalculateFieldTransformerOptions,
-  CumulativeOptions,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+import { CalculateFieldMode, CalculateFieldTransformerOptions, CumulativeOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -40,16 +37,19 @@ export const CumulativeOptionsEditor = (props: {
 
   return (
     <>
-      <InlineField label="Field" labelWidth={LABEL_WIDTH}>
+      <InlineField label={t('transformers.cumulative-options-editor.label-field', 'Field')} labelWidth={LABEL_WIDTH}>
         <Select
-          placeholder="Field"
+          placeholder={t('transformers.cumulative-options-editor.placeholder-field', 'Field')}
           options={selectOptions}
           className="min-width-18"
           value={cumulative?.field}
           onChange={onCumulativeFieldChange}
         />
       </InlineField>
-      <InlineField label="Calculation" labelWidth={LABEL_WIDTH}>
+      <InlineField
+        label={t('transformers.cumulative-options-editor.label-calculation', 'Calculation')}
+        labelWidth={LABEL_WIDTH}
+      >
         <StatsPicker
           allowMultiple={false}
           className="width-18"

@@ -1,28 +1,28 @@
-import { validateInterval, validateIntervalRegex } from './validation';
+import { validateInterval } from './validation';
 
 describe('Validation', () => {
   it('should validate incorrect values correctly', () => {
-    expect(validateInterval('-', validateIntervalRegex)).toBeTruthy();
-    expect(validateInterval('1', validateIntervalRegex)).toBeTruthy();
-    expect(validateInterval('test', validateIntervalRegex)).toBeTruthy();
-    expect(validateInterval('1ds', validateIntervalRegex)).toBeTruthy();
-    expect(validateInterval('10Ms', validateIntervalRegex)).toBeTruthy();
-    expect(validateInterval('-9999999', validateIntervalRegex)).toBeTruthy();
+    expect(validateInterval('-')).toBeTruthy();
+    expect(validateInterval('1')).toBeTruthy();
+    expect(validateInterval('test')).toBeTruthy();
+    expect(validateInterval('1ds')).toBeTruthy();
+    expect(validateInterval('10Ms')).toBeTruthy();
+    expect(validateInterval('-9999999')).toBeTruthy();
   });
 
   it('should validate correct values correctly', () => {
-    expect(validateInterval('1y', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('1M', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('1w', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('1d', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('2h', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('4m', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('8s', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('80ms', validateIntervalRegex)).toBeFalsy();
-    expect(validateInterval('-80ms', validateIntervalRegex)).toBeFalsy();
+    expect(validateInterval('1y')).toBeFalsy();
+    expect(validateInterval('1M')).toBeFalsy();
+    expect(validateInterval('1w')).toBeFalsy();
+    expect(validateInterval('1d')).toBeFalsy();
+    expect(validateInterval('2h')).toBeFalsy();
+    expect(validateInterval('4m')).toBeFalsy();
+    expect(validateInterval('8s')).toBeFalsy();
+    expect(validateInterval('80ms')).toBeFalsy();
+    expect(validateInterval('-80ms')).toBeFalsy();
   });
 
   it('should not return error if no value provided', () => {
-    expect(validateInterval('', validateIntervalRegex)).toBeFalsy();
+    expect(validateInterval('')).toBeFalsy();
   });
 });

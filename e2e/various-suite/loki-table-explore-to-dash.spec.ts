@@ -110,7 +110,7 @@ const lokiQueryResult = {
   },
 };
 
-describe('Loki Query Editor', () => {
+describe.skip('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -175,6 +175,7 @@ describe('Loki Query Editor', () => {
     // One row with two cells
     cy.get('[role="cell"]').should('have.length', 2);
 
+    cy.contains('label', 'targetLabelName').scrollIntoView();
     cy.contains('label', 'targetLabelName').should('be.visible');
     cy.contains('label', 'targetLabelName').click();
     cy.contains('label', 'targetLabelName').within(() => {

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
-import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';

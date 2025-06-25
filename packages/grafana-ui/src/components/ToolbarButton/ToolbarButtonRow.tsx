@@ -5,8 +5,9 @@ import { useOverlay } from '@react-aria/overlays';
 import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -87,7 +88,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           <div ref={overflowRef} className={styles.overflowButton}>
             <ToolbarButton
               variant={showOverflowItems ? 'active' : 'default'}
-              tooltip="Show more items"
+              tooltip={t('grafana-ui.toolbar-button-row.show-more', 'Show more items')}
               onClick={() => setShowOverflowItems(!showOverflowItems)}
               icon="ellipsis-v"
               iconOnly

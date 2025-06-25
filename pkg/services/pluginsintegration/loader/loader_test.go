@@ -21,12 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -88,6 +86,10 @@ func TestLoader_Load(t *testing.T) {
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
+							Links: []plugins.InfoLink{
+								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
@@ -106,6 +108,7 @@ func TestLoader_Load(t *testing.T) {
 						Extensions: plugins.Extensions{
 							AddedLinks:        []plugins.AddedLink{},
 							AddedComponents:   []plugins.AddedComponent{},
+							AddedFunctions:    []plugins.AddedFunction{},
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -122,56 +125,6 @@ func TestLoader_Load(t *testing.T) {
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,
-				},
-			},
-		},
-		{
-			name:        "Load a Bundled plugin",
-			class:       plugins.ClassBundled,
-			cfg:         &config.PluginManagementCfg{},
-			pluginPaths: []string{filepath.Join(testDataDir(t), "valid-v2-signature")},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Will Browne",
-								URL:  "https://willbrowne.com",
-							},
-							Version: "1.0.0",
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
-						},
-						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Executable: "test",
-						Backend:    true,
-						State:      "alpha",
-					},
-					Module:        "public/plugins/test-datasource/module.js",
-					BaseURL:       "public/plugins/test-datasource",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-signature/plugin/")),
-					Signature:     "valid",
-					SignatureType: plugins.SignatureTypeGrafana,
-					SignatureOrg:  "Grafana Labs",
-					Class:         plugins.ClassBundled,
 				},
 			},
 		},
@@ -211,8 +164,8 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "3.x.x",
 							Plugins: []plugins.Dependency{
-								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+								{Type: "datasource", ID: "graphite", Name: "Graphite"},
+								{Type: "panel", ID: "graph", Name: "Graph"},
 							},
 							Extensions: plugins.ExtensionsDependencies{
 								ExposedComponents: []string{},
@@ -251,8 +204,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -299,8 +254,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -360,8 +317,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -474,8 +433,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -521,8 +482,6 @@ func TestLoader_Load(t *testing.T) {
 }
 
 func TestLoader_Load_ExternalRegistration(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
@@ -557,16 +516,18 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
-					IAM: &pfs.IAM{
-						Permissions: []pfs.Permission{
+					IAM: &auth.IAM{
+						Permissions: []auth.Permission{
 							{
 								Action: "read",
-								Scope:  stringPtr("datasource"),
+								Scope:  "datasource",
 							},
 						},
 					},
@@ -604,9 +565,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, pluginPaths).Discover,
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{}, false
 			},
@@ -668,14 +627,16 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
 			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:     plugins.ClassBundled,
+			Class:     plugins.ClassExternal,
 			Signature: plugins.SignatureStatusValid,
 			BaseURL:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
 			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
@@ -684,11 +645,9 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassBundled
+				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, pluginPaths).Discover,
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{
 					Status: plugins.SignatureStatusValid,
@@ -749,8 +708,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 								},
 							},
 							Extensions: plugins.Extensions{
-								AddedLinks:        []plugins.AddedLink{},
-								AddedComponents:   []plugins.AddedComponent{},
+								AddedLinks:      []plugins.AddedLink{},
+								AddedComponents: []plugins.AddedComponent{},
+								AddedFunctions:  []plugins.AddedFunction{},
+
 								ExposedComponents: []plugins.ExposedComponent{},
 								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
@@ -788,9 +749,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
 					},
-					PluginURIsFunc: func(ctx context.Context) []string {
-						return tt.pluginPaths
-					},
+					DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, tt.pluginPaths).Discover,
 				})
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
@@ -854,8 +813,10 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -898,9 +859,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return tt.pluginPaths
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, tt.pluginPaths).Discover,
 		})
 		require.NoError(t, err)
 
@@ -936,8 +895,10 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						ExposedComponents: []string{},
 					}},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -963,9 +924,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1009,16 +968,18 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
 						},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1049,9 +1010,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "test-app"), filepath.Join(testDataDir(t), "test-app")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "test-app"), filepath.Join(testDataDir(t), "test-app")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1099,8 +1058,8 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "3.x.x",
 						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
 						},
 						Extensions: plugins.ExtensionsDependencies{
 							ExposedComponents: []string{},
@@ -1113,8 +1072,10 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
 					},
 					Extensions: plugins.Extensions{
-						AddedLinks:        []plugins.AddedLink{},
-						AddedComponents:   []plugins.AddedComponent{},
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
@@ -1148,9 +1109,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{pluginDir1, pluginDir2}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir1, pluginDir2}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1174,11 +1133,6 @@ func TestLoader_AngularClass(t *testing.T) {
 			expAngularDetectionRun: false,
 		},
 		{
-			name:                   "bundled plugin should skip angular detection",
-			class:                  plugins.ClassBundled,
-			expAngularDetectionRun: false,
-		},
-		{
 			name:                   "external plugin should run angular detection",
 			class:                  plugins.ClassExternal,
 			expAngularDetectionRun: true,
@@ -1194,20 +1148,18 @@ func TestLoader_AngularClass(t *testing.T) {
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return tc.class
 				},
-				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-				},
+				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithOpts(t, &config.PluginManagementCfg{AngularSupportEnabled: true}, loaderDepOpts{
+			l := newLoaderWithOpts(t, &config.PluginManagementCfg{}, loaderDepOpts{
 				angularInspector: angularinspector.AlwaysAngularFakeInspector,
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].Angular.Detected, "angular detection should run")
+				require.Empty(t, p, "plugin shouldn't have been loaded")
 			} else {
+				require.Len(t, p, 1, "should load 1 plugin")
 				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
@@ -1219,16 +1171,14 @@ func TestLoader_Load_Angular(t *testing.T) {
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
 			return plugins.ClassExternal
 		},
-		PluginURIsFunc: func(ctx context.Context) []string {
-			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-		},
+		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
 	for _, cfgTc := range []struct {
 		name string
 		cfg  *config.PluginManagementCfg
 	}{
-		{name: "angular support enabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: true}},
-		{name: "angular support disabled", cfg: &config.PluginManagementCfg{AngularSupportEnabled: false}},
+		{name: "angular support enabled", cfg: &config.PluginManagementCfg{}},
+		{name: "angular support disabled", cfg: &config.PluginManagementCfg{}},
 	} {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
@@ -1240,7 +1190,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 					name:             "angular plugin",
 					angularInspector: angularinspector.AlwaysAngularFakeInspector,
 					// angular plugins should load only if allowed by the cfg
-					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
+					shouldLoad: false,
 				},
 				{
 					name:             "non angular plugin",
@@ -1269,27 +1219,21 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
 			return plugins.ClassExternal
 		},
-		PluginURIsFunc: func(ctx context.Context) []string {
-			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
-		},
+		DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "valid-v2-signature")}).Discover,
 	}
 	for _, tc := range []struct {
-		name                      string
-		cfg                       *config.PluginManagementCfg
-		expHideAngularDeprecation bool
+		name string
+		cfg  *config.PluginManagementCfg
 	}{
 		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
-		}, expHideAngularDeprecation: true},
+		}},
 		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
-		}, expHideAngularDeprecation: false},
+		}},
 		{name: "with empty HideAngularDeprecation", cfg: &config.PluginManagementCfg{
-			AngularSupportEnabled:  true,
 			HideAngularDeprecation: nil,
-		}, expHideAngularDeprecation: false},
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
@@ -1297,8 +1241,7 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
-			require.Len(t, p, 1, "should load 1 plugin")
-			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
+			require.Empty(t, p, "plugin shouldn't have been loaded")
 		})
 	}
 }
@@ -1330,8 +1273,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1372,8 +1317,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				},
 			},
 			Extensions: plugins.Extensions{
-				AddedLinks:        []plugins.AddedLink{},
-				AddedComponents:   []plugins.AddedComponent{},
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
 				ExposedComponents: []plugins.ExposedComponent{},
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
@@ -1401,9 +1348,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "nested-plugins")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "nested-plugins")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1424,9 +1369,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
 				},
-				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{filepath.Join(testDataDir(t), "nested-plugins")}
-				},
+				DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "nested-plugins")}).Discover,
 			})
 			require.NoError(t, err)
 
@@ -1521,8 +1464,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -1570,8 +1515,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					},
 				},
 				Extensions: plugins.Extensions{
-					AddedLinks:        []plugins.AddedLink{},
-					AddedComponents:   []plugins.AddedComponent{},
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
 					ExposedComponents: []plugins.ExposedComponent{},
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
@@ -1599,9 +1546,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "app-with-child")}
-			},
+			DiscoverFunc: sources.NewLocalSource(plugins.ClassExternal, []string{filepath.Join(testDataDir(t), "app-with-child")}).Discover,
 		})
 		require.NoError(t, err)
 
@@ -1633,8 +1578,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false), reg),
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
@@ -1665,8 +1609,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
 	}
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
-		finder.NewLocalFinder(false), reg),
+	return ProvideService(cfg, pipeline.ProvideDiscoveryStage(cfg, reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
 		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),

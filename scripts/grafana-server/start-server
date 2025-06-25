@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eo pipefail
 
 . scripts/grafana-server/variables
@@ -46,6 +46,11 @@ if [ -d "./e2e/test-plugins" ]; then
 # when running in CI
 elif [ -d "../e2e/test-plugins" ]; then
   cp -r "../e2e/test-plugins" "$RUNDIR/data/plugins"
+fi
+
+if [ "$INSTALL_IMAGE_RENDERER" ]; then
+  echo -e "Installing image renderer"
+  $RUNDIR/bin/"$ARCH"grafana cli --pluginsDir "$RUNDIR/data/plugins" plugins install grafana-image-renderer
 fi
 
 echo -e "Copy provisioning setup from devenv"

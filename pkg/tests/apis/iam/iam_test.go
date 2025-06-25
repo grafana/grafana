@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var gvrTeams = schema.GroupVersionResource{
@@ -51,7 +52,7 @@ func TestIntegrationIdentity(t *testing.T) {
 		})
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		found := teamClient.SanitizeJSONList(rsp, "name")
+		found := teamClient.SanitizeJSONList(rsp, "name", "labels")
 		require.JSONEq(t, `{
       "items": [
         {
@@ -82,10 +83,13 @@ func TestIntegrationIdentity(t *testing.T) {
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
-			{},
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"email": "admin@localhost",
+				"login": "admin"
+			},
+			{
+				"email": "admin2-1",
+				"login": "admin2-1"
 			},
 			{
 				"email": "editor-1",
@@ -110,16 +114,20 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
-				"email": "admin-3",
-				"login": "admin-3"
+				"email": "admin2-1",
+				"login": "admin2-1"
 			},
 			{
-				"email": "editor-3",
-				"login": "editor-3"
+				"email": "admin2-2",
+				"login": "admin2-2"
 			},
 			{
-				"email": "viewer-3",
-				"login": "viewer-3"
+				"email": "editor-2",
+				"login": "editor-2"
+			},
+			{
+				"email": "viewer-2",
+				"login": "viewer-2"
 			}
 		]`, found)
 	})

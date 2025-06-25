@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -16,20 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	userSvc user.Service, features featuremgmt.FeatureToggles) *AccessControlAPI {
+func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, userSvc user.Service) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		userSvc:       userSvc,
 		AccessControl: accesscontrol,
-		features:      features,
 	}
 }
 
@@ -38,7 +36,6 @@ type AccessControlAPI struct {
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
 	userSvc       user.Service
-	features      featuremgmt.FeatureToggles
 }
 
 func (api *AccessControlAPI) RegisterAPIEndpoints() {
@@ -47,9 +44,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
-		if api.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) {
-			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
-		}
+		rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 

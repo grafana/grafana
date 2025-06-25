@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -54,7 +55,10 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
   };
 
   return (
-    <Field label="Subscriptions" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
+    <Field
+      label={t('components.subscription-field.label-subscriptions', 'Subscriptions')}
+      data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}
+    >
       <>
         <MultiSelect
           isClearable
@@ -64,7 +68,13 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
           options={options}
           width={38}
         />
-        {error ? <FieldValidationMessage>At least one subscription must be chosen.</FieldValidationMessage> : null}
+        {error ? (
+          <FieldValidationMessage>
+            <Trans i18nKey="components.subscription-field.validation-subscriptions">
+              At least one subscription must be chosen.
+            </Trans>
+          </FieldValidationMessage>
+        ) : null}
       </>
     </Field>
   );

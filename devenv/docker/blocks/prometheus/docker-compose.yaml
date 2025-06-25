@@ -6,6 +6,7 @@
       - "host.docker.internal:host-gateway"
     command: >
       --enable-feature=remote-write-receiver
+      --enable-feature=promql-experimental-functions
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
       --web.console.libraries=/usr/share/prometheus/console_libraries
@@ -15,7 +16,7 @@
   node_exporter:
     image: prom/node-exporter
     ports:
-      - "9100:9100"
+      - "9101:9100"
 
   fake-prometheus-data:
     image: grafana/fake-data-gen
@@ -42,3 +43,8 @@
     build: docker/blocks/prometheus_high_card
     ports:
       - "9111:9111"
+
+  prometheus-utf8:
+    build: docker/blocks/prometheus_utf8
+    ports:
+      - "9112:9112"

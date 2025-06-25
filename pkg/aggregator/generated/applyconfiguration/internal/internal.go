@@ -5,8 +5,8 @@
 package internal
 
 import (
-	"fmt"
-	"sync"
+	fmt "fmt"
+	sync "sync"
 
 	typed "sigs.k8s.io/structured-merge-diff/v4/typed"
 )

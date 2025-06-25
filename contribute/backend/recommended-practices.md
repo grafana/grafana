@@ -119,7 +119,7 @@ For example:
 
 Today it's only possible to provision data sources and dashboards, but we want to support it throughout Grafana in the future.
 
-### 109 - Use `context.Context`
+## 109 - Use `context.Context`
 
 **State:** Completed.
 

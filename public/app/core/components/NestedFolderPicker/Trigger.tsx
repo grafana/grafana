@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
-import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
-import { Trans, t } from 'app/core/internationalization';
+import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/internal';
+
+import { FolderPickerSkeleton } from './Skeleton';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading: boolean;
@@ -20,6 +21,7 @@ function Trigger(
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const theme = useTheme2();
+
   const styles = getStyles(theme, invalid);
 
   const handleKeyDown = (event: React.KeyboardEvent<SVGElement>) => {
@@ -27,6 +29,10 @@ function Trigger(
       handleClearSelection?.(event);
     }
   };
+
+  if (isLoading) {
+    return <FolderPickerSkeleton />;
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -43,9 +49,7 @@ function Trigger(
           {...rest}
           ref={ref}
         >
-          {isLoading ? (
-            <Skeleton width={100} />
-          ) : label ? (
+          {label ? (
             <Text truncate>{label}</Text>
           ) : (
             <Text truncate color="secondary">

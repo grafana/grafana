@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/plugin-ui';
 import { ConfirmModal } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';

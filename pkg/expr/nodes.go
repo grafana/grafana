@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
@@ -103,13 +104,19 @@ func (gn *CMDNode) NeedsVars() []string {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, now, vars, s.tracer)
+	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, error) {
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
+	}
+
+	if commandType == TypeSQL {
+		if !toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
+			return nil, fmt.Errorf("sql expressions are disabled")
+		}
 	}
 
 	node := &CMDNode{
@@ -155,9 +162,9 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
-		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn)
+		node.Command, err = UnmarshalSQLCommand(rn, cfg)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -185,6 +192,8 @@ type DSNode struct {
 	intervalMS int64
 	maxDP      int64
 	request    Request
+
+	isInputToSQLExpr bool
 }
 
 func (dn *DSNode) String() string {
@@ -312,7 +321,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
-				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
 			resp, err := s.dataService.QueryData(ctx, req)
@@ -333,7 +342,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
@@ -387,7 +396,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
-		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
 	resp, err := s.dataService.QueryData(ctx, req)
@@ -401,7 +410,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+
+	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, dn.isInputToSQLExpr)
+
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}

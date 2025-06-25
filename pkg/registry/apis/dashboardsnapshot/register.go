@@ -18,7 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -34,8 +34,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ builder.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
-var _ builder.OpenAPIPostProcessor = (*SnapshotsAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder       = (*SnapshotsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor  = (*SnapshotsAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider = (*SnapshotsAPIBuilder)(nil)
+)
 
 var resourceInfo = dashboardsnapshot.DashboardSnapshotResourceInfo
 
@@ -117,6 +120,10 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *SnapshotsAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (b *SnapshotsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
@@ -146,12 +153,12 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 }
 
 // Register additional routes with the server
-func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *SnapshotsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	prefix := dashboardsnapshot.DashboardSnapshotResourceInfo.GroupResource().Resource
 	defs := dashboardsnapshot.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	createCmd := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateCommand"].Schema
+	createCmd := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.DashboardCreateCommand"].Schema
 	createExample := `{"dashboard":{"annotations":{"list":[{"name":"Annotations & Alerts","enable":true,"iconColor":"rgba(0, 211, 255, 1)","snapshotData":[],"type":"dashboard","builtIn":1,"hide":true}]},"editable":true,"fiscalYearStartMonth":0,"graphTooltip":0,"id":203,"links":[],"liveNow":false,"panels":[{"datasource":null,"fieldConfig":{"defaults":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"overrides":[]},"gridPos":{"h":8,"w":12,"x":0,"y":0},"id":1,"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"pluginVersion":"10.4.0-pre","snapshotData":[{"fields":[{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"showPoints":"auto","thresholdsStyle":{"mode":"off"}},"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"time","type":"time","values":[1706030536378,1706034856378,1706039176378,1706043496378,1706047816378,1706052136378]},{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"A-series","type":"number","values":[1,20,90,30,50,0]}],"refId":"A"}],"targets":[],"title":"Simple example","type":"timeseries","links":[]}],"refresh":"","schemaVersion":39,"snapshot":{"timestamp":"2024-01-23T23:22:16.377Z"},"tags":[],"templating":{"list":[]},"time":{"from":"2024-01-23T17:22:20.380Z","to":"2024-01-23T23:22:20.380Z","raw":{"from":"now-6h","to":"now"}},"timepicker":{},"timezone":"","title":"simple and small","uid":"b22ec8db-399b-403b-b6c7-b0fb30ccb2a5","version":1,"weekStart":""},"name":"simple and small","expires":86400}`
-	createRsp := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateResponse"].Schema
+	createRsp := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.DashboardCreateResponse"].Schema
 
 	tags := []string{dashboardsnapshot.DashboardSnapshotResourceInfo.GroupVersionKind().Kind}
 	routes := &builder.APIRoutes{
@@ -347,13 +354,5 @@ func (b *SnapshotsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		sub.Get.Description = "Read the full dashboard body"
 	}
 
-	// Hide the invalid endpoint to list all snapshots for all orgs
-	delete(oas.Paths.Paths, "/apis/dashboardsnapshot.grafana.app/v0alpha1/dashboardsnapshots")
-
-	// The root API discovery list
-	sub = oas.Paths.Paths["/apis/dashboardsnapshot.grafana.app/v0alpha1/"]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

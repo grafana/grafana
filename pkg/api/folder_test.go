@@ -8,17 +8,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	conversions "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -27,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -38,8 +35,6 @@ import (
 
 func TestFoldersCreateAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{}
-	setUpRBACGuardian(t)
-
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 
 	type testCase struct {
@@ -156,7 +151,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 
 func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{}
-	setUpRBACGuardian(t)
 
 	type testCase struct {
 		description            string
@@ -260,7 +254,6 @@ func testDescription(description string, expectedErr error) string {
 }
 
 func TestHTTPServer_FolderMetadata(t *testing.T) {
-	setUpRBACGuardian(t)
 	folderService := &foldertest.FakeService{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -355,7 +348,6 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{},
 	}
-	setUpRBACGuardian(t)
 
 	type testCase struct {
 		description  string
@@ -437,7 +429,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		expectedParentOrgIDs []int64
 		expectedParentTitles []string
 		permissions          []accesscontrol.Permission
-		g                    *guardian.FakeDashboardGuardian
 	}
 	tcs := []testCase{
 		{
@@ -450,8 +441,9 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentTitles: []string{"parent title", "subfolder title"},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("subfolder")},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 		{
 			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
@@ -464,7 +456,19 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: false},
+		},
+		{
+			description:          "get folder by UID should return some parent folder titles and some parent folders as redacted if nested folder are enabled and user only has read access to some parent folders",
+			URL:                  "/api/folders/uid",
+			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParentUIDs:   []string{REDACTED, "subfolder"},
+			expectedParentOrgIDs: []int64{0, 0},
+			expectedParentTitles: []string{REDACTED, "subfolder title"},
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("subfolder")},
+			},
 		},
 		{
 			description:          "get folder by UID should not return parent folders if nested folder are disabled",
@@ -475,9 +479,8 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{},
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 	}
 
@@ -489,13 +492,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run(tc.description, func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-
-			guardian.MockDashboardGuardian(tc.g)
-
 			req := srv.NewGetRequest(tc.URL)
 			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
 			resp, err := srv.Send(req)
@@ -531,25 +527,11 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
 
-func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
+// for now, test only the general folder
+func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 	testuser := &user.User{ID: 99, UID: "fdxsqt7t5ryf4a", Login: "testuser"}
 
-	legacyFolder := folder.Folder{
-		UID:          "ady4yobv315a8e",
-		Title:        "Example folder 226",
-		URL:          "/dashboards/f/ady4yobv315a8e/example-folder-226",
-		CreatedBy:    99,
-		CreatedByUID: "fdxsqt7t5ryf4a",
-		Created:      time.Date(2024, time.November, 29, 0, 42, 34, 0, time.UTC),
-		UpdatedBy:    99,
-		UpdatedByUID: "fdxsqt7t5ryf4a",
-		Updated:      time.Date(2024, time.November, 29, 0, 42, 34, 0, time.UTC),
-		Version:      3,
-	}
-
-	namespacer := func(_ int64) string { return "1" }
-	unifiedStorageFolder, err := conversions.LegacyFolderToUnstructured(&legacyFolder, namespacer)
-	require.NoError(t, err)
+	legacyFolder := *folder.RootFolder
 
 	expectedFolder := dtos.Folder{
 		UID:       legacyFolder.UID,
@@ -557,23 +539,15 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 		Title:     legacyFolder.Title,
 		URL:       legacyFolder.URL,
 		HasACL:    false,
-		CanSave:   false,
+		CanSave:   true,
 		CanEdit:   true,
 		CanAdmin:  false,
 		CanDelete: false,
-		CreatedBy: "testuser",
-		Created:   legacyFolder.Created,
-		UpdatedBy: "testuser",
-		Updated:   legacyFolder.Updated,
-		Version:   legacyFolder.Version,
+		CreatedBy: "Anonymous",
+		UpdatedBy: "Anonymous",
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
-		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
-		require.NoError(t, err)
-	})
-
 	folderApiServerMock := httptest.NewServer(mux)
 	defer folderApiServerMock.Close()
 
@@ -591,7 +565,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 		tcs := []testCase{
 			{
-				description:           "Happy Path - Legacy",
+				description:           "General folder - Legacy",
 				expectedCode:          http.StatusOK,
 				legacyFolder:          legacyFolder,
 				folderUID:             legacyFolder.UID,
@@ -599,7 +573,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 				unifiedStorageEnabled: false,
 			},
 			{
-				description:           "Happy Path - Unified storage, mode 1",
+				description:           "General folder - Unified storage, mode 1",
 				expectedCode:          http.StatusOK,
 				legacyFolder:          legacyFolder,
 				folderUID:             legacyFolder.UID,
@@ -608,7 +582,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 				unifiedStorageMode:    grafanarest.Mode1,
 			},
 			{
-				description:           "Happy Path - Unified storage, mode 2",
+				description:           "General folder - Unified storage, mode 2",
 				expectedCode:          http.StatusOK,
 				legacyFolder:          legacyFolder,
 				folderUID:             legacyFolder.UID,
@@ -617,7 +591,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 				unifiedStorageMode:    grafanarest.Mode2,
 			},
 			{
-				description:           "Happy Path - Unified storage, mode 3",
+				description:           "General folder - Unified storage, mode 3",
 				expectedCode:          http.StatusOK,
 				legacyFolder:          legacyFolder,
 				folderUID:             legacyFolder.UID,
@@ -626,55 +600,10 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 				unifiedStorageMode:    grafanarest.Mode3,
 			},
 			{
-				description:           "Happy Path - Unified storage, mode 4",
+				description:           "General folder - Unified storage, mode 4",
 				expectedCode:          http.StatusOK,
 				legacyFolder:          legacyFolder,
 				folderUID:             legacyFolder.UID,
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode4,
-			},
-			{
-				description:                "Folder Not Found - Legacy",
-				expectedCode:               http.StatusNotFound,
-				legacyFolder:               legacyFolder,
-				folderUID:                  "notfound",
-				expectedFolder:             expectedFolder,
-				unifiedStorageEnabled:      false,
-				expectedFolderServiceError: dashboards.ErrFolderNotFound,
-			},
-			{
-				description:           "Folder Not Found - Unified storage, mode 1",
-				expectedCode:          http.StatusNotFound,
-				legacyFolder:          legacyFolder,
-				folderUID:             "notfound",
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode1,
-			},
-			{
-				description:           "Folder Not Found - Unified storage, mode 2",
-				expectedCode:          http.StatusNotFound,
-				legacyFolder:          legacyFolder,
-				folderUID:             "notfound",
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode2,
-			},
-			{
-				description:           "Folder Not Found - Unified storage, mode 3",
-				expectedCode:          http.StatusNotFound,
-				legacyFolder:          legacyFolder,
-				folderUID:             "notfound",
-				expectedFolder:        expectedFolder,
-				unifiedStorageEnabled: true,
-				unifiedStorageMode:    grafanarest.Mode3,
-			},
-			{
-				description:           "Folder Not Found - Unified storage, mode 4",
-				expectedCode:          http.StatusNotFound,
-				legacyFolder:          legacyFolder,
-				folderUID:             "notfound",
 				expectedFolder:        expectedFolder,
 				unifiedStorageEnabled: true,
 				unifiedStorageMode:    grafanarest.Mode4,
@@ -683,18 +612,16 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.description, func(t *testing.T) {
-				setUpRBACGuardian(t)
-
 				cfg := setting.NewCfg()
 				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: tc.unifiedStorageMode,
 					},
 				}
 
 				featuresArr := []any{featuremgmt.FlagNestedFolders}
 				if tc.unifiedStorageEnabled {
-					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesFolders)
+					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesClientDashboardsFolders)
 				}
 
 				server := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -718,12 +645,12 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 					}
 				})
 
-				req := server.NewRequest(http.MethodPut, fmt.Sprintf("/api/folders/%s", tc.folderUID), strings.NewReader(`{"title":"new title"}`))
+				req := server.NewRequest(http.MethodGet, fmt.Sprintf("/api/folders/%s", tc.folderUID), nil)
 				req.Header.Set("Content-Type", "application/json")
 				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+						{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
 					}),
 				}})
 
@@ -746,4 +673,94 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
+	folderService := &foldertest.FakeService{}
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+
+	type testCase struct {
+		description                   string
+		expectedCallsToSetPermissions int
+		expectedCode                  int
+		expectedFolder                *folder.Folder
+		permissions                   []accesscontrol.Permission
+		featuresArr                   []any
+		input                         string
+	}
+
+	tcs := []testCase{
+		{
+			description:                   "folder creation succeeds, via legacy storage",
+			expectedCallsToSetPermissions: 1,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+		},
+		{
+			description:                   "folder creation succeeds, via API Server",
+			expectedCallsToSetPermissions: 0,
+			input:                         folderWithoutParentInput,
+			expectedCode:                  http.StatusOK,
+			expectedFolder:                &folder.Folder{UID: "uid", Title: "Folder"},
+			permissions:                   []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
+			featuresArr:                   []any{featuremgmt.FlagKubernetesClientDashboardsFolders},
+		},
+	}
+
+	// we need to save these values because they are defined at `setting` package level
+	// and modified when we invoke setting.NewCfgFromINIFile
+	prevCookieSameSiteDisabled := setting.CookieSameSiteDisabled
+	prevCookieSameSiteMode := setting.CookieSameSiteMode
+
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("folder")
+	tmpCfg, err := setting.NewCfgFromINIFile(cfg.Raw)
+	require.NoError(t, err)
+	cfg.RBAC = tmpCfg.RBAC
+
+	// restore previous values so other tests don't break
+	// ex: TestHTTPServer_RotateUserAuthToken
+	setting.CookieSameSiteDisabled = prevCookieSameSiteDisabled
+	setting.CookieSameSiteMode = prevCookieSameSiteMode
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			folderService.ExpectedFolder = tc.expectedFolder
+			folderPermService := acmock.NewMockedPermissionsService()
+			folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+
+				featuresArr := append(tc.featuresArr, featuremgmt.FlagNestedFolders)
+				hs.Features = featuremgmt.WithFeatures(
+					featuresArr...,
+				)
+				hs.folderService = folderService
+				hs.folderPermissionsService = folderPermService
+				hs.accesscontrolService = actest.FakeService{}
+			})
+
+			input := strings.NewReader(tc.input)
+			req := srv.NewPostRequest("/api/folders", input)
+			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			folderPermService.AssertNumberOfCalls(t, "SetPermissions", tc.expectedCallsToSetPermissions)
+
+			if tc.expectedCode == http.StatusOK {
+				assert.Equal(t, "uid", folder.UID)
+				assert.Equal(t, "Folder", folder.Title)
+			}
+		})
+	}
 }

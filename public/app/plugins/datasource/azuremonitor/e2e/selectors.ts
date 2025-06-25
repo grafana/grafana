@@ -76,6 +76,9 @@ export const components = {
       formatSelection: {
         input: 'data-testid format-selection',
       },
+      runQuery: {
+        button: 'data-testid run-query',
+      },
     },
     argsQueryEditor: {
       container: {
@@ -112,6 +115,9 @@ export const components = {
     },
     region: {
       input: 'data-testid region',
+    },
+    customNamespace: {
+      input: 'data-testid custom-namespace',
     },
   },
 };

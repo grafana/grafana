@@ -31,7 +31,6 @@ import {
   setBackendSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
@@ -269,7 +268,7 @@ describe('LokiDatasource', () => {
         },
       ];
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
-        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
+        `rate({bar="baz", job="foo", k1=~"v.*", k2=~"v'.*"} |= "bar" [5m])`
       );
     });
 
@@ -325,8 +324,15 @@ describe('LokiDatasource', () => {
       variable = {} as unknown as CustomVariableModel;
     });
 
-    it('should only escape single quotes', () => {
-      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+    it('should not escape', () => {
+      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc'$^*{}[]+?.()|");
+    });
+
+    it('should not escape single quotes in line filters', () => {
+      expect(ds.interpolateQueryExpr("|= `abc'$^*{}[]+?.()|`", variable)).toEqual("|= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("|~ `abc'$^*{}[]+?.()|`", variable)).toEqual("|~ `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!= `abc'$^*{}[]+?.()|`", variable)).toEqual("!= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!~ `abc'$^*{}[]+?.()|`", variable)).toEqual("!~ `abc'$^*{}[]+?.()|`");
     });
 
     it('should return a number', () => {
@@ -1407,6 +1413,15 @@ describe('LokiDatasource', () => {
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
+    it('does not create provider for hidden logs query', () => {
+      const options: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range, hide: true }],
+      };
+
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+    });
+
     it('does not create provider for metrics query', () => {
       const options: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
@@ -1519,7 +1534,21 @@ describe('LokiDatasource', () => {
         });
       });
 
-      it('does return logs volume query for instant log query', () => {
+      it('does not return logs volume query for hidden log query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label="value"}',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
+      });
+
+      it('returns logs volume query for instant log query', () => {
         // we changed logic to automatically run logs queries as range queries, thus there's a volume query now
         expect(
           ds.getSupplementaryQuery(
@@ -1596,6 +1625,20 @@ describe('LokiDatasource', () => {
           maxLines: 20,
           supportingQueryType: SupportingQueryType.LogsSample,
         });
+      });
+
+      it('does not return logs sample query for hidden query', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsSample },
+            {
+              expr: 'rate({label="value"}[5m]',
+              queryType: LokiQueryType.Range,
+              refId: 'A',
+              hide: true,
+            }
+          )
+        ).toEqual(undefined);
       });
 
       it('returns logs sample query for instant metric query', () => {
@@ -1762,46 +1805,6 @@ describe('LokiDatasource', () => {
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('query', () => {
-    let featureToggleVal = config.featureToggles.lokiSendDashboardPanelNames;
-    beforeEach(() => {
-      setDashboardSrv({
-        getCurrent: () => ({
-          title: 'dashboard_title',
-          panels: [{ title: 'panel_title', id: 0 }],
-        }),
-      } as unknown as DashboardSrv);
-      const fetchMock = jest.fn().mockReturnValue(of({ data: testLogsResponse }));
-      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
-      config.featureToggles.lokiSendDashboardPanelNames = true;
-    });
-    afterEach(() => {
-      config.featureToggles.lokiSendDashboardPanelNames = featureToggleVal;
-    });
-
-    it('adds dashboard headers', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      jest.spyOn(ds, 'runQuery');
-      const query: DataQueryRequest<LokiQuery> = {
-        ...baseRequestOptions,
-        panelId: 0,
-        targets: [{ expr: '{a="b"}', refId: 'A' }],
-        app: CoreApp.Dashboard,
-      };
-
-      await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(ds.runQuery).toHaveBeenCalledWith(
-          expect.objectContaining({
-            headers: expect.objectContaining({
-              'X-Dashboard-Title': 'dashboard_title',
-              'X-Panel-Title': 'panel_title',
-            }),
-          })
-        );
       });
     });
   });

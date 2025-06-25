@@ -67,13 +67,14 @@ type stateFn func(*lexer) stateFn
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	input   string    // the string being scanned
-	state   stateFn   // the next lexing function to enter
-	pos     Pos       // current position in the input
-	start   Pos       // start position of this item
-	width   Pos       // width of last rune read from input
-	lastPos Pos       // position of most recent item returned by nextItem
-	items   chan item // channel of scanned items
+	input   string        // the string being scanned
+	state   stateFn       // the next lexing function to enter
+	pos     Pos           // current position in the input
+	start   Pos           // start position of this item
+	width   Pos           // width of last rune read from input
+	lastPos Pos           // position of most recent item returned by nextItem
+	items   chan item     // channel of scanned items
+	done    chan struct{} // channel to signal lexer shutdown
 }
 
 // next returns the next rune in the input.
@@ -103,7 +104,11 @@ func (l *lexer) backup() {
 
 // emit passes an item back to the client.
 func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.start, l.input[l.start:l.pos]}
+	select {
+	case l.items <- item{t, l.start, l.input[l.start:l.pos]}:
+	case <-l.done:
+		return
+	}
 	l.start = l.pos
 }
 
@@ -139,7 +144,11 @@ func (l *lexer) lineNumber() int {
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...any) stateFn {
-	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
+	select {
+	case l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}:
+	case <-l.done:
+		return nil
+	}
 	return nil
 }
 
@@ -155,15 +164,32 @@ func lex(input string) *lexer {
 	l := &lexer{
 		input: input,
 		items: make(chan item),
+		done:  make(chan struct{}),
 	}
 	go l.run()
 	return l
 }
 
+// Close terminates the lexer goroutine.
+func (l *lexer) Close() {
+	select {
+	case <-l.done:
+		// already closed
+	default:
+		close(l.done)
+	}
+}
+
 // run runs the state machine for the lexer.
 func (l *lexer) run() {
+	defer close(l.items)
 	for l.state = lexItem; l.state != nil; {
-		l.state = l.state(l)
+		select {
+		case <-l.done:
+			return
+		default:
+			l.state = l.state(l)
+		}
 	}
 }
 

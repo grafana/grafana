@@ -51,43 +51,20 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
           "annotations": {},
           "for": "1m",
           "grafana_alert": {
-            "condition": "B",
+            "condition": "C",
             "data": [
               {
-                "datasourceUid": "__expr__",
+                "datasourceUid": "prometheus",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "A",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
+                  "instant": true,
                   "refId": "A",
-                  "type": "reduce",
                 },
                 "queryType": "",
                 "refId": "A",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0,
+                },
               },
               {
                 "datasourceUid": "__expr__",
@@ -95,9 +72,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [
-                          0,
-                        ],
+                        "params": [],
                         "type": "gt",
                       },
                       "operator": {
@@ -120,21 +95,759 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                     "uid": "__expr__",
                   },
                   "expression": "A",
+                  "reducer": "last",
                   "refId": "B",
-                  "type": "threshold",
+                  "type": "reduce",
                 },
                 "queryType": "",
                 "refId": "B",
               },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "C",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "B",
+                  "refId": "C",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "C",
+              },
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "notification_settings": {
               "receiver": "lotsa-emails",
             },
             "title": "my great new rule",
           },
+          "keep_firing_for": "0s",
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Can create a new grafana managed alert using simplified routing switch modes enabled can create the new grafana-managed rule with advanced modes 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {},
+          "for": "1m",
+          "grafana_alert": {
+            "condition": "C",
+            "data": [
+              {
+                "datasourceUid": "prometheus",
+                "model": {
+                  "instant": true,
+                  "refId": "A",
+                },
+                "queryType": "",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0,
+                },
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "B",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "reducer": "last",
+                  "refId": "B",
+                  "type": "reduce",
+                },
+                "queryType": "",
+                "refId": "B",
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "C",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "B",
+                  "refId": "C",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "C",
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": false,
+                "simplified_query_and_expressions_section": false,
+              },
+            },
+            "missing_series_evals_to_resolve": 0,
+            "no_data_state": "NoData",
+            "title": "my great new rule",
+          },
+          "keep_firing_for": "0s",
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Can create a new grafana managed alert using simplified routing switch modes enabled can create the new grafana-managed rule with default modes 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {},
+          "for": "1m",
+          "grafana_alert": {
+            "condition": "C",
+            "data": [
+              {
+                "datasourceUid": "prometheus",
+                "model": {
+                  "instant": true,
+                  "refId": "A",
+                },
+                "queryType": "",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0,
+                },
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "B",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "reducer": "last",
+                  "refId": "B",
+                  "type": "reduce",
+                },
+                "queryType": "",
+                "refId": "B",
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "C",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "B",
+                  "refId": "C",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "C",
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": true,
+                "simplified_query_and_expressions_section": true,
+              },
+            },
+            "missing_series_evals_to_resolve": 0,
+            "no_data_state": "NoData",
+            "notification_settings": {
+              "receiver": "lotsa-emails",
+            },
+            "title": "my great new rule",
+          },
+          "keep_firing_for": "0s",
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Can create a new grafana managed alert using simplified routing switch modes enabled can create the new grafana-managed rule with only notifications step advanced mode 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {},
+          "for": "1m",
+          "grafana_alert": {
+            "condition": "C",
+            "data": [
+              {
+                "datasourceUid": "prometheus",
+                "model": {
+                  "instant": true,
+                  "refId": "A",
+                },
+                "queryType": "",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0,
+                },
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "B",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "reducer": "last",
+                  "refId": "B",
+                  "type": "reduce",
+                },
+                "queryType": "",
+                "refId": "B",
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "C",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "B",
+                  "refId": "C",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "C",
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": false,
+                "simplified_query_and_expressions_section": true,
+              },
+            },
+            "missing_series_evals_to_resolve": 0,
+            "no_data_state": "NoData",
+            "title": "my great new rule",
+          },
+          "keep_firing_for": "0s",
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Can create a new grafana managed alert using simplified routing switch modes enabled can create the new grafana-managed rule with only query step advanced mode 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {},
+          "for": "1m",
+          "grafana_alert": {
+            "condition": "C",
+            "data": [
+              {
+                "datasourceUid": "prometheus",
+                "model": {
+                  "instant": true,
+                  "refId": "A",
+                },
+                "queryType": "",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 600,
+                  "to": 0,
+                },
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "B",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "reducer": "last",
+                  "refId": "B",
+                  "type": "reduce",
+                },
+                "queryType": "",
+                "refId": "B",
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "C",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "B",
+                  "refId": "C",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "C",
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": true,
+                "simplified_query_and_expressions_section": false,
+              },
+            },
+            "missing_series_evals_to_resolve": 0,
+            "no_data_state": "NoData",
+            "notification_settings": {
+              "receiver": "lotsa-emails",
+            },
+            "title": "my great new rule",
+          },
+          "keep_firing_for": "0s",
           "labels": {},
         },
       ],

@@ -67,7 +67,7 @@ describe.skip('Prometheus query editor', () => {
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
     cy.get(`[data-test-id="prometheus-step"]`).scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`[data-test-id="prometheus-exemplars"]`).scrollIntoView().should('exist');
+    cy.get(`[data-testid="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
   describe('Code editor', () => {
@@ -159,19 +159,6 @@ describe.skip('Prometheus query editor', () => {
 
       e2e.components.DataSource.Prometheus.queryEditor.builder.metricsExplorer().should('exist');
     });
-
-    // NEED TO COMPLETE QUEY ADVISOR WORK OR FIGURE OUT HOW TO ENABLE EXPERIMENTAL FEATURE TOGGLES
-    // it('should have a query advisor when enabled with feature toggle', () => {
-    //   cy.window().then((win) => {
-    //     win.localStorage.setItem('grafana.featureToggles', 'prometheusPromQAIL=0');
-
-    //     navigateToEditor('Builder', 'prometheusBuilder');
-
-    //     getResources();
-
-    //     e2e.components.DataSource.Prometheus.queryEditor.builder.queryAdvisor().should('exist');
-    //   });
-    // });
   });
 });
 

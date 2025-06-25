@@ -32,7 +32,7 @@ You can enable debug log messages for rendering in the Grafana configuration fil
 filters = rendering:debug
 ```
 
-You can also enable more logs in image renderer service itself by enabling [debug logging]({{< relref "#enable-debug-logging" >}}).
+You can also enable more logs in image renderer service itself by enabling [debug logging](#enable-debug-logging).
 
 ## Missing libraries
 
@@ -155,10 +155,10 @@ As a last resort, if you already have [Chrome](https://www.google.com/chrome/) o
 installed on your system, then you can configure the Grafana Image renderer plugin to use this
 instead of the pre-packaged version of Chromium.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
 compatible with the [Grafana Image renderer plugin](/grafana/plugins/grafana-image-renderer).
-{{% /admonition %}}
+{{< /admonition >}}
 
 To override the path to the Chrome/Chromium executable in plugin mode, set an environment variable and make sure that it's available for the Grafana process. For example:
 

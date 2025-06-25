@@ -15,12 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -111,7 +109,10 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPut,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
 		},
 		{
 			desc:         "should not be able to update dashboard annotation without correct permission",
@@ -163,7 +164,10 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPatch,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
 		},
 		{
 			desc:         "should not be able to patch dashboard annotation without correct permission",
@@ -216,7 +220,10 @@ func TestAPI_Annotations(t *testing.T) {
 			method:       http.MethodPost,
 			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
 		},
 		{
 			desc:         "should not be able to create dashboard annotation without correct permission",
@@ -274,7 +281,10 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodDelete,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
 		},
 		{
 			desc:         "should not be able to delete dashboard annotation without correct permission",
@@ -342,7 +352,10 @@ func TestAPI_Annotations(t *testing.T) {
 			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
 			method:       http.MethodPost,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
 		},
 		{
 			desc:         "should not be able to mass delete dashboard annotations without correct permission",
@@ -383,29 +396,24 @@ func TestAPI_Annotations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			// Don't need access to dashboards if annotationPermissionUpdate is enabled
-			if len(tt.featureFlags) == 0 {
-				setUpRBACGuardian(t)
-			}
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0})
-				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0, DashboardUID: ""})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"})
 				hs.annotationsRepo = repo
 				hs.Features = featuremgmt.WithFeatures(tt.featureFlags...)
 				dashService := &dashboards.FakeDashboardService{}
 				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil)
 				folderService := &foldertest.FakeService{}
-				fStore := folder.NewFakeStore()
 				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1}
 				folderDB := &foldertest.FakeFolderStore{}
 				folderDB.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{UID: folderUID, ID: 1}, nil)
 				hs.DashboardService = dashService
 				hs.folderService = folderService
-				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, fStore))
-				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderDB, dashService, fStore))
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, folderService))
+				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashService, folderService))
 			})
 			var body io.Reader
 			if tt.body != "" {
@@ -428,11 +436,11 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	dashSvc := &dashboards.FakeDashboardService{}
 	rootDash := &dashboards.Dashboard{ID: 1, OrgID: 1, UID: rootDashUID}
 	folderDash := &dashboards.Dashboard{ID: 2, OrgID: 1, UID: folderDashUID, FolderUID: folderUID}
-	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: rootDash.ID, OrgID: 1}).Return(rootDash, nil)
-	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: folderDash.ID, OrgID: 1}).Return(folderDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: rootDash.UID, OrgID: 1}).Return(rootDash, nil)
+	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: folderDash.UID, OrgID: 1}).Return(folderDash, nil)
 
-	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID}
-	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID}
+	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID, DashboardUID: rootDash.UID}
+	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID, DashboardUID: folderDash.UID}
 	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
@@ -505,7 +513,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.featureToggles...)
-			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, folder.NewFakeStore())
+			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, &foldertest.FakeService{})
 			require.Equal(t, "annotations:id:", prefix)
 
 			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)
@@ -519,13 +527,4 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setUpRBACGuardian(t *testing.T) {
-	origNewGuardian := guardian.New
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
 }

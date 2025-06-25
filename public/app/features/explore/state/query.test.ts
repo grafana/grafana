@@ -28,7 +28,6 @@ import { makeLogs } from '../__mocks__/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { saveCorrelationsAction } from './explorePane';
-import { createDefaultInitialState } from './helpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -50,6 +49,7 @@ import {
   changeQueries,
 } from './query';
 import * as actions from './query';
+import { createDefaultInitialState } from './testHelpers';
 import { makeExplorePaneState } from './utils';
 
 jest.mock('app/features/logs/logsModel');
@@ -232,7 +232,7 @@ describe('runQueries', () => {
   });
 
   /* the next two tests are for ensuring the query datasource's filterQuery function stops queries
-    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0]) 
+    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0])
     to filter queries off their key value
 
     datasources[1] does not have filterQuery defined
@@ -323,7 +323,7 @@ describe('running queries', () => {
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
   });
-  it('should cancel running query when a new query is issued', async () => {
+  it('should cancel running queries when a new query is issued', async () => {
     const initialState = {
       ...makeExplorePaneState(),
     };
@@ -332,6 +332,23 @@ describe('running queries', () => {
       .whenThunkIsDispatched({ exploreId });
 
     expect(dispatchedActions).toContainEqual(cancelQueriesAction({ exploreId }));
+  });
+  it('should not cancel running queries when scanning', async () => {
+    const initialState = {
+      ...makeExplorePaneState(),
+      explore: {
+        panes: {
+          [exploreId]: {
+            scanning: true,
+          },
+        },
+      },
+    };
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(runQueries)
+      .whenThunkIsDispatched({ exploreId });
+
+    expect(dispatchedActions).not.toContainEqual(cancelQueriesAction({ exploreId }));
   });
 });
 

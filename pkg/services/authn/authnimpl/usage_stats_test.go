@@ -23,7 +23,7 @@ func TestService_getUsageStats(t *testing.T) {
 	svc.cfg.AuthProxy.Enabled = true
 	svc.cfg.JWTAuth.Enabled = true
 	svc.cfg.LDAPAuthEnabled = true
-	svc.cfg.EditorsCanAdmin = true
+	//nolint:staticcheck
 	svc.cfg.ViewersCanEdit = true
 
 	got, err := svc.getUsageStats(context.Background())
@@ -35,7 +35,6 @@ func TestService_getUsageStats(t *testing.T) {
 		"stats.auth_enabled.jwt.count":              1,
 		"stats.auth_enabled.ldap.count":             1,
 		"stats.auth_enabled.login_form.count":       1,
-		"stats.authz.editors_can_admin.count":       1,
 		"stats.authz.viewers_can_edit.count":        1,
 		"stats.test.enabled.count":                  1,
 	}

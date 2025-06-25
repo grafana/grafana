@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
+import { LoadingBar, LoadingBarProps } from './LoadingBar';
 import mdx from './LoadingBar.mdx';
 
 const meta: Meta<typeof LoadingBar> = {

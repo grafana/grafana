@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx
 import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
-import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
 import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
@@ -13,8 +12,8 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { DataProvider } from './monaco-completion-provider/data_provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/monaco-completion-provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 import { language, languageConfiguration } from './promql';
 
@@ -88,6 +87,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       justifyContent: 'start',
       alignItems: 'center',
       height: '100%',
+      overflow: 'hidden',
     }),
     placeholder: css({
       '::after': {
@@ -105,13 +105,12 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange, datasource } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, datasource, timeRange } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
-  const onChangeRef = useLatest(onChange);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
 
@@ -133,6 +132,8 @@ const MonacoQueryField = (props: Props) => {
       ref={containerRef}
     >
       <ReactMonacoEditor
+        // see https://github.com/suren-atoyan/monaco-react/issues/365
+        saveViewState
         overrideServices={overrideServicesRef.current}
         options={options}
         language="promql"
@@ -154,7 +155,7 @@ const MonacoQueryField = (props: Props) => {
             historyProvider: historyRef.current,
             languageProvider: lpRef.current,
           });
-          const completionProvider = getCompletionProvider(monaco, dataProvider);
+          const completionProvider = getCompletionProvider(monaco, dataProvider, timeRange);
 
           // completion-providers in monaco are not registered directly to editor-instances,
           // they are registered to languages. this makes it hard for us to have
@@ -200,23 +201,6 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
 
-          // Whenever the editor changes, lets save the last value so the next query for this editor will be up-to-date.
-          // This change is being introduced to fix a bug where you can submit a query via shift+enter:
-          // If you clicked into another field and haven't un-blurred the active field,
-          // then the query that is run will be stale, as the reference is only updated
-          // with the value of the last blurred input.
-          // This can run quite slowly, so we're debouncing this which should accomplish two things
-          // 1. Should prevent this function from blocking the current call stack by pushing into the web API callback queue
-          // 2. Should prevent a bunch of duplicates of this function being called as the user is typing
-          const updateCurrentEditorValue = debounce(() => {
-            const editorValue = editor.getValue();
-            onChangeRef.current(editorValue);
-          }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
-
-          editor.getModel()?.onDidChangeContent(() => {
-            updateCurrentEditorValue();
-          });
-
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(
@@ -234,9 +218,8 @@ const MonacoQueryField = (props: Props) => {
             command: null,
           });
 
-          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
-                    command palette uses. Pass the event out of monaco manually
-                    */
+          // Something in this configuration of monaco doesn't bubble up [mod]+K,
+          // which the command palette uses. Pass the event out of monaco manually
           editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
             global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           });

@@ -9,8 +9,9 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -32,8 +33,14 @@ export const RegressionTransformerEditor = ({
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
   const modelTypeOptions = [
-    { label: 'Linear', value: ModelType.linear },
-    { label: 'Polynomial', value: ModelType.polynomial },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear'),
+      value: ModelType.linear,
+    },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial'),
+      value: ModelType.polynomial,
+    },
   ];
 
   useEffect(() => {
@@ -74,7 +81,10 @@ export const RegressionTransformerEditor = ({
 
   return (
     <>
-      <InlineField labelWidth={LABEL_WIDTH} label="X field">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.regression-transformer-editor.label-x-field', 'X field')}
+      >
         <FieldNamePicker
           context={{ data: input }}
           value={options.xFieldName ?? ''}
@@ -84,7 +94,10 @@ export const RegressionTransformerEditor = ({
           }}
         ></FieldNamePicker>
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="Y field">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.regression-transformer-editor.label-y-field', 'Y field')}
+      >
         <FieldNamePicker
           context={{ data: input }}
           value={options.yFieldName ?? ''}
@@ -94,7 +107,10 @@ export const RegressionTransformerEditor = ({
           }}
         ></FieldNamePicker>
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="Model type">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.regression-transformer-editor.label-model-type', 'Model type')}
+      >
         <Select
           value={options.modelType ?? DEFAULTS.modelType}
           onChange={(v) => {
@@ -103,7 +119,14 @@ export const RegressionTransformerEditor = ({
           options={modelTypeOptions}
         ></Select>
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="Predicted points" tooltip={'Number of X,Y points to predict'}>
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.regression-transformer-editor.label-predicted-points', 'Predicted points')}
+        tooltip={t(
+          'transformers.regression-transformer-editor.tooltip-number-of-xy-points-to-predict',
+          'Number of X,Y points to predict'
+        )}
+      >
         <NumberInput
           value={options.predictionCount ?? DEFAULTS.predictionCount}
           onChange={(v) => {
@@ -112,14 +135,17 @@ export const RegressionTransformerEditor = ({
         ></NumberInput>
       </InlineField>
       {options.modelType === ModelType.polynomial && (
-        <InlineField labelWidth={LABEL_WIDTH} label="Degree">
+        <InlineField
+          labelWidth={LABEL_WIDTH}
+          label={t('transformers.regression-transformer-editor.label-degree', 'Degree')}
+        >
           <Select<number>
             value={options.degree ?? DEFAULTS.degree}
             options={[
-              { label: 'Quadratic', value: 2 },
-              { label: 'Cubic', value: 3 },
-              { label: 'Quartic', value: 4 },
-              { label: 'Quintic', value: 5 },
+              { label: t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
+              { label: t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
+              { label: t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
+              { label: t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
             ]}
             onChange={(v) => {
               onChange({ ...options, degree: v.value });

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -181,6 +182,47 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Contains(t, bodyString, "metrics-2018.05.15")
 		require.Contains(t, bodyString, "metrics-2018.05.17")
 	})
+
+	t.Run("Should return DownstreamError when index is invalid", func(t *testing.T) {
+		ds := &DatasourceInfo{
+			URL:      "test",
+			Database: "index-with-no-pattern",
+			Interval: intervalMonthly,
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		_, err = c.ExecuteMultisearch(&MultiSearchRequest{Requests: []*SearchRequest{{}}})
+		assert.Equal(t, "failed to get indices from index pattern. invalid index pattern index-with-no-pattern. Specify an index with a time pattern or select 'No pattern'", err.Error())
+		require.True(t, backend.IsDownstreamError(err))
+	})
+
+	t.Run("Should return DownstreamError when decoding response fails", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err := rw.Write([]byte(`{"invalid`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
+
+		ds := &DatasourceInfo{
+			URL:        ts.URL,
+			Database:   "[metrics-]YYYY.MM.DD",
+			HTTPClient: ts.Client(),
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		_, err = c.ExecuteMultisearch(&MultiSearchRequest{})
+		require.Error(t, err)
+		require.True(t, backend.IsDownstreamError(err))
+	})
 }
 
 func TestClient_Index(t *testing.T) {
@@ -284,6 +326,169 @@ func TestClient_Index(t *testing.T) {
 			assert.Equal(t, test.indexInRequest, jHeader.Get("index").MustString())
 		})
 	}
+}
+
+func TestStreamMultiSearchResponse_Success(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": [] } },
+            { "hits": { "hits": [] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 2 {
+		t.Errorf("expected 2 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_MalformedJSON(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": [] } }
+    ` // Missing closing braces
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error, got none")
+	}
+}
+
+func TestStreamMultiSearchResponse_MissingResponses(t *testing.T) {
+	jsonBody := `
+    {
+        "something_else": [
+            { "hits": { "hits": [] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 0 {
+		t.Errorf("expected 0 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_EmptyBody(t *testing.T) {
+	jsonBody := `{}`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(msr.Responses) != 0 {
+		t.Errorf("expected 0 responses, got %d", len(msr.Responses))
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidJSONStart(t *testing.T) {
+	jsonBody := `invalid_json`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid JSON, got none")
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidHitsField(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": "invalid_string_value" }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid 'hits' field, got none")
+	}
+
+	if err.Error() != "expected '{' for hits object, got invalid_string_value" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidHitElement(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": ["invalid_element"] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid element in 'hits' array, got none")
+	}
+
+	expected := "json: cannot unmarshal string into Go value of type map[string]interface {}"
+	if err.Error() != expected {
+		t.Errorf("unexpected error message: expected %v, got %v", expected, err)
+	}
+}
+
+func TestStreamMultiSearchResponse_ErrorHandling(t *testing.T) {
+	t.Run("Given invalid elasticsearch responses", func(t *testing.T) {
+		t.Run("When response is invalid JSON", func(t *testing.T) {
+			msr := &MultiSearchResponse{}
+			err := StreamMultiSearchResponse(strings.NewReader(`abc`), msr)
+
+			require.Error(t, err)
+			require.True(t, backend.IsDownstreamError(err))
+		})
+	})
+
+	t.Run("Given a client with invalid response", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Set("Content-Type", "application/x-ndjson")
+			_, err := rw.Write([]byte(`{"invalid`))
+			require.NoError(t, err)
+			rw.WriteHeader(200)
+		}))
+
+		ds := &DatasourceInfo{
+			URL:        ts.URL,
+			Database:   "[metrics-]YYYY.MM.DD",
+			HTTPClient: ts.Client(),
+		}
+
+		c, err := NewClient(context.Background(), ds, log.NewNullLogger())
+		require.NoError(t, err)
+
+		t.Cleanup(func() {
+			ts.Close()
+		})
+
+		t.Run("When executing multi search with invalid response", func(t *testing.T) {
+			_, err = c.ExecuteMultisearch(&MultiSearchRequest{})
+			require.Error(t, err)
+			require.True(t, backend.IsDownstreamError(err))
+		})
+	})
 }
 
 func createMultisearchForTest(t *testing.T, c Client, timeRange backend.TimeRange) (*MultiSearchRequest, error) {

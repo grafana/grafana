@@ -3,9 +3,9 @@ import { HTMLAttributes } from 'react';
 
 import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2, hasTitle: boolean) => {
 
 const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkClicked }: AlertMessageProps) => {
   const theme = useTheme2();
+
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
   const canExploreDataSources = contextSrv.hasAccessToExplore();
@@ -50,7 +51,7 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
       <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
         Next, you can start to visualize data by{' '}
         <Link
-          aria-label={`Create a dashboard`}
+          aria-label={t('datasources.alert-success-message.aria-label-create-a-dashboard', 'Create a dashboard')}
           href={`/dashboard/new-with-ds/${dataSourceId}`}
           className="external-link"
           onClick={onDashboardLinkClicked}
@@ -59,7 +60,7 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
         </Link>
         , or by querying data in the{' '}
         <Link
-          aria-label={`Explore data`}
+          aria-label={t('datasources.alert-success-message.aria-label-explore-data', 'Explore data')}
           className={cx('external-link', {
             [`${styles.disabled}`]: !canExploreDataSources,
             'test-disabled': !canExploreDataSources,
@@ -82,6 +83,7 @@ interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
 
 const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
   const theme = useTheme2();
+
   const styles = {
     content: css({
       color: theme.colors.text.secondary,
@@ -102,7 +104,10 @@ const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
       <Trans i18nKey="data-source-testing-status-page.error-more-details-link">
         Click{' '}
         <Link
-          aria-label={`More details about the error`}
+          aria-label={t(
+            'datasources.error-details-link.aria-label-more-details-about-the-error',
+            'More details about the error'
+          )}
           className={'external-link'}
           href={link}
           target="_blank"
@@ -138,7 +143,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
       grafana_version: config.buildInfo.version,
       datasource_uid: dataSource.uid,
       plugin_name: dataSource.typeName,
-      path: location.pathname,
+      path: window.location.pathname,
     });
   };
   const styles = useStyles2(getTestingStatusStyles);

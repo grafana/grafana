@@ -77,6 +77,7 @@ const (
 	TestDataQueryTypeRandomWalkWithError          TestDataQueryType = "random_walk_with_error"
 	TestDataQueryTypeRawFrame                     TestDataQueryType = "raw_frame"
 	TestDataQueryTypeServerError500               TestDataQueryType = "server_error_500"
+	TestDataQueryTypeSteps                        TestDataQueryType = "steps"
 	TestDataQueryTypeSimulation                   TestDataQueryType = "simulation"
 	TestDataQueryTypeSlowQuery                    TestDataQueryType = "slow_query"
 	TestDataQueryTypeStreamingClient              TestDataQueryType = "streaming_client"

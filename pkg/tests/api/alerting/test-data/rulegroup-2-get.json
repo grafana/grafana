@@ -5,6 +5,7 @@
     {
       "expr": "",
       "for": "5m",
+      "keep_firing_for": "0s",
       "labels": {
         "label1": "test-label"
       },
@@ -12,8 +13,6 @@
         "annotation": "test-annotation"
       },
       "grafana_alert": {
-        "id": 3,
-        "orgId": 1,
         "title": "Rule3",
         "condition": "A",
         "data": [

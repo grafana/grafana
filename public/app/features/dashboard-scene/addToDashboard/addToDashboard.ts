@@ -1,4 +1,5 @@
 import { locationUtil, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import store from 'app/core/store';
@@ -56,7 +57,10 @@ export function addToDashboard({
   } catch {
     return {
       error: AddToDashboardError.SET_DASHBOARD_LS,
-      message: 'Could not add panel to dashboard. Please try again.',
+      message: t(
+        'dashboard-scene.add-to-dashboard.message.could-panel-dashboard-please-again',
+        'Could not add panel to dashboard. Please try again.'
+      ),
     };
   }
 
@@ -69,7 +73,10 @@ export function addToDashboard({
       store.delete(DASHBOARD_FROM_LS_KEY);
       return {
         error: GenericError.NAVIGATION,
-        message: 'Could not navigate to the selected dashboard. Please try again.',
+        message: t(
+          'dashboard-scene.add-to-dashboard.message.could-navigate-selected-dashboard-please-again',
+          'Could not navigate to the selected dashboard. Please try again.'
+        ),
       };
     }
 

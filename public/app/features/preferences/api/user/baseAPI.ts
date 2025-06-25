@@ -1,36 +1,9 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { lastValueFrom } from 'rxjs';
+import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-
-interface RequestOptions extends BackendSrvRequest {
-  manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
-  body?: BackendSrvRequest['data'];
-}
-
-function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
-  async function backendSrvBaseQuery(requestOptions: RequestOptions) {
-    try {
-      const { data: responseData, ...meta } = await lastValueFrom(
-        getBackendSrv().fetch({
-          ...requestOptions,
-          url: baseURL + requestOptions.url,
-          showErrorAlert: requestOptions.showErrorAlert,
-          data: requestOptions.body,
-        })
-      );
-      return { data: responseData, meta };
-    } catch (error) {
-      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
-    }
-  }
-
-  return backendSrvBaseQuery;
-}
+import { createBaseQuery } from 'app/api/createBaseQuery';
 
 export const baseAPI = createApi({
   reducerPath: 'userPreferencesAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: () => ({}),
 });

@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { Field, GrafanaTheme2 } from '@grafana/data/';
-import { reportInteraction } from '@grafana/runtime/src';
-import { IconButton, useStyles2 } from '@grafana/ui/';
+import { Field, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
+import { reportInteraction } from '@grafana/runtime';
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
@@ -94,9 +96,12 @@ function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Val
 
 const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, isExpandedView }: RawListProps) => {
   const { __name__, ...allLabels } = listItemData;
+  // We must know whether it is a utf8 metric name or not
+  const isLegacyMetric = isValidLegacyName(__name__);
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
+
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**
@@ -110,10 +115,12 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   };
 
   // Convert the object back into a string
-  const stringRep = `${__name__}{${attributeValues.map((value) => {
-    // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
-    return `${value.key}="${transformCopyValue(value.value)}"`;
-  })}}`;
+  const stringRep = `${isLegacyMetric ? __name__ : ''}{${isLegacyMetric ? '' : `"${__name__}", `}${attributeValues.map(
+    (value) => {
+      // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
+      return `${utf8Support(value.key)}="${transformCopyValue(value.value)}"`;
+    }
+  )}}`;
 
   const hideFieldsWithoutValues = Boolean(valueLabels && valueLabels?.length);
 
@@ -125,7 +132,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
           <IconButton
-            tooltip="Copy to clipboard"
+            tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
               reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
               copyToClipboard(stringRep);
@@ -135,8 +142,13 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
-            <span>{__name__}</span>
+            {isLegacyMetric && <span>{__name__}</span>}
             <span>{`{`}</span>
+            {!isLegacyMetric && __name__ !== '' && (
+              <span>
+                "{__name__}"{', '}
+              </span>
+            )}
             <span>
               {attributeValues.map((value, index) => (
                 <RawListItemAttributes

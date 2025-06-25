@@ -5,7 +5,7 @@
  * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
  */
 
-import { compact, uniqBy } from 'lodash';
+import { chain, compact } from 'lodash';
 
 import { parseFlags } from '@grafana/data';
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
@@ -110,11 +110,16 @@ export function parsePromQLStyleMatcherLooseSafe(matcher: string): Matcher[] {
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x));
-
-  // Due to migration, old alert rules might have a duplicated alertname label
-  // To handle that case want to filter out duplicates and make sure there are only unique labels
-  return uniqBy(parsedMatchers, (matcher) => matcher.name);
+  return (
+    chain(matcherPairs)
+      .map((m) => m.trim()) // trim spaces
+      .compact() // remove empty strings
+      .flatMap(parsePromQLStyleMatcherLooseSafe)
+      // Due to migration, old alert rules might have a duplicated alertname label
+      // To handle that case want to filter out duplicates and make sure there are only unique labels
+      .uniqBy('name')
+      .value()
+  );
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
@@ -183,8 +188,13 @@ export function quoteWithEscapeIfRequired(input: string) {
   return shouldQuote ? quoteWithEscape(input) : input;
 }
 
+export function unquoteIfRequired(input: string) {
+  return quoteWithEscapeIfRequired(unquoteWithUnescape(input));
+}
+
 export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
   const encodedLabelName = quoteWithEscapeIfRequired(name);
+  // @TODO why not use quoteWithEscapeIfRequired?
   const encodedLabelValue = quoteWithEscape(value);
 
   return `${encodedLabelName}${operator}${encodedLabelValue}`;

@@ -244,11 +244,14 @@ func TestIntegrationConfig(t *testing.T) {
 				allSecrets[key] = struct{}{}
 			}
 
-			for field := range config.Fields {
-				_, isSecret := allSecrets[field]
-				assert.Equalf(t, isSecret, config.IsSecureField(NewIntegrationFieldPath(field)), "field '%s' is expected to be secret", field)
+			secretFields := config.GetSecretFields()
+			for _, path := range secretFields {
+				_, isSecret := allSecrets[path.String()]
+				assert.Equalf(t, isSecret, config.IsSecureField(path), "field '%s' is expected to be secret", path)
+				delete(allSecrets, path.String())
 			}
 			assert.False(t, config.IsSecureField(IntegrationFieldPath{"__--**unknown_field**--__"}))
+			assert.Empty(t, allSecrets, "mismatched secret fields for integration type %s: %v", integrationType, allSecrets)
 		})
 	}
 
@@ -331,7 +334,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	completelyDifferentReceiver.Integrations[0].Config = IntegrationConfig{Type: completelyDifferentReceiver.Integrations[0].Config.Type} // Remove all fields except Type.
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "a3402fdaba03030c" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "c0c82936be34b183" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, baseReceiver.Fingerprint())
 	})
 	t.Run("stable across clones", func(t *testing.T) {

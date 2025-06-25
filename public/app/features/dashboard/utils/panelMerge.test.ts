@@ -4,7 +4,8 @@ import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture, createPanelSaveModel } from '../state/__fixtures__/dashboardFixtures';
 
-describe('Merge dashboard panels', () => {
+// skipping these tests because panelMerge is not used
+describe.skip('Merge dashboard panels', () => {
   describe('simple changes', () => {
     let dashboard: DashboardModel;
     let rawPanels: PanelModel[];

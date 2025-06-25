@@ -60,6 +60,7 @@ func (b *Builder) buildSelect() {
 	b.sql.WriteString(
 		`SELECT
 			dashboard.id,
+			dashboard.org_id,
 			dashboard.uid,
 			dashboard.title,
 			dashboard.slug,

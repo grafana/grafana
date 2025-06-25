@@ -14,12 +14,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,7 +55,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 		Title: "Folder" + util.GenerateShortUID(),
 	}
 	gen := models.RuleGen
-	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1)).GenerateManyRef(5)
+	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1.ToFolderReference())).GenerateManyRef(5)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	db := fakes.NewRuleStore(t)
@@ -86,7 +90,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -102,7 +106,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -120,7 +124,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -139,7 +143,42 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.NotNil(t, h)
+		require.NoError(t, err)
+	})
+
+	t.Run("fail initialization if prometheus backend missing datasource UID", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "prometheus",
+			// Missing PrometheusTargetDatasourceUID
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "datasource UID must not be empty")
+	})
+
+	t.Run("successful initialization of prometheus backend", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:                       true,
+			Backend:                       "prometheus",
+			PrometheusMetricName:          "test_metric",
+			PrometheusTargetDatasourceUID: "test-prometheus-uid",
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -156,7 +195,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -179,7 +218,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -191,4 +230,98 @@ grafana_alerting_state_history_info{backend="noop"} 0
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
 		require.NoError(t, err)
 	})
+}
+
+type mockDB struct {
+	db.DB
+}
+
+func TestInitInstanceStore(t *testing.T) {
+	sqlStore := &mockDB{}
+	logger := log.New()
+
+	tests := []struct {
+		name                      string
+		ft                        featuremgmt.FeatureToggles
+		expectedInstanceStoreType interface{}
+	}{
+		{
+			name: "Compressed flag enabled, no periodic flag",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+			),
+			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
+		},
+		{
+			name: "Compressed flag enabled with periodic flag",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
+		},
+		{
+			name:                      "Compressed flag disabled",
+			ft:                        featuremgmt.WithFeatures(),
+			expectedInstanceStoreType: store.InstanceDBStore{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			instanceStore, instanceReader := initInstanceStore(sqlStore, logger, tt.ft)
+			assert.IsType(t, tt.expectedInstanceStoreType, instanceStore)
+			assert.IsType(t, &state.MultiInstanceReader{}, instanceReader)
+			assert.IsType(t, store.ProtoInstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).ProtoDBReader)
+			assert.IsType(t, store.InstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).DBReader)
+		})
+	}
+}
+
+func TestInitStatePersister(t *testing.T) {
+	ua := setting.UnifiedAlertingSettings{
+		StatePeriodicSaveInterval: 1 * time.Minute,
+	}
+	cfg := state.ManagerCfg{}
+
+	tests := []struct {
+		name                       string
+		ft                         featuremgmt.FeatureToggles
+		expectedStatePersisterType state.StatePersister
+	}{
+		{
+			name: "Compressed flag enabled",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+			),
+			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+		},
+		{
+			name: "Periodic flag enabled",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedStatePersisterType: &state.AsyncStatePersister{},
+		},
+		{
+			name:                       "No flags enabled",
+			ft:                         featuremgmt.WithFeatures(),
+			expectedStatePersisterType: &state.SyncStatePersister{},
+		},
+		{
+			name: "Both flags enabled - compressed takes precedence",
+			ft: featuremgmt.WithFeatures(
+				featuremgmt.FlagAlertingSaveStateCompressed,
+				featuremgmt.FlagAlertingSaveStatePeriodic,
+			),
+			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			statePersister := initStatePersister(ua, cfg, tt.ft)
+			assert.IsType(t, tt.expectedStatePersisterType, statePersister)
+		})
+	}
 }

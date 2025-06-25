@@ -18,6 +18,7 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import TimeSeries from 'app/core/time_series2';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
@@ -48,9 +49,12 @@ export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
   '@emotion/react': () => import('@emotion/react'),
   '@grafana/data': grafanaData,
+  '@grafana/data/unstable': () => import('@grafana/data/unstable'),
   '@grafana/runtime': grafanaRuntime,
+  '@grafana/runtime/unstable': () => import('@grafana/runtime/unstable'),
   '@grafana/slate-react': () => import('slate-react'),
   '@grafana/ui': grafanaUI,
+  '@grafana/ui/unstable': () => import('@grafana/ui/unstable'),
   '@kusto/monaco-kusto': () => import('@kusto/monaco-kusto'),
   'app/core/app_events': {
     default: appEvents,
@@ -84,13 +88,14 @@ export const sharedDependenciesMap = {
   d3: () => import('d3'),
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
-  i18next: () => import('i18next'),
+  i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
   jquery: {
     default: jquery,
     __useDefault: true,
   },
   ...jQueryFlotDeps,
-  lodash: () => import('lodash').then((module) => ({ ...module, __useDefault: true })),
+  // add move to lodash for backward compatabilty with plugins
+  lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
   moment: () => import('moment').then((module) => ({ ...module, __useDefault: true })),
   prismjs: () => import('prismjs'),
   react: () => import('react'),

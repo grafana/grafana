@@ -118,7 +118,9 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		filterInBody = false
 		if resourceUri != nil {
 			azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
-			resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
+			// Store the resource URI in the map lowercased to avoid case sensitivity issues
+			uriLower := strings.ToLower(*resourceUri)
+			resourceMap[uriLower] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 		}
 	} else {
 		for _, r := range azJSONModel.Resources {
@@ -135,7 +137,9 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 			}
 
 			if resourceUri != nil {
-				resourceMap[*resourceUri] = r
+				// Store the resource URI in the map lowercased to avoid case sensitivity issues
+				uriLower := strings.ToLower(*resourceUri)
+				resourceMap[uriLower] = r
 			}
 			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", *resourceUri))
 		}
@@ -269,7 +273,11 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	res, err := cli.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to request subscription details: %s", err)
+		err = fmt.Errorf("failed to request subscription details: %s", err)
+		if backend.IsDownstreamHTTPError(err) {
+			err = backend.DownstreamError(err)
+		}
+		return "", err
 	}
 
 	defer func() {
@@ -593,7 +601,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 func formatAzureMonitorLegendKey(query *types.AzureMonitorQuery, resourceId string, amr *types.AzureMonitorResponse, labels data.Labels, subscription string) string {
 	alias := query.Alias
 	subscriptionId := query.Subscription
-	resource := query.Resources[resourceId]
+	resource := query.Resources[strings.ToLower(resourceId)]
 	metricName := amr.Value[0].Name.LocalizedValue
 	namespace := amr.Namespace
 	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.

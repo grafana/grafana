@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
@@ -14,9 +14,10 @@ interface Props {
   pluginId: string;
   versions?: Version[];
   installedVersion?: string;
+  disableInstallation: boolean;
 }
 
-export const VersionList = ({ pluginId, versions = [], installedVersion }: Props) => {
+export const VersionList = ({ pluginId, versions = [], installedVersion, disableInstallation }: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
 
@@ -27,7 +28,11 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
   }, [installedVersion]);
 
   if (versions.length === 0) {
-    return <p>No version history was found.</p>;
+    return (
+      <p>
+        <Trans i18nKey="plugins.version-list.no-version-history-was-found">No version history was found.</Trans>
+      </p>
+    );
   }
 
   const onInstallClick = () => {
@@ -38,19 +43,24 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Version</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.version">Version</Trans>
+          </th>
           <th></th>
-          <th>Last updated</th>
-          <th>Grafana Dependency</th>
+          <th>
+            <Trans i18nKey="plugins.version-list.latest-release-date">Latest release date</Trans>
+          </th>
+          <th>
+            <Trans i18nKey="plugins.version-list.grafana-dependency">Grafana dependency</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>
         {versions.map((version) => {
           let tooltip: string | undefined = undefined;
           const isInstalledVersion = installedVersion === version.version;
-          const canInstall = version.angularDetected ? config.angularSupportEnabled : true;
 
-          if (!canInstall) {
+          if (version.angularDetected) {
             tooltip = 'This plugin version is AngularJS type which is not supported';
           }
 
@@ -58,13 +68,28 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
             tooltip = 'This plugin version is not compatible with the current Grafana version';
           }
 
+          if (disableInstallation) {
+            tooltip = `This plugin can't be managed through the Plugin Catalog`;
+          }
+
           return (
             <tr key={version.version}>
               {/* Version number */}
               {isInstalledVersion ? (
-                <td className={styles.currentVersion}>{version.version} (installed version)</td>
+                <td className={styles.currentVersion}>
+                  <Trans i18nKey="plugins.version-list.installed-version" values={{ versionNumber: version.version }}>
+                    {'{{versionNumber}}'} (installed version)
+                  </Trans>
+                </td>
               ) : version.version === latestCompatibleVersion?.version ? (
-                <td>{version.version} (latest compatible version)</td>
+                <td>
+                  <Trans
+                    i18nKey="plugins.version-list.latest-compatible-version"
+                    values={{ versionNumber: version.version }}
+                  >
+                    {'{{versionNumber}}'} (latest compatible version)
+                  </Trans>
+                </td>
               ) : (
                 <td>{version.version}</td>
               )}
@@ -77,14 +102,20 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                   latestCompatibleVersion={latestCompatibleVersion?.version}
                   installedVersion={installedVersion}
                   onConfirmInstallation={onInstallClick}
-                  disabled={isInstalledVersion || isInstalling || !canInstall || !version.isCompatible || !canInstall}
+                  disabled={
+                    isInstalledVersion ||
+                    isInstalling ||
+                    version.angularDetected ||
+                    !version.isCompatible ||
+                    disableInstallation
+                  }
                   tooltip={tooltip}
                 />
               </td>
 
-              {/* Last updated */}
+              {/* Latest release date */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
-                {dateTimeFormatTimeAgo(version.createdAt)}
+                {dateTimeFormatTimeAgo(version.updatedAt || version.createdAt)}
               </td>
               {/* Dependency */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>

@@ -1,18 +1,15 @@
 import { isEmpty } from 'lodash';
 
-import { dateTime } from '@grafana/data';
-import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { RulesFilter, getSearchFilterFromQuery } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
-
-export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -28,6 +25,7 @@ export const LogMessages = {
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
   exportNewGrafanaRule: 'exporting new Grafana rule',
+  noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
 const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
@@ -36,23 +34,27 @@ const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger
 
 export { logError, logInfo, logMeasurement, logWarning };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
-  type: string,
-  func: TFunc,
-  context: Record<string, string>
-): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
-  return async function (...args) {
-    const startLoadingTs = performance.now();
+/**
+ * Utility function to measure performance of async operations
+ * @param func Function to measure
+ * @param measurementName Name of the measurement for logging
+ * @param context Context for logging
+ */
+export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
+  func: (...args: TArgs) => Promise<TReturn>,
+  measurementName: string,
+  context: Record<string, string> = {}
+): (...args: TArgs) => Promise<TReturn> {
+  return async function (...args: TArgs): Promise<TReturn> {
+    const startMark = `${measurementName}:start`;
+    performance.mark(startMark);
 
     const response = await func(...args);
-    const loadTimesMs = performance.now() - startLoadingTs;
 
+    const loadTimeMeasure = performance.measure(measurementName, startMark);
     logMeasurement(
-      type,
-      {
-        loadTimesMs,
-      },
+      measurementName,
+      { duration: loadTimeMeasure.duration, loadTimesMs: loadTimeMeasure.duration },
       context
     );
 
@@ -150,21 +152,6 @@ function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
   };
 }
 
-export async function isNewUser() {
-  try {
-    const { createdAt } = await getBackendSrv().get(`/api/user`);
-
-    const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
-    const userCreationDate = dateTime(createdAt);
-
-    const isNew = limitDateForNewUser.isBefore(userCreationDate);
-
-    return isNew;
-  } catch {
-    return true; //if no date is returned, we assume the user is new to prevent tracking actions
-  }
-}
-
 export const trackRuleListNavigation = async (
   props: AlertRuleTrackingProps = {
     grafana_version: config.buildInfo.version,
@@ -172,10 +159,6 @@ export const trackRuleListNavigation = async (
     user_id: contextSrv.user.id,
   }
 ) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
   reportInteraction('grafana_alerting_navigation', props);
 };
 
@@ -193,8 +176,12 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
-export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
-  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+export const trackNewGrafanaAlertRuleFormSavedSuccess = (payload: {
+  simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
+  canBeTransformedToSimpleQuery: boolean;
+}) => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success', payload);
 };
 
 export const trackNewGrafanaAlertRuleFormCancelled = () => {
@@ -212,6 +199,49 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
     user_id: contextSrv.user.id,
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
+};
+
+interface RuleVersionComparisonProps {
+  latest: boolean;
+  oldVersion: number;
+  newVersion: number;
+}
+
+export const trackRuleVersionsComparisonClick = async (payload: RuleVersionComparisonProps) => {
+  reportInteraction('grafana_alerting_rule_versions_comparison_click', { ...payload });
+};
+
+export const trackRuleVersionsRestoreSuccess = async (payload: RuleVersionComparisonProps & { origin: Origin }) => {
+  reportInteraction('grafana_alerting_rule_versions_restore_success', { ...payload });
+};
+
+export const trackRuleVersionsRestoreFail = async (
+  payload: RuleVersionComparisonProps & { origin: Origin; error: Error }
+) => {
+  reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
+};
+
+export const trackDeletedRuleRestoreSuccess = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_success');
+};
+
+export const trackDeletedRuleRestoreFail = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_error');
+};
+
+export const trackImportToGMASuccess = async (payload: {
+  importSource: 'yaml' | 'datasource';
+  isRootFolder: boolean;
+  namespace?: string;
+  ruleGroup?: string;
+  pauseRecordingRules: boolean;
+  pauseAlertingRules: boolean;
+}) => {
+  reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
+};
+
+export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+  reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
 
 interface RulesSearchInteractionPayload {
@@ -274,6 +304,30 @@ export function trackUseCentralHistoryExpandRow() {
 
 export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; to: number }) {
   reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
+}
+
+export function trackFolderBulkActionsDeleteSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_success');
+}
+
+export function trackFolderBulkActionsDeleteFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_fail');
+}
+
+export function trackFolderBulkActionsPauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_success');
+}
+
+export function trackFolderBulkActionsUnpauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_success');
+}
+
+export function trackFolderBulkActionsPauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_fail');
+}
+
+export function trackFolderBulkActionsUnpauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
 }
 
 export type AlertRuleTrackingProps = {

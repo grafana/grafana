@@ -1,19 +1,23 @@
 package libraryelements
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
-func TestGetLibraryElement(t *testing.T) {
+func TestIntegration_GetLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
@@ -70,7 +74,7 @@ func TestGetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -89,6 +93,37 @@ func TestGetLibraryElement(t *testing.T) {
 			if diff := cmp.Diff(libraryElementArrayResult{Result: []libraryElement{expected(result).Result}}, arrayResult, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
+		})
+
+	scenarioWithPanel(t, "When an admin tries to get a library panel that exists, but the original folder does not, it should succeed and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			b, err := json.Marshal(map[string]string{"test": "test"})
+			require.NoError(t, err)
+			newFolder := createFolder(t, sc, "NewFolder", nil)
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
+			result, err := sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
+				FolderID:  newFolder.ID, // nolint:staticcheck
+				FolderUID: &newFolder.UID,
+				Name:      "Testing Library Panel With Deleted Folder",
+				Kind:      1,
+				Model:     b,
+				UID:       "panel-with-deleted-folder",
+			})
+			require.NoError(t, err)
+			err = sc.service.folderService.Delete(sc.reqContext.Req.Context(), &folder.DeleteFolderCommand{
+				UID:          newFolder.UID,
+				OrgID:        sc.reqContext.OrgID,
+				SignedInUser: sc.reqContext.SignedInUser,
+			})
+			require.NoError(t, err)
+			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
+				elem, err := sc.service.GetLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, session, result.UID)
+				require.NoError(t, err)
+				require.Equal(t, elem.FolderName, "General")
+				return nil
+			})
+			require.NoError(t, err)
 		})
 
 	scenarioWithPanel(t, "When an admin tries to get a connected library panel, it should succeed and return correct connected dashboards",
@@ -169,7 +204,7 @@ func TestGetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
+			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -191,8 +226,8 @@ func TestGetLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.SignedInUser.OrgID = 2
-			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
+			sc.reqContext.OrgID = 2
+			sc.reqContext.OrgRole = org.RoleAdmin
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})

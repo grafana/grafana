@@ -1,28 +1,19 @@
 import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
-import { Observable } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginMeta,
-  DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
   ReducerID,
-  ScopedVars,
-  TestDataSourceResponse,
 } from '@grafana/data';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
+import { config } from '@grafana/runtime';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
   AlertState,
@@ -52,6 +43,7 @@ import {
   AlertQuery,
   GrafanaAlertState,
   GrafanaAlertStateDecision,
+  GrafanaPromAlertingRuleDTO,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -65,7 +57,7 @@ import {
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
-import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
@@ -133,7 +125,7 @@ export const mockRulerGrafanaRule = (
           datasourceUid: '123',
           refId: 'A',
           queryType: 'huh',
-          model: {} as any,
+          model: {} as unknown as DataQuery,
         },
       ],
       ...partialDef,
@@ -196,14 +188,11 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   ...partial,
 });
 
-export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerAlertingRuleDTO => ({
-  alert: 'alert1',
+export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerRecordingRuleDTO => ({
+  record: 'alert1',
   expr: 'up = 1',
   labels: {
     severity: 'warning',
-  },
-  annotations: {
-    summary: 'test alert',
   },
   ...partial,
 });
@@ -230,6 +219,20 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     },
     state: PromAlertingRuleState.Firing,
     health: 'OK',
+    totalsFiltered: { alerting: 1 },
+    ...partial,
+  };
+};
+
+export const mockGrafanaPromAlertingRule = (
+  partial: Partial<GrafanaPromAlertingRuleDTO> = {}
+): GrafanaPromAlertingRuleDTO => {
+  return {
+    ...mockPromAlertingRule(),
+    uid: 'mock-rule-uid-123',
+    folderUid: 'NAMESPACE_UID',
+    isPaused: false,
+    totals: { alerting: 1 },
     totalsFiltered: { alerting: 1 },
     ...partial,
   };
@@ -402,80 +405,6 @@ export const mockReceiversState = (partial: Partial<ReceiversState> = {}): Recei
     ...partial,
   };
 };
-
-class MockDataSourceApi extends DataSourceApi {
-  constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
-    super(instanceSettings);
-  }
-
-  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
-    throw new Error('Method not implemented.');
-  }
-  testDatasource(): Promise<TestDataSourceResponse> {
-    throw new Error('Method not implemented.');
-  }
-}
-
-/** @deprecated use `setupDatasources` instead */
-export class MockDataSourceSrv implements DataSourceSrv {
-  datasources: Record<string, DataSourceApi> = {};
-  // @ts-ignore
-  private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
-  private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
-  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
-  // @ts-ignore
-  private templateSrv = {
-    getVariables: () => [],
-    replace: (name: any) => name,
-  };
-
-  defaultName = '';
-
-  constructor(datasources: Record<string, DataSourceInstanceSettings>) {
-    this.datasources = {};
-    this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
-      (acc, ds) => {
-        acc[ds.name] = ds;
-        return acc;
-      },
-      {}
-    );
-
-    for (const dsSettings of Object.values(this.settingsMapByName)) {
-      this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
-      if (dsSettings.isDefault) {
-        this.defaultName = dsSettings.name;
-      }
-      this.datasources[dsSettings.uid] = new MockDataSourceApi(dsSettings);
-    }
-  }
-
-  get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    return DatasourceSrv.prototype.get.call(this, name, scopedVars);
-    //return Promise.reject(new Error('not implemented'));
-  }
-
-  /**
-   * Get a list of data sources
-   */
-  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[] {
-    return DatasourceSrv.prototype.getList.call(this, filters);
-  }
-
-  /**
-   * Get settings and plugin metadata by name or uid
-   */
-  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid);
-  }
-
-  async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
-    return DatasourceSrv.prototype.loadDatasource.call(this, name);
-  }
-
-  reload() {}
-}
 
 export const mockGrafanaReceiver = (
   type: string,
@@ -733,7 +662,7 @@ export function mockStore(recipe: (state: StoreState) => void) {
   return configureStore(produce(defaultState, recipe));
 }
 
-export function mockAlertQuery(query: Partial<AlertQuery>): AlertQuery {
+export function mockAlertQuery(query: Partial<AlertQuery> = {}): AlertQuery {
   return {
     datasourceUid: '--uid--',
     refId: 'A',
@@ -772,7 +701,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
     namespace: {
       groups: [],
       name: 'Grafana',
-      rulesSource: 'grafana',
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
     },
     rulerRule: mockGrafanaRulerRule(rulerOverride),
     ...override,
@@ -857,30 +786,65 @@ export function mockDashboardDto(
   };
 }
 
-export const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.queryId,
+export const mockDataQuery = (partial: Partial<AlertDataQuery> = {}): AlertQuery<AlertDataQuery> => ({
+  refId: partial?.refId ?? 'A',
   datasourceUid: 'abc123',
   queryType: '',
-  model: { refId: SimpleConditionIdentifier.queryId },
-};
+  model: { refId: 'A', ...partial },
+});
 
-export const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.reducerId,
+export const mockReduceExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'B',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
-    refId: SimpleConditionIdentifier.reducerId,
+    refId: 'B',
     settings: { mode: ReducerMode.Strict },
     reducer: ReducerID.last,
+    ...partial,
   },
-};
-export const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.thresholdId,
+});
+
+export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'C',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SimpleConditionIdentifier.thresholdId,
+    refId: 'C',
+    ...partial,
   },
-};
+});
+
+class LocalStorageMock implements Storage {
+  [key: string]: any;
+
+  getItem(key: string) {
+    return this[key] ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this[key] = value;
+  }
+
+  clear() {
+    Object.keys(this).forEach((key) => delete this[key]);
+  }
+
+  removeItem(key: string) {
+    delete this[key];
+  }
+
+  key(index: number) {
+    return Object.keys(this)[index] ?? null;
+  }
+
+  get length() {
+    return Object.keys(this).length;
+  }
+}
+
+export function mockLocalStorage(): Storage {
+  return new LocalStorageMock();
+}

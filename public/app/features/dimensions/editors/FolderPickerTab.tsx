@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
@@ -106,7 +107,7 @@ export const FolderPickerTab = (props: Props) => {
       <Field>
         <FilterInput
           value={searchQuery ?? ''}
-          placeholder="Search"
+          placeholder={t('dimensions.folder-picker-tab.placeholder-search', 'Search')}
           onChange={(v) => {
             onChangeSearch(v);
             setSearchQuery(v);

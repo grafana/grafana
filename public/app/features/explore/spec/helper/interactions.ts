@@ -26,28 +26,28 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query history' });
-  await userEvent.click(button);
-  expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  let button = screen.queryByRole('button', { name: 'Query history' });
+  if (button) {
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  } else {
+    button = screen.getByRole('button', { name: 'Open query library or query history' });
+    await userEvent.click(button);
+    button = await screen.findByRole('menuitem', { name: 'Query history' });
+    await userEvent.click(button);
+    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  }
 };
 
 export const openQueryLibrary = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query library' });
+  const button = screen.getByRole('button', { name: 'Add query from library' });
   await userEvent.click(button);
   await waitFor(async () => {
-    screen.getByRole('tab', {
-      name: /query library/i,
+    const container = screen.getByRole('dialog', {
+      name: /Drawer title/,
     });
+    within(container).getByText('Query library');
   });
-};
-
-export const switchToQueryHistory = async () => {
-  const tab = screen.getByRole('tab', {
-    name: /query history/i,
-  });
-  await userEvent.click(tab);
 };
 
 export const addQueryHistoryToQueryLibrary = async () => {
@@ -55,9 +55,9 @@ export const addQueryHistoryToQueryLibrary = async () => {
   await userEvent.click(button);
 };
 
-export const submitAddToQueryLibrary = async ({ description }: { description: string }) => {
-  const input = within(screen.getByRole('dialog')).getByLabelText('Description');
-  await userEvent.type(input, description);
+export const submitAddToQueryLibrary = async ({ title }: { title: string }) => {
+  const input = within(screen.getByRole('dialog')).getByLabelText('Title');
+  await userEvent.type(input, title);
   const saveButton = screen.getByRole('button', {
     name: /^save$/i,
   });

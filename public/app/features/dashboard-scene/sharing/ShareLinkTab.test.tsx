@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { advanceTo, clear } from 'jest-date-mock';
 
 import { dateTime } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -88,7 +88,7 @@ describe('ShareLinkTab', () => {
       await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
     ).toHaveAttribute(
       'href',
-      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=panel-12&__feature.dashboardSceneSolo&width=1000&height=500&tz=Pacific%2FEaster'
+      'http://dashboards.grafana.com/grafana/render/d-solo/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&panelId=panel-12&__feature.dashboardSceneSolo=true&width=1000&height=500&tz=Pacific%2FEaster'
     );
   });
 });

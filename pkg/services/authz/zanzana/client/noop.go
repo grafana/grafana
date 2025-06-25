@@ -3,13 +3,11 @@ package client
 import (
 	"context"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
-
+	authlib "github.com/grafana/authlib/types"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-var _ authz.AccessClient = (*NoopClient)(nil)
+var _ authlib.AccessClient = (*NoopClient)(nil)
 
 func NewNoop() *NoopClient {
 	return &NoopClient{}
@@ -17,11 +15,11 @@ func NewNoop() *NoopClient {
 
 type NoopClient struct{}
 
-func (nc *NoopClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
-	return authz.CheckResponse{}, nil
+func (nc *NoopClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, nil
 }
 
-func (nc *NoopClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
 	return nil, nil
 }
 

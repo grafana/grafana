@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,12 +14,15 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	claims "github.com/grafana/authlib/types"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -37,17 +41,20 @@ type QueryAPIBuilder struct {
 	userFacingDefaultError string
 	features               featuremgmt.FeatureToggles
 
-	tracer     tracing.Tracer
-	metrics    *queryMetrics
-	parser     *queryParser
-	client     DataSourceClientSupplier
-	registry   query.DataSourceApiServerRegistry
-	converter  *expr.ResultConverter
-	queryTypes *query.QueryTypeDefinitionList
+	authorizer authorizer.Authorizer
+
+	tracer         tracing.Tracer
+	metrics        *metrics.ExprMetrics
+	parser         *queryParser
+	clientSupplier clientapi.DataSourceClientSupplier
+	registry       query.DataSourceApiServerRegistry
+	converter      *expr.ResultConverter
+	queryTypes     *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	client DataSourceClientSupplier,
+	clientSupplier clientapi.DataSourceClientSupplier,
+	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -73,10 +80,11 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		client:               client,
+		clientSupplier:       clientSupplier,
+		authorizer:           ar,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
-		metrics:              newQueryMetrics(registerer),
+		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
@@ -104,11 +112,25 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
+	ar := authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			// we only verify that we have a valid user.
+			// the "real" check will happen when the specific
+			// data sources are loaded.
+			_, ok := claims.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "valid user is required", nil
+			}
+
+			return authorizer.DecisionAllow, "", nil
+		})
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		&CommonDataSourceClientSupplier{
-			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider, accessControl),
 		},
+		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		legacy, registerer, tracer,
 	)
@@ -135,6 +157,10 @@ func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	addKnownTypes(scheme, query.SchemeGroupVersion)
 	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)
+}
+
+func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
 }
 
 func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
@@ -166,7 +192,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default is OK
+	return b.authorizer
 }
 
 func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -251,10 +277,5 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, nil
 	}
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }

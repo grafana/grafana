@@ -1,10 +1,13 @@
 package authnimpl
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -80,9 +83,24 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
-		authnSvc.RegisterClient(passwordless)
+	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
+		if !hasEnabledProviders {
+			oauthInfos := socialService.GetOAuthInfoProviders()
+			for _, provider := range oauthInfos {
+				if provider.Enabled {
+					hasEnabledProviders = true
+					break
+				}
+			}
+		}
+
+		if hasEnabledProviders {
+			logger.Error("Failed to configure passwordless magic link auth: cannot enable both passwordless magic link auth & SSO")
+		} else {
+			passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
+			authnSvc.RegisterClient(passwordless)
+		}
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
@@ -95,10 +113,11 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, cfg))
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg))
 	}
 
-	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
+	if cfg.ExtJWTAuth.Enabled {
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
@@ -107,15 +126,23 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features))
 	}
 
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
+	}
+
 	// FIXME (jguer): move to User package
-	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
+	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features, cfg)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
-	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)
+	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 40)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
+
+	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
+		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
+	}
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
@@ -125,8 +152,11 @@ func ProvideRegistration(
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
+	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
 
 	nsSync := sync.ProvideNamespaceSync(cfg)
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
+	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
+
 	return Registration{}
 }

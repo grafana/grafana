@@ -35,7 +35,7 @@ interface JoinValues {
 
 export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFrame[]): DataFrame {
   if (!options.value?.length) {
-    return getErrorFrame('No value labele configured');
+    return getErrorFrame('No value label configured');
   }
   const distinctLabels = getDistinctLabels(data);
   if (distinctLabels.size < 1) {
@@ -104,7 +104,11 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
     }
   }
 
-  const frame: DataFrame = { fields: [], length: nameValues[0].length };
+  const frame: DataFrame = {
+    fields: [],
+    length: nameValues[0].length,
+    refId: `${DataTransformerID.joinByLabels}-${data.map((frame) => frame.refId).join('-')}`,
+  };
   for (let i = 0; i < join.length; i++) {
     frame.fields.push({
       name: join[i],

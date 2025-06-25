@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authentication/user"
+
+	claims "github.com/grafana/authlib/types"
 )
 
 type Requester interface {

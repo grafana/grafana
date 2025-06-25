@@ -166,5 +166,77 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.CheckHealthReq.GetHTTPHeader(`X-Query-Group-Id`))
 			require.Equal(t, `true`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
+
+		t.Run("tracing headers are set for subscribe stream", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			_, err = cdt.MiddlewareHandler.SubscribeStream(req.Context(), &backend.SubscribeStreamRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+			})
+			require.NoError(t, err)
+
+			require.Len(t, cdt.SubscribeStreamReq.GetHTTPHeaders(), 6)
+			require.Equal(t, `lN53lOcVk`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `aIyC_OcVz`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `1`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			require.Equal(t, `2`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+		})
+
+		t.Run("tracing headers are set for publish stream", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			_, err = cdt.MiddlewareHandler.PublishStream(req.Context(), &backend.PublishStreamRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+			})
+			require.NoError(t, err)
+
+			require.Len(t, cdt.PublishStreamReq.GetHTTPHeaders(), 6)
+			require.Equal(t, `lN53lOcVk`, cdt.PublishStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `aIyC_OcVz`, cdt.PublishStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `1`, cdt.PublishStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			require.Equal(t, `2`, cdt.PublishStreamReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.PublishStreamReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.PublishStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+		})
+
+		t.Run("tracing headers are set for run stream", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			err = cdt.MiddlewareHandler.RunStream(req.Context(), &backend.RunStreamRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+			}, &backend.StreamSender{})
+			require.NoError(t, err)
+
+			require.Len(t, cdt.RunStreamReq.GetHTTPHeaders(), 6)
+			require.Equal(t, `lN53lOcVk`, cdt.RunStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `aIyC_OcVz`, cdt.RunStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `1`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			require.Equal(t, `2`, cdt.RunStreamReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.RunStreamReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+		})
 	})
 }

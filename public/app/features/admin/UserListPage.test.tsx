@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { GrafanaBootConfig } from '@grafana/runtime/src';
+import { GrafanaBootConfig } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';

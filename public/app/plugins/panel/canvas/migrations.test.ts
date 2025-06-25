@@ -1,14 +1,11 @@
-import { FieldConfigSource, OneClickMode, PanelModel } from '@grafana/data';
+import { PanelModel } from '@grafana/data';
 
 import { canvasMigrationHandler } from './migrations';
 
 describe('Canvas migration', () => {
-  let prevFieldConfig: FieldConfigSource;
-
   it('should migrate renamed options', () => {
     const panel = {
       type: 'canvas',
-      fieldConfig: prevFieldConfig,
       options: {
         root: {
           elements: [
@@ -23,6 +20,16 @@ describe('Canvas migration', () => {
                   },
                 },
               ],
+              links: [
+                {
+                  title: 'Link1',
+                  url: 'www.link1.com',
+                },
+                {
+                  title: 'Link2',
+                  url: 'www.link2.com',
+                },
+              ],
             },
           ],
         },
@@ -32,7 +39,7 @@ describe('Canvas migration', () => {
 
     panel.options = canvasMigrationHandler(panel);
 
-    expect(panel.options.root.elements[0].oneClickMode).toBe(OneClickMode.Link);
+    expect(panel.options.root.elements[0].links[0].oneClick).toBe(true);
     expect(panel.options.root.elements[0].actions[0].fetch.url).toBe('http://test.com');
   });
 });

@@ -3,6 +3,7 @@ package utils_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,10 +131,13 @@ func (in *Spec2) DeepCopy() *Spec2 {
 }
 
 func TestMetaAccessor(t *testing.T) {
-	repoInfo := &utils.ResourceRepositoryInfo{
-		Name: "test",
-		Path: "a/b/c",
-		Hash: "kkk",
+	repoInfo := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test",
+	}
+	sourceInfo := utils.SourceProperties{
+		Path:     "a/b/c",
+		Checksum: "kkk",
 	}
 
 	t.Run("fails for non resource objects", func(t *testing.T) {
@@ -154,6 +158,28 @@ func TestMetaAccessor(t *testing.T) {
 		require.NoError(t, err) // Must be a pointer
 	})
 
+	t.Run("get and set grafana labels (unstructured)", func(t *testing.T) {
+		res := &unstructured.Unstructured{
+			Object: map[string]any{},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		// should return 0 when not set
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(0))
+
+		// 0 is not allowed
+		meta.SetDeprecatedInternalID(0)
+		require.Equal(t, map[string]string(nil), res.GetLabels())
+
+		// should be able to set and get
+		meta.SetDeprecatedInternalID(1)
+		require.Equal(t, map[string]string{
+			"grafana.app/deprecatedInternalID": "1",
+		}, res.GetLabels())
+		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1))
+	})
+
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
 		// Error reading spec+status when missing
 		res := &unstructured.Unstructured{
@@ -172,20 +198,22 @@ func TestMetaAccessor(t *testing.T) {
 		res.Object = map[string]any{
 			"spec": map[string]any{
 				"hello": "world",
+				"title": "Title",
 			},
 			"status": map[string]any{
 				"sloth": "🦥",
 			},
 		}
+		require.Equal(t, "", meta.GetFolder())
+		require.Equal(t, "", meta.GetAnnotation("missing annotation"))
 
-		meta.SetRepositoryInfo(repoInfo)
+		meta.SetManagerProperties(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/repoName": "test",
-			"grafana.app/repoPath": "a/b/c",
-			"grafana.app/repoHash": "kkk",
-			"grafana.app/folder":   "folderUID",
+			"grafana.app/managedBy": "repo",
+			"grafana.app/managerId": "test",
+			"grafana.app/folder":    "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -196,6 +224,7 @@ func TestMetaAccessor(t *testing.T) {
 		rv, err := meta.GetResourceVersionInt64()
 		require.NoError(t, err)
 		require.Equal(t, int64(12345), rv)
+		require.Equal(t, "Title", meta.FindTitle(""))
 
 		// Make sure access to spec works for Unstructured
 		spec, err = meta.GetSpec()
@@ -230,14 +259,16 @@ func TestMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
 
-		meta.SetRepositoryInfo(repoInfo)
+		meta.SetManagerProperties(repoInfo)
+		meta.SetSourceProperties(sourceInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/repoName": "test",
-			"grafana.app/repoPath": "a/b/c",
-			"grafana.app/repoHash": "kkk",
-			"grafana.app/folder":   "folderUID",
+			"grafana.app/managedBy":      "repo",
+			"grafana.app/managerId":      "test",
+			"grafana.app/sourcePath":     "a/b/c",
+			"grafana.app/sourceChecksum": "kkk",
+			"grafana.app/folder":         "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -281,14 +312,13 @@ func TestMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
 
-		meta.SetRepositoryInfo(repoInfo)
+		meta.SetManagerProperties(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/repoName": "test",
-			"grafana.app/repoPath": "a/b/c",
-			"grafana.app/repoHash": "kkk",
-			"grafana.app/folder":   "folderUID",
+			"grafana.app/managedBy": "repo",
+			"grafana.app/managerId": "test",
+			"grafana.app/folder":    "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
@@ -322,7 +352,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, "ZZ", res.Status.Title)
 	})
 
-	t.Run("test reading old originInfo (now repository)", func(t *testing.T) {
+	t.Run("test reading old repo fields (now manager+source)", func(t *testing.T) {
 		res := &TestResource2{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
@@ -337,11 +367,15 @@ func TestMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
 
-		info, err := meta.GetRepositoryInfo()
-		require.NoError(t, err)
-		require.Equal(t, "test", info.Name)
-		require.Equal(t, "a/b/c", info.Path)
-		require.Equal(t, "zzz", info.Hash)
+		manager, ok := meta.GetManagerProperties()
+		require.True(t, ok)
+		require.Equal(t, utils.ManagerKindRepo, manager.Kind)
+		require.Equal(t, "test", manager.Identity)
+
+		source, ok := meta.GetSourceProperties()
+		require.True(t, ok)
+		require.Equal(t, "a/b/c", source.Path)
+		require.Equal(t, "zzz", source.Checksum)
 	})
 
 	t.Run("blob info", func(t *testing.T) {
@@ -366,14 +400,16 @@ func TestMetaAccessor(t *testing.T) {
 
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
-		meta.SetRepositoryInfo(repoInfo)
+		meta.SetManagerProperties(repoInfo)
+		meta.SetSourceProperties(sourceInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/repoName": "test",
-			"grafana.app/repoPath": "a/b/c",
-			"grafana.app/repoHash": "kkk",
-			"grafana.app/folder":   "folderUID",
+			"grafana.app/managedBy":      "repo",
+			"grafana.app/managerId":      "test",
+			"grafana.app/sourcePath":     "a/b/c",
+			"grafana.app/sourceChecksum": "kkk",
+			"grafana.app/folder":         "folderUID",
 		}, obj.GetAnnotations())
 
 		require.Equal(t, "HELLO", obj.Spec.Title)
@@ -389,14 +425,13 @@ func TestMetaAccessor(t *testing.T) {
 
 		meta, err = utils.MetaAccessor(obj2)
 		require.NoError(t, err)
-		meta.SetRepositoryInfo(repoInfo)
+		meta.SetManagerProperties(repoInfo)
 		meta.SetFolder("folderUID")
 
 		require.Equal(t, map[string]string{
-			"grafana.app/repoName": "test",
-			"grafana.app/repoPath": "a/b/c",
-			"grafana.app/repoHash": "kkk",
-			"grafana.app/folder":   "folderUID",
+			"grafana.app/managedBy": "repo",
+			"grafana.app/managerId": "test",
+			"grafana.app/folder":    "folderUID",
 		}, obj2.GetAnnotations())
 
 		require.Equal(t, "xxx", meta.FindTitle("xxx"))
@@ -408,6 +443,135 @@ func TestMetaAccessor(t *testing.T) {
 		spec, err := meta.GetSpec()
 		require.Equal(t, obj2.Spec, spec)
 		require.NoError(t, err)
+	})
+
+	t.Run("ManagerProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.ManagerProperties
+			wantProperties utils.ManagerProperties
+			wantOK         bool
+		}{
+			{
+				name: "get default values",
+				wantProperties: utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindTerraform,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindTerraform,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantOK: true,
+			},
+			{
+				name: "set empty identity returns default values",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindRepo,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: false,
+					Suspended:   false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "invalid kind falls back to generic kind",
+				setProperties: &utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKind("invalid"),
+					AllowsEdits: false,
+					Suspended:   true,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:    "identity",
+					Kind:        utils.ManagerKindUnknown,
+					AllowsEdits: false,
+					Suspended:   true,
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetManagerProperties(*tt.setProperties)
+				}
+
+				mp, ok := meta.GetManagerProperties()
+				require.Equal(t, tt.wantOK, ok)
+				require.Equal(t, tt.wantProperties, mp)
+			})
+		}
+	})
+
+	t.Run("SourceProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.SourceProperties
+			wantProperties utils.SourceProperties
+			wantOK         bool
+		}{
+			{
+				name:           "get default values",
+				wantProperties: utils.SourceProperties{},
+				wantOK:         false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.SourceProperties{
+					Path:            "path",
+					Checksum:        "hash",
+					TimestampMillis: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+				wantProperties: utils.SourceProperties{
+					Path:            "path",
+					Checksum:        "hash",
+					TimestampMillis: time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetSourceProperties(*tt.setProperties)
+				}
+
+				sp, ok := meta.GetSourceProperties()
+				require.Equal(t, tt.wantProperties, sp)
+				require.Equal(t, tt.wantOK, ok)
+			})
+		}
 	})
 }
 

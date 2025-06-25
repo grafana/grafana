@@ -2,6 +2,21 @@ import { DashboardLoadedEvent } from '@grafana/data';
 
 import { CloudWatchQuery } from '../types';
 
+const baseLogsQuery = {
+  datasource: {
+    type: 'cloudwatch',
+    uid: 'P7DC3E4760CFAC4AP',
+  },
+  expression: 'fields @timestamp, @message | sort @timestamp desc | limit 300     ',
+  id: '',
+  logGroupNames: ['/aws/lambda/hello-world', '/aws/sagemaker/Endpoints/test', '/aws/sagemaker/test'],
+  namespace: '',
+  queryMode: 'Logs',
+  refId: 'A',
+  region: 'default',
+  statsGroups: [],
+};
+
 export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
   dashboardId: 'dashboard123',
   orgId: 1,
@@ -460,18 +475,23 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         statistic: 'Average',
       },
       {
-        datasource: {
-          type: 'cloudwatch',
-          uid: 'P7DC3E4760CFAC4AP',
-        },
-        expression: 'fields @timestamp, @message | sort @timestamp desc | limit 300     ',
-        id: '',
-        logGroupNames: ['/aws/lambda/hello-world', '/aws/sagemaker/Endpoints/test', '/aws/sagemaker/test'],
-        namespace: '',
-        queryMode: 'Logs',
-        refId: 'A',
-        region: 'default',
-        statsGroups: [],
+        ...baseLogsQuery,
+      },
+      {
+        ...baseLogsQuery,
+        queryLanguage: 'PPL',
+      },
+      {
+        ...baseLogsQuery,
+        queryLanguage: 'PPL',
+      },
+      {
+        ...baseLogsQuery,
+        queryLanguage: 'SQL',
+      },
+      {
+        ...baseLogsQuery,
+        queryLanguage: 'CWLI',
       },
       {
         alias: '',

@@ -4,7 +4,7 @@ import { forwardRef, PropsWithChildren, UIEventHandler } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Box, BoxProps } from '../Layout/Box/Box';
 
 import { ScrollIndicators } from './ScrollIndicators';
@@ -34,6 +34,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
     const defaults: Partial<BoxProps> = {
       maxHeight: '100%',
       minHeight: 0,
+      minWidth: 0,
     };
     const boxProps = { ...defaults, ...rest };
 

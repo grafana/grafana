@@ -5,18 +5,18 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, ScrollContainer, useStyles2, Stack } from '@grafana/ui';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
-import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+import { InviteUserButton } from '../../InviteUserButton/InviteUserButton';
+import { shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
 
-import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
+import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
@@ -44,7 +44,7 @@ export const MegaMenu = memo(
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     if (config.featureToggles.pinNavItems) {
-      const bookmarksItem = findByUrl(navItems, '/bookmarks');
+      const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
       if (bookmarksItem) {
         // Add children to the bookmarks section
         bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
@@ -74,13 +74,6 @@ export const MegaMenu = memo(
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
       if (state.megaMenuDocked) {
         chrome.setMegaMenuOpen(false);
-      }
-
-      // refocus on undock/menu open button when changing state
-      if (!config.featureToggles.singleTopNav) {
-        setTimeout(() => {
-          document.getElementById(state.megaMenuDocked ? MEGA_MENU_TOGGLE_ID : DOCK_MENU_BUTTON_ID)?.focus();
-        });
       }
     };
 
@@ -119,50 +112,27 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        {config.featureToggles.singleTopNav ? (
-          <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
-        ) : (
-          <div className={styles.mobileHeader}>
-            <Icon name="bars" size="xl" />
-            <IconButton
-              tooltip={t('navigation.megamenu.close', 'Close menu')}
-              name="times"
-              onClick={onClose}
-              size="xl"
-              variant="secondary"
-            />
-          </div>
-        )}
+        <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">
-                  {index === 0 && !config.featureToggles.singleTopNav && (
-                    <IconButton
-                      id="dock-menu-button"
-                      className={styles.dockMenuButton}
-                      tooltip={
-                        state.megaMenuDocked
-                          ? t('navigation.megamenu.undock', 'Undock menu')
-                          : t('navigation.megamenu.dock', 'Dock menu')
-                      }
-                      name="web-section-alt"
-                      onClick={handleDockedMenu}
-                      variant="secondary"
-                    />
-                  )}
-                  <MegaMenuItem
-                    link={link}
-                    isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
-                    activeItem={activeItem}
-                    onPin={onPinItem}
-                  />
-                </Stack>
+                <MegaMenuItem
+                  key={link.text}
+                  link={link}
+                  isPinned={isPinned}
+                  onClick={state.megaMenuDocked ? undefined : onClose}
+                  activeItem={activeItem}
+                  onPin={onPinItem}
+                />
               ))}
             </ul>
           </ScrollContainer>
+          {shouldRenderInviteUserButton && (
+            <div className={styles.inviteNewMemberButton}>
+              <InviteUserButton />
+            </div>
+          )}
         </nav>
       </div>
     );
@@ -172,13 +142,12 @@ export const MegaMenu = memo(
 MegaMenu.displayName = 'MegaMenu';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      height: isSingleTopNav ? `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)` : '100%',
       minHeight: 0,
+      flexGrow: 1,
       position: 'relative',
     }),
     mobileHeader: css({
@@ -200,6 +169,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
+    }),
+    inviteNewMemberButton: css({
+      display: 'flex',
+      padding: theme.spacing(1.5, 1, 1.5, 1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     dockMenuButton: css({
       display: 'none',

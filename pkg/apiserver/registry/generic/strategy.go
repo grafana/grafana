@@ -3,7 +3,6 @@ package generic
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -13,23 +12,32 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// genericStrategy allows for writing objects with spec fields.
+// It ignores status fields, and does not allow for status updates.
 type genericStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	gv schema.GroupVersion
+	gv            schema.GroupVersion
+	clusterScoped bool
 }
 
 // NewStrategy creates and returns a genericStrategy instance.
 func NewStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericStrategy {
-	return &genericStrategy{typer, names.SimpleNameGenerator, gv}
+	return &genericStrategy{typer, names.SimpleNameGenerator, gv, false}
 }
 
-// NamespaceScoped returns true because all Generic resources must be within a namespace.
 func (g *genericStrategy) NamespaceScoped() bool {
-	return true
+	return !g.clusterScoped
+}
+
+func (g *genericStrategy) WithClusterScope() *genericStrategy {
+	g.clusterScoped = true
+	return g
 }
 
 func (g *genericStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
@@ -41,15 +49,29 @@ func (g *genericStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.S
 	return fields
 }
 
-func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {}
-
-func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldMeta, err := utils.MetaAccessor(old)
+func (g *genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return
 	}
+	meta.SetGeneration(1)
+	objCopy := obj.DeepCopyObject()
+	err = runtime.SetZeroValue(objCopy)
+	if err != nil {
+		return
+	}
+	metaCopy, err := utils.MetaAccessor(objCopy)
+	if err != nil {
+		return
+	}
+	status, err := metaCopy.GetStatus()
+	if err == nil {
+		_ = meta.SetStatus(status)
+	}
+}
 
-	status, err := oldMeta.GetStatus()
+func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	oldMeta, err := utils.MetaAccessor(old)
 	if err != nil {
 		return
 	}
@@ -59,7 +81,13 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 		return
 	}
 
-	_ = newMeta.SetStatus(status)
+	// update shouldn't change the status
+	status, err := oldMeta.GetStatus()
+	if err != nil {
+		_ = newMeta.SetStatus(nil)
+	} else {
+		_ = newMeta.SetStatus(status)
+	}
 }
 
 func (g *genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
@@ -72,11 +100,13 @@ func (g *genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Obje
 }
 
 func (g *genericStrategy) AllowCreateOnUpdate() bool {
-	return true
+	// Necessary due to dualwriter storage strategy
+	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
 
 func (g *genericStrategy) AllowUnconditionalUpdate() bool {
-	return true
+	// Necessary due to dualwriter storage strategy
+	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
 
 func (g *genericStrategy) Canonicalize(obj runtime.Object) {}
@@ -90,6 +120,8 @@ func (g *genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime
 	return nil
 }
 
+// genericStatusStrategy allows for writing objects with status fields, however may not create them.
+// It ignores spec and metadata fields, and does not allow for updates outside of the status field.
 type genericStatusStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -152,6 +184,71 @@ func (g *genericStatusStrategy) ValidateUpdate(ctx context.Context, obj, old run
 
 // WarningsOnUpdate returns warnings for the given update.
 func (g *genericStatusStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
+}
+
+// genericCompleteStrategy allows for writing objects with spec and status fields.
+// It does not ignore any fields, and allows for updates to both spec and status fields.
+// This is the same as having separate stores for spec and status fields.
+//
+// This can be applied to both the root object and status subresource in a Kubernetes REST API.
+type genericCompleteStrategy struct {
+	runtime.ObjectTyper
+	names.NameGenerator
+
+	gv schema.GroupVersion
+}
+
+// NewCompleteStrategy creates a new genericCompleteStrategy.
+func NewCompleteStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericCompleteStrategy {
+	return &genericCompleteStrategy{typer, names.SimpleNameGenerator, gv}
+}
+
+func (g *genericCompleteStrategy) NamespaceScoped() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
+	fields := map[fieldpath.APIVersion]*fieldpath.Set{
+		fieldpath.APIVersion(g.gv.String()): fieldpath.NewSet(),
+	}
+
+	return fields
+}
+
+func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return
+	}
+	meta.SetGeneration(1)
+}
+
+func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
+
+func (g *genericCompleteStrategy) AllowCreateOnUpdate() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) AllowUnconditionalUpdate() bool {
+	return true
+}
+
+func (g *genericCompleteStrategy) Canonicalize(obj runtime.Object) {}
+
+func (g *genericCompleteStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return nil
+}
+
+func (g *genericCompleteStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return nil
+}
+
+func (g *genericCompleteStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
+func (g *genericCompleteStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
 	return nil
 }
 

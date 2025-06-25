@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+
 	authlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -127,13 +128,6 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	// For use in service layer, allow higher privilege
-	namespace := accessTokenClaims.Rest.Namespace
-	if len(s.cfg.StackID) > 0 {
-		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		namespace = idTokenClaims.Rest.Namespace
-	}
-
 	return &authn.Identity{
 		ID:                id,
 		Type:              t,
@@ -142,7 +136,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		IDTokenClaims:     &idTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
 		AuthID:            accessTokenClaims.Subject,
-		Namespace:         namespace,
+		Namespace:         idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -173,9 +167,14 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	if len(permissions) > 0 {
 		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
 		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		fetchPermissionsParams.K8s = make([]string, 0, len(permissions))
+
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else if strings.Contains(permissions[i], "grafana.app") {
+				// Check for pattern <resource>.grafana.app/<resource>:<action>
+				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {
 				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
 			}

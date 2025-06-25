@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -229,6 +230,10 @@ type listServiceAccountTokensQuery struct {
 	UserTable    string
 	TokenTable   string
 	OrgUserTable string
+}
+
+func (listServiceAccountTokensQuery) Validate() error {
+	return nil // TODO
 }
 
 func (s *legacySQLStore) ListServiceAccountTokens(ctx context.Context, ns claims.NamespaceInfo, query ListServiceAccountTokenQuery) (*ListServiceAccountTokenResult, error) {

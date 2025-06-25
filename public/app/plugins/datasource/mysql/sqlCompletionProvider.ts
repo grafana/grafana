@@ -11,7 +11,7 @@ import {
   TableDefinition,
   TableIdentifier,
   TokenType,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 
 interface CompletionProviderGetterArgs {
   getMeta: (t?: TableIdentifier) => Promise<TableDefinition[]>;

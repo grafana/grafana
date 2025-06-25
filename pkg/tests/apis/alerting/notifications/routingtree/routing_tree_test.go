@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -16,24 +15,24 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
+
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -44,11 +43,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingApiServer,
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationNotAllowedMethods(t *testing.T) {
@@ -58,13 +53,13 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	route := &v0alpha1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{},
+		Spec: v0alpha1.RoutingTreeSpec{},
 	}
 	_, err := client.Create(ctx, route, v1.CreateOptions{})
 	assert.Error(t, err)
@@ -162,11 +157,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	admin := org1.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewRoutingTreeClient(t, admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client := newClient(t, tc.user)
+			client := common.NewRoutingTreeClient(t, tc.user)
 
 			if tc.canRead {
 				t.Run("should be able to list routing trees", func(t *testing.T) {
@@ -208,12 +203,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
 			expected := current.Copy().(*v0alpha1.RoutingTree)
-			expected.Spec.Routes = []v0alpha1.Route{
+			expected.Spec.Routes = []v0alpha1.RoutingTreeRoute{
 				{
-					Matchers: []v0alpha1.Matcher{
+					Matchers: []v0alpha1.RoutingTreeMatcher{
 						{
 							Label: "test",
-							Type:  v0alpha1.MatcherTypeEqual,
+							Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 							Value: "test",
 						},
 					},
@@ -297,10 +292,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient := newClient(t, admin)
+	adminClient := common.NewRoutingTreeClient(t, admin)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -317,12 +312,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
 		updated := current.Copy().(*v0alpha1.RoutingTree)
-		updated.Spec.Routes = []v0alpha1.Route{
+		updated.Spec.Routes = []v0alpha1.RoutingTreeRoute{
 			{
-				Matchers: []v0alpha1.Matcher{
+				Matchers: []v0alpha1.RoutingTreeMatcher{
 					{
 						Label: "test",
-						Type:  v0alpha1.MatcherTypeNotEqual,
+						Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
 						Value: "123",
 					},
 				},
@@ -348,7 +343,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient := newClient(t, helper.Org1.Admin)
+	adminClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 	require.NoError(t, err)
@@ -374,7 +369,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NoError(t, err)
 		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = ""
-		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.Route{Continue: true})
+		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: true})
 
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -394,45 +389,29 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client := newClient(t, helper.Org1.Admin)
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
 
 	receiver := "grafana-default-email"
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
-		cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
-		var receivers []*definitions.PostableApiReceiver
-		for _, apiReceiver := range cfg.AlertmanagerConfig.Receivers {
-			var recv []*definitions.PostableGrafanaReceiver
-			for _, r := range apiReceiver.GettableGrafanaReceivers.GrafanaManagedReceivers {
-				recv = append(recv, &definitions.PostableGrafanaReceiver{
-					UID:                   r.UID,
-					Name:                  r.Name,
-					Type:                  r.Type,
-					DisableResolveMessage: r.DisableResolveMessage,
-					Settings:              r.Settings,
-				})
-			}
-			receivers = append(receivers, &definitions.PostableApiReceiver{
-				Receiver:                 config.Receiver{Name: apiReceiver.Name},
-				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{GrafanaManagedReceivers: recv},
-			})
-		}
-		_, err := legacyCli.PostConfiguration(t, definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definition.Config{
-					Route: &route,
-					TimeIntervals: []config.TimeInterval{
-						{
-							Name: timeInterval,
-						},
-					},
-				},
-				Receivers: receivers,
-			},
-		})
+		routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), route, "", func(int64) string { return "default" })
+		require.NoError(t, err)
+		_, err = routeClient.Update(ctx, v1Route, v1.UpdateOptions{})
 		require.NoError(t, err)
 	}
+
+	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          timeInterval,
+			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
+		},
+	}, v1.CreateOptions{})
+	require.NoError(t, err)
 
 	var regex config.Regexp
 	require.NoError(t, json.Unmarshal([]byte(`".*"`), &regex))
@@ -467,28 +446,29 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			createRoute(t, route)
 			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
-			assert.Equal(t, []v0alpha1.Matcher{
+			expected := []v0alpha1.RoutingTreeMatcher{
 				{
 					Label: "label_match",
-					Type:  v0alpha1.MatcherTypeEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 					Value: "test-123",
 				},
 				{
 					Label: "label_re",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: ".*",
 				},
 				{
 					Label: "label_matchers",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "test-321",
 				},
 				{
 					Label: "object-label-matchers",
-					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "test-456",
 				},
-			}, tree.Spec.Routes[0].Matchers)
+			}
+			assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 		})
 		t.Run("should save into ObjectMatchers", func(t *testing.T) {
 			route := definitions.Route{
@@ -557,13 +537,14 @@ func TestIntegrationDataConsistency(t *testing.T) {
 					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
 					ensureMatcher(t, labels.MatchNotRegexp, "p", "1"),
 				},
-				Receiver:          receiver,
-				GroupByStr:        []string{"test-789"},
-				GroupWait:         util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:     util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:    util.Pointer(model.Duration(30 * time.Hour)),
-				MuteTimeIntervals: []string{timeInterval},
-				Continue:          true,
+				Receiver:            receiver,
+				GroupByStr:          []string{"test-789"},
+				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
+				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
+				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				MuteTimeIntervals:   []string{timeInterval},
+				ActiveTimeIntervals: []string{timeInterval},
+				Continue:            true,
 			},
 		},
 	}
@@ -572,7 +553,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	t.Run("correctly reads all fields", func(t *testing.T) {
 		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, v0alpha1.RouteDefaults{
+		assert.Equal(t, v0alpha1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
 			GroupWait:      util.Pointer("30s"),
@@ -580,33 +561,34 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			RepeatInterval: util.Pointer("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
-		assert.Equal(t, v0alpha1.Route{
-			Continue:          true,
-			Receiver:          util.Pointer(receiver),
-			GroupBy:           []string{"test-789"},
-			GroupWait:         util.Pointer("2m"),
-			GroupInterval:     util.Pointer("5m"),
-			RepeatInterval:    util.Pointer("1d6h"),
-			MuteTimeIntervals: []string{timeInterval},
-			Matchers: []v0alpha1.Matcher{
+		assert.Equal(t, v0alpha1.RoutingTreeRoute{
+			Continue:            true,
+			Receiver:            util.Pointer(receiver),
+			GroupBy:             []string{"test-789"},
+			GroupWait:           util.Pointer("2m"),
+			GroupInterval:       util.Pointer("5m"),
+			RepeatInterval:      util.Pointer("1d6h"),
+			MuteTimeIntervals:   []string{timeInterval},
+			ActiveTimeIntervals: []string{timeInterval},
+			Matchers: []v0alpha1.RoutingTreeMatcher{
 				{
 					Label: "m",
-					Type:  v0alpha1.MatcherTypeNotEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
 					Value: "1",
 				},
 				{
 					Label: "n",
-					Type:  v0alpha1.MatcherTypeEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 					Value: "1",
 				},
 				{
 					Label: "o",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "1",
 				},
 				{
 					Label: "p",
-					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "1",
 				},
 			},
@@ -629,20 +611,55 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.Equalf(t, http.StatusOK, status, body)
 		require.Equal(t, before, after)
 	})
-}
 
-func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList] {
-	t.Helper()
+	t.Run("unicode support in groupBy and matchers", func(t *testing.T) {
+		route := definitions.Route{
+			Receiver: receiver,
+			Routes: []*definitions.Route{
+				{
+					GroupByStr: []string{"foo🙂"},
+					Matchers: config.Matchers{{
+						Type:  labels.MatchEqual,
+						Name:  "foo🙂",
+						Value: "bar",
+					}, {
+						Type:  labels.MatchNotEqual,
+						Name:  "_bar1",
+						Value: "baz🙂",
+					}, {
+						Type:  labels.MatchRegexp,
+						Name:  "0baz",
+						Value: "[a-zA-Z0-9]+,?",
+					}, {
+						Type:  labels.MatchNotRegexp,
+						Name:  "corge",
+						Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
+					}},
+					ObjectMatchers: definitions.ObjectMatchers{{
+						Type:  labels.MatchEqual,
+						Name:  "Προμηθέας", // Prometheus in Greek
+						Value: "Prom",
+					}, {
+						Type:  labels.MatchNotEqual,
+						Name:  "犬", // Dog in Japanese (inu)
+						Value: "Shiba Inu",
+					}},
+				},
+			},
+		}
 
-	client, err := dynamic.NewForConfig(user.NewRestConfig())
-	require.NoError(t, err)
-
-	return &apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList]{
-		Client: client.Resource(
-			schema.GroupVersionResource{
-				Group:    v0alpha1.Kind().Group(),
-				Version:  v0alpha1.Kind().Version(),
-				Resource: v0alpha1.Kind().Plural(),
-			}).Namespace("default"),
-	}
+		createRoute(t, route)
+		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, "foo🙂", tree.Spec.Routes[0].GroupBy[0])
+		expected := []v0alpha1.RoutingTreeMatcher{
+			{Label: "foo🙂", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "bar"},
+			{Label: "_bar1", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "baz🙂"},
+			{Label: "0baz", Type: v0alpha1.RoutingTreeMatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
+			{Label: "corge", Type: v0alpha1.RoutingTreeMatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
+			{Label: "Προμηθέας", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "Prom"},
+			{Label: "犬", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "Shiba Inu"},
+		}
+		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
+	})
 }

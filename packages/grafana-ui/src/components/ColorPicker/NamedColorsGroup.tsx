@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import { upperFirst } from 'lodash';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { reverseMap } from '../../utils/reverseMap';
 
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 
@@ -19,12 +19,15 @@ interface NamedColorsGroupProps {
 const NamedColorsGroup = ({ hue, selectedColor, onColorSelect, ...otherProps }: NamedColorsGroupProps) => {
   const label = upperFirst(hue.name);
   const styles = useStyles2(getStyles);
+  const reversedShades = useMemo(() => {
+    return [...hue.shades].reverse();
+  }, [hue.shades]);
 
   return (
     <div className={styles.colorRow}>
       <div className={styles.colorLabel}>{label}</div>
       <div {...otherProps} className={styles.swatchRow}>
-        {reverseMap(hue.shades, (shade) => (
+        {reversedShades.map((shade) => (
           <ColorSwatch
             key={shade.name}
             aria-label={shade.name}
@@ -54,7 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     colorLabel: css({
-      paddingLeft: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
     }),

@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -27,7 +29,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
   }
 
   public getTabLabel() {
-    return 'Alert';
+    return t('dashboard-scene.panel-data-alerting-tab.tab-label', 'Alert');
   }
 
   public getDashboardUID() {
@@ -45,7 +47,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
 
   public getCanCreateRules() {
     const rulesPermissions = getRulesPermissions('grafana');
-    return this.getDashboard().state.meta.canSave && contextSrv.hasPermission(rulesPermissions.create);
+    return (
+      config.unifiedAlerting &&
+      this.getDashboard().state.meta.canSave &&
+      contextSrv.hasPermission(rulesPermissions.create)
+    );
   }
 }
 
@@ -58,9 +64,22 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
   });
 
   const alert = errors.length ? (
-    <Alert title="Errors loading rules" severity="error">
+    <Alert
+      title={t(
+        'dashboard-scene.panel-data-alerting-tab-rendered.alert.title-errors-loading-rules',
+        'Errors loading rules'
+      )}
+      severity="error"
+    >
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
+        <div key={index}>
+          <Trans
+            i18nKey="dashboard-scene.panel-data-alerting-tab-rendered.error-failed-to-load"
+            values={{ errorToDisplay: stringifyErrorLike(error) }}
+          >
+            Failed to load Grafana rules state: {'{{errorToDisplay}}'}
+          </Trans>
+        </div>
       ))}
     </Alert>
   ) : null;
@@ -69,7 +88,9 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     return (
       <>
         {alert}
-        <LoadingPlaceholder text="Loading rules..." />
+        <LoadingPlaceholder
+          text={t('dashboard-scene.panel-data-alerting-tab-rendered.text-loading-rules', 'Loading rules...')}
+        />
       </>
     );
   }
@@ -86,10 +107,31 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     );
   }
 
+  const isNew = !Boolean(model.getDashboardUID());
+  const dashboard = model.getDashboard();
+
   return (
     <div className={styles.noRulesWrapper}>
-      <p>There are no alert rules linked to this panel.</p>
-      {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
+      {!isNew && (
+        <>
+          <p>
+            <Trans i18nKey="dashboard.panel-edit.alerting-tab.no-rules">
+              There are no alert rules linked to this panel.
+            </Trans>
+          </p>
+          {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
+        </>
+      )}
+      {isNew && !!dashboard.state.meta.canSave && (
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.panel-data-alerting-tab-rendered.title-dashboard-not-saved', 'Dashboard not saved')}
+        >
+          <Trans i18nKey="dashboard.panel-edit.alerting-tab.dashboard-not-saved">
+            Dashboard must be saved before alerts can be added.
+          </Trans>
+        </Alert>
+      )}
     </div>
   );
 }

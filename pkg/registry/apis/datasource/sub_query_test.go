@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,8 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -58,6 +61,26 @@ func TestSubQueryConnect(t *testing.T) {
 		"X-Rule-Version":           "version-1",
 		"X-Grafana-Org-Id":         "1",
 	}, *sqr.builder.client.(mockClient).lastCalledWithHeaders)
+}
+
+func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
+	sqr := subQueryREST{
+		builder: &DataSourceAPIBuilder{
+			client: mockClient{
+				lastCalledWithHeaders: &map[string]string{},
+			},
+			datasources:     mockDatasources{},
+			contextProvider: mockContextProvider{},
+			log:             log.NewNopLogger(),
+		},
+	}
+
+	mr := mockResponder{}
+	_, err := sqr.Connect(context.Background(), "dsname-that-does-not-exist", nil, mr)
+	require.Error(t, err)
+	var statusErr *k8serrors.StatusError
+	require.True(t, errors.As(err, &statusErr))
+	require.Equal(t, int32(404), statusErr.Status().Code)
 }
 
 type mockClient struct {
@@ -108,7 +131,10 @@ func (m mockDatasources) List(ctx context.Context) (*v0alpha1.DataSourceConnecti
 // Return settings (decrypted!) for a specific plugin
 // This will require "query" permission for the user in context
 func (m mockDatasources) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
-	return nil, nil
+	if uid == "dsname" {
+		return nil, nil
+	}
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 type mockContextProvider struct {

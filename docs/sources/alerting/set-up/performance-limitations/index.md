@@ -61,9 +61,17 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 If you have a high number of alert instances, it can happen that the load on the database gets very high, as each state
 transition of an alert instance is saved in the database.
 
-This can be prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
+### Compressed alert state
+
+When the `alertingSaveStateCompressed` feature toggle is enabled, Grafana saves the alert rule state in a compressed form, reducing database overhead for alerts with many instances.
+
+### Save state periodically
+
+High load can be also prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
 to be enabled. By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
-can also be configured using the `state_periodic_save_interval` configuration flag.
+can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the
+database and then writes the entire current set of instances back in batches in a single transacton.
+Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
@@ -72,3 +80,7 @@ If Grafana crashes or is force killed, then the database can be up to `state_per
 When Grafana restarts, the UI might show incorrect state for some alerts until the alerts are re-evaluated.
 In some cases, alerts that were firing before the crash might fire again.
 If this happens, Grafana might send duplicate notifications for firing alerts.
+
+## Alert rule migrations for Grafana 11.6.0
+
+When you upgrade to Grafana 11.6.0, a migration is performed on the `alert_rule_versions` table. If you experience a 11.6.0 upgrade that causes a migration failure, then your `alert_rule_versions` table has too many rows. To fix this, you need to truncated the `alert_rule_versions` table for the migration to complete.

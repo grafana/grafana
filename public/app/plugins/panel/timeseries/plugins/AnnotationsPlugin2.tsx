@@ -176,19 +176,16 @@ export const AnnotationsPlugin2 = ({
             let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
             let x0 = u.valToPos(vals.time[i], 'x', true);
+            renderLine(ctx, y0, y1, x0, color);
 
-            if (!vals.isRegion?.[i]) {
-              renderLine(ctx, y0, y1, x0, color);
-              // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-            } else if (canvasRegionRendering) {
-              renderLine(ctx, y0, y1, x0, color);
-
+            if (vals.isRegion?.[i]) {
               let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
-
               renderLine(ctx, y0, y1, x1, color);
 
-              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-              ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+              if (canvasRegionRendering) {
+                ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+                ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+              }
             }
           }
         }

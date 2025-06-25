@@ -16,6 +16,7 @@ export interface ContactPoint {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+  activeTimeIntervals: string[];
 }
 
 // key: name of alert manager, value ContactPoint
@@ -49,12 +50,13 @@ export interface RuleFormValues {
   folder: Folder | undefined;
   evaluateEvery: string;
   evaluateFor: string;
+  keepFiringFor?: string;
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
   editorSettings?: SimplifiedEditor;
   metric?: string;
-
+  targetDatasourceUid?: string;
   // cortex / loki rules
   namespace: string;
   forTime: number;
@@ -62,6 +64,7 @@ export interface RuleFormValues {
   keepFiringForTime?: number;
   keepFiringForTimeUnit?: string;
   expression: string;
+  missingSeriesEvalsToResolve?: number;
 }
 
 export type Folder = { title: string; uid: string };

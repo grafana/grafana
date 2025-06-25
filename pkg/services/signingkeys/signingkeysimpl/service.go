@@ -1,7 +1,6 @@
 package signingkeysimpl
 
 import (
-	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdsa"
@@ -182,7 +181,7 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 	expiry := now.Add(30 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
-		PrivateKey: encoded,
+		PrivateKey: string(encoded),
 		ExpiresAt:  &expiry,
 		Alg:        alg,
 		AddedAt:    now,
@@ -232,7 +231,7 @@ func (s *Service) encodePrivateKey(ctx context.Context, privateKey crypto.Signer
 	return encoded, nil
 }
 
-func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (crypto.Signer, error) {
+func (s *Service) decodePrivateKey(ctx context.Context, privateKey string) (crypto.Signer, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if len(privateKey) == 0 {
 		return nil, errors.New("private key is empty")
@@ -240,10 +239,9 @@ func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (cryp
 
 	// Backwards compatibility with old base64 encoding
 	// Can be removed in the future
-	privateKey = bytes.TrimRight(privateKey, "=")
+	privateKey = strings.TrimRight(privateKey, "=")
 
-	payload := make([]byte, base64.RawStdEncoding.DecodedLen(len(privateKey)))
-	_, err := base64.RawStdEncoding.Decode(payload, privateKey)
+	payload, err := base64.RawStdEncoding.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
@@ -23,6 +24,7 @@ export interface Props {
   mode?: TooltipDisplayMode | null;
   header?: string;
   padding?: number;
+  maxHeight?: number;
 }
 
 export interface DisplayValue {
@@ -92,7 +94,16 @@ export function getDisplayValuesAndLinks(
   return { displayValues, links };
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+export const DataHoverView = ({
+  data,
+  rowIndex,
+  columnIndex,
+  sortOrder,
+  mode,
+  header,
+  padding = 0,
+  maxHeight,
+}: Props) => {
   const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
@@ -108,7 +119,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const { displayValues, links } = dispValuesAndLinks;
 
   if (header === 'Exemplar') {
-    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
+    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} maxHeight={maxHeight} />;
   }
 
   return (
@@ -128,7 +139,9 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
           ))}
           {links.map((link, i) => (
             <tr key={i}>
-              <th>Link</th>
+              <th>
+                <Trans i18nKey="visualization.data-hover-view.link">Link</Trans>
+              </th>
               <td colSpan={2}>
                 <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
                   {link.title}

@@ -23,7 +23,7 @@ func TestDashboardUpdater(t *testing.T) {
 	t.Run("updateAppDashboards", func(t *testing.T) {
 		scenario(t, "Without any stored plugin settings shouldn't delete/import any dashboards",
 			scenarioInput{}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.Len(t, ctx.pluginSettingsService.getPluginSettingsArgs, 1)
 				require.Equal(t, int64(0), ctx.pluginSettingsService.getPluginSettingsArgs[0])
@@ -46,7 +46,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -68,7 +68,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -100,7 +100,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -135,7 +135,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
@@ -183,7 +183,7 @@ func TestDashboardUpdater(t *testing.T) {
 					},
 				},
 			}, func(ctx *scenarioContext) {
-				ctx.dashboardUpdater.updateAppDashboards()
+				ctx.dashboardUpdater.updateAppDashboards(context.Background())
 
 				require.NotEmpty(t, ctx.pluginSettingsService.getPluginSettingsArgs)
 				require.Len(t, ctx.dashboardService.deleteDashboardArgs, 1)
@@ -443,18 +443,21 @@ func (s *pluginsSettingsServiceMock) DecryptedValues(_ *pluginsettings.DTO) map[
 type dashboardServiceMock struct {
 	dashboards.DashboardService
 	deleteDashboardArgs []struct {
-		orgId       int64
-		dashboardId int64
+		orgId        int64
+		dashboardId  int64
+		dashboardUID string
 	}
 }
 
-func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId int64, orgId int64) error {
+func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId int64, dashboardUID string, orgId int64) error {
 	s.deleteDashboardArgs = append(s.deleteDashboardArgs, struct {
-		orgId       int64
-		dashboardId int64
+		orgId        int64
+		dashboardId  int64
+		dashboardUID string
 	}{
-		orgId:       orgId,
-		dashboardId: dashboardId,
+		orgId:        orgId,
+		dashboardId:  dashboardId,
+		dashboardUID: dashboardUID,
 	})
 	return nil
 }
@@ -532,8 +535,9 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 
 	sCtx.dashboardService = &dashboardServiceMock{
 		deleteDashboardArgs: []struct {
-			orgId       int64
-			dashboardId int64
+			orgId        int64
+			dashboardId  int64
+			dashboardUID string
 		}{},
 	}
 

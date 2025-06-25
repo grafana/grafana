@@ -20,6 +20,15 @@ var (
 	// MStatTotalServiceAccountTokens is a metric gauge for total number of service account tokens
 	MStatTotalServiceAccountTokens prometheus.Gauge
 
+	// MStatTotalMigratedAPIKeysToSATokens is a metric gauge for total number of API keys to be migrated to service account tokens
+	MStatTotalMigratedAPIKeysToSATokens prometheus.Gauge
+
+	// MStatSuccessfullyMigratedAPIKeysToSATokens is a metric gauge for total number of successful migrations of API keys to service account tokens
+	MStatSuccessfullyMigratedAPIKeysToSATokens prometheus.Gauge
+
+	// MStatFailedMigratedAPIKeysToSATokens is a metric gauge for total number of failed migrations of API keys to service account tokens
+	MStatFailedMigratedAPIKeysToSATokens prometheus.Gauge
+
 	Initialised bool = false
 )
 
@@ -42,10 +51,31 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MStatTotalMigratedAPIKeysToSATokens = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_migrated_api_keys_to_sa_tokens",
+		Help:      "total number of API keys to be migrated to service account tokens",
+		Namespace: ExporterName,
+	})
+
+	MStatSuccessfullyMigratedAPIKeysToSATokens = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_successfully_migrated_api_keys_to_sa_tokens",
+		Help:      "total number of successful migrations of API keys to service account tokens",
+		Namespace: ExporterName,
+	})
+
+	MStatFailedMigratedAPIKeysToSATokens = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_failed_migrated_api_keys_to_sa_tokens",
+		Help:      "total number of failed migrations of API keys to service account tokens",
+		Namespace: ExporterName,
+	})
+
 	prometheus.MustRegister(
 		MStatTotalServiceAccounts,
 		MStatTotalServiceAccountTokens,
 		MStatTotalServiceAccountsNoRole,
+		MStatTotalMigratedAPIKeysToSATokens,
+		MStatSuccessfullyMigratedAPIKeysToSATokens,
+		MStatFailedMigratedAPIKeysToSATokens,
 	)
 }
 
@@ -80,4 +110,10 @@ func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[stri
 	MStatTotalServiceAccountTokens.Set(float64(storeStats.Tokens))
 
 	return stats, nil
+}
+
+func setAPIKeyMigrationStats(total, migrated, failed int) {
+	MStatTotalMigratedAPIKeysToSATokens.Set(float64(total))
+	MStatSuccessfullyMigratedAPIKeysToSATokens.Set(float64(migrated))
+	MStatFailedMigratedAPIKeysToSATokens.Set(float64(failed))
 }

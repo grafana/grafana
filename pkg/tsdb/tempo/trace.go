@@ -123,7 +123,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		}
 
 		frame.Meta.Custom = map[string]interface{}{
-			"partial": tr.GetStatus() == tempopb.TraceByIDResponse_PARTIAL,
+			"partial": tr.GetStatus() == tempopb.PartialStatus_PARTIAL,
 			"message": tr.GetMessage(),
 		}
 	}
@@ -155,8 +155,10 @@ func (s *Service) performTraceRequest(ctx context.Context, dsInfo *Datasource, a
 	}
 
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		if resp != nil && resp.Body != nil {
+			if err := resp.Body.Close(); err != nil {
+				ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+			}
 		}
 	}()
 

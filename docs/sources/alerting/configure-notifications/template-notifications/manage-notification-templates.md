@@ -28,6 +28,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
+  notification-template-examples:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/examples/
 ---
 
 # Manage notification templates
@@ -95,9 +100,9 @@ For more details on how to write notification templates, refer to the [template 
 
 Preview how your notification templates should look before using them in your contact points, helping you understand the result of the template you are creating as well as enabling you to fix any errors before saving it.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Notification template preview is only for Grafana Alertmanager.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To preview your notification templates:
 

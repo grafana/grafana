@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
@@ -52,6 +52,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     }
   };
 
+  const isProvisioned = dashboard instanceof DashboardScene && dashboard.isManagedRepository();
   return (
     <Stack alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
@@ -100,7 +101,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={onAddLibraryPanel}
-                  disabled={!canCreate}
+                  disabled={!canCreate || isProvisioned}
                 >
                   <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
                 </Button>

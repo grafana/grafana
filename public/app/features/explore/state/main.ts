@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -151,7 +151,7 @@ export const navigateToExplore = (
       return;
     }
 
-    locationService.push(path!);
+    locationService.push(locationUtil.stripBaseFromUrl(path!));
   };
 };
 

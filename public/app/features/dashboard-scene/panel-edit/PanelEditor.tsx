@@ -2,6 +2,7 @@ import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
@@ -19,9 +20,11 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 
+import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
-import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
@@ -76,6 +79,18 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
+
+    if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      panel.changePluginType('timeseries');
+    }
+
+    this._subs.add(
+      this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+        // TODO add support for undo/redo within panel edit
+        payload.perform();
+      })
+    );
+
     const deactivateParents = activateSceneObjectAndParentTree(panel);
 
     this.waitForPlugin();
@@ -239,7 +254,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     return {
-      text: 'Edit panel',
+      text: t('dashboard-scene.panel-editor.text.edit-panel', 'Edit panel'),
       parentItem: dashboard.getPageNav(location, navIndex),
     };
   }

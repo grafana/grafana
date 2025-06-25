@@ -141,7 +141,7 @@ func (s *Signature) ReadPluginManifestFromFS(ctx context.Context, pfs plugins.FS
 }
 
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+	if defaultSignature, exists := src.DefaultSignature(ctx, plugin.JSONData.ID); exists {
 		return defaultSignature, nil
 	}
 
