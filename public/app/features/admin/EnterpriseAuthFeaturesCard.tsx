@@ -34,17 +34,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
   }
 
   return (
-    <Box
-      padding={2}
-      borderColor="weak"
-      borderStyle={'solid'}
-      borderRadius="default"
-      backgroundColor="secondary"
-      display={'flex'}
-      direction="column"
-      gap={1.5}
-      marginTop={3}
-    >
+    <div className={styles.box}>
       <Stack direction="row" alignItems="center" justifyContent={'space-between'}>
         <div className={styles.cloudBadge}>
           <Icon name="cloud" className={styles.icon} />
@@ -80,7 +70,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
           <Trans i18nKey="admin.enterprise-auth-features-card.learn-more-link">Learn more</Trans>
         </LinkButton>
       </div>
-    </Box>
+    </div>
   );
 }
 
@@ -95,6 +85,19 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.pill,
       fontSize: theme.typography.bodySmall.fontSize,
       gap: theme.spacing(1),
+    }),
+    box: css({
+      padding: theme.spacing(3),
+      border: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: theme.colors.background.secondary,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.default,
+      marginTop: theme.spacing(3),
+      strong: {
+        color: theme.colors.text.primary,
+      },
     }),
     icon: css({
       position: 'relative',
