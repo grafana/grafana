@@ -50,6 +50,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>Database</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-db`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-db`}
@@ -72,6 +73,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         label={<InlineLabel width={WIDTH_SHORT}>User</InlineLabel>}
         className={styles.horizontalField}
         htmlFor={`${htmlPrefix}-user`}
+        noMargin
       >
         <Input
           id={`${htmlPrefix}-user`}
@@ -84,6 +86,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         horizontal
         label={<InlineLabel width={WIDTH_SHORT}>Password</InlineLabel>}
         className={styles.horizontalField}
+        noMargin
       >
         <SecretInput
           isConfigured={Boolean(secureJsonFields && secureJsonFields.password)}
@@ -109,6 +112,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
         }
         htmlFor={`${htmlPrefix}-http-method`}
         className={styles.horizontalField}
+        noMargin
       >
         <Select
           inputId={`${htmlPrefix}-http-method`}
@@ -131,12 +135,34 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           </InlineLabel>
         }
         className={styles.horizontalField}
+        noMargin
       >
         <Input
           className="width-20"
           placeholder="10s"
           value={options.jsonData.timeInterval || ''}
           onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+        />
+      </Field>
+
+      <Field
+        horizontal
+        label={
+          <InlineLabel
+            width={WIDTH_SHORT}
+            tooltip="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
+          >
+            Autocomplete range
+          </InlineLabel>
+        }
+        className={styles.horizontalField}
+        noMargin
+      >
+        <Input
+          className="width-20"
+          placeholder="12h"
+          value={options.jsonData.showTagTime || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'showTagTime')}
         />
       </Field>
     </>
