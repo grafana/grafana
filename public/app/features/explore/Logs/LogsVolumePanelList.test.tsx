@@ -22,7 +22,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () =
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
       onLoadLogsVolume={onLoadLogsVolume}
-      onHiddenSeriesChanged={() => null}
+      onDisplayedSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
     />
   );

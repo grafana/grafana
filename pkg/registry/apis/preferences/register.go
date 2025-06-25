@@ -33,6 +33,11 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 	return builder
 }
 
+// AllowedV0Alpha1Resources implements builder.APIGroupBuilder.
+func (b *PreferencesAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (b *PreferencesAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return preferences.GroupVersion
 }

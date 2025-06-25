@@ -3,7 +3,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Box, Icon, Tab, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
@@ -30,7 +30,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
   const isClone = useIsClone(model);
-  const { t } = useTranslate();
+
   const isDraggable = !isClone && isEditing;
 
   if (isConditionallyHidden && !isEditing && !isActive) {
@@ -93,7 +93,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 }
 
 function IsHiddenSuffix() {
-  const { t } = useTranslate();
   return (
     <Box paddingLeft={1} display={'inline'}>
       <Tooltip

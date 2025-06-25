@@ -34,6 +34,9 @@ preferences: {
 					language?: string
 
 					// Selected locale (beta)
+					regionalFormat?: string
+
+					// Selected locale (beta)
 					locale?: string
 
 					// Explore query history preferences

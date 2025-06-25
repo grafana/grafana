@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 

@@ -1,11 +1,12 @@
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { WorkflowOption } from 'app/features/provisioning/types';
 
 import { Diffs } from '../settings/version-history/utils';
 
@@ -21,6 +22,19 @@ export interface DashboardChangeInfo {
   isNew?: boolean;
   hasFolderChanges?: boolean;
   hasMigratedToV2?: boolean;
+}
+export interface ProvisionedDashboardFormData {
+  ref?: string; // Branch or tag in the repository
+  path: string; // Path to the dashboard file in the repository
+  comment?: string; // Commit message for the change
+  repo: string; // Repository name
+  workflow?: WorkflowOption;
+  title: string; // Title of the dashboard
+  description: string;
+  folder: {
+    uid?: string;
+    title?: string;
+  };
 }
 
 export function isVersionMismatchError(error?: Error) {
@@ -41,7 +55,6 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const { t } = useTranslate();
   const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
@@ -84,7 +97,6 @@ export interface SaveButtonProps {
 }
 
 export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
-  const { t } = useTranslate();
   return (
     <Button
       disabled={!isValid || isLoading}

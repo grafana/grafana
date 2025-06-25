@@ -729,38 +729,53 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
+		// The metric includes alert rules with either internal ConvertedPrometheusRuleLabel label,
+		// or when AlertRule.HasPrometheusRuleDefinition() returns true.
 		alertRule1 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(firstOrgID),
 			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
 		).GenerateRef()
 
-		t.Run("it should show one imported rule in a single org", func(t *testing.T) {
-			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
+		alertRule2 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
+		).GenerateRef()
+
+		alertRulePaused := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+			models.RuleGen.WithIsPaused(true),
+		).GenerateRef()
+
+		t.Run("it should show two imported rules in a single org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRulePaused})
 
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_prometheus_imported_rules The number of rules imported from a Prometheus-compatible source.
 								# TYPE grafana_alerting_prometheus_imported_rules gauge
-								grafana_alerting_prometheus_imported_rules{org="%[1]d"} 1
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="active"} 2
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="paused"} 1
 				`, alertRule1.OrgID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
 			require.NoError(t, err)
 		})
 
-		alertRule2 := models.RuleGen.With(
+		alertRule3 := models.RuleGen.With(
 			models.RuleGen.WithOrgID(secondOrgID),
 			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
 		).GenerateRef()
 
-		t.Run("it should show two imported rules in two orgs", func(t *testing.T) {
-			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
+		t.Run("it should show three imported rules in two orgs", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRule3, alertRulePaused})
 
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_prometheus_imported_rules The number of rules imported from a Prometheus-compatible source.
 								# TYPE grafana_alerting_prometheus_imported_rules gauge
-								grafana_alerting_prometheus_imported_rules{org="%[1]d"} 1
-								grafana_alerting_prometheus_imported_rules{org="%[2]d"} 1
-				`, alertRule1.OrgID, alertRule2.OrgID)
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="active"} 2
+								grafana_alerting_prometheus_imported_rules{org="%[1]d",state="paused"} 1
+								grafana_alerting_prometheus_imported_rules{org="%[2]d",state="active"} 1
+				`, firstOrgID, secondOrgID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_prometheus_imported_rules")
 			require.NoError(t, err)

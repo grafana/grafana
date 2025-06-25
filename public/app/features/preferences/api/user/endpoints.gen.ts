@@ -78,8 +78,6 @@ export type QueryHistoryPreference = {
 };
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
   locale?: string;
@@ -91,8 +89,6 @@ export type PatchPrefsCmd = {
 };
 export type UpdatePrefsCmd = {
   cookies?: CookieType[];
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
   locale?: string;

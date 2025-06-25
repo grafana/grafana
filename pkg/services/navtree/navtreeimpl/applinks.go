@@ -174,6 +174,11 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				IsNew:      true,
 			}
 			alertsSection.Children = append(alertsSection.Children, serviceLink)
+
+			reportsNavLink := navtree.FindByURL(alertsSection.Children, "/a/grafana-slo-app/reports")
+			if reportsNavLink != nil {
+				reportsNavLink.IsNew = true
+			}
 		}
 	}
 
@@ -227,7 +232,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
-				SubTitle:   "Observability and infrastructure apps",
+				SubTitle:   "Opinionated observability across applications, services, and infrastructure",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},

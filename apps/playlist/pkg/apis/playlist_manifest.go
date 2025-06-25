@@ -14,8 +14,6 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName: "playlist",
 	Group:   "playlist.grafana.app",

@@ -297,15 +297,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, res[0], provisioningData)
 
 		// get dashboards within the provisioner
-		dashs, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 1)
+		provisionedDashes, err := dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 1)
 		require.NoError(t, err)
-		require.Len(t, dashs, 1)
-		dashs, err = dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 2)
+		require.Len(t, provisionedDashes, 1)
+		provisionedDashes, err = dashboardStore.GetProvisionedDashboardsByName(context.Background(), "test", 2)
 		require.NoError(t, err)
-		require.Len(t, dashs, 0)
+		require.Len(t, provisionedDashes, 0)
 
 		// find dashboards not within that provisioner
-		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 1)
+		dashs, err := dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 1)
 		require.NoError(t, err)
 		require.Len(t, dashs, 1)
 		dashs, err = dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), []string{"test"}, 2)
@@ -888,25 +888,47 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc           string
-		title          string
-		expectedResult res
-		typ            string
+		desc            string
+		title           string
+		titleExactMatch bool
+		expectedResult  *res
+		typ             string
 	}{
 		{
 			desc:           "find dashboard under general",
 			title:          "dashboard under general",
-			expectedResult: res{title: "dashboard under general"},
+			expectedResult: &res{title: "dashboard under general"},
 		},
 		{
 			desc:           "find dashboard under f0",
 			title:          "dashboard under f0",
-			expectedResult: res{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+			expectedResult: &res{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 		},
 		{
 			desc:           "find dashboard under subfolder",
 			title:          "dashboard under subfolder",
-			expectedResult: res{title: "dashboard under subfolder", folderUID: subfolder.UID, folderTitle: subfolder.Title},
+			expectedResult: &res{title: "dashboard under subfolder", folderUID: subfolder.UID, folderTitle: subfolder.Title},
+		},
+		{
+			desc:            "find folder 'sub' using partial match: 1 result found",
+			title:           "sub",
+			titleExactMatch: false,
+			typ:             "dash-folder",
+			expectedResult:  &res{title: "subfolder", folderUID: f0.UID, folderTitle: f0.Title},
+		},
+		{
+			desc:            "find folder 'sub' using exact match: no results",
+			title:           "sub",
+			titleExactMatch: true,
+			typ:             "dash-folder",
+			expectedResult:  nil,
+		},
+		{
+			desc:            "find folder 'subfolder' using exact match: 1 result",
+			title:           "subfolder",
+			titleExactMatch: true,
+			typ:             "dash-folder",
+			expectedResult:  &res{title: "subfolder", folderUID: f0.UID, folderTitle: f0.Title},
 		},
 	}
 
@@ -915,11 +937,18 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
-				SignedInUser: user,
-				Type:         tc.typ,
-				Title:        tc.title,
+				SignedInUser:    user,
+				Type:            tc.typ,
+				Title:           tc.title,
+				TitleExactMatch: tc.titleExactMatch,
 			})
 			require.NoError(t, err)
+
+			if tc.expectedResult == nil {
+				require.Equal(t, 0, len(res))
+				return
+			}
+
 			require.Equal(t, 1, len(res))
 
 			r := tc.expectedResult

@@ -11,7 +11,7 @@ import {
   LoadingState,
   DataQueryError,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -56,7 +56,7 @@ export const InspectContent = ({
   onClose,
 }: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
-  const { t } = useTranslate();
+
   if (!plugin) {
     return null;
   }
@@ -129,7 +129,7 @@ function getErrors(data: PanelData | undefined): DataQueryError[] {
   if (!errors.length && data?.state === LoadingState.Error) {
     return [
       {
-        message: 'Error loading data',
+        message: t('dashboard.get-errors.message.error-loading-data', 'Error loading data'),
       },
     ];
   }

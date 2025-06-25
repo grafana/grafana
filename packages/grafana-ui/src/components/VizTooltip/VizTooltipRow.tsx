@@ -4,9 +4,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorPlacement, VizTooltipItem } from './types';
@@ -52,8 +52,9 @@ export const VizTooltipRow = ({
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'wrap',
+        whiteSpace: 'pre-line',
         wordBreak: 'break-word',
+        lineHeight: 1.2,
       };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
@@ -129,7 +130,7 @@ export const VizTooltipRow = ({
   return (
     <div className={styles.contentWrapper}>
       {(color || label) && (
-        <div className={styles.valueWrapper}>
+        <div className={styles.labelWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
             <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
           )}
@@ -221,6 +222,12 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
     overflow: 'hidden',
     marginRight: theme.spacing(2),
   }),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    flex: '2',
+    minWidth: 0,
+  }),
   value: css({
     fontWeight: 500,
     textOverflow: 'ellipsis',
@@ -229,6 +236,7 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
+    flex: '1',
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
