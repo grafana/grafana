@@ -73,7 +73,6 @@ func (n *eventStore) parseKey(key string) (EventKey, error) {
 // LastEventKey returns the Event Key of the event with the highest resource version.
 // If no events are found, it returns ErrNotFound.
 func (n *eventStore) LastEventKey(ctx context.Context) (EventKey, error) {
-
 	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderDesc, Limit: 1}) {
 		if err != nil {
 			return EventKey{}, err

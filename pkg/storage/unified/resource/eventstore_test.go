@@ -12,7 +12,8 @@ import (
 func setupTestEventStore(t *testing.T) *eventStore {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
 	return newEventStore(kv)
@@ -318,7 +319,7 @@ func TestEventStore_ListSince(t *testing.T) {
 	}
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
-	var retrievedEvents []Event
+	retrievedEvents := make([]Event, 0, 2)
 	for event, err := range store.ListSince(ctx, 1500) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
@@ -335,7 +336,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// List events when store is empty
-	var retrievedEvents []Event
+	retrievedEvents := make([]Event, 0)
 	for event, err := range store.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
