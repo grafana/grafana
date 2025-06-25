@@ -1,4 +1,4 @@
 {
-  "exclude": ["dist", "node_modules", "tests", "**/*.test.ts*"],
+  "exclude": ["dist", "node_modules", "tests", "**/*.test.ts*", "**/*.story.tsx"],
   "extends": "./tsconfig.json"
 }
