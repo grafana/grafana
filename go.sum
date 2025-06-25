@@ -1613,6 +1613,8 @@ github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1/go.mod h1:u5uyB/n3LAUJzQyvacslofKbqpmaJlbNhf5D5DuqqfQ=
 github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250617185418-073e1195cf26 h1:x8sAxGSOPFQ5lDZ6OUyZE5k/Ko04BPNp+TUd+LNYOnQ=
 github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250617185418-073e1195cf26/go.mod h1:dnyn8aVgSsZXFk7G6vf5DEcxy4ZtzPR1e9XuZUs1z1k=
+github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250625205002-4b02ac22a884 h1:eBuMFUW7gKeari4FKeRbvLaNO0AMmiBxSTBCl8seqDg=
+github.com/grafana/grafana/apps/alerting/rules v0.0.0-20250625205002-4b02ac22a884/go.mod h1:dnyn8aVgSsZXFk7G6vf5DEcxy4ZtzPR1e9XuZUs1z1k=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf h1:4dylGFxAO/B2up1n5x4smAVdfTYkStSExS3WaLD5jXY=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf/go.mod h1:XcJIUxPfKAhDb9mx9jHeV9U2xVA2WgE93ukd4Bx8U/M=
 github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 h1:SkVUcSlXIUi46gSGfe5/Xqn2p51c/unmkZRDX+274Os=
