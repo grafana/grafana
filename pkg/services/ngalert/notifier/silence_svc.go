@@ -46,7 +46,7 @@ type SilenceStore interface {
 }
 
 type RuleStore interface {
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, string, error)
 }
 
 func NewSilenceService(
@@ -200,7 +200,7 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 		OrgID:    user.GetOrgID(),
 	}
 
-	rules, err := s.ruleStore.ListAlertRules(ctx, &q)
+	rules, _, err := s.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return err
 	}

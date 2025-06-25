@@ -139,7 +139,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+		alertRules, _, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
 			logger.Error("Unable to fetch previous state", "error", err)
 		}

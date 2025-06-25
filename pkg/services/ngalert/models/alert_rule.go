@@ -875,6 +875,9 @@ type ListAlertRulesQuery struct {
 	HasPrometheusRuleDefinition *bool
 
 	RuleType RuleTypeFilter
+
+	Limit         int64
+	ContinueToken string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

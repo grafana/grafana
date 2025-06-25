@@ -51,18 +51,22 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rules, _, err := s.service.GetFilteredRules(ctx, user, ngmodels.RuleTypeFilterRecording)
+	rules, _, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+		RuleType:      ngmodels.RuleTypeFilterRecording,
+		Limit:         opts.Limit,
+		ContinueToken: opts.Continue,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertToK8sResources(user.GetOrgID(), rules, s.namespacer)
+	return ConvertToK8sResources(user.GetOrgID(), rules, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {

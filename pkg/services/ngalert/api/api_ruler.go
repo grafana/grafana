@@ -777,7 +777,7 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 		NamespaceUIDs: []string{ruleGroupKey.NamespaceUID},
 		RuleGroups:    []string{ruleGroupKey.RuleGroup},
 	}
-	rules, err := srv.store.ListAlertRules(ctx, &q)
+	rules, _, err := srv.store.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +803,7 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 		DashboardUID:  q.DashboardUID,
 		PanelID:       q.PanelID,
 	}
-	rules, err := srv.store.ListAlertRules(ctx, &query)
+	rules, _, err := srv.store.ListAlertRules(ctx, &query)
 	if err != nil {
 		return nil, 0, err
 	}

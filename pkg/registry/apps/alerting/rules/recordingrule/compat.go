@@ -71,8 +71,12 @@ func ConvertToK8sResources(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	namespaceMapper request.NamespaceMapper,
+	continueToken string,
 ) (*model.RecordingRuleList, error) {
 	k8sRules := &model.RecordingRuleList{
+		ListMeta: metav1.ListMeta{
+			Continue: continueToken,
+		},
 		Items: make([]model.RecordingRule, 0, len(rules)),
 	}
 	for _, rule := range rules {

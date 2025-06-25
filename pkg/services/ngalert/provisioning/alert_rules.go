@@ -80,30 +80,38 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
-func (service *AlertRuleService) GetFilteredRules(ctx context.Context, user identity.Requester, filter models.RuleTypeFilter) ([]*models.AlertRule, map[string]models.Provenance, error) {
+type ListAlertRulesOptions struct {
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+}
+
+func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {
 	q := models.ListAlertRulesQuery{
-		OrgID:    user.GetOrgID(),
-		RuleType: filter,
+		OrgID:         user.GetOrgID(),
+		RuleType:      opts.RuleType,
+		Limit:         opts.Limit,
+		ContinueToken: opts.ContinueToken,
 	}
-	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
+	rules, nextToken, err = service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
-	provenances := make(map[string]models.Provenance)
+	provenances = make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
 		provenances, err = service.provenanceStore.GetProvenances(ctx, user.GetOrgID(), resourceType)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, "", err
 		}
 	}
 
 	can, err := service.authz.CanReadAllRules(ctx, user)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 	if can {
-		return rules, provenances, nil
+		return rules, provenances, nextToken, nil
 	}
 	// If user does not have blanket privilege to read rules, remove all rules that are not allowed to the user.
 	groups := models.GroupByAlertRuleGroupKey(rules)
@@ -117,18 +125,18 @@ func (service *AlertRuleService) GetFilteredRules(ctx context.Context, user iden
 				}
 				continue
 			}
-			return nil, nil, err
+			return nil, nil, "", err
 		}
 		result = append(result, group...)
 	}
-	return result, provenances, nil
+	return result, provenances, nextToken, nil
 }
 
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]models.Provenance, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),
 	}
-	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
+	rules, _, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -348,7 +356,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 		RuleGroups:    []string{group},
 	}
 
-	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	ruleList, _, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return models.AlertRuleGroup{}, err
 	}
@@ -390,7 +398,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 			NamespaceUIDs: []string{namespaceUID},
 			RuleGroups:    []string{ruleGroup},
 		}
-		ruleList, err := service.ruleStore.ListAlertRules(ctx, query)
+		ruleList, _, err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
 			return fmt.Errorf("failed to list alert rules: %w", err)
 		}
@@ -557,7 +565,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 			NamespaceUIDs: []string{group.FolderUID},
 			RuleGroups:    []string{group.Title},
 		}
-		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
+		ruleList, _, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list alert rules: %w", err)
 		}
@@ -887,7 +895,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 	}
 	q = filterOpts.apply(q)
 
-	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
+	ruleList, _, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, err
 	}

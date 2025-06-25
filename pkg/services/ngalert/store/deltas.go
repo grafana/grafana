@@ -71,7 +71,7 @@ func (c *GroupDelta) NewOrUpdatedNotificationSettings() []models.NotificationSet
 }
 
 type RuleReader interface {
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, string, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
 }
 
@@ -83,7 +83,7 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
 		RuleGroups:    []string{groupKey.RuleGroup},
 	}
-	existingGroupRules, err := ruleReader.ListAlertRules(ctx, q)
+	existingGroupRules, _, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
 	}
@@ -218,7 +218,7 @@ func CalculateRuleUpdate(ctx context.Context, ruleReader RuleReader, rule *model
 		NamespaceUIDs: []string{rule.NamespaceUID},
 		RuleGroups:    []string{rule.RuleGroup},
 	}
-	existingGroupRules, err := ruleReader.ListAlertRules(ctx, q)
+	existingGroupRules, _, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func CalculateRuleGroupsDelete(ctx context.Context, ruleReader RuleReader, orgID
 		query = &models.ListAlertRulesQuery{}
 	}
 	query.OrgID = orgID
-	ruleList, err := ruleReader.ListAlertRules(ctx, query)
+	ruleList, _, err := ruleReader.ListAlertRules(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func CalculateRuleCreate(ctx context.Context, ruleReader RuleReader, rule *model
 		NamespaceUIDs: []string{rule.NamespaceUID},
 		RuleGroups:    []string{rule.RuleGroup},
 	}
-	group, err := ruleReader.ListAlertRules(ctx, q)
+	group, _, err := ruleReader.ListAlertRules(ctx, q)
 	if err != nil {
 		return nil, err
 	}

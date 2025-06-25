@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -583,7 +584,7 @@ func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []
 }
 
 // ListAlertRules is a handler for retrieving alert rules of specific organisation.
-func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, err error) {
+func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, nextToken string, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		q := sess.Table("alert_rule")
 
@@ -653,6 +654,21 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
+		if query.ContinueToken != "" {
+			cursor, err := decodeCursor(query.ContinueToken)
+			if err != nil {
+				return fmt.Errorf("invalid continue token: %w", err)
+			}
+
+			// Build cursor condition that matches the ORDER BY clause
+			q = buildCursorCondition(q, cursor)
+		}
+
+		if query.Limit > 0 {
+			// Fetch one extra rule to determine if there are more results
+			q = q.Limit(int(query.Limit) + 1)
+		}
+
 		alertRules := make([]*ngmodels.AlertRule, 0)
 		rule := new(alertRule)
 		rows, err := q.Rows(rule)
@@ -705,10 +721,62 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			alertRules = append(alertRules, &converted)
 		}
 
+		hasMore := len(alertRules) > int(query.Limit)
+		if hasMore {
+			// Remove the extra item we fetched
+			alertRules = alertRules[:query.Limit]
+
+			// Generate next continue token from the last item
+			if len(alertRules) > 0 {
+				lastRule := alertRules[len(alertRules)-1]
+				cursor := continueCursor{
+					NamespaceUID: lastRule.NamespaceUID,
+					RuleGroup:    lastRule.RuleGroup,
+					RuleGroupIdx: int64(lastRule.RuleGroupIndex),
+					ID:           lastRule.ID,
+				}
+
+				nextToken = encodeCursor(cursor)
+			}
+		}
+
 		result = alertRules
 		return nil
 	})
-	return result, err
+	return result, nextToken, err
+}
+
+type continueCursor struct {
+	NamespaceUID string `json:"n"`
+	RuleGroup    string `json:"g"`
+	RuleGroupIdx int64  `json:"i"`
+	ID           int64  `json:"d"`
+}
+
+func encodeCursor(c continueCursor) string {
+	data, _ := json.Marshal(c)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+func decodeCursor(token string) (continueCursor, error) {
+	var c continueCursor
+	data, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return c, fmt.Errorf("failed to decode token: %w", err)
+	}
+
+	if err := json.Unmarshal(data, &c); err != nil {
+		return c, fmt.Errorf("failed to unmarshal cursor: %w", err)
+	}
+
+	return c, nil
+}
+
+func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
+	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
+		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup).
+		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx).
+		Or("(namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)", c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID)
 }
 
 // Count returns either the number of the alert rules under a specific org (if orgID is not zero)
@@ -889,7 +957,7 @@ func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs [
 			return dashboards.ErrFolderAccessDenied
 		}
 
-		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		rules, _, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 			OrgID:         orgID,
 			NamespaceUIDs: []string{folderUID},
 		})
@@ -1050,7 +1118,7 @@ func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Sess
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
-	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+	rules, _, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:        orgID,
 		ReceiverName: oldReceiver,
 	})
@@ -1125,7 +1193,7 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	dryRun bool,
 ) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
-	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+	rules, _, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:            orgID,
 		TimeIntervalName: oldTimeInterval,
 	})
