@@ -111,8 +111,8 @@
       "users-heading": "Organization users"
     },
     "enterprise-auth-features-card": {
-      "text": "Sync users and teams using SCIM, sync teams from LDAP, or authenticate using SAML in Grafana Cloud and Enterprise. Learn more about <2>Enterprise authentication.</2>",
-      "title": "Did you know?"
+      "dismiss": "Dismiss",
+      "text": "You can sync users and teams with <1>SCIM</1>, authenticate using <3>SAML</3> and sync teams with <5>LDAP</5>."
     },
     "feature-listing": {
       "title-auditing": "Auditing",

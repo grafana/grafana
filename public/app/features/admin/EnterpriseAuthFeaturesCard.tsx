@@ -36,19 +36,20 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
 
   return (
     <Box
-      padding={3}
+      padding={2}
       borderColor="weak"
       borderStyle={'solid'}
       borderRadius="default"
       backgroundColor="secondary"
       display={'flex'}
       direction="column"
-      gap={2}
+      gap={1.5}
+      marginTop={3}
     >
       <Stack direction="row" alignItems="center" justifyContent={'space-between'}>
         <div className={styles.cloudBadge}>
-          <Icon name="cloud" />
-          Cloud & Enterprise
+          <Icon name="cloud" className={styles.icon} />
+          <Trans i18nKey="admin.enterprise-auth-features-card.badge">Cloud & Enterprise</Trans>
         </div>
         <Button
           variant="secondary"
@@ -58,8 +59,10 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
           aria-label={t('admin.enterprise-auth-features-card.dismiss', 'Dismiss')}
         />
       </Stack>
-      <Stack direction="column" gap={1}>
-        <Text variant="h4">Enterprise authentication</Text>
+      <Stack direction="column" gap={0.5}>
+        <Text variant="h4">
+          <Trans i18nKey="admin.enterprise-auth-features-card.heading">Enterprise authentication</Trans>
+        </Text>
         <Text variant="body" color="secondary">
           <Trans i18nKey="admin.enterprise-auth-features-card.text">
             You can sync users and teams with <strong>SCIM</strong>, authenticate using <strong>SAML</strong> and sync
@@ -75,7 +78,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn more.
+          <Trans i18nKey="admin.enterprise-auth-features-card.learn-more-link">Learn more.</Trans>
         </LinkButton>
       </div>
     </Box>
@@ -93,6 +96,10 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.pill,
       fontSize: theme.typography.bodySmall.fontSize,
       gap: theme.spacing(1),
+    }),
+    icon: css({
+      position: 'relative',
+      top: -1,
     }),
   };
 }
