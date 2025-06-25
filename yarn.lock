@@ -3717,6 +3717,8 @@ __metadata:
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
     monaco-editor: "npm:0.34.1"
+    msw: "npm:^2.10.2"
+    msw-storybook-addon: "npm:^2.0.5"
     ol: "npm:7.4.0"
     prismjs: "npm:1.30.0"
     process: "npm:^0.11.10"
@@ -19979,7 +19981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-node-process@npm:^1.2.0":
+"is-node-process@npm:^1.0.1, is-node-process@npm:^1.2.0":
   version: 1.2.0
   resolution: "is-node-process@npm:1.2.0"
   checksum: 10/930765cdc6d81ab8f1bbecbea4a8d35c7c6d88a3ff61f3630e0fc7f22d624d7661c1df05c58547d0eb6a639dfa9304682c8e342c4113a6ed51472b704cee2928
@@ -23164,7 +23166,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.10.2":
+"msw-storybook-addon@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "msw-storybook-addon@npm:2.0.5"
+  dependencies:
+    is-node-process: "npm:^1.0.1"
+  peerDependencies:
+    msw: ^2.0.0
+  checksum: 10/c7c2c77fbe64775f6d01a2724c1e43d67c2590dc5961d4cd14c654d954b84b7938eba0404888d056752e360a41d4a8e4535ebc27a80d4108ce78552ac904be32
+  languageName: node
+  linkType: hard
+
+"msw@npm:2.10.2, msw@npm:^2.10.2":
   version: 2.10.2
   resolution: "msw@npm:2.10.2"
   dependencies:
