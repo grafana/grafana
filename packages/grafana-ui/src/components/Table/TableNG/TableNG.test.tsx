@@ -1232,7 +1232,9 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Resizing', () => {
+  // TODO we need to test this with an e2e rather than a unit test, because the element dimensions calcs
+  // don't work in unit tests (no clientWidth/Height)
+  describe.skip('Resizing', () => {
     beforeEach(() => {
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
       window.HTMLElement.prototype.setPointerCapture = jest.fn();
@@ -1277,13 +1279,7 @@ describe('TableNG', () => {
       await userEvent.pointer({ coords: { x: 250, y: 0 }, target: handle });
       await userEvent.pointer({ keys: '[/MouseLeft]', coords: { x: 250, y: 0 }, target: handle });
 
-      // Check that onColumnResize was called. we need to wait for the debounce.
-      await waitFor(
-        () => {
-          expect(onColumnResize).toHaveBeenCalled();
-        },
-        { timeout: 500 }
-      );
+      await waitFor(() => expect(onColumnResize).toHaveBeenCalled());
     });
   });
 
