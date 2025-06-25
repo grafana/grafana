@@ -38,6 +38,13 @@ var (
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
 	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
+
+	// TODO
+	sqlAuditLogConfigCreate = mustTemplate("audit_log_config_create.sql")
+	sqlAuditLogConfigRead   = mustTemplate("audit_log_config_read.sql")
+	//sqlAuditLogConfigUpdate = mustTemplate("audit_log_config_update.sql")
+	//sqlAuditLogConfigList   = mustTemplate("audit_log_config_list.sql")
+	//sqlAuditLogConfigDelete = mustTemplate("audit_log_config_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -266,3 +273,47 @@ type incrementReceiveCountOutbox struct {
 }
 
 func (incrementReceiveCountOutbox) Validate() error { return nil }
+
+/**********************************/
+/**-- Audit Log Config Queries --**/
+/**********************************/
+
+// Create
+type createAuditLogConfig struct {
+	sqltemplate.SQLTemplate
+	Row *auditLogConfigDB
+}
+
+func (r createAuditLogConfig) Validate() error { return nil }
+
+// Read
+type readAuditLogConfig struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r readAuditLogConfig) Validate() error { return nil }
+
+// Update
+type updateAuditLogConfig struct {
+	sqltemplate.SQLTemplate
+	Row *auditLogConfigDB
+}
+
+func (r updateAuditLogConfig) Validate() error { return nil }
+
+// List
+type listAuditLogConfig struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r listAuditLogConfig) Validate() error { return nil }
+
+// Delete
+type deleteAuditLogConfig struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r deleteAuditLogConfig) Validate() error { return nil }
