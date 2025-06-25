@@ -131,10 +131,16 @@ function setup(
 
   const renderResult = render(<DeleteProvisionedFolderForm {...defaultProps} {...props} />);
 
+  const clickDeleteButton = async () => {
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    await userEvent.click(deleteButton);
+  };
+
   return {
     ...renderResult,
     onDismiss,
     mockDeleteRepoFile,
+    clickDeleteButton,
   };
 }
 
@@ -169,10 +175,9 @@ describe('DeleteProvisionedFolderForm', () => {
 
   describe('form submission', () => {
     it('should call deleteRepoFile with correct parameters on form submission', async () => {
-      const { mockDeleteRepoFile } = setup();
+      const { mockDeleteRepoFile, clickDeleteButton } = setup();
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await userEvent.click(deleteButton);
+      await clickDeleteButton();
 
       await waitFor(() => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith({
@@ -189,10 +194,12 @@ describe('DeleteProvisionedFolderForm', () => {
         ...mockFormData,
         comment: 'Custom delete message',
       };
-      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, initialValues: customFormData });
+      const { mockDeleteRepoFile, clickDeleteButton } = setup(
+        {},
+        { ...defaultHookData, initialValues: customFormData }
+      );
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await userEvent.click(deleteButton);
+      await clickDeleteButton();
 
       await waitFor(() => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith(
@@ -209,10 +216,12 @@ describe('DeleteProvisionedFolderForm', () => {
         workflow: 'branch' as const,
         ref: 'feature-branch',
       };
-      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, initialValues: branchFormData });
+      const { mockDeleteRepoFile, clickDeleteButton } = setup(
+        {},
+        { ...defaultHookData, initialValues: branchFormData }
+      );
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await userEvent.click(deleteButton);
+      await clickDeleteButton();
 
       await waitFor(() => {
         expect(mockDeleteRepoFile).toHaveBeenCalledWith(
@@ -224,10 +233,9 @@ describe('DeleteProvisionedFolderForm', () => {
     });
 
     it('should not submit if repository name is missing', async () => {
-      const { mockDeleteRepoFile } = setup({}, { ...defaultHookData, repository: undefined });
+      const { mockDeleteRepoFile, clickDeleteButton } = setup({}, { ...defaultHookData, repository: undefined });
 
-      const deleteButton = screen.getByRole('button', { name: /delete/i });
-      await userEvent.click(deleteButton);
+      await clickDeleteButton();
 
       await waitFor(() => {
         expect(mockDeleteRepoFile).not.toHaveBeenCalled();
