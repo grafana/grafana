@@ -3,14 +3,13 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
 jest.mock('./language_utils', () => ({
   ...jest.requireActual('./language_utils'),
-  processHistogramMetrics: (metrics: string[]) => metrics,
   getPrometheusTime: jest.requireActual('./language_utils').getPrometheusTime,
   getRangeSnapInterval: jest.requireActual('./language_utils').getRangeSnapInterval,
 }));
 
 import { getCacheDurationInMinutes } from './caching';
-import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
+import { DEFAULT_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   exportToAbstractQuery,
@@ -82,6 +81,7 @@ describe('Prometheus Language Provider', () => {
     cacheLevel: PrometheusCacheLevel.None,
     getIntervalVars: () => ({}),
     getRangeScopedVars: () => ({}),
+    seriesLimit: DEFAULT_SERIES_LIMIT,
   } as unknown as PrometheusDatasource;
 
   describe('Series and label fetching', () => {
@@ -308,7 +308,7 @@ describe('Prometheus Language Provider', () => {
         const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
         const requestSpy = jest.spyOn(languageProvider, 'request');
 
-        fetchSeriesLabels(getMockTimeRange(), '$metric');
+        fetchSeriesLabels(getMockTimeRange(), '$metric', undefined, DEFAULT_SERIES_LIMIT);
 
         verifyRequestParams(requestSpy, '/api/v1/series', {
           end: toPrometheusTimeString,
@@ -825,6 +825,21 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(result).toEqual(['label1', 'label2']);
     });
 
+    it('queryLabelKeys should interpolate variables', async () => {
+      const provider = new PrometheusLanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
+      } as PrometheusDatasource);
+      const resourceClientSpy = jest
+        .spyOn(provider['resourceClient'], 'queryLabelKeys')
+        .mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.queryLabelKeys(timeRange, '{job="$job"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, '{job="interpolated_job"}', undefined);
+      expect(result).toEqual(['label1', 'label2']);
+    });
+
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
@@ -835,6 +850,26 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
       expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, 'job', '{job="grafana"}', undefined);
       expect(result).toEqual(['value1', 'value2']);
+    });
+
+    it('queryLabelValues should interpolate variables', async () => {
+      const provider = new PrometheusLanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
+      } as PrometheusDatasource);
+      const resourceClientSpy = jest
+        .spyOn(provider['resourceClient'], 'queryLabelValues')
+        .mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.queryLabelValues(timeRange, '$label', '{job="$job"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(
+        timeRange,
+        'interpolated_label',
+        '{job="interpolated_job"}',
+        undefined
+      );
+      expect(result).toEqual(['label1', 'label2']);
     });
   });
 

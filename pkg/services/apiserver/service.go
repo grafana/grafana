@@ -347,6 +347,7 @@ func (s *service) start(ctx context.Context) error {
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
+		s.features,
 	)
 	if err != nil {
 		return err

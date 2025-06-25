@@ -186,8 +186,6 @@ func (r *stagedGitRepository) Push(ctx context.Context, opts repository.PushOpti
 	return r.writer.Push(ctx)
 }
 
-func (r *stagedGitRepository) Remove(_ context.Context) error {
-	// Since we're using nanogit which doesn't actually clone the repository,
-	// we don't need to do anything here as there's nothing to clean up
-	return nil
+func (r *stagedGitRepository) Remove(ctx context.Context) error {
+	return r.writer.Cleanup(ctx)
 }
