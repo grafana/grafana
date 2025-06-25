@@ -43,12 +43,11 @@ function FormContent({
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
-  // form related
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const workflow = watch('workflow');
 
-  const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo, path, comment, ref }: BaseProvisionedFormData) => {
     if (!repository?.name) {
       return;
     }
@@ -93,7 +92,6 @@ function FormContent({
     }
 
     if (request.isError) {
-      console.error('Error deleting folder:', request.error);
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -133,7 +131,7 @@ function FormContent({
 
           {/* Delete / Cancel button */}
           <Stack gap={2}>
-            <Button type="submit" disabled={request.isLoading}>
+            <Button type="submit" disabled={request.isLoading} variant="destructive">
               {request.isLoading
                 ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}

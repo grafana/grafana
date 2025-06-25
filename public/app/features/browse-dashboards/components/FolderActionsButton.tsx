@@ -103,7 +103,8 @@ export function FolderActionsButton({ folder }: Props) {
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
-      {canDeleteFolders && (
+      {/* TODO: remove isProvisionedFolder check once BE folder delete flow is complete */}
+      {canDeleteFolders && !isProvisionedFolder && (
         <MenuItem
           destructive
           onClick={isProvisionedFolder ? showDeleteProvisionedModal : showDeleteModal}

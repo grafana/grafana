@@ -33,7 +33,7 @@ export function useProvisionedFolderFormData({
   const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitHub = Boolean(repository?.type === 'github');
+  const isGitHub = repository?.type === 'github';
 
   const initialValues = useMemo(() => {
     // Only create initial values when we have the data

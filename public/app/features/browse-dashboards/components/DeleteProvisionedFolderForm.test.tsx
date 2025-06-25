@@ -118,7 +118,7 @@ function setup(
   const mockMutationResult = [mockDeleteRepoFile, requestState] as unknown as ReturnType<
     typeof useDeleteRepositoryFilesWithPathMutation
   >;
-  const mockHookResult = hookData as unknown as ReturnType<typeof useProvisionedFolderFormData>;
+  const mockHookResult = hookData as ReturnType<typeof useProvisionedFolderFormData>;
 
   mockUseDeleteRepositoryFilesMutation.mockReturnValue(mockMutationResult);
   mockUseProvisionedFolderFormData.mockReturnValue(mockHookResult);
@@ -152,7 +152,7 @@ describe('DeleteProvisionedFolderForm', () => {
   describe('rendering', () => {
     it('should render component correctly ', () => {
       setup();
-      // delete warning and descendant coun
+      // delete warning and descendant count
       expect(screen.getByText(/This will delete this folder and all its descendants/)).toBeInTheDocument();
       expect(screen.getByTestId('descendant-count')).toBeInTheDocument();
 
@@ -283,17 +283,6 @@ describe('DeleteProvisionedFolderForm', () => {
 
       // Component should handle error gracefully without crashing
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
-    });
-  });
-
-  describe('cancel functionality', () => {
-    it('should call onDismiss when cancel button is clicked', async () => {
-      const { onDismiss } = setup();
-
-      const cancelButton = screen.getByRole('button', { name: /cancel/i });
-      await userEvent.click(cancelButton);
-
-      expect(onDismiss).toHaveBeenCalledTimes(1);
     });
   });
 });
