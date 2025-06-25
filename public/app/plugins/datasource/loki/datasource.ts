@@ -46,7 +46,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -295,33 +294,6 @@ export class LokiDatasource
     return { ...logsSampleRequest, targets };
   }
 
-  private getQueryHeaders(request: DataQueryRequest<LokiQuery>): Record<string, string> {
-    const headers: Record<string, string> = {};
-    if (!config.featureToggles.lokiSendDashboardPanelNames) {
-      return headers;
-    }
-    // only add headers if we are in the context of a dashboard
-    if (
-      [CoreApp.Dashboard.toString(), CoreApp.PanelEditor.toString(), CoreApp.PanelViewer.toString()].includes(
-        request.app
-      ) === false
-    ) {
-      return headers;
-    }
-
-    const dashboard = getDashboardSrv().getCurrent();
-    const dashboardTitle = dashboard?.title;
-    const panelTitle = dashboard?.panels.find((p) => p.id === request?.panelId)?.title;
-    if (dashboardTitle) {
-      headers['X-Dashboard-Title'] = dashboardTitle;
-    }
-    if (panelTitle) {
-      headers['X-Panel-Title'] = panelTitle;
-    }
-
-    return headers;
-  }
-
   /**
    * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
    * @returns An Observable of DataQueryResponse containing the query results.
@@ -335,8 +307,6 @@ export class LokiDatasource
       ...request,
       targets: queries,
     };
-
-    fixedRequest.headers = this.getQueryHeaders(request);
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
     if (
