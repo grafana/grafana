@@ -23226,6 +23226,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
