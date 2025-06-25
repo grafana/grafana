@@ -263,7 +263,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     return '';
   }
 
-  config = defaults(config ?? {}, {
+  config = defaults(config, {
     delimiter: getLocaleDelimiter(),
     newline: '\r\n',
     quoteChar: '"',

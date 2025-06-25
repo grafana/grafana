@@ -149,16 +149,16 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
         switch (mode) {
           case CalculateFieldMode.ReduceRow:
-            creator = getReduceRowCreator(defaults(options.reduce ?? {}, defaultReduceOptions), data);
+            creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.CumulativeFunctions:
-            creator = getCumulativeCreator(defaults(options.cumulative ?? {}, defaultReduceOptions), data);
+            creator = getCumulativeCreator(defaults(options.cumulative, defaultReduceOptions), data);
             break;
           case CalculateFieldMode.WindowFunctions:
-            creator = getWindowCreator(defaults(options.window ?? {}, defaultWindowOptions), data);
+            creator = getWindowCreator(defaults(options.window, defaultWindowOptions), data);
             break;
           case CalculateFieldMode.UnaryOperation:
-            creator = getUnaryCreator(defaults(options.unary ?? {}, defaultUnaryOptions), data);
+            creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
             break;
           case CalculateFieldMode.BinaryOperation:
             const fieldNames: string[] = [];

@@ -3029,7 +3029,7 @@ __metadata:
     d3-interpolate: "npm:3.0.1"
     date-fns: "npm:4.1.0"
     dompurify: "npm:3.2.6"
-    es-toolkit: "npm:^1.39.3"
+    es-toolkit: "npm:^1.39.5"
     esbuild: "npm:0.25.0"
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
@@ -15749,15 +15749,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-toolkit@npm:^1.39.3":
-  version: 1.39.3
-  resolution: "es-toolkit@npm:1.39.3"
+"es-toolkit@npm:^1.39.5":
+  version: 1.39.5
+  resolution: "es-toolkit@npm:1.39.5"
   dependenciesMeta:
     "@trivago/prettier-plugin-sort-imports@4.3.0":
       unplugged: true
     prettier-plugin-sort-re-exports@0.0.1:
       unplugged: true
-  checksum: 10/18cf6dee69170f802a50d447cac3af0026c199b501fe9a151633a402ea0523463b73aacbde53072cc610914d68031e2856fbb8a305b020e34bd7f6ac24d37e6d
+  checksum: 10/3b7e7d5bd50b8e603fbde93149d90ae541c1fc804b516d3b22f3d107724fb0b8f91bc4a17ca6af3bd17c8e5be89f1a7ec673a3e7f8a55323704a31e77cc5fa67
   languageName: node
   linkType: hard
 
