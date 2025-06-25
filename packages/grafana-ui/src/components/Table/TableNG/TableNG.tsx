@@ -1,12 +1,12 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
-  ColumnWidths,
   DataGrid,
+  DataGridHandle,
   DataGridProps,
   RenderCellProps,
   RenderRowProps,
@@ -30,7 +30,15 @@ import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
 import { getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
-import { useFilteredRows, useFooterCalcs, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
+import {
+  useColumnResize,
+  useFilteredRows,
+  useFooterCalcs,
+  usePaginatedRows,
+  useRowHeight,
+  useSortedRows,
+  useTextWraps,
+} from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
   frameToRecords,
@@ -87,6 +95,9 @@ export function TableNG(props: TableNGProps) {
 
   const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const tableRef = useRef<DataGridHandle | null>(null);
+
+  const resizeHandler = useColumnResize(tableRef, onColumnResize);
 
   useLayoutEffect(() => {
     if (!isContextMenuOpen) {
@@ -202,13 +213,7 @@ export function TableNG(props: TableNGProps) {
 
           setIsContextMenuOpen(true);
         },
-        onColumnWidthsChange: onColumnResize
-          ? (columnWidths: ColumnWidths) => {
-              columnWidths.forEach(({ width: newWidth }, columnKey) => {
-                onColumnResize?.(columnKey, Math.floor(newWidth));
-              });
-            }
-          : undefined,
+        onColumnResize: resizeHandler,
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
           setSortColumns(newSortColumns);
           onSortByChange?.(
@@ -226,13 +231,13 @@ export function TableNG(props: TableNGProps) {
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
+      resizeHandler,
       sortColumns,
       rowHeight,
       styles.headerRow,
       noHeader,
       hasFooter,
       setSortColumns,
-      onColumnResize,
       onSortByChange,
     ]
   );
@@ -451,6 +456,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
+        ref={tableRef}
         key={structureRev} // forces re-render when editing the panel
         className={styles.grid}
         columns={columns}

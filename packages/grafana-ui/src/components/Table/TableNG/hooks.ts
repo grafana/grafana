@@ -1,13 +1,13 @@
-import { useState, useMemo, useEffect } from 'react';
-import { SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, MutableRefObject } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
-import { TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState } from './types';
+import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
 import { getDisplayName, processNestedTableRows, getCellHeightCalculator, applySort, getCellOptions } from './utils';
 
 // Helper function to get displayed value
@@ -434,9 +434,79 @@ export function useRowHeight(
 }
 
 /**
- * - getDisplayedValue: does not throw if field.display is undefined
- * - useSortedRows: hasNestedFrames proces nested table rows
- * - usePaginatedRows: test when disabled
- * - useRowHeight: if columns array is empty, maxLinesIdx === -1
- * - useRowHeight: test returned value
+ * react-data-grid is a little unwieldy when it comes to column resize events.
+ * we want to detect a few different column resize signals:
+ *   - dragging the handle (only want to dispatch when handle is released)
+ *   - double-clicking the handle (sets the column to the minimum width to fit content)
+ * `onColumnResize` dispatches events throughout a dragged resize, and `onColumnWidthsChanged` doesn't
+ * emit an event when double-click resizing occurs, so we have to build something custom on top of these
+ * behaviors in order to get everything.
  */
+export function useColumnResize(
+  tableRef: MutableRefObject<DataGridHandle | null>,
+  onColumnResize: TableColumnResizeActionCallback = () => {}
+): DataGridProps<TableRow, TableSummaryRow>['onColumnResize'] {
+  // this state must be managed as refs so that we avoid race conditions in our event handlers.
+  const resizeBuffer = useRef<Record<string, number>>({});
+  const draggingResizeHandle = useRef(false);
+
+  // when we have a double click on a resize handle, we actually call this method three times.
+  const flushResize = useCallback(() => {
+    let hadValues = false;
+    for (const columnKey in resizeBuffer.current) {
+      hadValues = true;
+      const newWidth = resizeBuffer.current[columnKey];
+      console.log('flush resize', columnKey, Math.floor(newWidth));
+      onColumnResize?.(columnKey, Math.floor(newWidth));
+    }
+    if (hadValues) {
+      resizeBuffer.current = {};
+    }
+  }, [onColumnResize]);
+
+  function inScope(event: Event, tableEl?: HTMLElement | null): boolean {
+    const headers = Array.from(tableEl?.querySelectorAll('[role="columnheader"]') ?? []);
+    return headers.some((n) => event.target instanceof Node && n.lastElementChild === event.target);
+  }
+
+  // attach pointer events to the table element, specifically looking at events whose targets are the resize handles.
+  useLayoutEffect(() => {
+    const tableEl = tableRef?.current?.element;
+    if (!tableEl) {
+      return;
+    }
+
+    function pointerDown(event: PointerEvent) {
+      if (inScope(event, tableEl)) {
+        draggingResizeHandle.current = true;
+      }
+    }
+
+    function pointerUp(event: PointerEvent) {
+      if (inScope(event, tableEl)) {
+        draggingResizeHandle.current = false;
+        flushResize();
+      }
+    }
+
+    tableEl.addEventListener('pointerdown', pointerDown);
+    tableEl.addEventListener('pointerup', pointerUp);
+
+    return () => {
+      tableEl.removeEventListener('pointerdown', pointerDown);
+      tableEl.removeEventListener('pointerup', pointerUp);
+    };
+  }, [tableRef, flushResize]);
+
+  const resizeHandler = useCallback(
+    (column: Column<TableRow, TableSummaryRow>, newWidth: number) => {
+      resizeBuffer.current[column.key] = newWidth;
+      if (!draggingResizeHandle.current) {
+        flushResize();
+      }
+    },
+    [flushResize]
+  );
+
+  return resizeHandler;
+}
