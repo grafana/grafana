@@ -141,6 +141,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		features,
 	)
 	require.NoError(t, err)
 
