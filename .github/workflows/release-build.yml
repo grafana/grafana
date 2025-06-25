@@ -6,9 +6,6 @@ on:
       - release-*.*.*
       - main
 
-concurrency:
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
