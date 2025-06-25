@@ -30,6 +30,7 @@ import {
   Field,
   LogsMetaItem,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
@@ -391,35 +392,33 @@ function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number
   return typeField[labelKey] ?? null;
 }
 
-export function getLabelTypeFromRow(label: string, row: LogRowModel) {
+export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = false) {
   if (!row.datasourceType) {
     return null;
   }
-  const idField = row.dataFrame.fields.find((field) => field.name === 'id');
-  if (!idField) {
-    return null;
-  }
-  const rowIndex = idField.values.findIndex((id) => id === row.rowId);
-  if (rowIndex < 0) {
-    return null;
-  }
-  const labelType = getLabelTypeFromFrame(label, row.dataFrame, rowIndex);
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
   if (!labelType) {
     return null;
   }
-  return getDataSourceLabelType(labelType, row.datasourceType);
+  return getDataSourceLabelType(labelType, row.datasourceType, plural);
 }
 
-function getDataSourceLabelType(labelType: string, datasourceType: string) {
+function getDataSourceLabelType(labelType: string, datasourceType: string, plural: boolean) {
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {
         case 'I':
-          return 'Indexed label';
+          return plural
+            ? t('logs.fields.type.loki.indexed-label-plural', 'Indexed labels')
+            : t('logs.fields.type.loki.indexed-label', 'Indexed label');
         case 'S':
-          return 'Structured metadata';
+          return plural
+            ? t('logs.fields.type.loki.structured-metadata-plural', 'Structured metadata')
+            : t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
         case 'P':
-          return 'Parsed label';
+          return plural
+            ? t('logs.fields.type.loki.parsed-label-plural', 'Parsed labels')
+            : t('logs.fields.type.loki.parsedl-label', 'Parsed label');
         default:
           return null;
       }
