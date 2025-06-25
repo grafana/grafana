@@ -4,6 +4,7 @@ import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
+import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { BaseProvisionedFormData } from '../../dashboard-scene/saving/shared';
@@ -34,6 +35,7 @@ export function useProvisionedFolderFormData({
 
   const workflowOptions = getWorkflowOptions(repository);
   const isGitHub = repository?.type === 'github';
+  const timestamp = generateTimestamp();
 
   const initialValues = useMemo(() => {
     // Only create initial values when we have the data
@@ -44,12 +46,12 @@ export function useProvisionedFolderFormData({
     return {
       title: title || '',
       comment: '',
-      ref: `${action}-folder-${Date.now()}`,
+      ref: `folder/${timestamp}`,
       repo: repository.name || '',
       path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
       workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, folder, title, action, isLoading]);
+  }, [repository, folder, title, isLoading, timestamp]);
 
   return {
     repository,
