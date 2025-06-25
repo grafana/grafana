@@ -77,19 +77,19 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		sort.ProvideService(),
 	)
 
-	if c.Bool("non-interactive") {
-		client, err := newUnifiedClient(cfg, sqlStore)
-		if err != nil {
-			return err
-		}
+	client, err := newUnifiedClient(cfg, sqlStore)
+	if err != nil {
+		return err
+	}
 
+	if c.Bool("non-interactive") {
 		opts.Store = client
 		opts.BlobStore = client
 		rsp, err := migrator.Migrate(ctx, opts)
-		if err != nil {
-			msg := fmt.Sprintf("Failed to migrate legacy resources: %+v", err)
-			return cli.Exit(msg, 1)
+		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
+			return exitErr
 		}
+
 		logger.Info("Migrated legacy resources successfully in", time.Since(start))
 		if rsp != nil {
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
@@ -154,11 +154,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
-		client, err := newUnifiedClient(cfg, sqlStore)
-		if err != nil {
-			return err
-		}
-
 		// Check the stats (eventually compare)
 		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
@@ -242,4 +237,20 @@ func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	}
 	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
+}
+
+func handleMigrationError(err error, rsp *resourcepb.BulkResponse) error {
+	if err != nil {
+		return cli.Exit(fmt.Sprintf("Failed to migrate legacy resources: %+v", err), 1)
+	}
+
+	if rsp != nil && rsp.Error != nil {
+		msg := fmt.Sprintf("Failed to migrate legacy resources: %s", rsp.Error.Message)
+		if rsp.Error.Reason != "" {
+			msg += fmt.Sprintf(" (%s)", rsp.Error.Reason)
+		}
+		return cli.Exit(msg, 1)
+	}
+
+	return nil
 }
