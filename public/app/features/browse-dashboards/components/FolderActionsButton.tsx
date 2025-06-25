@@ -138,7 +138,7 @@ export function FolderActionsButton({ folder }: Props) {
       )}
       {showDeleteProvisionedFolderDrawer && (
         <Drawer
-          title={t('browse-dashboards.action.delete-provisioned-folder', 'Delete Provisioned Folder')}
+          title={t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
           subtitle={folder.title}
           onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
         >
