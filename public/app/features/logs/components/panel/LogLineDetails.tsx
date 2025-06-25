@@ -97,7 +97,7 @@ const LogDetailsComponent = ({
     [extensionLinks, log.labels]
   );
   const groupedLabels = useMemo(
-    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log)),
+    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log) ?? ''),
     [labelsWithLinks, log]
   );
   const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
@@ -110,16 +110,38 @@ const LogDetailsComponent = ({
       <ControlledCollapse label={t('logs.log-line-details.links-section', 'Links')} collapsible>
         <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
       </ControlledCollapse>
-      {labelGroups.map((group) => (
+      {labelGroups.map((group) =>
+        group === '' ? (
+          <ControlledCollapse
+            key={'fields'}
+            label={t('logs.log-line-details.fields-section', 'Fields')}
+            collapsible
+            isOpen={true}
+          >
+            <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+            <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
+          </ControlledCollapse>
+        ) : (
+          <ControlledCollapse
+            key={group}
+            label={t('logs.log-line-details.fields-section', 'Fields')}
+            collapsible
+            isOpen={true}
+          >
+            <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+          </ControlledCollapse>
+        )
+      )}
+      {!labelGroups.length && (
         <ControlledCollapse
-          key={group ?? 'fields'}
-          label={group === '' ? t('logs.log-line-details.fields-section', 'Fields') : group}
+          key={'fields'}
+          label={t('logs.log-line-details.fields-section', 'Fields')}
           collapsible
           isOpen={true}
         >
-          <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+          <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
         </ControlledCollapse>
-      ))}
+      )}
     </div>
   );
 };
