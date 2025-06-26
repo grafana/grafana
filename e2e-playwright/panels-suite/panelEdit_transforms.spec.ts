@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Panels test: Transformations',
   {
-    tag: '@panels',
+    tag: ['@panels'],
   },
   () => {
     test('Tests transformations editor', async ({ selectors, gotoDashboardPage, dashboardPage }) => {

@@ -5,7 +5,7 @@ import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-
 test.describe(
   'Panels test: Queries',
   {
-    tag: '@panels',
+    tag: ['@panels'],
   },
   () => {
     test('Tests various Panel edit queries scenarios', async ({
