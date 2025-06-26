@@ -6,6 +6,8 @@ import { config, AppPluginConfig } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
+
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
@@ -28,7 +30,12 @@ import {
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
-  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
+  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
+}));
+
+jest.mock('../sandbox/sandbox_plugin_loader_registry', () => ({
+  ...jest.requireActual('../sandbox/sandbox_plugin_loader_registry'),
+  shouldLoadPluginInFrontendSandbox: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('./logs/log', () => {
@@ -683,6 +690,7 @@ describe('Plugin Extensions / Utils', () => {
 
     beforeEach(() => {
       resetLogMock(log);
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockClear();
     });
 
     it('should make the plugin context available for the wrapped component', async () => {
@@ -744,6 +752,37 @@ describe('Plugin Extensions / Utils', () => {
 
       // Not able to mutate the props in production mode either
       expect(props.a.b.c).toBe('Grafana');
+    });
+
+    it('should add data-plugin-sandbox attribute when sandbox is enabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
+
+      const pluginId = 'test-plugin';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
+
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
+
+      // Find the div with the sandbox attribute
+      const sandboxDiv = document.querySelector('[data-plugin-sandbox]');
+
+      expect(sandboxDiv).toHaveAttribute('data-plugin-sandbox', 'test-plugin');
+    });
+
+    it('should not add data-plugin-sandbox attribute when sandbox is disabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
+
+      const pluginId = 'test-plugin';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
+
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
+
+      // Verify no element has the sandbox attribute
+      const sandboxDiv = document.querySelector('[data-plugin-sandbox]');
+      expect(sandboxDiv).toBeNull();
     });
   });
 
