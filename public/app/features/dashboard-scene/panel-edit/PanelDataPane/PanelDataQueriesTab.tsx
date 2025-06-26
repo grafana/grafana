@@ -1,15 +1,4 @@
-import { css } from '@emotion/css';
-import { useCallback } from 'react';
-
-import {
-  CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  FeatureState,
-  getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
-} from '@grafana/data';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -24,12 +13,13 @@ import {
   SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, Dropdown, FeatureBadge, Icon, Menu, Stack, Tab, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { ExpressionTypeDropdown } from 'app/features/expressions/components/ExpressionTypeDropdown';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
@@ -328,45 +318,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const styles = useStyles2(getStyles);
-
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-
-  const renderMenuItem = useCallback(
-    ({ description, label, value }: SelectableValue<ExpressionQueryType>) => {
-      const expressionIconMap = {
-        [ExpressionQueryType.math]: 'calculator-alt',
-        [ExpressionQueryType.reduce]: 'compress-arrows',
-        [ExpressionQueryType.resample]: 'sync',
-        [ExpressionQueryType.classic]: 'cog',
-        [ExpressionQueryType.threshold]: 'sliders-v-alt',
-        [ExpressionQueryType.sql]: 'database',
-      } as const;
-
-      return (
-        <Menu.Item
-          component={() => (
-            <div className={styles.sqlItem}>
-              <div className={styles.leftContent} data-testid={`expression-type-${value}`}>
-                <Icon className={styles.icon} name={expressionIconMap[value!]} />
-                {label}
-                {value === 'sql' && <FeatureBadge featureState={FeatureState.new} />}
-              </div>
-              <Tooltip placement="right" content={description!}>
-                <Icon name="info-circle" className={styles.icon} />
-              </Tooltip>
-            </div>
-          )}
-          key={value}
-          label=""
-          onClick={() => model.onAddExpressionOfType(value!)}
-        />
-      );
-    },
-    [styles, model]
-  );
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -402,8 +356,6 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       }
     }
   };
-
-  const expressionDropdownMenu = <Menu>{expressionTypes.map(renderMenuItem)}</Menu>;
 
   return (
     <div data-testid={selectors.components.QueryTab.content}>
@@ -452,11 +404,11 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <Dropdown placement="bottom-start" overlay={expressionDropdownMenu}>
+          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
             <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
             </Button>
-          </Dropdown>
+          </ExpressionTypeDropdown>
         )}
         {model.renderExtraActions()}
       </Stack>
@@ -493,27 +445,3 @@ function QueriesTab(props: QueriesTabProps) {
     />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  sqlItem: css({
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  description: css({
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-    textAlign: 'start',
-  }),
-  leftContent: css({
-    flexGrow: 1,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  icon: css({
-    opacity: 0.7,
-    color: theme.colors.text.secondary,
-  }),
-});

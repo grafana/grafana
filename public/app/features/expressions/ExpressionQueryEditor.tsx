@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Combobox, ComboboxOption, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
+import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
@@ -83,23 +84,14 @@ export function ExpressionQueryEditor(props: Props) {
 
   const styles = useStyles2(getStyles);
 
-  const expressionTypeOptions = useMemo(
-    () =>
-      expressionTypes.map(({ label, value }) => ({
-        label: label!,
-        value: value!,
-      })),
-    []
-  );
-
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
   }, [query.expression, query.type, setCachedExpression]);
 
   const onSelectExpressionType = useCallback(
-    (item: ComboboxOption<ExpressionQueryType>) => {
-      const cachedExpression = getCachedExpression(item.value!);
-      const defaults = getDefaults({ ...query, type: item.value! });
+    (value: ExpressionQueryType) => {
+      const cachedExpression = getCachedExpression(value!);
+      const defaults = getDefaults({ ...query, type: value! });
 
       onChange({ ...defaults, expression: cachedExpression ?? defaults.expression });
     },
@@ -139,12 +131,11 @@ export function ExpressionQueryEditor(props: Props) {
           label={t('expressions.expression-query-editor.label-operation', 'Operation')}
           labelWidth={labelWidth}
         >
-          <Combobox
-            options={expressionTypeOptions}
-            value={query.type}
-            onChange={({ value }) => onSelectExpressionType({ value })}
-            width={25}
-          />
+          <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
+            <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
+              {expressionTypes.find(({ value }) => value === query.type)?.label}
+            </Button>
+          </ExpressionTypeDropdown>
         </InlineField>
         {helperText && <IconButton className={styles.infoIcon} name="info-circle" tooltip={helperText} />}
       </div>
