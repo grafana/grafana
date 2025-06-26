@@ -107,6 +107,28 @@ var appManifestData = app.ManifestData{
 				},
 			},
 		},
+
+		{
+			Kind:       "TeamBinding",
+			Scope:      "Namespaced",
+			Conversion: false,
+			Versions: []app.ManifestKindVersion{
+				{
+					Name: "v0alpha1",
+				},
+			},
+		},
+
+		{
+			Kind:       "ServiceAccount",
+			Scope:      "Namespaced",
+			Conversion: false,
+			Versions: []app.ManifestKindVersion{
+				{
+					Name: "v0alpha1",
+				},
+			},
+		},
 	},
 }
 
@@ -127,6 +149,8 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"ResourcePermission/v0alpha1": v0alpha1.ResourcePermissionKind(),
 	"User/v0alpha1":               v0alpha1.UserKind(),
 	"Team/v0alpha1":               v0alpha1.TeamKind(),
+	"TeamBinding/v0alpha1":        v0alpha1.TeamBindingKind(),
+	"ServiceAccount/v0alpha1":     v0alpha1.ServiceAccountKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

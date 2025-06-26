@@ -73,10 +73,11 @@ var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"serviceaccounts", "serviceaccount", "ServiceAccount",
-	func() runtime.Object { return &ServiceAccount{} },
-	func() runtime.Object { return &ServiceAccountList{} },
+var serviceAccountKind = iamv0alpha1.ServiceAccountKind()
+var ServiceAccountResourceInfo = utils.NewResourceInfo(serviceAccountKind.Group(), serviceAccountKind.Version(),
+	serviceAccountKind.GroupVersionResource().Resource, strings.ToLower(serviceAccountKind.Kind()), serviceAccountKind.Kind(),
+	func() runtime.Object { return serviceAccountKind.ZeroValue() },
+	func() runtime.Object { return serviceAccountKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -85,7 +86,7 @@ var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			sa, ok := obj.(*ServiceAccount)
+			sa, ok := obj.(*iamv0alpha1.ServiceAccount)
 			if ok {
 				return []interface{}{
 					sa.Name,
@@ -166,8 +167,8 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&iamv0alpha1.User{},
 		&iamv0alpha1.UserList{},
 		&UserTeamList{},
-		&ServiceAccount{},
-		&ServiceAccountList{},
+		&iamv0alpha1.ServiceAccount{},
+		&iamv0alpha1.ServiceAccountList{},
 		&ServiceAccountTokenList{},
 		&Team{},
 		&TeamList{},

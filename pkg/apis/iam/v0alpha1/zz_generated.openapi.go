@@ -20,9 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":              schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList":          schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec":          schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount":          schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountList":      schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec":      schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken":     schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountTokenList": schema_pkg_apis_iam_v0alpha1_ServiceAccountTokenList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Team":                    schema_pkg_apis_iam_v0alpha1_Team(ref),
@@ -322,118 +319,6 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"disabled": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 

@@ -1,7 +1,13 @@
 package v0alpha1
 
 TeamBindingSpec: {
-	#Subject: TeamPermissionSpec
+	#Subject: {
+		// uid of the identity
+		name: string
+		// permission of the identity in the team
+		permission: TeamPermission
+	}
+	
 	#TeamRef: {
 		// uid of the Team
 		name: string
@@ -9,12 +15,6 @@ TeamBindingSpec: {
 
 	subjects: [...#Subject]
 	teamRef: #TeamRef
-}
-
-TeamPermissionSpec: {
-    name: string
-
-    permission: TeamPermission
 }
 
 TeamPermission: "admin" | "member"

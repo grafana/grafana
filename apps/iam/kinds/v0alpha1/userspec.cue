@@ -1,15 +1,13 @@
 package v0alpha1
 
-import (
-    t "time"
-)
+import "time"
 
 UserSpec: {
     disabled: bool
     email: string
     emailVerified: bool
     grafanaAdmin: bool
-    lastSeenAt: string & t.Time
+    lastSeenAt: string & time.Time
     login: string
     name: string
     provisioned: bool

@@ -11,6 +11,8 @@ manifest: {
 		rolebinding,
 		resourcepermission,
 		user,
-		team 
+		team,
+		teambinding,
+		serviceaccount,
 	]
 }

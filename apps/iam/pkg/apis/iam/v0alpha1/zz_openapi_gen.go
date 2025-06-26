@@ -51,7 +51,19 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleStatus":                            schema_pkg_apis_iam_v0alpha1_RoleStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolespecPermission":                    schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolestatusOperatorState":               schema_pkg_apis_iam_v0alpha1_RolestatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount":                        schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountList":                    schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec":                    schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountStatus":                  schema_pkg_apis_iam_v0alpha1_ServiceAccountStatus(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountstatusOperatorState":     schema_pkg_apis_iam_v0alpha1_ServiceAccountstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.Team":                                  schema_pkg_apis_iam_v0alpha1_Team(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding":                           schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingList":                       schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec":                       schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingStatus":                     schema_pkg_apis_iam_v0alpha1_TeamBindingStatus(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject":                schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecTeamRef":                schema_pkg_apis_iam_v0alpha1_TeamBindingspecTeamRef(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingstatusOperatorState":        schema_pkg_apis_iam_v0alpha1_TeamBindingstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamList":                              schema_pkg_apis_iam_v0alpha1_TeamList(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec":                              schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus":                            schema_pkg_apis_iam_v0alpha1_TeamStatus(ref),
@@ -1749,6 +1761,224 @@ func schema_pkg_apis_iam_v0alpha1_RolestatusOperatorState(ref common.ReferenceCa
 	}
 }
 
+func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the ServiceAccount",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountStatus"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec", "status"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"title", "disabled"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1794,6 +2024,281 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the TeamBinding",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingStatus"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec", "status"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingSpec", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"subjects": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject"),
+									},
+								},
+							},
+						},
+					},
+					"teamRef": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecTeamRef"),
+						},
+					},
+				},
+				Required: []string{"subjects", "teamRef"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecSubject", "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingspecTeamRef"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "permission of the identity in the team",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "permission"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingspecTeamRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the Team",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamBindingstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
 	}
 }
 

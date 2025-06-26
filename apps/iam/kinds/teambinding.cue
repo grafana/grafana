@@ -1,4 +1,4 @@
-ackage kinds
+package kinds
 
 import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
