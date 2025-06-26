@@ -120,18 +120,18 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
-	// Create a mock index that can track calls
+	// Create a mock index that can handle method calls
 	mockIndex := &MockResourceIndex{}
 	mockIndex.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	mockIndex.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
 
-	// Call the builder to see if it adds documents
+	// Call the builder function (required by the contract)
 	_, err := builder(mockIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	// Determine if this is an empty index based on size and whether BulkIndex was called
+	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	if size == 0 {
 		// This is an empty index (buildEmptyIndex was called)
