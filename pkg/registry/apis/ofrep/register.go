@@ -168,8 +168,8 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	stackID := b.stackIdFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
 	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
-		b.logger.Error("stackID in evaluation context does not match requested namespace", "error", err)
-		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
+		b.logger.Error("stackId in evaluation context does not match requested namespace", "error", err)
+		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
 
