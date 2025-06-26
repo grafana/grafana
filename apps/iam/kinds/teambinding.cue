@@ -22,22 +22,3 @@ teambinding: {
 		}
 	}
 }
-
-teampermission: {
-	kind:       "TeamPermission"
-	pluralName: "TeamPermissions"
-	current:    "v0alpha1"
-
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
-
-	versions: {
-		"v0alpha1": {
-			schema: {
-				spec: v0alpha1.TeamPermissionSpec
-			}
-		}
-	}
-}
