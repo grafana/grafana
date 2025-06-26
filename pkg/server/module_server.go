@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,6 +39,7 @@ func NewModule(opts Options,
 	indexMetrics *resource.BleveIndexMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 ) (*ModuleServer, error) {
 	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
