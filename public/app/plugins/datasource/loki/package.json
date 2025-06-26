@@ -1,6 +1,6 @@
 {
     "name": "@grafana-plugins/loki",
-    "description": "Loki plugin for Grafana",
+    "description": "Loki data source plugin for Grafana",
     "private": true,
     "version": "12.1.0-pre",
     "dependencies": {
