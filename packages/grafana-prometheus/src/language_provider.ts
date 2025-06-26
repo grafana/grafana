@@ -810,7 +810,9 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     }
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
-        params.push(bq.query.metric);
+        if (bq.query.metric !== '') {
+          params.push(bq.query.metric);
+        }
       });
     }
     return params;
