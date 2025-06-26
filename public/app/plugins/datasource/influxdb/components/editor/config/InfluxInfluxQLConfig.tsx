@@ -16,6 +16,11 @@ import { Alert, Field, InlineLabel, Input, SecretInput, Select, useStyles2 } fro
 import { InfluxOptions, InfluxSecureJsonData } from '../../../types';
 
 import { WIDTH_SHORT } from './constants';
+import {
+  trackInfluxDBConfigV1InfluxQLDatabaseInputField,
+  trackInfluxDBConfigV1InfluxQLPasswordInputField,
+  trackInfluxDBConfigV1InfluxQLUserInputField,
+} from './trackingv1';
 
 const httpModes: SelectableValue[] = [
   { label: 'GET', value: 'GET' },
@@ -66,6 +71,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
               },
             });
           }}
+          onBlur={trackInfluxDBConfigV1InfluxQLDatabaseInputField}
         />
       </Field>
       <Field
@@ -80,6 +86,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           value={options.user || ''}
           onChange={onUpdateDatasourceOption(props, 'user')}
+          onBlur={trackInfluxDBConfigV1InfluxQLUserInputField}
         />
       </Field>
       <Field
@@ -96,6 +103,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           onReset={() => updateDatasourcePluginResetOption(props, 'password')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+          onBlur={trackInfluxDBConfigV1InfluxQLPasswordInputField}
         />
       </Field>
       <Field
