@@ -28,6 +28,44 @@ type EventKey struct {
 	ResourceVersion int64
 }
 
+func (k EventKey) String() string {
+	return fmt.Sprintf("%d~%s~%s~%s~%s", k.ResourceVersion, k.Namespace, k.Group, k.Resource, k.Name)
+}
+
+func (k EventKey) Validate() error {
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace cannot be empty")
+	}
+	if k.Group == "" {
+		return fmt.Errorf("group cannot be empty")
+	}
+	if k.Resource == "" {
+		return fmt.Errorf("resource cannot be empty")
+	}
+	if k.Name == "" {
+		return fmt.Errorf("name cannot be empty")
+	}
+	if k.ResourceVersion < 0 {
+		return fmt.Errorf("resource version must be non-negative")
+	}
+
+	// Validate each field against the naming rules (reusing the regex from datastore.go)
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
+	}
+	if !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid", k.Name)
+	}
+
+	return nil
+}
+
 type Event struct {
 	Namespace       string     `json:"namespace"`
 	Group           string     `json:"group"`
@@ -45,12 +83,8 @@ func newEventStore(kv KV) *eventStore {
 	}
 }
 
-func (n *eventStore) getKey(key EventKey) string {
-	return fmt.Sprintf("%d~%s~%s~%s~%s", key.ResourceVersion, key.Namespace, key.Group, key.Resource, key.Name)
-}
-
-// parseKey parses a key string back into an EventKey struct
-func (n *eventStore) parseKey(key string) (EventKey, error) {
+// ParseEventKey parses a key string back into an EventKey struct
+func ParseEventKey(key string) (EventKey, error) {
 	parts := strings.Split(key, "~")
 	if len(parts) != 5 {
 		return EventKey{}, fmt.Errorf("invalid key format: expected 5 parts, got %d", len(parts))
@@ -77,7 +111,7 @@ func (n *eventStore) LastEventKey(ctx context.Context) (EventKey, error) {
 		if err != nil {
 			return EventKey{}, err
 		}
-		eventKey, err := n.parseKey(key)
+		eventKey, err := ParseEventKey(key)
 		if err != nil {
 			return EventKey{}, err
 		}
@@ -89,17 +123,23 @@ func (n *eventStore) LastEventKey(ctx context.Context) (EventKey, error) {
 
 // Save an event to the store.
 func (n *eventStore) Save(ctx context.Context, event Event) error {
-	v, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	err = n.kv.Save(ctx, eventsSection, n.getKey(EventKey{
+	eventKey := EventKey{
 		Namespace:       event.Namespace,
 		Group:           event.Group,
 		Resource:        event.Resource,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
-	}), io.NopCloser(bytes.NewReader(v)))
+	}
+
+	if err := eventKey.Validate(); err != nil {
+		return fmt.Errorf("invalid event key: %w", err)
+	}
+
+	v, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	err = n.kv.Save(ctx, eventsSection, eventKey.String(), io.NopCloser(bytes.NewReader(v)))
 	if err != nil {
 		return err
 	}
@@ -107,7 +147,11 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 }
 
 func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
-	obj, err := n.kv.Get(ctx, eventsSection, n.getKey(key))
+	if err := key.Validate(); err != nil {
+		return Event{}, fmt.Errorf("invalid event key: %w", err)
+	}
+
+	obj, err := n.kv.Get(ctx, eventsSection, key.String())
 	if err != nil {
 		return Event{}, err
 	}
@@ -122,9 +166,9 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
 	opts := ListOptions{
 		Sort: SortOrderAsc,
-		StartKey: n.getKey(EventKey{
+		StartKey: EventKey{
 			ResourceVersion: sinceRV,
-		}),
+		}.String(),
 	}
 	return func(yield func(Event, error) bool) {
 		for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
