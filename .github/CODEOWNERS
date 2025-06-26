@@ -512,7 +512,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
-/public/app/features/expressions/ @grafana/grafana-datasources-core-services
+/public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-search-navigate-organise
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
@@ -697,7 +697,10 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/grafana-operator-experience-squad
 /public/app/features/manage-dashboards/PublicDashboardListPage.tsx* @grafana/grafana-operator-experience-squad
 
-# SSE - Server Side Expressions
+# SSE - Server Side Expressions and SQL Expressions
+/pkg/expr/sql/ @grafana/datapro
+/pkg/expr/sql_*.go @grafana/datapro
+/pkg/expr/service_sql_test.go @grafana/datapro
 /pkg/expr/ @grafana/grafana-datasources-core-services
 
 # Cloud middleware
