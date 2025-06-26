@@ -62,7 +62,7 @@ export function ImagePreview({
       )}
 
       {error && !isLoading && <ErrorAlert error={error} />}
-      {imageBlob && !isLoading && imageUrl && (
+      {!isLoading && imageUrl && (
         <img
           src={imageUrl}
           alt={t('share-modal.image.preview', 'Preview')}
@@ -97,6 +97,7 @@ function ErrorAlert({ error }: { error: ErrorState }) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   previewContainer: css({
+    position: 'relative',
     width: '100%',
     minHeight: '200px',
     display: 'flex',
