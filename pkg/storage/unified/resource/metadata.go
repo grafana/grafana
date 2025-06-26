@@ -107,12 +107,7 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, 
 			yield(MetaDataObj{}, fmt.Errorf("resource is required"))
 		}
 	}
-	prefix, err := d.getPrefix(key)
-	if err != nil {
-		return func(yield func(MetaDataObj, error) bool) {
-			yield(MetaDataObj{}, err)
-		}
-	}
+	prefix := key.Prefix()
 	// List all keys in the prefix.
 	iter := d.kv.Keys(ctx, metaSection, ListOptions{
 		StartKey: prefix,
@@ -235,19 +230,6 @@ func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
 		Action:          DataAction(rvActionFolderParts[1]),
 		Folder:          rvActionFolderParts[2],
 	}, nil
-}
-
-func (d *metadataStore) getPrefix(key ListRequestKey) (string, error) {
-	if key.Group == "" || key.Resource == "" {
-		return "", fmt.Errorf("group and resource are required")
-	}
-	if key.Namespace == "" {
-		return fmt.Sprintf("%s/%s/", key.Group, key.Resource), nil
-	}
-	if key.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/", key.Group, key.Resource, key.Namespace), nil
-	}
-	return fmt.Sprintf("%s/%s/%s/%s/", key.Group, key.Resource, key.Namespace, key.Name), nil
 }
 
 // keyMatches checks if the keys are the same.

@@ -82,33 +82,6 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 	}
 }
 
-func TestMetadataStore_GetPrefix(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
-	key := ListRequestKey{
-		Group:     "apps",
-		Resource:  "resource",
-		Namespace: "default",
-		Name:      "test-resource",
-	}
-
-	expectedPrefix := "apps/resource/default/test-resource/"
-	actualPrefix, err := store.getPrefix(key)
-	require.NoError(t, err)
-	assert.Equal(t, expectedPrefix, actualPrefix)
-
-	key.Name = ""
-	expectedPrefix = "apps/resource/default/"
-	actualPrefix, err = store.getPrefix(key)
-	require.NoError(t, err)
-
-	assert.Equal(t, expectedPrefix, actualPrefix)
-
-	key.Group = ""
-	_, err = store.getPrefix(key)
-	require.Error(t, err)
-}
-
 func TestMetadataStore_Save(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
