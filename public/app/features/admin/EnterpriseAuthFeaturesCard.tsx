@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Text, Icon, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
+import { Text, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
+import { BrandBadge } from 'app/core/components/Branding/BrandBadge';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -36,10 +37,9 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
   return (
     <div className={styles.box}>
       <Stack direction="row" alignItems="center" justifyContent={'space-between'}>
-        <div className={styles.cloudBadge}>
-          <Icon name="cloud" className={styles.icon} />
+        <BrandBadge icon="cloud">
           <Trans i18nKey="admin.enterprise-auth-features-card.badge">Cloud & Enterprise</Trans>
-        </div>
+        </BrandBadge>
         <Button
           variant="secondary"
           fill="text"
