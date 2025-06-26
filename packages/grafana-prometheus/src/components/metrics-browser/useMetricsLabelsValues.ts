@@ -3,7 +3,7 @@ import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 
 import { Metric } from './MetricsBrowserContext';
@@ -11,10 +11,10 @@ import { buildSelector } from './selectorBuilder';
 
 export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: PrometheusLanguageProviderInterface) => {
   const timeRangeRef = useRef<TimeRange>(timeRange);
-  const lastSeriesLimitRef = useRef(DEFAULT_SERIES_LIMIT);
+  const lastSeriesLimitRef = useRef(languageProvider.datasource.seriesLimit);
   const isInitializedRef = useRef(false);
 
-  const [seriesLimit, setSeriesLimit] = useState(DEFAULT_SERIES_LIMIT);
+  const [seriesLimit, setSeriesLimit] = useState(languageProvider.datasource.seriesLimit);
   const [err, setErr] = useState('');
   const [status, setStatus] = useState('Ready');
   const [validationStatus, setValidationStatus] = useState('');
@@ -28,7 +28,7 @@ export const useMetricsLabelsValues = (timeRange: TimeRange, languageProvider: P
   const [selectedLabelValues, setSelectedLabelValues] = useState<Record<string, string[]>>({});
 
   // Memoize the effective series limit to use the default when seriesLimit is empty
-  const effectiveLimit = useMemo(() => seriesLimit || DEFAULT_SERIES_LIMIT, [seriesLimit]);
+  const effectiveLimit = useMemo(() => seriesLimit, [seriesLimit]);
 
   // We don't want to trigger fetching for small amount of time changes.
   // When MetricsBrowser re-renders for any reason we might receive a new timerange.
