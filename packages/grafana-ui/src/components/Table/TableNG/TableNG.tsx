@@ -764,6 +764,9 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
   }),
 });
 
+// the line height of the text in our table. it's not on the theme, unfortunately.
+const LH = 22;
+
 const getCellStyles = (
   theme: GrafanaTheme2,
   field: Field,
@@ -793,6 +796,7 @@ const getCellStyles = (
         zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: 'pre-line',
         height: 'fit-content',
+        paddingBlock: (rowHeight - LH) / 2 - 1,
         minWidth: 'fit-content',
       }),
     },
