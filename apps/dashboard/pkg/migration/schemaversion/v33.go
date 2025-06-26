@@ -59,6 +59,9 @@ package schemaversion
 func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 	datasources := dsInfo.GetDataSourceInfo()
 	return func(dashboard map[string]interface{}) error {
+		if dashboard == nil {
+			dashboard = map[string]interface{}{}
+		}
 		dashboard["schemaVersion"] = int(33)
 
 		migratePanelsV33(dashboard, datasources)
