@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -38,11 +39,134 @@ type DataKey struct {
 	Action          DataAction
 }
 
+var (
+	// validNameRegex validates that a name contains only lowercase alphanumeric characters, '-' or '.'
+	// and starts and ends with an alphanumeric character
+	validNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
+)
+
+func (k DataKey) String() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", k.Namespace, k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action)
+}
+
+func (k DataKey) Validate() error {
+	if k.Namespace == "" {
+		if k.Group != "" || k.Resource != "" || k.Name != "" {
+			return fmt.Errorf("namespace is required when group, resource, or name are provided")
+		}
+		return fmt.Errorf("namespace cannot be empty")
+	}
+	if k.Group == "" {
+		if k.Resource != "" || k.Name != "" {
+			return fmt.Errorf("group is required when resource or name are provided")
+		}
+		return fmt.Errorf("group cannot be empty")
+	}
+	if k.Resource == "" {
+		if k.Name != "" {
+			return fmt.Errorf("resource is required when name is provided")
+		}
+		return fmt.Errorf("resource cannot be empty")
+	}
+	if k.Name == "" {
+		return fmt.Errorf("name cannot be empty")
+	}
+	if k.Action == "" {
+		return fmt.Errorf("action cannot be empty")
+	}
+
+	// Validate each field against the naming rules
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+	}
+	if !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+	}
+
+	switch k.Action {
+	case DataActionCreated, DataActionUpdated, DataActionDeleted:
+		return nil
+	default:
+		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
+	}
+}
+
 type ListRequestKey struct {
 	Namespace string
 	Group     string
 	Resource  string
 	Name      string
+}
+
+func (k ListRequestKey) Validate() error {
+	// Check hierarchical validation - if a field is empty, more specific fields should also be empty
+	if k.Namespace == "" {
+		if k.Group != "" || k.Resource != "" || k.Name != "" {
+			return fmt.Errorf("namespace is required when group, resource, or name are provided")
+		}
+		return nil // Empty namespace is allowed for ListRequestKey
+	}
+	if k.Group == "" {
+		if k.Resource != "" || k.Name != "" {
+			return fmt.Errorf("group is required when resource or name are provided")
+		}
+		// Only validate namespace if it's provided
+		if !validNameRegex.MatchString(k.Namespace) {
+			return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		}
+		return nil
+	}
+	if k.Resource == "" {
+		if k.Name != "" {
+			return fmt.Errorf("resource is required when name is provided")
+		}
+		// Validate namespace and group if they're provided
+		if !validNameRegex.MatchString(k.Namespace) {
+			return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		}
+		if !validNameRegex.MatchString(k.Group) {
+			return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		}
+		return nil
+	}
+
+	// All fields are provided, validate each one
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+	}
+	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+	}
+
+	return nil
+}
+
+func (k ListRequestKey) Prefix() string {
+	if k.Namespace == "" {
+		return ""
+	}
+	if k.Group == "" {
+		return fmt.Sprintf("%s/", k.Namespace)
+	}
+	if k.Resource == "" {
+		return fmt.Sprintf("%s/%s/", k.Namespace, k.Group)
+	}
+	if k.Name == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Namespace, k.Group, k.Resource)
+	}
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Namespace, k.Group, k.Resource, k.Name)
 }
 
 type DataAction string
@@ -55,12 +179,13 @@ const (
 
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[DataKey, error] {
-	prefix, err := d.getPrefix(key)
-	if err != nil {
+	if err := key.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
 			yield(DataKey{}, err)
 		}
 	}
+
+	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
@@ -83,48 +208,31 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 }
 
 func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error) {
-	obj, err := d.kv.Get(ctx, dataSection, d.getKey(key))
+	if err := key.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid data key: %w", err)
+	}
+
+	obj, err := d.kv.Get(ctx, dataSection, key.String())
 	if err != nil {
 		return nil, err
 	}
 	return obj.Value, nil
 }
 
-func (d *dataStore) Save(ctx context.Context, key DataKey, value io.ReadCloser) error {
-	return d.kv.Save(ctx, dataSection, d.getKey(key), value)
+func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {
+	if err := key.Validate(); err != nil {
+		return fmt.Errorf("invalid data key: %w", err)
+	}
+
+	return d.kv.Save(ctx, dataSection, key.String(), value)
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
-	return d.kv.Delete(ctx, dataSection, d.getKey(key))
-}
+	if err := key.Validate(); err != nil {
+		return fmt.Errorf("invalid data key: %w", err)
+	}
 
-func (d *dataStore) getPrefix(key ListRequestKey) (string, error) {
-	if key.Namespace == "" {
-		if key.Group != "" || key.Resource != "" || key.Name != "" {
-			return "", fmt.Errorf("namespace is required but group, resource, and name are not")
-		}
-		return "", nil
-	}
-	if key.Group == "" {
-		if key.Resource != "" || key.Name != "" {
-			return "", fmt.Errorf("group is required but resource and name are not")
-		}
-		return fmt.Sprintf("%s/", key.Namespace), nil
-	}
-	if key.Resource == "" {
-		if key.Name != "" {
-			return "", fmt.Errorf("resource is required but name is not")
-		}
-		return fmt.Sprintf("%s/%s/", key.Namespace, key.Group), nil
-	}
-	if key.Name == "" {
-		return fmt.Sprintf("%s/%s/%s/", key.Namespace, key.Group, key.Resource), nil
-	}
-	return fmt.Sprintf("%s/%s/%s/%s/", key.Namespace, key.Group, key.Resource, key.Name), nil
-}
-
-func (d *dataStore) getKey(key DataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", key.Namespace, key.Group, key.Resource, key.Name, key.ResourceVersion, key.Action)
+	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
 func (d *dataStore) parseKey(key string) (DataKey, error) {
