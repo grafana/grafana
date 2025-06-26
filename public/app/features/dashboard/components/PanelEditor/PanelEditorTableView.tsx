@@ -38,6 +38,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });

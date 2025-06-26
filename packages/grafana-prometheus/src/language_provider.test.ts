@@ -966,6 +966,21 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(result).toEqual(['label1', 'label2']);
     });
 
+    it('queryLabelKeys should interpolate variables', async () => {
+      const provider = new PrometheusLanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
+      } as PrometheusDatasource);
+      const resourceClientSpy = jest
+        .spyOn(provider['resourceClient'], 'queryLabelKeys')
+        .mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.queryLabelKeys(timeRange, '{job="$job"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, '{job="interpolated_job"}', undefined);
+      expect(result).toEqual(['label1', 'label2']);
+    });
+
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
@@ -976,6 +991,26 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
 
       expect(resourceClientSpy).toHaveBeenCalledWith(timeRange, 'job', '{job="grafana"}', undefined);
       expect(result).toEqual(['value1', 'value2']);
+    });
+
+    it('queryLabelValues should interpolate variables', async () => {
+      const provider = new PrometheusLanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
+      } as PrometheusDatasource);
+      const resourceClientSpy = jest
+        .spyOn(provider['resourceClient'], 'queryLabelValues')
+        .mockResolvedValue(['label1', 'label2']);
+
+      const result = await provider.queryLabelValues(timeRange, '$label', '{job="$job"}');
+
+      expect(resourceClientSpy).toHaveBeenCalledWith(
+        timeRange,
+        'interpolated_label',
+        '{job="interpolated_job"}',
+        undefined
+      );
+      expect(result).toEqual(['label1', 'label2']);
     });
   });
 
@@ -1043,6 +1078,17 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const queries: PromQuery[] = [];
       const result = populateMatchParamsFromQueries(queries);
       expect(result).toBe('__name__!=""');
+    });
+
+    it('should extract the correct matcher for queries with `... or vector(0)`', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: `sum(increase(go_cpu_classes_idle_cpu_seconds_total[$__rate_interval])) or vector(0)`,
+        },
+      ];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__=~"go_cpu_classes_idle_cpu_seconds_total"');
     });
   });
 });
