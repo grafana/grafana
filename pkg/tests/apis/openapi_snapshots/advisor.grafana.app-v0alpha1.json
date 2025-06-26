@@ -1851,6 +1851,10 @@
               ]
             }
           },
+          "moreInfo": {
+            "description": "More information about the failure",
+            "type": "string"
+          },
           "severity": {
             "description": "Severity of the failure",
             "type": "string",
