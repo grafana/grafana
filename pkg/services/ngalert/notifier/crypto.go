@@ -18,6 +18,7 @@ import (
 type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 
@@ -234,6 +235,10 @@ func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaRe
 // Encrypt delegates encryption to secrets.Service.
 func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	return c.secrets.Encrypt(ctx, payload, opt)
+}
+
+func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	return c.secrets.Decrypt(ctx, payload)
 }
 
 func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
