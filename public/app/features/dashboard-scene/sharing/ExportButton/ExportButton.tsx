@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Icon } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 
 import ExportMenu from './ExportMenu';
+
+const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
 interface Props {
   dashboard: DashboardScene;
@@ -21,7 +24,7 @@ export default function ExportButton({ dashboard }: Props) {
   const MenuActions = () => <ExportMenu dashboard={dashboard} />;
 
   return (
-    <ButtonGroup>
+    <ButtonGroup data-testid={newExportButtonSelector.container}>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
           size="sm"
