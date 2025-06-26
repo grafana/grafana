@@ -79,8 +79,8 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	}
 
 	if authenticator != nil {
-		unaryInterceptors = append(unaryInterceptors, grpcAuth.UnaryServerInterceptor(authenticator.Authenticate))
-		streamInterceptors = append(streamInterceptors, grpcAuth.StreamServerInterceptor(authenticator.Authenticate))
+		unaryInterceptors = append([]grpc.UnaryServerInterceptor{grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)}, unaryInterceptors...)
+		streamInterceptors = append([]grpc.StreamServerInterceptor{grpcAuth.StreamServerInterceptor(authenticator.Authenticate)}, streamInterceptors...)
 	}
 
 	// Default auth is admin token check, but this can be overridden by
