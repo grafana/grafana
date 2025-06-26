@@ -123,6 +123,16 @@ export function EditDataSourceView({
   let currentJsonData = dataSource.jsonData;
   let currentSecureJsonData = dataSource.secureJsonData;
 
+  const isPDCInjected = components.some((component) => component.meta.pluginId === 'grafana-pdc-app');
+
+  const dataSourceWithIsPDCInjected = {
+    ...dataSource,
+    jsonData: {
+      ...dataSource.jsonData,
+      pdcInjected: isPDCInjected,
+    },
+  };
+
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
@@ -190,7 +200,7 @@ export function EditDataSourceView({
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
             plugin={plugin}
-            dataSource={dataSource}
+            dataSource={dataSourceWithIsPDCInjected}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
           />

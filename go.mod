@@ -150,7 +150,6 @@ require (
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
 	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.6 // @grafana-app-platform-squad
-	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/tjhop/slog-gokit v0.1.3 // @grafana/grafana-app-platform-squad
@@ -213,6 +212,7 @@ require (
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
@@ -576,6 +576,8 @@ require (
 )
 
 require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
+
+require github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
