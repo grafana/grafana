@@ -685,9 +685,9 @@ const getGridStyles = (
   }),
   gridNested: css({
     height: '100%',
-    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - 1}px)`,
+    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
     overflow: 'visible',
-    marginLeft: COLUMN.EXPANDER_WIDTH - 1,
+    marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
   }),
   cellNested: css({
     '&[aria-selected=true]': {
