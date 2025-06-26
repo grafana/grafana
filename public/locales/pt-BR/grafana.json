@@ -3366,6 +3366,7 @@
       "delete-modal-restore-dashboards-text": "Esta ação excluirá as pastas selecionadas imediatamente, mas os painéis de controle selecionados serão marcados para exclusão em 30 dias. O administrador da sua organização pode restaurar os painéis de controle a qualquer momento antes do término do prazo de 30 dias. As pastas não podem ser restauradas.",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
       "delete-modal-title": "Excluir",
+      "delete-provisioned-folder": "",
       "deleting": "Excluindo...",
       "manage-permissions-button": "Gerenciar permissões",
       "move-button": "Mover",
@@ -3405,6 +3406,14 @@
       "select-all-header-checkbox": "Selecionar tudo",
       "select-checkbox": "Selecionar",
       "tags-column": "Tags"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Não é possível recuperar informações de elementos subordinados"
@@ -3523,11 +3532,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Centro",
         "left": "Esquerda",
         "right": "Direita"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Automático"
       }
@@ -3554,7 +3570,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3563,11 +3592,48 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3576,20 +3642,50 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Editor integrado do Canvas",
       "tooltip-close-inline-editor": "Fechar editor integrado"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Adicionar item",
       "please-select-an-element": "Selecione um elemento"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animar"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3700,15 @@
         "auto": "Automático"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Não encontrado: </0><config />"
     },
@@ -3616,6 +3721,7 @@
       "zoom-scroll-wheel": "Zoom: botão de rolagem"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3624,6 +3730,11 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
       }
@@ -3635,9 +3746,23 @@
       "placeholder-value": "Valor"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Restrições",
       "label-position": "Posição",
-      "loading": "Carregando..."
+      "loading": "Carregando...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Alinhar na parte inferior",
@@ -3648,6 +3773,7 @@
       "tooltip-align-vertical-centers": "Alinhar nos centros verticais"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3656,14 +3782,33 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Clique duas vezes para definir o texto"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3672,6 +3817,11 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
       }
@@ -3693,6 +3843,7 @@
       "tooltip-remove": "Remover"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Parte inferior",
         "center": "Centro",
@@ -3701,9 +3852,18 @@
         "right": "Direita",
         "top": "Parte superior"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automático"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -4593,6 +4753,7 @@
       "title-matched_other": "Opções correspondentes: {{count}}/{{totalCount}}"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(vazio)",
         "no-title": "<sem título>"
@@ -5452,12 +5613,6 @@
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre provisionamento.",
       "title-cannot-delete-provisioned-dashboard": "Não é possível excluir o painel de controle provisionado"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Caminho do arquivo:",
-      "managed-by-version-control": "Este recurso é gerenciado pelo controle de versão e não pode ser excluído. Para removê-lo, exclua-o do repositório e sincronize para aplicar as alterações.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Não é possível excluir o recurso provisionado"
-    },
     "query-editor": {
       "query": "Consulta"
     },
@@ -5545,15 +5700,6 @@
       "update-all": "Atualizar tudo",
       "affected-dashboards_one": "Esta atualização afetará <1>{{count}} painéis.</1> Os seguintes painéis de controle que estão usando o painel serão afetados:",
       "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis.</1> Os seguintes painéis de controle que estão usando o painel serão afetados:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Adicione uma nota para descrever suas alterações (opcional)",
-      "description-branch-name-in-git-hub": "Nome do branch no GitHub",
-      "description-inside-repository": "Caminho do arquivo dentro do repositório (.json ou .yaml)",
-      "label-branch": "Branch",
-      "label-comment": "Comentário",
-      "label-path": "Caminho",
-      "label-workflow": "Fluxo de trabalho"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erro ao salvar o painel de controle",
@@ -6078,6 +6224,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Carregar"
     },
@@ -6090,7 +6248,10 @@
       "placeholder-search": "Pesquisar"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Campo",
+      "label-fixed": "",
       "label-mappings": "Mapeamentos",
       "label-source": "Fonte"
     },
@@ -6106,8 +6267,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Limite",
-      "label-value": "Valor"
+      "label-value": "Valor",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Máx.",
@@ -6115,7 +6285,10 @@
       "label-value": "Valor"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Campo",
+      "label-fixed": "",
       "label-source": "Fonte",
       "label-template": "Modelo",
       "label-value": "Valor"
@@ -9607,6 +9780,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Este plug-in não está publicado em <2>grafana.com/plugins</2> e não pode ser gerenciado por meio do catálogo.",
+      "enterprise-plugin-info": "",
       "learn-more": "Saiba mais",
       "no-valid-grafana-enterprise-license-detected": "Nenhuma licença válida da Grafana Enterprise foi identificada.",
       "title-dev-alert": "Esta é uma versão de desenvolvimento do plug-in e não pode ser desinstalada.",
@@ -9760,6 +9934,17 @@
       "name": "Nome",
       "teams": "Equipes",
       "text-loading-teams": "Carregando equipes…"
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {

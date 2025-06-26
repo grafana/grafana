@@ -3366,6 +3366,7 @@
       "delete-modal-restore-dashboards-text": "Ez a művelet azonnal törli a kijelölt mappákat, de a kijelölt irányítópultok 30 napon belüli törlésre lesznek megjelölve. A szervezeti rendszergazda a 30 nap lejárta előtt bármikor visszaállíthatja az irányítópultokat. A mappák nem állíthatók vissza.",
       "delete-modal-text": "Ez a művelet törli a következő tartalmat:",
       "delete-modal-title": "Törlés",
+      "delete-provisioned-folder": "",
       "deleting": "Törlés...",
       "manage-permissions-button": "Engedélyek kezelése",
       "move-button": "Áthelyezés",
@@ -3405,6 +3406,14 @@
       "select-all-header-checkbox": "Összes kijelölése",
       "select-checkbox": "Kijelölés",
       "tags-column": "Címkék"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nem lehet lekérni a leszármazott adatokat"
@@ -3523,11 +3532,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Középre",
         "left": "Balra",
         "right": "Jobbra"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Automatikus"
       }
@@ -3554,7 +3570,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3563,11 +3592,48 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3576,20 +3642,50 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Beágyazott vászonszerkesztő",
       "tooltip-close-inline-editor": "Beágyazott szerkesztő bezárása"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Elem hozzáadása",
       "please-select-an-element": "Válasszon egy elemet"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animálás"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3700,15 @@
         "auto": "Automatikus"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Nem található: </0><config />"
     },
@@ -3616,6 +3721,7 @@
       "zoom-scroll-wheel": "Nagyítás: egérgörgő"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3624,6 +3730,11 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
       }
@@ -3635,9 +3746,23 @@
       "placeholder-value": "Érték"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Korlátozások",
       "label-position": "Helyzet",
-      "loading": "Betöltés…"
+      "loading": "Betöltés…",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Alulra igazítás",
@@ -3648,6 +3773,7 @@
       "tooltip-align-vertical-centers": "Igazítás függőleges középre"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3656,14 +3782,33 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Kattintson duplán a szöveg beállításához"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3672,6 +3817,11 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
       }
@@ -3693,6 +3843,7 @@
       "tooltip-remove": "Eltávolítás"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Lent",
         "center": "Középre",
@@ -3701,9 +3852,18 @@
         "right": "Jobbra",
         "top": "Felső"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatikus"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -4593,6 +4753,7 @@
       "title-matched_other": "{{totalCount}}/{{count}} egyező lehetőség"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(üres)",
         "no-title": "<nincs cím>"
@@ -5452,12 +5613,6 @@
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>.",
       "title-cannot-delete-provisioned-dashboard": "Nem lehet törölni a kiépített irányítópultot"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Fájl útvonala:",
-      "managed-by-version-control": "Ezt az erőforrást a verziókezelés felügyeli, és nem törölhető. Az eltávolításához törölje az adattárból, és szinkronizálja a változtatások alkalmazásához.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Nem lehet törölni a létrehozott erőforrást"
-    },
     "query-editor": {
       "query": "Lekérdezés"
     },
@@ -5545,15 +5700,6 @@
       "update-all": "Összes frissítése",
       "affected-dashboards_one": "Ez a frissítés <1>{{count}} irányítópultot érint.</1> A panelt használó következő irányítópultokat érinti:",
       "affected-dashboards_other": "Ez a frissítés <1>{{count}} irányítópultot érint.</1> A panelt használó következő irányítópultokat érinti:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Megjegyzés hozzáadása a módosítások leírásához (nem kötelező)",
-      "description-branch-name-in-git-hub": "Ág neve a GitHubon",
-      "description-inside-repository": "Fájl útvonala az adattáron belül (.json vagy .yaml)",
-      "label-branch": "Ág",
-      "label-comment": "Megjegyzés",
-      "label-path": "Útvonal",
-      "label-workflow": "Munkafolyamat"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Hiba történt az irányítópult mentésekor",
@@ -6078,6 +6224,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Feltöltés"
     },
@@ -6090,7 +6248,10 @@
       "placeholder-search": "Keresés"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Mező",
+      "label-fixed": "",
       "label-mappings": "Hozzárendelések",
       "label-source": "Forrás"
     },
@@ -6106,8 +6267,17 @@
       "url": "URL-cím"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Korlát",
-      "label-value": "Érték"
+      "label-value": "Érték",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Max.",
@@ -6115,7 +6285,10 @@
       "label-value": "Érték"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Mező",
+      "label-fixed": "",
       "label-source": "Forrás",
       "label-template": "Sablon",
       "label-value": "Érték"
@@ -9607,6 +9780,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Ez a bővítmény nincs közzétéve a <2>grafana.com/plugins</2> weboldalon, és nem kezelhető a katalóguson keresztül.",
+      "enterprise-plugin-info": "",
       "learn-more": "További információk",
       "no-valid-grafana-enterprise-license-detected": "Nem található érvényes Grafana Enterprise-licenc.",
       "title-dev-alert": "Ez a bővítmény fejlesztési változata, és nem távolítható el.",
@@ -9760,6 +9934,17 @@
       "name": "Név",
       "teams": "Csapatok",
       "text-loading-teams": "Csapatok betöltése…"
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
