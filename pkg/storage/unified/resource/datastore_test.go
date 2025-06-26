@@ -426,9 +426,7 @@ func TestDataKey_Validate(t *testing.T) {
 	}
 }
 
-func TestDataStore_ParseKey(t *testing.T) {
-	ds := setupTestDataStore(t)
-
+func TestParseKey(t *testing.T) {
 	rv := node.Generate()
 
 	tests := []struct {
@@ -485,7 +483,7 @@ func TestDataStore_ParseKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := ds.parseKey(tt.key)
+			actual, err := ParseKey(tt.key)
 
 			if tt.expectError {
 				require.Error(t, err)
