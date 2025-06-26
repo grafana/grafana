@@ -20,4 +20,4 @@ else
   ./scripts/grafana-server/wait-for-grafana
 fi
 
-PORT=3001 HOST=localhost yarn playwright test
+PORT=3001 HOST=localhost yarn playwright test --ui

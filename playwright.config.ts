@@ -188,5 +188,12 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'scenarios',
+      testDir: path.join(testDirRoot, '/scenarios'),
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
   ],
 });
