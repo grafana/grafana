@@ -3,7 +3,7 @@ import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 
-const testDirRoot = 'e2e/playwright';
+const testDirRoot = 'e2e-playwright';
 const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
 
 export default defineConfig<PluginOptions>({
