@@ -20,19 +20,20 @@ export type Props = {
   datasource: CloudWatchDatasource;
   disableExpressions?: boolean;
   onChange: (value: MetricStat) => void;
+  applicationId?: string;
 };
 
 const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
 const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
 const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
 
-// used in both Metric query editor and in Annotations Editor
 export const MetricStatEditor = ({
   refId,
   metricStat,
   datasource,
   disableExpressions = false,
   onChange,
+  applicationId,
 }: React.PropsWithChildren<Props>) => {
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
@@ -141,6 +142,7 @@ export const MetricStatEditor = ({
             onChange={(dimensions) => onChange({ ...metricStat, dimensions })}
             disableExpressions={disableExpressions}
             datasource={datasource}
+            applicationId={applicationId}
           />
         </EditorField>
         {!disableExpressions && (
