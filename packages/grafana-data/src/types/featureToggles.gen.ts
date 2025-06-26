@@ -305,6 +305,10 @@ export interface FeatureToggles {
   */
   kubernetesSnapshots?: boolean;
   /**
+  * Routes library panel requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
+  /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
@@ -1032,4 +1036,14 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
+  /**
+  * Use fixed-width numbers globally in the UI
+  * @default true
+  */
+  tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
 }
