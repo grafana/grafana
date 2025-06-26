@@ -110,6 +110,7 @@ const (
 type ResourceErrorCode string
 
 const (
+	ErrAlertRulesQuotaReached     ResourceErrorCode = "ALERT_RULES_QUOTA_REACHED"
 	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
 	ErrDatasourceInvalidURL       ResourceErrorCode = "DATASOURCE_INVALID_URL"
 	ErrDatasourceAlreadyManaged   ResourceErrorCode = "DATASOURCE_ALREADY_MANAGED"

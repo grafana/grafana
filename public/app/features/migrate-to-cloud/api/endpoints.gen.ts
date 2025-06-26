@@ -206,6 +206,7 @@ export type CreateSnapshotRequestDto = {
 };
 export type MigrateDataResponseItemDto = {
   errorCode?:
+    | 'ALERT_RULES_QUOTA_REACHED'
     | 'DATASOURCE_NAME_CONFLICT'
     | 'DATASOURCE_INVALID_URL'
     | 'DATASOURCE_ALREADY_MANAGED'

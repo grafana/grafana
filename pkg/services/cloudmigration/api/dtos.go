@@ -150,6 +150,7 @@ const (
 type ItemErrorCode string
 
 const (
+	ErrAlertRulesQuotaReached     ItemErrorCode = "ALERT_RULES_QUOTA_REACHED"
 	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
 	ErrDatasourceInvalidURL       ItemErrorCode = "DATASOURCE_INVALID_URL"
 	ErrDatasourceAlreadyManaged   ItemErrorCode = "DATASOURCE_ALREADY_MANAGED"
