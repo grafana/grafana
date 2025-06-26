@@ -60,21 +60,21 @@ func (k MetaDataKey) Validate() error {
 
 	// Validate naming conventions for all required fields
 	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
 	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
 	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
 	// Validate folder field if provided (optional field)
 	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
-		return fmt.Errorf("folder '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Folder)
+		return fmt.Errorf("folder '%s' is invalid", k.Folder)
 	}
 
 	// Validate action is one of the valid values
@@ -108,16 +108,16 @@ func (k MetaListRequestKey) Validate() error {
 
 	// Validate naming conventions
 	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
 	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
 	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
 	return nil
@@ -156,16 +156,16 @@ func (k MetaGetRequestKey) Validate() error {
 
 	// Validate naming conventions
 	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
 	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
 	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
 	return nil
