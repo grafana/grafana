@@ -215,6 +215,7 @@ export function SaveProvisionedDashboardForm({
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
           <DashboardEditFormSharedFields
+            resourceType="dashboard"
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
