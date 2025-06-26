@@ -135,6 +135,7 @@ export interface BaseTableProps {
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
