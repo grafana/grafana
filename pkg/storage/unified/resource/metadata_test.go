@@ -943,6 +943,125 @@ func TestMetaDataKey_Validate_Invalid(t *testing.T) {
 	}
 }
 
+func TestMetaDataKey_SameResource(t *testing.T) {
+	baseKey := MetaDataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "deployments",
+		Name:            "test-deployment",
+		ResourceVersion: 123,
+		Action:          DataActionCreated,
+		Folder:          "test-folder",
+	}
+
+	tests := []struct {
+		name     string
+		key1     MetaDataKey
+		key2     MetaDataKey
+		expected bool
+	}{
+		{
+			name:     "identical keys",
+			key1:     baseKey,
+			key2:     baseKey,
+			expected: true,
+		},
+		{
+			name: "same identifying fields, different resource version",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "test-deployment",
+				ResourceVersion: 456, // Different resource version
+				Action:          DataActionUpdated,
+				Folder:          "other-folder",
+			},
+			expected: true, // Should still be equal as ResourceVersion, Action, and Folder don't matter
+		},
+		{
+			name: "different namespace",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "other-namespace",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "test-deployment",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different group",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "extensions",
+				Resource:        "deployments",
+				Name:            "test-deployment",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different resource",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "daemonsets",
+				Name:            "test-deployment",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different name",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "deployments",
+				Name:            "other-deployment",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name:     "empty keys",
+			key1:     MetaDataKey{},
+			key2:     MetaDataKey{},
+			expected: true,
+		},
+		{
+			name:     "one empty key",
+			key1:     baseKey,
+			key2:     MetaDataKey{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.key1.SameResource(tt.key2)
+			assert.Equal(t, tt.expected, result)
+
+			// Test symmetry: SameResource should be commutative
+			reverseResult := tt.key2.SameResource(tt.key1)
+			assert.Equal(t, result, reverseResult, "SameResource method should be commutative")
+		})
+	}
+}
+
 func TestMetadataStore_Save_InvalidKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()

@@ -310,16 +310,17 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 
 			}
 			// Should yield if either:
-			// - We reached the next key.
-			// - We reached a resource version greater than the target RV.
-			if !keyMatches(metaKey, *candidateKey) || metaKey.ResourceVersion > rv {
+			// - We reached the next resource.
+			// - We reached a resource version greater than the target resource version.
+			if !metaKey.SameResource(*candidateKey) || metaKey.ResourceVersion > rv {
 				if !yieldCandidate(*candidateKey) {
 					return
 				}
-				// If we moved to a different resource and the current key is valid, make it the new candidate
-				if !keyMatches(metaKey, *candidateKey) && metaKey.ResourceVersion <= rv {
+				// If we moved to a different resource and the resource version matches, make it the new candidate
+				if !metaKey.SameResource(*candidateKey) && metaKey.ResourceVersion <= rv {
 					candidateKey = &metaKey
 				} else {
+					// If we moved to a different resource and the resource version does not match, reset the candidate
 					candidateKey = nil
 				}
 			} else {
@@ -375,19 +376,12 @@ func parseMetaDataKey(key string) (MetaDataKey, error) {
 	}, nil
 }
 
-// keyMatches checks if the keys are the same.
-func keyMatches(key1, key2 MetaDataKey) bool {
-	if key1.Namespace != key2.Namespace {
-		return false
-	}
-	if key1.Group != key2.Group {
-		return false
-	}
-	if key1.Resource != key2.Resource {
-		return false
-	}
-	if key1.Name != key2.Name {
-		return false
-	}
-	return true
+// SameResource checks if this key represents the same resource as another key.
+// It compares the identifying fields: Namespace, Group, Resource, and Name.
+// ResourceVersion, Action, and Folder are ignored as they don't identify the resource itself.
+func (k MetaDataKey) SameResource(other MetaDataKey) bool {
+	return k.Namespace == other.Namespace &&
+		k.Group == other.Group &&
+		k.Resource == other.Resource &&
+		k.Name == other.Name
 }
