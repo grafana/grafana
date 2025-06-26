@@ -35,7 +35,10 @@ Note that in data source-managed groups, the alert rules and recording rules wit
 
 ## Before you begin
 
-- Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you will not be able to create or update Grafana Mimir managed alerting rules.
+- Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you will not be able to create or update Grafana Mimir managed alerting rules.  
+{{< admonition type="note" >}}
+Recording rules currently cannot write to data sources that have been configured with [Private Data source Connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
+{{< /admonition >}}
 
 - For Grafana Mimir and Loki data sources, enable the ruler API by configuring their respective services.
 
