@@ -126,7 +126,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		t.Run("POST without config identifier header should fail", func(t *testing.T) {
+		t.Run("POST without config identifier header should use default identifier", func(t *testing.T) {
+			defer cleanup("")
+
 			headers := map[string]string{
 				"Content-Type":                      "application/yaml",
 				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
@@ -137,7 +139,14 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			}
 
 			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			getHeaders := map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": "default",
+			}
+			responseConfig, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
+			requireStatusCode(t, http.StatusOK, status, "")
+			require.NotEmpty(t, responseConfig.AlertmanagerConfig)
 		})
 
 		t.Run("POST without merge matchers header should fail", func(t *testing.T) {
@@ -184,11 +193,27 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
-		t.Run("DELETE without config identifier header should fail", func(t *testing.T) {
-			headers := map[string]string{}
+		t.Run("DELETE without config identifier header should use default identifier", func(t *testing.T) {
+			createHeaders := map[string]string{
+				"Content-Type":                      "application/yaml",
+				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
+			}
 
-			_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			amConfig := apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: testAlertmanagerConfigYAML,
+			}
+
+			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, createHeaders)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusOK, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusNotFound, status, "")
 		})
 	})
 
