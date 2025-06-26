@@ -13,8 +13,8 @@ import (
 func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	var (
 		distributor = &distributorService{}
-		tracer = otel.Tracer("unified-storage-distributor")
-		err error
+		tracer      = otel.Tracer("unified-storage-distributor")
+		err         error
 	)
 	distributor.grpcHandler, err = resource.ProvideDistributorServer(ms.cfg, ms.features, ms.registerer, tracer, ms.storageRing, ms.storageRingClientPool)
 	if err != nil {
