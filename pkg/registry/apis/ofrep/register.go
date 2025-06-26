@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -72,7 +73,8 @@ func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	return nil
+	metav1.AddToGroupVersion(scheme, b.GetGroupVersion())
+	return scheme.SetVersionPriority(b.GetGroupVersion())
 }
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {

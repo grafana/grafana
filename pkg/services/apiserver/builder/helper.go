@@ -399,8 +399,7 @@ func InstallAPIs(
 			}); err != nil {
 				return err
 			}
-
-			if len(g.PrioritizedVersions) == 0 {
+			if len(g.PrioritizedVersions) < 1 {
 				continue
 			}
 
