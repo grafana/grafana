@@ -392,13 +392,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           }
           // single point surrounded by nulls
           else {
-            // meh heuristic
-            if (yData[0] == null && yData[yData.length - 1] == null) {
-              for (let i = 0; i < yData.length; i++) {
-                if (yData[i] != null) {
-                  filtered.push(i);
-                }
-              }
+            let i = 0;
+
+            while (yData[i] === null) {
+              i++;
+            }
+
+            if (yData[i+1] === null) {
+              filtered.push(i);
             }
           }
         }
