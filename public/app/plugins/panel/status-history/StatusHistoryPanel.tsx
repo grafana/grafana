@@ -53,7 +53,7 @@ export const StatusHistoryPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
-  const { warn, frames } = useMemo(
+  const { frames, warn } = useMemo(
     () => prepareTimelineFields(data.series, false, timeRange, theme),
     [data.series, timeRange, theme]
   );

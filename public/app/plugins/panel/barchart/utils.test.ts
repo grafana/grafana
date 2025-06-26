@@ -166,14 +166,14 @@ describe('BarChart utils', () => {
   });
 
   describe('prepareGraphableFrames', () => {
-    it('will return undefined when there is no frames in the response', () => {
+    it('will return empty string when there are no frames in the response', () => {
       const info = prepSeries([], fieldConfig, StackingMode.None, createTheme());
 
       expect(info.warn).toBe('');
       expect(info.series).toHaveLength(0);
     });
 
-    it('will return undefined when there is no data in the response', () => {
+    it('will return empty string when there is no data in the response', () => {
       const info = prepSeries(
         [
           {
