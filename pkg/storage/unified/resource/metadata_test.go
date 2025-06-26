@@ -1131,13 +1131,22 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name: "missing namespace",
+			name: "invalid key: name provided when namespace is empty",
 			key: MetaListRequestKey{
 				Group:    "apps",
 				Resource: "resource",
-				Name:     "test-Resource",
+				Name:     "test-resource",
 			},
 			expectErr: true,
+		},
+		{
+			name: "valid key with empty namespace and no name",
+			key: MetaListRequestKey{
+				Namespace: "",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectErr: false,
 		},
 		{
 			name: "missing group",
@@ -1278,9 +1287,9 @@ func TestMetaListRequestKey_Prefix(t *testing.T) {
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "resource",
-				Name:      "test-	",
+				Name:      "test-resource",
 			},
-			expectedPrefix: "apps/resource/default/test-	/",
+			expectedPrefix: "apps/resource/default/test-resource/",
 		},
 		{
 			name: "key without name",
@@ -1290,6 +1299,15 @@ func TestMetaListRequestKey_Prefix(t *testing.T) {
 				Resource:  "resource",
 			},
 			expectedPrefix: "apps/resource/default/",
+		},
+		{
+			name: "key without namespace and without name",
+			key: MetaListRequestKey{
+				Namespace: "",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectedPrefix: "apps/resource/",
 		},
 	}
 
