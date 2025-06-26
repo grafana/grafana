@@ -56,13 +56,13 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 				}
 			}
 		}
-		return nil
+		return GetDefaultDSInstanceSettings(datasources)
 	}
 
 	// Check if it's a string
 	str, ok := nameOrRef.(string)
 	if !ok {
-		return nil
+		return GetDefaultDSInstanceSettings(datasources)
 	}
 
 	// Search for matching name or UID
@@ -76,7 +76,7 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 			}
 		}
 	}
-	return nil
+	return GetDefaultDSInstanceSettings(datasources)
 }
 
 // MigrateDatasourceNameToRef converts a datasource name/uid string to a reference object

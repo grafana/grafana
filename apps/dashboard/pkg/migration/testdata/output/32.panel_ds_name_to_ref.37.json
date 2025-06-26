@@ -44,7 +44,8 @@
       },
       {
         "datasource": {
-          "uid": "non-existing-ds"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "enable": true,
         "name": "Test Non-existing Annotation",
@@ -73,6 +74,24 @@
         "prefixMatching": false,
         "region": "us-west-2",
         "statistic": "Maximum"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "enable": true,
+        "name": "Test Empty String Annotation",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "enable": true,
+        "name": "Test Another Non-existing Annotation",
+        "type": "dashboard"
       },
       {
         "dimensions": {
@@ -265,7 +284,8 @@
     },
     {
       "datasource": {
-        "uid": "non-existing-ds"
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "gridPos": {
         "h": 8,
@@ -277,7 +297,8 @@
       "targets": [
         {
           "datasource": {
-            "uid": "non-existing-ds"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           }
         }
       ],
@@ -383,7 +404,8 @@
     },
     {
       "datasource": {
-        "uid": "prometheus"
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "gridPos": {
         "h": 8,
@@ -409,14 +431,16 @@
         },
         {
           "datasource": {
-            "uid": "prometheus"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "expr": "up",
           "refId": "B"
         },
         {
           "datasource": {
-            "uid": "prometheus"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "dimensions": {
             "DBInstanceIdentifier": "my-db"
@@ -429,7 +453,8 @@
         },
         {
           "datasource": {
-            "uid": "prometheus"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
@@ -613,7 +638,8 @@
         },
         {
           "datasource": {
-            "uid": "non-existing-ds"
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "refId": "C"
         },
@@ -667,6 +693,61 @@
       ],
       "title": "V33: Mixed Target References",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 76
+      },
+      "id": 21,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "V33: Panel with Empty String Datasource",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 76
+      },
+      "id": 22,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "B"
+        }
+      ],
+      "title": "V33: Panel with Another Non-existing Datasource",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -711,9 +792,26 @@
       },
       {
         "datasource": {
-          "uid": "non-existing-ds"
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "name": "non_existing_var",
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "name": "empty_string_var",
+        "type": "query"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "name": "another_non_existing_var",
         "type": "query"
       }
     ]

@@ -60,6 +60,18 @@
         "region": "us-west-2",
         "prefixMatching": false,
         "statistics": ["Maximum", "Minimum", "Sum"]
+      },
+      {
+        "datasource": "",
+        "enable": true,
+        "name": "Test Empty String Annotation",
+        "type": "dashboard"
+      },
+      {
+        "datasource": "another-missing-ds",
+        "enable": true,
+        "name": "Test Another Non-existing Annotation",
+        "type": "dashboard"
       }
     ]
   },
@@ -450,6 +462,46 @@
           "datasource": "default"
         }
       ]
+    },
+    {
+      "type": "stat",
+      "title": "V33: Panel with Empty String Datasource",
+      "id": 21,
+      "datasource": "",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 76
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": ""
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "V33: Panel with Another Non-existing Datasource",
+      "id": 22,
+      "datasource": "completely-missing-ds",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 76
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": "also-missing-ds"
+        },
+        {
+          "refId": "B",
+          "datasource": ""
+        }
+      ]
     }
   ],
   "preload": false,
@@ -482,6 +534,16 @@
         "type": "query",
         "datasource": "non-existing-ds",
         "name": "non_existing_var"
+      },
+      {
+        "type": "query",
+        "datasource": "",
+        "name": "empty_string_var"
+      },
+      {
+        "type": "query",
+        "datasource": "another-non-existing-ds",
+        "name": "another_non_existing_var"
       }
     ]
   },

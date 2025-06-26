@@ -195,7 +195,7 @@ func TestV33(t *testing.T) {
 			},
 		},
 		{
-			name: "panel with unknown datasource should create uid-only reference",
+			name: "panel with unknown datasource should return default reference",
 			input: map[string]interface{}{
 				"schemaVersion": 32,
 				"panels": []interface{}{
@@ -214,12 +214,16 @@ func TestV33(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"datasource": map[string]interface{}{
-							"uid": "unknown-datasource",
+							"uid":        "default-ds",
+							"type":       "prometheus",
+							"apiVersion": "v1",
 						},
 						"targets": []interface{}{
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid": "unknown-datasource",
+									"uid":        "default-ds",
+									"type":       "prometheus",
+									"apiVersion": "v1",
 								},
 							},
 						},
@@ -270,7 +274,9 @@ func TestV33(t *testing.T) {
 							},
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid": "unknown-ds",
+									"uid":        "default-ds",
+									"type":       "prometheus",
+									"apiVersion": "v1",
 								},
 							},
 						},
@@ -357,7 +363,9 @@ func TestV33(t *testing.T) {
 							},
 							map[string]interface{}{
 								"datasource": map[string]interface{}{
-									"uid": "unknown-ds",
+									"uid":        "default-ds",
+									"type":       "prometheus",
+									"apiVersion": "v1",
 								},
 								"targets": []interface{}{
 									map[string]interface{}{

@@ -210,14 +210,34 @@ func TestGetInstanceSettings(t *testing.T) {
 			},
 		},
 		{
-			name:      "unknown datasource should return nil",
+			name:      "unknown datasource should return default",
 			nameOrRef: "unknown-ds",
-			expected:  nil,
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "default-ds",
+				Type:       "prometheus",
+				Name:       "Default",
+				APIVersion: "v1",
+			},
 		},
 		{
-			name:      "empty string should return nil",
+			name:      "empty string should return default",
 			nameOrRef: "",
-			expected:  nil,
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "default-ds",
+				Type:       "prometheus",
+				Name:       "Default",
+				APIVersion: "v1",
+			},
+		},
+		{
+			name:      "unsupported input type should return default",
+			nameOrRef: 123,
+			expected: &schemaversion.DataSourceInfo{
+				UID:        "default-ds",
+				Type:       "prometheus",
+				Name:       "Default",
+				APIVersion: "v1",
+			},
 		},
 	}
 
@@ -284,16 +304,22 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 				},
 			},
 			{
-				name:      "unknown datasource should create uid-only reference",
+				name:      "unknown datasource should return default reference",
 				nameOrRef: "unknown-ds",
 				expected: map[string]interface{}{
-					"uid": "unknown-ds",
+					"uid":        "default-ds",
+					"type":       "prometheus",
+					"apiVersion": "v1",
 				},
 			},
 			{
-				name:      "empty string should return nil",
+				name:      "empty string should return default reference",
 				nameOrRef: "",
-				expected:  nil,
+				expected: map[string]interface{}{
+					"uid":        "default-ds",
+					"type":       "prometheus",
+					"apiVersion": "v1",
+				},
 			},
 		}
 
@@ -351,6 +377,24 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 					"apiVersion": "v2",
 				},
 			},
+			{
+				name:      "unknown datasource should return default reference",
+				nameOrRef: "unknown-ds",
+				expected: map[string]interface{}{
+					"uid":        "default-ds",
+					"type":       "prometheus",
+					"apiVersion": "v1",
+				},
+			},
+			{
+				name:      "empty string should return default reference",
+				nameOrRef: "",
+				expected: map[string]interface{}{
+					"uid":        "default-ds",
+					"type":       "prometheus",
+					"apiVersion": "v1",
+				},
+			},
 		}
 
 		for _, tt := range tests {
@@ -377,9 +421,14 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 			assert.Equal(t, expected, result)
 		})
 
-		t.Run("integer input should return nil", func(t *testing.T) {
+		t.Run("integer input should return default reference", func(t *testing.T) {
 			result := schemaversion.MigrateDatasourceNameToRef(123, options, datasources)
-			assert.Nil(t, result)
+			expected := map[string]interface{}{
+				"uid":        "default-ds",
+				"type":       "prometheus",
+				"apiVersion": "v1",
+			}
+			assert.Equal(t, expected, result)
 		})
 
 		t.Run("empty datasources list", func(t *testing.T) {
