@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonGroup, Dropdown, Icon } from '@grafana/ui';
 
@@ -31,6 +32,7 @@ export default function ExportButton({ dashboard }: Props) {
           aria-label={t('dashboard.export.button.label', 'Export dashboard')}
           aria-haspopup="menu"
           aria-expanded={isOpen}
+          data-testid={e2eSelectors.pages.Dashboard.DashNav.NewExportButton.arrowMenu}
         >
           <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>&nbsp;
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
