@@ -6,13 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ImagePreview } from '../components/ImagePreview';
-import { ShareView } from '../types';
+import { SceneShareTabState, ShareView } from '../types';
 
 import { generateDashboardImage, ImageGenerationError } from './utils';
 
@@ -22,11 +22,7 @@ type ErrorState = {
   code?: ImageGenerationError;
 } | null;
 
-export interface ExportAsImageState extends SceneObjectState {
-  onDismiss: () => void;
-}
-
-export class ExportAsImage extends SceneObjectBase<ExportAsImageState> implements ShareView {
+export class ExportAsImage extends SceneObjectBase<SceneShareTabState> implements ShareView {
   static Component = ExportAsImageRenderer;
 
   public getTabLabel() {
