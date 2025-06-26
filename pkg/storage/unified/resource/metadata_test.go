@@ -947,8 +947,8 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 	baseKey := MetaDataKey{
 		Namespace:       "default",
 		Group:           "apps",
-		Resource:        "deployments",
-		Name:            "test-deployment",
+		Resource:        "resource",
+		Name:            "test-resource",
 		ResourceVersion: 123,
 		Action:          DataActionCreated,
 		Folder:          "test-folder",
@@ -972,8 +972,8 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 			key2: MetaDataKey{
 				Namespace:       "default",
 				Group:           "apps",
-				Resource:        "deployments",
-				Name:            "test-deployment",
+				Resource:        "resource",
+				Name:            "test-Resource",
 				ResourceVersion: 456, // Different resource version
 				Action:          DataActionUpdated,
 				Folder:          "other-folder",
@@ -986,8 +986,8 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 			key2: MetaDataKey{
 				Namespace:       "other-namespace",
 				Group:           "apps",
-				Resource:        "deployments",
-				Name:            "test-deployment",
+				Resource:        "resource",
+				Name:            "test-Resource",
 				ResourceVersion: 123,
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
@@ -1000,8 +1000,8 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 			key2: MetaDataKey{
 				Namespace:       "default",
 				Group:           "extensions",
-				Resource:        "deployments",
-				Name:            "test-deployment",
+				Resource:        "resource",
+				Name:            "test-Resource",
 				ResourceVersion: 123,
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
@@ -1015,7 +1015,7 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 				Namespace:       "default",
 				Group:           "apps",
 				Resource:        "daemonsets",
-				Name:            "test-deployment",
+				Name:            "test-Resource",
 				ResourceVersion: 123,
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
@@ -1028,8 +1028,8 @@ func TestMetaDataKey_SameResource(t *testing.T) {
 			key2: MetaDataKey{
 				Namespace:       "default",
 				Group:           "apps",
-				Resource:        "deployments",
-				Name:            "other-deployment",
+				Resource:        "resource",
+				Name:            "other-Resource",
 				ResourceVersion: 123,
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
@@ -1116,8 +1116,8 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-Resource",
 			},
 			expectErr: false,
 		},
@@ -1126,7 +1126,7 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
+				Resource:  "resource",
 			},
 			expectErr: false,
 		},
@@ -1134,8 +1134,8 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			name: "missing namespace",
 			key: MetaListRequestKey{
 				Group:    "apps",
-				Resource: "deployments",
-				Name:     "test-deployment",
+				Resource: "resource",
+				Name:     "test-Resource",
 			},
 			expectErr: true,
 		},
@@ -1143,8 +1143,8 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			name: "missing group",
 			key: MetaListRequestKey{
 				Namespace: "default",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-Resource",
 			},
 			expectErr: true,
 		},
@@ -1153,7 +1153,7 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Name:      "test-deployment",
+				Name:      "test-Resource",
 			},
 			expectErr: true,
 		},
@@ -1162,7 +1162,7 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "Default",
 				Group:     "apps",
-				Resource:  "deployments",
+				Resource:  "resource",
 			},
 			expectErr: true,
 		},
@@ -1171,8 +1171,8 @@ func TestMetaListRequestKey_Validate(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
-				Name:      "Test-Deployment",
+				Resource:  "resource",
+				Name:      "Test-Resource",
 			},
 			expectErr: true,
 		},
@@ -1201,8 +1201,8 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			key: MetaGetRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-	",
 			},
 			expectErr: false,
 		},
@@ -1210,8 +1210,8 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			name: "missing namespace",
 			key: MetaGetRequestKey{
 				Group:    "apps",
-				Resource: "deployments",
-				Name:     "test-deployment",
+				Resource: "resource",
+				Name:     "test-	",
 			},
 			expectErr: true,
 		},
@@ -1219,8 +1219,8 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			name: "missing group",
 			key: MetaGetRequestKey{
 				Namespace: "default",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-	",
 			},
 			expectErr: true,
 		},
@@ -1229,7 +1229,7 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			key: MetaGetRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Name:      "test-deployment",
+				Name:      "test-	",
 			},
 			expectErr: true,
 		},
@@ -1238,7 +1238,7 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			key: MetaGetRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
+				Resource:  "resource",
 			},
 			expectErr: true,
 		},
@@ -1247,8 +1247,8 @@ func TestMetaGetRequestKey_Validate(t *testing.T) {
 			key: MetaGetRequestKey{
 				Namespace: "Default",
 				Group:     "apps",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-	",
 			},
 			expectErr: true,
 		},
@@ -1277,19 +1277,19 @@ func TestMetaListRequestKey_Prefix(t *testing.T) {
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
-				Name:      "test-deployment",
+				Resource:  "resource",
+				Name:      "test-	",
 			},
-			expectedPrefix: "apps/deployments/default/test-deployment/",
+			expectedPrefix: "apps/resource/default/test-	/",
 		},
 		{
 			name: "key without name",
 			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
-				Resource:  "deployments",
+				Resource:  "resource",
 			},
-			expectedPrefix: "apps/deployments/default/",
+			expectedPrefix: "apps/resource/default/",
 		},
 	}
 
@@ -1305,11 +1305,11 @@ func TestMetaGetRequestKey_Prefix(t *testing.T) {
 	key := MetaGetRequestKey{
 		Namespace: "default",
 		Group:     "apps",
-		Resource:  "deployments",
-		Name:      "test-deployment",
+		Resource:  "resource",
+		Name:      "test-	",
 	}
 
-	expectedPrefix := "apps/deployments/default/test-deployment/"
+	expectedPrefix := "apps/resource/default/test-	/"
 	prefix := key.Prefix()
 	assert.Equal(t, expectedPrefix, prefix)
 }
