@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isEmpty, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 import { ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
@@ -35,10 +35,10 @@ export class OptionsPaneItemDescriptor {
   props: OptionsPaneItemInfo;
 
   constructor(props: OptionsPaneItemInfo) {
-      this.props = { ...props, id: props.id ?? props.title };      
-      if (this.props.id === '') {
-         this.props.id = uniqueId();                              
-      }              
+    this.props = { ...props, id: props.id ?? props.title };
+    if (this.props.id === '') {
+      this.props.id = uniqueId();
+    }
   }
 
   render(searchQuery?: string) {
