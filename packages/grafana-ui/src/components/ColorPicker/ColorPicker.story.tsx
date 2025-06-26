@@ -10,7 +10,7 @@ import mdx from './ColorPicker.mdx';
 import { ColorPickerInput } from './ColorPickerInput';
 
 const meta: Meta<typeof ColorPicker> = {
-  title: 'Pickers and Editors/ColorPicker',
+  title: 'Pickers/ColorPicker',
   component: ColorPicker,
   parameters: {
     docs: {

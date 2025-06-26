@@ -8,7 +8,7 @@ import { Menu } from './Menu';
 import mdx from './Menu.mdx';
 
 const meta: Meta<typeof Menu> = {
-  title: 'General/Menu',
+  title: 'Navigation/Menu',
   component: Menu,
   argTypes: {},
   parameters: {

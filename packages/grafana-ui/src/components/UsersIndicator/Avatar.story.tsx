@@ -4,7 +4,7 @@ import { Avatar } from './Avatar';
 import mdx from './Avatar.mdx';
 
 const meta: Meta<typeof Avatar> = {
-  title: 'General/UsersIndicator/Avatar',
+  title: 'Iconography/Avatar',
   component: Avatar,
   parameters: {
     docs: { page: mdx },

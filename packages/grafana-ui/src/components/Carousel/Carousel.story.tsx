@@ -15,7 +15,7 @@ const sampleImages = [
 ];
 
 const meta: Meta<typeof Carousel> = {
-  title: 'Data Display/Carousel',
+  title: 'Overlays/Carousel',
   component: Carousel,
   parameters: {
     docs: { page: mdx },

@@ -13,6 +13,8 @@ import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
 import { ToolbarButtonRow } from '../ToolbarButton/ToolbarButtonRow';
 
+// TODO: deprecate PageToolbar, in favor of just using Page instead?
+
 export interface Props {
   pageIcon?: IconName;
   title?: string;

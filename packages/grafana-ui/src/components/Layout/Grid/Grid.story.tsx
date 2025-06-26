@@ -11,7 +11,7 @@ const dimensions = Array.from({ length: 9 }).map(() => ({
 }));
 
 const meta: Meta<typeof Grid> = {
-  title: 'General/Layout/Grid',
+  title: 'Layout/Grid',
   component: Grid,
   parameters: {
     docs: {

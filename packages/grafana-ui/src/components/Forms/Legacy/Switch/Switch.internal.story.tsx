@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Switch } from './Switch';
 
 const meta: Meta<typeof Switch> = {
-  title: 'Forms/Legacy/Switch',
+  title: 'Inputs/Legacy/Switch',
   component: Switch,
   parameters: {
     controls: {

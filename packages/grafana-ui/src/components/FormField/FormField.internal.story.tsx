@@ -3,7 +3,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { FormField } from './FormField';
 
 const meta: Meta<typeof FormField> = {
-  title: 'Forms/Legacy/FormField',
+  title: 'Form layout/Deprecated/FormField',
   component: FormField,
   parameters: {
     controls: {

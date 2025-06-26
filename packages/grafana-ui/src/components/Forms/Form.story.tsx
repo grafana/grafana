@@ -17,7 +17,7 @@ import { Legend } from './Legend';
 import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export default {
-  title: 'Forms/Form',
+  title: 'Form layout/Form',
   decorators: [withStoryContainer],
   parameters: {
     docs: {

@@ -11,7 +11,7 @@ import mdx from './FieldArray.mdx';
 import { Form } from './Form';
 
 const meta: Meta = {
-  title: 'Forms/FieldArray',
+  title: 'Form layout/FieldArray',
   component: FieldArray,
   decorators: [withStoryContainer],
   parameters: {
