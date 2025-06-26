@@ -19,7 +19,6 @@ interface ImagePreviewProps {
   error: ErrorState;
   testId?: string;
   title?: string;
-  showLoading?: boolean;
 }
 
 export function ImagePreview({
@@ -28,7 +27,6 @@ export function ImagePreview({
   error,
   testId = selectors.components.ExportImage.preview.container,
   title,
-  showLoading = true,
 }: ImagePreviewProps) {
   const styles = useStyles2(getStyles);
   const [ref, { width: measuredWidth }] = useMeasure<HTMLDivElement>();
@@ -52,7 +50,7 @@ export function ImagePreview({
 
   return (
     <div className={styles.previewContainer} ref={ref} data-testid={testId}>
-      {showLoading && isLoading && (
+      {isLoading && (
         <div className={styles.loadingBarContainer} data-testid={selectors.components.ExportImage.preview.loading}>
           <LoadingBar width={measuredWidth} />
           {title && (

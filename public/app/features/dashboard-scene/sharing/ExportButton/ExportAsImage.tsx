@@ -138,7 +138,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         }
         testId={selectors.components.ExportImage.preview.container}
         title={dashboard.state.title}
-        showLoading={!!imageBlob || isLoading}
       />
     </>
   );
