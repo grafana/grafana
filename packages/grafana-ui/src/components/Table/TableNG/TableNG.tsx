@@ -701,7 +701,7 @@ const getGridStyles = (
     margin: 'auto',
     height: '100%',
     color: theme.colors.text.primary,
-    background: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     padding: theme.spacing.x0_5,
     paddingInlineStart: theme.spacing.x1,
   }),
