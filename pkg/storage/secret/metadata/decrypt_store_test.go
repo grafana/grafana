@@ -325,7 +325,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	database := database.ProvideDatabase(db, tracer)
 
 	// Initialize encryption manager and storage
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
@@ -341,20 +341,20 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
+	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager, nil)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, tracer, features)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, tracer, features)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, allowList)
 
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
+	decryptSvc, err := ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	return decryptSvc.(*decryptStorage), secureValueMetadataStorage, keeperService, keeperMetadataStorage
