@@ -48,7 +48,7 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
       new ShowModalReactEvent({
         component: wrapWithPluginContext<ModalWrapperProps>(
           pluginId,
-          getModalWrapper({ title, body, width, height }),
+          getModalWrapper({ title, body, width, height, pluginId }),
           log
         ),
       })
@@ -67,7 +67,6 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
       loading,
       value: pluginMeta,
     } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
-    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }), [pluginId]);
 
     if (loading) {
       return null;
@@ -88,9 +87,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <div {...(isSandboxEnabled && { 'data-plugin-sandbox': pluginMeta.id })}>
-          <Component {...readOnlyCopy(props, log)} />
-        </div>
+        <Component {...readOnlyCopy(props, log)} />
       </PluginContextProvider>
     );
   };
@@ -107,13 +104,18 @@ const getModalWrapper = ({
   body: Body,
   width,
   height,
-}: PluginExtensionOpenModalOptions) => {
+  pluginId,
+}: PluginExtensionOpenModalOptions & { pluginId: string }) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
+    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }), [pluginId]);
+
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <Body onDismiss={onDismiss} />
+        <div {...(isSandboxEnabled && { 'data-plugin-sandbox': pluginId })} data-testid="plugin-sandbox-wrapper">
+          <Body onDismiss={onDismiss} />
+        </div>
       </Modal>
     );
   };

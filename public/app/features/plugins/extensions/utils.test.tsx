@@ -660,6 +660,41 @@ describe('Plugin Extensions / Utils', () => {
       const modal = await screen.findByRole('dialog');
       expect(modal).toHaveTextContent('Version: 1.0.0');
     });
+
+    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
+
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).toHaveAttribute(
+        'data-plugin-sandbox',
+        'grafana-worldmap-panel'
+      );
+    });
+
+    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
+
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).not.toHaveAttribute('data-plugin-sandbox');
+    });
   });
 
   describe('wrapWithPluginContext()', () => {
@@ -752,37 +787,6 @@ describe('Plugin Extensions / Utils', () => {
 
       // Not able to mutate the props in production mode either
       expect(props.a.b.c).toBe('Grafana');
-    });
-
-    it('should add data-plugin-sandbox attribute when sandbox is enabled', async () => {
-      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
-
-      const pluginId = 'test-plugin';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
-
-      render(<Component a={{ b: { c: 'Grafana' } }} />);
-
-      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
-
-      // Find the div with the sandbox attribute
-      const sandboxDiv = document.querySelector('[data-plugin-sandbox]');
-
-      expect(sandboxDiv).toHaveAttribute('data-plugin-sandbox', 'test-plugin');
-    });
-
-    it('should not add data-plugin-sandbox attribute when sandbox is disabled', async () => {
-      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
-
-      const pluginId = 'test-plugin';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
-
-      render(<Component a={{ b: { c: 'Grafana' } }} />);
-
-      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
-
-      // Verify no element has the sandbox attribute
-      const sandboxDiv = document.querySelector('[data-plugin-sandbox]');
-      expect(sandboxDiv).toBeNull();
     });
   });
 
