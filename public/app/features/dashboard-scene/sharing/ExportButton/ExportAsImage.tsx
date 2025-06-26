@@ -15,13 +15,7 @@ import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { ImagePreview } from '../components/ImagePreview';
 import { SceneShareTabState, ShareView } from '../types';
 
-import { generateDashboardImage, ImageGenerationError } from './utils';
-
-type ErrorState = {
-  message: string;
-  title: string;
-  code?: ImageGenerationError;
-} | null;
+import { generateDashboardImage } from './utils';
 
 export class ExportAsImage extends SceneObjectBase<SceneShareTabState> implements ShareView {
   static Component = ExportAsImageRenderer;
@@ -37,27 +31,24 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const styles = useStyles2(getStyles);
 
   const [{ loading: isLoading, value: imageBlob, error }, onExport] = useAsyncFn(async () => {
-    const result = await generateDashboardImage({
-      dashboard,
-      scale: config.rendererDefaultImageScale || 1,
-    });
+    try {
+      const result = await generateDashboardImage({
+        dashboard,
+        scale: config.rendererDefaultImageScale || 1,
+      });
 
-    if (result.error) {
-      throw new Error(result.error);
-    }
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
-    DashboardInteractions.generateDashboardImageClicked({
-      scale: config.rendererDefaultImageScale || 1,
-      shareResource: 'dashboard',
-      success: true,
-    });
+      DashboardInteractions.generateDashboardImageClicked({
+        scale: config.rendererDefaultImageScale || 1,
+        shareResource: 'dashboard',
+        success: true,
+      });
 
-    return result.blob;
-  }, [dashboard]);
-
-  // Handle error tracking
-  useEffect(() => {
-    if (error) {
+      return result.blob;
+    } catch (error) {
       console.error('Error exporting image:', error);
       DashboardInteractions.generateDashboardImageClicked({
         scale: config.rendererDefaultImageScale || 1,
@@ -65,8 +56,9 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to generate image',
       });
+      throw error; // Re-throw to let useAsyncFn handle the error state
     }
-  }, [error]);
+  }, [dashboard]);
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
