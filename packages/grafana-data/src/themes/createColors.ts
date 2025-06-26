@@ -295,6 +295,35 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
+    if (!color.contrastColor) {
+      if (base.mode === 'light') {
+        switch (name) {
+          case 'primary':
+            color.contrastColor = palette.orangeLightMain;
+            break;
+          case 'secondary':
+            color.contrastColor = palette.orangeLightMain;
+            break;
+          default:
+            color.contrastColor = palette.orangeLightMain;
+            break;
+        }
+      } else {
+        switch (name) {
+          case 'primary':
+            color.contrastColor = palette.orangeLightMain;
+            break;
+          case 'secondary':
+            color.contrastColor = palette.orangeLightMain;
+            break;
+          default:
+            color.contrastColor = palette.orangeLightMain;
+            break;
+        }
+      }
+
+      console.log('color.contrastColor', color.contrastColor);
+    }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
     }

@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
@@ -218,7 +218,7 @@ export const getButtonStyles = (props: StyleProps) => {
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
-  const focusStyle = getFocusStyles(theme);
+  const focusStyle = getButtonFocusStyles(theme);
   const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
 
   return {
@@ -325,19 +325,35 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     };
   }
 
+  const shadowOffset = '8px';
+  const shadowSpread = '5px';
+
+  const hoverShadowOffset = '11px';
+  const hoverShadowSpread = '28px';
+  const hoverShadowBlur = '5px';
+
+  // primary
   return {
-    background: color.main,
+    backgroundColor: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-      duration: theme.transitions.duration.short,
-    }),
+    boxShadow: `${shadowOffset} ${shadowOffset} ${shadowSpread} #1c1c1c, -${shadowOffset} -${shadowOffset} ${shadowSpread} #262626`,
+    transition: `box-shadow ease-in-out 0.3s, background-color ease-in-out 0.1s, letter-spacing ease-in-out 0.1s, transform ease-in-out 0.1s`,
 
     '&:hover': {
-      background: color.shade,
+      backgroundColor: color.shade,
       color: color.contrastText,
-      boxShadow: theme.shadows.z1,
+      boxShadow: `${hoverShadowOffset} ${hoverShadowOffset} ${hoverShadowSpread} #121212, -${hoverShadowOffset} -${hoverShadowOffset} ${hoverShadowSpread} #303030`,
       borderColor: hoverBorderColor,
+    },
+    '&:active': {
+      boxShadow: `${hoverShadowOffset} ${hoverShadowOffset} ${hoverShadowSpread} #121212, -${hoverShadowOffset} -${hoverShadowOffset} ${hoverShadowSpread} #303030, ${color.contrastColor} 0px 0px ${hoverShadowSpread} ${hoverShadowBlur}`,
+      backgroundColor: color.contrastColor,
+      transform: 'scale(0.95)',
+      borderColor: hoverBorderColor,
+    },
+    '&:focus:not(:focus-visible)': {
+      outline: 'none',
     },
   };
 }
