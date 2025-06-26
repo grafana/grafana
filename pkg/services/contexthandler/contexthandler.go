@@ -93,6 +93,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			Context: web.FromContext(ctx),
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
+				IsAnonymous: true,
 			},
 			IsSignedIn:                false,
 			AllowAnonymous:            false,
