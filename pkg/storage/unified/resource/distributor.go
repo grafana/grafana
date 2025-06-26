@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,9 +21,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authnInterceptor interceptors.Authenticator, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
+func ProvideDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
 	var err error
-	grpcHandler, err := grpcserver.ProvideService(cfg, features, authnInterceptor, tracer, registerer)
+	grpcHandler, err := grpcserver.ProvideService(cfg, features, nil, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +239,11 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+
 	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
 
 	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", rs.Instances[0].Id))
@@ -247,7 +251,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	return userutils.InjectOrgID(ctx, namespace), client.(*RingClient).Client, nil
+	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
