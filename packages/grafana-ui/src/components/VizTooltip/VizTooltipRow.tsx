@@ -226,7 +226,6 @@ const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) =
     display: 'flex',
     alignItems: 'center',
     flex: '2',
-    minWidth: 0,
   }),
   value: css({
     fontWeight: 500,
