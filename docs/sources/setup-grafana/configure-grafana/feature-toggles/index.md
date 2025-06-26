@@ -109,12 +109,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
 | `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
+| `enableSCIM`                          | Enables SCIM support for user and group management                                                                                                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
 | `azureMonitorLogsBuilderEditor`       | Enables the logs builder mode for the Azure Monitor data source                                                                                               |
 | `logsPanelControls`                   | Enables a control component for the logs panel in Explore                                                                                                     |
-| `enableSCIM`                          | Enables SCIM support for user and group management                                                                                                            |
 
 ## Development feature toggles
 
