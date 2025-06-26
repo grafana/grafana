@@ -101,12 +101,14 @@ func (k MetaListRequestKey) Validate() error {
 	if k.Resource == "" {
 		return fmt.Errorf("resource is required")
 	}
-	if k.Namespace == "" {
-		return fmt.Errorf("namespace is required")
+
+	// If namespace is empty, name must also be empty
+	if k.Namespace == "" && k.Name != "" {
+		return fmt.Errorf("name must be empty when namespace is empty")
 	}
 
 	// Validate naming conventions
-	if !validNameRegex.MatchString(k.Namespace) {
+	if k.Namespace != "" && !validNameRegex.MatchString(k.Namespace) {
 		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
@@ -125,7 +127,13 @@ func (k MetaListRequestKey) Validate() error {
 // Prefix returns the prefix for listing metadata objects
 func (k MetaListRequestKey) Prefix() string {
 	if k.Name == "" {
+		if k.Namespace == "" {
+			return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		}
 		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
+	}
+	if k.Namespace == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
 	}
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
