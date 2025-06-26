@@ -4510,6 +4510,9 @@
       "failed-to-load": "Failed to load dashboard"
     },
     "export": {
+      "button": {
+        "label": "Export dashboard"
+      },
       "menu": {
         "label": "Export dashboard menu"
       }
