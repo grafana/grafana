@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -33,10 +34,39 @@ export class ExportAsImage extends SceneObjectBase<SceneShareTabState> implement
 function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const { onDismiss } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const [isLoading, setIsLoading] = useState(false);
-  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
-  const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
+
+  const [{ loading: isLoading, value: imageBlob, error }, onExport] = useAsyncFn(async () => {
+    const result = await generateDashboardImage({
+      dashboard,
+      scale: config.rendererDefaultImageScale || 1,
+    });
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    DashboardInteractions.generateDashboardImageClicked({
+      scale: config.rendererDefaultImageScale || 1,
+      shareResource: 'dashboard',
+      success: true,
+    });
+
+    return result.blob;
+  }, [dashboard]);
+
+  // Handle error tracking
+  useEffect(() => {
+    if (error) {
+      console.error('Error exporting image:', error);
+      DashboardInteractions.generateDashboardImageClicked({
+        scale: config.rendererDefaultImageScale || 1,
+        shareResource: 'dashboard',
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate image',
+      });
+    }
+  }, [error]);
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
@@ -46,43 +76,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       }
     };
   }, [imageBlob]);
-
-  const onExport = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await generateDashboardImage({
-        dashboard,
-        scale: config.rendererDefaultImageScale || 1,
-      });
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      setImageBlob(result.blob);
-      DashboardInteractions.generateDashboardImageClicked({
-        scale: config.rendererDefaultImageScale || 1,
-        shareResource: 'dashboard',
-        success: true,
-      });
-    } catch (error) {
-      console.error('Error exporting image:', error);
-      DashboardInteractions.generateDashboardImageClicked({
-        scale: config.rendererDefaultImageScale || 1,
-        shareResource: 'dashboard',
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to generate image',
-      });
-      setError({
-        title: t('share-modal.image.error-title', 'Failed to generate image'),
-        message: error instanceof Error ? error.message : 'Failed to generate image',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const onDownload = () => {
     if (!imageBlob) {
@@ -141,9 +134,16 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       </div>
 
       <ImagePreview
-        imageBlob={imageBlob}
+        imageBlob={imageBlob || null}
         isLoading={isLoading}
-        error={error}
+        error={
+          error
+            ? {
+                title: t('share-modal.image.error-title', 'Failed to generate image'),
+                message: error instanceof Error ? error.message : 'Failed to generate image',
+              }
+            : null
+        }
         testId={selectors.components.ExportImage.preview.container}
         title={dashboard.state.title}
         showLoading={!!imageBlob || isLoading}
