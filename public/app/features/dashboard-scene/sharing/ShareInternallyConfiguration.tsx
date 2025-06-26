@@ -1,3 +1,4 @@
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Label, Spinner, Stack, Switch } from '@grafana/ui';
 
@@ -12,6 +13,8 @@ interface Props {
   onChangeTheme: (v: string) => void;
   isLoading: boolean;
 }
+
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally;
 
 export default function ShareInternallyConfiguration({
   useLockedTime,
@@ -32,6 +35,7 @@ export default function ShareInternallyConfiguration({
               id="share-current-time-range"
               value={useLockedTime}
               onChange={onToggleLockedTime}
+              data-testid={selectors.lockTimeRangeSwitch}
               aria-describedby="time-range-description"
             />
             <Label
@@ -50,6 +54,7 @@ export default function ShareInternallyConfiguration({
               value={useShortUrl}
               label={t('link.share.short-url-label', 'Shorten link')}
               onChange={onUrlShorten}
+              data-testid={selectors.shortenUrlSwitch}
             />
             <Label>
               <Trans i18nKey="link.share.short-url-label">Shorten link</Trans>
