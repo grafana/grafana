@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -41,6 +42,7 @@ export const StatusHistoryPanel = ({
   fieldConfig,
   replaceVariables,
   onChangeTimeRange,
+  id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
@@ -51,9 +53,9 @@ export const StatusHistoryPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
-  const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme, fieldConfig.defaults.noValue),
-    [data.series, timeRange, theme, fieldConfig.defaults.noValue]
+  const { warn, frames } = useMemo(
+    () => prepareTimelineFields(data.series, false, timeRange, theme),
+    [data.series, timeRange, theme]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
@@ -69,11 +71,7 @@ export const StatusHistoryPanel = ({
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!paginatedFrames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+    return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
   }
 
   // Status grid requires some space between values

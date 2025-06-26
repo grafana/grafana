@@ -3255,6 +3255,12 @@
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "No numeric fields found",
+      "missing-series": "Bar charts require a string or time field"
+    }
+  },
   "barchart": {
     "config": {
       "category-thresholds": "Thresholds",
@@ -3295,9 +3301,6 @@
         "label-constant": "Constant",
         "label-negative-y": "Negative Y"
       }
-    },
-    "no-value": {
-      "default-message": "No data in response"
     },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
@@ -11610,9 +11613,6 @@
     "missing-field": {
       "all": "No graphable fields",
       "time": "Data does not have a time field"
-    },
-    "no-value": {
-      "default": "No data in response"
     }
   },
   "timeseries": {

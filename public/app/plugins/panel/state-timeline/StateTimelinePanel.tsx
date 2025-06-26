@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   AxisPlacement,
   EventBusPlugin,
@@ -40,6 +41,7 @@ export const StateTimelinePanel = ({
   fieldConfig,
   replaceVariables,
   onChangeTimeRange,
+  id: panelId,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
@@ -49,9 +51,8 @@ export const StateTimelinePanel = ({
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(
-    () =>
-      prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme, fieldConfig.defaults.noValue),
-    [data.series, options.mergeValues, timeRange, theme, fieldConfig.defaults.noValue]
+    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
+    [data.series, options.mergeValues, timeRange, theme]
   );
 
   const { paginatedFrames, paginationRev, paginationElement, paginationHeight } = usePagination(
@@ -67,11 +68,7 @@ export const StateTimelinePanel = ({
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!paginatedFrames || warn) {
-    return (
-      <div className="panel-empty">
-        <p>{warn ?? 'No data found in response'}</p>
-      </div>
-    );
+    return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());

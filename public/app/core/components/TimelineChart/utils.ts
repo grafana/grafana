@@ -308,11 +308,10 @@ export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
   timeRange: TimeRange,
-  theme: GrafanaTheme2,
-  noValue = t('timeline.no-value.default', 'No data in response')
+  theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
-    return { warn: noValue };
+    return { warn: undefined };
   }
 
   cacheFieldDisplayNames(series);
