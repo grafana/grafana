@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Alert, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 
 type ErrorState = {
@@ -80,17 +80,23 @@ function ErrorAlert({ error }: { error: ErrorState }) {
     return null;
   }
 
+  // Only show message if it's different from the title to avoid repetition
+  const showMessage = error.message && error.message !== error.title;
+
   return (
     <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
-      <div data-testid={selectors.components.ExportImage.preview.error.title}>{error.title}</div>
-      <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>
+      {showMessage && <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>}
+      {error.code && (
+        <div>
+          <Trans i18nKey="share-modal.image.error-code">Error code:</Trans> {error.code}
+        </div>
+      )}
     </Alert>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   previewContainer: css({
-    position: 'relative',
     width: '100%',
     minHeight: '200px',
     display: 'flex',
