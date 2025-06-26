@@ -579,6 +579,8 @@ require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-sto
 
 require github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 
+require cloud.google.com/go/spanner v1.76.1
+
 require (
 	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.2 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect

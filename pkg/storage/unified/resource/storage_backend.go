@@ -16,35 +16,40 @@ import (
 
 // Unified storage backend
 
-type KVStorageBackend struct {
+type kvStorageBackend struct {
 	snowflake  *snowflake.Node
 	kv         KV
 	dataStore  *dataStore
 	metaStore  *metadataStore
 	eventStore *eventStore
 	notifier   *notifier
+	builder    DocumentBuilder
 }
 
-var _ StorageBackend = &KVStorageBackend{}
+var _ StorageBackend = &kvStorageBackend{}
 
-func NewKVStorageBackend(kv KV) *KVStorageBackend {
+func NewkvStorageBackend(kv KV) *kvStorageBackend {
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
 		panic(err)
 	}
 	eventStore := newEventStore(kv)
-	return &KVStorageBackend{
+	return &kvStorageBackend{
 		kv:         kv,
 		dataStore:  newDataStore(kv),
 		metaStore:  newMetadataStore(kv),
 		eventStore: eventStore,
 		notifier:   newnotifier(eventStore, notifierOptions{}),
 		snowflake:  s,
+		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
 	}
 }
 
-// // WriteEvent writes a resource event (create/update/delete) to the storage backend.
-func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+// WriteEvent writes a resource event (create/update/delete) to the storage backend.
+func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+	if err := event.Validate(); err != nil {
+		return 0, fmt.Errorf("invalid event: %w", err)
+	}
 	rv := k.snowflake.Generate().Int64()
 
 	// Write data.
@@ -59,6 +64,7 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
+
 	err := k.dataStore.Save(ctx, DataKey{
 		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
@@ -66,12 +72,17 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-	}, io.NopCloser(bytes.NewReader(event.Value)))
+	}, io.NopCloser(bytes.NewReader(event.Value))) // TODO: this should be a reader instead of a byte array
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
 
 	// Write metadata
+	doc, err := k.builder.BuildDocument(ctx, event.Key, rv, event.Value)
+	if err != nil {
+		return 0, fmt.Errorf("failed to build document: %w", err)
+	}
+
 	err = k.metaStore.Save(ctx, MetaDataObj{
 		Key: MetaDataKey{
 			Namespace:       event.Key.Namespace,
@@ -82,12 +93,15 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Action:          action,
 			Folder:          event.Object.GetFolder(),
 		},
-		Value: MetaData{},
+		Value: MetaData{
+			IndexableDocument: *doc,
+		},
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to write metadata: %w", err)
 	}
 
+	// Write event
 	err = k.eventStore.Save(ctx, Event{
 		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
@@ -104,7 +118,7 @@ func (k *KVStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	return rv, nil
 }
 
-func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
 	}
@@ -143,7 +157,7 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 // // ListIterator returns an iterator for listing resources.
-func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -286,7 +300,7 @@ func (i *kvListIterator) Value() []byte {
 }
 
 // ListHistory is like ListIterator, but it returns the history of a resource.
-func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
+func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
@@ -454,7 +468,7 @@ func (k *KVStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 }
 
 // processTrashEntries handles the special case of listing deleted items (trash)
-func (k *KVStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyEntries []DataObj, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
+func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error, historyEntries []DataObj, lastSeenRV int64, sortAscending bool, listRV int64) (int64, error) {
 	// Filter to only deleted entries
 	var deletedEntries []DataObj
 	for _, entry := range historyEntries {
@@ -666,7 +680,7 @@ func (i *kvHistoryIterator) Value() []byte {
 }
 
 // WatchWriteEvents returns a channel that receives write events.
-func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
@@ -721,7 +735,7 @@ func (k *KVStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 // GetResourceStats returns resource stats within the storage backend.
 // TODO: this isn't very efficient, we should use a more efficient algorithm.
-func (k *KVStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	stats := make([]ResourceStats, 0)
 	res := make(map[string]map[string]bool)
 	rvs := make(map[string]int64)
