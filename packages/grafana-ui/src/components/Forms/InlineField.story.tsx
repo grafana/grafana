@@ -8,7 +8,7 @@ import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 
 const meta: Meta<typeof InlineField> = {
-  title: 'Forms/InlineField',
+  title: 'Form layout/InlineField',
   component: InlineField,
   argTypes: {
     label: { control: { type: 'text' } },

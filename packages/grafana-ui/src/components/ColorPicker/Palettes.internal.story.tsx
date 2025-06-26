@@ -7,8 +7,10 @@ import mdx from './ColorPicker.mdx';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';
 
+// TODO: Note: these components aren't exported from the package
+
 const meta: Meta = {
-  title: 'Pickers and Editors/ColorPicker/Palettes',
+  title: 'Pickers/Development/ColorPickerPalettes',
   parameters: {
     docs: {
       page: mdx,

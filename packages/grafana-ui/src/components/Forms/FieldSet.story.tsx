@@ -9,7 +9,7 @@ import mdx from './FieldSet.mdx';
 import { Form } from './Form';
 
 const meta: Meta<typeof FieldSet> = {
-  title: 'Forms/FieldSet',
+  title: 'Form layout/FieldSet',
   component: FieldSet,
   args: {
     label: 'Default label',

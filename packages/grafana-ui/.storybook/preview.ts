@@ -73,17 +73,35 @@ const preview: Preview = {
       // https://github.com/storybookjs/storybook/issues/22470
       storySort: (a, b) => {
         // Skip sorting for stories with nosort tag
-        if (a.tags.includes('nosort') || b.tags.includes('nosort')) {
-          return 0;
-        }
-        if (a.title.startsWith('Docs Overview')) {
-          if (b.title.startsWith('Docs Overview')) {
-            return 0;
-          }
-          return -1;
-        } else if (b.title.startsWith('Docs Overview')) {
+        // if (a.tags.includes('nosort') || b.tags.includes('nosort')) {
+        //   return 0;
+        // }
+        // if (a.title.startsWith('Docs Overview')) {
+        //   if (b.title.startsWith('Docs Overview')) {
+        //     return 0;
+        //   }
+        //   return -1;
+        // } else if (b.title.startsWith('Docs Overview')) {
+        //   return 1;
+        // }
+
+        const aTitle = a.title.toLowerCase();
+        const bTitle = b.title.toLowerCase();
+
+        if (aTitle.includes('deprecated') && !bTitle.includes('deprecated')) {
           return 1;
         }
+        if (bTitle.includes('deprecated') && !aTitle.includes('deprecated')) {
+          return -1;
+        }
+
+        if (aTitle.includes('legacy') && !bTitle.includes('legacy')) {
+          return 1;
+        }
+        if (bTitle.includes('legacy') && !aTitle.includes('legacy')) {
+          return -1;
+        }
+
         return a.id === b.id ? 0 : a.id.localeCompare(b.id, undefined, { numeric: true });
       },
     },

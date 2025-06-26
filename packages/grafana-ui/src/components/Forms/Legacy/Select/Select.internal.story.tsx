@@ -8,7 +8,7 @@ import { SelectableValue } from '@grafana/data';
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
 const meta: Meta<typeof Select> = {
-  title: 'Forms/Legacy/Select',
+  title: 'Inputs/Legacy/Select',
   component: Select,
   parameters: {
     controls: {

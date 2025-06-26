@@ -9,7 +9,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Text } from './Text';
 
 const meta: Meta = {
-  title: 'General/Text',
+  title: 'Foundations/Typography',
 };
 
 const FONT_WEIGHTS = [/*100, 200, 300, */ 400, 500 /*600, 700, 800, 900*/];

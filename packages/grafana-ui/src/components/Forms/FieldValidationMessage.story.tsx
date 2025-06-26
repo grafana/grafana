@@ -4,7 +4,7 @@ import { FieldValidationMessage } from './FieldValidationMessage';
 import mdx from './FieldValidationMessage.mdx';
 
 const meta: Meta<typeof FieldValidationMessage> = {
-  title: 'Forms/FieldValidationMessage',
+  title: 'Form layout/FieldValidationMessage',
   component: FieldValidationMessage,
   parameters: {
     docs: {

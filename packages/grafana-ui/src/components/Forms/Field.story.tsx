@@ -9,7 +9,7 @@ import { Field } from './Field';
 import mdx from './Field.mdx';
 
 const meta: Meta<typeof Field> = {
-  title: 'Forms/Field',
+  title: 'Form layout/Field',
   component: Field,
   argTypes: {
     label: { control: { type: 'text' } },
