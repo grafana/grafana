@@ -3353,6 +3353,7 @@
       "delete-modal-restore-dashboards-text": "Tindakan ini akan segera menghapus folder yang dipilih tetapi dasbor yang dipilih akan ditandai untuk dihapus dalam 30 hari. Administrator organisasi Anda dapat memulihkan dasbor kapan saja sebelum 30 hari kedaluwarsa. Folder tidak dapat dipulihkan.",
       "delete-modal-text": "Tindakan ini akan menghapus konten berikut:",
       "delete-modal-title": "Hapus",
+      "delete-provisioned-folder": "",
       "deleting": "Menghapus...",
       "manage-permissions-button": "Kelola izin",
       "move-button": "Pindahkan",
@@ -3387,6 +3388,14 @@
       "select-all-header-checkbox": "Pilih semua",
       "select-checkbox": "Pilih",
       "tags-column": "Tag"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Tidak dapat mengambil informasi turunan"
@@ -3505,11 +3514,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Pusat",
         "left": "Kiri",
         "right": "Kanan"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3536,7 +3552,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3545,11 +3574,48 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3558,20 +3624,50 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Editor Inline Canvas",
       "tooltip-close-inline-editor": "Tutup editor inline"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Tambahkan item",
       "please-select-an-element": "Pilih elemen"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animasikan"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3586,6 +3682,15 @@
         "auto": "Auto"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Tidak ditemukan: </0><config />"
     },
@@ -3598,6 +3703,7 @@
       "zoom-scroll-wheel": "Zoom: Roda gulir"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3606,6 +3712,11 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3617,9 +3728,23 @@
       "placeholder-value": "Nilai"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Kendala",
       "label-position": "Jabatan",
-      "loading": "Memuat..."
+      "loading": "Memuat...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Ratakan ke bawah",
@@ -3630,6 +3755,7 @@
       "tooltip-align-vertical-centers": "Ratakan ke tengah vertikal"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3638,14 +3764,33 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Klik dua kali untuk mengatur teks"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3654,6 +3799,11 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3675,6 +3825,7 @@
       "tooltip-remove": "Hapus"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Bawah",
         "center": "Pusat",
@@ -3683,9 +3834,18 @@
         "right": "Kanan",
         "top": "Atas"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -4574,6 +4734,7 @@
       "title-matched_other": "Cocok {{count}}/{{totalCount}} opsi"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(kosong)",
         "no-title": "<no title>"
@@ -5432,12 +5593,6 @@
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan.",
       "title-cannot-delete-provisioned-dashboard": "Tidak dapat menghapus dasbor yang disediakan"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Jalur file:",
-      "managed-by-version-control": "Sumber daya ini dikelola oleh kontrol versi dan tidak dapat dihapus. Untuk menghapusnya, hapus dari repositori dan sinkronkan untuk menerapkan perubahan.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Tidak dapat menghapus sumber daya yang disediakan"
-    },
     "query-editor": {
       "query": "Kueri"
     },
@@ -5524,15 +5679,6 @@
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
       "affected-dashboards_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1> Dasbor berikut yang menggunakan panel akan terpengaruh:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
-      "description-branch-name-in-git-hub": "Nama cabang di GitHub",
-      "description-inside-repository": "Jalur file di dalam repositori (.json atau .yaml)",
-      "label-branch": "Cabang",
-      "label-comment": "Komentar",
-      "label-path": "Jalur",
-      "label-workflow": "Alur kerja"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Kesalahan saat menyimpan dasbor",
@@ -6057,6 +6203,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Unggah"
     },
@@ -6069,7 +6227,10 @@
       "placeholder-search": "Cari"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Bidang",
+      "label-fixed": "",
       "label-mappings": "Pemetaan",
       "label-source": "Sumber"
     },
@@ -6085,8 +6246,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Batas",
-      "label-value": "Nilai"
+      "label-value": "Nilai",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Maksimum",
@@ -6094,7 +6264,10 @@
       "label-value": "Nilai"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Bidang",
+      "label-fixed": "",
       "label-source": "Sumber",
       "label-template": "Templat",
       "label-value": "Nilai"
@@ -9578,6 +9751,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Plugin ini tidak dipublikasikan ke <2>grafana.com/plugins</2> dan tidak dapat dikelola melalui katalog.",
+      "enterprise-plugin-info": "",
       "learn-more": "Pelajari lebih lanjut",
       "no-valid-grafana-enterprise-license-detected": "Tidak ada lisensi Grafana Enterprise yang valid terdeteksi.",
       "title-dev-alert": "Ini adalah pengembangan plugin dan instalasinya tidak dapat dihapus.",
@@ -9731,6 +9905,17 @@
       "name": "Nama",
       "teams": "Tim",
       "text-loading-teams": "Memuat tim..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {

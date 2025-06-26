@@ -3366,6 +3366,7 @@
       "delete-modal-restore-dashboards-text": "Deze actie verwijdert de geselecteerde mappen onmiddellijk, maar de geselecteerde dashboards worden gemarkeerd voor verwijdering over 30 dagen. Je organisatiebeheerder kan de dashboards op elk moment herstellen voordat de 30 dagen verlopen. Mappen kunnen niet worden hersteld.",
       "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
       "delete-modal-title": "Verwijderen",
+      "delete-provisioned-folder": "",
       "deleting": "Bezig met verwijderen ...",
       "manage-permissions-button": "Toestemmingen beheren",
       "move-button": "Verplaatsen",
@@ -3405,6 +3406,14 @@
       "select-all-header-checkbox": "Alles selecteren",
       "select-checkbox": "Selecteren",
       "tags-column": "Tags"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Kan afgeleide informatie niet ophalen"
@@ -3523,11 +3532,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Midden",
         "left": "Links",
         "right": "Rechts"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Automatisch"
       }
@@ -3554,7 +3570,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3563,11 +3592,48 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3576,20 +3642,50 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Canvas Inline-editor",
       "tooltip-close-inline-editor": "Inline-editor sluiten"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Artikelen toevoegen",
       "please-select-an-element": "Selecteer een element"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animatie"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3700,15 @@
         "auto": "Automatisch"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Niet gevonden: </0><config />"
     },
@@ -3616,6 +3721,7 @@
       "zoom-scroll-wheel": "Zoom: scrollwiel"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3624,6 +3730,11 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
       }
@@ -3635,9 +3746,23 @@
       "placeholder-value": "Waarde"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Beperkende factoren",
       "label-position": "Positie",
-      "loading": "Laden..."
+      "loading": "Laden...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Onder uitlijnen",
@@ -3648,6 +3773,7 @@
       "tooltip-align-vertical-centers": "Verticale middens uitlijnen"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3656,14 +3782,33 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Dubbelklik om tekst in te stellen"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3672,6 +3817,11 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
       }
@@ -3693,6 +3843,7 @@
       "tooltip-remove": "Verwijderen"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Onderaan",
         "center": "Midden",
@@ -3701,9 +3852,18 @@
         "right": "Rechts",
         "top": "Boven"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatisch"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -4593,6 +4753,7 @@
       "title-matched_other": "{{count}} overeenkomende/{{totalCount}} opties"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(leeg)",
         "no-title": "<no title>"
@@ -5452,12 +5613,6 @@
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Kan provisioned dashboard niet verwijderen"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Bestandspad:",
-      "managed-by-version-control": "Deze bron wordt beheerd door versiebeheer en kan niet worden verwijderd. Om het te verwijderen, verwijder je het uit de repository en synchroniseer je het om de wijzigingen toe te passen.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Kan provisioned bron niet verwijderen"
-    },
     "query-editor": {
       "query": "Query"
     },
@@ -5545,15 +5700,6 @@
       "update-all": "Alles bijwerken",
       "affected-dashboards_one": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:",
       "affected-dashboards_other": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel)",
-      "description-branch-name-in-git-hub": "Filiaalnaam in GitHub",
-      "description-inside-repository": "Bestandspad in de repository (.json of .yaml)",
-      "label-branch": "Vestiging",
-      "label-comment": "Opmerking",
-      "label-path": "Path",
-      "label-workflow": "Werkstroom"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Fout bij opslaan van dashboard",
@@ -6078,6 +6224,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Uploaden"
     },
@@ -6090,7 +6248,10 @@
       "placeholder-search": "Zoeken"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Veld",
+      "label-fixed": "",
       "label-mappings": "Mappingen",
       "label-source": "Bron"
     },
@@ -6106,8 +6267,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Limiet",
-      "label-value": "Waarde"
+      "label-value": "Waarde",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Max.",
@@ -6115,7 +6285,10 @@
       "label-value": "Waarde"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Veld",
+      "label-fixed": "",
       "label-source": "Bron",
       "label-template": "Sjabloon",
       "label-value": "Waarde"
@@ -9607,6 +9780,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Deze plug-in is niet gepubliceerd op <2>grafana.com/plugins</2> en kan niet via de catalogus worden beheerd.",
+      "enterprise-plugin-info": "",
       "learn-more": "Meer informatie",
       "no-valid-grafana-enterprise-license-detected": "Geen geldige Grafana Enterprise-licentie gedetecteerd.",
       "title-dev-alert": "Dit is een ontwikkelversie van de plug-in die niet kan worden verwijderd.",
@@ -9760,6 +9934,17 @@
       "name": "Naam",
       "teams": "Teams",
       "text-loading-teams": "Teams laden..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {

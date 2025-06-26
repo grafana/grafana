@@ -3366,6 +3366,7 @@
       "delete-modal-restore-dashboards-text": "Bu işlem, seçilen klasörleri anında silecektir ancak seçilen panolar 30 gün içinde silinmek üzere işaretlenecektir. Kuruluş yöneticiniz, panoları 30 günlük süre dolmadan önce istediği zaman geri yükleyebilir. Klasörler geri yüklenemez.",
       "delete-modal-text": "Bu işlem aşağıdaki içerikleri silecektir:",
       "delete-modal-title": "Sil",
+      "delete-provisioned-folder": "",
       "deleting": "Siliniyor...",
       "manage-permissions-button": "İzinleri yönet",
       "move-button": "Taşı",
@@ -3405,6 +3406,14 @@
       "select-all-header-checkbox": "Tümünü seç",
       "select-checkbox": "Seçin",
       "tags-column": "Etiketler"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Alt öge bilgileri alınamıyor"
@@ -3523,11 +3532,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Merkez",
         "left": "Sol",
         "right": "Sağ"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Otomatik"
       }
@@ -3554,7 +3570,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3563,11 +3592,48 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3576,20 +3642,50 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Tuval Satır İçi Düzenleyici",
       "tooltip-close-inline-editor": "Satır içi düzenleyiciyi kapat"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Öge ekle",
       "please-select-an-element": "Lütfen bir bileşen seçin"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animasyon"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3700,15 @@
         "auto": "Otomatik"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Bulunamadı: </0><config />"
     },
@@ -3616,6 +3721,7 @@
       "zoom-scroll-wheel": "Yakınlaştırma: Tekerleği kaydırma"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3624,6 +3730,11 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
       }
@@ -3635,9 +3746,23 @@
       "placeholder-value": "Değer"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Kısıtlamalar",
       "label-position": "Pozisyon",
-      "loading": "Yükleniyor..."
+      "loading": "Yükleniyor...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Alta hizala",
@@ -3648,6 +3773,7 @@
       "tooltip-align-vertical-centers": "Dikey merkezleri hizala"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3656,14 +3782,33 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Metni ayarlamak için çift tıklayın"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3672,6 +3817,11 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
       }
@@ -3693,6 +3843,7 @@
       "tooltip-remove": "Kaldır"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Alt",
         "center": "Merkez",
@@ -3701,9 +3852,18 @@
         "right": "Sağ",
         "top": "Üst"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Otomatik"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -4593,6 +4753,7 @@
       "title-matched_other": "{{totalCount}} seçenekten {{count}} tanesi eşleşti"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(boş)",
         "no-title": "<başlık yok>"
@@ -5452,12 +5613,6 @@
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. ",
       "title-cannot-delete-provisioned-dashboard": "Sağlanan pano silinemiyor"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Dosya yolu:",
-      "managed-by-version-control": "Bu kaynak sürüm kontrolü tarafından yönetilmektedir ve silinemez. Kaldırmak için depodan silin ve değişiklikleri uygulamak için eşitleyin.",
-      "ok": "Tamam",
-      "title-cannot-delete-provisioned-resource": "Sağlanan kaynak silinemiyor"
-    },
     "query-editor": {
       "query": "Sorgu"
     },
@@ -5545,15 +5700,6 @@
       "update-all": "Tümünü güncelle",
       "affected-dashboards_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:",
       "affected-dashboards_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
-      "description-branch-name-in-git-hub": "GitHub'daki dal adı",
-      "description-inside-repository": "Depo içindeki dosya yolu (.json veya .yaml)",
-      "label-branch": "Dal",
-      "label-comment": "Yorum",
-      "label-path": "Yol",
-      "label-workflow": "İş akışı"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Pano kaydedilirken hata oluştu",
@@ -6078,6 +6224,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Yükle"
     },
@@ -6090,7 +6248,10 @@
       "placeholder-search": "Ara"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Alan",
+      "label-fixed": "",
       "label-mappings": "Eşlemeler",
       "label-source": "Kaynak"
     },
@@ -6106,8 +6267,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Sınırlama",
-      "label-value": "Değer"
+      "label-value": "Değer",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Maks.",
@@ -6115,7 +6285,10 @@
       "label-value": "Değer"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Alan",
+      "label-fixed": "",
       "label-source": "Kaynak",
       "label-template": "Şablonu",
       "label-value": "Değer"
@@ -9607,6 +9780,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Bu eklenti <2>grafana.com/plugins</2> adresinde yayımlanmadı ve katalog üzerinden yönetilemez.",
+      "enterprise-plugin-info": "",
       "learn-more": "Daha fazla bilgi edinin",
       "no-valid-grafana-enterprise-license-detected": "Geçerli bir Grafana Enterprise lisansı bulunamadı.",
       "title-dev-alert": "Bu, eklentinin geliştirme sürümüdür ve kaldırılamaz.",
@@ -9760,6 +9934,17 @@
       "name": "Ad",
       "teams": "Ekipler",
       "text-loading-teams": "Ekipler yükleniyor..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
