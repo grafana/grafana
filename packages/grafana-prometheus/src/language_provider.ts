@@ -522,7 +522,7 @@ export interface PrometheusLanguageProviderInterface
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
 
-  queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
+  queryMetricsMetadata: (limit?: number) => Promise<PromMetricsMetadata>;
   queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
 }
@@ -577,7 +577,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);
     return this._backwardCompatibleStart();
   };
 
@@ -599,12 +599,12 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
    */
-  private _queryMetadata = async () => {
+  private _queryMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
       API_V1.METADATA,
-      {},
+      { limit: limit ?? this.datasource.seriesLimit },
       {
         showErrorAlert: false,
         ...headers,
@@ -660,9 +660,9 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
    */
-  public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+  public queryMetricsMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     try {
-      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+      this._metricsMetadata = (await this._queryMetadata(limit)) ?? {};
     } catch (error) {
       this._metricsMetadata = {};
     }
@@ -682,7 +682,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelKeys(timeRange, interpolatedMatch, limit);
   };
 
   /**
@@ -716,7 +717,13 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelValues(
+      timeRange,
+      this.datasource.interpolateString(labelKey),
+      interpolatedMatch,
+      limit
+    );
   };
 }
 
@@ -803,7 +810,9 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     }
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
-        params.push(bq.query.metric);
+        if (bq.query.metric !== '') {
+          params.push(bq.query.metric);
+        }
       });
     }
     return params;

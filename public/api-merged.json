@@ -8877,6 +8877,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -16971,6 +16974,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
