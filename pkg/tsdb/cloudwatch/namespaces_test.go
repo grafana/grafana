@@ -1,29 +1,17 @@
-package routes
+package cloudwatch
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
 func Test_Namespaces_Route(t *testing.T) {
-	customNamespaces := ""
-	factoryFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{
-			Settings: models.CloudWatchSettings{
-				Namespace: customNamespaces,
-			},
-		}, nil
-	}
-
 	t.Run("calls GetHardCodedNamespaces", func(t *testing.T) {
 		origGetHardCodedNamespaces := services.GetHardCodedNamespaces
 		t.Cleanup(func() {
@@ -36,7 +24,8 @@ func Test_Namespaces_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, logger, factoryFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.NamespacesHandler))
 		handler.ServeHTTP(rr, req)
 		assert.True(t, haveBeenCalled)
 	})
@@ -51,8 +40,10 @@ func Test_Namespaces_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
-		customNamespaces = "customNamespace1,customNamespace2"
-		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, logger, factoryFunc))
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Namespace = "customNamespace1,customNamespace2"
+		})
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.NamespacesHandler))
 		handler.ServeHTTP(rr, req)
 		assert.JSONEq(t, `[{"value":"AWS/EC2"}, {"value":"AWS/ELB"}, {"value":"customNamespace1"}, {"value":"customNamespace2"}]`, rr.Body.String())
 	})
@@ -67,8 +58,10 @@ func Test_Namespaces_Route(t *testing.T) {
 		}
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/namespaces", nil)
-		customNamespaces = "DCustomNamespace1,ACustomNamespace2"
-		handler := http.HandlerFunc(ResourceRequestMiddleware(NamespacesHandler, logger, factoryFunc))
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Namespace = "DCustomNamespace1,ACustomNamespace2"
+		})
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.NamespacesHandler))
 		handler.ServeHTTP(rr, req)
 		assert.JSONEq(t, `[{"value":"ACustomNamespace2"}, {"value":"AWS/ELB"}, {"value":"AWS/XYZ"}, {"value":"DCustomNamespace1"}]`, rr.Body.String())
 	})
