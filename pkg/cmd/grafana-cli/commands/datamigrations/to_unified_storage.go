@@ -85,6 +85,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	if c.Bool("non-interactive") {
 		opts.Store = client
 		opts.BlobStore = client
+		opts.WithHistory = true // always include history in non-interactive mode
 		rsp, err := migrator.Migrate(ctx, opts)
 		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
 			return exitErr
