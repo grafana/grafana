@@ -406,7 +406,6 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 		// If the count is too large, we need to set the index to empty.
 		// Only do this if the max size is set to a non-zero (default) value.
 		if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
-
 			// #TODO figure out if we need to check rebuilding here as well
 			group.Go(func() error {
 				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
