@@ -14,6 +14,8 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName: "iam",
 	Group:   "iam.grafana.app",
@@ -83,6 +85,28 @@ var appManifestData = app.ManifestData{
 				},
 			},
 		},
+
+		{
+			Kind:       "User",
+			Scope:      "Namespaced",
+			Conversion: false,
+			Versions: []app.ManifestKindVersion{
+				{
+					Name: "v0alpha1",
+				},
+			},
+		},
+
+		{
+			Kind:       "Team",
+			Scope:      "Namespaced",
+			Conversion: false,
+			Versions: []app.ManifestKindVersion{
+				{
+					Name: "v0alpha1",
+				},
+			},
+		},
 	},
 }
 
@@ -101,6 +125,8 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"Role/v0alpha1":               v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":        v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1": v0alpha1.ResourcePermissionKind(),
+	"User/v0alpha1":               v0alpha1.UserKind(),
+	"Team/v0alpha1":               v0alpha1.TeamKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

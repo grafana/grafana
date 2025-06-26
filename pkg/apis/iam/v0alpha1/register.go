@@ -2,8 +2,10 @@ package v0alpha1
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,25 +18,28 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"users", "user", "User",
-	func() runtime.Object { return &User{} },
-	func() runtime.Object { return &UserList{} },
+var userKind = iamv0alpha1.UserKind()
+var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(),
+	userKind.GroupVersionResource().Resource, strings.ToLower(userKind.Kind()), userKind.Kind(),
+	func() runtime.Object { return userKind.ZeroValue() },
+	func() runtime.Object { return userKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Login", Type: "string", Format: "string", Description: "The user login"},
 			{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
 			{Name: "Created At", Type: "date"},
+			{Name: "Last Seen At", Type: "date", Description: "The last time the user was seen"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*User)
+			u, ok := obj.(*iamv0alpha1.User)
 			if ok {
 				return []interface{}{
 					u.Name,
 					u.Spec.Login,
 					u.Spec.Email,
 					u.CreationTimestamp.UTC().Format(time.RFC3339),
+					u.Spec.LastSeenAt.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected user")
@@ -158,8 +163,8 @@ var (
 func AddKnownTypes(scheme *runtime.Scheme, version string) {
 	scheme.AddKnownTypes(
 		schema.GroupVersion{Group: GROUP, Version: version},
-		&User{},
-		&UserList{},
+		&iamv0alpha1.User{},
+		&iamv0alpha1.UserList{},
 		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
