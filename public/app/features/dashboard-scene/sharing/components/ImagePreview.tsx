@@ -3,7 +3,6 @@ import { useMemo, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 
@@ -17,17 +16,10 @@ interface ImagePreviewProps {
   imageBlob: Blob | null;
   isLoading: boolean;
   error: ErrorState;
-  testId?: string;
   title?: string;
 }
 
-export function ImagePreview({
-  imageBlob,
-  isLoading,
-  error,
-  testId = selectors.components.ExportImage.preview.container,
-  title,
-}: ImagePreviewProps) {
+export function ImagePreview({ imageBlob, isLoading, error, title }: ImagePreviewProps) {
   const styles = useStyles2(getStyles);
   const [ref, { width: measuredWidth }] = useMeasure<HTMLDivElement>();
 
@@ -49,9 +41,19 @@ export function ImagePreview({
   }, [imageUrl]);
 
   return (
-    <div className={styles.previewContainer} ref={ref} data-testid={testId}>
+    <div
+      className={styles.previewContainer}
+      ref={ref}
+      role="region"
+      aria-label={t('share-modal.image.preview-region', 'Image preview')}
+    >
       {isLoading && (
-        <div className={styles.loadingBarContainer} data-testid={selectors.components.ExportImage.preview.loading}>
+        <div
+          className={styles.loadingBarContainer}
+          role="status"
+          aria-live="polite"
+          aria-label={t('share-modal.image.generating', 'Generating image')}
+        >
           <LoadingBar width={measuredWidth} />
           {title && (
             <div className={styles.titleContainer}>
@@ -67,7 +69,6 @@ export function ImagePreview({
           src={imageUrl}
           alt={t('share-modal.image.preview', 'Preview')}
           className={styles.image}
-          data-testid={selectors.components.ExportImage.preview.image}
           aria-label={t('share-modal.image.preview-aria', 'Generated image preview')}
         />
       )}
@@ -84,8 +85,8 @@ function ErrorAlert({ error }: { error: ErrorState }) {
   const showMessage = error.message && error.message !== error.title;
 
   return (
-    <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
-      {showMessage && <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>}
+    <Alert severity="error" title={error.title}>
+      {showMessage && <div>{error.message}</div>}
       {error.code && (
         <div>
           <Trans i18nKey="share-modal.image.error-code">Error code:</Trans> {error.code}

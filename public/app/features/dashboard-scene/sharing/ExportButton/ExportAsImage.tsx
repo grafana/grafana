@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
@@ -89,41 +88,41 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   }
 
   return (
-    <>
+    <main>
       <p className={styles.info}>
         <Trans i18nKey="share-modal.image.info-text">Save this dashboard as an image</Trans>
       </p>
 
-      <div className={styles.buttonRow}>
+      <div
+        className={styles.buttonRow}
+        role="group"
+        aria-label={t('share-modal.image.actions', 'Image export actions')}
+      >
         {!imageBlob ? (
           <Button
             variant="primary"
             onClick={onExport}
             disabled={isLoading}
             icon="gf-layout-simple"
-            data-testid={selectors.components.ExportImage.buttons.generate}
+            aria-describedby={isLoading ? 'generate-status' : undefined}
           >
             <Trans i18nKey="share-modal.image.generate-button">Generate image</Trans>
           </Button>
         ) : (
-          <Button
-            variant="primary"
-            onClick={onDownload}
-            icon="download-alt"
-            data-testid={selectors.components.ExportImage.buttons.download}
-          >
+          <Button variant="primary" onClick={onDownload} icon="download-alt">
             <Trans i18nKey="share-modal.image.download-button">Download image</Trans>
           </Button>
         )}
-        <Button
-          variant="secondary"
-          onClick={onDismiss}
-          fill="outline"
-          data-testid={selectors.components.ExportImage.buttons.cancel}
-        >
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
           <Trans i18nKey="share-modal.image.cancel-button">Cancel</Trans>
         </Button>
       </div>
+
+      {isLoading && (
+        <div id="generate-status" aria-live="polite" className="sr-only">
+          <Trans i18nKey="share-modal.image.generating">Generating image...</Trans>
+        </div>
+      )}
 
       <ImagePreview
         imageBlob={imageBlob || null}
@@ -136,10 +135,9 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
               }
             : null
         }
-        testId={selectors.components.ExportImage.preview.container}
         title={dashboard.state.title}
       />
-    </>
+    </main>
   );
 }
 
@@ -149,15 +147,9 @@ function RendererAlert() {
   }
 
   return (
-    <Alert
-      severity="info"
-      title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-      data-testid={selectors.components.ExportImage.rendererAlert.container}
-    >
-      <div data-testid={selectors.components.ExportImage.rendererAlert.title}>
-        {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-      </div>
-      <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
+    <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
+      <div>{t('share-modal.link.render-alert', 'Image renderer plugin not installed')}</div>
+      <div>
         <Trans i18nKey="share-modal.link.render-instructions">
           To render an image, you must install the{' '}
           <a

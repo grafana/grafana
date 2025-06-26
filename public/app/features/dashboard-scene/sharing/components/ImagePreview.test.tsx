@@ -1,7 +1,5 @@
 import { render, screen, cleanup } from '@testing-library/react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { ImagePreview } from './ImagePreview';
 
 // Mock URL.createObjectURL and URL.revokeObjectURL
@@ -28,15 +26,21 @@ describe('ImagePreview', () => {
 
   it('should render empty container when no image, loading, or error', () => {
     render(<ImagePreview {...defaultProps} />);
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.container)).toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.loading)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.image)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.error.container)).not.toBeInTheDocument();
+    // Container should exist with proper role and label
+    expect(screen.getByRole('region', { name: 'Image preview' })).toBeInTheDocument();
+    // Loading bar should not be visible
+    expect(screen.queryByLabelText('Loading bar')).not.toBeInTheDocument();
+    // Image should not be visible
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // Error alert should not be visible
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('should show loading state with title when loading', () => {
     render(<ImagePreview {...defaultProps} isLoading={true} title="Test Title" />);
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.loading)).toBeInTheDocument();
+    // Loading state should be announced properly
+    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading bar')).toBeInTheDocument();
     expect(screen.getByText('Test Title')).toBeInTheDocument();
   });
 
@@ -46,21 +50,18 @@ describe('ImagePreview', () => {
       message: 'Error Message',
     };
     render(<ImagePreview {...defaultProps} error={error} />);
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.error.container)).toBeInTheDocument();
-    expect(screen.getByText('Error Title')).toBeInTheDocument(); // Title is now in the Alert component
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.error.message)).toHaveTextContent(
-      'Error Message'
-    );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Error Title')).toBeInTheDocument();
+    expect(screen.getByText('Error Message')).toBeInTheDocument();
   });
 
   it('should show image when imageBlob is present', () => {
     const imageBlob = new Blob(['test'], { type: 'image/png' });
     mockCreateObjectURL.mockReturnValue('mock-url');
     render(<ImagePreview {...defaultProps} imageBlob={imageBlob} />);
-    const image = screen.getByTestId(selectors.components.ExportImage.preview.image);
+    const image = screen.getByRole('img', { name: 'Generated image preview' });
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('alt', 'Preview');
-    expect(image).toHaveAttribute('aria-label', 'Generated image preview');
     expect(image).toHaveAttribute('src', 'mock-url');
     expect(mockCreateObjectURL).toHaveBeenCalledWith(imageBlob);
   });
@@ -76,7 +77,9 @@ describe('ImagePreview', () => {
   it('should not show image when loading', () => {
     const imageBlob = new Blob(['test'], { type: 'image/png' });
     render(<ImagePreview {...defaultProps} imageBlob={imageBlob} isLoading={true} />);
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.image)).not.toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    // Should show loading state instead
+    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
   });
 
   it('should not show error when loading', () => {
@@ -85,7 +88,9 @@ describe('ImagePreview', () => {
       message: 'Error Message',
     };
     render(<ImagePreview {...defaultProps} error={error} isLoading={true} />);
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.error.container)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Should show loading state instead
+    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
   });
 
   it('should not show duplicate message when error title and message are the same', () => {
@@ -94,8 +99,24 @@ describe('ImagePreview', () => {
       message: 'Failed to generate image',
     };
     render(<ImagePreview {...defaultProps} error={error} />);
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.error.container)).toBeInTheDocument();
-    expect(screen.getByText('Failed to generate image')).toBeInTheDocument(); // Title is shown in Alert
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.error.message)).not.toBeInTheDocument(); // Message should not be shown separately
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Failed to generate image')).toBeInTheDocument();
+    // Check that the message doesn't appear twice by counting occurrences
+    expect(screen.getAllByText('Failed to generate image')).toHaveLength(1);
+  });
+
+  it('should show error code when present', () => {
+    const error = {
+      title: 'Generation failed',
+      message: 'Network error',
+      code: 'ERR_NETWORK',
+    };
+    render(<ImagePreview {...defaultProps} error={error} />);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('Generation failed')).toBeInTheDocument();
+    expect(screen.getByText('Network error')).toBeInTheDocument();
+    // Check for the error code text - it should exist in the DOM
+    expect(document.body.textContent).toContain('Error code:');
+    expect(document.body.textContent).toContain('ERR_NETWORK');
   });
 });

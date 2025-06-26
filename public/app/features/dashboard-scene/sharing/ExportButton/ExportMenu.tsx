@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
@@ -9,11 +8,8 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
-const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
-
 export interface ExportDrawerMenuItem {
   shareId: string;
-  testId: string;
   label: string;
   description?: string;
   icon: IconName;
@@ -43,7 +39,6 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     menuItems.push({
       shareId: shareDashboardType.export,
-      testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
       label,
       renderCondition: true,
@@ -52,7 +47,6 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     menuItems.push({
       shareId: shareDashboardType.image,
-      testId: newExportButtonSelector.exportAsImage,
       icon: 'camera',
       label: t('share-dashboard.menu.export-image-title', 'Export as image'),
       renderCondition: Boolean(config.featureToggles.sharingDashboardImage),
@@ -72,15 +66,15 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   };
 
   return (
-    <Menu data-testid={newExportButtonSelector.container}>
+    <Menu role="menu" aria-label={t('dashboard.export.menu.label', 'Export dashboard menu')}>
       {buildMenuItems().map((item) => (
         <Menu.Item
           key={item.label}
-          testId={item.testId}
           label={item.label}
           icon={item.icon}
           description={item.description}
           onClick={() => onClick(item)}
+          role="menuitem"
         />
       ))}
     </Menu>
