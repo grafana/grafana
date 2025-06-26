@@ -195,5 +195,14 @@ export default defineConfig<PluginOptions>({
         ...devices['Desktop Chrome'],
       },
     },
+    {
+      name: 'panels',
+      testDir: path.join(testDirRoot, '/panels-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });
