@@ -5,9 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Label, Stack, useStyles2 } from '@grafana/ui';
 
+import { EMPTY_SELECTOR } from '../../constants';
+
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesSelectorActions } from './styles';
-import { EMPTY_SELECTOR } from './types';
 
 export function SelectorActions() {
   const styles = useStyles2(getStylesSelectorActions);

@@ -245,9 +245,9 @@ org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 
 ### Configure team synchronization (Enterprise only)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](../../../../introduction/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 

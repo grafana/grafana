@@ -94,6 +94,36 @@ func (_m *FakeDashboardService) CountDashboardsInOrg(ctx context.Context, orgID 
 	return r0, r1
 }
 
+// GetDashboardsByLibraryPanelUID provides a mock function with given fields: ctx, libraryPanelUID, orgID
+func (_m *FakeDashboardService) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error) {
+	ret := _m.Called(ctx, libraryPanelUID, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDashboardsByLibraryPanelUID")
+	}
+
+	var r0 []*DashboardRef
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) ([]*DashboardRef, error)); ok {
+		return rf(ctx, libraryPanelUID, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) []*DashboardRef); ok {
+		r0 = rf(ctx, libraryPanelUID, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*DashboardRef)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, libraryPanelUID, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CountInFolders provides a mock function with given fields: ctx, orgID, folderUIDs, user
 func (_m *FakeDashboardService) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
 	ret := _m.Called(ctx, orgID, folderUIDs, user)
