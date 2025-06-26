@@ -174,7 +174,7 @@ describe('Language_provider', () => {
             },
           ],
         })
-      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\\\\\s\\\\\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
+      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\s\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
     });
     it('two fields with everything filled in', () => {
       expect(

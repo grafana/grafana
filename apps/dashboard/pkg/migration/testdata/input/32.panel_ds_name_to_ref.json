@@ -32,7 +32,14 @@
         "type": "dashboard"
       },
       {
+<<<<<<<< HEAD:apps/dashboard/pkg/migration/testdata/input/32.panel_ds_name_to_ref.json
         "datasource": "non-existing-ds",
+========
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+>>>>>>>> origin/main:apps/dashboard/pkg/migration/testdata/output/33.multiple_stats_cloudwatch.36.json
         "enable": true,
         "name": "Test Non-existing Annotation",
         "type": "dashboard"
@@ -204,9 +211,16 @@
       ]
     },
     {
+<<<<<<<< HEAD:apps/dashboard/pkg/migration/testdata/input/32.panel_ds_name_to_ref.json
       "datasource": "non-existing-ds",
       "title": "Non-existing Datasource Panel",
       "id": 9,
+========
+      "datasource": {
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+>>>>>>>> origin/main:apps/dashboard/pkg/migration/testdata/output/33.multiple_stats_cloudwatch.36.json
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -215,7 +229,14 @@
       },
       "targets": [
         {
+<<<<<<<< HEAD:apps/dashboard/pkg/migration/testdata/input/32.panel_ds_name_to_ref.json
           "datasource": "non-existing-ds"
+========
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          }
+>>>>>>>> origin/main:apps/dashboard/pkg/migration/testdata/output/33.multiple_stats_cloudwatch.36.json
         }
       ]
     },
@@ -285,7 +306,14 @@
           "statistics": ["Sum", "Average"]
         },
         {
+<<<<<<<< HEAD:apps/dashboard/pkg/migration/testdata/input/32.panel_ds_name_to_ref.json
           "refId": "B",
+========
+          "datasource": {
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+>>>>>>>> origin/main:apps/dashboard/pkg/migration/testdata/output/33.multiple_stats_cloudwatch.36.json
           "expr": "up",
           "datasource": "prometheus"
         },
@@ -531,6 +559,7 @@
         "name": "null_var"
       },
       {
+<<<<<<<< HEAD:apps/dashboard/pkg/migration/testdata/input/32.panel_ds_name_to_ref.json
         "type": "query",
         "datasource": "non-existing-ds",
         "name": "non_existing_var"
@@ -544,6 +573,14 @@
         "type": "query",
         "datasource": "another-non-existing-ds",
         "name": "another_non_existing_var"
+========
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
+        "name": "non_existing_var",
+        "type": "query"
+>>>>>>>> origin/main:apps/dashboard/pkg/migration/testdata/output/33.multiple_stats_cloudwatch.36.json
       }
     ]
   },
