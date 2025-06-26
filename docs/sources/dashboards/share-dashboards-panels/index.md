@@ -220,7 +220,7 @@ The snapshot is immediately deleted. You may need to clear your browser cache or
 
 You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph.
 
-**> Note:** As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+**> Note:** Panel embedding and anonymous access permissions are not available in Grafana Cloud, even for panels in [public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/). These capabilities are only supported in Grafana Enterprise and Grafana Open Source.
 
 Here is an example of the HTML code:
 
