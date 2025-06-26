@@ -195,7 +195,7 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 				yield(DataKey{}, err)
 				return
 			}
-			key, err := d.parseKey(k)
+			key, err := ParseKey(k)
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -235,7 +235,8 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
-func (d *dataStore) parseKey(key string) (DataKey, error) {
+// ParseKey parses a string key into a DataKey struct
+func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 5 {
 		return DataKey{}, fmt.Errorf("invalid key: %s", key)
