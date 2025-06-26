@@ -406,8 +406,15 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 		// If the count is too large, we need to set the index to empty.
 		// Only do this if the max size is set to a non-zero (default) value.
 		if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
-			s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
-			// #TODO: figure out how to build an empty index
+
+			// #TODO figure out if we need to check rebuilding here as well
+			group.Go(func() error {
+				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
+				totalBatchesIndexed++
+				_, err := s.buildEmptyIndex(ctx, info.NamespacedResource, info.ResourceVersion)
+				return err
+			})
+			continue
 		}
 
 		group.Go(func() error {
@@ -722,6 +729,23 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 	// rv is the last RV we read.  when watching, we must add all events since that time
 	return index, rv, err
+}
+
+// buildEmptyIndex creates an empty index without adding any documents
+func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResource, rv int64) (ResourceIndex, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildEmptyIndex")
+	defer span.End()
+
+	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
+	fields := s.builders.GetFields(nsr)
+
+	logger.Debug("Building empty index", "resource", nsr.Resource, "rv", rv)
+
+	// Build an empty index by passing a builder function that doesn't add any documents
+	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, func(index ResourceIndex) (int64, error) {
+		// Return the resource version without adding any documents to the index
+		return rv, nil
+	})
 }
 
 type builderCache struct {
