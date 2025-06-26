@@ -526,7 +526,7 @@ export class PrometheusDatasource
         .map((k) => ({ value: k, text: k }));
     }
 
-    const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
+    const match = extractResourceMatcher(options.queries ?? [], options.filters);
 
     let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match);
 
@@ -557,36 +557,12 @@ export class PrometheusDatasource
       ).map((v) => ({ value: v, text: v }));
     }
 
-    const match = this.extractResourceMatcher(options.queries ?? [], options.filters);
+    const match = extractResourceMatcher(options.queries ?? [], options.filters);
 
     return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match)).map((v) => ({
       value: v,
       text: v,
     }));
-  }
-
-  /**
-   * It creates a matcher string for resource calls
-   * @param queries
-   * @param adhocFilters
-   *
-   * @example
-   * queries<PromQuery>=[{expr:`metricName{label="value"}`}]
-   * adhocFilters={key:"instance", operator:"=", value:"localhost"}
-   * returns {__name__=~"metricName", instance="localhost"}
-   */
-  extractResourceMatcher(queries: PromQuery[], adhocFilters: AdHocVariableFilter[]): string {
-    // Extract metric names from queries we have already
-    const metricMatch = populateMatchParamsFromQueries(queries);
-    const labelFilters: QueryBuilderLabelFilter[] = adhocFilters.map((f) => ({
-      label: f.key,
-      value: f.value,
-      op: f.operator,
-    }));
-    // Extract label filters from the filters we have already
-    const labelsMatch = renderLabelsWithoutBrackets(labelFilters);
-    // Create a matcher using metric names and label filters
-    return `{${[metricMatch, ...labelsMatch].join(',')}}`;
   }
 
   interpolateVariablesInQueries(
@@ -911,3 +887,27 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
     {}
   );
 }
+
+/**
+ * It creates a matcher string for resource calls
+ * @param queries
+ * @param adhocFilters
+ *
+ * @example
+ * queries<PromQuery>=[{expr:`metricName{label="value"}`}]
+ * adhocFilters={key:"instance", operator:"=", value:"localhost"}
+ * returns {__name__=~"metricName", instance="localhost"}
+ */
+export const extractResourceMatcher = (queries: PromQuery[], adhocFilters: AdHocVariableFilter[]): string => {
+  // Extract metric names from queries we have already
+  const metricMatch = populateMatchParamsFromQueries(queries);
+  const labelFilters: QueryBuilderLabelFilter[] = adhocFilters.map((f) => ({
+    label: f.key,
+    value: f.value,
+    op: f.operator,
+  }));
+  // Extract label filters from the filters we have already
+  const labelsMatch = renderLabelsWithoutBrackets(labelFilters);
+  // Create a matcher using metric names and label filters
+  return `{${[metricMatch, ...labelsMatch].join(',')}}`;
+};

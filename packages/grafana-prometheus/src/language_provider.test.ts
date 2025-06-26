@@ -938,5 +938,16 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const result = populateMatchParamsFromQueries(queries);
       expect(result).toBe('__name__!=""');
     });
+
+    it('should extract the correct matcher for queries with `... or vector(0)`', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: `sum(increase(go_cpu_classes_idle_cpu_seconds_total[$__rate_interval])) or vector(0)`,
+        },
+      ];
+      const result = populateMatchParamsFromQueries(queries);
+      expect(result).toBe('__name__=~"go_cpu_classes_idle_cpu_seconds_total"');
+    });
   });
 });
