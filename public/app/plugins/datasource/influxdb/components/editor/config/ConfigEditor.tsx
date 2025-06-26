@@ -16,6 +16,7 @@ import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
 import { InfluxFluxConfig } from './InfluxFluxConfig';
 import { InfluxInfluxQLConfig } from './InfluxInfluxQLConfig';
 import { InfluxSqlConfig } from './InfluxSQLConfig';
+import { trackInfluxDBConfigV1QueryLanguageSelection } from './trackingv1';
 
 const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
   [InfluxVersion.InfluxQL]: {
@@ -117,6 +118,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
               options={versions}
               defaultValue={versionMap[InfluxVersion.InfluxQL]}
               onChange={this.onVersionChanged}
+              onBlur={() =>
+                trackInfluxDBConfigV1QueryLanguageSelection({ version: this.props.options.jsonData.version || '' })
+              }
             />
           </Field>
         </FieldSet>
