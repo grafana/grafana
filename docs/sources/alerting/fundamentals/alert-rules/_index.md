@@ -48,6 +48,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  comparison-ds-grafana-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
 ---
 
 # Alert rules
@@ -70,13 +75,13 @@ Grafana Alerting inherits the Prometheus Alerting model for defining alert rules
 
   These alert rules can only query Prometheus-based data sources such as Mimir, Loki, and Prometheus. The rules are stored in the data source.
 
-  Grafana Alerting supports this alert rule type for compatibility with these data sources.
+  Grafana Alerting supports this alert rule type for horizonal scalability with these data sources.
 
 - **Grafana-managed alert rules**
 
   The recommended alert rule type in Grafana Alerting.
 
-  These alert rules can query a wider range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and more.
+  These alert rules can query a wider range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and [more](ref:comparison-ds-grafana-rules).
 
   You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, see [Configure Grafana-managed alert rules](ref:configure-grafana-alerts).
 

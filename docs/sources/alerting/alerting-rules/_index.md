@@ -38,6 +38,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
+  comparison-ds-grafana-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
 ---
 
 # Configure alert rules
@@ -48,8 +53,8 @@ An alert rule consists of one or more queries and expressions that select the da
 
 Grafana supports two types of alert rules:
 
-1. **Grafana-managed alert rules** — the recommended option.
-1. **Data source-managed alert rules** — can only query Prometheus-based data sources (such as Mimir, Loki, and Prometheus), and are stored in the data source.
+1. **Grafana-managed alert rules** — the recommended option. They can query backend data sources—including Prometheus-based ones—and offer a [richer feature set](ref:comparison-ds-grafana-rules).
+1. **Data source-managed alert rules** — supported for Prometheus-based data sources (such as Mimir, Loki, and Prometheus), with rules stored in the data source itself.
 
    You can [convert and import data source-managed rules into Grafana-managed rules](ref:import-to-grafana-managed) to let Grafana Alerting manage them.
 

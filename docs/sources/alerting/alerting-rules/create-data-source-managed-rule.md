@@ -29,7 +29,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/notification-policies/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  supported-data-sources-grafana-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
   notification-policies:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
@@ -85,6 +90,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
+  rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/
   expression-queries:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#advanced-options-expressions
@@ -100,6 +110,31 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
+  view-alert-state-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting/monitor-status/view-alert-state-history/
+  view-compare-and-restore-alert-rules-versions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-rules/#view-compare-and-restore-alert-rules-versions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting/monitor-status/view-alert-rules/#view-compare-and-restore-alert-rules-versions
+  th-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/
+  no-data-error-states:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/
+  stale-alert-instances:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
 ---
 
 # Configure data source-managed alert rules
@@ -113,23 +148,31 @@ In Grafana Alerting, you can:
 1. [Import data source-managed rules](ref:import-to-grafana-rules) from Loki, Mimir, and Prometheus into Grafana-managed rules.
 
 {{< admonition type="note" >}}
-Data source-managed rules are supported for compatibility, but we recommend using [Grafana-managed alert rules](ref:configure-grafana-managed-rules) whenever possible.
+Data source-managed rules are supported for horizontal scalability, but they can introduce more operational complexity than Grafana-managed alert rules.
+
+We recommend using [Grafana-managed alert rules](ref:configure-grafana-managed-rules) whenever possible, as they provide a richer feature set and better integration with the full Grafana Alerting workflow.
 {{< /admonition >}}
 
 ## Comparison with Grafana-managed rules
 
 The table below compares Grafana-managed and data source-managed alert rules.
 
-| <div style="width:200px">Feature</div>                                                                                  | <div style="width:200px">Grafana-managed alert rule</div>                                                  | <div style="width:200px">Data source-managed alert rule                         |
-| ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Create alert rules that query data sources supporting Alerting                                                          | Yes                                                                                                        | Only supports creating rules for Mimir and Loki.                                |
-| Mix and match data sources                                                                                              | Yes                                                                                                        | No                                                                              |
-| Add [expressions](ref:expression-queries) to transform<wbr /> your data and set [alert conditions](ref:alert-condition) | Yes                                                                                                        | No                                                                              |
-| Use [images in alert notifications](ref:notification-images)                                                            | Yes                                                                                                        | No                                                                              |
-| Support for [recording rules](#recording-rules)                                                                         | Yes                                                                                                        | Yes                                                                             |
-| Organization                                                                                                            | Organize and manage access with folders                                                                    | Use namespaces                                                                  |
-| Alert rule evaluation and delivery                                                                                      | Alert evaluation is done in Grafana, while delivery can be handled by Grafana or an external Alertmanager. | Alert rule evaluation and alert delivery are distributed.                       |
-| Scaling                                                                                                                 | Alert rules are stored in the Grafana database.                                                            | Alert rules are stored within the data source and allow for horizontal scaling. |
+| <div style="width:200px">Feature</div>                                                                                  | <div style="width:200px">Grafana-managed alert rule</div>           | <div style="width:200px">Data source-managed alert rule                           |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Supported data sources                                                                                                  | All backend data sources enabling the [`alerting` option](ref:rbac) | Only supports creating rules for Mimir and Loki data sources                      |
+| Mix and match data sources                                                                                              | Yes                                                                 | No                                                                                |
+| Add [expressions](ref:expression-queries) to transform<wbr /> your data and set [alert conditions](ref:alert-condition) | Yes                                                                 | No                                                                                |
+| [No data and error states](ref:no-data-error-states)                                                                    | Yes                                                                 | No                                                                                |
+| [Stale alert instances](ref:stale-alert-instances)                                                                      | Yes                                                                 | No                                                                                |
+| [Images in alert notifications](ref:notification-images)                                                                | Yes                                                                 | No                                                                                |
+| [Role-based access control](ref:rbac)                                                                                   | Yes                                                                 | No                                                                                |
+| [Alert state history](ref:view-alert-state-history)                                                                     | Yes                                                                 | No                                                                                |
+| [Alert version history](ref:view-compare-and-restore-alert-rules-versions)                                              | Yes                                                                 | No                                                                                |
+| [Terraform provisioning](ref:th-provisioning)                                                                           | Yes                                                                 | No                                                                                |
+| [Recording rules](ref:create-recording-rules)                                                                           | Yes                                                                 | Yes                                                                               |
+| Organization                                                                                                            | Organize and manage access with folders                             | Use namespaces                                                                    |
+| Alert rule evaluation                                                                                                   | Alert evaluation is done in Grafana                                 | Alert rule evaluation is done in the data source and allow for horizontal scaling |
+| Scaling                                                                                                                 | Alert rules are stored in the Grafana database.                     | Alert rules are stored within the data source and allow for horizontal scaling    |
 
 The following diagram shows the architecture of a Mimir setup that uses data source-managed alert rules.
 
