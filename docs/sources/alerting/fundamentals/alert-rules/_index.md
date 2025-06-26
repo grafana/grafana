@@ -75,7 +75,7 @@ Grafana Alerting inherits the Prometheus Alerting model for defining alert rules
 
   These alert rules can only query Prometheus-based data sources such as Mimir, Loki, and Prometheus. The rules are stored in the data source.
 
-  Grafana Alerting supports this alert rule type for horizonal scalability with these data sources.
+  Grafana Alerting supports this alert rule type for horizontal scalability with these data sources.
 
 - **Grafana-managed alert rules**
 
