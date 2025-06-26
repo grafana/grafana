@@ -1,4 +1,5 @@
 import { isNumber, isString } from 'lodash';
+import { CSSProperties } from 'react';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
@@ -178,7 +179,6 @@ export const calculateCoordinates = (
   let x2: number;
   let y2: number;
   const targetRect = target.div?.getBoundingClientRect();
-
   if (info.targetName && targetRect) {
     const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
     const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
@@ -192,9 +192,8 @@ export const calculateCoordinates = (
     x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
     y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
   }
-
-  // x2 /= transformScale;
-  // y2 /= transformScale;
+  x2 /= transformScale;
+  y2 /= transformScale;
 
   // TODO look into a better way to avoid division by zero
   if (x2 - x1 === 0) {
@@ -369,31 +368,10 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 
 export const getParentBoundingClientRect = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    // const transformRef = scene.transformComponentRef?.current;
-    const transformRef = scene.viewportDiv;
-    // return transformRef?.instance.contentComponent?.getBoundingClientRect();
-    return transformRef?.getBoundingClientRect();
+    return scene.viewportDiv?.getBoundingClientRect();
   }
 
-  // return scene.div?.getBoundingClientRect();
-  return scene.viewportDiv?.getBoundingClientRect();
-};
-
-export const getTransformInstance = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    // return scene.transformComponentRef?.current?.instance;
-    return scene.viewportDiv;
-  }
-  return undefined;
-};
-
-export const getParent = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
-    // return scene.transformComponentRef?.current?.instance.contentComponent;
-    return scene.viewportDiv;
-  }
-  // return scene.div;
-  return scene.viewportDiv;
+  return scene.div?.getBoundingClientRect();
 };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
@@ -428,4 +406,17 @@ export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions
   });
 
   return [...fields];
+}
+
+export function applyStyles(style: React.CSSProperties, target: HTMLDivElement) {
+  let key: keyof CSSProperties;
+  for (key in style) {
+    target.style.setProperty(key, String(style[key]));
+  }
+}
+
+export function removeStyles(style: React.CSSProperties, target: HTMLDivElement) {
+  for (const key in style) {
+    target.style.removeProperty(key);
+  }
 }

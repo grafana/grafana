@@ -11,35 +11,26 @@ import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
   calculateAngle,
-  calculateCoordinates,
+  calculateCoordinates2,
   calculateDistance,
   calculateMidpoint,
   getConnectionStyles,
-  getParentBoundingClientRect,
 } from '../../utils';
 
 import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
 
 type Props = {
-  setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
-  setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
   setVertexPathRef: (anchorElement: SVGPathElement) => void;
   setVertexRef: (anchorElement: SVGCircleElement) => void;
+  setConnectionsSVGRef: (anchorElement: SVGSVGElement) => void;
   scene: Scene;
 };
 
 let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
-export const ConnectionSVG = ({
-  setSVGRef,
-  setLineRef,
-  setSVGVertexRef,
-  setVertexPathRef,
-  setVertexRef,
-  scene,
-}: Props) => {
+export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setConnectionsSVGRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
   const headId = Date.now() + '_' + idCounter++;
@@ -129,16 +120,15 @@ export const ConnectionSVG = ({
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
           const { source, target, info, vertices, index } = v;
-          const sourceRect = source.div?.getBoundingClientRect();
+          const sourceRect = source.div;
           const parent = source.div?.parentElement;
-          const transformScale = scene.scale;
-          const parentRect = getParentBoundingClientRect(scene);
+          const parentRect = scene.viewportDiv;
 
           if (!sourceRect || !parent || !parentRect) {
             return;
           }
 
-          const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+          let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
 
           let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
           if (v.sourceOriginal && v.targetOriginal) {
@@ -178,8 +168,7 @@ export const ConnectionSVG = ({
           let pathString = `M${x1} ${y1} `;
           if (vertices?.length) {
             vertices.map((vertex, index) => {
-              const x = vertex.x;
-              const y = vertex.y;
+              const { x, y } = vertex;
 
               // Convert vertex relative coordinates to scene coordinates
               const X = x * xDist + xStart;
@@ -374,160 +363,167 @@ export const ConnectionSVG = ({
           };
 
           return (
-            <svg className={styles.connection} key={idx}>
-              <g onClick={() => selectConnection(v)}>
-                <defs>
-                  <marker
-                    id={CONNECTION_HEAD_ID_START}
-                    markerWidth="10"
-                    markerHeight="7"
-                    refX="0"
-                    refY="3.5"
-                    orient="auto"
+            <g key={idx} onClick={() => selectConnection(v)}>
+              <defs>
+                <marker
+                  id={CONNECTION_HEAD_ID_START}
+                  markerWidth="10"
+                  markerHeight="7"
+                  refX="0"
+                  refY="3.5"
+                  orient="auto"
+                  stroke={strokeColor}
+                >
+                  <polygon points="10 0, 0 3.5, 10 7" fill={strokeColor} />
+                </marker>
+                <marker
+                  id={CONNECTION_HEAD_ID_END}
+                  markerWidth="10"
+                  markerHeight="7"
+                  refX="10"
+                  refY="3.5"
+                  orient="auto"
+                  stroke={strokeColor}
+                >
+                  <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
+                </marker>
+              </defs>
+              {vertices?.length ? (
+                // Render path with vertices
+                <g>
+                  {/* heighlight line */}
+                  <path
+                    id={`${CONNECTION_LINE_ID}_transparent`}
+                    d={pathString}
+                    cursor={connectionCursorStyle}
+                    pointerEvents="auto"
+                    stroke="transparent"
+                    strokeWidth={15}
+                    fill={'none'}
+                    style={isSelected ? selectedStyles : {}}
+                  />
+                  {/* real line */}
+                  <path
+                    d={pathString}
                     stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={lineStyle}
+                    strokeDashoffset={1}
+                    fill={'none'}
+                    markerEnd={markerEnd}
+                    markerStart={markerStart}
                   >
-                    <polygon points="10 0, 0 3.5, 10 7" fill={strokeColor} />
-                  </marker>
-                  <marker
-                    id={CONNECTION_HEAD_ID_END}
-                    markerWidth="10"
-                    markerHeight="7"
-                    refX="10"
-                    refY="3.5"
-                    orient="auto"
-                    stroke={strokeColor}
-                  >
-                    <polygon points="0 0, 10 3.5, 0 7" fill={strokeColor} />
-                  </marker>
-                </defs>
-                {vertices?.length ? (
-                  <g>
-                    <path
-                      id={`${CONNECTION_LINE_ID}_transparent`}
-                      d={pathString}
-                      cursor={connectionCursorStyle}
-                      pointerEvents="auto"
-                      stroke="transparent"
-                      strokeWidth={15}
-                      fill={'none'}
-                      style={isSelected ? selectedStyles : {}}
-                    />
-                    <path
-                      d={pathString}
-                      stroke={strokeColor}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={lineStyle}
-                      strokeDashoffset={1}
-                      fill={'none'}
-                      markerEnd={markerEnd}
-                      markerStart={markerStart}
-                    >
-                      {shouldAnimate && (
-                        <animate
-                          attributeName="stroke-dashoffset"
-                          values={getAnimationDirection()}
-                          dur="5s"
-                          calcMode="linear"
-                          repeatCount="indefinite"
-                          fill={'freeze'}
-                        />
-                      )}
-                    </path>
-                    {isSelected && (
-                      <g>
-                        {vertices.map((value, index) => {
+                    {shouldAnimate && (
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        values={getAnimationDirection()}
+                        dur="5s"
+                        calcMode="linear"
+                        repeatCount="indefinite"
+                        fill={'freeze'}
+                      />
+                    )}
+                  </path>
+                  {isSelected && (
+                    <g>
+                      {/* vertices */}
+                      {vertices.map((value, index) => {
+                        return (
+                          <circle
+                            id={CONNECTION_VERTEX_ID}
+                            data-index={index}
+                            key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
+                            cx={value.x * xDist + xStart}
+                            cy={value.y * yDist + yStart}
+                            r={5}
+                            stroke={strokeColor}
+                            className={styles.vertex}
+                            cursor={'crosshair'}
+                            pointerEvents="auto"
+                          />
+                        );
+                      })}
+                      {/* midpoints */}
+                      {vertices.length < maximumVertices &&
+                        addVertices.map((value, index) => {
                           return (
                             <circle
-                              id={CONNECTION_VERTEX_ID}
+                              id={CONNECTION_VERTEX_ADD_ID}
                               data-index={index}
-                              key={`${CONNECTION_VERTEX_ID}${index}_${idx}`}
+                              key={`${CONNECTION_VERTEX_ADD_ID}${index}_${idx}`}
                               cx={value.x * xDist + xStart}
                               cy={value.y * yDist + yStart}
-                              r={5}
+                              r={4}
                               stroke={strokeColor}
-                              className={styles.vertex}
+                              className={styles.addVertex}
                               cursor={'crosshair'}
                               pointerEvents="auto"
                             />
                           );
                         })}
-                        {vertices.length < maximumVertices &&
-                          addVertices.map((value, index) => {
-                            return (
-                              <circle
-                                id={CONNECTION_VERTEX_ADD_ID}
-                                data-index={index}
-                                key={`${CONNECTION_VERTEX_ADD_ID}${index}_${idx}`}
-                                cx={value.x * xDist + xStart}
-                                cy={value.y * yDist + yStart}
-                                r={4}
-                                stroke={strokeColor}
-                                className={styles.addVertex}
-                                cursor={'crosshair'}
-                                pointerEvents="auto"
-                              />
-                            );
-                          })}
-                      </g>
-                    )}
-                  </g>
-                ) : (
-                  <g>
-                    <line
-                      id={`${CONNECTION_LINE_ID}_transparent`}
-                      cursor={connectionCursorStyle}
-                      pointerEvents="auto"
-                      stroke="transparent"
-                      strokeWidth={15}
-                      style={isSelected ? selectedStyles : {}}
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                    />
-                    <line
-                      id={CONNECTION_LINE_ID}
-                      stroke={strokeColor}
-                      pointerEvents="auto"
-                      strokeWidth={strokeWidth}
-                      markerEnd={markerEnd}
-                      markerStart={markerStart}
-                      strokeDasharray={lineStyle}
-                      strokeDashoffset={1}
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      cursor={connectionCursorStyle}
-                    >
-                      {shouldAnimate && (
-                        <animate
-                          attributeName="stroke-dashoffset"
-                          values={getAnimationDirection()}
-                          dur="5s"
-                          calcMode="linear"
-                          repeatCount="indefinite"
-                          fill={'freeze'}
-                        />
-                      )}
-                    </line>
-                    {isSelected && (
-                      <circle
-                        id={CONNECTION_VERTEX_ADD_ID}
-                        data-index={0}
-                        cx={midpoint.x}
-                        cy={midpoint.y}
-                        r={4}
-                        stroke={strokeColor}
-                        className={styles.addVertex}
-                        cursor={'crosshair'}
-                        pointerEvents="auto"
+                    </g>
+                  )}
+                </g>
+              ) : (
+                // Render line without vertices
+                <g>
+                  {/* heighlight line */}
+                  <line
+                    id={`${CONNECTION_LINE_ID}_transparent`}
+                    cursor={connectionCursorStyle}
+                    pointerEvents="auto"
+                    stroke="transparent"
+                    strokeWidth={15}
+                    style={isSelected ? selectedStyles : {}}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                  />
+                  {/* real line */}
+                  <line
+                    id={CONNECTION_LINE_ID}
+                    stroke={strokeColor}
+                    pointerEvents="auto"
+                    strokeWidth={strokeWidth}
+                    markerEnd={markerEnd}
+                    markerStart={markerStart}
+                    strokeDasharray={lineStyle}
+                    strokeDashoffset={1}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    cursor={connectionCursorStyle}
+                  >
+                    {shouldAnimate && (
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        values={getAnimationDirection()}
+                        dur="5s"
+                        calcMode="linear"
+                        repeatCount="indefinite"
+                        fill={'freeze'}
                       />
                     )}
-                  </g>
-                )}
-              </g>
-            </svg>
+                  </line>
+                  {/* initial midpoint */}
+                  {isSelected && (
+                    <circle
+                      id={CONNECTION_VERTEX_ADD_ID}
+                      data-index={0}
+                      cx={midpoint.x}
+                      cy={midpoint.y}
+                      r={4}
+                      stroke={strokeColor}
+                      className={styles.addVertex}
+                      cursor={'crosshair'}
+                      pointerEvents="auto"
+                    />
+                  )}
+                </g>
+              )}
+            </g>
           );
         })
     );
@@ -535,7 +531,7 @@ export const ConnectionSVG = ({
 
   return (
     <>
-      <svg ref={setSVGRef} className={styles.editorSVG}>
+      <svg ref={setConnectionsSVGRef} className={styles.connection}>
         <defs>
           <marker
             id={EDITOR_HEAD_ID}
@@ -549,36 +545,42 @@ export const ConnectionSVG = ({
             <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
           </marker>
         </defs>
-        <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
-      </svg>
-      <svg ref={setSVGVertexRef} className={styles.editorSVG}>
+        {/* svg line for connection creation */}
+        <line
+          ref={setLineRef}
+          stroke={defaultArrowColor}
+          strokeWidth={2}
+          markerEnd={`url(#${EDITOR_HEAD_ID})`}
+          style={{ display: 'none' }}
+        />
+
+        {/* svg circle for initial vertex?
+          path? is it for the line drag handling? */}
         <path
           ref={setVertexPathRef}
           stroke={defaultArrowColor}
           strokeWidth={2}
           strokeDasharray={'5, 5'}
           fill={'none'}
+          style={{ display: 'none' }}
         />
-        <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
+        <circle
+          ref={setVertexRef}
+          stroke={defaultArrowColor}
+          r={4}
+          className={styles.vertex}
+          style={{ display: 'none' }}
+        />
+
+        {renderConnections()}
       </svg>
-      {renderConnections()}
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorSVG: css({
-    position: 'absolute',
-    pointerEvents: 'none',
-    width: '100%',
-    height: '100%',
-    zIndex: 1000,
-    display: 'none',
-  }),
   connection: css({
     position: 'absolute',
-    width: '100%',
-    height: '100%',
     zIndex: 1000,
     pointerEvents: 'none',
   }),

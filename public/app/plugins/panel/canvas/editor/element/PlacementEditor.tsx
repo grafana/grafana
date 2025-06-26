@@ -11,9 +11,7 @@ import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
 import { CanvasEditorOptions } from './elementEditor';
 
-const positions: Array<keyof Placement> = ['top', 'left', 'bottom', 'right'];
-// const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
-const places: Array<keyof Placement> = [...positions, 'width', 'height', 'rotation'];
+const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
 
 const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
@@ -130,10 +128,6 @@ export function PlacementEditor({ item }: Props) {
             if (v == null) {
               return null;
             }
-
-            // if (positions.includes(p) && p !== constraint.horizontal && p !== constraint.vertical) {
-            //   return null; // Don't show position fields that are not in the constraints
-            // }
 
             // Need to set explicit min/max for rotation as logic only can handle 0-360
             const min = p === 'rotation' ? 0 : undefined;
