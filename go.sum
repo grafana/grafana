@@ -1621,6 +1621,8 @@ github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf h1:
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250616215703-eb4de388c3cf/go.mod h1:XcJIUxPfKAhDb9mx9jHeV9U2xVA2WgE93ukd4Bx8U/M=
 github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 h1:SkVUcSlXIUi46gSGfe5/Xqn2p51c/unmkZRDX+274Os=
 github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1/go.mod h1:z9u5VFG9q1CcIt62c9RIP8dEWHX81NdiPCjtpKKeuFU=
+github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df h1:t0y8BiEJ7dBq2/eYQI66kYyOGYdPCxNPNftrRwL6kIo=
+github.com/grafana/grafana/apps/iam v0.0.0-20250620082852-de59956db4df/go.mod h1:6j/luBu5kqJysChmy9bnlCDYvukIAxqaoUEVI+HaCuA=
 github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 h1:IN+KiBwtvJ3JCLdsPyAmGKJupWckH3h5iXpELd78rPo=
 github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1/go.mod h1:/uuCYrNS3VOTZ7gTD+cBHD9WBIYhqj7bK6EnX3TP1wg=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250527064921-326081cdb7a1 h1:GNPPHXhUv++4qKdrUJg/Mfi/HJPGlc5u+/FjElYAcOM=
