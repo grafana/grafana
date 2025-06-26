@@ -234,3 +234,4 @@ alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,f
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
+foldersNewApi,experimental,@grafana/grafana-search-navigate-organise,false,false,true

@@ -946,4 +946,8 @@ const (
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
+
+	// FlagFoldersNewApi
+	// Enables new API for folders
+	FlagFoldersNewApi = "foldersNewApi"
 )

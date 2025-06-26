@@ -1032,11 +1032,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Enables new API for folders
-  * @default false
-  */
-  foldersNewApi?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1051,4 +1046,9 @@ export interface FeatureToggles {
   * @default false
   */
   newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Enables new API for folders
+  * @default false
+  */
+  foldersNewApi?: boolean;
 }
