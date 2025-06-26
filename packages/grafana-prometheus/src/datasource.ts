@@ -503,16 +503,6 @@ export class PrometheusDatasource
     };
   }
 
-  async getApplicableFilters(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<string[]> {
-    if (!options.timeRange) {
-      options.timeRange = getDefaultTimeRange();
-    }
-
-    console.log(options);
-
-    return Promise.resolve(['cluster']);
-  }
-
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
