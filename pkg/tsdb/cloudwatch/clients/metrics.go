@@ -22,7 +22,7 @@ func NewMetricsClient(client cloudwatch.ListMetricsAPIClient, listMetricsPageLim
 }
 
 func (mc *MetricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
-	var response []resources.MetricResponse
+	var responses []resources.MetricResponse
 	paginator := cloudwatch.NewListMetricsPaginator(mc.ListMetricsAPIClient, params)
 	includeAccount := params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts
 	pages := 0
@@ -30,15 +30,15 @@ func (mc *MetricsClient) ListMetricsWithPageLimit(ctx context.Context, params *c
 		pages += 1
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return response, err
+			return responses, err
 		}
 		for i, metric := range page.Metrics {
 			resp := resources.MetricResponse{Metric: metric}
 			if includeAccount && len(page.OwningAccounts) >= i {
 				resp.AccountId = &page.OwningAccounts[i]
 			}
-			response = append(response, resp)
+			responses = append(responses, resp)
 		}
 	}
-	return response, nil
+	return responses, nil
 }

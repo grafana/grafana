@@ -81,5 +81,5 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) (
 		nextToken = links.NextToken
 	}
 
-	return valuesToListMetricRespone(response), nil
+	return valuesToListMetricResponse(response), nil
 }

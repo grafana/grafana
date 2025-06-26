@@ -138,7 +138,7 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 	_, fromAlert := req.Headers[headerFromAlert]
 	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
-	// Public dashboard queries execute like alert queries, i.ds. they execute on the backend, therefore, we need to handle them synchronously.
+	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
 	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
 	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
 	queryMode := ""
