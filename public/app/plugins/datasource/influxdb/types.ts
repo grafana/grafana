@@ -13,6 +13,7 @@ export interface InfluxOptions extends DataSourceJsonData {
 
   timeInterval?: string;
   httpMode?: string;
+  showTagTime?: string;
 
   dbName?: string;
   product?: string;

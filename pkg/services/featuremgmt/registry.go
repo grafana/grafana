@@ -508,6 +508,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "kubernetesLibraryPanels",
+			Description:     "Routes library panel requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:         "kubernetesDashboards",
 			Description:  "Use the kubernetes API in the frontend for dashboards",
 			Stage:        FeatureStageExperimental,
@@ -963,8 +970,8 @@ var (
 		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
+			Stage:          FeatureStagePrivatePreview,
+			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
