@@ -67,7 +67,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
       loading,
       value: pluginMeta,
     } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
-    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }));
+    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }), [pluginId]);
 
     if (loading) {
       return null;
