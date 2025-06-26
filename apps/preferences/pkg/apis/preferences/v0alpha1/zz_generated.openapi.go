@@ -230,6 +230,13 @@ func schema_pkg_apis_preferences_v0alpha1_PreferencesSpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"regionalFormat": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Selected locale (beta)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"locale": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Selected locale (beta)",
