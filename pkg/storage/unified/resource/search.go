@@ -117,6 +117,7 @@ type searchSupport struct {
 	builders     *builderCache
 	initWorkers  int
 	initMinSize  int
+	initMaxSize  int
 
 	// Index queue processors
 	indexQueueProcessorsMutex sync.Mutex
@@ -156,6 +157,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		log:                   slog.Default().With("logger", "resource-search"),
 		initWorkers:           opts.WorkerThreads,
 		initMinSize:           opts.InitMinCount,
+		initMaxSize:           opts.InitMaxCount,
 		indexMetrics:          indexMetrics,
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
@@ -399,6 +401,13 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 		// only periodically rebuild the dashboard index, specifically to update the usage insights data
 		if rebuild && info.Resource != dashboardv1.DASHBOARD_RESOURCE {
 			continue
+		}
+
+		// If the count is too large, we need to set the index to empty.
+		// Only do this if the max size is set to a non-zero (default) value.
+		if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
+			s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
+			// #TODO: figure out how to build an empty index
 		}
 
 		group.Go(func() error {
