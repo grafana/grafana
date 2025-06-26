@@ -108,59 +108,57 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 			continue
 		}
 
-		// Check if this query has multiple statistics
+		// Add CloudWatch-specific fields to match frontend behavior
+		// Add metricQueryType if not present (default to 0 = Search)
+		if _, hasMetricQueryType := t["metricQueryType"]; !hasMetricQueryType {
+			t["metricQueryType"] = 0
+		}
+		// Add metricEditorMode if not present
+		if _, hasMetricEditorMode := t["metricEditorMode"]; !hasMetricEditorMode {
+			if _, hasExpression := t["expression"]; hasExpression {
+				t["metricEditorMode"] = 1 // Code mode
+			} else {
+				t["metricEditorMode"] = 0 // Builder mode
+			}
+		}
+
+		// Check if this query has multiple statistics - match frontend behavior exactly
 		statistics, hasStatistics := t["statistics"].([]interface{})
-		if !hasStatistics || len(statistics) <= 1 {
-			// Convert single statistic or no statistics to proper format
-			if hasStatistics && len(statistics) == 1 {
-				if stat, ok := statistics[0].(string); ok {
-					t["statistic"] = stat
-				}
-			}
+		if !hasStatistics || len(statistics) == 0 {
+			// No statistics array or empty - just remove statistics field
 			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
 
-		// Split query with multiple statistics into separate queries
-		// First, collect all valid statistics
-		var validStatistics []string
-		for _, stat := range statistics {
-			statString, ok := stat.(string)
-			if !ok {
-				continue
-			}
-			validStatistics = append(validStatistics, statString)
-		}
-
-		// If no valid statistics found, remove statistics field and keep original query
-		if len(validStatistics) == 0 {
+		if len(statistics) == 1 {
+			// Single statistic - convert to statistic field
+			t["statistic"] = statistics[0] // Don't validate - frontend doesn't validate
 			delete(t, "statistics")
 			newTargets = append(newTargets, t)
 			continue
 		}
 
-		// Create separate queries for each valid statistic
-		for i, statString := range validStatistics {
+		// Multiple statistics - split into separate queries
+		// Frontend sets first statistic directly without validation
+		t["statistic"] = statistics[0]
+		delete(t, "statistics")
+		newTargets = append(newTargets, t)
+
+		// Create additional queries for remaining statistics (starting from index 1)
+		for i := 1; i < len(statistics); i++ {
 			// Create a copy of the original query
 			newQuery := make(map[string]interface{})
 			for k, v := range t {
-				if k != "statistics" {
-					newQuery[k] = v
-				}
+				newQuery[k] = v
 			}
 
-			// Set the single statistic
-			newQuery["statistic"] = statString
+			// Set the statistic (don't validate - frontend doesn't validate)
+			newQuery["statistic"] = statistics[i]
 
-			if i == 0 {
-				// First query replaces the original
-				newTargets = append(newTargets, newQuery)
-			} else {
-				// Additional queries get new refIds and are added at the end
-				newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
-				additionalTargets = append(additionalTargets, newQuery)
-			}
+			// Generate new refId
+			newQuery["refId"] = generateNextRefId(append(targets, additionalTargets...), len(additionalTargets))
+			additionalTargets = append(additionalTargets, newQuery)
 		}
 	}
 
@@ -192,86 +190,60 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 			continue
 		}
 
-		// Check if this annotation has multiple statistics
+		// Check if this annotation has multiple statistics - match frontend behavior exactly
 		statistics, hasStatistics := a["statistics"].([]interface{})
-		if !hasStatistics || len(statistics) <= 1 {
-			// Convert single statistic to proper format
-			if hasStatistics && len(statistics) == 1 {
-				if stat, ok := statistics[0].(string); ok {
-					// Create new annotation with single statistic
-					newAnnotation := make(map[string]interface{})
-					for k, v := range a {
-						if k != "statistics" {
-							newAnnotation[k] = v
-						}
-					}
-					newAnnotation["statistic"] = stat
-					annotationsList[i] = newAnnotation
-				}
-			} else {
-				// Always remove statistics field, even if empty or no statistics
-				newAnnotation := make(map[string]interface{})
-				for k, v := range a {
-					if k != "statistics" {
-						newAnnotation[k] = v
-					}
-				}
-				annotationsList[i] = newAnnotation
-			}
+		if !hasStatistics || len(statistics) == 0 {
+			// No statistics array or empty - just remove statistics field
+			delete(a, "statistics")
 			continue
 		}
 
-		// Split annotation with multiple statistics into separate annotations
-		// First, collect all valid statistics
-		var validStatistics []string
-		for _, stat := range statistics {
-			statString, ok := stat.(string)
-			if !ok {
-				continue
-			}
-			validStatistics = append(validStatistics, statString)
-		}
-
-		// If no valid statistics found, remove statistics field and keep original annotation
-		if len(validStatistics) == 0 {
-			// Create new annotation without statistics field
-			newAnnotation := make(map[string]interface{})
-			for k, v := range a {
-				if k != "statistics" {
-					newAnnotation[k] = v
-				}
-			}
-			annotationsList[i] = newAnnotation
+		if len(statistics) == 1 {
+			// Single statistic - convert to statistic field (no validation like frontend)
+			a["statistic"] = statistics[0]
+			delete(a, "statistics")
 			continue
 		}
 
-		// Create new annotations for each valid statistic, replace original with first one
+		// Multiple statistics - split like frontend does
 		originalName, hasName := a["name"].(string)
 
-		for j, statString := range validStatistics {
+		// Set first statistic on original annotation (no validation)
+		a["statistic"] = statistics[0]
+		delete(a, "statistics")
+
+		// Only change the name if we're creating additional annotations
+		if hasName {
+			// Convert statistic to string for name suffix - handle null/non-string values like frontend
+			statString := "null"
+			if statValue, ok := a["statistic"].(string); ok {
+				statString = statValue
+			}
+			a["name"] = originalName + " - " + statString
+		}
+
+		// Create additional annotations for remaining statistics (starting from index 1)
+		for j := 1; j < len(statistics); j++ {
 			// Create new annotation for this statistic
 			newAnnotation := make(map[string]interface{})
 			for k, v := range a {
-				if k != "statistics" {
-					newAnnotation[k] = v
-				}
+				newAnnotation[k] = v
 			}
 
-			// Set the single statistic
-			newAnnotation["statistic"] = statString
+			// Set the statistic (no validation like frontend)
+			newAnnotation["statistic"] = statistics[j]
 
-			// Set the name with statistic suffix if multiple valid statistics
-			if len(validStatistics) > 1 && hasName {
+			// Set the name with statistic suffix
+			if hasName {
+				// Handle null/non-string values like frontend
+				statString := "null"
+				if statValue, ok := statistics[j].(string); ok {
+					statString = statValue
+				}
 				newAnnotation["name"] = originalName + " - " + statString
 			}
 
-			if j == 0 {
-				// Replace the original annotation with the first new one
-				annotationsList[i] = newAnnotation
-			} else {
-				// Add additional annotations to be appended later
-				additionalAnnotations = append(additionalAnnotations, newAnnotation)
-			}
+			additionalAnnotations = append(additionalAnnotations, newAnnotation)
 		}
 	}
 
@@ -302,6 +274,29 @@ func isLegacyCloudWatchAnnotationQuery(annotation map[string]interface{}) bool {
 	_, hasStatistics := annotation["statistics"]
 
 	return hasDimensions && hasNamespace && hasRegion && hasPrefixMatching && hasStatistics
+}
+
+// migrateCloudWatchQueryFields adds CloudWatch-specific fields to match frontend behavior
+func migrateCloudWatchQueryFields(query map[string]interface{}) {
+	// Add metricQueryType if not present (default to 0 = Search)
+	if _, hasMetricQueryType := query["metricQueryType"]; !hasMetricQueryType {
+		query["metricQueryType"] = 0 // MetricQueryType.Search
+	}
+
+	// Add metricEditorMode if not present
+	if _, hasMetricEditorMode := query["metricEditorMode"]; !hasMetricEditorMode {
+		metricQueryType, _ := query["metricQueryType"].(int)
+		if metricQueryType == 1 { // MetricQueryType.Insights
+			query["metricEditorMode"] = 1 // MetricEditorMode.Code
+		} else {
+			// Check if expression exists to determine editor mode
+			if _, hasExpression := query["expression"]; hasExpression {
+				query["metricEditorMode"] = 1 // MetricEditorMode.Code
+			} else {
+				query["metricEditorMode"] = 0 // MetricEditorMode.Builder
+			}
+		}
+	}
 }
 
 // generateNextRefId generates a new refId for additional queries created during migration.
