@@ -67,6 +67,91 @@ func TestQuerySplitting(t *testing.T) {
 		require.Equal(t, "0", split.Requests[0].Request.From)
 		require.Equal(t, "0", split.Requests[0].Request.To)
 	})
+
+	t.Run("forbid duplicate refId", func(t *testing.T) {
+		_, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{},
+				Queries: []data.DataQuery{
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "A",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "A",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+	})
+	t.Run("forbid duplicate refId, when refId=''", func(t *testing.T) {
+		_, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{},
+				Queries: []data.DataQuery{
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+	})
+	t.Run("allow empty refId", func(t *testing.T) {
+		_, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				TimeRange: data.TimeRange{},
+				Queries: []data.DataQuery{
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+					{
+						CommonQueryProperties: data.CommonQueryProperties{
+							RefID: "B",
+							Datasource: &data.DataSourceRef{
+								Type: "x",
+								UID:  "abc",
+							},
+						},
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+	})
 	t.Run("applies query time range if present", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
 			QueryDataRequest: data.QueryDataRequest{
