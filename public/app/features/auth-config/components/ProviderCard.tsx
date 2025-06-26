@@ -1,6 +1,7 @@
 import { isIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Card, Icon, TextLink } from '@grafana/ui';
+import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
@@ -59,14 +60,7 @@ export function ProviderSAMLCard() {
         <Icon name="lock" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
-        <Badge
-          text={t('auth-config.provider-card.text-enterprise-only', 'Cloud & Enterprise')}
-          color={'brand'}
-          tooltip={t(
-            'auth-config.provider-card.text-enterprise-only-tooltip',
-            'Only available in Grafana Cloud and Enterprise'
-          )}
-        />
+        <CloudEnterpriseBadge />
       </Card.Actions>
     </Card>
   );
@@ -93,14 +87,7 @@ export function ProviderSCIMCard() {
         <Icon name="sync" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
-        <Badge
-          text={t('auth-config.provider-card.text-enterprise-only', 'Cloud & Enterprise')}
-          color={'brand'}
-          tooltip={t(
-            'auth-config.provider-card.text-enterprise-only-tooltip',
-            'Only available in Grafana Cloud and Enterprise'
-          )}
-        />
+        <CloudEnterpriseBadge />
       </Card.Actions>
     </Card>
   );

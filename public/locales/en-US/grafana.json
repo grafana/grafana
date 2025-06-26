@@ -3225,9 +3225,7 @@
       "saml-learn-more": "Single sign-on (SSO) with SAML.",
       "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
-      "text-badge-not-enabled": "Not enabled",
-      "text-enterprise-only": "Cloud & Enterprise",
-      "text-enterprise-only-tooltip": "Only available in Grafana Cloud and Enterprise"
+      "text-badge-not-enabled": "Not enabled"
     },
     "provider-config-form": {
       "additional-actions-menu": {
@@ -3875,6 +3873,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
