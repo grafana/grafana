@@ -6,16 +6,6 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { DashboardScene } from '../../scene/DashboardScene';
 
 /**
- * Error types for image generation
- */
-export enum ImageGenerationError {
-  RENDERER_NOT_AVAILABLE = 'renderer_not_available',
-  GENERATION_FAILED = 'generation_failed',
-  INVALID_RESPONSE = 'invalid_response',
-  NETWORK_ERROR = 'network_error',
-}
-
-/**
  * Options for generating a dashboard image
  */
 export interface ImageGenerationOptions {
@@ -29,7 +19,6 @@ export interface ImageGenerationOptions {
 export interface ImageGenerationResult {
   blob: Blob;
   error?: string;
-  errorCode?: ImageGenerationError;
 }
 
 /**
@@ -41,14 +30,6 @@ export async function generateDashboardImage({
   dashboard,
   scale = config.rendererDefaultImageScale || 1,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
-  if (!config.rendererAvailable) {
-    return {
-      blob: new Blob(),
-      error: 'Image renderer plugin not installed',
-      errorCode: ImageGenerationError.RENDERER_NOT_AVAILABLE,
-    };
-  }
-
   try {
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
@@ -67,7 +48,7 @@ export async function generateDashboardImage({
     });
 
     const response = await lastValueFrom(
-      getBackendSrv().fetch({
+      getBackendSrv().fetch<Blob>({
         url: imageUrl,
         responseType: 'blob',
       })
@@ -76,16 +57,7 @@ export async function generateDashboardImage({
     if (!response.ok) {
       return {
         blob: new Blob(),
-        error: `Failed to generate image: ${response.status} ${response.statusText}`,
-        errorCode: ImageGenerationError.GENERATION_FAILED,
-      };
-    }
-
-    if (!(response.data instanceof Blob)) {
-      return {
-        blob: new Blob(),
-        error: 'Invalid response data format',
-        errorCode: ImageGenerationError.INVALID_RESPONSE,
+        error: response.statusText || 'Failed to generate image',
       };
     }
 
@@ -95,8 +67,7 @@ export async function generateDashboardImage({
   } catch (error) {
     return {
       blob: new Blob(),
-      error: error instanceof Error ? error.message : 'Failed to generate image',
-      errorCode: ImageGenerationError.NETWORK_ERROR,
+      error: error instanceof Error && error.message ? error.message : 'Failed to generate image',
     };
   }
 }
