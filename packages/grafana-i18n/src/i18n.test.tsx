@@ -4,7 +4,7 @@ import { initReactI18next, setDefaults, setI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE } from './constants';
 import {
-  loadPluginResources,
+  loadNamespacedResources,
   initDefaultI18nInstance,
   initDefaultReactI18nInstance,
   initPluginTranslations,
@@ -22,7 +22,7 @@ describe('i18n', () => {
     jest.resetAllMocks();
   });
 
-  describe('loadPluginResources', () => {
+  describe('loadNamespacedResources', () => {
     it('should load all resources for a plugin', async () => {
       const loaders: ResourceLoader[] = [
         () => Promise.resolve({ hello: 'Hi' }),
@@ -30,7 +30,7 @@ describe('i18n', () => {
       ];
       const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
 
-      await loadPluginResources('test', 'en-US', loaders);
+      await loadNamespacedResources('test', 'en-US', loaders);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(2);
       expect(addResourceBundleSpy).toHaveBeenNthCalledWith(1, 'en-US', 'test', { hello: 'Hi' }, true, false);
@@ -45,7 +45,7 @@ describe('i18n', () => {
       jest.spyOn(console, 'error').mockImplementation();
       const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
 
-      await loadPluginResources('test', 'en-US', loaders);
+      await loadNamespacedResources('test', 'en-US', loaders);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
       expect(addResourceBundleSpy).toHaveBeenCalledWith('en-US', 'test', { i18n: 'i18n' }, true, false);
@@ -55,7 +55,7 @@ describe('i18n', () => {
       const loaders: ResourceLoader[] = [];
       const addResourceBundleSpy = jest.spyOn(i18n, 'addResourceBundle');
 
-      await loadPluginResources('test', 'en-US', loaders);
+      await loadNamespacedResources('test', 'en-US', loaders);
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(0);
     });

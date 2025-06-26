@@ -1,4 +1,5 @@
 import { PanelPlugin, toOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { getTraceServiceNames, getTraceSpanNames } from '../../../features/explore/TraceView/utils/tags';
 import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
@@ -9,25 +10,25 @@ import { TracesSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin(TracesPanel)
   .setPanelOptions((builder, context) => {
-    const category = ['Span filters'];
+    const category = [t('traces.category-span-filters', 'Span filters')];
     const trace = transformDataFrames(context?.data?.[0]);
 
     // Find
     builder
       .addTextInput({
         path: 'spanFilters.query',
-        name: 'Find in trace',
+        name: t('traces.name-find-in-trace', 'Find in trace'),
         category,
       })
       .addBooleanSwitch({
         path: 'spanFilters.matchesOnly',
-        name: 'Show matches only',
+        name: t('traces.name-show-matches-only', 'Show matches only'),
         defaultValue: false,
         category,
       })
       .addBooleanSwitch({
         path: 'spanFilters.criticalPathOnly',
-        name: 'Show critical path only',
+        name: t('traces.name-critical-path-only', 'Show critical path only'),
         defaultValue: false,
         category,
       });
@@ -36,7 +37,7 @@ export const plugin = new PanelPlugin(TracesPanel)
     builder
       .addSelect({
         path: 'spanFilters.serviceName',
-        name: 'Service name',
+        name: t('traces.name-service-name', 'Service name'),
         category,
         settings: {
           options: trace ? getTraceServiceNames(trace).map(toOption) : [],
@@ -46,7 +47,7 @@ export const plugin = new PanelPlugin(TracesPanel)
       })
       .addRadio({
         path: 'spanFilters.serviceNameOperator',
-        name: 'Service name operator',
+        name: t('traces.name-service-name-operator', 'Service name operator'),
         defaultValue: '=',
         settings: {
           options: [
@@ -61,7 +62,7 @@ export const plugin = new PanelPlugin(TracesPanel)
     builder
       .addSelect({
         path: 'spanFilters.spanName',
-        name: 'Span name',
+        name: t('traces.name-span-name', 'Span name'),
         category,
         settings: {
           options: trace ? getTraceSpanNames(trace).map(toOption) : [],
@@ -71,7 +72,7 @@ export const plugin = new PanelPlugin(TracesPanel)
       })
       .addRadio({
         path: 'spanFilters.spanNameOperator',
-        name: 'Span name operator',
+        name: t('traces.name-span-name-operator', 'Span name operator'),
         defaultValue: '=',
         settings: {
           options: [
@@ -86,18 +87,18 @@ export const plugin = new PanelPlugin(TracesPanel)
     builder
       .addTextInput({
         path: 'spanFilters.from',
-        name: 'Min duration',
+        name: t('traces.name-min-duration', 'Min duration'),
         category,
       })
       .addTextInput({
         path: 'spanFilters.to',
-        name: 'Max duration',
+        name: t('traces.name-max-duration', 'Max duration'),
         category,
       });
 
     builder.addCustomEditor({
       id: 'tags',
-      name: 'Tags',
+      name: t('traces.name-tags', 'Tags'),
       path: 'spanFilters',
       category,
       editor: TagsEditor,

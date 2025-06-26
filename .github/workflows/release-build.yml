@@ -6,10 +6,6 @@ on:
       - release-*.*.*
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -64,6 +60,51 @@ jobs:
           BUILD_ID: ${{ github.run_number }}
       - id: output
         run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+  # Triggers the same workflow in `grafana-enterprise` on the same ref
+  downstream:
+    runs-on: github-hosted-ubuntu-x64-small
+    needs: [setup]
+    permissions:
+      contents: read
+      id-token: write
+    name: Dispatch grafana-enterprise build
+    steps:
+      - id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          repositories: '["grafana-enterprise"]'
+          permissions: '{"actions": "write"}'
+      - uses: actions/github-script@v7
+        env:
+          REF: ${{ github.ref_name }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          BUILD_ID: ${{ github.run_number }}
+          BUCKET: grafana-prerelease
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
+
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'grafana-enterprise',
+                workflow_id: 'release-build.yml',
+                ref:  REF,
+                inputs: {
+                  "version": VERSION,
+                  "build-id": String(BUILD_ID),
+                  "bucket": BUCKET,
+                }
+            })
+
   build:
     runs-on: github-hosted-ubuntu-x64-large
     needs: [setup]
@@ -72,6 +113,7 @@ jobs:
       id-token: write
     name: ${{ needs.setup.outputs.version }} / ${{ matrix.name }}
     strategy:
+      fail-fast: false
       matrix:
         # The artifacts in these lists are grouped by their os+arch because the
         # build process can reuse the binaries for each artifact.
@@ -97,11 +139,14 @@ jobs:
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
     steps:
+      - uses: grafana/shared-workflows/actions/dockerhub-login@main
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
+        with:
+          image: docker.io/tonistiigi/binfmt:qemu-v7.0.0-28
       - uses: ./.github/actions/build-package
         id: build
         with:
@@ -113,23 +158,27 @@ jobs:
           output: artifacts-${{ matrix.name }}.txt
           verify: true
           build-id: ${{ github.run_number }}
-      - name: Log in to GCS
-        id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          environment: prod
-      - name: Upload artifacts
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
-        with:
-          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
-          environment: prod
-          parent: false
-          path: ${{ steps.build.outputs.dist-dir }}
-          bucket_path: ${{ needs.setup.outputs.version }}
-      - name: Upload manifest
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
-        with:
-          bucket: ${{ steps.login-to-gcs.outputs.bucket }}
-          environment: prod
+          name: artifacts-list-${{ matrix.name }}
           path: ${{ steps.build.outputs.file }}
-          bucket_path: ${{ needs.setup.outputs.version }}
+          retention-days: 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: artifacts-${{ matrix.name }}
+          path: ${{ steps.build.outputs.dist-dir }}
+          retention-days: 1
+  publish-artifacts:
+    name: Upload artifacts
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    permissions:
+      id-token: write
+    needs:
+      - setup
+      - build
+    with:
+      bucket: grafana-prerelease
+      pattern: artifacts-*
+      run-id: ${{ github.run_id }}
+      bucket-path: ${{ needs.setup.outputs.version }}
+      environment: prod

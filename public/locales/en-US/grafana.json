@@ -846,13 +846,11 @@
       "tooltip-provisioned-contact-points": "Provisioned contact points cannot be edited in the UI"
     },
     "contact-point-selector": {
-      "aria-label-refresh-contact-points": "Refresh contact points",
       "contact-point-picker-label-contact-point": "Contact point",
       "message": {
         "contact-point-is-required": "Contact point is required."
       },
-      "title-failed-to-fetch-contact-points": "Failed to fetch contact points",
-      "tooltip-refresh-contact-points-list": "Refresh contact points list"
+      "title-failed-to-fetch-contact-points": "Failed to fetch contact points"
     },
     "contact-points": {
       "create": "Create contact point",
@@ -911,6 +909,11 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "contactPoints": {
+      "validation": {
+        "notFound": "Contact point \"{{contactPoint}}\" could not be found"
+      }
     },
     "continue-matching-indicator": {
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
@@ -1064,6 +1067,9 @@
     },
     "error-summary-button": {
       "content-show-all-errors": "Show all errors"
+    },
+    "errors": {
+      "failedWith": "{{-config}} failed with {{status}}: {{-message}}"
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1905,6 +1911,7 @@
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
+      "placeholder-search-by-contact-point": "Choose a contact point",
       "search-query-input-placeholder-search": "Search"
     },
     "notification-policies-list": {
@@ -2410,7 +2417,7 @@
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
       },
-      "loading-more-groups": "Loading more groups...",
+      "loading-more-groups": "Loading more groups…",
       "more": "More",
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
@@ -2941,9 +2948,51 @@
     }
   },
   "alertlist": {
+    "category-alert-state-filter": "Alert state filter",
+    "category-filter": "Filter",
+    "category-options": "Options",
+    "descriptino-alerts-linked-to-dashboard": "Only show alerts linked to this dashboard",
+    "description-alert-instance-label": "Filter alert instances using label querying, ex: {severity=\"critical\", instance=~\"cluster-us-.+\"}",
+    "description-alert-name": "Filter for alerts containing this text",
+    "description-datasource": "Filter from alert source",
+    "description-folder": "Filter for alerts in the selected folder (for Grafana-managed alert rules only)",
+    "description-group-by": "Filter alerts using label querying",
+    "description-group-mode": "How alert instances should be grouped",
+    "description-max-items": "Maximum alerts to display",
+    "description-show-inactive-alerts": "Include alert rules which have 0 (zero) instances. Because these rules have no instances, they remain hidden if the Alert instance label filter is configured.",
+    "description-sort-order": "Sort order of alerts and alert instances",
+    "description-view-mode": "Toggle between list view and stat view",
     "group-by": {
       "aria-label-group-by-label-keys": "group by label keys",
       "placeholder-group-by": "Group by"
+    },
+    "group-mode-options": {
+      "label-custom-grouping": "Custom grouping",
+      "label-default-grouping": "Default grouping"
+    },
+    "name-alert-instance-label": "Alert instance label",
+    "name-alert-name": "Alert name",
+    "name-alerts-linked-to-dashboard": "Alerts linked to this dashboard",
+    "name-datasource": "Datasource",
+    "name-error": "Error",
+    "name-firing": "Alerting / Firing",
+    "name-folder": "Folder",
+    "name-group-by": "Group by",
+    "name-group-mode": "Group mode",
+    "name-max-items": "Max items",
+    "name-no-data": "No Data",
+    "name-normal": "Normal",
+    "name-pending": "Pending",
+    "name-recovering": "Recovering",
+    "name-show-inactive-alerts": "Show alerts with 0 instances",
+    "name-sort-order": "Sort order",
+    "name-view-mode": "View mode",
+    "sort-order-options": {
+      "label-alphabetical-asc": "Alphabetical (asc)",
+      "label-alphabetical-desc": "Alphabetical (desc)",
+      "label-importance": "Importance",
+      "label-time-asc": "Time (asc)",
+      "label-time-desc": "Time (desc)"
     },
     "ungrouped-mode-view": {
       "active-for": "for <1>{{duration}}</1>",
@@ -2957,6 +3006,10 @@
     "unified-alert-list-panel": {
       "body-permission-required": "Sorry, you do not have the required permissions to read alert rules.",
       "title-permission-required": "Permission required"
+    },
+    "view-mode-options": {
+      "label-list": "List",
+      "label-stat": "Stat"
     }
   },
   "annolist": {
@@ -2968,6 +3021,32 @@
     },
     "annotation-list-item": {
       "tooltip-created-by": "Created by:<1></1> {{email}}"
+    },
+    "category-annotation-query": "Annotation query",
+    "category-display": "Display",
+    "category-link-behaviour": "Link behavior",
+    "description-tags": "Match annotation tags",
+    "link-target-options": {
+      "label-dashboard": "Dashboard",
+      "label-panel": "Panel"
+    },
+    "name-limit": "Limit",
+    "name-link-target": "Link target",
+    "name-query-filter": "Query filter",
+    "name-show-tags": "Show tags",
+    "name-show-time": "Show time",
+    "name-show-user": "Show user",
+    "name-tags": "Tags",
+    "name-time-after": "Time after",
+    "name-time-before": "Time before",
+    "name-time-range": "Time range",
+    "query-filter-options": {
+      "label-all-dashboards": "All dashboards",
+      "label-this-dashboard": "This dashboard"
+    },
+    "time-range-options": {
+      "label-none": "None",
+      "label-this-dashboard": "This dashboard"
     }
   },
   "annotations": {
@@ -3177,9 +3256,94 @@
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "barchart": {
+    "config": {
+      "category-thresholds": "Thresholds",
+      "description-color-by-field": "Use the color value for a sibling field to color each bar value.",
+      "description-x-label-max-length": "X-axis labels will be truncated to the length provided",
+      "name-bar-radius": "Bar radius",
+      "name-bar-width": "Bar width",
+      "name-color-by-field": "Color by field",
+      "name-fill-opacity": "Fill opacity",
+      "name-full-highlight": "Highlight full area on hover",
+      "name-gradient-mode": "Gradient mode",
+      "name-group-width": "Group width",
+      "name-line-width": "Line width",
+      "name-orientation": "Orientation",
+      "name-rotate-x-labels": "Rotate x-axis tick labels",
+      "name-show-thresholds": "Show thresholds",
+      "name-show-values": "Show values",
+      "name-stacking": "Stacking",
+      "name-transform": "Transform",
+      "name-x-axis": "X Axis",
+      "name-x-label-max-length": "X-axis tick label max length",
+      "name-x-label-min-spacing": "X-axis labels minimum spacing",
+      "orientation-options": {
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontal",
+        "label-line-vertical": "Vertical"
+      },
+      "placeholder-x-axis": "First string or time field",
+      "placeholder-x-label-max-length": "None",
+      "show-values-options": {
+        "label-always": "Always",
+        "label-auto": "Auto",
+        "label-never": "Never"
+      },
+      "transform-options": {
+        "description-constant": "The first value will be shown as a constant line",
+        "description-negative-y": "Flip the results to negative values on the y axis",
+        "label-constant": "Constant",
+        "label-negative-y": "Negative Y"
+      }
+    },
     "tick-spacing-editor": {
       "content-require-space-from-the-right-side": "Require space from the right side",
+      "gaps-options": {
+        "description-large": "Require {{spacing}} spacing",
+        "description-medium": "Require {{spacing}} spacing",
+        "description-none": "Show all tick marks",
+        "description-small": "Require {{spacing}} spacing",
+        "label-large": "Large",
+        "label-medium": "Medium",
+        "label-none": "None",
+        "label-small": "Small"
+      },
       "label-rtl": "RTL"
+    }
+  },
+  "bargauge": {
+    "bar-size-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "category-bar-gauge": "Bar gauge",
+    "description-max-height": "Maximum row height (horizontal orientation)",
+    "description-min-height": "Minimum row height (horizontal orientation)",
+    "description-min-width": "Minimum column width (vertical orientation)",
+    "description-show-unfilled-area": "When enabled renders the unfilled region as gray",
+    "display-mode-options": {
+      "label-basic": "Basic",
+      "label-gradient": "Gradient",
+      "label-retro": "Retro LCD"
+    },
+    "name-bar-size": "Bar size",
+    "name-display-mode": "Display mode",
+    "name-max-height": "Max height",
+    "name-min-height": "Min height",
+    "name-min-width": "Min width",
+    "name-name-placement": "Name placement",
+    "name-placement-options": {
+      "label-auto": "Auto",
+      "label-hidden": "Hidden",
+      "label-left": "Left",
+      "label-top": "Top"
+    },
+    "name-show-unfilled-area": "Show unfilled area",
+    "name-value-display": "Value display",
+    "value-display-options": {
+      "label-hidden": "Hidden",
+      "label-text-color": "Text color",
+      "label-value-color": "Value color"
     }
   },
   "bookmarks-page": {
@@ -3202,6 +3366,7 @@
       "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
+      "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
@@ -3242,6 +3407,14 @@
       "select-checkbox": "Select",
       "tags-column": "Tags"
     },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "Folder deleted successfully",
+      "api-error": "Failed to delete folder",
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:"
+    },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
@@ -3266,9 +3439,6 @@
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
-    },
-    "hard-delete": {
-      "success": "Dashboard {{name}} deleted"
     },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
@@ -3307,7 +3477,47 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
+    "restore": {
+      "success": "Dashboard {{name}} restored"
+    },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
+  },
+  "candlestick": {
+    "additional-fields-options": {
+      "label-ignore": "Ignore",
+      "label-include": "Include"
+    },
+    "candle-style-options": {
+      "label-candles": "Candles",
+      "label-ohlc-bars": "OHLC Bars"
+    },
+    "category-candlestick": "Candlestick",
+    "color-strategy-options": {
+      "label-since-open": "Since Open",
+      "label-since-prior-close": "Since Prior Close"
+    },
+    "description-additional-fields": "Use standard timeseries options to configure any fields not mapped above",
+    "description-close": "Value at the end of the period",
+    "description-high": "Maximum value within the period",
+    "description-low": "Minimum value within the period",
+    "description-open": "Value at the start of the period",
+    "description-volume": "Sample count within the period",
+    "mode-options": {
+      "label-both": "Both",
+      "label-candles": "Candles",
+      "label-volume": "Volume"
+    },
+    "name-additional-fields": "Additional fields",
+    "name-candle-style": "Candle style",
+    "name-close": "Close",
+    "name-color-strategy": "Color strategy",
+    "name-down-color": "Down color",
+    "name-high": "High",
+    "name-low": "Low",
+    "name-mode": "Mode",
+    "name-open": "Open",
+    "name-up-color": "Up color",
+    "name-volume": "Volume"
   },
   "canvas": {
     "apieditor": {
@@ -3322,11 +3532,18 @@
       }
     },
     "button-item": {
+      "category-button": "Button",
       "label": {
         "center": "Center",
         "left": "Left",
         "right": "Right"
       },
+      "name-align-text": "Align text",
+      "name-api": "API",
+      "name-style": "Style",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3353,7 +3570,20 @@
         }
       }
     },
+    "category-arrow-direction": "Arrow Direction",
+    "category-background": "Background",
+    "category-border": "Border",
+    "category-canvas": "Canvas",
+    "category-color": "Color",
+    "category-data-links": "Data links and actions",
+    "category-line-style": "Line style",
+    "category-metric-value": "Metric value",
+    "category-radius": "Radius",
+    "category-selected-connection": "Selected connection",
+    "category-selected-element": "Selected element ({{element}})",
+    "category-size": "Size",
     "cloud-item": {
+      "category-cloud": "Cloud",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3362,11 +3592,48 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
     },
+    "description-experimental-types": "Enable selection of experimental element types",
+    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
+    "description-inline-editing": "Enable editing the panel directly",
+    "description-pan-zoom": "Enable pan and zoom",
+    "direction-options": {
+      "label-both": "Both",
+      "label-forward": "Forward",
+      "label-none": "None",
+      "label-reverse": "Reverse"
+    },
+    "drone-front-item": {
+      "category-drone-front": "Drone Front",
+      "name-roll-angle": "Roll Angle"
+    },
+    "drone-side-item": {
+      "category-drone-side": "Drone Side",
+      "name-pitch-angle": "Pitch Angle"
+    },
+    "drone-top-item": {
+      "category-drone-top": "Drone Top",
+      "name-back-left-rotor-rpm": "Back Left Rotor RPM",
+      "name-back-right-rotor-rpm": "Back Right Rotor RPM",
+      "name-front-left-rotor-rpm": "Front Left Rotor RPM",
+      "name-front-right-rotor-rpm": "Front Right Rotor RPM",
+      "name-yaw-angle": "Yaw Angle"
+    },
+    "element-editor": {
+      "category-layout": "Layout",
+      "description-unsupported": "Selected element type is not supported by current settings. Please enable advanced element types.",
+      "name-quick-placement": "Quick placement"
+    },
     "ellipse-item": {
+      "category-ellipse": "Ellipse",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3375,20 +3642,50 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "icon-item": {
+      "category-icon": "Icon",
+      "name-fill-color": "Fill color",
+      "name-svg-path": "SVG Path"
     },
     "inline-edit": {
       "canvas-inline-editor": "Canvas Inline Editor",
       "tooltip-close-inline-editor": "Close inline editor"
     },
     "inline-edit-body": {
+      "category-selected-element": "Selected element ({{element}})",
       "label-add-item": "Add item",
       "please-select-an-element": "Please select an element"
     },
+    "label-actions": "Actions",
+    "label-color": "Color",
+    "label-direction": "Direction",
+    "label-image": "Image",
+    "label-image-size": "Image size",
+    "label-line-style": "Line style",
+    "label-links": "Links",
+    "label-radius": "Radius",
+    "label-size": "Size",
+    "label-width": "Width",
+    "layer-editor": {
+      "category-layer": "Layer",
+      "category-layout": "Layout",
+      "name-constraints": "Constraints",
+      "name-elements": "Elements"
+    },
     "line-style-editor": {
       "label-animate": "Animate"
+    },
+    "line-style-options": {
+      "label-solid": "Solid"
     },
     "metric-value-item": {
       "label": {
@@ -3403,6 +3700,15 @@
         "auto": "Auto"
       }
     },
+    "name-align-text": "Align text",
+    "name-color": "Text color",
+    "name-experimental-types": "Experimental element types",
+    "name-infinite-panning": "Infinite panning",
+    "name-inline-editing": "Inline editing",
+    "name-pan-zoom": "Pan and zoom",
+    "name-text": "Text",
+    "name-text-size": "Text size",
+    "name-vertical-align": "Vertical align",
     "not-found-display": {
       "not-found": "<0>Not found: </0><config />"
     },
@@ -3415,6 +3721,7 @@
       "zoom-scroll-wheel": "Zoom: Scroll wheel"
     },
     "parallelogram-item": {
+      "category-parallelogram": "Parallelogram",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3423,6 +3730,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3434,9 +3746,23 @@
       "placeholder-value": "Value"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-left-and-right": "Left & right",
+        "label-right": "Right",
+        "label-scale": "Scale"
+      },
       "label-constraints": "Constraints",
       "label-position": "Position",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "vertical-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-scale": "Scale",
+        "label-top": "Top",
+        "label-top-and-bottom": "Top & bottom"
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Align bottom",
@@ -3447,6 +3773,7 @@
       "tooltip-align-vertical-centers": "Align vertical centers"
     },
     "rectangle-item": {
+      "category-rectangle": "Rectangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3455,14 +3782,33 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "server-item": {
+      "category-server": "Server",
+      "name-blink-rate": "Blink rate [hz] (0 = off)",
+      "name-bulb-color": "Bulb color",
+      "name-status-color": "Status color",
+      "name-type": "Type",
+      "type-options": {
+        "label-database": "Database",
+        "label-single": "Single",
+        "label-stack": "Stack",
+        "label-terminal": "Terminal"
       }
     },
     "text-display": {
       "double-click-to-set": "Double click to set text"
     },
     "text-item": {
+      "category-text": "Text",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3471,6 +3817,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3492,6 +3843,7 @@
       "tooltip-remove": "Remove"
     },
     "triangle-item": {
+      "category-triangle": "Triangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3500,9 +3852,18 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "Wind Turbine",
+      "name-rpm": "RPM"
     }
   },
   "carousel": {
@@ -4055,8 +4416,12 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
+      "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-repeat-direction": "Repeat direction",
+      "panel-repeat-variable": "Panel repeat by",
       "panel-title": "Change panel title",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
@@ -4175,6 +4540,7 @@
     "get-field-override-categories": {
       "label-add-field-override": "Add field override",
       "label-add-override-property": "Add override property",
+      "override-name": "Override {{overrideNum}}",
       "title": {
         "add-button": "add button"
       }
@@ -4387,6 +4753,7 @@
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
+      "repeated-item": "Repeat",
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
@@ -5037,6 +5404,15 @@
         }
       }
     },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Failed to delete dashboard",
+      "cancel-action": "Cancel",
+      "delete-action": "Delete dashboard",
+      "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
+      "deleting": "Deleting...",
+      "drawer-title": "Delete Provisioned Dashboard",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "description-label": {
       "description": "Description"
     },
@@ -5046,6 +5422,9 @@
           "edit-link": "Edit link"
         }
       }
+    },
+    "edit-provisioned-dashboard-form": {
+      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5166,6 +5545,9 @@
         "remove-panel": "Remove panel"
       }
     },
+    "panel-data-alerting-tab": {
+      "tab-label": "Alert"
+    },
     "panel-data-alerting-tab-rendered": {
       "alert": {
         "title-errors-loading-rules": "Errors loading rules"
@@ -5174,9 +5556,15 @@
       "text-loading-rules": "Loading rules...",
       "title-dashboard-not-saved": "Dashboard not saved"
     },
+    "panel-data-queries-tab": {
+      "tab-label": "Queries"
+    },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
       "expression": "Expression "
+    },
+    "panel-data-transformations-tab": {
+      "tab-label": "Transformations"
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Add another transformation",
@@ -5224,12 +5612,6 @@
       "ok": "OK",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
-    },
-    "provisioned-resource-delete-modal": {
-      "file-path": "File path:",
-      "managed-by-version-control": "This resource is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
     },
     "query-editor": {
       "query": "Query"
@@ -5321,22 +5703,14 @@
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
-      "api-success": "Dashboard changes saved",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-message": "If you have direct access to the target, copy the JSON and paste it there.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
-      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
-      "description-inside-repository": "File path inside the repository (.json or .yaml)",
       "file-path": "<0>File path:</0> {{filePath}}",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-description": "Description",
-      "label-path": "Path",
       "label-target-folder": "Target folder",
       "label-title": "Title",
-      "label-workflow": "Workflow",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -5577,6 +5951,20 @@
         }
       }
     }
+  },
+  "dashlist": {
+    "category-dashboard-list": "Dashboard list",
+    "name-folder": "Folder",
+    "name-include-current-template-variables": "Include current template variable values",
+    "name-include-current-time-range": "Include current time range",
+    "name-max-items": "Max items",
+    "name-query": "Query",
+    "name-recently-viewed": "Recently viewed",
+    "name-search": "Search",
+    "name-show-folder-names": "Show folder names",
+    "name-show-headings": "Show headings",
+    "name-starred": "Starred",
+    "name-tags": "Tags"
   },
   "data-source-list": {
     "empty-state": {
@@ -5836,6 +6224,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "Contain",
+        "label-cover": "Cover",
+        "label-fill": "Fill",
+        "label-original": "Original",
+        "label-tile": "Tile"
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": "Fixed color"
+    },
     "file-dropzone-custom-children": {
       "upload": "Upload"
     },
@@ -5848,7 +6248,10 @@
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
+      "description-field": "Use a string field result",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-mappings": "Mappings",
       "label-source": "Source"
     },
@@ -5864,8 +6267,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": "Fixed value"
+      },
       "label-limit": "Limit",
-      "label-value": "Value"
+      "label-value": "Value",
+      "scalar-options": {
+        "description-clamped": "Use field values, clamped to max and min",
+        "description-mod": "Use field values, mod from max",
+        "label-clamped": "Clamped",
+        "label-mod": "Mod"
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Max",
@@ -5873,7 +6285,10 @@
       "label-value": "Value"
     },
     "text-dimension-editor": {
+      "description-field": "Display field value",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-source": "Source",
       "label-template": "Template",
       "label-value": "Value"
@@ -5885,7 +6300,18 @@
       "add-threshold": "Add threshold",
       "aria-label-threshold": "Threshold {{thresholdNumber}}",
       "description-percentage-means-thresholds-relative": "Percentage means thresholds relative to min & max",
-      "thresholds-mode": "Thresholds mode"
+      "modes": {
+        "description": {
+          "threshold-based-percent-between-minmax": "Pick threshold based on the percent between min/max",
+          "thresholds-based-absolute-values": "Pick thresholds based on the absolute values"
+        },
+        "label": {
+          "absolute": "Absolute",
+          "percentage": "Percentage"
+        }
+      },
+      "thresholds-mode": "Thresholds mode",
+      "value-base": "Base"
     },
     "urlpicker-tab": {
       "label-preview": "Preview"
@@ -6679,6 +7105,25 @@
     "discard-button": "Discard unsaved changes",
     "title": "Leave page?"
   },
+  "gauge": {
+    "category-gauge": "Gauge",
+    "description-min-height": "Minimum row height (horizontal orientation)",
+    "description-min-width": "Minimum column width (vertical orientation)",
+    "description-neutral": "Leave empty to use Min as neutral point",
+    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
+    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
+    "gauge-size-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "name-gauge-size": "Gauge size",
+    "name-min-height": "Min height",
+    "name-min-width": "Min width",
+    "name-neutral": "Neutral",
+    "name-show-threshold-labels": "Show threshold labels",
+    "name-show-threshold-markers": "Show threshold markers",
+    "placeholder-neutral": "auto"
+  },
   "gen-ai": {
     "apply-suggestion": "Apply",
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
@@ -6909,6 +7354,90 @@
       "linear-threshold": "Linear threshold",
       "log-base": "Log base"
     },
+    "builder": {
+      "axis": {
+        "category-axis": "Axis",
+        "color-label": "Color",
+        "color-options": {
+          "label-series": "Series",
+          "label-text": "Text"
+        },
+        "grid-line-options": {
+          "label-auto": "Auto",
+          "label-off": "Off",
+          "label-on": "On"
+        },
+        "name-centered-zero": "Centered zero",
+        "name-grid-lines": "Show grid lines",
+        "name-label": "Label",
+        "name-placement": "Placement",
+        "name-scale": "Scale",
+        "name-show-border": "Show border",
+        "name-soft-max": "Soft max",
+        "name-soft-min": "Soft min",
+        "name-width": "Width",
+        "placeholder-label": "Optional text",
+        "placeholder-soft-max": "See: Standard options > Max",
+        "placeholder-soft-min": "See: Standard options > Min",
+        "placeholder-width": "Auto",
+        "scale-distribution-editor": {
+          "distribution-options": {
+            "label-linear": "Linear",
+            "label-log": "Logarithmic",
+            "label-symlog": "Symlog"
+          }
+        }
+      },
+      "legend": {
+        "category": "Legend",
+        "description-values": "Select values or calculations to show in legend",
+        "mode-options": {
+          "label-list": "List",
+          "label-table": "Table"
+        },
+        "name-mode": "Mode",
+        "name-placement": "Placement",
+        "name-values": "Values",
+        "name-visibility": "Visibility",
+        "name-width": "Width",
+        "placement-options": {
+          "label-bottom": "Bottom",
+          "label-right": "Right"
+        }
+      },
+      "stacking": {
+        "name-stack-series": "Stack series"
+      },
+      "text": {
+        "category-text-size": "Text size",
+        "name-percent-change": "Percent change",
+        "name-title": "Title",
+        "name-value": "Value",
+        "placeholder-percent-change": "Auto",
+        "placeholder-title": "Auto",
+        "placeholder-value": "Auto"
+      },
+      "tooltip": {
+        "category": "Tooltip",
+        "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
+        "modeOptions": {
+          "label-all": "All",
+          "label-hidden": "Hidden",
+          "label-single": "Single"
+        },
+        "name-hide-zeros": "Hide zeros",
+        "name-hover-proximity": "Hover proximity",
+        "name-max-height": "Max height",
+        "name-max-width": "Max width",
+        "name-tooltip-mode": "Tooltip mode",
+        "name-values-sort-order": "Values sort order",
+        "sortOptions": {
+          "label-ascending": "Ascending",
+          "label-descending": "Descending",
+          "label-none": "None"
+        }
+      }
+    },
     "card": {
       "option": "option"
     },
@@ -7065,6 +7594,21 @@
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
+    "matchers-ui": {
+      "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
+      "description-fields-by-query": "Set properties for fields from a specific query",
+      "description-fields-with-name": "Set properties for a specific field",
+      "description-fields-with-type": "Set properties for fields of a specific type (number, string, boolean)",
+      "description-fields-with-value": "Set properties for fields with reducer condition",
+      "field-name-picker": {
+        "placeholder": "Select field"
+      },
+      "name-field-name-by-regex-matcher": "Fields with name matching regex",
+      "name-fields-by-query": "Fields returned by query",
+      "name-fields-with-name": "Fields with name",
+      "name-fields-with-type": "Fields with type",
+      "name-fields-with-value": "Fields with values"
+    },
     "menu-item": {
       "keyboard-shortcut-label": "Keyboard shortcut"
     },
@@ -7177,6 +7721,63 @@
     "toolbar-button-row": {
       "show-more": "Show more items"
     },
+    "u-plot": {
+      "config": {
+        "get-graph-field-options": {
+          "axis-placement": {
+            "description-auto": "First field on the left, everything else on the right",
+            "label-auto": "Auto",
+            "label-hidden": "Hidden",
+            "label-left": "Left",
+            "label-right": "Right"
+          },
+          "bar-alignment": {
+            "description-after": "After",
+            "description-before": "Before",
+            "description-center": "Center"
+          },
+          "draw-style": {
+            "label-bars": "Bars",
+            "label-lines": "Lines",
+            "label-points": "Points"
+          },
+          "fill-gradient": {
+            "description-hue": "Small color hue gradient",
+            "description-opacity": "Enable fill opacity gradient",
+            "description-scheme": "Use color scheme to define gradient",
+            "label-hue": "Hue",
+            "label-none": "None",
+            "label-opacity": "Opacity",
+            "label-scheme": "Scheme"
+          },
+          "line-interpolation": {
+            "description-linear": "Linear",
+            "description-smooth": "Smooth",
+            "description-step-after": "Step after",
+            "description-step-before": "Step before"
+          },
+          "show-points": {
+            "description-auto": "Show points when the density is low",
+            "label-always": "Always",
+            "label-auto": "Auto",
+            "label-never": "Never"
+          },
+          "stacking": {
+            "label-100": "100%",
+            "label-normal": "Normal",
+            "label-off": "Off"
+          },
+          "thresholds-display-mode": {
+            "label-dashed-lines": "As lines (dashed)",
+            "label-filled-regions": "As filled regions",
+            "label-filled-regions-and-dashed-lines": "As filled regions and lines (dashed)",
+            "label-filled-regions-and-lines": "As filled regions and lines",
+            "label-lines": "As lines",
+            "label-off": "Off"
+          }
+        }
+      }
+    },
     "unit-picker": {
       "placeholder": "Choose"
     },
@@ -7209,6 +7810,82 @@
       "show-all-series": "Show all {{length}}",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
       "title": "Graph"
+    }
+  },
+  "heatmap": {
+    "calculate-from-data-options": {
+      "label-no": "No",
+      "label-yes": "Yes"
+    },
+    "category-cell-display": "Cell display",
+    "category-colors": "Colors",
+    "category-exemplars": "Exemplars",
+    "category-heatmap": "Heatmap",
+    "category-legend": "Legend",
+    "category-tooltip": "Tooltip",
+    "category-y-axis": "Y Axis",
+    "mode-options": {
+      "label-opacity": "Opacity",
+      "label-scheme": "Scheme"
+    },
+    "name-axis-label": "Axis label",
+    "name-axis-width": "Axis width",
+    "name-calculate-from-data": "Calculate from data",
+    "name-cell-gap": "Cell gap",
+    "name-color": "Color",
+    "name-decimals": "Decimals",
+    "name-end-color-at-value": "End color scale at value",
+    "name-exponent": "Exponent",
+    "name-hide-cells-gt": "Hide cells with values >=",
+    "name-hide-cells-lt": "Hide cells with values <=",
+    "name-max-height": "Max height",
+    "name-max-value": "Max value",
+    "name-max-width": "Max width",
+    "name-min-value": "Min value",
+    "name-mode": "Mode",
+    "name-placement": "Placement",
+    "name-reverse": "Reverse",
+    "name-scale": "Scale",
+    "name-scheme": "Scheme",
+    "name-show-color-scale": "Show color scale",
+    "name-show-histogram": "Show histogram (Y axis)",
+    "name-show-legend": "Show legend",
+    "name-start-color-from-value": "Start color scale from value",
+    "name-steps": "Steps",
+    "name-tick-alignment": "Tick alignment",
+    "name-tooltip-mode": "Tooltip mode",
+    "name-unit": "Unit",
+    "name-value-name": "Value name",
+    "name-y-axis-scale": "Y axis scale",
+    "placeholder-axis-label": "Auto",
+    "placeholder-axis-width": "Auto",
+    "placeholder-decimals": "Auto",
+    "placeholder-end-color-at-value": "Auto (max)",
+    "placeholder-hide-cells-gt": "None",
+    "placeholder-hide-cells-lt": "None",
+    "placeholder-max-value": "Auto",
+    "placeholder-min-value": "Auto",
+    "placeholder-start-color-from-value": "Auto (min)",
+    "placeholder-value-name": "Value",
+    "placement-options": {
+      "label-hidden": "Hidden",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "scale-options": {
+      "label-exponential": "Exponential",
+      "label-linear": "Linear"
+    },
+    "tick-alignment-options": {
+      "label-auto": "Auto",
+      "label-bottom": "Bottom (GE)",
+      "label-middle": "Middle",
+      "label-top": "Top (LE)"
+    },
+    "tooltip-mode-options": {
+      "label-all": "All",
+      "label-hidden": "Hidden",
+      "label-single": "Single"
     }
   },
   "help-modal": {
@@ -7268,9 +7945,14 @@
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
   "histogram": {
+    "category-histogram": "Histogram",
     "histogram-panel": {
       "no-histogram-found-in-response": "No histogram found in response"
-    }
+    },
+    "name-fill-opacity": "Fill opacity",
+    "name-gradient-mode": "Gradient mode",
+    "name-line-width": "Line width",
+    "name-stacking": "Stacking"
   },
   "inspector": {
     "inspect-data-tab": {
@@ -7647,6 +8329,20 @@
     }
   },
   "logs": {
+    "category-logs": "Logs",
+    "deduplication-options": {
+      "label-exact": "Exact",
+      "label-none": "None",
+      "label-numbers": "Numbers",
+      "label-signature": "Signature"
+    },
+    "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "font-size-options": {
+      "label-default": "Default",
+      "label-small": "Small"
+    },
     "get-dataframe-fields": {
       "vars": {
         "text": {
@@ -7790,6 +8486,22 @@
         "common-labels": "Common labels:"
       }
     },
+    "name-common-labels": "Common labels",
+    "name-deduplication": "Deduplication",
+    "name-enable-infinite-scrolling": "Enable infinite scrolling",
+    "name-enable-log-details": "Enable log details",
+    "name-enable-syntax-highlighting": "Enable syntax highlighting",
+    "name-font-size": "Font size",
+    "name-order": "Order",
+    "name-prettify-json": "Prettify JSON",
+    "name-show-controls": "Show controls",
+    "name-time": "Time",
+    "name-unique-labels": "Unique labels",
+    "name-wrap-lines": "Wrap lines",
+    "order-options": {
+      "label-newest-first": "Newest first",
+      "label-oldest-first": "Oldest first"
+    },
     "out-of-range-message": {
       "end-of-the-selected-time-range": "End of the selected time range."
     },
@@ -7819,6 +8531,30 @@
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
+    }
+  },
+  "logs-new": {
+    "category-logs": "Logs",
+    "deduplication-options": {
+      "label-exact": "Exact",
+      "label-none": "None",
+      "label-numbers": "Numbers",
+      "label-signature": "Signature"
+    },
+    "description-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "description-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
+    "name-deduplication": "Deduplication",
+    "name-enable-log-details": "Enable log details",
+    "name-infinite-scrolling": "Enable infinite scrolling",
+    "name-order": "Order",
+    "name-show-controls": "Show controls",
+    "name-syntax-highlighting": "Enable syntax highlighting",
+    "name-time": "Time",
+    "name-wrap-lines": "Wrap lines",
+    "order-options": {
+      "label-newest-first": "Newest first",
+      "label-oldest-first": "Oldest first"
     }
   },
   "manage-dashbaords": {
@@ -8503,16 +9239,42 @@
     "rss-button": "Latest from the blog"
   },
   "news": {
-    "drawer": {
-      "close": "Close drawer"
-    },
+    "category-news": "News",
+    "description-show-image": "Controls if the news item social (og:image) image is shown above text content",
+    "description-url": "Supports RSS and Atom feeds",
     "link-title": "Go to Grafana labs blog",
+    "name-show-image": "Show image",
+    "name-url": "URL",
     "news-panel": {
       "body-error-loading-rss-feed": "Make sure that the feed URL is correct and that CORS is configured correctly on the server. See <2>News panel documentation.</2>",
       "loading": "Loading...",
       "title-error-loading-rss-feed": "Error loading RSS feed"
     },
     "title": "Latest from the blog"
+  },
+  "node-graph": {
+    "category-edges": "Edges",
+    "category-node-graph": "Node graph",
+    "category-nodes": "Nodes",
+    "layout-algorithm-options": {
+      "description-force": "Use a force-directed layout",
+      "description-grid": "Use a grid layout",
+      "description-layered": "Use a layered layout",
+      "label-force": "Force",
+      "label-grid": "Grid",
+      "label-layered": "Layered"
+    },
+    "name-arc-sections": "Arc sections",
+    "name-layout-algorithm": "Layout algorithm",
+    "name-main-stat-unit": "Main stat unit",
+    "name-secondary-stat-unit": "Secondary stat unit",
+    "name-zoom-mode": "Zoom mode",
+    "zoom-mode-options": {
+      "description-cooperative": "Lets you scroll the page normally",
+      "description-greedy": "Reacts to all zoom gestures",
+      "label-cooperative": "Cooperative",
+      "label-greedy": "Greedy"
+    }
   },
   "nodeGraph": {
     "arc-options-editor": {
@@ -8587,6 +9349,44 @@
     },
     "field-color": {
       "color-by-label": "Color series by"
+    },
+    "registry": {
+      "get-all-option-editors": {
+        "description-time-zone": "Time zone selection",
+        "name-time-zone": "Time zone"
+      },
+      "standard-field-condigs": {
+        "category-data-links": "Data links and actions"
+      },
+      "standard-field-configs": {
+        "category": "Standard options",
+        "category-thresholds": "Thresholds",
+        "category-value-mappings": "Value mappings",
+        "description-display-name": "Change the field or series name",
+        "description-field-min-max": "Calculate min max per field",
+        "description-max": "Leave empty to calculate based on all values",
+        "description-min": "Leave empty to calculate based on all values",
+        "description-no-value": "What to show when there is no value",
+        "description-value-mappings": "Modify the display text based on input value",
+        "name-actions": "Actions",
+        "name-ad-hoc": "Ad-hoc filterable",
+        "name-color-scheme": "Color scheme",
+        "name-data-links": "Data links",
+        "name-decimals": "Decimals",
+        "name-display-name": "Display name",
+        "name-field-min-max": "Field min/max",
+        "name-max": "Max",
+        "name-min": "Min",
+        "name-no-value": "No value",
+        "name-thresholds": "Thresholds",
+        "name-unit": "Unit",
+        "name-value-mappings": "Value mappings",
+        "placeholder-decimals": "auto",
+        "placeholder-display-name": "none",
+        "placeholder-max": "auto",
+        "placeholder-min": "auto",
+        "placeholder-unit": "none"
+      }
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
@@ -8728,6 +9528,28 @@
     "select-aria-label": "Panel type filter",
     "select-no-options": "No panel types found",
     "select-placeholder": "Filter by type"
+  },
+  "piechart": {
+    "category-legend": "Legend",
+    "category-pie-chart": "Pie chart",
+    "description-labels": "Select the labels to be displayed in the pie chart",
+    "description-pie-chart-type": "How the pie chart should be rendered",
+    "labels-options": {
+      "label-name": "Name",
+      "label-percent": "Percent",
+      "label-value": "Value"
+    },
+    "legend-values-options": {
+      "label-percent": "Percent",
+      "label-value": "Value"
+    },
+    "name-labels": "Labels",
+    "name-legend-values": "Legend values",
+    "name-pie-chart-type": "Pie chart type",
+    "pie-chart-type-options": {
+      "label-donut": "Donut",
+      "label-pie": "Pie"
+    }
   },
   "playlist": {
     "playlist-new-page": {
@@ -8956,6 +9778,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
+      "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
       "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
@@ -9109,6 +9932,17 @@
       "name": "Name",
       "teams": "Teams",
       "text-loading-teams": "Loading teams..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-path": "Path",
+      "label-workflow": "Workflow"
     }
   },
   "provisioning": {
@@ -9751,7 +10585,6 @@
   },
   "recently-deleted": {
     "buttons": {
-      "delete": "Permanently delete",
       "restore": "Restore"
     },
     "page": {
@@ -10358,7 +11191,115 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "stat": {
+    "add-orientation-option": {
+      "description-orientation": "Layout orientation",
+      "name-orientation": "Orientation",
+      "orientation-options": {
+        "label-auto": "Auto",
+        "label-horizontal": "Horizontal",
+        "label-vertical": "Vertical"
+      }
+    },
+    "add-standard-data-reduce-options": {
+      "category-value-options": "Value options",
+      "description-calculation": "Choose a reducer function / calculation",
+      "description-fields": "Select the fields that should be included in the panel",
+      "description-limit": "Max number of rows to display",
+      "description-show": "Calculate a single value per column or series or show each row",
+      "fields-options": {
+        "label-all-fields": "All Fields",
+        "label-numeric-fields": "Numeric Fields"
+      },
+      "name-calculation": "Calculation",
+      "name-fields": "Fields",
+      "name-limit": "Limit",
+      "name-show": "Show",
+      "show-options": {
+        "label-all-values": "All values",
+        "label-calculate": "Calculate"
+      }
+    },
+    "category-stat-styles": "Stat styles",
+    "color-mode-options": {
+      "label-background-gradient": "Background Gradient",
+      "label-background-solid": "Background Solid",
+      "label-none": "None",
+      "label-value": "Value"
+    },
+    "description-graph-mode": "Stat panel graph / sparkline mode",
+    "description-text-mode": "Control if name and value is displayed or just name",
+    "graph-mode": {
+      "options": {
+        "label-area": "Area",
+        "label-none": "None"
+      }
+    },
+    "name-color-modcolor-mode-options": {
+      "label": "Color mode"
+    },
+    "name-graph-mode": "Graph mode",
+    "name-show-percent-change": "Show percent change",
+    "name-text-alignment": "Text alignment",
+    "name-text-mode": "Text mode",
+    "name-wide-layout": "Wide layout",
+    "percent-change-color-mode": "Percent change color mode",
+    "percent-change-color-mode-options": {
+      "label-inverted": "Inverted",
+      "label-same-as-value": "Same as Value",
+      "label-standard": "Standard"
+    },
+    "text-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
+    },
+    "wide-layout-options": {
+      "label-off": "Off",
+      "label-on": "On"
+    }
+  },
+  "state-timeline": {
+    "align-values-options": {
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "category-state-timeline": "State timeline",
+    "name-align-values": "Align values",
+    "name-connect-null-values": "Connect null values",
+    "name-disconnect-values": "Disconnect values",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-width": "Line width",
+    "name-merge-equal-consecutive-values": "Merge equal consecutive values",
+    "name-page-size": "Page size (enable pagination)",
+    "name-row-height": "Row height",
+    "name-show-values": "Show values",
+    "show-values-options": {
+      "label-always": "Always",
+      "label-auto": "Auto",
+      "label-never": "Never"
+    }
+  },
   "status-history": {
+    "category-status-history": "Status history",
+    "name-column-width": "Column width",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-width": "Line width",
+    "name-page-size": "Page size (enable pagination)",
+    "name-row-height": "Row height",
+    "name-show-values": "Show values",
+    "show-values-options": {
+      "label-always": "Always",
+      "label-auto": "Auto",
+      "label-never": "Never"
+    },
     "status-history-panel": {
       "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
       "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
@@ -10397,6 +11338,14 @@
       "label-gauge-display-mode": "Gauge display mode",
       "label-value-display": "Value display"
     },
+    "category-cell-options": "Cell options",
+    "category-table": "Table",
+    "category-table-footer": "Table footer",
+    "cell-height-options": {
+      "label-large": "Large",
+      "label-medium": "Medium",
+      "label-small": "Small"
+    },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
@@ -10408,17 +11357,83 @@
       "label-wrap-text": "Wrap text",
       "wrap-text": "Wrap text"
     },
+    "column-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
     "container": {
       "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
     },
+    "description-calculation": "Choose a reducer function / calculation",
+    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
+    "description-column-filter": "Enables/disables field filters in table",
+    "description-count-rows": "Display a single count for all data rows",
+    "description-fields": "Select the fields that should be calculated",
+    "description-min-column-width": "The minimum width for column auto resizing",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
-    }
+    },
+    "name-calculation": "Calculation",
+    "name-cell-height": "Cell height",
+    "name-cell-type": "Cell type",
+    "name-cell-value-inspect": "Cell value inspect",
+    "name-column-alignment": "Column alignment",
+    "name-column-filter": "Column filter",
+    "name-column-width": "Column width",
+    "name-count-rows": "Count rows",
+    "name-enable-paginations": "Enable pagination",
+    "name-fields": "Fields",
+    "name-hide-in-table": "Hide in table",
+    "name-min-column-width": "Minimum column width",
+    "name-show-table-footer": "Show table footer",
+    "name-show-table-header": "Show table header",
+    "placeholder-column-width": "auto",
+    "placeholder-fields": "All Numeric Fields"
+  },
+  "table-new": {
+    "category-cell-options": "Cell options",
+    "category-table": "Table",
+    "category-table-footer": "Table footer",
+    "cell-height-options": {
+      "label-large": "Large",
+      "label-medium": "Medium",
+      "label-small": "Small"
+    },
+    "column-alignment-options": {
+      "label-auto": "Auto",
+      "label-center": "Center",
+      "label-left": "Left",
+      "label-right": "Right"
+    },
+    "description-calculation": "Choose a reducer function / calculation",
+    "description-cell-value-inspect": "Enable cell value inspection in a modal window",
+    "description-column-filter": "Enables/disables field filters in table",
+    "description-count-rows": "Display a single count for all data rows",
+    "description-fields": "Select the fields that should be calculated",
+    "description-min-column-width": "The minimum width for column auto resizing",
+    "name-calculation": "Calculation",
+    "name-cell-height": "Cell height",
+    "name-cell-type": "Cell type",
+    "name-cell-value-inspect": "Cell value inspect",
+    "name-column-alignment": "Column alignment",
+    "name-column-filter": "Column filter",
+    "name-column-width": "Column width",
+    "name-count-rows": "Count rows",
+    "name-enable-pagination": "Enable pagination",
+    "name-fields": "Fields",
+    "name-hide-in-table": "Hide in table",
+    "name-min-column-width": "Minimum column width",
+    "name-show-table-footer": "Show table footer",
+    "name-show-table-header": "Show table header",
+    "placeholder-column-width": "auto",
+    "placeholder-fields": "All Numeric Fields"
   },
   "tag-filter": {
     "clear-button": "Clear tags",
@@ -10500,6 +11515,19 @@
     "team-sync-upgrade-content": {
       "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
+  },
+  "text": {
+    "category-text": "Text",
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-content": "Content",
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers",
+    "name-show-mini-map": "Show mini map"
   },
   "theme-preview": {
     "breadcrumbs": {
@@ -10591,10 +11619,54 @@
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },
+    "category-axis": "Axis",
+    "config": {
+      "get-graph-field-config": {
+        "aria-label-bar-width-factor": "Bar width factor",
+        "aria-label-fill-opacity": "Fill opacity",
+        "aria-label-line-width": "Line width",
+        "aria-label-point-size": "Point size",
+        "category-graph-styles": "Graph styles",
+        "category-thresholds": "Thresholds",
+        "name-bar-alignment": "Bar alignment",
+        "name-bar-width-factor": "Bar width factor",
+        "name-connect-nulls": "Connect null values",
+        "name-disconnect-values": "Disconnect values",
+        "name-fill-below-to": "Fill below to",
+        "name-fill-opacity": "Fill opacity",
+        "name-gradient-mode": "Gradient mode",
+        "name-line-interpolation": "Line interpolation",
+        "name-line-style": "Line style",
+        "name-line-width": "Line width",
+        "name-point-size": "Point size",
+        "name-show-points": "Show points",
+        "name-show-thresholds": "Show thresholds",
+        "name-style": "Style",
+        "name-transform": "Transform",
+        "transform-options": {
+          "description-constant": "The first value will be shown as a constant line",
+          "description-style": "Flip the results to negative values on the y axis",
+          "label-constant": "Constant",
+          "label-style": "Negative Y"
+        }
+      }
+    },
+    "insert-nulls-editor": {
+      "disconnect-options": {
+        "label-never": "Never",
+        "label-threshold": "Threshold"
+      }
+    },
     "line-style-editor": {
+      "line-fill-options": {
+        "label-dash": "Dash",
+        "label-dots": "Dots",
+        "label-solid": "Solid"
+      },
       "title-the-input-expects-a-segment-list": "The input expects a segment list",
       "tooltip-help": "Help"
     },
+    "name-time-zone": "Time zone",
     "nulls-threshold-input": {
       "placeholder-never": "Never"
     },
@@ -10602,12 +11674,30 @@
       "data-outside-time-range": "Data outside time range",
       "zoom-to-data": "Zoom to data"
     },
+    "span-nulls-editor": {
+      "gaps-options": {
+        "label-always": "Always",
+        "label-never": "Never",
+        "label-threshold": "Threshold"
+      }
+    },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
       "tooltip-remove-timezone": "Remove timezone"
     }
   },
   "traces": {
+    "category-span-filters": "Span filters",
+    "name-critical-path-only": "Show critical path only",
+    "name-find-in-trace": "Find in trace",
+    "name-max-duration": "Max duration",
+    "name-min-duration": "Min duration",
+    "name-service-name": "Service name",
+    "name-service-name-operator": "Service name operator",
+    "name-show-matches-only": "Show matches only",
+    "name-span-name": "Span name",
+    "name-span-name-operator": "Span name operator",
+    "name-tags": "Tags",
     "traces-panel": {
       "no-data-found-in-response": "No data found in response"
     }
@@ -10620,6 +11710,24 @@
   },
   "transformers": {
     "axis-editor": {
+      "log-mode-options": {
+        "description": {
+          "split-the-buckets-based-on-size": "Split the buckets based on size"
+        },
+        "label": {
+          "split": "Split"
+        }
+      },
+      "mode-options": {
+        "description": {
+          "split-the-buckets-based-on-count": "Split the buckets based on count",
+          "split-the-buckets-based-on-size": "Split the buckets based on size"
+        },
+        "label": {
+          "count": "Count",
+          "size": "Size"
+        }
+      },
       "placeholder-auto": "Auto"
     },
     "basic-matcher-editor": {
@@ -10634,6 +11742,13 @@
       "label-alias": "Alias",
       "label-mode": "Mode",
       "label-replace-all-fields": "Replace all fields"
+    },
+    "calculate-heatmap": {
+      "add-heatmap-calculation-options": {
+        "name-x-bucket": "X Bucket",
+        "name-y-bucket": "Y Bucket",
+        "name-y-bucket-scale": "Y Bucket scale"
+      }
     },
     "concatenate-transformer-editor": {
       "label-label": "Label",
@@ -10674,6 +11789,11 @@
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-disable": "Disable",
       "tooltip-enable": "Enable"
+    },
+    "draggable-sort-order": {
+      "asc": "ASC",
+      "desc": "DESC",
+      "off": "Off"
     },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
@@ -10853,6 +11973,9 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "field-order": "Field order",
+      "field-order-auto": "Auto",
+      "field-order-manual": "Manual",
       "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
     },
     "partion-by-values-editor": {
@@ -11011,6 +12134,12 @@
         }
       }
     }
+  },
+  "trend": {
+    "category-x-axis": "X axis",
+    "description-x-field": "An increasing numeric value",
+    "name-x-field": "X field",
+    "placeholder-x-field": "First numeric value"
   },
   "upgrade-box": {
     "discovery-text": "You’ve discovered a Pro feature!",
@@ -11237,6 +12366,21 @@
     }
   },
   "xychart": {
+    "category-xychart": "XY Chart",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-style": "Line style",
+    "name-line-width": "Line width",
+    "name-max-point-size": "Max point size",
+    "name-min-point-size": "Min point size",
+    "name-point-shape": "Point shape",
+    "name-point-size": "Point size",
+    "name-point-stroke-width": "Point stroke width",
+    "name-series-mapping": "Series mapping",
+    "name-show": "Show",
+    "point-shape-options": {
+      "label-circle": "Circle",
+      "label-square": "Square"
+    },
     "series-editor": {
       "add-series": "Add series",
       "aria-label-select-series": "Select series {{seriesNum}}",
@@ -11247,7 +12391,18 @@
       "label-y-field": "Y field",
       "placeholder-all-frames": "All frames",
       "placeholder-select-frame": "Select frame",
+      "placeholder-x-field": "First number or time field in each frame",
+      "placeholder-y-field": "Remaining number fields in each frame",
       "tooltip-delete-series": "Delete series"
+    },
+    "series-mapping-options": {
+      "label-auto": "Auto",
+      "label-manual": "Manual"
+    },
+    "show-options": {
+      "label-both": "Both",
+      "label-lines": "Lines",
+      "label-points": "Points"
     }
   }
 }

@@ -1,4 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -27,10 +28,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       },
     },
     useCustomConfig: (builder) => {
+      const category = [t('status-history.category-status-history', 'Status history')];
       builder
         .addSliderInput({
           path: 'lineWidth',
-          name: 'Line width',
+          name: t('status-history.name-line-width', 'Line width'),
+          category,
           defaultValue: defaultFieldConfig.lineWidth,
           settings: {
             min: 0,
@@ -40,7 +43,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: 'Fill opacity',
+          name: t('status-history.name-fill-opacity', 'Fill opacity'),
+          category,
           defaultValue: defaultFieldConfig.fillOpacity,
           settings: {
             min: 0,
@@ -58,22 +62,25 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
     },
   })
   .setPanelOptions((builder) => {
+    const category = [t('status-history.category-status-history', 'Status history')];
     builder
       .addRadio({
         path: 'showValue',
-        name: 'Show values',
+        name: t('status-history.name-show-values', 'Show values'),
+        category,
         settings: {
           options: [
-            { value: VisibilityMode.Auto, label: 'Auto' },
-            { value: VisibilityMode.Always, label: 'Always' },
-            { value: VisibilityMode.Never, label: 'Never' },
+            { value: VisibilityMode.Auto, label: t('status-history.show-values-options.label-auto', 'Auto') },
+            { value: VisibilityMode.Always, label: t('status-history.show-values-options.label-always', 'Always') },
+            { value: VisibilityMode.Never, label: t('status-history.show-values-options.label-never', 'Never') },
           ],
         },
         defaultValue: VisibilityMode.Auto,
       })
       .addSliderInput({
         path: 'rowHeight',
-        name: 'Row height',
+        name: t('status-history.name-row-height', 'Row height'),
+        category,
         defaultValue: 0.9,
         settings: {
           min: 0,
@@ -83,7 +90,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       })
       .addSliderInput({
         path: 'colWidth',
-        name: 'Column width',
+        name: t('status-history.name-column-width', 'Column width'),
+        category,
         defaultValue: 0.9,
         settings: {
           min: 0,
@@ -93,7 +101,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       })
       .addNumberInput({
         path: 'perPage',
-        name: 'Page size (enable pagination)',
+        name: t('status-history.name-page-size', 'Page size (enable pagination)'),
+        category,
         settings: {
           min: 1,
           step: 1,

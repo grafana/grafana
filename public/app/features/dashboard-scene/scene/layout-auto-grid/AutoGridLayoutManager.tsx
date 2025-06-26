@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -86,6 +86,11 @@ export class AutoGridLayoutManager
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen),
         }),
     });
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    const outlineChildren = this.state.layout.state.children.map((gridItem) => gridItem.state.body);
+    return outlineChildren;
   }
 
   public addPanel(vizPanel: VizPanel) {
