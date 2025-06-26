@@ -61,7 +61,6 @@ export function prepSeries(
     return {
       series: [],
       _rest: [],
-      warn: fieldConfig.defaults.noValue ?? t('barchart.no-value.default-message', 'No data in response'),
     };
   }
 
@@ -125,7 +124,7 @@ export function prepSeries(
     let warn: string | null = null;
 
     if (fields.length === 1) {
-      warn = 'No numeric fields found';
+      warn = t('bar-chart.warn.missing-numeric', 'No numeric fields found');
     }
 
     frame.fields = fields;
@@ -146,7 +145,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: 'Bar charts requires a string or time field',
+    warn: t('bar-chart.warn.missing-series', 'Bar charts require a string or time field'),
   };
 }
 
