@@ -180,7 +180,7 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 
 	var additionalAnnotations []interface{}
 
-	for i, annotation := range annotationsList {
+	for _, annotation := range annotationsList {
 		a, ok := annotation.(map[string]interface{})
 		if !ok {
 			continue

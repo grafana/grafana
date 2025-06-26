@@ -1,7 +1,54 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
-import { DashboardModel } from './DashboardModel';
+
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+import { DashboardModel } from './DashboardModel';
+
+// Set up the same datasources as DashboardMigrator.test.ts to ensure consistency
+const dataSources = {
+  default: mockDataSource({
+    name: 'Default Test Datasource Name',
+    uid: 'default-ds-uid',
+    type: 'prometheus',
+    isDefault: true,
+  }),
+  nonDefault: mockDataSource({
+    name: 'Non Default Test Datasource Name',
+    uid: 'non-default-test-ds-uid',
+    type: 'loki',
+    isDefault: false,
+  }),
+  existingRef: mockDataSource({
+    name: 'Existing Ref Name',
+    uid: 'existing-ref-uid',
+    type: 'prometheus',
+    isDefault: false,
+  }),
+  existingTarget: mockDataSource({
+    name: 'Existing Target Name',
+    uid: 'existing-target-uid',
+    type: 'elasticsearch',
+    isDefault: false,
+  }),
+  existingRefAlt: mockDataSource({
+    name: 'Existing Ref Name',
+    uid: 'existing-ref',
+    type: 'prometheus',
+    isDefault: false,
+  }),
+  mixed: mockDataSource({
+    name: MIXED_DATASOURCE_NAME,
+    type: 'mixed',
+    uid: MIXED_DATASOURCE_NAME,
+    isDefault: false,
+  }),
+};
+
+setupDataSources(...Object.values(dataSources));
 
 describe('Backend / Frontend result comparison', () => {
   const inputDir = path.join(
