@@ -12,70 +12,89 @@ const EXPRESSION_ICON_MAP = {
   [ExpressionQueryType.classic]: 'cog',
   [ExpressionQueryType.threshold]: 'sliders-v-alt',
   [ExpressionQueryType.sql]: 'database',
-} as const;
+} as const satisfies Record<ExpressionQueryType, string>;
 
-export const ExpressionTypeDropdown = memo(
-  ({ handleOnSelect, children }: { handleOnSelect: (value: ExpressionQueryType) => void; children: ReactElement }) => {
-    const styles = useStyles2(getStyles);
+interface ExpressionTypeDropdownProps {
+  children: ReactElement;
+  handleOnSelect: (value: ExpressionQueryType) => void;
+}
 
-    const renderMenuItem = useCallback(
-      ({ description, label, value }: SelectableValue<ExpressionQueryType>) => {
-        return (
-          <Menu.Item
-            component={() => (
-              <div className={styles.expressionTypeItem}>
-                <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
-                  <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} />
-                  {label}
-                  {value === 'sql' && <FeatureBadge featureState={FeatureState.new} />}
-                </div>
-                <Tooltip placement="right" content={description!}>
-                  <Icon name="info-circle" className={styles.icon} />
-                </Tooltip>
-              </div>
-            )}
-            key={value}
-            label=""
-            onClick={() => handleOnSelect(value!)}
-          />
-        );
-      },
-      [styles, handleOnSelect]
-    );
+interface ExpressionMenuItemProps {
+  item: SelectableValue<ExpressionQueryType>;
+  onSelect: (value: ExpressionQueryType) => void;
+}
 
-    const menuItems = useMemo(() => expressionTypes.map(renderMenuItem), [renderMenuItem]);
-    const menuOverlay = useMemo(() => <Menu>{menuItems}</Menu>, [menuItems]);
+const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) => {
+  const { value, label, description } = item;
+  const styles = useStyles2(getStyles);
 
-    return (
-      <Dropdown placement="bottom-start" overlay={menuOverlay}>
-        {children}
-      </Dropdown>
-    );
-  }
-);
+  const handleClick = useCallback(() => onSelect(value!), [value, onSelect]);
+
+  return (
+    <Menu.Item
+      component={() => (
+        <div className={styles.expressionTypeItem} role="menuitem">
+          <div className={styles.expressionTypeItemContent} data-testid={`expression-type-${value}`}>
+            <Icon className={styles.icon} name={EXPRESSION_ICON_MAP[value!]} aria-hidden="true" />
+            {label}
+            {value === ExpressionQueryType.sql && <FeatureBadge featureState={FeatureState.new} />}
+          </div>
+          <Tooltip placement="right" content={description!}>
+            <Icon className={styles.infoIcon} name="info-circle" />
+          </Tooltip>
+        </div>
+      )}
+      key={value}
+      label=""
+      onClick={handleClick}
+    />
+  );
+});
+
+ExpressionMenuItem.displayName = 'ExpressionMenuItem';
+
+export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(({ handleOnSelect, children }) => {
+  const menuItems = useMemo(
+    () => expressionTypes.map((item) => <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} />),
+    [handleOnSelect]
+  );
+
+  const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
+
+  return (
+    <Dropdown placement="bottom-start" overlay={menuOverlay}>
+      {children}
+    </Dropdown>
+  );
+});
 
 ExpressionTypeDropdown.displayName = 'ExpressionTypeDropdown';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  expressionTypeItem: css({
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  expressionTypeItemContent: css({
-    flexGrow: 1,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  description: css({
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-    textAlign: 'start',
-  }),
-  icon: css({
-    opacity: 0.7,
-    color: theme.colors.text.secondary,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    expressionTypeItem: css({
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+
+    expressionTypeItemContent: css({
+      flexGrow: 1,
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+
+    icon: css({
+      color: theme.colors.text.secondary,
+      flexShrink: 0,
+    }),
+
+    infoIcon: css({
+      opacity: 0.7,
+      color: theme.colors.text.secondary,
+      flexShrink: 0,
+    }),
+  };
+};
