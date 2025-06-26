@@ -111,7 +111,6 @@
       "users-heading": "Organization users"
     },
     "enterprise-auth-features-card": {
-      "badge": "Cloud & Enterprise",
       "dismiss": "Dismiss",
       "heading": "Enterprise authentication",
       "learn-more-link": "Learn more",
@@ -3887,6 +3886,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
