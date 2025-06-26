@@ -6,10 +6,6 @@ on:
       - release-*.*.*
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -73,11 +69,6 @@ jobs:
       id-token: write
     name: Dispatch grafana-enterprise build
     steps:
-      - name: Log in to GCS
-        id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
-        with:
-          environment: prod
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -96,8 +87,9 @@ jobs:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
           BUILD_ID: ${{ github.run_number }}
-          BUCKET: ${{ steps.login-to-gcs.outputs.bucket }}
+          BUCKET: grafana-prerelease
         with:
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
 
@@ -108,7 +100,7 @@ jobs:
                 ref:  REF,
                 inputs: {
                   "version": VERSION,
-                  "build-id": BUILD_ID,
+                  "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
                 }
             })
@@ -187,20 +179,6 @@ jobs:
     with:
       bucket: grafana-prerelease
       pattern: artifacts-*
-      run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}
-      environment: prod
-  publish-artifact-lists:
-    name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
-    permissions:
-      id-token: write
-    needs:
-      - setup
-      - build
-    with:
-      bucket: grafana-prerelease
-      pattern: artifacts-list-*
       run-id: ${{ github.run_id }}
       bucket-path: ${{ needs.setup.outputs.version }}
       environment: prod
