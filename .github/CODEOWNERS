@@ -399,7 +399,9 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
+/e2e-playwright/ @grafana/grafana-frontend-platform
+/e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
+/e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
