@@ -52,17 +52,15 @@ export function ProviderSAMLCard() {
           color="secondary"
           href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-authorization-admin"
         >
-          {t('auth-config.provider-card.saml-learn-more', 'Learn more about SAML support.')}
+          {t('auth-config.provider-card.saml-learn-more', 'Single sign-on (SSO) with SAML.')}
         </TextLink>
       </Card.Meta>
       <Card.Figure>
         <Icon name="lock" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
-        <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
-        <Badge
-          text={t('auth-config.provider-card.text-enterprise-only', 'Enterprise only')}
-          color={'purple'}
+          text={t('auth-config.provider-card.text-enterprise-only', 'Cloud & Enterprise')}
+          color={'brand'}
           tooltip={t(
             'auth-config.provider-card.text-enterprise-only-tooltip',
             'Only available in Grafana Cloud and Enterprise'
@@ -94,10 +92,9 @@ export function ProviderSCIMCard() {
         <Icon name="sync" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
-        <Badge text={t('auth-config.provider-card.text-badge-not-enabled', 'Not enabled')} color={'blue'} />
         <Badge
-          text={t('auth-config.provider-card.text-enterprise-only', 'Enterprise only')}
-          color={'purple'}
+          text={t('auth-config.provider-card.text-enterprise-only', 'Cloud & Enterprise')}
+          color={'brand'}
           tooltip={t(
             'auth-config.provider-card.text-enterprise-only-tooltip',
             'Only available in Grafana Cloud and Enterprise'
