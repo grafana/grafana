@@ -315,16 +315,26 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error 
 	if err != nil {
 		return fmt.Errorf("querying timestamp from secure value outbox table: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
+		_ = rows.Close()
 		return fmt.Errorf("no row found for message id=%v", messageID)
 	}
 
 	var timestamp int64
 	var messageType string
 	if err := rows.Scan(&timestamp, &messageType); err != nil {
+		_ = rows.Close()
 		return fmt.Errorf("scanning timestamp: %w", err)
+	}
+
+	// Explicitly close rows and check for errors before proceeding
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("closing rows: %w", err)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error: %w", err)
 	}
 
 	totalLifetime := time.Since(time.UnixMilli(timestamp))
