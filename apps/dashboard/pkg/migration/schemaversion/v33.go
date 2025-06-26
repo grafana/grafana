@@ -72,6 +72,9 @@ func V33(dsInfo DataSourceInfoProvider) SchemaVersionMigrationFunc {
 
 // migratePanelsV33 updates datasource references in dashboard panels for V33 migration
 func migratePanelsV33(dashboard map[string]interface{}, datasources []DataSourceInfo) {
+	if dashboard == nil {
+		return
+	}
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		return
