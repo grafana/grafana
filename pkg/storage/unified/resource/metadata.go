@@ -32,6 +32,150 @@ type MetaDataKey struct {
 	Action          DataAction
 }
 
+// String returns the string representation of the MetaDataKey used as the storage key
+func (k MetaDataKey) String() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
+}
+
+// Validate validates that all required fields are present and valid
+func (k MetaDataKey) Validate() error {
+	if k.Group == "" {
+		return fmt.Errorf("group is required")
+	}
+	if k.Resource == "" {
+		return fmt.Errorf("resource is required")
+	}
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace is required")
+	}
+	if k.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if k.ResourceVersion <= 0 {
+		return fmt.Errorf("resource version must be positive")
+	}
+	if k.Action == "" {
+		return fmt.Errorf("action is required")
+	}
+
+	// Validate naming conventions for all required fields
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+	}
+	if !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+	}
+
+	// Validate folder field if provided (optional field)
+	if k.Folder != "" && !validNameRegex.MatchString(k.Folder) {
+		return fmt.Errorf("folder '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Folder)
+	}
+
+	// Validate action is one of the valid values
+	switch k.Action {
+	case DataActionCreated, DataActionUpdated, DataActionDeleted:
+		return nil
+	default:
+		return fmt.Errorf("action '%s' is invalid: must be one of 'created', 'updated', or 'deleted'", k.Action)
+	}
+}
+
+// MetaListRequestKey is used for listing metadata objects
+type MetaListRequestKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string // optional for listing multiple resources
+}
+
+// Validate validates the list request key
+func (k MetaListRequestKey) Validate() error {
+	if k.Group == "" {
+		return fmt.Errorf("group is required")
+	}
+	if k.Resource == "" {
+		return fmt.Errorf("resource is required")
+	}
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace is required")
+	}
+
+	// Validate naming conventions
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+	}
+	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+	}
+
+	return nil
+}
+
+// Prefix returns the prefix for listing metadata objects
+func (k MetaListRequestKey) Prefix() string {
+	if k.Name == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
+	}
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
+}
+
+// MetaGetRequestKey is used for getting a specific metadata object by latest version
+type MetaGetRequestKey struct {
+	Namespace string
+	Group     string
+	Resource  string
+	Name      string
+}
+
+// Validate validates the get request key
+func (k MetaGetRequestKey) Validate() error {
+	if k.Group == "" {
+		return fmt.Errorf("group is required")
+	}
+	if k.Resource == "" {
+		return fmt.Errorf("resource is required")
+	}
+	if k.Namespace == "" {
+		return fmt.Errorf("namespace is required")
+	}
+	if k.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+
+	// Validate naming conventions
+	if !validNameRegex.MatchString(k.Namespace) {
+		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+	}
+	if !validNameRegex.MatchString(k.Group) {
+		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+	}
+	if !validNameRegex.MatchString(k.Resource) {
+		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+	}
+	if !validNameRegex.MatchString(k.Name) {
+		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+	}
+
+	return nil
+}
+
+// Prefix returns the prefix for getting a specific metadata object
+func (k MetaGetRequestKey) Prefix() string {
+	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
+}
+
 type MetaDataObj struct {
 	Key   MetaDataKey
 	Value MetaData
@@ -48,7 +192,11 @@ func newMetadataStore(kv KV) *metadataStore {
 }
 
 func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, error) {
-	obj, err := d.kv.Get(ctx, metaSection, d.getKey(key))
+	if err := key.Validate(); err != nil {
+		return MetaData{}, fmt.Errorf("invalid metadata key: %w", err)
+	}
+
+	obj, err := d.kv.Get(ctx, metaSection, key.String())
 	if err != nil {
 		return MetaData{}, err
 	}
@@ -58,27 +206,27 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	return meta, err
 }
 
-func (d *metadataStore) GetLatest(ctx context.Context, key ListRequestKey) (MetaDataObj, error) {
+func (d *metadataStore) GetLatest(ctx context.Context, key MetaGetRequestKey) (MetaDataObj, error) {
 	return d.GetAtRevision(ctx, key, 0)
 }
 
-func (d *metadataStore) GetAtRevision(ctx context.Context, key ListRequestKey, rv int64) (MetaDataObj, error) {
+func (d *metadataStore) GetAtRevision(ctx context.Context, key MetaGetRequestKey, rv int64) (MetaDataObj, error) {
+	if err := key.Validate(); err != nil {
+		return MetaDataObj{}, fmt.Errorf("invalid get request key: %w", err)
+	}
+
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
-	if key.Namespace == "" {
-		return MetaDataObj{}, fmt.Errorf("namespace is required")
+
+	listKey := MetaListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Name:      key.Name,
 	}
-	if key.Group == "" {
-		return MetaDataObj{}, fmt.Errorf("group is required")
-	}
-	if key.Resource == "" {
-		return MetaDataObj{}, fmt.Errorf("resource is required")
-	}
-	if key.Name == "" {
-		return MetaDataObj{}, fmt.Errorf("name is required")
-	}
-	iter := d.ListAtRevision(ctx, key, rv)
+
+	iter := d.ListAtRevision(ctx, listKey, rv)
 	for obj, err := range iter {
 		if err != nil {
 			return MetaDataObj{}, err
@@ -88,25 +236,22 @@ func (d *metadataStore) GetAtRevision(ctx context.Context, key ListRequestKey, r
 	return MetaDataObj{}, ErrNotFound
 }
 
-func (d *metadataStore) ListLatest(ctx context.Context, key ListRequestKey) iter.Seq2[MetaDataObj, error] {
+func (d *metadataStore) ListLatest(ctx context.Context, key MetaListRequestKey) iter.Seq2[MetaDataObj, error] {
 	return d.ListAtRevision(ctx, key, 0)
 }
 
 // ListAtRevision lists all metadata objects for a given resource key and resource version.
-func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
+func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
+	if err := key.Validate(); err != nil {
+		return func(yield func(MetaDataObj, error) bool) {
+			yield(MetaDataObj{}, fmt.Errorf("invalid list request key: %w", err))
+		}
+	}
+
 	if rv == 0 {
 		rv = math.MaxInt64
 	}
-	if key.Group == "" {
-		return func(yield func(MetaDataObj, error) bool) {
-			yield(MetaDataObj{}, fmt.Errorf("group is required"))
-		}
-	}
-	if key.Resource == "" {
-		return func(yield func(MetaDataObj, error) bool) {
-			yield(MetaDataObj{}, fmt.Errorf("resource is required"))
-		}
-	}
+
 	prefix := key.Prefix()
 	// List all keys in the prefix.
 	iter := d.kv.Keys(ctx, metaSection, ListOptions{
@@ -125,18 +270,15 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, 
 				// Skip because the resource was last deleted.
 				return true
 			}
-			obj, err := d.kv.Get(ctx, metaSection, d.getKey(key))
+			obj, err := d.kv.Get(ctx, metaSection, key.String())
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return false
 			}
+			defer obj.Value.Close()
 			var meta MetaData
-			value, err := io.ReadAll(obj.Value)
+			err = json.NewDecoder(obj.Value).Decode(&meta)
 			if err != nil {
-				yield(MetaDataObj{}, err)
-				return false
-			}
-			if err := json.Unmarshal(value, &meta); err != nil {
 				yield(MetaDataObj{}, err)
 				return false
 			}
@@ -195,15 +337,15 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key ListRequestKey, 
 }
 
 func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
+	if err := obj.Key.Validate(); err != nil {
+		return fmt.Errorf("invalid metadata key: %w", err)
+	}
+
 	valueBytes, err := json.Marshal(obj.Value)
 	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, metaSection, d.getKey(obj.Key), io.NopCloser(bytes.NewReader(valueBytes)))
-}
-
-func (d *metadataStore) getKey(key MetaDataKey) string {
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", key.Group, key.Resource, key.Namespace, key.Name, key.ResourceVersion, key.Action, key.Folder)
+	return d.kv.Save(ctx, metaSection, obj.Key.String(), io.NopCloser(bytes.NewReader(valueBytes)))
 }
 
 func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
