@@ -27,8 +27,9 @@ class DeletedDashboardsCache {
     try {
       this.cache = await this.promise;
       return this.cache;
-    } finally {
+    } catch (error) {
       this.promise = null;
+      throw error;
     }
   }
 
@@ -38,14 +39,19 @@ class DeletedDashboardsCache {
   }
 
   private async fetch(): Promise<SearchHit[]> {
-    const api = getDashboardAPI();
-    const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
+    try {
+      const api = getDashboardAPI();
+      const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
 
-    if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-      return resourceToSearchResult(deletedResponse);
+      if (isResourceList<DashboardDataDTO>(deletedResponse)) {
+        return resourceToSearchResult(deletedResponse);
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch deleted dashboards:', error);
+      return [];
     }
-
-    return [];
   }
 }
 
