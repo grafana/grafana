@@ -59,6 +59,7 @@ export function ProviderSAMLCard() {
         <Icon name="lock" size={'xxxl'} />
       </Card.Figure>
       <Card.Actions>
+        <Badge
           text={t('auth-config.provider-card.text-enterprise-only', 'Cloud & Enterprise')}
           color={'brand'}
           tooltip={t(
