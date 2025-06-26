@@ -17,10 +17,10 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
-	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -87,25 +87,25 @@ func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAP
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return iamv0.SchemeGroupVersion
+	return legacyiamv0.SchemeGroupVersion
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if b.enableAuthZApis {
-		if err := iamv0b.AddToScheme(scheme); err != nil {
+		if err := iamv0.AddToScheme(scheme); err != nil {
 			return err
 		}
 	}
 
-	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
+	legacyiamv0.AddKnownTypes(scheme, legacyiamv0.VERSION)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	iamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	legacyiamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
-	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, legacyiamv0.SchemeGroupVersion)
+	return scheme.SetVersionPriority(legacyiamv0.SchemeGroupVersion)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -115,45 +115,45 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	teamResource := iamv0.TeamResourceInfo
+	teamResource := legacyiamv0.TeamResourceInfo
 	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
-	teamBindingResource := iamv0.TeamBindingResourceInfo
+	teamBindingResource := legacyiamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
-	userResource := iamv0.UserResourceInfo
+	userResource := legacyiamv0.UserResourceInfo
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
-	serviceAccountResource := iamv0.ServiceAccountResourceInfo
+	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
 	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
-		ssoResource := iamv0.SSOSettingResourceInfo
+		ssoResource := legacyiamv0.SSOSettingResourceInfo
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
 	if b.enableAuthZApis {
 		// v0alpha1
-		store, err := NewLocalStore(iamv0b.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		store, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
 			return err
 		}
-		storage[iamv0b.CoreRoleInfo.StoragePath()] = store
+		storage[iamv0.CoreRoleInfo.StoragePath()] = store
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
 	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	defs := iamv0.GetOpenAPIDefinitions
+	defs := legacyiamv0.GetOpenAPIDefinitions
 	if b.enableAuthZApis {
 		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-			def1 := iamv0.GetOpenAPIDefinitions(ref)
-			def2 := iamv0b.GetOpenAPIDefinitions(ref)
+			def1 := legacyiamv0.GetOpenAPIDefinitions(ref)
+			def2 := iamv0.GetOpenAPIDefinitions(ref)
 			for k, v := range def2 {
 				def1[k] = v
 			}

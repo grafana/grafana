@@ -7,9 +7,9 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authlib "github.com/grafana/authlib/types"
-	iamv0b "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -24,14 +24,14 @@ func newIAMAuthorizer(accessClient authlib.AccessClient, legacyAccessClient auth
 
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
-	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = legacyAuthorizer
-	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = legacyAuthorizer
-	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[legacyiamv0.UserResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[legacyiamv0.ServiceAccountResourceInfo.GetName()] = legacyAuthorizer
+	resourceAuthorizer[legacyiamv0.TeamResourceInfo.GetName()] = legacyAuthorizer
 	resourceAuthorizer["display"] = legacyAuthorizer
 
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-	resourceAuthorizer[iamv0b.CoreRoleInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = authorizer
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
 }
@@ -53,7 +53,7 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 	client := accesscontrol.NewLegacyAccessClient(
 		ac,
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.UserResourceInfo.GetName(),
+			Resource: legacyiamv0.UserResourceInfo.GetName(),
 			Attr:     "id",
 			Mapping: map[string]string{
 				utils.VerbGet:  accesscontrol.ActionOrgUsersRead,
@@ -77,7 +77,7 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			},
 		},
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.ServiceAccountResourceInfo.GetName(),
+			Resource: legacyiamv0.ServiceAccountResourceInfo.GetName(),
 			Attr:     "id",
 			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
 				res, err := store.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{
@@ -90,7 +90,7 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			}),
 		},
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.TeamResourceInfo.GetName(),
+			Resource: legacyiamv0.TeamResourceInfo.GetName(),
 			Attr:     "id",
 			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
 				res, err := store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
