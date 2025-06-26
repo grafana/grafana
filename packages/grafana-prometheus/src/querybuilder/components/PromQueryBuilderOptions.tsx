@@ -115,7 +115,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 minWidth={10}
                 onCommitChange={onChangeStep}
                 defaultValue={query.interval}
-                data-test-id="prometheus-step"
+                data-testid={selectors.components.DataSource.Prometheus.queryEditor.step}
               />
             </EditorField>
             <EditorField label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-format', 'Format')}>
