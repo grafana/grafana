@@ -9,6 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +22,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -68,6 +69,7 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	worker, err := worker.NewWorker(worker.Config{
 		BatchSize:                    20,
@@ -82,6 +84,7 @@ func NewSecretAPIBuilder(
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		registerer,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
@@ -114,6 +117,7 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Don't register the API.
 	if cfg.StackID != "" {
@@ -151,6 +155,7 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
+		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -698,10 +703,12 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 	if operation == admission.Create && a.GetName() == "" {
 		switch typedObj := obj.(type) {
 		case *secretv0alpha1.SecureValue:
-			typedObj.Name = names.SimpleNameGenerator.GenerateName(cmp.Or(typedObj.GenerateName, "sv-"))
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "sv-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for secure value", "name", typedObj.Name)
 
 		case *secretv0alpha1.Keeper:
-			typedObj.Name = names.SimpleNameGenerator.GenerateName(cmp.Or(typedObj.GenerateName, "kp-"))
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "kp-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for keeper", "name", typedObj.Name)
 		}
 	}
 

@@ -3,12 +3,15 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -18,12 +21,18 @@ import (
 type keeperMetadataStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	metrics *metrics.StorageMetrics
 	tracer  trace.Tracer
 }
 
 var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
-func ProvideKeeperMetadataStorage(db contracts.Database, tracer trace.Tracer, features featuremgmt.FeatureToggles) (contracts.KeeperMetadataStorage, error) {
+func ProvideKeeperMetadataStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	features featuremgmt.FeatureToggles,
+	reg prometheus.Registerer,
+) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperMetadataStorage{}, nil
@@ -32,11 +41,13 @@ func ProvideKeeperMetadataStorage(db contracts.Database, tracer trace.Tracer, fe
 	return &keeperMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		metrics: metrics.NewStorageMetrics(reg),
 		tracer:  tracer,
 	}, nil
 }
 
 func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Create", trace.WithAttributes(
 		attribute.String("name", keeper.GetName()),
 		attribute.String("namespace", keeper.GetNamespace()),
@@ -53,7 +64,6 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Row:         row,
 	}
-
 	query, err := sqltemplate.Execute(sqlKeeperCreate, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperCreate.Name(), err)
@@ -95,10 +105,14 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 	}
 
+	s.metrics.KeeperMetadataCreateDuration.WithLabelValues(string(createdKeeper.Spec.GetType())).Observe(time.Since(start).Seconds())
+	s.metrics.KeeperMetadataCreateCount.WithLabelValues(string(createdKeeper.Spec.GetType())).Inc()
+
 	return createdKeeper, nil
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.Keeper, error) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
@@ -115,6 +129,9 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 	}
+
+	s.metrics.KeeperMetadataGetDuration.WithLabelValues(string(keeper.Spec.GetType())).Observe(time.Since(start).Seconds())
+	s.metrics.KeeperMetadataGetCount.WithLabelValues(string(keeper.Spec.GetType())).Inc()
 
 	return keeper, nil
 }
@@ -158,6 +175,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Update", trace.WithAttributes(
 		attribute.String("name", newKeeper.GetName()),
 		attribute.String("namespace", newKeeper.GetNamespace()),
@@ -227,10 +245,14 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 	}
 
+	s.metrics.KeeperMetadataUpdateDuration.WithLabelValues(string(keeper.Spec.GetType())).Observe(time.Since(start).Seconds())
+	s.metrics.KeeperMetadataUpdateCount.WithLabelValues(string(keeper.Spec.GetType())).Inc()
+
 	return keeper, nil
 }
 
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Delete", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
@@ -263,10 +285,14 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
 	}
 
+	s.metrics.KeeperMetadataDeleteDuration.Observe(time.Since(start).Seconds())
+	s.metrics.KeeperMetadataDeleteCount.Inc()
+
 	return nil
 }
 
 func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (keeperList []secretv0alpha1.Keeper, err error) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 	))
@@ -315,6 +341,9 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
+
+	s.metrics.KeeperMetadataListDuration.Observe(time.Since(start).Seconds())
+	s.metrics.KeeperMetadataListCount.Inc()
 
 	return keepers, nil
 }
@@ -477,9 +506,10 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// Check if keeper is the systemwide one.
 	if name == nil {
-		return nil, nil
+		return &secretv0alpha1.SystemKeeperConfig{}, nil
 	}
 
+	start := time.Now()
 	span.SetAttributes(attribute.String("name", *name))
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
@@ -489,6 +519,8 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	keeperConfig := toProvider(secretv0alpha1.KeeperType(kp.Type), kp.Payload)
+
+	s.metrics.KeeperMetadataGetKeeperConfigDuration.Observe(time.Since(start).Seconds())
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 	return keeperConfig, nil

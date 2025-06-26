@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -105,12 +106,12 @@ export const windTurbineItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Wind Turbine'];
+    const category = [t('canvas.wind-turbine-item.category-wind-turbine', 'Wind Turbine')];
     builder.addCustomEditor({
       category,
       id: 'rpm',
       path: 'config.rpm',
-      name: 'RPM',
+      name: t('canvas.wind-turbine-item.name-rpm', 'RPM'),
       editor: ScalarDimensionEditor,
     });
   },

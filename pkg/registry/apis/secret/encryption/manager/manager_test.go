@@ -78,7 +78,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -185,7 +185,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
@@ -476,7 +476,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
