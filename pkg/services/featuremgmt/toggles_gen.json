@@ -1623,6 +1623,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesLibraryPanels",
+        "resourceVersion": "1750714411267",
+        "creationTimestamp": "2025-06-23T21:33:31Z"
+      },
+      "spec": {
+        "description": "Routes library panel requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesSnapshots",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-12-05T22:31:49Z"
