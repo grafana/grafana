@@ -35,7 +35,7 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
       }, 1000);
     }
 
-    if (finishedQuery.isSuccess) {
+    if (finishedQuery.isSuccess && job?.status?.state !== 'error') {
       setStepStatusInfo({ status: 'success' });
     }
 

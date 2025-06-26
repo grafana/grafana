@@ -7028,6 +7028,7 @@
             "type": "integer"
           },
           "id": {
+            "description": "Deprecated: this field will be removed in the future",
             "format": "int64",
             "type": "integer"
           },
@@ -23225,6 +23226,9 @@
           },
           "403": {
             "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"

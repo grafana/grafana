@@ -3021,6 +3021,7 @@ __metadata:
     "@braintree/sanitize-url": "npm:7.0.1"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
@@ -3332,12 +3333,14 @@ __metadata:
     eslint-webpack-plugin: "npm:4.2.0"
     fork-ts-checker-webpack-plugin: "npm:9.0.2"
     glob: "npm:11.0.1"
+    imports-loader: "npm:^5.0.0"
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
     webpack: "npm:5.97.1"
     webpack-bundle-analyzer: "npm:^4.10.2"
+    webpack-virtual-modules: "npm:^0.6.2"
   languageName: unknown
   linkType: soft
 
@@ -3497,11 +3500,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes-react@npm:6.22.1"
+"@grafana/scenes-react@npm:^6.24.0":
+  version: 6.24.0
+  resolution: "@grafana/scenes-react@npm:6.24.0"
   dependencies:
-    "@grafana/scenes": "npm:6.22.1"
+    "@grafana/scenes": "npm:6.24.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3513,13 +3516,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/42c171bb743cf270370ff204afc63df20629f06e462015a4a425857b9380ee03b5dfda6aa6babc5fa52b2759cbee1c72f5db8a70c4e77d8c3b7bf8f56c91ef9d
+  checksum: 10/27b7110929e6ea76335b406980f643d4f60259cda2e88ed830d1e157d46996f48b4a7e11e524e6e38f0332671226da5403c51a856b7e619ae648c86a8fd977e1
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.22.1, @grafana/scenes@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes@npm:6.22.1"
+"@grafana/scenes@npm:6.24.0, @grafana/scenes@npm:^6.24.0":
+  version: 6.24.0
+  resolution: "@grafana/scenes@npm:6.24.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3539,7 +3542,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a20a2a96f637e5d022b3d9c7bc5fe3e2e6d083052798c7f429d3913268fbb704d77c77932d7620b76110a3351971174a3fa54031004ca9c721a976b2593dc34e
+  checksum: 10/04d36aa38c47708e0963776210272c052d8ee6aec4c5c98e2998d57b6b4c0a918a06a81923e90421122a26088142fb2571bebfb06e6fc4d6576a66087509c780
   languageName: node
   linkType: hard
 
@@ -3641,7 +3644,6 @@ __metadata:
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@hello-pangea/dnd": "npm:18.0.1"
-    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.27"
@@ -3717,6 +3719,8 @@ __metadata:
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
     monaco-editor: "npm:0.34.1"
+    msw: "npm:^2.10.2"
+    msw-storybook-addon: "npm:^2.0.5"
     ol: "npm:7.4.0"
     prismjs: "npm:1.30.0"
     process: "npm:^0.11.10"
@@ -18156,8 +18160,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.22.1"
-    "@grafana/scenes-react": "npm:^6.22.1"
+    "@grafana/scenes": "npm:^6.24.0"
+    "@grafana/scenes-react": "npm:^6.24.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -19400,6 +19404,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"imports-loader@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "imports-loader@npm:5.0.0"
+  dependencies:
+    source-map-js: "npm:^1.0.2"
+    strip-comments: "npm:^2.0.1"
+  peerDependencies:
+    webpack: ^5.0.0
+  checksum: 10/b507436b7d2c7a6d6d8623b93b5a0fda2d13c48d4d0f310b74b8465c080d9fd07a2f8d0f896e264b4feff59effa9aef736a2b668d7a695cecd8bdc7cb817373e
+  languageName: node
+  linkType: hard
+
 "imurmurhash@npm:^0.1.4":
   version: 0.1.4
   resolution: "imurmurhash@npm:0.1.4"
@@ -19979,7 +19995,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-node-process@npm:^1.2.0":
+"is-node-process@npm:^1.0.1, is-node-process@npm:^1.2.0":
   version: 1.2.0
   resolution: "is-node-process@npm:1.2.0"
   checksum: 10/930765cdc6d81ab8f1bbecbea4a8d35c7c6d88a3ff61f3630e0fc7f22d624d7661c1df05c58547d0eb6a639dfa9304682c8e342c4113a6ed51472b704cee2928
@@ -23164,7 +23180,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.10.2":
+"msw-storybook-addon@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "msw-storybook-addon@npm:2.0.5"
+  dependencies:
+    is-node-process: "npm:^1.0.1"
+  peerDependencies:
+    msw: ^2.0.0
+  checksum: 10/c7c2c77fbe64775f6d01a2724c1e43d67c2590dc5961d4cd14c654d954b84b7938eba0404888d056752e360a41d4a8e4535ebc27a80d4108ce78552ac904be32
+  languageName: node
+  linkType: hard
+
+"msw@npm:2.10.2, msw@npm:^2.10.2":
   version: 2.10.2
   resolution: "msw@npm:2.10.2"
   dependencies:
@@ -29349,7 +29376,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.1, source-map-js@npm:^1.2.1":
+"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.1, source-map-js@npm:^1.0.2, source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10/ff9d8c8bf096d534a5b7707e0382ef827b4dd360a577d3f34d2b9f48e12c9d230b5747974ee7c607f0df65113732711bb701fe9ece3c7edbd43cb2294d707df3
@@ -29961,6 +29988,13 @@ __metadata:
   version: 4.0.0
   resolution: "strip-bom@npm:4.0.0"
   checksum: 10/9dbcfbaf503c57c06af15fe2c8176fb1bf3af5ff65003851a102749f875a6dbe0ab3b30115eccf6e805e9d756830d3e40ec508b62b3f1ddf3761a20ebe29d3f3
+  languageName: node
+  linkType: hard
+
+"strip-comments@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "strip-comments@npm:2.0.1"
+  checksum: 10/43ea36189e4ba543c6ffb0384831e9e23c3b57ede5592c6edcbfc883f489f91d00328fe2670b4e467f61c7886eff68deae3e946f0f092346b2b3cb058b9cfdba
   languageName: node
   linkType: hard
 
@@ -32332,7 +32366,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-virtual-modules@npm:^0.6.0":
+"webpack-virtual-modules@npm:^0.6.0, webpack-virtual-modules@npm:^0.6.2":
   version: 0.6.2
   resolution: "webpack-virtual-modules@npm:0.6.2"
   checksum: 10/d9a0d035f7ec0c7f1055aaf88bfe48b7f96458043916a1b2926d9012fd61de3810a6b768e31a8cd4b3c84a9b6d55824361a9dd20aaf9f5ccfb6f017af216a178

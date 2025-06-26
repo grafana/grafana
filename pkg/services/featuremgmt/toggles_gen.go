@@ -271,6 +271,10 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagKubernetesLibraryPanels
+	// Routes library panel requests from /api to the /apis endpoint
+	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
@@ -938,4 +942,8 @@ const (
 	// FlagTabularNumbers
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
+
+	// FlagNewInfluxDSConfigPageDesign
+	// Enables new design for the InfluxDB data source configuration page
+	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 )
