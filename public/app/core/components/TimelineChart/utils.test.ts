@@ -64,12 +64,14 @@ describe('prepare timeline graph', () => {
 
   it('errors with no frame', () => {
     const info = prepareTimelineFields(undefined, true, timeRange, theme);
-    expect(info.warn).toEqual('No data in response');
+    expect(info.frames).toBeUndefined();
+    expect(info.warn).toBe('');
   });
 
   it('errors with empty frame', () => {
     const info = prepareTimelineFields([], true, timeRange, theme);
-    expect(info.warn).toBeUndefined();
+    expect(info.frames).toBeUndefined();
+    expect(info.warn).toBe('');
   });
 
   it('will merge duplicate values', () => {

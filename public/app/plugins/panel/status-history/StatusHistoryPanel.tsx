@@ -70,7 +70,7 @@ export const StatusHistoryPanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  if (!paginatedFrames || warn) {
+  if (!paginatedFrames || typeof warn === 'string') {
     return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
   }
 

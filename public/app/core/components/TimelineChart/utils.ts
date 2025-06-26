@@ -310,8 +310,9 @@ export function prepareTimelineFields(
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
+  // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
-    return { warn: undefined };
+    return { warn: '' };
   }
 
   cacheFieldDisplayNames(series);

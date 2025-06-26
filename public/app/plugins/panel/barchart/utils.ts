@@ -57,8 +57,10 @@ export function prepSeries(
   xFieldName?: string,
   colorFieldName?: string
 ): BarSeries {
+  // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
     return {
+      warn: '',
       series: [],
       _rest: [],
     };
