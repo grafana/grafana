@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"iter"
 	"math"
 	"strconv"
@@ -341,12 +340,12 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err := obj.Key.Validate(); err != nil {
 		return fmt.Errorf("invalid metadata key: %w", err)
 	}
-
-	valueBytes, err := json.Marshal(obj.Value)
-	if err != nil {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	if err := encoder.Encode(obj.Value); err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, metaSection, obj.Key.String(), io.NopCloser(bytes.NewReader(valueBytes)))
+	return d.kv.Save(ctx, metaSection, obj.Key.String(), &buf)
 }
 
 // parseMetaDataKey parses a string key into a MetaDataKey struct
