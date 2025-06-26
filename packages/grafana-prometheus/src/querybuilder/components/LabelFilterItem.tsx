@@ -94,7 +94,7 @@ export function LabelFilterItem({
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <AsyncSelect
-          placeholder={t('querybuilder.label-filter-item.placeholder-select-label', 'Select label')}
+          placeholder={t('grafana-prometheus.querybuilder.label-filter-item.placeholder-select-label', 'Select label')}
           data-testid={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
@@ -151,7 +151,7 @@ export function LabelFilterItem({
 
         {/* Label value async select: autocomplete calls prometheus API */}
         <AsyncSelect
-          placeholder={t('querybuilder.label-filter-item.placeholder-select-value', 'Select value')}
+          placeholder={t('grafana-prometheus.querybuilder.label-filter-item.placeholder-select-value', 'Select value')}
           data-testid={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
@@ -203,7 +203,9 @@ export function LabelFilterItem({
           invalid={invalidValue}
         />
         <AccessoryButton
-          aria-label={t('querybuilder.label-filter-item.aria-label-remove', 'Remove {{name}}', { name: item.label })}
+          aria-label={t('grafana-prometheus.querybuilder.label-filter-item.aria-label-remove', 'Remove {{name}}', {
+            name: item.label,
+          })}
           icon="times"
           variant="secondary"
           onClick={onDelete}

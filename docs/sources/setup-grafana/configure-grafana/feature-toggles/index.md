@@ -42,6 +42,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                  | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                           | Yes                |
+| `libraryPanelRBAC`                     | Enables RBAC support for library panels                                                                                            | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                        | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                             | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                   | Yes                |
@@ -84,6 +85,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                            |                    |
+| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                         | Yes                |
 
 ## Public preview feature toggles
 

@@ -2,16 +2,10 @@ name: Backend Unit Tests
 
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
   push:
     branches:
       - main
       - release-*.*.*
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -53,6 +47,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           go test -short -timeout=30m "${PACKAGES[@]}"
 
@@ -106,27 +101,31 @@ jobs:
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
-          go test -short -v -timeout=30m "${PACKAGES[@]}" | tee >(go-junit-report -set-exit-code > "$RESULTS_FILE")
+          go test -short -timeout=30m "${PACKAGES[@]}"
 
-      # Upload results to GCS
-      - name: Log in to GCS
-        if: github.repository == 'grafana/grafana' && (success() || failure())
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs-v0.2.0
-        with:
-          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
-          bucket: grafana-test-results
-      - if: github.repository == 'grafana/grafana' && (success() || failure())
-        run: |
-          BUCKET_PATH="go-unit-tests/$(echo "${REF_NAME}" | sed 's/\//-/g')"
-          echo "BUCKET_PATH=$BUCKET_PATH" >> "$GITHUB_ENV"
+  # This is the job that is actually required by rulesets.
+  # We need to require EITHER the OSS or the Enterprise job to pass.
+  # However, if one is skipped, GitHub won't flat-map the shards,
+  #   so they won't be accepted by a ruleset.
+  required-backend-unit-tests:
+    needs:
+      - grafana
+      - grafana-enterprise
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend unit tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
         env:
-          REF_NAME: ${{ github.ref_name }}
-      - name: Upload test results
-        if: github.repository == 'grafana/grafana' && (success() || failure())
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
-        with:
-          bucket: grafana-test-results
-          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
-          environment: "dev" # Can be dev/prod (defaults to dev)
-          path: ${{ env.RESULTS_FILE }}
-          bucket_path: ${{ env.BUCKET_PATH }}
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

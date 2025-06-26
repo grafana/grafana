@@ -3,6 +3,8 @@ package common
 // Optional formats for the template variable replace functions
 // See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
 VariableFormatID:
+    // Values are joined with a separator
+    "join" |
     // Values are lucene escaped and multi-valued variables generate an OR expression
     "lucene" |
     // Raw values
@@ -36,4 +38,4 @@ VariableFormatID:
     // Format variables in their text representation. Example in multi-variable scenario A + B + C.
     "text" |
     // Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.
-    "queryparam"  @cuetsy(kind="enum",memberNames="Lucene|Raw|Regex|Pipe|Distributed|CSV|HTML|JSON|PercentEncode|UriEncode|SingleQuote|DoubleQuote|SQLString|Date|Glob|Text|QueryParam")
+    "queryparam"  @cuetsy(kind="enum",memberNames="Join|Lucene|Raw|Regex|Pipe|Distributed|CSV|HTML|JSON|PercentEncode|UriEncode|SingleQuote|DoubleQuote|SQLString|Date|Glob|Text|QueryParam")
