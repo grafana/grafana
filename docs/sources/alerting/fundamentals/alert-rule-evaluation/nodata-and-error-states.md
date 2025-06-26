@@ -1,10 +1,11 @@
 ---
 aliases:
+  - ../../fundamentals/alert-rule-evaluation/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/
   - ../../fundamentals/alert-rules/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health/
   - ../../fundamentals/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
   - ../../unified-alerting/alerting-rules/state-and-health/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/state-and-health
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/state-and-health/
-description: Learn about the state and health of alert rules to understand several key status indicators about your alerts
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/
+description: Grafana Alerting implements the No Data and Error states to handle these common scenarios when evaluating alert rules.
 keywords:
   - grafana
   - alerting
@@ -16,7 +17,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: State and health of alerts
+title: No Data and Error states
 weight: 109
 refs:
   evaluation_timeout:
@@ -67,40 +68,41 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/missing-data/
 ---
 
-# State and health of alerts
+# No Data and Error states
 
-There are three key components that help you understand how your alerts behave during their evaluation: [alert instance state](#alert-instance-state), [alert rule state](#alert-rule-state), and [alert rule health](#alert-rule-health). Although related, each component conveys subtly different information.
+Grafana Alerting implements the **No Data** and **Error** states to handle common scenarios when evaluating alert rules, and you can modify their behavior.
 
-## Alert instance state
+An alert instance can transition to these special states:
 
-An alert instance can be in either of the following states:
+- [No Data state](#no-data-state) occurs when the alert rule query runs successfully but returns no data points.
+- [Error state](#error-state) occurs when the alert rule fails to evaluate its query or queries successfully.
+
+{{< admonition type="note" >}}
+
+No Data and Error states are supported only for Grafana-managed alert rules.
+
+{{< /admonition  >}}
+
+{{< admonition type="tip" >}}
+For common examples and practical guidance on handling **Error**, **No Data**, and **stale** alert scenarios, refer to the [Handle connectivity errors](ref:guide-connectivity-errors) and [Handle missing data](ref:guide-missing-data) guides.
+{{< /admonition  >}}
+
+## Alert instance states
+
+A Grafana-managed alert instance can be in any of the following states, depending on the outcome of the alert rule evaluation:
 
 | State                    | Description                                                                                                                                                                                              |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                         |
 | **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                        |
 | **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                          |
-| **Recovering**           | The state of an alert that has been configured to keep [firing for a duration after it is triggered](ref:keep-firing).                                                                                   |
+| **Recovering**           | The state of a firing alert when the threshold is no longer breached, but for less than the [keep firing for](ref:keep-firing) period.                                                                   |
 | **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> You can customize the behavior of the [Error state](#error-state), which by default triggers a different alert. |
 | **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> You can customize the behavior of the [No Data state](#no-data-state), which by default triggers a different alert.      |
 
-If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the `Normal` state. The alert instance state then updates accordingly during the next evaluation.
-
 {{< figure src="/media/docs/alerting/alert-state-diagram2.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
-{{< admonition type="note" >}}
-
-`No Data` and `Error` states are supported only for Grafana-managed alert rules.
-
-{{< /admonition >}}
-
-### Notification routing
-
-Alert instances will be routed for [notifications](ref:notifications) when they are in the `Alerting` state or have been `Resolved`, transitioning from `Alerting` to `Normal` state.
-
-{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" alt="A diagram of the alert instance states and when to route their notifications." max-width="750px" >}}
-
-### `Error` state
+## `Error` state
 
 The **Error** state is triggered when the alert rule fails to evaluate its query or queries successfully.
 
@@ -108,7 +110,7 @@ This can occur due to evaluation timeouts (default: `30s`) or three repeated fai
 
 When an alert instance enters the **Error** state, Grafana, by default, triggers a new [`DatasourceError` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
 
-### `No Data` state
+## `No Data` state
 
 The **No Data** state occurs when the alert rule query runs successfully but returns no data points at all.
 
@@ -159,13 +161,9 @@ To minimize the number of **No Data** or **Error** state alerts received, try th
 
 1. To reduce multiple notifications from **Error** alerts, define a [notification policy](ref:notification-policies) to handle all related alerts with `alertname=DatasourceError`, and filter and group errors from the same data source using the `datasource_uid` label.
 
-{{< admonition type="tip" >}}
-
-For common examples and practical guidance on handling **Error**, **No Data**, and **stale** alert scenarios, see the following related guides:
-
-- [Handling connectivity errors](ref:guide-connectivity-errors)
-- [Handling missing data](ref:guide-missing-data)
-  {{< /admonition  >}}
+   {{< admonition type="tip" >}}
+   For common examples and practical guidance on handling **Error**, **No Data**, and **stale** alert scenarios, refer to the [Handle connectivity errors](ref:guide-connectivity-errors) and [Handle missing data](ref:guide-missing-data) guides.
+   {{< /admonition  >}}
 
 ## `grafana_state_reason` for troubleshooting
 
@@ -183,26 +181,3 @@ The `grafana_state_reason` annotation is included in these situations, providing
 - If "no data" or "error" handling transitions to the `Normal` state, the `grafana_state_reason` annotation is included with the value **No Data** or **Error**, respectively.
 - If the alert rule is deleted or paused, the `grafana_state_reason` is set to **Paused** or **RuleDeleted**. For some updates, it is set to **Updated**.
 - [Stale alert instances](ref:stale-alert-instances) in the `Normal` state include the `grafana_state_reason` annotation with the value **MissingSeries**.
-
-## Alert rule state
-
-The alert rule state is determined by the “worst case” state of the alert instances produced. For example, if one alert instance is `Alerting`, the alert rule state is firing.
-
-An alert rule can be in either of the following states:
-
-| State       | Description                                                                                          |
-| ----------- | ---------------------------------------------------------------------------------------------------- |
-| **Normal**  | None of the alert instances returned by the evaluation engine is in a `Pending` or `Alerting` state. |
-| **Pending** | At least one alert instances returned by the evaluation engine is `Pending`.                         |
-| **Firing**  | At least one alert instances returned by the evaluation engine is `Alerting`.                        |
-
-## Alert rule health
-
-An alert rule can have one of the following health statuses:
-
-| State                  | Description                                                                                              |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Ok**                 | No error when evaluating an alerting rule.                                                               |
-| **Error**              | An error occurred when evaluating an alerting rule.                                                      |
-| **No Data**            | The absence of data in at least one time series returned during a rule evaluation.                       |
-| **{status}, KeepLast** | The rule would have received another status but was configured to keep the last state of the alert rule. |

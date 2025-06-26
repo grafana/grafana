@@ -10,7 +10,7 @@ labels:
     - oss
 title: Import data source-managed rules to Grafana-managed rules
 menuTitle: Import to Grafana-managed rules
-weight: 450
+weight: 300
 refs:
   configure-grafana-rule_query_offset:
     - pattern: /docs/

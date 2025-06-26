@@ -5,8 +5,6 @@ labels:
 title: 'Configure notification message'
 ---
 
-## Configure notification message
-
 Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
 
 Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
