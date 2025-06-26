@@ -62,9 +62,14 @@ func (n *notifier) cachekey(evt Event) string {
 }
 
 func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
-	events := make(chan Event, opts.BufferSize)
+	if opts.PollInterval <= 0 {
+		opts.PollInterval = defaultPollInterval
+	}
+	cacheTTL := opts.LookbackPeriod
+	cacheCleanupInterval := 2 * opts.LookbackPeriod
 
-	cache := gocache.New(opts.LookbackPeriod, opts.PollInterval)
+	cache := gocache.New(cacheTTL, cacheCleanupInterval)
+	events := make(chan Event, opts.BufferSize)
 
 	initialRV, err := n.lastEventResourceVersion(ctx)
 	if errors.Is(err, ErrNotFound) {
@@ -87,7 +92,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 						continue
 					}
 
-					// Skip old events
+					// Skip old events lower than the requested resource version
 					if evt.ResourceVersion <= initialRV {
 						continue
 					}

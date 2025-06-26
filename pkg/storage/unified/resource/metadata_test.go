@@ -19,9 +19,7 @@ func TestNewMetadataStore(t *testing.T) {
 	assert.NotNil(t, store)
 }
 
-func TestMetadataStore_GetKey(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
+func TestMetaDataKey_String(t *testing.T) {
 	rv := int64(56500267212345678)
 	key := MetaDataKey{
 		Folder:          "test-folder",
@@ -34,18 +32,16 @@ func TestMetadataStore_GetKey(t *testing.T) {
 	}
 
 	expectedKey := "apps/resource/default/test-resource/56500267212345678~created~test-folder"
-	actualKey := store.getKey(key)
+	actualKey := key.String()
 
 	assert.Equal(t, expectedKey, actualKey)
 }
 
-func TestMetadataStore_ParseKey(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
+func TestParseMetaDataKey(t *testing.T) {
 	rv := node.Generate()
 	key := "apps/resource/default/test-resource/" + rv.String() + "~" + string(DataActionCreated) + "~test-folder"
 
-	resourceKey, err := store.parseKey(key)
+	resourceKey, err := parseMetaDataKey(key)
 
 	require.NoError(t, err)
 	assert.Equal(t, "apps", resourceKey.Group)
@@ -57,9 +53,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	assert.Equal(t, "test-folder", resourceKey.Folder)
 }
 
-func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
+func TestParseMetaDataKey_InvalidKey(t *testing.T) {
 	tests := []struct {
 		name string
 		key  string
@@ -76,37 +70,10 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := store.parseKey(tt.key)
+			_, err := parseMetaDataKey(tt.key)
 			assert.Error(t, err)
 		})
 	}
-}
-
-func TestMetadataStore_GetPrefix(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
-	key := ListRequestKey{
-		Group:     "apps",
-		Resource:  "resource",
-		Namespace: "default",
-		Name:      "test-resource",
-	}
-
-	expectedPrefix := "apps/resource/default/test-resource/"
-	actualPrefix, err := store.getPrefix(key)
-	require.NoError(t, err)
-	assert.Equal(t, expectedPrefix, actualPrefix)
-
-	key.Name = ""
-	expectedPrefix = "apps/resource/default/"
-	actualPrefix, err = store.getPrefix(key)
-	require.NoError(t, err)
-
-	assert.Equal(t, expectedPrefix, actualPrefix)
-
-	key.Group = ""
-	_, err = store.getPrefix(key)
-	require.Error(t, err)
 }
 
 func TestMetadataStore_Save(t *testing.T) {
@@ -246,7 +213,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get latest should return uid3
-	latestObj, err := store.GetLatest(ctx, ListRequestKey{
+	latestObj, err := store.GetLatest(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -279,7 +246,7 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetLatest(ctx, ListRequestKey{
+	_, err = store.GetLatest(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -294,11 +261,11 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name string
-		key  ListRequestKey
+		key  MetaGetRequestKey
 	}{
 		{
 			name: "missing namespace",
-			key: ListRequestKey{
+			key: MetaGetRequestKey{
 				Group:    "apps",
 				Resource: "resource",
 				Name:     "test-resource",
@@ -306,7 +273,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing group",
-			key: ListRequestKey{
+			key: MetaGetRequestKey{
 				Namespace: "default",
 				Resource:  "resource",
 				Name:      "test-resource",
@@ -314,7 +281,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing resource",
-			key: ListRequestKey{
+			key: MetaGetRequestKey{
 				Namespace: "default",
 				Group:     "apps",
 				Name:      "test-resource",
@@ -322,7 +289,7 @@ func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
 		},
 		{
 			name: "missing name",
-			key: ListRequestKey{
+			key: MetaGetRequestKey{
 				Namespace: "default",
 				Group:     "apps",
 				Resource:  "resource",
@@ -342,7 +309,7 @@ func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	key := ListRequestKey{
+	key := MetaGetRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
@@ -390,7 +357,7 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 
 	// List latest metadata objects
 	var results []MetaDataObj
-	for obj, err := range store.ListLatest(ctx, ListRequestKey{
+	for obj, err := range store.ListLatest(ctx, MetaListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -484,7 +451,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -501,7 +468,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -523,7 +490,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -548,7 +515,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv4 - should return", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -571,7 +538,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -594,7 +561,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list with specific resource name", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -612,7 +579,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
 		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -641,18 +608,25 @@ func TestMetadataStore_ListAtRevision_ValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name string
-		key  ListRequestKey
+		key  MetaListRequestKey
 	}{
 		{
+			name: "missing namespace",
+			key: MetaListRequestKey{
+				Group:    "apps",
+				Resource: "resource",
+			},
+		},
+		{
 			name: "missing group",
-			key: ListRequestKey{
+			key: MetaListRequestKey{
 				Namespace: "default",
 				Resource:  "resource",
 			},
 		},
 		{
 			name: "missing resource",
-			key: ListRequestKey{
+			key: MetaListRequestKey{
 				Namespace: "default",
 				Group:     "apps",
 			},
@@ -661,9 +635,13 @@ func TestMetadataStore_ListAtRevision_ValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for _, err := range store.ListAtRevision(ctx, tt.key, 100) {
-				assert.Error(t, err)
-				break // Just check the first error
+			var results []MetaDataObj
+			for obj, err := range store.ListAtRevision(ctx, tt.key, 0) {
+				if err != nil {
+					assert.Error(t, err)
+					return
+				}
+				results = append(results, obj)
 			}
 		})
 	}
@@ -673,13 +651,12 @@ func TestMetadataStore_ListAtRevision_EmptyResults(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	// List from empty store
 	var results []MetaDataObj
-	for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+	for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
-	}, 1000) {
+	}, 0) {
 		require.NoError(t, err)
 		results = append(results, obj)
 	}
@@ -707,7 +684,7 @@ func TestMetadataStore_ListAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 
 	// List at a revision before the resource was created
 	var results []MetaDataObj
-	for obj, err := range store.ListAtRevision(ctx, ListRequestKey{
+	for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
@@ -718,4 +695,621 @@ func TestMetadataStore_ListAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 
 	// Should return no results since the resource is newer than the target revision
 	assert.Len(t, results, 0)
+}
+
+func TestMetaDataKey_Validate_Valid(t *testing.T) {
+	validKey := MetaDataKey{
+		Group:           "apps",
+		Resource:        "resource",
+		Namespace:       "default",
+		Name:            "test-resource",
+		ResourceVersion: 123,
+		Action:          DataActionCreated,
+		Folder:          "test-folder",
+	}
+
+	err := validKey.Validate()
+	assert.NoError(t, err)
+}
+
+func TestMetaDataKey_Validate_ValidEdgeCases(t *testing.T) {
+	tests := []struct {
+		name string
+		key  MetaDataKey
+	}{
+		{
+			name: "valid with empty folder",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "", // empty folder should be allowed
+			},
+		},
+		{
+			name: "valid with single character names",
+			key: MetaDataKey{
+				Group:           "a",
+				Resource:        "r",
+				Namespace:       "n",
+				Name:            "t",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "f",
+			},
+		},
+		{
+			name: "valid with hyphens and dots",
+			key: MetaDataKey{
+				Group:           "my-group.v1",
+				Resource:        "my-resource.v2",
+				Namespace:       "my-namespace.test",
+				Name:            "my-name.test",
+				ResourceVersion: 123,
+				Action:          DataActionUpdated,
+				Folder:          "my-folder.test",
+			},
+		},
+		{
+			name: "valid with all action types",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionDeleted,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestMetaDataKey_Validate_Invalid(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       MetaDataKey
+		wantError string
+	}{
+		{
+			name: "empty group",
+			key: MetaDataKey{
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "group is required",
+		},
+		{
+			name: "empty resource",
+			key: MetaDataKey{
+				Group:           "apps",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "resource is required",
+		},
+		{
+			name: "empty namespace",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "namespace is required",
+		},
+		{
+			name: "empty name",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "name is required",
+		},
+		{
+			name: "zero resource version",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 0,
+				Action:          DataActionCreated,
+			},
+			wantError: "resource version must be positive",
+		},
+		{
+			name: "negative resource version",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: -1,
+				Action:          DataActionCreated,
+			},
+			wantError: "resource version must be positive",
+		},
+		{
+			name: "empty action",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+			},
+			wantError: "action is required",
+		},
+		{
+			name: "invalid name with uppercase",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "Test-Resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "name 'Test-Resource' is invalid",
+		},
+		{
+			name: "invalid namespace with special chars",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default_ns",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "namespace 'default_ns' is invalid",
+		},
+		{
+			name: "invalid group with uppercase",
+			key: MetaDataKey{
+				Group:           "Apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "group 'Apps' is invalid",
+		},
+		{
+			name: "invalid resource with special chars",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource_type",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+			},
+			wantError: "resource 'resource_type' is invalid",
+		},
+		{
+			name: "invalid folder with special chars",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "invalid_folder",
+			},
+			wantError: "folder 'invalid_folder' is invalid",
+		},
+		{
+			name: "invalid action",
+			key: MetaDataKey{
+				Group:           "apps",
+				Resource:        "resource",
+				Namespace:       "default",
+				Name:            "test-resource",
+				ResourceVersion: 123,
+				Action:          "invalid",
+			},
+			wantError: "action 'invalid' is invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantError)
+		})
+	}
+}
+
+func TestMetaDataKey_SameResource(t *testing.T) {
+	baseKey := MetaDataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resource",
+		Name:            "test-resource",
+		ResourceVersion: 123,
+		Action:          DataActionCreated,
+		Folder:          "test-folder",
+	}
+
+	tests := []struct {
+		name     string
+		key1     MetaDataKey
+		key2     MetaDataKey
+		expected bool
+	}{
+		{
+			name:     "identical keys",
+			key1:     baseKey,
+			key2:     baseKey,
+			expected: true,
+		},
+		{
+			name: "same identifying fields, different resource version",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "resource",
+				Name:            "test-resource",
+				ResourceVersion: 456, // Different resource version
+				Action:          DataActionUpdated,
+				Folder:          "other-folder",
+			},
+			expected: true, // Should still be equal as ResourceVersion, Action, and Folder don't matter
+		},
+		{
+			name: "different namespace",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "other-namespace",
+				Group:           "apps",
+				Resource:        "resource",
+				Name:            "test-Resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different group",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "extensions",
+				Resource:        "resource",
+				Name:            "test-Resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different resource",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "daemonsets",
+				Name:            "test-Resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name: "different name",
+			key1: baseKey,
+			key2: MetaDataKey{
+				Namespace:       "default",
+				Group:           "apps",
+				Resource:        "resource",
+				Name:            "other-Resource",
+				ResourceVersion: 123,
+				Action:          DataActionCreated,
+				Folder:          "test-folder",
+			},
+			expected: false,
+		},
+		{
+			name:     "empty keys",
+			key1:     MetaDataKey{},
+			key2:     MetaDataKey{},
+			expected: true,
+		},
+		{
+			name:     "one empty key",
+			key1:     baseKey,
+			key2:     MetaDataKey{},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.key1.SameResource(tt.key2)
+			assert.Equal(t, tt.expected, result)
+
+			// Test symmetry: SameResource should be commutative
+			reverseResult := tt.key2.SameResource(tt.key1)
+			assert.Equal(t, result, reverseResult, "SameResource method should be commutative")
+		})
+	}
+}
+
+func TestMetadataStore_Save_InvalidKey(t *testing.T) {
+	store := setupTestMetadataStore(t)
+	ctx := context.Background()
+
+	key := MetaDataKey{
+		Group:           "", // invalid: empty group
+		Resource:        "resource",
+		Namespace:       "default",
+		Name:            "test-resource",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          DataActionCreated,
+	}
+
+	metadata := MetaData{}
+
+	err := store.Save(ctx, MetaDataObj{
+		Key:   key,
+		Value: metadata,
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid metadata key")
+	assert.Contains(t, err.Error(), "group is required")
+}
+
+func TestMetadataStore_Get_InvalidKey(t *testing.T) {
+	store := setupTestMetadataStore(t)
+	ctx := context.Background()
+
+	key := MetaDataKey{
+		Group:           "", // invalid: empty group
+		Resource:        "resource",
+		Namespace:       "default",
+		Name:            "test-resource",
+		ResourceVersion: node.Generate().Int64(),
+		Action:          DataActionCreated,
+	}
+
+	_, err := store.Get(ctx, key)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid metadata key")
+	assert.Contains(t, err.Error(), "group is required")
+}
+
+func TestMetaListRequestKey_Validate(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       MetaListRequestKey
+		expectErr bool
+	}{
+		{
+			name: "valid key with all fields",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+				Name:      "test-resource",
+			},
+			expectErr: false,
+		},
+		{
+			name: "valid key without name (for listing multiple resources)",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectErr: false,
+		},
+		{
+			name: "missing namespace",
+			key: MetaListRequestKey{
+				Group:    "apps",
+				Resource: "resource",
+				Name:     "test-Resource",
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing group",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Resource:  "resource",
+				Name:      "test-Resource",
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing resource",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Name:      "test-Resource",
+			},
+			expectErr: true,
+		},
+		{
+			name: "invalid namespace",
+			key: MetaListRequestKey{
+				Namespace: "Default",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectErr: true,
+		},
+		{
+			name: "invalid name",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+				Name:      "Test-Resource",
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestMetaGetRequestKey_Validate(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       MetaGetRequestKey
+		expectErr bool
+	}{
+		{
+			name: "valid key",
+			key: MetaGetRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+				Name:      "test-resource",
+			},
+			expectErr: false,
+		},
+		{
+			name: "missing namespace",
+			key: MetaGetRequestKey{
+				Group:    "apps",
+				Resource: "resource",
+				Name:     "test-	",
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing group",
+			key: MetaGetRequestKey{
+				Namespace: "default",
+				Resource:  "resource",
+				Name:      "test-	",
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing resource",
+			key: MetaGetRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Name:      "test-	",
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing name",
+			key: MetaGetRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectErr: true,
+		},
+		{
+			name: "invalid namespace",
+			key: MetaGetRequestKey{
+				Namespace: "Default",
+				Group:     "apps",
+				Resource:  "resource",
+				Name:      "test-	",
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestMetaListRequestKey_Prefix(t *testing.T) {
+	tests := []struct {
+		name           string
+		key            MetaListRequestKey
+		expectedPrefix string
+	}{
+		{
+			name: "full key with name",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+				Name:      "test-	",
+			},
+			expectedPrefix: "apps/resource/default/test-	/",
+		},
+		{
+			name: "key without name",
+			key: MetaListRequestKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resource",
+			},
+			expectedPrefix: "apps/resource/default/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prefix := tt.key.Prefix()
+			assert.Equal(t, tt.expectedPrefix, prefix)
+		})
+	}
+}
+
+func TestMetaGetRequestKey_Prefix(t *testing.T) {
+	key := MetaGetRequestKey{
+		Namespace: "default",
+		Group:     "apps",
+		Resource:  "resource",
+		Name:      "test-	",
+	}
+
+	expectedPrefix := "apps/resource/default/test-	/"
+	prefix := key.Prefix()
+	assert.Equal(t, expectedPrefix, prefix)
 }

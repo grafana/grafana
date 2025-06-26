@@ -12,7 +12,8 @@ import (
 func setupTestEventStore(t *testing.T) *eventStore {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
 	return newEventStore(kv)
@@ -23,9 +24,7 @@ func TestNewEventStore(t *testing.T) {
 	assert.NotNil(t, store.kv)
 }
 
-func TestEventStore_getKey(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventKey_String(t *testing.T) {
 	tests := []struct {
 		name     string
 		eventKey EventKey
@@ -68,15 +67,13 @@ func TestEventStore_getKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := store.getKey(tt.eventKey)
+			result := tt.eventKey.String()
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestEventStore_parseKey(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventKey_Validate(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
@@ -140,7 +137,7 @@ func TestEventStore_parseKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := store.parseKey(tt.key)
+			result, err := ParseEventKey(tt.key)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -153,9 +150,7 @@ func TestEventStore_parseKey(t *testing.T) {
 	}
 }
 
-func TestEventStore_getKey_parseKey_RoundTrip(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventStore_ParseEventKey(t *testing.T) {
 	originalKey := EventKey{
 		ResourceVersion: 1234567890,
 		Namespace:       "test-namespace",
@@ -165,8 +160,8 @@ func TestEventStore_getKey_parseKey_RoundTrip(t *testing.T) {
 	}
 
 	// Convert to string and back
-	keyString := store.getKey(originalKey)
-	parsedKey, err := store.parseKey(keyString)
+	keyString := originalKey.String()
+	parsedKey, err := ParseEventKey(keyString)
 
 	require.NoError(t, err)
 	assert.Equal(t, originalKey, parsedKey)
@@ -318,7 +313,7 @@ func TestEventStore_ListSince(t *testing.T) {
 	}
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
-	var retrievedEvents []Event
+	retrievedEvents := make([]Event, 0, 2)
 	for event, err := range store.ListSince(ctx, 1500) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
@@ -335,7 +330,7 @@ func TestEventStore_ListSince_Empty(t *testing.T) {
 	store := setupTestEventStore(t)
 
 	// List events when store is empty
-	var retrievedEvents []Event
+	retrievedEvents := make([]Event, 0)
 	for event, err := range store.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)

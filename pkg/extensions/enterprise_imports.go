@@ -49,8 +49,5 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
-
-	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
-	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
+	_ "github.com/spyzhov/ajson"
 )

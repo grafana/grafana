@@ -12,12 +12,6 @@ import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../type
 
 import { ResourcePicker } from './ResourcePicker';
 
-const resourceOptions = [
-  { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
-  { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },
-  //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
-];
-
 const dummyFieldSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
@@ -27,6 +21,19 @@ export const ResourceDimensionEditor = (
 ) => {
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
+  const resourceOptions = [
+    {
+      label: t('dimensions.resource-dimension-editor.label-fixed', 'Fixed'),
+      value: ResourceDimensionMode.Fixed,
+      description: t('dimensions.resource-dimension-editor.description-fixed', 'Fixed value'),
+    },
+    {
+      label: t('dimensions.resource-dimension-editor.label-field', 'Field'),
+      value: ResourceDimensionMode.Field,
+      description: t('dimensions.resource-dimension-editor.description-field', 'Use a string field result'),
+    },
+    //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
+  ];
 
   const onModeChange = useCallback(
     (mode: ResourceDimensionMode) => {

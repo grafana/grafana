@@ -227,6 +227,59 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('correctly passes dashboard and panel headers', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }],
+      dashboardUID: 'dashA',
+      dashboardTitle: 'My Test Dashboard',
+      panelId: 123,
+      panelName: 'CPU Usage Panel',
+      range: getDefaultTimeRange(),
+    } as DataQueryRequest);
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "from": "1697133600000",
+          "queries": [
+            {
+              "applyTemplateVariablesCalled": true,
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "filters": undefined,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+          ],
+          "to": "1697155200000",
+        },
+        "headers": {
+          "X-Dashboard-Title": "My Test Dashboard",
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc",
+          "X-Panel-Id": "123",
+          "X-Panel-Title": "CPU Usage Panel",
+          "X-Plugin-Id": "dummy",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": undefined,
+        "url": "/api/ds/query?ds_type=dummy",
+      }
+    `);
+  });
+
   test('correctly creates expression queries', () => {
     const { mock, ds } = createMockDatasource();
     ds.query({

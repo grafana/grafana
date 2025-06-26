@@ -13,7 +13,8 @@ import (
 func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
 	db := setupTestBadgerDB(t)
 	t.Cleanup(func() {
-		db.Close()
+		err := db.Close()
+		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
 	eventStore := newEventStore(kv)
