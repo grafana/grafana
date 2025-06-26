@@ -68,7 +68,6 @@ jobs:
       contents: read
       id-token: write
     name: Dispatch grafana-enterprise build
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
