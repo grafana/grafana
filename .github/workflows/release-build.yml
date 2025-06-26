@@ -39,6 +39,7 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
+    if: github.repository == 'grafana/grafana'
     outputs:
       version: ${{ steps.output.outputs.version }}
     permissions:
