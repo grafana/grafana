@@ -22,9 +22,14 @@ import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegen
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { getWebGLStyle, textMarker } from '../../style/markers';
-import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
+import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig, StyleConfigValues } from '../../style/types';
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
+
+// Type for marker uniqueness key - picks only dimension-driven properties from StyleConfigValues
+type MarkerUniquenessKey = Pick<StyleConfigValues, 'color' | 'size' | 'text' | 'rotation'> & {
+  coord: string;
+};
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -122,29 +127,29 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Track if we find any line strings during feature processing
           let hasLineString = false;
-          
           // Track coordinates to avoid rendering duplicate markers at the same location
-          const processedCoordinates = new Set<string>();
+          const processedMarkers = new Set<string>();
+
+          // Helper function to create a robust uniqueness key
+          const createMarkerKey = (coordinates: number[], markerValues: StyleConfigValues): string => {
+            const keyObject: MarkerUniquenessKey = {
+              coord: `${coordinates[0]},${coordinates[1]}`,
+              color: markerValues.color,
+              size: markerValues.size,
+              text: markerValues.text,
+              rotation: markerValues.rotation,
+            };
+            return JSON.stringify(keyObject);
+          };
 
           source.forEachFeature((feature) => {
             const geometry = feature.getGeometry();
             const isLineString = geometry?.getType() === 'LineString';
-            
-            // For point geometries, check if we've already processed this coordinate
-            if (geometry?.getType() === 'Point') {
-              const coordinates = geometry.getCoordinates();
-              const coordKey = `${coordinates[0]},${coordinates[1]}`;
-              
-              // Skip this feature if we've already processed a marker at this coordinate
-              if (processedCoordinates.has(coordKey)) {
-                return;
-              }
-              processedCoordinates.add(coordKey);
-            }
-            
+
             if (isLineString) {
               hasLineString = true;
             }
+
             const idx: number = feature.get('rowIndex');
             const dims = style.dims;
             const values = { ...style.base };
@@ -161,6 +166,25 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
+
+            // For point geometries, check if we've already processed this marker
+            if (geometry?.getType() === 'Point') {
+              const coordinates = geometry.getCoordinates();
+
+              // Skip this feature if coordinates are invalid
+              if (!coordinates || coordinates.length < 2) {
+                return;
+              }
+
+              const markerKey = createMarkerKey(coordinates, values);
+
+              // Skip this feature if we've already processed a marker with identical properties
+              if (processedMarkers.has(markerKey)) {
+                return;
+              }
+              processedMarkers.add(markerKey);
+            }
+
             if (!isLineString) {
               const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
               const colorValues = getRGBValues(colorString);
