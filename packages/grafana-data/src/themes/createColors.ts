@@ -299,10 +299,13 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       if (base.mode === 'light') {
         switch (name) {
           case 'primary':
-            color.contrastColor = palette.orangeLightMain;
+            color.contrastColor = palette.orangeDarkMain;
             break;
           case 'secondary':
-            color.contrastColor = palette.orangeLightMain;
+            color.contrastColor = palette.blueDarkMain;
+            break;
+          case 'success':
+            color.contrastColor = palette.greenDarkMain;
             break;
           default:
             color.contrastColor = palette.orangeLightMain;
@@ -314,6 +317,12 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
             color.contrastColor = palette.orangeLightMain;
             break;
           case 'secondary':
+            color.contrastColor = palette.blueLightMain;
+            break;
+          case 'success':
+            color.contrastColor = palette.blueLightMain;
+            break;
+          case 'error':
             color.contrastColor = palette.orangeLightMain;
             break;
           default:

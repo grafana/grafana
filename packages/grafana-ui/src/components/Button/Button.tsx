@@ -292,7 +292,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
-      transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+      transition: theme.transitions.create(['background-color', 'border-color', 'color', 'transform'], {
         duration: theme.transitions.duration.short,
       }),
 
@@ -300,6 +300,11 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         background: color.transparent,
         borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
+      },
+
+      '&:active': {
+        borderColor: color.contrastColor,
+        transform: 'scale(0.95)',
       },
     };
   }
@@ -309,7 +314,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
-      transition: theme.transitions.create(['background-color', 'color'], {
+      transition: theme.transitions.create(['background-color', 'color', 'transform'], {
         duration: theme.transitions.duration.short,
       }),
 
@@ -322,38 +327,32 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         background: color.transparent,
         textDecoration: 'none',
       },
+
+      '&:active': {
+        backgroundColor: color.main,
+        transform: 'scale(0.95)',
+        color: color.contrastText,
+      },
     };
   }
 
-  const shadowOffset = '8px';
-  const shadowSpread = '5px';
-
-  const hoverShadowOffset = '11px';
-  const hoverShadowSpread = '28px';
-  const hoverShadowBlur = '5px';
-
-  // primary
   return {
-    backgroundColor: color.main,
+    background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    boxShadow: `${shadowOffset} ${shadowOffset} ${shadowSpread} #1c1c1c, -${shadowOffset} -${shadowOffset} ${shadowSpread} #262626`,
-    transition: `box-shadow ease-in-out 0.3s, background-color ease-in-out 0.1s, letter-spacing ease-in-out 0.1s, transform ease-in-out 0.1s`,
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color', 'transform'], {
+      duration: theme.transitions.duration.short,
+    }),
 
     '&:hover': {
-      backgroundColor: color.shade,
+      background: color.shade,
       color: color.contrastText,
-      boxShadow: `${hoverShadowOffset} ${hoverShadowOffset} ${hoverShadowSpread} #121212, -${hoverShadowOffset} -${hoverShadowOffset} ${hoverShadowSpread} #303030`,
+      boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
     },
     '&:active': {
-      boxShadow: `${hoverShadowOffset} ${hoverShadowOffset} ${hoverShadowSpread} #121212, -${hoverShadowOffset} -${hoverShadowOffset} ${hoverShadowSpread} #303030, ${color.contrastColor} 0px 0px ${hoverShadowSpread} ${hoverShadowBlur}`,
       backgroundColor: color.contrastColor,
       transform: 'scale(0.95)',
-      borderColor: hoverBorderColor,
-    },
-    '&:focus:not(:focus-visible)': {
-      outline: 'none',
     },
   };
 }
