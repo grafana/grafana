@@ -186,15 +186,8 @@ export function filterSearchResults(
 
   if (query.sort) {
     const collator = new Intl.Collator();
-    filtered = filtered.sort((a, b) => {
-      if (query.sort === 'alpha-asc') {
-        return collator.compare(a.title, b.title);
-      }
-      if (query.sort === 'alpha-desc') {
-        return collator.compare(b.title, a.title);
-      }
-      return 0;
-    });
+    const mult = query.sort === 'alpha-desc' ? -1 : 1;
+    filtered.sort((a, b) => mult * collator.compare(a.title, b.title));
   }
 
   return filtered;

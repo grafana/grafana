@@ -79,7 +79,7 @@ export class TrashStateManager extends SearchStateManager {
       },
       {
         label: t('browse-dashboards.trash-state-manager.label.alphabetically-za', 'Alphabetically (Z–A)'),
-        name: 'alpha-desc',
+        value: 'alpha-desc',
       },
     ]);
   };
