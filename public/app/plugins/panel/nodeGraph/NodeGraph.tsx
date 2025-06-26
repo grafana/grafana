@@ -281,7 +281,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
             style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
           >
             {!config.gridLayout && (
-              /**/ <Edges
+              <Edges
                 edges={edges}
                 nodeHoveringId={nodeHover}
                 edgeHoveringId={edgeHover}
