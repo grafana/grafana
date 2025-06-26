@@ -3,6 +3,7 @@ import { map as _map } from 'lodash';
 
 import { MetricFindValue, TimeRange } from '@grafana/data';
 
+import { METRIC_LABEL } from './constants';
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import {
@@ -13,8 +14,6 @@ import {
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
 import { getOriginalMetricName } from './result_transformer';
-import { METRIC_LABEL } from './types';
-import { escapeForUtf8Support } from './utf8_support';
 
 export class PrometheusMetricFindQuery {
   constructor(
@@ -76,8 +75,7 @@ export class PrometheusMetricFindQuery {
   }
 
   async labelValuesQuery(label: string, range: TimeRange, metric?: string) {
-    const escapedLabel = escapeForUtf8Support(label);
-    const values = await this.datasource.languageProvider.queryLabelValues(range, escapedLabel, metric);
+    const values = await this.datasource.languageProvider.queryLabelValues(range, label, metric);
     return values.map((value) => ({ text: value }));
   }
 

@@ -91,3 +91,44 @@ func TestFolderUIDFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestTitleFilter(t *testing.T) {
+	testCases := []struct {
+		description    string
+		title          string
+		exactMatch     bool
+		expectedSql    string
+		expectedParams []any
+	}{
+		{
+			description:    "searching foo folder - partial match",
+			title:          "foo",
+			expectedSql:    "dashboard.title LIKE ?",
+			expectedParams: []any{"%foo%"},
+		},
+		{
+			description:    "searching foo folder - exact match",
+			title:          "foo",
+			exactMatch:     true,
+			expectedSql:    "dashboard.title = ?",
+			expectedParams: []any{"foo"},
+		},
+	}
+
+	store := setupTestEnvironment(t)
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			f := searchstore.TitleFilter{
+				Dialect:         store.GetDialect(),
+				Title:           tc.title,
+				TitleExactMatch: tc.exactMatch,
+			}
+
+			sql, params := f.Where()
+
+			assert.Equal(t, tc.expectedSql, sql)
+			assert.Equal(t, tc.expectedParams, params)
+		})
+	}
+}

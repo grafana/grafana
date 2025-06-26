@@ -39,6 +39,7 @@ const initialFormValues: Partial<FormData> = {
   ref: `folder/${Date.now()}`,
 };
 
+// TODO: use useProvisionedFolderFormData hook to manage form data and repository state
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
   const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
   const prURL = usePullRequestParam();
@@ -62,6 +63,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     setValue('workflow', getDefaultWorkflow(repository));
   }, [repository, setValue]);
 
+  // TODO: replace with useProvisionedRequestHandler hook
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess && repository) {
@@ -194,6 +196,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
           />
         </Field>
 
+        {/* TODO: use DashboardEditFormSharedFields to replace comment and workflow input*/}
         <Field label={t('browse-dashboards.new-provisioned-folder-form.label-comment', 'Comment')}>
           <TextArea
             {...register('comment')}
