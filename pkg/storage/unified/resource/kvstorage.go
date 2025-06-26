@@ -108,7 +108,7 @@ func (k *KVStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
 	}
-	meta, err := k.metaStore.GetAtRevision(ctx, ListRequestKey{
+	meta, err := k.metaStore.GetAtRevision(ctx, MetaGetRequestKey{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -167,7 +167,7 @@ func (k *KVStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	// Fetch the latest objects
 	keys := make([]MetaDataObj, 0)
 	idx := 0
-	for metaObj, err := range k.metaStore.ListAtRevision(ctx, ListRequestKey{
+	for metaObj, err := range k.metaStore.ListAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
@@ -465,7 +465,7 @@ func (k *KVStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 	// Check if the resource currently exists (is live)
 	// If it exists, don't return any trash entries
-	_, err := k.metaStore.GetLatest(ctx, ListRequestKey{
+	_, err := k.metaStore.GetLatest(ctx, MetaGetRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
