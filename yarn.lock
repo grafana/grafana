@@ -3021,6 +3021,7 @@ __metadata:
     "@braintree/sanitize-url": "npm:7.0.1"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
@@ -3499,11 +3500,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes-react@npm:6.22.1"
+"@grafana/scenes-react@npm:^6.24.0":
+  version: 6.25.0
+  resolution: "@grafana/scenes-react@npm:6.25.0"
   dependencies:
-    "@grafana/scenes": "npm:6.22.1"
+    "@grafana/scenes": "npm:6.25.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3515,13 +3516,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/42c171bb743cf270370ff204afc63df20629f06e462015a4a425857b9380ee03b5dfda6aa6babc5fa52b2759cbee1c72f5db8a70c4e77d8c3b7bf8f56c91ef9d
+  checksum: 10/3064b8270098f4489239051741ccc4edb73352f91687fe14037751593363526164ad737e51e6820a850eba436f04454d0b8d7be14fbdb0e403161045d39f6064
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.22.1, @grafana/scenes@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes@npm:6.22.1"
+"@grafana/scenes@npm:6.25.0, @grafana/scenes@npm:^6.24.0":
+  version: 6.25.0
+  resolution: "@grafana/scenes@npm:6.25.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3541,7 +3542,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a20a2a96f637e5d022b3d9c7bc5fe3e2e6d083052798c7f429d3913268fbb704d77c77932d7620b76110a3351971174a3fa54031004ca9c721a976b2593dc34e
+  checksum: 10/eae7ccb82fad458dffbc71fa8b8273e8a57686cd95c0aa76929df51b81eca43117c3d04e31a279d87fd295672df98b0ee28c3501377518c73f6c935a1a791f20
   languageName: node
   linkType: hard
 
@@ -3643,7 +3644,6 @@ __metadata:
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@hello-pangea/dnd": "npm:18.0.1"
-    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.27"
@@ -18160,8 +18160,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.22.1"
-    "@grafana/scenes-react": "npm:^6.22.1"
+    "@grafana/scenes": "npm:^6.24.0"
+    "@grafana/scenes-react": "npm:^6.24.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
