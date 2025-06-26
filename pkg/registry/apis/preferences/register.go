@@ -3,7 +3,6 @@ package preferences
 import (
 	"context"
 
-	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,23 +10,32 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ builder.APIGroupBuilder = (*PreferencesAPIBuilder)(nil)
 
 type PreferencesAPIBuilder struct {
-	registerer prometheus.Registerer
+	service    pref.Service
+	calculator *calculator
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *PreferencesAPIBuilder {
+func RegisterAPIService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	apiregistration builder.APIRegistrar,
+	service pref.Service,
+) *PreferencesAPIBuilder {
 	builder := &PreferencesAPIBuilder{
-		registerer: registerer,
+		service:    service,
+		calculator: newCalculator(service, cfg, features),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -57,12 +65,12 @@ func (b *PreferencesAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 	resourceInfo := preferences.PreferencesResourceInfo
 	storage := map[string]rest.Storage{}
 
-	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-
-	storage[resourceInfo.StoragePath()] = store
+	// Unified storage
+	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
+	// if err != nil {
+	// 	return err
+	// }
+	storage[resourceInfo.StoragePath()] = NewLegacyStorage(b.service)
 
 	apiGroupInfo.VersionedResourcesStorageMap[preferences.APIVersion] = storage
 	return nil
@@ -72,24 +80,22 @@ func (b *PreferencesAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinit
 	return preferences.GetOpenAPIDefinitions
 }
 
+func (b *PreferencesAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.calculator.GetAPIRoutes(defs)
+}
+
 func (b *PreferencesAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() {
-				return authorizer.DecisionNoOpinion, "", nil
-			}
-
 			// require a user
-			u, err := identity.GetRequester(ctx)
+			_, err = identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			// check if is admin
-			if u.GetIsGrafanaAdmin() {
-				return authorizer.DecisionAllow, "", nil
-			}
+			// TODO, verify User against the request (required for dual write)
 
-			return authorizer.DecisionNoOpinion, "", nil
+			return authorizer.DecisionAllow, "", nil
 		})
 }
