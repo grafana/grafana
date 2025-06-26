@@ -4509,6 +4509,11 @@
     "errors": {
       "failed-to-load": "Failed to load dashboard"
     },
+    "export": {
+      "menu": {
+        "label": "Export dashboard menu"
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Failed to fetch dashboard"
@@ -8246,6 +8251,7 @@
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
+      "generating-url": "Generating share link",
       "short-url-label": "Shorten link",
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
@@ -10948,13 +10954,16 @@
       "view-button-yaml": "View YAML"
     },
     "image": {
+      "actions": "Image export actions",
       "cancel-button": "Cancel",
       "download-button": "Download image",
       "error-title": "Failed to generate image",
       "generate-button": "Generate image",
+      "generating": "Generating image...",
       "info-text": "Save this dashboard as an image",
       "preview": "Preview",
       "preview-aria": "Generated image preview",
+      "preview-region": "Image preview",
       "title": "Export as image"
     },
     "library": {
@@ -11033,7 +11042,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "Save the dashboard to enable image generation",
+    "download-disabled-help": "Generate an image first to enable download",
     "error-title": "Failed to generate image",
+    "form": {
+      "label": "Panel image settings"
+    },
     "preview": {
       "title": "Panel preview"
     },

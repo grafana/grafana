@@ -39,7 +39,7 @@ describe('ImagePreview', () => {
   it('should show loading state with title when loading', () => {
     render(<ImagePreview {...defaultProps} isLoading={true} title="Test Title" />);
     // Loading state should be announced properly
-    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Generating image...' })).toBeInTheDocument();
     expect(screen.getByLabelText('Loading bar')).toBeInTheDocument();
     expect(screen.getByText('Test Title')).toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('ImagePreview', () => {
     render(<ImagePreview {...defaultProps} imageBlob={imageBlob} isLoading={true} />);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     // Should show loading state instead
-    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Generating image...' })).toBeInTheDocument();
   });
 
   it('should not show error when loading', () => {
@@ -90,7 +90,7 @@ describe('ImagePreview', () => {
     render(<ImagePreview {...defaultProps} error={error} isLoading={true} />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     // Should show loading state instead
-    expect(screen.getByRole('status', { name: 'Generating image' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Generating image...' })).toBeInTheDocument();
   });
 
   it('should not show duplicate message when error title and message are the same', () => {
