@@ -43,11 +43,6 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
   })),
 }));
 
-// jest.mock('../helpers.ts', () => ({
-//   ...jest.requireActual('../helpers.ts'),
-//   updatePanels: jest.fn(),
-// }));
-
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: (action: string) => true,
