@@ -47,6 +47,7 @@ func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r
 func (b *APIBuilder) proxyFlagReq(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
 	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
 	if err != nil {
+		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

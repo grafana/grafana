@@ -9,6 +9,7 @@ import (
 func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
 	result, err := b.staticEvaluator.EvalAllFlags(r.Context())
 	if err != nil {
+		b.logger.Error("Failed to evaluate all static flags", "error", err)
 		http.Error(w, "failed to evaluate flags", http.StatusInternalServerError)
 		return
 	}
@@ -31,6 +32,7 @@ func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter
 func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
 	result, err := b.staticEvaluator.EvalFlag(r.Context(), flagKey)
 	if err != nil {
+		b.logger.Error("Failed to evaluate static flag", "key", flagKey, "error", err)
 		http.Error(w, "failed to evaluate flag", http.StatusInternalServerError)
 		return
 	}

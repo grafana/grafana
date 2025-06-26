@@ -116,14 +116,16 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		b.logger.Error("Error reading evaluation request body", "error", err)
 		http.Error(w, "failed to read request body", http.StatusBadRequest)
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := b.stackIdFromEvalCtx(body)
-	// assume that "default" namespace case can only occure in ST grafana
+	// "default" namespace case can only occur in on-prem grafana
 	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
+		b.logger.Error("StackID in evaluation context does not match requested namespace", "error", err)
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
@@ -138,6 +140,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	publicFlag := isPublicFlag(flagKey)
 
 	if !isAuthedUser && !publicFlag {
+		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
 	}
@@ -156,14 +159,16 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		b.logger.Error("Error reading evaluation request body", "error", err)
 		http.Error(w, "failed to read request body", http.StatusBadRequest)
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	stackID := b.stackIdFromEvalCtx(body)
-	// assume that "default" namespace case can only occure in ST grafana
+	// "default" namespace case can only occur in on-prem grafana
 	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
+		b.logger.Error("stackID in evaluation context does not match requested namespace", "error", err)
 		http.Error(w, "stackID in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
