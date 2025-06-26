@@ -16,4 +16,7 @@ type store interface {
 	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
 	GetSnapshotByUID(ctx context.Context, orgID int64, sessUid, id string, params cloudmigration.SnapshotResultQueryParams) (*cloudmigration.CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error)
+	StoreSnapshotBlob(ctx context.Context, sessUid, snapshotUid string, blob []byte) error
+	RetrieveSnapshotBlob(ctx context.Context, sessUid, snapshotUid string) ([]byte, error)
+	DeleteSnapshotBlob(ctx context.Context, sessUid, snapshotUid string) error
 }

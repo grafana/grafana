@@ -329,6 +329,50 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return snapshots, nil
 }
 
+func (ss *sqlStore) StoreSnapshotBlob(ctx context.Context, sessUid, snapshotUid string, blob []byte) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rowsAffected, err := sess.Where("session_uid=? AND uid=?", sessUid, snapshotUid).Update(cloudmigration.CloudMigrationSnapshot{
+			Data: blob,
+		})
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+
+		return nil
+	})
+}
+
+func (ss *sqlStore) RetrieveSnapshotBlob(ctx context.Context, sessUid, snapshotUid string) ([]byte, error) {
+	var blob cloudmigration.CloudMigrationSnapshot
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		exist, err := sess.Where("session_uid=? AND uid=?", sessUid, snapshotUid).Select("data").Get(&blob)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return blob.Data, nil
+}
+
+func (ss *sqlStore) DeleteSnapshotBlob(ctx context.Context, sessUid, snapshotUid string) error {
+	update := cloudmigration.CloudMigrationSnapshot{
+		Data: nil,
+	}
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Where("session_uid=? AND uid=?", sessUid, snapshotUid).Update(update)
+		return err
+	})
+}
+
 // CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
 // Inserting large enough datasets causes SQL errors, so we batch the inserts
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
