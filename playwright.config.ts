@@ -3,7 +3,8 @@ import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 
-const testDirRoot = 'e2e/plugin-e2e/';
+const testDirRoot = 'e2e/playwright';
+const pluginDirRoot = path.join(testDirRoot, 'plugin-e2e');
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -44,7 +45,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with admin role
     {
       name: 'admin',
-      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
+      testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-admin-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -54,7 +55,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with viewer role
     {
       name: 'viewer',
-      testDir: path.join(testDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
+      testDir: path.join(pluginDirRoot, '/plugin-e2e-api-tests/as-viewer-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/viewer.json',
@@ -63,7 +64,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'elasticsearch',
-      testDir: path.join(testDirRoot, '/elasticsearch'),
+      testDir: path.join(pluginDirRoot, '/elasticsearch'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -72,7 +73,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'mysql',
-      testDir: path.join(testDirRoot, '/mysql'),
+      testDir: path.join(pluginDirRoot, '/mysql'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -81,7 +82,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'mssql',
-      testDir: path.join(testDirRoot, '/mssql'),
+      testDir: path.join(pluginDirRoot, '/mssql'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -108,7 +109,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'cloudwatch',
-      testDir: path.join(testDirRoot, '/cloudwatch'),
+      testDir: path.join(pluginDirRoot, '/cloudwatch'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -117,7 +118,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'azuremonitor',
-      testDir: path.join(testDirRoot, '/azuremonitor'),
+      testDir: path.join(pluginDirRoot, '/azuremonitor'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -126,7 +127,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'cloudmonitoring',
-      testDir: path.join(testDirRoot, '/cloudmonitoring'),
+      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -135,7 +136,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'graphite',
-      testDir: path.join(testDirRoot, '/graphite'),
+      testDir: path.join(pluginDirRoot, '/graphite'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -144,7 +145,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'influxdb',
-      testDir: path.join(testDirRoot, '/influxdb'),
+      testDir: path.join(pluginDirRoot, '/influxdb'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -153,7 +154,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'opentsdb',
-      testDir: path.join(testDirRoot, '/opentsdb'),
+      testDir: path.join(pluginDirRoot, '/opentsdb'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -162,7 +163,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'jaeger',
-      testDir: path.join(testDirRoot, '/jaeger'),
+      testDir: path.join(pluginDirRoot, '/jaeger'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -171,7 +172,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'grafana-postgresql-datasource',
-      testDir: path.join(testDirRoot, '/grafana-postgresql-datasource'),
+      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -180,7 +181,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'zipkin',
-      testDir: path.join(testDirRoot, '/zipkin'),
+      testDir: path.join(pluginDirRoot, '/zipkin'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
