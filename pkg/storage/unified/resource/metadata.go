@@ -199,7 +199,9 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	if err != nil {
 		return MetaData{}, err
 	}
-	defer obj.Value.Close()
+	defer func() {
+		_ = obj.Value.Close()
+	}()
 	var meta MetaData
 	err = json.NewDecoder(obj.Value).Decode(&meta)
 	return meta, err
@@ -218,12 +220,7 @@ func (d *metadataStore) GetAtRevision(ctx context.Context, key MetaGetRequestKey
 		rv = math.MaxInt64
 	}
 
-	listKey := MetaListRequestKey{
-		Namespace: key.Namespace,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Name:      key.Name,
-	}
+	listKey := MetaListRequestKey(key)
 
 	iter := d.ListAtRevision(ctx, listKey, rv)
 	for obj, err := range iter {
@@ -274,7 +271,9 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 				yield(MetaDataObj{}, err)
 				return false
 			}
-			defer obj.Value.Close()
+			defer func() {
+				_ = obj.Value.Close()
+			}()
 			var meta MetaData
 			err = json.NewDecoder(obj.Value).Decode(&meta)
 			if err != nil {
@@ -306,7 +305,6 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 					candidateKey = &metaKey
 				}
 				continue
-
 			}
 			// Should yield if either:
 			// - We reached the next resource.
