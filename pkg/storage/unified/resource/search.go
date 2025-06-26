@@ -403,26 +403,22 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 			continue
 		}
 
-		// If the count is too large, we need to set the index to empty.
-		// Only do this if the max size is set to a non-zero (default) value.
-		if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
-			// #TODO figure out if we need to check rebuilding here as well
-			group.Go(func() error {
-				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
-				totalBatchesIndexed++
-				_, err := s.buildEmptyIndex(ctx, info.NamespacedResource, info.ResourceVersion)
-				return err
-			})
-			continue
-		}
-
 		group.Go(func() error {
 			if rebuild {
 				// we need to clear the cache to make sure we get the latest usage insights data
 				s.builders.clearNamespacedCache(info.NamespacedResource)
 			}
-			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
+
+			// If the count is too large, we need to set the index to empty.
+			// Only do this if the max size is set to a non-zero (default) value.
+			if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
+				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
+				_, err := s.buildEmptyIndex(ctx, info.NamespacedResource, info.ResourceVersion)
+				return err
+			}
+
+			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
 		})
