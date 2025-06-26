@@ -66,6 +66,8 @@ describe('Dashboard Export Image Utils', () => {
         {
           setup: () => {
             (config as { rendererAvailable: boolean }).rendererAvailable = false;
+            // Reset the mock for this test case
+            (getBackendSrv as jest.Mock).mockReset();
           },
           expectedError: 'Image renderer plugin not installed',
         },
@@ -80,6 +82,7 @@ describe('Dashboard Export Image Utils', () => {
         },
         {
           setup: () => {
+            (config as { rendererAvailable: boolean }).rendererAvailable = true;
             (getBackendSrv as jest.Mock).mockReturnValue({
               fetch: jest.fn().mockReturnValue(of({ ok: true, data: 'invalid-data' })),
             });
@@ -88,6 +91,7 @@ describe('Dashboard Export Image Utils', () => {
         },
         {
           setup: () => {
+            (config as { rendererAvailable: boolean }).rendererAvailable = true;
             (getBackendSrv as jest.Mock).mockReturnValue({
               fetch: jest.fn().mockReturnValue(of(Promise.reject(new Error('Network error')))),
             });

@@ -210,7 +210,6 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
           }
           testId={selector.preview}
           title={title}
-          showLoading={!!image || loading}
         />
       </Stack>
     </div>

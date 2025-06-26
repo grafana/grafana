@@ -40,11 +40,6 @@ describe('ImagePreview', () => {
     expect(screen.getByText('Test Title')).toBeInTheDocument();
   });
 
-  it('should not show loading state when showLoading is false', () => {
-    render(<ImagePreview {...defaultProps} isLoading={true} showLoading={false} />);
-    expect(screen.queryByTestId(selectors.components.ExportImage.preview.loading)).not.toBeInTheDocument();
-  });
-
   it('should show error state when error is present', () => {
     const error = {
       title: 'Error Title',
@@ -52,7 +47,7 @@ describe('ImagePreview', () => {
     };
     render(<ImagePreview {...defaultProps} error={error} />);
     expect(screen.getByTestId(selectors.components.ExportImage.preview.error.container)).toBeInTheDocument();
-    expect(screen.getByTestId(selectors.components.ExportImage.preview.error.title)).toHaveTextContent('Error Title');
+    expect(screen.getByText('Error Title')).toBeInTheDocument(); // Title is now in the Alert component
     expect(screen.getByTestId(selectors.components.ExportImage.preview.error.message)).toHaveTextContent(
       'Error Message'
     );
@@ -91,5 +86,16 @@ describe('ImagePreview', () => {
     };
     render(<ImagePreview {...defaultProps} error={error} isLoading={true} />);
     expect(screen.queryByTestId(selectors.components.ExportImage.preview.error.container)).not.toBeInTheDocument();
+  });
+
+  it('should not show duplicate message when error title and message are the same', () => {
+    const error = {
+      title: 'Failed to generate image',
+      message: 'Failed to generate image',
+    };
+    render(<ImagePreview {...defaultProps} error={error} />);
+    expect(screen.getByTestId(selectors.components.ExportImage.preview.error.container)).toBeInTheDocument();
+    expect(screen.getByText('Failed to generate image')).toBeInTheDocument(); // Title is shown in Alert
+    expect(screen.queryByTestId(selectors.components.ExportImage.preview.error.message)).not.toBeInTheDocument(); // Message should not be shown separately
   });
 });

@@ -31,6 +31,14 @@ export async function generateDashboardImage({
   scale = config.rendererDefaultImageScale || 1,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
   try {
+    // Check if renderer plugin is available
+    if (!config.rendererAvailable) {
+      return {
+        blob: new Blob(),
+        error: 'Image renderer plugin not installed',
+      };
+    }
+
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
@@ -57,7 +65,15 @@ export async function generateDashboardImage({
     if (!response.ok) {
       return {
         blob: new Blob(),
-        error: response.statusText || 'Failed to generate image',
+        error: `Failed to generate image: ${response.status} ${response.statusText}`,
+      };
+    }
+
+    // Validate response data format
+    if (!(response.data instanceof Blob)) {
+      return {
+        blob: new Blob(),
+        error: 'Invalid response data format',
       };
     }
 
