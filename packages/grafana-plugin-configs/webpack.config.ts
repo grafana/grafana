@@ -4,7 +4,7 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
-import { type Configuration, BannerPlugin } from 'webpack';
+import webpack, { type Configuration } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
@@ -117,7 +117,7 @@ const config = async (env: Env): Promise<Configuration> => {
           test: /module\.tsx?$/,
           use: [
             {
-              loader: require.resolve('imports-loader'),
+              loader: 'imports-loader',
               options: {
                 imports: `side-effects grafana-public-path`,
               },
@@ -212,7 +212,7 @@ const config = async (env: Env): Promise<Configuration> => {
     plugins: [
       virtualPublicPath,
       // Insert create plugin version information into the bundle so Grafana will load from cdn with script tags.
-      new BannerPlugin({
+      new webpack.BannerPlugin({
         banner: '/* [create-plugin] version: 5.22.0 */',
         raw: true,
         entryOnly: true,
