@@ -294,7 +294,7 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 				return
 			}
 
-			metaKey, err := d.parseKey(key)
+			metaKey, err := parseMetaDataKey(key)
 			if err != nil {
 				yield(MetaDataObj{}, err)
 				return
@@ -348,7 +348,8 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	return d.kv.Save(ctx, metaSection, obj.Key.String(), io.NopCloser(bytes.NewReader(valueBytes)))
 }
 
-func (d *metadataStore) parseKey(key string) (MetaDataKey, error) {
+// parseMetaDataKey parses a string key into a MetaDataKey struct
+func parseMetaDataKey(key string) (MetaDataKey, error) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 5 {
 		return MetaDataKey{}, fmt.Errorf("invalid key: %s", key)

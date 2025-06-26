@@ -37,13 +37,11 @@ func TestMetaDataKey_String(t *testing.T) {
 	assert.Equal(t, expectedKey, actualKey)
 }
 
-func TestMetadataStore_ParseKey(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
+func TestParseMetaDataKey(t *testing.T) {
 	rv := node.Generate()
 	key := "apps/resource/default/test-resource/" + rv.String() + "~" + string(DataActionCreated) + "~test-folder"
 
-	resourceKey, err := store.parseKey(key)
+	resourceKey, err := parseMetaDataKey(key)
 
 	require.NoError(t, err)
 	assert.Equal(t, "apps", resourceKey.Group)
@@ -55,9 +53,7 @@ func TestMetadataStore_ParseKey(t *testing.T) {
 	assert.Equal(t, "test-folder", resourceKey.Folder)
 }
 
-func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
-	store := setupTestMetadataStore(t)
-
+func TestParseMetaDataKey_InvalidKey(t *testing.T) {
 	tests := []struct {
 		name string
 		key  string
@@ -74,7 +70,7 @@ func TestMetadataStore_ParseKey_InvalidKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := store.parseKey(tt.key)
+			_, err := parseMetaDataKey(tt.key)
 			assert.Error(t, err)
 		})
 	}
