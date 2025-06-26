@@ -24,9 +24,7 @@ func TestNewEventStore(t *testing.T) {
 	assert.NotNil(t, store.kv)
 }
 
-func TestEventStore_getKey(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventKey_String(t *testing.T) {
 	tests := []struct {
 		name     string
 		eventKey EventKey
@@ -69,15 +67,13 @@ func TestEventStore_getKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := store.getKey(tt.eventKey)
+			result := tt.eventKey.String()
 			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
 
-func TestEventStore_parseKey(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventKey_Validate(t *testing.T) {
 	tests := []struct {
 		name        string
 		key         string
@@ -141,7 +137,7 @@ func TestEventStore_parseKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := store.parseKey(tt.key)
+			result, err := ParseEventKey(tt.key)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -154,9 +150,7 @@ func TestEventStore_parseKey(t *testing.T) {
 	}
 }
 
-func TestEventStore_getKey_parseKey_RoundTrip(t *testing.T) {
-	store := setupTestEventStore(t)
-
+func TestEventStore_ParseEventKey(t *testing.T) {
 	originalKey := EventKey{
 		ResourceVersion: 1234567890,
 		Namespace:       "test-namespace",
@@ -166,8 +160,8 @@ func TestEventStore_getKey_parseKey_RoundTrip(t *testing.T) {
 	}
 
 	// Convert to string and back
-	keyString := store.getKey(originalKey)
-	parsedKey, err := store.parseKey(keyString)
+	keyString := originalKey.String()
+	parsedKey, err := ParseEventKey(keyString)
 
 	require.NoError(t, err)
 	assert.Equal(t, originalKey, parsedKey)

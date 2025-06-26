@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"iter"
 	"strconv"
 	"strings"
@@ -135,15 +134,12 @@ func (n *eventStore) Save(ctx context.Context, event Event) error {
 		return fmt.Errorf("invalid event key: %w", err)
 	}
 
-	v, err := json.Marshal(event)
-	if err != nil {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	if err := encoder.Encode(event); err != nil {
 		return err
 	}
-	err = n.kv.Save(ctx, eventsSection, eventKey.String(), io.NopCloser(bytes.NewReader(v)))
-	if err != nil {
-		return err
-	}
-	return nil
+	return n.kv.Save(ctx, eventsSection, eventKey.String(), &buf)
 }
 
 func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
@@ -155,11 +151,11 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 	if err != nil {
 		return Event{}, err
 	}
+	defer obj.Value.Close()
+
 	var event Event
-	if err := json.NewDecoder(obj.Value).Decode(&event); err != nil {
-		return Event{}, err
-	}
-	return event, nil
+	err = json.NewDecoder(obj.Value).Decode(&event)
+	return event, err
 }
 
 // ListSince returns a sequence of events since the given resource version.
