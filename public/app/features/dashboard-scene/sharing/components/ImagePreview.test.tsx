@@ -104,19 +104,4 @@ describe('ImagePreview', () => {
     // Check that the message doesn't appear twice by counting occurrences
     expect(screen.getAllByText('Failed to generate image')).toHaveLength(1);
   });
-
-  it('should show error code when present', () => {
-    const error = {
-      title: 'Generation failed',
-      message: 'Network error',
-      code: 'ERR_NETWORK',
-    };
-    render(<ImagePreview {...defaultProps} error={error} />);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('Generation failed')).toBeInTheDocument();
-    expect(screen.getByText('Network error')).toBeInTheDocument();
-    // Check for the error code text - it should exist in the DOM
-    expect(document.body.textContent).toContain('Error code:');
-    expect(document.body.textContent).toContain('ERR_NETWORK');
-  });
 });

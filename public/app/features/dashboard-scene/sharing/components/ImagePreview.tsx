@@ -3,13 +3,12 @@ import { useMemo, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 
 type ErrorState = {
   message: string;
   title: string;
-  code?: string;
 } | null;
 
 interface ImagePreviewProps {
@@ -87,11 +86,6 @@ function ErrorAlert({ error }: { error: ErrorState }) {
   return (
     <Alert severity="error" title={error.title}>
       {showMessage && <div>{error.message}</div>}
-      {error.code && (
-        <div>
-          <Trans i18nKey="share-modal.image.error-code">Error code:</Trans> {error.code}
-        </div>
-      )}
     </Alert>
   );
 }
