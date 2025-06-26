@@ -6,6 +6,7 @@ import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
+import { dashboardEditActions } from '../edit-pane/shared';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
@@ -126,7 +127,14 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
     <Combobox
       options={enableConditionOptions}
       value={enableConditionOption}
-      onChange={({ value }) => model.setStateAndNotify({ value: Boolean(value) })}
+      onChange={({ value: val }) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
+          source: model,
+          perform: () => model.setStateAndNotify({ value: Boolean(val) }),
+          undo: () => model.setStateAndNotify({ value }),
+        });
+      }}
     />
   );
 }

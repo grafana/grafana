@@ -4256,6 +4256,10 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "edit-query-result-rule": "Change query result rule",
+      "edit-template-variable-rule": "Change template variable rule",
+      "edit-time-range-rule": "Change time range rule",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
