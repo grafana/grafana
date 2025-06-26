@@ -21,7 +21,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               If something isn't working correctly, you can revert to the original configuration page design by
               disabling the <code>newInfluxDSConfigPageDesign</code> feature flag.{' '}
               <TextLink
-                href="https://docs.google.com/forms/d/1wiJJ5WFu33maVNaWDmJuW0VbhoeR6-VSuu6y2mHMb_4/viewform"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
                 external
                 onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
               >
