@@ -69,6 +69,6 @@ export class MockDataSourceSrv extends DatasourceSrvMock {
     return this.ds;
   }
   getInstanceSettings(name?: string): DataSourceInstanceSettings | undefined {
-    return name ? this.ds.find(ds => ds.name === name) : undefined;
+    return name ? this.ds.find((ds) => ds.name === name) : undefined;
   }
 }

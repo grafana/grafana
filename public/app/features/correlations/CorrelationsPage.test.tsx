@@ -9,7 +9,14 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BackendSrv, BackendSrvRequest, DataSourceSrv, reportInteraction, setAppEvents, setDataSourceSrv } from '@grafana/runtime';
+import {
+  BackendSrv,
+  BackendSrvRequest,
+  DataSourceSrv,
+  reportInteraction,
+  setAppEvents,
+  setDataSourceSrv,
+} from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -734,4 +741,3 @@ describe('CorrelationsPage', () => {
     });
   });
 });
-
