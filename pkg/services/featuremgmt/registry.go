@@ -1308,7 +1308,7 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{
