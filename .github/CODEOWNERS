@@ -646,8 +646,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
-.pa11yci.conf.js @grafana/grafana-frontend-platform
-.pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
@@ -664,7 +662,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/graphite/ @grafana/partner-datasources
 /public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
 /public/app/plugins/datasource/jaeger/ @grafana/oss-big-tent
-/public/app/plugins/datasource/loki/ @grafana/oss-big-tent
+/public/app/plugins/datasource/loki/ @grafana/oss-big-tent @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
@@ -833,6 +831,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
@@ -842,7 +841,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-developer-enablement-squad
-/.github/workflows/release-build.yml  @grafana/grafana-developer-enablement-squad
+/.github/workflows/release-build.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/publish-artifact.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
 /.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
