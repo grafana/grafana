@@ -52,15 +52,10 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	if err != nil {
 		return MetaData{}, err
 	}
-	value, err := io.ReadAll(obj.Value)
-	if err != nil {
-		return MetaData{}, err
-	}
+	defer obj.Value.Close()
 	var meta MetaData
-	if err := json.Unmarshal(value, &meta); err != nil {
-		return meta, err
-	}
-	return meta, nil
+	err = json.NewDecoder(obj.Value).Decode(&meta)
+	return meta, err
 }
 
 func (d *metadataStore) GetLatest(ctx context.Context, key ListRequestKey) (MetaDataObj, error) {
