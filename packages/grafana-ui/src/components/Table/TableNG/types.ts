@@ -13,7 +13,7 @@ import {
   FieldType,
   DataFrameWithValue,
 } from '@grafana/data';
-import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { TableCellOptions, TableCellHeight, TableFieldOptions, TablePillCellOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 
@@ -246,4 +246,9 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface PillCellProps {
+  cellOptions: TablePillCellOptions;
+  value: unknown;
 }

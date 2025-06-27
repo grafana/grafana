@@ -10,6 +10,7 @@ import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -23,9 +24,10 @@ export interface TableCellEditorProps<T> {
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
+  fieldConfig?: any;
 }
 
-export const TableCellOptionEditor = ({ value, onChange }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange, fieldConfig }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
@@ -77,6 +79,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.Pill && (
+        <PillCellOptionsEditor cellOptions={value as any} onChange={onCellOptionsChange as any} fieldConfig={fieldConfig} />
+      )}
     </div>
   );
 };
@@ -91,6 +96,7 @@ let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
+  { value: { type: TableCellDisplayMode.Pill }, label: 'Pill' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

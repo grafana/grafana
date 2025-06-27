@@ -27,6 +27,7 @@ import { DataLinksCell } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
+import { PillCell } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
 export function TableCellNG(props: TableCellNGProps) {
@@ -137,6 +138,9 @@ export function TableCellNG(props: TableCellNGProps) {
         cell = <CustomCellComponent field={field} value={value} rowIndex={rowIdx} frame={frame} />;
         break;
       case TableCellDisplayMode.Auto:
+      case TableCellDisplayMode.Pill:
+        cell = <PillCell cellOptions={cellOptions} value={value} field={field} />;
+        break;
       default:
         // Handle auto cell type detection
         if (field.type === FieldType.geo) {

@@ -708,6 +708,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Pill = 'pill',
   Sparkline = 'sparkline',
 }
 
@@ -825,6 +826,17 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Pill cell options
+ * The value for a pill cell should be a list of strings (array), or a JSON string that parses to a list of strings. Each string will be rendered as a separate pill.
+ */
+export interface TablePillCellOptions {
+  color?: string;
+  icon?: string;
+  label?: string;
+  type: TableCellDisplayMode.Pill;
+}
+
+/**
  * Height of a table cell
  */
 export enum TableCellHeight {
@@ -838,7 +850,34 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
+
+/**
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
+ */
+export interface TableFieldOptions {
+  align: FieldTextAlignment;
+  cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellDisplayMode;
+  filterable?: boolean;
+  hidden?: boolean; // ?? default is missing or false ??
+  /**
+   * Hides any header for a column, useful for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
+  inspect: boolean;
+  minWidth?: number;
+  width?: number;
+}
+
+export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
+  align: 'auto',
+  inspect: false,
+};
 
 /**
  * Use UTC/GMT timezone
@@ -944,32 +983,7 @@ export enum ComparisonOperation {
   NEQ = 'neq',
 }
 
-/**
- * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
- * Generally defines alignment, filtering capabilties, display options, etc.
- */
-export interface TableFieldOptions {
-  align: FieldTextAlignment;
-  cellOptions: TableCellOptions;
-  /**
-   * This field is deprecated in favor of using cellOptions
-   */
-  displayMode?: TableCellDisplayMode;
-  filterable?: boolean;
-  hidden?: boolean; // ?? default is missing or false ??
-  /**
-   * Hides any header for a column, useful for columns that show some static content or buttons.
-   */
-  hideHeader?: boolean;
-  inspect: boolean;
-  minWidth?: number;
-  width?: number;
-}
 
-export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
-  align: 'auto',
-  inspect: false,
-};
 
 /**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database

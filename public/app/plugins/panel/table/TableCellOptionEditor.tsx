@@ -3,14 +3,16 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { TableCellOptions, TableCellDisplayMode, TablePillCellOptions } from '@grafana/schema';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 
 import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -77,6 +79,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.Pill && (
+        <PillCellOptionsEditor cellOptions={value as TablePillCellOptions} onChange={onCellOptionsChange as any} />
+      )}
     </div>
   );
 };
@@ -90,6 +95,7 @@ let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
+  { value: { type: TableCellDisplayMode.Pill }, label: 'Pill' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
 ];
 
