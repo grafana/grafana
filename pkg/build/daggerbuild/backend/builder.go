@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/containers"
@@ -102,7 +103,9 @@ func GolangContainer(
 		WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
 		WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
 		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
+		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
+		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.1/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
+		WithExec([]string{"chmod", "+x", "/bin/go-cache-plugin"})
 
 	return WithGoEnv(log, container, distro, opts)
 }
@@ -154,8 +157,6 @@ func Builder(
 	builder = builder.
 		WithMountedCache("/root/.cache/go", goBuildCache).
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	builder = builder.WithExec([]string{"go", "install", "github.com/tailscale/go-cache-plugin/cmd/go-cache-plugin@latest"})
 
 	if prog := opts.GoCacheProg; prog != "" {
 		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
