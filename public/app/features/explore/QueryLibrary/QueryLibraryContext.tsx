@@ -20,7 +20,11 @@ export type QueryLibraryContextType = {
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
    */
-  openDrawer: (datasourceFilters: string[], onSelectQuery: OnSelectQueryType, options?: { context?: string }) => void;
+  openDrawer: (
+    datasourceFilters: string[],
+    onSelectQuery: OnSelectQueryType,
+    options?: { isReplacingQuery?: boolean; context?: string }
+  ) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
 
@@ -30,8 +34,12 @@ export type QueryLibraryContextType = {
    * @param options.onSave Callback that will be called after the query is saved.
    * @param options.context Used for tracking. Should identify the context this is called from, like 'explore' or
    *   'dashboard'.
+   * @param options.title Default title for the modal, can be overridden by the query title.
    */
-  openAddQueryModal: (query: DataQuery, options?: { onSave?: () => void; context?: string }) => void;
+  openAddQueryModal: (
+    query: DataQuery,
+    options?: { onSave?: () => void; context?: string; title?: string; isDuplicating?: boolean }
+  ) => void;
   closeAddQueryModal: () => void;
 
   /**
