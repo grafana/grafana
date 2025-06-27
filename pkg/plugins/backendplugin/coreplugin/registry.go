@@ -94,7 +94,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 	}
 }
 
-func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
@@ -102,7 +102,7 @@ func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cl
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw.Executor),
+		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
 		Elasticsearch:   asBackendPlugin(es),
@@ -217,7 +217,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
 	case CloudWatch:
-		svc = cloudwatch.ProvideService(httpClientProvider).Executor
+		svc = cloudwatch.ProvideService()
 	case CloudMonitoring:
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:

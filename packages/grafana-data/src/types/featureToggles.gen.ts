@@ -265,11 +265,6 @@ export interface FeatureToggles {
   */
   sseGroupByDatasource?: boolean;
   /**
-  * Enables RBAC support for library panels
-  * @default true
-  */
-  libraryPanelRBAC?: boolean;
-  /**
   * Enables running Loki queries in parallel
   */
   lokiRunQueriesInParallel?: boolean;
@@ -304,6 +299,10 @@ export interface FeatureToggles {
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * Routes library panel requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -1037,4 +1036,9 @@ export interface FeatureToggles {
   * @default true
   */
   tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
 }
