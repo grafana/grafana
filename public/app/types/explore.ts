@@ -104,6 +104,11 @@ export interface ExploreState {
    * If a minimize pane button is pressed, it will do an even split of panes. Will be undefined if split or on a manual resize
    */
   evenSplitPanes?: boolean;
+
+  /**
+   * True if compact mode is enabled. In compact mode, UI elements are automatically collapsed to save space.
+   */
+  compactMode?: boolean;
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;

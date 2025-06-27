@@ -5,6 +5,7 @@ import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useDispatch, useSelector } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
@@ -12,7 +13,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
 import { changeQueries, runQueries } from './state/query';
-import { getExploreItemSelector } from './state/selectors';
+import { getExploreItemSelector, selectCompactMode } from './state/selectors';
 
 interface Props {
   exploreId: string;
@@ -21,13 +22,13 @@ interface Props {
 const makeSelectors = (exploreId: string) => {
   const exploreItemSelector = getExploreItemSelector(exploreId);
   return {
-    getQueries: createSelector(exploreItemSelector, (s) => s!.queries),
-    getQueryResponse: createSelector(exploreItemSelector, (s) => s!.queryResponse),
-    getHistory: createSelector(exploreItemSelector, (s) => s!.history),
-    getEventBridge: createSelector(exploreItemSelector, (s) => s!.eventBridge),
+    getQueries: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.queries),
+    getQueryResponse: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.queryResponse),
+    getHistory: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.history),
+    getEventBridge: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.eventBridge),
     getDatasourceInstanceSettings: createSelector(
       exploreItemSelector,
-      (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
+      (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
   };
 };
@@ -44,6 +45,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
+  const compactMode = useSelector(selectCompactMode);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -102,6 +104,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      compactMode={compactMode}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

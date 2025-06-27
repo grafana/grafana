@@ -40,6 +40,7 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
+  compactMode?: boolean;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -175,6 +176,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryToggled,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
+      compactMode,
     } = this.props;
 
     return (
@@ -212,6 +214,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
+                      compactMode={compactMode}
                     />
                   );
 

@@ -69,7 +69,7 @@ import {
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
-import { isSplit, selectExploreDSMaps } from './state/selectors';
+import { isSplit, selectExploreDSMaps, selectCompactMode } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -573,6 +573,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
+      splitted,
+      compactMode,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -598,6 +600,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
+    // In split view, hide individual DrilldownAlertBoxes (will be shown once at top level)
+    const shouldShowDrilldownAlert = datasourceInstance && !splitted;
+    
+    console.log('🔍 Explore rendering with compactMode:', compactMode, 'contentOutlineVisible:', contentOutlineVisible);
+
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
@@ -615,7 +622,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} compactMode={compactMode} />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
@@ -631,7 +638,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
+                        {shouldShowDrilldownAlert && (
+                          <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
+                        )}
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} />
                         <SecondaryActions
@@ -780,6 +789,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
+    compactMode: selectCompactMode(state),
   };
 }
 
