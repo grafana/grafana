@@ -25,14 +25,14 @@ func TestConverter(t *testing.T) {
 		}
 		for _, name := range check {
 			t.Run(name, func(t *testing.T) {
-				fpath := filepath.Join("testdata", name+"-input.json")
+				fpath := filepath.Join("testdata", name+".json")
 				raw, err := os.ReadFile(fpath) // nolint:gosec
 				require.NoError(t, err)
 				err = json.Unmarshal(raw, obj)
 				require.NoError(t, err)
 
 				// The add command
-				fpath = filepath.Join("testdata", name+"-output-add.json")
+				fpath = filepath.Join("testdata", name+"-cmd-add.json")
 				add, err := converter.toAddCommand(obj)
 				require.NoError(t, err)
 				out, err := json.MarshalIndent(add, "", "  ")
@@ -43,7 +43,7 @@ func TestConverter(t *testing.T) {
 				}
 
 				// The update command
-				fpath = filepath.Join("testdata", name+"-output-update.json")
+				fpath = filepath.Join("testdata", name+"-cmd-update.json")
 				update, err := converter.toUpdateCommand(obj)
 				require.NoError(t, err)
 				out, err = json.MarshalIndent(update, "", "  ")
