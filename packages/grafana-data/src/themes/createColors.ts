@@ -297,7 +297,6 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
     if (!color.contrastColor) {
       if (base.mode === 'light') {
-        //'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning'
         switch (name) {
           case 'primary':
             color.contrastColor = palette.orangeDarkMain;
