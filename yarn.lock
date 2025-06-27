@@ -2984,6 +2984,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::locator=grafana%40workspace%3A.":
+  version: 1.0.0
+  resolution: "@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant#/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::hash=252e7b&locator=grafana%40workspace%3A."
+  checksum: 10/e3bd2ade78c64bb5868cf2e9fb2fdb0e4265dc1bc7b6ef12cfc01a5e2482caa1de1cbd7c8e0bb9c63309751aa57dbd0090a2ccf29c4aa8c85326c1c8cec13e1c
+  languageName: node
+  linkType: hard
+
 "@grafana/async-query-data@npm:0.4.1":
   version: 0.4.1
   resolution: "@grafana/async-query-data@npm:0.4.1"
@@ -3267,6 +3274,7 @@ __metadata:
     react-use: "npm:^17.6.0"
     semver: "npm:^7.6.3"
     uuid: "npm:^11.0.5"
+    zod: "npm:3.24.2"
   peerDependencies:
     "@grafana/data": ^10.4.0 ||^11 || ^12
     "@grafana/runtime": ^10.4.0 || ^11 || ^12
@@ -18140,6 +18148,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
+    "@grafana/assistant": "file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
@@ -33020,6 +33029,13 @@ __metadata:
   peerDependencies:
     zod: ^3.24.1
   checksum: 10/1af291b4c429945c9568c2e924bdb7c66ab8d139cbeb9a99b6e9fc9e1b02863f85d07759b9303714f07ceda3993dcaf0ebcb80d2c18bb2aaf5502b2c1016affd
+  languageName: node
+  linkType: hard
+
+"zod@npm:3.24.2":
+  version: 3.24.2
+  resolution: "zod@npm:3.24.2"
+  checksum: 10/604c62a8cf8e330d78b106a557f4b44f5d14845d20b1360a423ccc09b58cb8525ccf7e4b40cf1bd4852d22393d2c67774b5817ec5a2fedab25f543b36ed15943
   languageName: node
   linkType: hard
 
