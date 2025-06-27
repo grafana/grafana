@@ -2986,8 +2986,8 @@ __metadata:
 
 "@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::locator=grafana%40workspace%3A.":
   version: 1.0.0
-  resolution: "@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant#/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::hash=252e7b&locator=grafana%40workspace%3A."
-  checksum: 10/e3bd2ade78c64bb5868cf2e9fb2fdb0e4265dc1bc7b6ef12cfc01a5e2482caa1de1cbd7c8e0bb9c63309751aa57dbd0090a2ccf29c4aa8c85326c1c8cec13e1c
+  resolution: "@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant#/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::hash=0677d0&locator=grafana%40workspace%3A."
+  checksum: 10/14ed0fa59dd20677fc6d4c35f2fc4416be31230d459a22dc9b33981ff3a683ff4c22b957e03cde5c555a07c5c94a562211fcfaf2f0365d82d24ea409e06a799d
   languageName: node
   linkType: hard
 
