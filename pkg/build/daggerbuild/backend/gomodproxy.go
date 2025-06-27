@@ -75,7 +75,7 @@ func WithGoModProxy(
 	})
 
 	return c.WithFile("/bin/go-cache-plugin", svc.File("/bin/go-cache-plugin")).
-		WithEnvVariable("GOPROXY", "http://localhost:12345/mod").
+		WithEnvVariable("GOPROXY", "http://gocache:12345/mod").
 		WithEnvVariable("GOSUMDB", "sum.golang.org http://localhost:12345/mod/sumdb/sum.golang.org").
 		WithEnvVariable("GOCACHEPROG", `go-cache-plugin connect gocache:1234`).
 		WithServiceBinding("gocache", s)
