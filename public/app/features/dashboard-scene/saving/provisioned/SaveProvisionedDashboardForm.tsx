@@ -87,7 +87,7 @@ export function SaveProvisionedDashboardForm({
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { handleSubmit, watch, control, reset, register, setValue } = methods;
-  const [workflow] = watch(['workflow']);
+  const [workflow, description] = watch(['workflow', 'description']);
 
   // AI loading states
   const [aiLoading, setAiLoading] = useState({
@@ -105,7 +105,7 @@ export function SaveProvisionedDashboardForm({
   }, [defaultValues, reset]);
 
   // Typing effect function
-  const typeText = async (text: string, setValue: (value: string) => void, delay = 50) => {
+  const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
     setValue(''); // Clear the field first
     for (let i = 0; i <= text.length; i++) {
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -337,7 +337,8 @@ export function SaveProvisionedDashboardForm({
               >
                 <TextAreaWithSuffix
                   id="dashboard-description"
-                  {...register('description')}
+                  value={description || ''}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('description', e.target.value)}
                   suffix={
                     <IconButton
                       name={aiLoading.description ? "spinner" : "ai-sparkle"}

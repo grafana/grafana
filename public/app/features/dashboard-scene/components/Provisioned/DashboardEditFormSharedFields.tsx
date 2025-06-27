@@ -74,8 +74,11 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
       control,
       register,
       setValue,
+      watch,
       formState: { errors },
     } = useFormContext();
+
+    const comment = watch('comment');
 
     const pathText =
       resourceType === 'dashboard'
@@ -94,7 +97,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
     const currentSetAiLoading = setAiLoading || setLocalAiLoading;
 
     // Typing effect function
-    const typeText = async (text: string, setValue: (value: string) => void, delay = 50) => {
+    const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
       setValue(''); // Clear the field first
       for (let i = 0; i <= text.length; i++) {
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -193,7 +196,8 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
         >
           <TextAreaWithSuffix
             id="provisioned-resource-form-comment"
-            {...register('comment')}
+            value={comment || ''}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('comment', e.target.value)}
             disabled={readOnly}
             placeholder={t(
               'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
