@@ -348,7 +348,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client := resource.NewLegacyResourceClient(conn)
+	client := resource.NewLegacyResourceClient(conn, conn)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
