@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 const INPUT_DIR = "testdata/input"
@@ -22,24 +23,8 @@ func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
 
-	migration.Initialize(&mockDataSourceInfoProvider{
-		dataSourceInfo: []schemaversion.DataSourceInfo{
-			{
-				Default: true,
-				UID:     "default-ds-uid",
-				ID:      1,
-				Type:    "prometheus",
-				Name:    "Default Test Datasource",
-			},
-			{
-				UID:        "non-default-test-ds-uid",
-				ID:         2,
-				Type:       "loki",
-				Name:       "Non Default Test Datasource",
-				APIVersion: "1",
-			},
-		},
-	})
+	// Use the same datasource provider as the frontend test to ensure consistency
+	migration.Initialize(testutil.GetTestProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(map[string]interface{}{
@@ -116,14 +101,4 @@ func load(t *testing.T, path string) (dash map[string]interface{}, inputVersion 
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
 	inputVersion, name = parseInputName(t, path)
 	return dash, inputVersion, name
-}
-
-var _ schemaversion.DataSourceInfoProvider = &mockDataSourceInfoProvider{}
-
-type mockDataSourceInfoProvider struct {
-	dataSourceInfo []schemaversion.DataSourceInfo
-}
-
-func (m *mockDataSourceInfoProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
-	return m.dataSourceInfo
 }

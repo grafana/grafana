@@ -8,6 +8,13 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 
+// Set the minimum version to test (set to 0 to test all versions)
+// Change this to test specific migration versions, e.g.:
+// - Set to 32 to only test v32 and above
+// - Set to 33 to only test v33 and above
+// - Set to 0 to test all versions
+const MIN_VERSION_TO_TEST = 40;
+
 // Set up the same datasources as DashboardMigrator.test.ts to ensure consistency
 const dataSources = {
   default: mockDataSource({
@@ -83,6 +90,15 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs.forEach((inputFile) => {
+    // Parse the input filename to get the version
+    const parts = inputFile.split('.');
+    const inputVersion = parseInt(parts[0], 10);
+
+    // Skip test if version is below minimum
+    if (MIN_VERSION_TO_TEST > 0 && inputVersion < MIN_VERSION_TO_TEST) {
+      return;
+    }
+
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
