@@ -40,6 +40,7 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 
 	return []any{
 		outOfSupportVersion, // out of support version check
+		outOfDateVersion,    // out of date version check
 	}, nil
 }
 
@@ -66,6 +67,10 @@ func (c *check) Steps() []checks.Step {
 		&outOfSupportVersionStep{
 			GrafanaVersion: c.cfg.BuildVersion,
 			BuildDate:      time.Unix(c.cfg.BuildStamp, 0).UTC(),
+			ghClient:       github.NewClient(nil).Repositories,
+		},
+		&outOfDateVersionStep{
+			GrafanaVersion: "v10.4.17", //c.cfg.BuildVersion,
 			ghClient:       github.NewClient(nil).Repositories,
 		},
 	}
