@@ -610,11 +610,6 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a data source has an invalid UIDs
-  * @default true
-  */
-  failWrongDSUID?: boolean;
-  /**
   * Use openFGA as authorization engine.
   */
   zanzana?: boolean;

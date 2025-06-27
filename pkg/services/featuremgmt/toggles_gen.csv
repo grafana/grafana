@@ -135,7 +135,6 @@ azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,fals
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
-failWrongDSUID,GA,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
