@@ -306,7 +306,7 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date(),
+          new Date()
         );
       });
     });
@@ -335,7 +335,7 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date(),
+          new Date()
         );
       });
     });

@@ -197,7 +197,7 @@ export function trackGroupedQueries(
   response: DataQueryResponse,
   groupedRequests: LokiGroupedRequest[],
   originalRequest: DataQueryRequest<LokiQuery>,
-  startTime: Date,
+  startTime: Date
 ): void {
   const splittingPayload = {
     split_query_group_count: groupedRequests.length,
