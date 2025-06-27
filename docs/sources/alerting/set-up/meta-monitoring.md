@@ -56,14 +56,16 @@ This `GRAFANA_ALERTS` metric is compatible with the `ALERTS` metric used by Prom
 1. A new `grafana_rule_uid` label for the UID of the Grafana rule.
 2. A new `grafana_alertstate` label for the Grafana alert state, which differs slightly from the equivalent Prometheus state included in the `alertstate` label.
 
-   | Grafana state  | `alertstate`          | `grafana_alertstate`  |
-   | -------------- | --------------------- | --------------------- |
-   | **Alerting**   | `firing`              | `alerting`            |
-   | **Recovering** | `firing`              | `recovering`          |
-   | **Pending**    | `pending`             | `pending`             |
-   | **Error**      | `firing`              | `error`               |
-   | **NoData**     | `firing`              | `nodata`              |
-   | **Normal**     | _(no metric emitted)_ | _(no metric emitted)_ |
+Alert labels are automatically converted before being written to Prometheus to ensure compatibility. Prometheus requires label names to start with a letter or underscore (`_`), followed only by letters, numbers, or additional underscores. Invalid characters are replaced during conversion. For example, `1my-label` becomes `_my_label`.
+
+| Grafana state  | `alertstate`          | `grafana_alertstate`  |
+| -------------- | --------------------- | --------------------- |
+| **Alerting**   | `firing`              | `alerting`            |
+| **Recovering** | `firing`              | `recovering`          |
+| **Pending**    | `pending`             | `pending`             |
+| **Error**      | `firing`              | `error`               |
+| **NoData**     | `firing`              | `nodata`              |
+| **Normal**     | _(no metric emitted)_ | _(no metric emitted)_ |
 
 You can then query this metric like any other Prometheus metric:
 
