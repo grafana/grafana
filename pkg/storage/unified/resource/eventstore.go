@@ -152,12 +152,14 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		return Event{}, err
 	}
 	var event Event
-	err = json.NewDecoder(obj.Value).Decode(&event)
-
+	if err = json.NewDecoder(obj.Value).Decode(&event); err != nil {
+		_ = obj.Value.Close()
+		return Event{}, err
+	}
 	if err = obj.Value.Close(); err != nil {
 		return Event{}, err
 	}
-	return event, err
+	return event, nil
 }
 
 // ListSince returns a sequence of events since the given resource version.
