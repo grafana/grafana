@@ -377,7 +377,7 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
+    // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
     // Should log a warning
@@ -430,7 +430,7 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
+    // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
     // Should log a warning
