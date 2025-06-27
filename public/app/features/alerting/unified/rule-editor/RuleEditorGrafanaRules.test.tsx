@@ -11,12 +11,7 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
-import {
-  grafanaRulerGroup,
-  grafanaRulerGroup2,
-  grafanaRulerGroupName2,
-  grafanaRulerRule,
-} from '../mocks/grafanaRulerApi';
+import { grafanaRulerGroup, grafanaRulerGroup2, grafanaRulerRule } from '../mocks/grafanaRulerApi';
 import { setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';

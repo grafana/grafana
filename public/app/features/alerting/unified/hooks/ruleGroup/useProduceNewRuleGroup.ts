@@ -1,4 +1,4 @@
-import { Action, isAction } from '@reduxjs/toolkit';
+import { Action } from '@reduxjs/toolkit';
 
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
