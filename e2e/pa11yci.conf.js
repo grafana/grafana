@@ -109,6 +109,10 @@ const config = {
       url: '${HOST}/dashboards',
       threshold: 2,
     },
+    {
+      url: '${HOST}/org/teams',
+      threshold: 2,
+    },
   ],
 };
 
