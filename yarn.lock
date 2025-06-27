@@ -2713,6 +2713,48 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/data": "npm:12.1.0-pre"
+    "@grafana/e2e-selectors": "npm:12.1.0-pre"
+    "@grafana/lezer-logql": "npm:0.2.7"
+    "@grafana/llm": "npm:0.22.1"
+    "@grafana/monaco-logql": "npm:^0.0.8"
+    "@grafana/plugin-configs": "npm:12.1.0-pre"
+    "@grafana/runtime": "npm:12.1.0-pre"
+    "@grafana/schema": "npm:12.1.0-pre"
+    "@grafana/ui": "npm:12.1.0-pre"
+    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/react": "npm:16.2.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/d3-random": "npm:^3.0.2"
+    "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:4.17.15"
+    "@types/node": "npm:22.15.0"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/uuid": "npm:10.0.0"
+    d3-random: "npm:^3.0.1"
+    lodash: "npm:4.17.21"
+    micro-memoize: "npm:^4.1.2"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-select: "npm:5.10.1"
+    react-use: "npm:17.6.0"
+    rxjs: "npm:7.8.2"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.8.1"
+    typescript: "npm:5.7.3"
+    uuid: "npm:11.1.0"
+    webpack: "npm:5.97.1"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
