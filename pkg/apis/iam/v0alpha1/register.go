@@ -173,7 +173,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&iamv0alpha1.UserTeamList{},
 		&iamv0alpha1.ServiceAccount{},
 		&iamv0alpha1.ServiceAccountList{},
-		&iamv0alpha1.ServiceAccountTokenList{},
+		&ServiceAccountTokenList{},
 		&iamv0alpha1.Team{},
 		&iamv0alpha1.TeamList{},
 		&DisplayList{},

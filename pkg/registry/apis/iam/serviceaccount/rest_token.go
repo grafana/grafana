@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -33,7 +33,7 @@ type LegacyTokenRest struct {
 
 // New implements rest.Storage.
 func (s *LegacyTokenRest) New() runtime.Object {
-	return &iamv0alpha1.ServiceAccountTokenList{}
+	return &legacyiamv0.ServiceAccountTokenList{}
 }
 
 // Destroy implements rest.Storage.
@@ -71,7 +71,7 @@ func (s *LegacyTokenRest) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		list := &iamv0alpha1.ServiceAccountTokenList{Items: make([]iamv0alpha1.ServiceAccountToken, 0, len(res.Items))}
+		list := &legacyiamv0.ServiceAccountTokenList{Items: make([]legacyiamv0.ServiceAccountToken, 0, len(res.Items))}
 
 		for _, t := range res.Items {
 			list.Items = append(list.Items, mapToToken(t, ns))
@@ -93,7 +93,7 @@ func (s *LegacyTokenRest) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) iamv0alpha1.ServiceAccountToken {
+func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) legacyiamv0.ServiceAccountToken {
 	var expires, lastUsed *metav1.Time
 
 	if t.Expires != nil {
@@ -106,7 +106,7 @@ func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) iamv0alph
 		lastUsed = &ts
 	}
 
-	return iamv0alpha1.ServiceAccountToken{
+	return legacyiamv0.ServiceAccountToken{
 		Name:     t.Name,
 		Expires:  expires,
 		LastUsed: lastUsed,

@@ -1,33 +1,24 @@
 package kinds
 
-// import (
-// 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
-// )
+import (
+	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
+)
 
-// serviceaccounttoken: {
-// 	kind:       "ServiceAccountToken"
-// 	pluralName: "ServiceAccountTokens"
-// 	current:    "v0alpha1"
+serviceaccounttoken: {
+	kind:       "ServiceAccountToken"
+	pluralName: "ServiceAccountTokens"
+	current:    "v0alpha1"
     
-// 	codegen: {
-// 		ts: { enabled: false }
-// 		go: { enabled: true }
-// 	}
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
 
-// 	versions: {
-// 		"v0alpha1": {
-// 			schema: {
-// 				spec: v0alpha1.ServiceAccountTokenSpec
-// 			}
-// 		}
-// 	}
-// }
-
-
-// serviceaccounttoken: {
-//    name: string       
-// 	revoked: bool         
-// 	expires: string & time.Time
-// 	lastUsed: string & time.Time
-// 	created: string & time.Time
-// }
+	versions: {
+		"v0alpha1": {
+			schema: {
+				spec: v0alpha1.ServiceAccountTokenSpec
+			}
+		}
+	}
+}

@@ -1,11 +1,11 @@
 package v0alpha1
 
-import "time"
+import t "time"
 
 ServiceAccountTokenSpec: {
-	name: string       
+    name: string       
 	revoked: bool         
-	expires: string & time.Time
-	lastUsed: string & time.Time
-	created: string & time.Time
+	expires: string & t.Time
+	lastUsed: string & t.Time
+	created: string & t.Time
 }

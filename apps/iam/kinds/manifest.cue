@@ -14,7 +14,7 @@ manifest: {
 		team,
 		teambinding,
 		serviceaccount,
-		// serviceaccounttoken,
+		// serviceaccounttoken, // TODO: in the previous implementation it was not a kind, but a custom response type
 		userteam,
 	]
 }
