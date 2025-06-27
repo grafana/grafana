@@ -249,6 +249,7 @@ function useDataSourceConfigPluginExtensions(): UsePluginComponentsResult<DataSo
     const allowedComponents = components.filter((component) => {
       switch (component.meta.pluginId) {
         case 'grafana-pdc-app':
+        case 'leventebalogh-test-app':
         case 'grafana-auth-app':
           return true;
         default:
