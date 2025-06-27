@@ -235,7 +235,6 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
               'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
               'Add a note to describe your changes (optional)'
             )}
-            rows={5}
             suffix={
               !readOnly ? (
                 <IconButton
