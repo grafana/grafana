@@ -269,8 +269,8 @@ type testModuleServer struct {
 }
 
 func getRandomPort() int {
-	ln, _ := net.Listen("tcp", ":0")
-	defer ln.Close()
+	ln, _ := net.Listen("tcp", "127.0.0.1:0")
+	_ = ln.Close()
 	return ln.Addr().(*net.TCPAddr).Port
 }
 
