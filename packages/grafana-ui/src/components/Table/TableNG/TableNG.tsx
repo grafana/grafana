@@ -33,6 +33,7 @@ import {
   useColumnResize,
   useFilteredRows,
   useFooterCalcs,
+  useHeaderHeight,
   usePaginatedRows,
   useRowHeight,
   useSortedRows,
@@ -146,7 +147,15 @@ export function TableNG(props: TableNGProps) {
     [width, hasNestedFrames]
   );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-  const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
+  const headerHeight = useHeaderHeight(
+    widths,
+    visibleFields,
+    hasHeader,
+    defaultRowHeight,
+    sortColumns,
+    !!showTypeIcons
+  );
+  const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, headerHeight, expandedRows);
 
   const {
     rows: paginatedRows,
@@ -160,8 +169,8 @@ export function TableNG(props: TableNGProps) {
     enabled: enablePagination,
     width: availableWidth,
     height,
-    hasHeader,
-    hasFooter,
+    headerHeight,
+    footerHeight: hasFooter ? defaultRowHeight : 0,
     rowHeight,
   });
 
@@ -224,16 +233,16 @@ export function TableNG(props: TableNGProps) {
         sortColumns,
         rowHeight,
         headerRowClass: styles.headerRow,
-        headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
+        headerRowHeight: headerHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
       resizeHandler,
       sortColumns,
-      rowHeight,
+      headerHeight,
       styles.headerRow,
-      noHeader,
+      rowHeight,
       hasFooter,
       setSortColumns,
       onSortByChange,
@@ -691,7 +700,11 @@ const getGridStyles = (
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
-    ...(noHeader && { display: 'none' }),
+    ...(noHeader ? { display: 'none' } : {}),
+    '& .rdg-cell': {
+      height: '100%',
+      alignItems: 'flex-end',
+    },
   }),
   paginationContainer: css({
     alignItems: 'center',

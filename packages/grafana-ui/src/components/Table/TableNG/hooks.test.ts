@@ -134,7 +134,14 @@ describe('TableNG hooks', () => {
     it('should return defaults for pagination values when pagination is disabled', () => {
       const { rows } = setupData();
       const { result } = renderHook(() =>
-        usePaginatedRows(rows, { rowHeight: 30, height: 300, width: 800, enabled: false })
+        usePaginatedRows(rows, {
+          rowHeight: 30,
+          height: 300,
+          width: 800,
+          enabled: false,
+          headerHeight: 28,
+          footerHeight: 0,
+        })
       );
 
       expect(result.current.page).toBe(-1);
@@ -153,6 +160,39 @@ describe('TableNG hooks', () => {
           height: 60,
           width: 800,
           rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+        })
+      );
+
+      expect(result.current.page).toBe(0);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(1);
+      expect(result.current.pageRangeEnd).toBe(2);
+      expect(result.current.rows.length).toBe(2);
+
+      act(() => {
+        result.current.setPage(1);
+      });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.rowsPerPage).toBe(2);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
+    it('should handle header and footer correctly', () => {
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 140,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 28,
+          footerHeight: 45,
         })
       );
 
