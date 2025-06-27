@@ -11,19 +11,15 @@ import (
 )
 
 const testAlertmanagerConfigYAML = `
-global:
-  smtp_smarthost: localhost:587
-  smtp_from: alertmanager@example.org
-
 route:
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: web.hook
+  receiver: webhook
 
 receivers:
-- name: web.hook
+- name: webhook
   webhook_configs:
   - url: 'http://127.0.0.1:5001/'
 
@@ -53,8 +49,17 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
+	cleanup := func(identifier string) {
+		deleteHeaders := map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		}
+		_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.Equal(t, http.StatusAccepted, status)
+	}
+
 	t.Run("create and get alertmanager configuration", func(t *testing.T) {
 		identifier := "test-create-get-config"
+		defer cleanup(identifier)
 		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
@@ -81,19 +86,14 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Contains(t, retrievedConfig.TemplateFiles, "test.tmpl")
 		require.Equal(t, `{{ define "test.template" }}Test template{{ end }}`, retrievedConfig.TemplateFiles["test.tmpl"])
 
-		// Verify the configuration contains expected content
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "smtp_smarthost: localhost:587")
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "web.hook")
-
-		// Cleanup
-		deleteHeaders := map[string]string{
-			"X-Grafana-Alerting-Config-Identifier": identifier,
-		}
-		apiClient.ConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
 	})
 
 	t.Run("delete alertmanager configuration", func(t *testing.T) {
 		identifier := "test-delete-config"
+		defer cleanup(identifier)
 		mergeMatchers := "environment=production,team=backend"
 
 		headers := map[string]string{
@@ -126,7 +126,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		t.Run("POST without config identifier header should fail", func(t *testing.T) {
+		t.Run("POST without config identifier header should use default identifier", func(t *testing.T) {
+			defer cleanup("")
+
 			headers := map[string]string{
 				"Content-Type":                      "application/yaml",
 				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
@@ -137,7 +139,14 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			}
 
 			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			getHeaders := map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": "default",
+			}
+			responseConfig, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
+			requireStatusCode(t, http.StatusOK, status, "")
+			require.NotEmpty(t, responseConfig.AlertmanagerConfig)
 		})
 
 		t.Run("POST without merge matchers header should fail", func(t *testing.T) {
@@ -184,16 +193,33 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
-		t.Run("DELETE without config identifier header should fail", func(t *testing.T) {
-			headers := map[string]string{}
+		t.Run("DELETE without config identifier header should use default identifier", func(t *testing.T) {
+			createHeaders := map[string]string{
+				"Content-Type":                      "application/yaml",
+				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
+			}
 
-			_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			amConfig := apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: testAlertmanagerConfigYAML,
+			}
+
+			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, createHeaders)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusOK, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusNotFound, status, "")
 		})
 	})
 
 	t.Run("update existing configuration", func(t *testing.T) {
 		identifier := "test-update-config"
+		defer cleanup(identifier)
 
 		headers := map[string]string{
 			"Content-Type":                         "application/yaml",
@@ -213,19 +239,15 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 
 		// Update the same configuration with new content
 		updatedConfigYAML := `
-global:
-  smtp_smarthost: localhost:25
-  smtp_from: updated@example.org
-
 route:
   group_by: ['service']
   group_wait: 5s
   group_interval: 5s
   repeat_interval: 30m
-  receiver: updated.hook
+  receiver: updated-webhook
 
 receivers:
-- name: updated.hook
+- name: updated-webhook
   webhook_configs:
   - url: 'http://127.0.0.1:8080/updated'
 `
@@ -245,21 +267,19 @@ receivers:
 			"X-Grafana-Alerting-Config-Identifier": identifier,
 		}
 		retrievedConfig := apiClient.ConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
-		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "updated@example.org")
-		require.Contains(t, retrievedConfig.AlertmanagerConfig, "updated.hook")
-		require.Contains(t, retrievedConfig.TemplateFiles, "updated.tmpl")
-		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 
-		deleteHeaders := map[string]string{
-			"X-Grafana-Alerting-Config-Identifier": identifier,
-		}
-		apiClient.ConvertPrometheusDeleteAlertmanagerConfig(t, deleteHeaders)
+		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
+
+		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 	})
 
 	t.Run("multiple extra configurations conflict", func(t *testing.T) {
 		firstIdentifier := "first-config"
 		secondIdentifier := "second-config"
+		defer cleanup(firstIdentifier)
 
 		// Create first configuration
 		firstHeaders := map[string]string{
