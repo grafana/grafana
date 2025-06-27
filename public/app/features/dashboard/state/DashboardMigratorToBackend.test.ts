@@ -32,9 +32,6 @@ import { DashboardModel } from './DashboardModel';
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
 
-// Set the minimum version to test (set to 0 to test all versions)
-const MIN_VERSION_TO_TEST = 38;
-
 // Set up the same datasources as DashboardMigrator.test.ts to ensure consistency
 const dataSources = {
   default: mockDataSource({
@@ -109,28 +106,22 @@ describe('Backend / Frontend result comparison', () => {
 
   const jsonInputs = readdirSync(inputDir);
 
-  jsonInputs.forEach((inputFile) => {
-    // Parse the input filename to get the version
-    const parts = inputFile.split('.');
-    const inputVersion = parseInt(parts[0], 10);
+  // Set the minimum version to test (set to 0 to test all versions)
+  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37];
 
+  jsonInputs.forEach((inputFile) => {
     // Skip test if version is below minimum
-    if (MIN_VERSION_TO_TEST > 0 && inputVersion < MIN_VERSION_TO_TEST) {
+    if (
+      MIN_VERSION_TO_TEST.length > 0 &&
+      !MIN_VERSION_TO_TEST.includes(parseInt(inputFile.split('.')[0].replace('v', ''), 10))
+    ) {
       return;
     }
 
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
-      // Parse the input filename to get the version and name
-      const parts = inputFile.split('.');
-      const inputVersion = parts[0];
-      const name = parts.slice(1, -1).join('.');
-
-      // Construct output filename using the new naming convention: {inputVersion}.{name}.json
-      const outputFileName = `${inputVersion}.${name}.json`;
-
-      const backendOutput = JSON.parse(readFileSync(path.join(outputDir, outputFileName), 'utf8'));
+      const backendOutput = JSON.parse(readFileSync(path.join(outputDir, inputFile), 'utf8'));
 
       // Make sure the backend output always migrates to the latest version
       expect(backendOutput.schemaVersion).toEqual(DASHBOARD_SCHEMA_VERSION);
