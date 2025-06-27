@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 
 	"dagger.io/dagger"
@@ -78,6 +79,12 @@ func ViceroyContainer(
 	return WithViceroyEnv(log, container, distro, opts)
 }
 
+func WithGoCachePlugin(c *dagger.Container, platform dagger.Platform) *dagger.Container {
+	return c.
+		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.1/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
+		WithExec([]string{"chmod", "+x", "/bin/go-cache-plugin"})
+}
+
 func GolangContainer(
 	d *dagger.Client,
 	log *slog.Logger,
@@ -103,9 +110,7 @@ func GolangContainer(
 		WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
 		WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
 		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.1/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
-		WithExec([]string{"chmod", "+x", "/bin/go-cache-plugin"})
+		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
 
 	return WithGoEnv(log, container, distro, opts)
 }
@@ -154,12 +159,12 @@ func Builder(
 		return nil, err
 	}
 
-	builder = builder.
-		WithMountedCache("/root/.cache/go", goBuildCache).
-		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	if prog := opts.GoCacheProg; prog != "" {
-		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	if _, ok := os.LookupEnv("GOCACHE_S3_BUCKET"); ok {
+		builder = WithGoModProxy(d, platform, builder, goVersion, goModCache)
+	} else {
+		builder = builder.
+			WithMountedCache("/root/.cache/go", goBuildCache).
+			WithEnvVariable("GOCACHE", "/root/.cache/go")
 	}
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
