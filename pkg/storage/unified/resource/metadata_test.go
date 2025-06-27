@@ -155,7 +155,7 @@ func TestMetadataStore_Get_NotFound(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestMetadataStore_GetLatest(t *testing.T) {
+func TestMetadataStore_GetLatestKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -171,7 +171,7 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	rv2 := node.Generate().Int64()
 	rv3 := node.Generate().Int64()
 
-	// Save multiple versions (uid3 should be latest)
+	// Save multiple versions (rv3 should be latest)
 	metadata1 := MetaData{
 		IndexableDocument: IndexableDocument{
 			Title: "Initial version",
@@ -212,8 +212,8 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Get latest should return uid3
-	latestObj, err := store.GetLatest(ctx, MetaGetRequestKey{
+	// GetLatestKey should return rv3
+	latestKey, err := store.GetLatestKey(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -221,11 +221,11 @@ func TestMetadataStore_GetLatest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, key, latestObj.Key)
-	assert.Equal(t, metadata3, latestObj.Value)
+	assert.Equal(t, key, latestKey)
+	assert.Equal(t, rv3, latestKey.ResourceVersion)
 }
 
-func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
+func TestMetadataStore_GetLatestKey_Deleted(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -246,7 +246,7 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetLatest(ctx, MetaGetRequestKey{
+	_, err = store.GetLatestKey(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -255,73 +255,67 @@ func TestMetadataStore_GetLatest_Deleted(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestMetadataStore_GetLatest_ValidationErrors(t *testing.T) {
+func TestMetadataStore_GetKeyAtRevision(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	tests := []struct {
-		name string
-		key  MetaGetRequestKey
-	}{
-		{
-			name: "missing namespace",
-			key: MetaGetRequestKey{
-				Group:    "apps",
-				Resource: "resource",
-				Name:     "test-resource",
-			},
-		},
-		{
-			name: "missing group",
-			key: MetaGetRequestKey{
-				Namespace: "default",
-				Resource:  "resource",
-				Name:      "test-resource",
-			},
-		},
-		{
-			name: "missing resource",
-			key: MetaGetRequestKey{
-				Namespace: "default",
-				Group:     "apps",
-				Name:      "test-resource",
-			},
-		},
-		{
-			name: "missing name",
-			key: MetaGetRequestKey{
-				Namespace: "default",
-				Group:     "apps",
-				Resource:  "resource",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := store.GetLatest(ctx, tt.key)
-			assert.Error(t, err)
-		})
-	}
-}
-
-func TestMetadataStore_GetLatest_NoVersionsFound(t *testing.T) {
-	store := setupTestMetadataStore(t)
-	ctx := context.Background()
-
-	key := MetaGetRequestKey{
+	key := MetaDataKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
 		Name:      "test-resource",
 	}
 
-	_, err := store.GetLatest(ctx, key)
-	assert.Error(t, err)
-	assert.Equal(t, ErrNotFound, err)
+	// Create multiple versions
+	rv1 := node.Generate().Int64()
+	rv2 := node.Generate().Int64()
+	rv3 := node.Generate().Int64()
+
+	metadata1 := MetaData{}
+	metadata2 := MetaData{}
+	metadata3 := MetaData{}
+
+	key.ResourceVersion = rv1
+	key.Action = DataActionCreated
+	err := store.Save(ctx, MetaDataObj{Key: key, Value: metadata1})
+	require.NoError(t, err)
+
+	key.ResourceVersion = rv2
+	key.Action = DataActionUpdated
+	err = store.Save(ctx, MetaDataObj{Key: key, Value: metadata2})
+	require.NoError(t, err)
+
+	key.ResourceVersion = rv3
+	key.Action = DataActionUpdated
+	err = store.Save(ctx, MetaDataObj{Key: key, Value: metadata3})
+	require.NoError(t, err)
+
+	// Get key at rv2 should return rv2
+	metaKey, err := store.GetKeyAtRevision(ctx, MetaGetRequestKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rv2)
+	require.NoError(t, err)
+
+	assert.Equal(t, rv2, metaKey.ResourceVersion)
+	assert.Equal(t, DataActionUpdated, metaKey.Action)
+
+	// Get key at rv1 should return rv1
+	metaKey, err = store.GetKeyAtRevision(ctx, MetaGetRequestKey{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rv1)
+	require.NoError(t, err)
+
+	assert.Equal(t, rv1, metaKey.ResourceVersion)
+	assert.Equal(t, DataActionCreated, metaKey.Action)
 }
 
-func TestMetadataStore_ListLatest(t *testing.T) {
+func TestMetadataStore_LatestResourceKeys(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -355,25 +349,29 @@ func TestMetadataStore_ListLatest(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// List latest metadata objects
-	var results []MetaDataObj
-	for obj, err := range store.ListLatest(ctx, MetaListRequestKey{
+	// List latest metadata keys
+	var resultKeys []MetaDataKey
+	for metaKey, err := range store.LatestResourceKeys(ctx, MetaListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 		Name:      key.Name,
 	}) {
 		require.NoError(t, err)
-		results = append(results, obj)
+		resultKeys = append(resultKeys, metaKey)
 	}
 
-	assert.Len(t, results, 1)
-	assert.Equal(t, key, results[0].Key)
-	assert.Equal(t, rv2, results[0].Key.ResourceVersion)
-	assert.Equal(t, metadata2, results[0].Value)
+	assert.Len(t, resultKeys, 1)
+	assert.Equal(t, key, resultKeys[0])
+	assert.Equal(t, rv2, resultKeys[0].ResourceVersion)
+
+	// Get the metadata to verify
+	metadata, err := store.Get(ctx, resultKeys[0])
+	require.NoError(t, err)
+	assert.Equal(t, metadata2, metadata)
 }
 
-func TestMetadataStore_ListAtRevision(t *testing.T) {
+func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 	store := newMetadataStore(setupTestKV(t))
 	ctx := context.Background()
 
@@ -450,37 +448,37 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, rv1) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 1)
-		assert.Equal(t, "resource1", results[0].Key.Name)
-		assert.Equal(t, rv1, results[0].Key.ResourceVersion)
-		assert.Equal(t, DataActionCreated, results[0].Key.Action)
+		require.Len(t, resultKeys, 1)
+		assert.Equal(t, "resource1", resultKeys[0].Name)
+		assert.Equal(t, rv1, resultKeys[0].ResourceVersion)
+		assert.Equal(t, DataActionCreated, resultKeys[0].Action)
 	})
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, rv2) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 3) // resource1, resource2, resource4
+		require.Len(t, resultKeys, 3) // resource1, resource2, resource4
 		names := make(map[string]int64)
-		for _, result := range results {
-			names[result.Key.Name] = result.Key.ResourceVersion
+		for _, result := range resultKeys {
+			names[result.Name] = result.ResourceVersion
 		}
 
 		assert.Equal(t, rv1, names["resource1"]) // Should be the original version
@@ -489,22 +487,22 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, rv3) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 3) // resource1 (updated), resource2, resource4
+		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource4
 		names := make(map[string]int64)
 		actions := make(map[string]DataAction)
-		for _, result := range results {
-			names[result.Key.Name] = result.Key.ResourceVersion
-			actions[result.Key.Name] = result.Key.Action
+		for _, result := range resultKeys {
+			names[result.Name] = result.ResourceVersion
+			actions[result.Name] = result.Action
 		}
 
 		assert.Equal(t, rv3, names["resource1"]) // Should be the updated version
@@ -514,20 +512,20 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv4 - should return", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, rv4) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 4) // resource1 (updated), resource2, resource3, resource4
+		require.Len(t, resultKeys, 4) // resource1 (updated), resource2, resource3, resource4
 		names := make(map[string]int64)
-		for _, result := range results {
-			names[result.Key.Name] = result.Key.ResourceVersion
+		for _, result := range resultKeys {
+			names[result.Name] = result.ResourceVersion
 		}
 
 		assert.Equal(t, rv3, names["resource1"])
@@ -537,20 +535,20 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, rv5) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 3) // resource1 (updated), resource2, resource3 (resource4 excluded because deleted)
+		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource3 (resource4 excluded because deleted)
 		names := make(map[string]bool)
-		for _, result := range results {
-			names[result.Key.Name] = true
+		for _, result := range resultKeys {
+			names[result.Name] = true
 		}
 
 		assert.True(t, names["resource1"])
@@ -560,39 +558,39 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	})
 
 	t.Run("list with specific resource name", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 			Name:      "resource1",
 		}, rv3) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
-		require.Len(t, results, 1)
-		assert.Equal(t, "resource1", results[0].Key.Name)
-		assert.Equal(t, rv3, results[0].Key.ResourceVersion)
-		assert.Equal(t, DataActionUpdated, results[0].Key.Action)
+		require.Len(t, resultKeys, 1)
+		assert.Equal(t, "resource1", resultKeys[0].Name)
+		assert.Equal(t, rv3, resultKeys[0].ResourceVersion)
+		assert.Equal(t, DataActionUpdated, resultKeys[0].Action)
 	})
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
-		var results []MetaDataObj
-		for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+		var resultKeys []MetaDataKey
+		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
 		}, 0) {
 			require.NoError(t, err)
-			results = append(results, obj)
+			resultKeys = append(resultKeys, metaKey)
 		}
 
 		// Should return all non-deleted resources at their latest versions
-		require.Len(t, results, 3) // resource1 (updated), resource2, resource3
+		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource3
 		names := make(map[string]bool)
-		for _, result := range results {
-			names[result.Key.Name] = true
+		for _, result := range resultKeys {
+			names[result.Name] = true
 		}
 
 		assert.True(t, names["resource1"])
@@ -602,7 +600,7 @@ func TestMetadataStore_ListAtRevision(t *testing.T) {
 	})
 }
 
-func TestMetadataStore_ListAtRevision_ValidationErrors(t *testing.T) {
+func TestMetadataStore_ResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -635,36 +633,36 @@ func TestMetadataStore_ListAtRevision_ValidationErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var results []MetaDataObj
-			for obj, err := range store.ListAtRevision(ctx, tt.key, 0) {
+			var resultKeys []MetaDataKey
+			for metaKey, err := range store.ResourceKeysAtRevision(ctx, tt.key, 0) {
 				if err != nil {
 					assert.Error(t, err)
 					return
 				}
-				results = append(results, obj)
+				resultKeys = append(resultKeys, metaKey)
 			}
 		})
 	}
 }
 
-func TestMetadataStore_ListAtRevision_EmptyResults(t *testing.T) {
+func TestMetadataStore_ResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	var results []MetaDataObj
-	for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+	var resultKeys []MetaDataKey
+	for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
 	}, 0) {
 		require.NoError(t, err)
-		results = append(results, obj)
+		resultKeys = append(resultKeys, metaKey)
 	}
 
-	assert.Len(t, results, 0)
+	assert.Len(t, resultKeys, 0)
 }
 
-func TestMetadataStore_ListAtRevision_ResourcesNewerThanRevision(t *testing.T) {
+func TestMetadataStore_ResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -683,18 +681,18 @@ func TestMetadataStore_ListAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	// List at a revision before the resource was created
-	var results []MetaDataObj
-	for obj, err := range store.ListAtRevision(ctx, MetaListRequestKey{
+	var resultKeys []MetaDataKey
+	for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
 	}, rv-1000) {
 		require.NoError(t, err)
-		results = append(results, obj)
+		resultKeys = append(resultKeys, metaKey)
 	}
 
 	// Should return no results since the resource is newer than the target revision
-	assert.Len(t, results, 0)
+	assert.Len(t, resultKeys, 0)
 }
 
 func TestMetaDataKey_Validate_Valid(t *testing.T) {
