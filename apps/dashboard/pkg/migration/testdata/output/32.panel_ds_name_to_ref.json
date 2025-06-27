@@ -15,9 +15,9 @@
       },
       {
         "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "enable": true,
         "name": "Test Annotation by Name",
@@ -35,6 +35,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -44,6 +45,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -52,6 +54,11 @@
         "type": "dashboard"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-123456"
         },
@@ -64,6 +71,11 @@
         "statistic": "Average"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -77,6 +89,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -86,6 +99,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -94,6 +108,11 @@
         "type": "dashboard"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -106,6 +125,11 @@
         "statistic": "Minimum"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -224,9 +248,9 @@
     },
     {
       "datasource": {
-        "apiVersion": "1",
-        "type": "loki",
-        "uid": "non-default-test-ds-uid"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "gridPos": {
         "h": 8,
@@ -245,9 +269,9 @@
         },
         {
           "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           }
         }
       ],
@@ -274,9 +298,9 @@
         },
         {
           "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           }
         }
       ],
@@ -284,6 +308,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -297,6 +322,7 @@
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           }
@@ -339,6 +365,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -353,6 +380,7 @@
         {
           "alias": "CPU Usage",
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -369,6 +397,7 @@
         {
           "alias": "CPU Usage",
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -385,6 +414,7 @@
         {
           "alias": "CPU Usage",
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -404,6 +434,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -417,6 +448,7 @@
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -431,6 +463,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -439,6 +472,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -453,6 +487,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -481,7 +516,11 @@
       "id": 13,
       "panels": [
         {
-          "datasource": null,
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -491,6 +530,11 @@
           "id": 14,
           "targets": [
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "QueueName": "my-queue"
               },
@@ -501,6 +545,11 @@
               "statistic": "Average"
             },
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "QueueName": "my-queue"
               },
@@ -511,6 +560,11 @@
               "statistic": "Maximum"
             },
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "QueueName": "my-queue"
               },
@@ -580,9 +634,9 @@
     },
     {
       "datasource": {
-        "apiVersion": "1",
-        "type": "loki",
-        "uid": "non-default-test-ds-uid"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "gridPos": {
         "h": 4,
@@ -631,6 +685,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -638,6 +693,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -657,6 +713,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -677,14 +734,15 @@
         },
         {
           "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "refId": "B"
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -696,6 +754,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -709,6 +768,7 @@
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -720,6 +780,7 @@
     },
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -733,6 +794,7 @@
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -740,6 +802,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -758,6 +821,7 @@
     "list": [
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -766,9 +830,9 @@
       },
       {
         "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
         },
         "name": "es_var_by_name",
         "type": "query"
@@ -784,6 +848,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -792,6 +857,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -800,6 +866,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -808,6 +875,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },

@@ -1,10 +1,9 @@
 {
-  "title": "Boolean Refresh Test Dashboard",
+  "title": "Refresh Not Set Test Dashboard",
   "schemaVersion": 39,
   "panels": [],
   "time": {
     "from": "now-6h",
     "to": "now"
-  },
-  "refresh": true
-}
+  }
+} 

@@ -3,6 +3,7 @@
     "list": [
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -10,6 +11,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -17,6 +19,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -24,6 +27,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -34,6 +38,7 @@
   "panels": [
     {
       "datasource": {
+        "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
@@ -41,6 +46,7 @@
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -67,7 +73,11 @@
       "id": 4,
       "targets": [
         {
-          "datasource": null,
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "refId": "A"
         },
         {
@@ -140,6 +150,7 @@
     "list": [
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -148,6 +159,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -156,6 +168,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },

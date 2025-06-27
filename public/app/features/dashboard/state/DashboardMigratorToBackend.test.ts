@@ -8,12 +8,32 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
 import { DashboardModel } from './DashboardModel';
 
+/*
+ * Backend / Frontend Migration Comparison Test Design Explanation:
+ *
+ * This test compares backend and frontend migration results by running both through DashboardModel.
+ * This approach is correct and not flaky for the following reasons:
+ *
+ * 1. Frontend Migration Path:
+ *    jsonInput (e.g. v39) → DashboardModel → DashboardMigrator runs → migrates to v41 → getSaveModelClone()
+ *
+ * 2. Backend Migration Path:
+ *    jsonInput (e.g. v39) → Backend Migration → backendOutput (v41) → DashboardModel → DashboardMigrator sees v41 → early return (no migration) → getSaveModelClone()
+ *
+ * 3. Why DashboardMigrator doesn't run on backendOutput:
+ *    - DashboardMigrator.updateSchema() has an early return: `if (oldVersion === this.dashboard.schemaVersion) return;`
+ *    - Since backendOutput.schemaVersion is already 41 (latest), no migration occurs
+ *    - This ensures we compare the final migrated state from both paths
+ *
+ * 4. Benefits of this approach:
+ *    - Tests the complete integration (backend migration + DashboardModel)
+ *    - Accounts for DashboardModel's default value handling and normalization
+ *    - Ensures both paths produce identical final dashboard states
+ *    - Avoids test brittleness from comparing raw JSON with different default value representations
+ */
+
 // Set the minimum version to test (set to 0 to test all versions)
-// Change this to test specific migration versions, e.g.:
-// - Set to 32 to only test v32 and above
-// - Set to 33 to only test v33 and above
-// - Set to 0 to test all versions
-const MIN_VERSION_TO_TEST = 40;
+const MIN_VERSION_TO_TEST = 38;
 
 // Set up the same datasources as DashboardMigrator.test.ts to ensure consistency
 const dataSources = {

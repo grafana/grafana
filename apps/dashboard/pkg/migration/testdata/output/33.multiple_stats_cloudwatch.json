@@ -2,6 +2,11 @@
   "annotations": {
     "list": [
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-123456"
         },
@@ -14,6 +19,11 @@
         "statistic": "Average"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -26,6 +36,11 @@
         "statistic": "Maximum"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "LoadBalancer": "my-lb"
         },
@@ -37,6 +52,11 @@
         "region": "us-west-1"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "TableName": "my-table"
         },
@@ -50,6 +70,7 @@
       },
       {
         "datasource": {
+          "apiVersion": "v1",
           "type": "prometheus",
           "uid": "default-ds-uid"
         },
@@ -58,6 +79,11 @@
         "name": "Non-CloudWatch Annotation"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -70,6 +96,11 @@
         "statistic": "Minimum"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -82,6 +113,11 @@
         "statistic": "Sum"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "TableName": "my-table"
         },
@@ -94,6 +130,11 @@
         "statistic": "Sum"
       },
       {
+        "datasource": {
+          "apiVersion": "v1",
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "dimensions": {
           "TableName": "my-table"
         },
@@ -109,9 +150,19 @@
   },
   "panels": [
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 1,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "InstanceId": "i-123456"
           },
@@ -123,6 +174,11 @@
           "statistic": "Average"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "InstanceId": "i-123456"
           },
@@ -134,6 +190,11 @@
           "statistic": "Maximum"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "InstanceId": "i-123456"
           },
@@ -149,9 +210,19 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 2,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
           },
@@ -166,9 +237,19 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 3,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "DBInstanceIdentifier": "my-db"
           },
@@ -183,9 +264,19 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 4,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "QueueName": "my-queue"
           },
@@ -197,6 +288,7 @@
         },
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
@@ -204,6 +296,11 @@
           "refId": "B"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "TopicName": "my-topic"
           },
@@ -214,6 +311,11 @@
           "statistic": "Sum"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "QueueName": "my-queue"
           },
@@ -228,9 +330,19 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 5,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "BucketName": "my-bucket"
           },
@@ -244,9 +356,19 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 6,
       "targets": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "FunctionName": "my-function"
           },
@@ -257,6 +379,11 @@
           "statistic": "InvalidStat"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "FunctionName": "my-function"
           },
@@ -267,6 +394,11 @@
           "statistic": "Average"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "FunctionName": "my-function"
           },
@@ -277,6 +409,11 @@
           "statistic": "Maximum"
         },
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "dimensions": {
             "FunctionName": "my-function"
           },
@@ -295,9 +432,19 @@
       "id": 7,
       "panels": [
         {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "id": 8,
           "targets": [
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "StreamName": "my-stream"
               },
@@ -308,6 +455,11 @@
               "statistic": "Sum"
             },
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "StreamName": "my-stream"
               },
@@ -318,6 +470,11 @@
               "statistic": "Average"
             },
             {
+              "datasource": {
+                "apiVersion": "v1",
+                "type": "prometheus",
+                "uid": "default-ds-uid"
+              },
               "dimensions": {
                 "StreamName": "my-stream"
               },
@@ -336,10 +493,16 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 9,
       "targets": [
         {
           "datasource": {
+            "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
           },
