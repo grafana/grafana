@@ -63,17 +63,16 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	baselineServer := createBaselineServer(t, dbType, db.ConnStr, testNamespaces)
 
-	runErrs := make(map[string]error)
 	testServers := make([]testModuleServer, 0, 2)
 	memberlistPort := getRandomPort()
 	distributorServer := initDistributorServerForTest(t, memberlistPort)
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
 
-	startAndWaitHealthy(t, distributorServer, runErrs)
+	startAndWaitHealthy(t, distributorServer)
 
 	for _, testServer := range testServers {
-		startAndWaitHealthy(t, testServer, runErrs)
+		startAndWaitHealthy(t, testServer)
 	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
@@ -240,7 +239,6 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	})
 
-	stopErrs := make(map[string]error)
 	stopServers := func(done chan error) {
 		var wg sync.WaitGroup
 		for _, testServer := range testServers {
@@ -250,7 +248,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
-					stopErrs[testServer.id] = err
+					require.NoError(t, err)
 				}
 			}(testServer)
 		}
@@ -259,7 +257,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := distributorServer.server.Shutdown(ctx, "tests are done"); err != nil {
-			stopErrs[distributorServer.id] = err
+			require.NoError(t, err)
 		}
 		done <- nil
 	}
@@ -271,17 +269,9 @@ func TestIntegrationDistributor(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("timeout waiting for servers to shutdown")
 	}
-
-	for server, runErr := range runErrs {
-		t.Fatalf("unexpected run error from module server %s: %v", server, runErr)
-	}
-
-	for server, stopErr := range stopErrs {
-		t.Fatalf("unexpected stop error from module server %s: %v", server, stopErr)
-	}
 }
 
-func startAndWaitHealthy(t *testing.T, testServer testModuleServer, runErrs map[string]error) {
+func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 	go func() {
 		// this next line is to avoid double registration, as both InitializeDocumentBuilders as well as ProvideUnifiedStorageGrpcService
 		// are hard-coded to use prometheus.DefaultRegisterer
@@ -290,14 +280,12 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer, runErrs map[
 		// We can remove this once that's fixed
 		prometheus.DefaultRegisterer = prometheus.NewRegistry()
 		if err := testServer.server.Run(); err != nil && !errors.Is(err, context.Canceled) {
-			runErrs[testServer.id] = err
+			require.NoError(t, err)
 		}
 	}()
 
 	deadline := time.Now().Add(20 * time.Second)
 	for {
-		require.NoError(t, runErrs[testServer.id], "failed to start "+testServer.id)
-
 		conn, err := net.DialTimeout("tcp", testServer.grpcAddress, 1*time.Second)
 		if err == nil {
 			_ = conn.Close()
