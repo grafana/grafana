@@ -21,6 +21,7 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout code
