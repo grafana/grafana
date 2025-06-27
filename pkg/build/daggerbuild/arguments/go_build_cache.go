@@ -2,6 +2,7 @@ package arguments
 
 import (
 	"context"
+	"os"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/golang"
@@ -26,6 +27,12 @@ var GoModCache = pipeline.Argument{
 	Flags:        []cli.Flag{},
 	ValueFunc: func(ctx context.Context, opts *pipeline.ArgumentOpts) (any, error) {
 		vol := opts.Client.CacheVolume("go-mod-cache")
+
+		// If GOCACHE_S3_BUCKET is set, then don't pre-warm the cache with 'go mod download'
+		if _, ok := os.LookupEnv("GOCACHE_S3_BUCKET"); ok {
+			return vol, nil
+		}
+
 		goVersion, err := opts.State.String(ctx, GoVersion)
 		if err != nil {
 			return nil, err
