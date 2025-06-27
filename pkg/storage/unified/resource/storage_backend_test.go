@@ -138,6 +138,46 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	}
 }
 
+func TestKvStorageBackend_WriteEvent_ResourceAlreadyExists(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create a test resource first
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "deployments",
+			Name:      "test-deployment",
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		PreviousRV: 0,
+	}
+
+	// First create should succeed
+	rv1, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+
+	// Try to create the same resource again - should fail with ErrResourceAlreadyExists
+	writeEvent.PreviousRV = 0 // Reset previous RV to simulate a fresh create attempt
+	rv2, err := backend.WriteEvent(ctx, writeEvent)
+	require.Error(t, err)
+	require.Equal(t, int64(0), rv2)
+	require.ErrorIs(t, err, ErrResourceAlreadyExists)
+
+	// Verify the error is the correct type
+	require.Contains(t, err.Error(), "the resource already exists")
+}
+
 func TestKvStorageBackend_ReadResource_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

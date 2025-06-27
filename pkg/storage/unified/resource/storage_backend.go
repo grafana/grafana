@@ -57,6 +57,21 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
+		// Check if resource already exists for create operations
+		_, err := k.metaStore.GetLatestResourceKey(ctx, MetaGetRequestKey{
+			Namespace: event.Key.Namespace,
+			Group:     event.Key.Group,
+			Resource:  event.Key.Resource,
+			Name:      event.Key.Name,
+		})
+		if err == nil {
+			// Resource exists, return already exists error
+			return 0, ErrResourceAlreadyExists
+		}
+		if err != ErrNotFound {
+			// Some other error occurred
+			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
+		}
 	case resourcepb.WatchEvent_MODIFIED:
 		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
