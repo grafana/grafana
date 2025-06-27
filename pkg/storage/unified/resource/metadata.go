@@ -192,12 +192,15 @@ type metadataStore struct {
 	kv KV
 }
 
+// newMetadataStore creates a new metadata store instance with the given key-value store backend.
 func newMetadataStore(kv KV) *metadataStore {
 	return &metadataStore{
 		kv: kv,
 	}
 }
 
+// Get retrieves the metadata for a specific metadata key.
+// It validates the key and returns the raw metadata content.
 func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, error) {
 	if err := key.Validate(); err != nil {
 		return MetaData{}, fmt.Errorf("invalid metadata key: %w", err)
@@ -215,13 +218,17 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	return meta, err
 }
 
-func (d *metadataStore) GetLatest(ctx context.Context, key MetaGetRequestKey) (MetaDataObj, error) {
-	return d.GetAtRevision(ctx, key, 0)
+// GetLatestResourceKey retrieves the metadata key for the latest version of a resource.
+// Returns the key with the highest resource version that is not deleted.
+func (d *metadataStore) GetLatestResourceKey(ctx context.Context, key MetaGetRequestKey) (MetaDataKey, error) {
+	return d.GetResourceKeyAtRevision(ctx, key, 0)
 }
 
-func (d *metadataStore) GetAtRevision(ctx context.Context, key MetaGetRequestKey, rv int64) (MetaDataObj, error) {
+// GetResourceKeyAtRevision retrieves the metadata key for a resource at a specific revision.
+// If rv is 0, it returns the latest version. Returns the highest version <= rv that is not deleted.
+func (d *metadataStore) GetResourceKeyAtRevision(ctx context.Context, key MetaGetRequestKey, rv int64) (MetaDataKey, error) {
 	if err := key.Validate(); err != nil {
-		return MetaDataObj{}, fmt.Errorf("invalid get request key: %w", err)
+		return MetaDataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
 
 	if rv == 0 {
@@ -230,25 +237,28 @@ func (d *metadataStore) GetAtRevision(ctx context.Context, key MetaGetRequestKey
 
 	listKey := MetaListRequestKey(key)
 
-	iter := d.ListAtRevision(ctx, listKey, rv)
-	for obj, err := range iter {
+	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
+	for metaKey, err := range iter {
 		if err != nil {
-			return MetaDataObj{}, err
+			return MetaDataKey{}, err
 		}
-		return obj, nil
+		return metaKey, nil
 	}
-	return MetaDataObj{}, ErrNotFound
+	return MetaDataKey{}, ErrNotFound
 }
 
-func (d *metadataStore) ListLatest(ctx context.Context, key MetaListRequestKey) iter.Seq2[MetaDataObj, error] {
-	return d.ListAtRevision(ctx, key, 0)
+// ListLatestResourceKeys returns an iterator over the metadata keys for the latest versions of resources.
+// Only returns keys for resources that are not deleted.
+func (d *metadataStore) ListLatestResourceKeys(ctx context.Context, key MetaListRequestKey) iter.Seq2[MetaDataKey, error] {
+	return d.ListResourceKeysAtRevision(ctx, key, 0)
 }
 
-// ListAtRevision lists all metadata objects for a given resource key and resource version.
-func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestKey, rv int64) iter.Seq2[MetaDataObj, error] {
+// ListResourceKeysAtRevision returns an iterator over metadata keys for resources at a specific revision.
+// If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
+func (d *metadataStore) ListResourceKeysAtRevision(ctx context.Context, key MetaListRequestKey, rv int64) iter.Seq2[MetaDataKey, error] {
 	if err := key.Validate(); err != nil {
-		return func(yield func(MetaDataObj, error) bool) {
-			yield(MetaDataObj{}, fmt.Errorf("invalid list request key: %w", err))
+		return func(yield func(MetaDataKey, error) bool) {
+			yield(MetaDataKey{}, fmt.Errorf("invalid list request key: %w", err))
 		}
 	}
 
@@ -264,7 +274,7 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 		Sort:     SortOrderAsc,
 	})
 
-	return func(yield func(MetaDataObj, error) bool) {
+	return func(yield func(MetaDataKey, error) bool) {
 		var candidateKey *MetaDataKey // The current candidate key we are iterating over
 
 		// yieldCandidate is a helper function to yield results.
@@ -274,35 +284,18 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 				// Skip because the resource was last deleted.
 				return true
 			}
-			obj, err := d.kv.Get(ctx, metaSection, key.String())
-			if err != nil {
-				yield(MetaDataObj{}, err)
-				return false
-			}
-			defer func() {
-				_ = obj.Value.Close()
-			}()
-			var meta MetaData
-			err = json.NewDecoder(obj.Value).Decode(&meta)
-			if err != nil {
-				yield(MetaDataObj{}, err)
-				return false
-			}
-			return yield(MetaDataObj{
-				Key:   key,
-				Value: meta,
-			}, nil)
+			return yield(key, nil)
 		}
 
 		for key, err := range iter {
 			if err != nil {
-				yield(MetaDataObj{}, err)
+				yield(MetaDataKey{}, err)
 				return
 			}
 
 			metaKey, err := parseMetaDataKey(key)
 			if err != nil {
-				yield(MetaDataObj{}, err)
+				yield(MetaDataKey{}, err)
 				return
 			}
 
@@ -342,6 +335,7 @@ func (d *metadataStore) ListAtRevision(ctx context.Context, key MetaListRequestK
 	}
 }
 
+// Save stores a metadata object in the store.
 func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err := obj.Key.Validate(); err != nil {
 		return fmt.Errorf("invalid metadata key: %w", err)
