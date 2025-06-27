@@ -390,16 +390,23 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
               filtered.push(lastIdx);
             }
           }
-          // single point surrounded by nulls
+          // single point
           else {
-            let i = 0;
-
-            while (yData[i] === null) {
-              i++;
+            // scan right
+            let leftIdx = 0;
+            while (yData[leftIdx] == null) {
+              leftIdx++;
             }
 
-            if (yData[i+1] === null) {
-              filtered.push(i);
+            // scan left
+            let rightIdx = yData.length - 1;
+            while (rightIdx >= leftIdx && yData[rightIdx] == null) {
+              rightIdx--;
+            }
+
+            // render if same
+            if (leftIdx === rightIdx) {
+              filtered.push(leftIdx);
             }
           }
         }
