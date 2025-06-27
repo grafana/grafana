@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,14 +113,20 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := contexthandler.FromContext(r.Context())
+	vars := mux.Vars(r)
 
+	var isAuthedUser bool
+	var namespace string
 	user, ok := types.AuthInfoFrom(r.Context())
-	// todo: fix this later
-	if !ok {
-		http.Error(w, "failed to get requester", http.StatusBadRequest)
+	if ok {
+		namespace = user.GetNamespace()
+		isAuthedUser = user.GetIdentityType() != ""
 	}
-	isAuthedUser := user.GetIdentityType() != ""
+
+	// if namespace is empty, use namespace from URL path
+	if namespace == "" {
+		namespace = vars["namespace"]
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -133,13 +138,12 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 	stackID := b.stackIdFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
+	if removeStackPrefix(namespace) != stackID && namespace != "default" {
 		b.logger.Error("stackId in evaluation context does not match requested namespace", "error", err)
 		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
 	}
 
-	vars := mux.Vars(r)
 	flagKey := vars["flagKey"]
 	if flagKey == "" {
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
@@ -163,8 +167,18 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx.IsSignedIn
+	var isAuthedUser bool
+	var namespace string
+	user, ok := types.AuthInfoFrom(r.Context())
+	if ok {
+		namespace = user.GetNamespace()
+		isAuthedUser = user.GetIdentityType() != ""
+	}
+
+	// if namespace is empty, use namespace from URL path
+	if namespace == "" {
+		namespace = mux.Vars(r)["namespace"]
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -176,7 +190,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	stackID := b.stackIdFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if removeStackPrefix(ctx.Namespace) != stackID && ctx.Namespace != "default" {
+	if removeStackPrefix(namespace) != stackID && namespace != "default" {
 		b.logger.Error("stackId in evaluation context does not match requested namespace", "error", err)
 		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
 		return
