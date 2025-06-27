@@ -731,10 +731,8 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildEmptyIndex")
 	defer span.End()
 
-	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 	fields := s.builders.GetFields(nsr)
-
-	logger.Debug("Building empty index", "resource", nsr.Resource, "rv", rv)
+	s.log.Debug("Building empty index", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "rv", rv)
 
 	// Build an empty index by passing a builder function that doesn't add any documents
 	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, func(index ResourceIndex) (int64, error) {
