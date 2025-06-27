@@ -398,14 +398,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:         "angularDeprecationUI",
-			Description:  "Display Angular warnings in dashboards and panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
 			Stage:        FeatureStageGeneralAvailability,
