@@ -9,156 +9,292 @@ import (
 func TestV37(t *testing.T) {
 	tests := []migrationTestCase{
 		{
-			name: "no legend config",
+			name: "legend normalization with nested panels",
 			input: map[string]interface{}{
+				"title":         "V37 Legend Normalization Test Dashboard",
 				"schemaVersion": 36,
 				"panels": []interface{}{
+					// Boolean legend true
 					map[string]interface{}{
-						"type":    "graph",
-						"options": map[string]interface{}{},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 37,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"type":    "graph",
-						"options": map[string]interface{}{},
-					},
-				},
-			},
-		},
-		{
-			name: "boolean legend true",
-			input: map[string]interface{}{
-				"schemaVersion": 36,
-				"panels": []interface{}{
-					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with Boolean Legend True",
+						"id":    1,
 						"options": map[string]interface{}{
 							"legend": true,
 						},
 					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 37,
-				"panels": []interface{}{
+					// Boolean legend false
 					map[string]interface{}{
-						"options": map[string]interface{}{
-							"legend": map[string]interface{}{
-								"displayMode": "list",
-								"showLegend":  true,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "boolean legend false",
-			input: map[string]interface{}{
-				"schemaVersion": 36,
-				"panels": []interface{}{
-					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with Boolean Legend False",
+						"id":    2,
 						"options": map[string]interface{}{
 							"legend": false,
 						},
 					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 37,
-				"panels": []interface{}{
+					// Hidden displayMode (deprecated)
 					map[string]interface{}{
-						"options": map[string]interface{}{
-							"legend": map[string]interface{}{
-								"displayMode": "list",
-								"showLegend":  false,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "hidden displayMode",
-			input: map[string]interface{}{
-				"schemaVersion": 36,
-				"panels": []interface{}{
-					map[string]interface{}{
+						"type":  "graph",
+						"title": "Panel with Hidden DisplayMode",
+						"id":    3,
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
 								"displayMode": "hidden",
+								"showLegend":  true, // conflicting with hidden
 							},
 						},
 					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 37,
-				"panels": []interface{}{
+					// ShowLegend false with other displayMode
 					map[string]interface{}{
+						"type":  "stat",
+						"title": "Panel with ShowLegend False",
+						"id":    4,
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
-								"displayMode": "list",
+								"displayMode": "table",
 								"showLegend":  false,
 							},
 						},
 					},
-				},
-			},
-		},
-		{
-			name: "showLegend false",
-			input: map[string]interface{}{
-				"schemaVersion": 36,
-				"panels": []interface{}{
+					// Valid legend with table displayMode
 					map[string]interface{}{
+						"type":  "barchart",
+						"title": "Panel with Table Legend",
+						"id":    5,
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
-								"showLegend": false,
+								"displayMode": "table",
+								"placement":   "bottom",
 							},
 						},
 					},
-				},
-			},
-			expected: map[string]interface{}{
-				"schemaVersion": 37,
-				"panels": []interface{}{
+					// Valid legend with list displayMode
 					map[string]interface{}{
+						"type":  "histogram",
+						"title": "Panel with List Legend",
+						"id":    6,
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
 								"displayMode": "list",
-								"showLegend":  false,
+								"placement":   "right",
 							},
 						},
 					},
-				},
-			},
-		},
-		{
-			name: "visible legend",
-			input: map[string]interface{}{
-				"schemaVersion": 36,
-				"panels": []interface{}{
+					// Panel with no options
 					map[string]interface{}{
+						"type":  "text",
+						"title": "Panel with No Options",
+						"id":    7,
+					},
+					// Panel with no legend config
+					map[string]interface{}{
+						"type":  "gauge",
+						"title": "Panel with No Legend Config",
+						"id":    8,
 						"options": map[string]interface{}{
-							"legend": map[string]interface{}{
-								"displayMode": "table",
+							"reduceOptions": map[string]interface{}{
+								"fields": "/.*temperature.*/",
+							},
+						},
+					},
+					// Panel with null legend
+					map[string]interface{}{
+						"type":  "piechart",
+						"title": "Panel with Null Legend",
+						"id":    9,
+						"options": map[string]interface{}{
+							"legend": nil,
+						},
+					},
+					// Row with nested panels
+					map[string]interface{}{
+						"type":      "row",
+						"title":     "Row with Nested Panels Having Various Legend Configs",
+						"id":        10,
+						"collapsed": false,
+						"panels": []interface{}{
+							// Nested panel with boolean legend
+							map[string]interface{}{
+								"type":  "timeseries",
+								"title": "Nested Panel with Boolean Legend",
+								"id":    11,
+								"options": map[string]interface{}{
+									"legend": true,
+								},
+							},
+							// Nested panel with hidden displayMode
+							map[string]interface{}{
+								"type":  "graph",
+								"title": "Nested Panel with Hidden DisplayMode",
+								"id":    12,
+								"options": map[string]interface{}{
+									"legend": map[string]interface{}{
+										"displayMode": "hidden",
+									},
+								},
+							},
+							// Nested panel with conflicting properties
+							map[string]interface{}{
+								"type":  "stat",
+								"title": "Nested Panel with Conflicting Properties",
+								"id":    13,
+								"options": map[string]interface{}{
+									"legend": map[string]interface{}{
+										"displayMode": "table",
+										"showLegend":  false, // conflict: table mode but showLegend false
+									},
+								},
 							},
 						},
 					},
 				},
 			},
 			expected: map[string]interface{}{
+				"title":         "V37 Legend Normalization Test Dashboard",
 				"schemaVersion": 37,
 				"panels": []interface{}{
+					// Boolean legend true (migrated)
 					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with Boolean Legend True",
+						"id":    1,
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
-								"displayMode": "table",
+								"displayMode": "list",
 								"showLegend":  true,
+							},
+						},
+					},
+					// Boolean legend false (migrated)
+					map[string]interface{}{
+						"type":  "timeseries",
+						"title": "Panel with Boolean Legend False",
+						"id":    2,
+						"options": map[string]interface{}{
+							"legend": map[string]interface{}{
+								"displayMode": "list",
+								"showLegend":  false,
+							},
+						},
+					},
+					// Hidden displayMode (normalized)
+					map[string]interface{}{
+						"type":  "graph",
+						"title": "Panel with Hidden DisplayMode",
+						"id":    3,
+						"options": map[string]interface{}{
+							"legend": map[string]interface{}{
+								"displayMode": "list",
+								"showLegend":  false,
+							},
+						},
+					},
+					// ShowLegend false (normalized)
+					map[string]interface{}{
+						"type":  "stat",
+						"title": "Panel with ShowLegend False",
+						"id":    4,
+						"options": map[string]interface{}{
+							"legend": map[string]interface{}{
+								"displayMode": "list",
+								"showLegend":  false,
+							},
+						},
+					},
+					// Valid legend with table displayMode (showLegend added)
+					map[string]interface{}{
+						"type":  "barchart",
+						"title": "Panel with Table Legend",
+						"id":    5,
+						"options": map[string]interface{}{
+							"legend": map[string]interface{}{
+								"displayMode": "table",
+								"placement":   "bottom",
+								"showLegend":  true,
+							},
+						},
+					},
+					// Valid legend with list displayMode (showLegend added)
+					map[string]interface{}{
+						"type":  "histogram",
+						"title": "Panel with List Legend",
+						"id":    6,
+						"options": map[string]interface{}{
+							"legend": map[string]interface{}{
+								"displayMode": "list",
+								"placement":   "right",
+								"showLegend":  true,
+							},
+						},
+					},
+					// Panel with no options (unchanged)
+					map[string]interface{}{
+						"type":  "text",
+						"title": "Panel with No Options",
+						"id":    7,
+					},
+					// Panel with no legend config (unchanged)
+					map[string]interface{}{
+						"type":  "gauge",
+						"title": "Panel with No Legend Config",
+						"id":    8,
+						"options": map[string]interface{}{
+							"reduceOptions": map[string]interface{}{
+								"fields": "/.*temperature.*/",
+							},
+						},
+					},
+					// Panel with null legend (unchanged)
+					map[string]interface{}{
+						"type":  "piechart",
+						"title": "Panel with Null Legend",
+						"id":    9,
+						"options": map[string]interface{}{
+							"legend": nil,
+						},
+					},
+					// Row with nested panels (nested panels migrated)
+					map[string]interface{}{
+						"type":      "row",
+						"title":     "Row with Nested Panels Having Various Legend Configs",
+						"id":        10,
+						"collapsed": false,
+						"panels": []interface{}{
+							// Nested panel with boolean legend (migrated)
+							map[string]interface{}{
+								"type":  "timeseries",
+								"title": "Nested Panel with Boolean Legend",
+								"id":    11,
+								"options": map[string]interface{}{
+									"legend": map[string]interface{}{
+										"displayMode": "list",
+										"showLegend":  true,
+									},
+								},
+							},
+							// Nested panel with hidden displayMode (normalized)
+							map[string]interface{}{
+								"type":  "graph",
+								"title": "Nested Panel with Hidden DisplayMode",
+								"id":    12,
+								"options": map[string]interface{}{
+									"legend": map[string]interface{}{
+										"displayMode": "list",
+										"showLegend":  false,
+									},
+								},
+							},
+							// Nested panel with conflicting properties (normalized)
+							map[string]interface{}{
+								"type":  "stat",
+								"title": "Nested Panel with Conflicting Properties",
+								"id":    13,
+								"options": map[string]interface{}{
+									"legend": map[string]interface{}{
+										"displayMode": "list",
+										"showLegend":  false,
+									},
+								},
 							},
 						},
 					},

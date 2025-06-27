@@ -79,13 +79,13 @@ func V38(dashboard map[string]interface{}) error {
 	}
 
 	// Process all panels, including nested ones
-	processPanels(panels)
+	processPanelsV38(panels)
 
 	return nil
 }
 
-// processPanels recursively processes panels, including nested panels within rows
-func processPanels(panels []interface{}) {
+// processPanelsV38 recursively processes panels, including nested panels within rows
+func processPanelsV38(panels []interface{}) {
 	for _, panel := range panels {
 		p, ok := panel.(map[string]interface{})
 		if !ok {
@@ -95,7 +95,7 @@ func processPanels(panels []interface{}) {
 		// Process nested panels if this is a row panel
 		if p["type"] == "row" {
 			if nestedPanels, ok := p["panels"].([]interface{}); ok {
-				processPanels(nestedPanels)
+				processPanelsV38(nestedPanels)
 			}
 			continue
 		}

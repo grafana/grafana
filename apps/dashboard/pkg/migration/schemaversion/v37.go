@@ -86,9 +86,25 @@ func V37(dashboard map[string]interface{}) error {
 		return nil
 	}
 
+	// Process all panels, including nested ones
+	processPanelsV37(panels)
+
+	return nil
+}
+
+// processPanelsV37 recursively processes panels, including nested panels within rows
+func processPanelsV37(panels []interface{}) {
 	for _, panel := range panels {
 		p, ok := panel.(map[string]interface{})
 		if !ok {
+			continue
+		}
+
+		// Process nested panels if this is a row panel
+		if p["type"] == "row" {
+			if nestedPanels, ok := p["panels"].([]interface{}); ok {
+				processPanelsV37(nestedPanels)
+			}
 			continue
 		}
 
@@ -131,6 +147,4 @@ func V37(dashboard map[string]interface{}) error {
 		// Ensure visible legends have showLegend true
 		legend["showLegend"] = true
 	}
-
-	return nil
 }
