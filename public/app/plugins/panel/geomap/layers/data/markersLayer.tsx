@@ -26,11 +26,6 @@ import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig, StyleConfigValues } from
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
-// Type for marker uniqueness key - picks only dimension-driven properties from StyleConfigValues
-type MarkerUniquenessKey = Pick<StyleConfigValues, 'color' | 'size' | 'text' | 'rotation'> & {
-  coord: string;
-};
-
 // Configuration options for Circle overlays
 export interface MarkersConfig {
   style: StyleConfig;
@@ -132,14 +127,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
           // Helper function to create a robust uniqueness key
           const createMarkerKey = (coordinates: number[], markerValues: StyleConfigValues): string => {
-            const keyObject: MarkerUniquenessKey = {
-              coord: `${coordinates[0]},${coordinates[1]}`,
-              color: markerValues.color,
-              size: markerValues.size,
-              text: markerValues.text,
-              rotation: markerValues.rotation,
-            };
-            return JSON.stringify(keyObject);
+            const coord = `${coordinates[0]},${coordinates[1]}`;
+            const { color, size, text, rotation } = markerValues;
+            return `markerAddressKey|${coord}|${color}|${size}|${text}|${rotation}`;
           };
 
           source.forEachFeature((feature) => {
