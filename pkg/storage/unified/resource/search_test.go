@@ -59,12 +59,9 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 }
 
 // mockResourceIndex implements ResourceIndex for testing
-type mockResourceIndex struct {
-	bulkIndexCalls []BulkIndexRequest
-}
+type mockResourceIndex struct{}
 
 func (m *mockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
-	m.bulkIndexCalls = append(m.bulkIndexCalls, *req)
 	return nil
 }
 
@@ -131,7 +128,6 @@ func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.Li
 type mockSearchBackend struct {
 	buildIndexCalls      []buildIndexCall
 	buildEmptyIndexCalls []buildEmptyIndexCall
-	indexes              map[string]ResourceIndex
 }
 
 type buildIndexCall struct {
@@ -149,14 +145,12 @@ type buildEmptyIndexCall struct {
 }
 
 func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
-	return m.indexes[key.String()], nil
+	return nil, nil
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	// Create a simple index
-	index := &mockResourceIndex{
-		bulkIndexCalls: []BulkIndexRequest{},
-	}
+	index := &mockResourceIndex{}
 
 	// Call the builder function (required by the contract)
 	_, err := builder(index)
@@ -184,7 +178,6 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 		})
 	}
 
-	m.indexes[key.String()] = index
 	return index, nil
 }
 
@@ -270,7 +263,6 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 			search := &mockSearchBackend{
 				buildIndexCalls:      []buildIndexCall{},
 				buildEmptyIndexCalls: []buildEmptyIndexCall{},
-				indexes:              make(map[string]ResourceIndex),
 			}
 			supplier := &mockDocumentBuilderSupplier{}
 
