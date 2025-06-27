@@ -284,6 +284,7 @@ func InstallAPIs(
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
 	metrics := newBuilderMetrics(reg)
+	dualWriterMetrics := grafanarest.NewDualWriterMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
@@ -337,11 +338,10 @@ func InstallAPIs(
 				ServerLockService:      serverLock,
 				DataSyncerInterval:     dataSyncerInterval,
 				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				Reg:                    reg,
 			}
 
 			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -359,7 +359,7 @@ func InstallAPIs(
 			if dualWriterPeriodicDataSyncJobEnabled {
 				// The mode might have changed in SetDualWritingMode, so apply current mode first.
 				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
 					return nil, err
 				}
 			}
