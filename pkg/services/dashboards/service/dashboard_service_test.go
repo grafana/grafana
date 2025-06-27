@@ -50,217 +50,241 @@ import (
 )
 
 func TestDashboardService(t *testing.T) {
-	t.Run("Dashboard service tests", func(t *testing.T) {
-		fakeStore := dashboards.FakeDashboardStore{}
-		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-		defer fakeStore.AssertExpectations(t)
+	fakeStore := dashboards.FakeDashboardStore{}
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	defer fakeStore.AssertExpectations(t)
 
-		folderSvc := foldertest.NewFakeService()
-		service := &DashboardServiceImpl{
-			cfg:                    setting.NewCfg(),
-			log:                    log.New("test.logger"),
-			dashboardStore:         &fakeStore,
-			folderService:          folderSvc,
-			ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-			features:               featuremgmt.WithFeatures(),
-			publicDashboardService: fakePublicDashboardService,
-		}
-		folderStore := foldertest.FakeFolderStore{}
-		folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
-		service.folderStore = &folderStore
+	service := &DashboardServiceImpl{
+		cfg:                    setting.NewCfg(),
+		log:                    log.New("test.logger"),
+		dashboardStore:         &fakeStore,
+		folderService:          foldertest.NewFakeService(),
+		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
+		features:               featuremgmt.WithFeatures(),
+		publicDashboardService: fakePublicDashboardService,
+	}
 
-		t.Run("Save dashboard validation", func(t *testing.T) {
-			dto := &dashboards.SaveDashboardDTO{}
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 
-			t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
-				titles := []string{"", " ", "   \t   "}
+	t.Run("Save dashboard validation", func(t *testing.T) {
+		dto := &dashboards.SaveDashboardDTO{}
 
-				for _, title := range titles {
-					dto.Dashboard = dashboards.NewDashboard(title)
-					_, err := service.SaveDashboard(context.Background(), dto, false)
-					require.Equal(t, err, dashboards.ErrDashboardTitleEmpty)
+		t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
+			titles := []string{"", " ", "   \t   "}
+
+			for _, title := range titles {
+				dto.Dashboard = dashboards.NewDashboard(title)
+				_, err := service.SaveDashboard(ctx, dto, false)
+				require.Equal(t, err, dashboards.ErrDashboardTitleEmpty)
+			}
+		})
+
+		t.Run("Should return validation error if message is too long", func(t *testing.T) {
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
+			having to read this. I spent too long trying to come up with something clever
+			to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
+			will share this with you, as a form of payment for having to read this:
+			https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if
+			this test passes or if the result is more exciting than these 500 characters
+			I wrote. Best of luck to the both of us!!`
+			_, err := service.SaveDashboard(ctx, dto, false)
+			require.Equal(t, err, dashboards.ErrDashboardMessageTooLong)
+
+			// set to a shorter message for the rest of the tests
+			dto.Message = `message`
+		})
+
+		t.Run("Should return validation error if folder is named General", func(t *testing.T) {
+			dto.Dashboard = dashboards.NewDashboardFolder("General")
+			_, err := service.SaveDashboard(ctx, dto, false)
+			require.Equal(t, err, dashboards.ErrDashboardFolderNameExists)
+		})
+
+		t.Run("When saving a dashboard should validate uid", func(t *testing.T) {
+			testCases := []struct {
+				Uid   string
+				Error error
+			}{
+				{Uid: "", Error: nil},
+				{Uid: "   ", Error: nil},
+				{Uid: "  \t  ", Error: nil},
+				{Uid: "asdf90_-", Error: nil},
+				{Uid: "asdf/90", Error: dashboards.ErrDashboardInvalidUid},
+				{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
+				{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: dashboards.ErrDashboardUidTooLong},
+			}
+
+			for _, tc := range testCases {
+				dto.Dashboard = dashboards.NewDashboard("title")
+				dto.Dashboard.SetUID(tc.Uid)
+				dto.User = &user.SignedInUser{}
+
+				if tc.Error == nil {
+					k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Once()
 				}
-			})
-
-			t.Run("Should return validation error if message is too long", func(t *testing.T) {
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
-				having to read this. I spent too long trying to come up with something clever
-				to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
-				will share this with you, as a form of payment for having to read this:
-				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if
-				this test passes or if the result is more exciting than these 500 characters
-				I wrote. Best of luck to the both of us!`
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, dashboards.ErrDashboardMessageTooLong)
-
-				// set to a shorter message for the rest of the tests
-				dto.Message = `message`
-			})
-
-			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
-				dto.Dashboard = dashboards.NewDashboardFolder("General")
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, dashboards.ErrDashboardFolderNameExists)
-			})
-
-			t.Run("When saving a dashboard should validate uid", func(t *testing.T) {
-				testCases := []struct {
-					Uid   string
-					Error error
-				}{
-					{Uid: "", Error: nil},
-					{Uid: "   ", Error: nil},
-					{Uid: "  \t  ", Error: nil},
-					{Uid: "asdf90_-", Error: nil},
-					{Uid: "asdf/90", Error: dashboards.ErrDashboardInvalidUid},
-					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: dashboards.ErrDashboardUidTooLong},
-				}
-
-				for _, tc := range testCases {
-					dto.Dashboard = dashboards.NewDashboard("title")
-					dto.Dashboard.SetUID(tc.Uid)
-					dto.User = &user.SignedInUser{}
-
-					if tc.Error == nil {
-						fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-					}
-					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
-					require.Equal(t, err, tc.Error)
-				}
-			})
-
-			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.FolderUID = "non-existing-folder"
-				folderSvc := foldertest.FakeService{ExpectedError: dashboards.ErrFolderNotFound}
-				service.folderService = &folderSvc
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, dashboards.ErrFolderNotFound)
-			})
-
-			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
-
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.SetID(3)
-				dto.User = &user.SignedInUser{UserID: 1}
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
-			})
-
-			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
-				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
-				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
-
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.SetID(3)
-				dto.User = &user.SignedInUser{UserID: 1}
-				_, err := service.SaveDashboard(context.Background(), dto, true)
-				require.NoError(t, err)
-			})
+				_, err := service.BuildSaveDashboardCommand(ctx, dto, false)
+				require.Equal(t, err, tc.Error)
+			}
 		})
 
-		t.Run("Save provisioned dashboard validation", func(t *testing.T) {
-			dto := &dashboards.SaveDashboardDTO{}
-
-			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.SetID(3)
-				dto.User = &user.SignedInUser{UserID: 1}
-				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
-				require.NoError(t, err)
-			})
-
-			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
-				oldRefreshInterval := service.cfg.MinRefreshInterval
-				service.cfg.MinRefreshInterval = "5m"
-				defer func() { service.cfg.MinRefreshInterval = oldRefreshInterval }()
-
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.SetID(3)
-				dto.User = &user.SignedInUser{UserID: 1}
-				dto.Dashboard.Data.Set("refresh", "1s")
-				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
-				require.NoError(t, err)
-				require.Equal(t, dto.Dashboard.Data.Get("refresh").MustString(), "5m")
-			})
+		t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.FolderUID = "non-existing-folder"
+			folderSvc := foldertest.FakeService{ExpectedError: dashboards.ErrFolderNotFound}
+			service.folderService = &folderSvc
+			_, err := service.SaveDashboard(ctx, dto, false)
+			require.Equal(t, err, dashboards.ErrFolderNotFound)
 		})
 
-		t.Run("Import dashboard validation", func(t *testing.T) {
-			dto := &dashboards.SaveDashboardDTO{}
-
-			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
-
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.Dashboard.SetID(3)
-				dto.User = &user.SignedInUser{UserID: 1}
-				_, err := service.ImportDashboard(context.Background(), dto)
-				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
-			})
+		t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
+			k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{}, nil).Once()
+			k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{
+							Name: "title",
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
+						},
+						{
+							Name: "folder",
+							Type: resourcepb.ResourceTableColumnDefinition_STRING,
+						},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{
+							Key: &resourcepb.ResourceKey{
+								Name:     "uid",
+								Resource: "dashboard",
+							},
+							Cells: [][]byte{
+								[]byte("Dashboard 1"),
+								[]byte("folder1"),
+							},
+						},
+					},
+				},
+				TotalHits: 1,
+			}, nil)
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.SetID(3)
+			dto.User = &user.SignedInUser{UserID: 1}
+			_, err := service.SaveDashboard(ctx, dto, false)
+			require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 		})
 
-		t.Run("Given provisioned dashboard", func(t *testing.T) {
-			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
-				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
-				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
-				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
-				require.NoError(t, err)
-			})
+		t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
+			fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
+			fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
-			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
-				err := service.DeleteDashboard(context.Background(), 1, "", 1)
-				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
-			})
-		})
-
-		t.Run("Given non provisioned dashboard", func(t *testing.T) {
-			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
-				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
-				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
-				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
-				require.NoError(t, err)
-			})
-
-			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
-				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
-				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
-				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				err := service.DeleteDashboard(context.Background(), 1, "", 1)
-				require.NoError(t, err)
-			})
-		})
-
-		t.Run("Count dashboards in folder", func(t *testing.T) {
-			fakeStore.On("CountDashboardsInFolders", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
-			folderSvc.ExpectedFolder = &folder.Folder{UID: "i am a folder"}
-			// set up a ctx with signed in user
-			usr := &user.SignedInUser{UserID: 1}
-			ctx := identity.WithRequester(context.Background(), usr)
-
-			count, err := service.CountInFolders(ctx, 1, []string{"i am a folder"}, usr)
-			require.NoError(t, err)
-			require.Equal(t, int64(3), count)
-		})
-
-		t.Run("Delete dashboards in folder", func(t *testing.T) {
-			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
-			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
-			fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
-			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.SetID(3)
+			dto.User = &user.SignedInUser{UserID: 1}
+			_, err := service.SaveDashboard(ctx, dto, true)
 			require.NoError(t, err)
 		})
 	})
+
+	t.Run("Save provisioned dashboard validation", func(t *testing.T) {
+		dto := &dashboards.SaveDashboardDTO{}
+
+		t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
+			fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.SetID(3)
+			dto.User = &user.SignedInUser{UserID: 1}
+			_, err := service.SaveProvisionedDashboard(ctx, dto, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
+			fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+			oldRefreshInterval := service.cfg.MinRefreshInterval
+			service.cfg.MinRefreshInterval = "5m"
+			defer func() { service.cfg.MinRefreshInterval = oldRefreshInterval }()
+
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.SetID(3)
+			dto.User = &user.SignedInUser{UserID: 1}
+			dto.Dashboard.Data.Set("refresh", "1s")
+			_, err := service.SaveProvisionedDashboard(ctx, dto, nil)
+			require.NoError(t, err)
+			require.Equal(t, dto.Dashboard.Data.Get("refresh").MustString(), "5m")
+		})
+	})
+
+	t.Run("Import dashboard validation", func(t *testing.T) {
+		dto := &dashboards.SaveDashboardDTO{}
+
+		t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
+			fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
+
+			dto.Dashboard = dashboards.NewDashboard("Dash")
+			dto.Dashboard.SetID(3)
+			dto.User = &user.SignedInUser{UserID: 1}
+			_, err := service.ImportDashboard(ctx, dto)
+			require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
+		})
+	})
+
+	t.Run("Given provisioned dashboard", func(t *testing.T) {
+		t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
+			fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+			err := service.DeleteProvisionedDashboard(ctx, 1, 1)
+			require.NoError(t, err)
+		})
+
+		t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
+			fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{}, nil).Once()
+			err := service.DeleteDashboard(ctx, 1, "", 1)
+			require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
+		})
+	})
+
+	t.Run("Given non provisioned dashboard", func(t *testing.T) {
+		t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
+			fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+			err := service.DeleteProvisionedDashboard(ctx, 1, 1)
+			require.NoError(t, err)
+		})
+
+		t.Run("DeleteDashboard should delete it", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
+			fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
+			fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+			err := service.DeleteDashboard(ctx, 1, "", 1)
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("Count dashboards in folder", func(t *testing.T) {
+		fakeStore.On("CountDashboardsInFolders", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolder = &folder.Folder{UID: "i am a folder"}
+		service.folderService = folderSvc
+
+		count, err := service.CountInFolders(ctx, 1, []string{"i am a folder"}, &user.SignedInUser{UserID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(3), count)
+	})
+
+	t.Run("Delete dashboards in folder", func(t *testing.T) {
+		args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
+		fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+		fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteInFolders(ctx, 1, []string{"uid"}, nil)
+		require.NoError(t, err)
+	})
+
+	k8sCliMock.AssertExpectations(t)
 }
 
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *client.MockK8sHandler) {
@@ -276,11 +300,8 @@ func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *cl
 }
 
 func TestGetDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 	query := &dashboards.GetDashboardQuery{
 		UID:   "test-uid",
@@ -407,11 +428,8 @@ func TestGetDashboard(t *testing.T) {
 }
 
 func TestGetAllDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
 
@@ -447,11 +465,8 @@ func TestGetAllDashboards(t *testing.T) {
 }
 
 func TestGetAllDashboardsByOrgId(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
 
@@ -487,11 +502,8 @@ func TestGetAllDashboardsByOrgId(t *testing.T) {
 }
 
 func TestGetProvisionedDashboardData(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -589,11 +601,8 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 }
 
 func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -680,11 +689,8 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 }
 
 func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -764,12 +770,9 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 }
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
@@ -924,8 +927,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	t.Run("Should retry until deleted dashboard not found in search", func(t *testing.T) {
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			dashboardStore: &fakeStore,
+			cfg: setting.NewCfg(),
 			orgService: &orgtest.FakeOrgService{
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
@@ -1018,8 +1020,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	t.Run("Will not wait for indexer when no dashboards were deleted", func(t *testing.T) {
 		repo := "test"
 		singleOrgService := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			dashboardStore: &fakeStore,
+			cfg: setting.NewCfg(),
 			orgService: &orgtest.FakeOrgService{
 				ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 			},
@@ -1127,11 +1128,8 @@ func TestUnprovisionDashboard(t *testing.T) {
 }
 
 func TestGetDashboardsByPluginID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 
 	query := &dashboards.GetDashboardsByPluginIDQuery{
@@ -1189,9 +1187,6 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 }
 
 func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
-
 	folderPermService := acmock.NewMockedPermissionsService()
 	folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
@@ -1204,7 +1199,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 
 	service := &DashboardServiceImpl{
 		cfg:               cfg,
-		dashboardStore:    &fakeStore,
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
@@ -1360,12 +1354,9 @@ func TestSaveDashboard(t *testing.T) {
 }
 
 func TestDeleteDashboard(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
-		dashboardStore:         &fakeStore,
 		publicDashboardService: fakePublicDashboardService,
 	}
 
@@ -1417,11 +1408,8 @@ func TestDeleteDashboard(t *testing.T) {
 }
 
 func TestDeleteAllDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
@@ -1433,19 +1421,16 @@ func TestDeleteAllDashboards(t *testing.T) {
 }
 
 func TestSearchDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakeFolders := foldertest.NewFakeService()
 	fakeFolders.ExpectedFolder = &folder.Folder{
 		Title: "testing-folder-1",
 		UID:   "f1",
 	}
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
-		folderService:  fakeFolders,
-		metrics:        newDashboardsMetrics(prometheus.NewRegistry()),
+		cfg:           setting.NewCfg(),
+		folderService: fakeFolders,
+		metrics:       newDashboardsMetrics(prometheus.NewRegistry()),
 	}
 
 	expectedResult := model.HitList{
@@ -1649,11 +1634,8 @@ func TestSearchDashboards(t *testing.T) {
 }
 
 func TestGetDashboards(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 
 	expectedResult := []*dashboards.Dashboard{
@@ -1757,11 +1739,8 @@ func TestGetDashboards(t *testing.T) {
 }
 
 func TestGetDashboardUIDByID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 
 	expectedResult := &dashboards.DashboardRef{
@@ -1964,11 +1943,8 @@ func TestQuotaCount(t *testing.T) {
 }
 
 func TestCountDashboardsInOrg(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
-	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
-		cfg:            setting.NewCfg(),
-		dashboardStore: &fakeStore,
+		cfg: setting.NewCfg(),
 	}
 	count := resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{
@@ -2618,20 +2594,16 @@ func createTestUnstructuredDashboard(uid, title string, resourceVersion string) 
 }
 
 func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
-	fakeStore := dashboards.FakeDashboardStore{}
 	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
-	defer fakeStore.AssertExpectations(t)
-
 	k8sCliMock := new(client.MockK8sHandler)
 
 	folderSvc := foldertest.NewFakeService()
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
 		log:                    log.New("test.logger"),
-		dashboardStore:         &fakeStore,
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders, featuremgmt.FlagKubernetesLibraryPanels),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesLibraryPanels),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}
