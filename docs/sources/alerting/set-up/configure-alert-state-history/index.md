@@ -80,6 +80,8 @@ Instead, Grafana Alerting writes alert state data to the `GRAFANA_ALERTS` metric
 GRAFANA_ALERTS{alertname="", alertstate="", grafana_alertstate="", grafana_rule_uid="", <additional alert labels>}
 ```
 
+Alert labels are automatically converted to ensure compatibility. Prometheus requires label names to start with a letter or underscore (`_`), followed only by letters, numbers, or additional underscores. Invalid characters are replaced during conversion. For example, `1my-label` becomes `_my_label`.
+
 The following steps describe a basic configuration:
 
 1. **Configure Prometheus**
