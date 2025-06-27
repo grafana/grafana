@@ -14764,7 +14764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0, debug@npm:^4.4.1":
+"debug@npm:4, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.3.7, debug@npm:^4.4.0":
   version: 4.4.1
   resolution: "debug@npm:4.4.1"
   dependencies:
@@ -15881,16 +15881,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-browserslist@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "esbuild-plugin-browserslist@npm:1.0.1"
+"esbuild-plugin-browserslist@npm:0.2.1":
+  version: 0.2.1
+  resolution: "esbuild-plugin-browserslist@npm:0.2.1"
   dependencies:
-    debug: "npm:^4.4.1"
-    zod: "npm:^3.25.3"
+    debug: "npm:^4.3.2"
+    zod: "npm:^3.7.1"
   peerDependencies:
-    browserslist: ^4.21.8
-    esbuild: ~0.25.4
-  checksum: 10/86fdd203b9335f79a1f37eab17b9826baa08b3ce2072430a37b4958a4537c55089905b76b9093d596b98d6e3fd161f1368f8b5facf328c29bcdc1eff50a1d4c5
+    browserslist: ^4.16.7
+    esbuild: ~0.12.19
+  checksum: 10/497e672a1697d80eae7091eb238052570038db8b6e85a0780d34ae02878d6198e663b11070ea443a4b431b116a121bc327bc107de00aefe87b6423527a6211b4
   languageName: node
   linkType: hard
 
@@ -18302,7 +18302,7 @@ __metadata:
     diff: "npm:^7.0.0"
     esbuild: "npm:0.25.0"
     esbuild-loader: "npm:4.3.0"
-    esbuild-plugin-browserslist: "npm:^1.0.0"
+    esbuild-plugin-browserslist: "npm:0.2.1"
     eslint: "npm:9.19.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
@@ -33023,7 +33023,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.23.8, zod@npm:^3.25.3, zod@npm:^3.25.55":
+"zod@npm:^3.23.8, zod@npm:^3.25.55, zod@npm:^3.7.1":
   version: 3.25.67
   resolution: "zod@npm:3.25.67"
   checksum: 10/0e35432dcca7f053e63f5dd491a87c78abe0d981817547252c3b6d05f0f58788695d1a69724759c6501dff3fd62929be24c9f314a3625179bee889150f7a61fa

@@ -127,6 +127,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
+	r.Get("/admin/repair-tool", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/provisioning", reqOrgAdmin, hs.Index)
 	r.Get("/admin/provisioning/*", reqOrgAdmin, hs.Index)
 
@@ -555,6 +556,18 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+
+		// Broken Panels API
+		apiRoute.Group("/brokenpanels", func(brokenPanelsRoute routing.RouteRegister) {
+			brokenPanelsRoute.Get("/dashboard/:dashboardUID", routing.Wrap(hs.brokenPanelsAPI.FindBrokenPanelsInDashboard))
+			brokenPanelsRoute.Get("/org", routing.Wrap(hs.brokenPanelsAPI.FindBrokenPanelsInOrg))
+			brokenPanelsRoute.Post("/validate", routing.Wrap(hs.brokenPanelsAPI.ValidatePanel))
+
+			// Cache management endpoints
+			brokenPanelsRoute.Delete("/cache/dashboard/:dashboardUID", routing.Wrap(hs.brokenPanelsAPI.InvalidateDashboardCache))
+			brokenPanelsRoute.Delete("/cache/org", routing.Wrap(hs.brokenPanelsAPI.InvalidateOrgCache))
+			brokenPanelsRoute.Delete("/cache/all", routing.Wrap(hs.brokenPanelsAPI.ClearAllCache))
+		})
 	}, reqSignedIn)
 
 	// admin api
