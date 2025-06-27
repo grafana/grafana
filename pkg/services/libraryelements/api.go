@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -215,6 +216,10 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
+				if errors.Is(err, dashboards.ErrFolderAccessDenied) {
+					return response.Error(http.StatusForbidden, "access denied to folder", err)
+				}
+
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
@@ -334,6 +339,10 @@ func (l *LibraryElementService) toLibraryElementError(err error, message string)
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
+	if err != nil && strings.Contains(err.Error(), "insufficient permissions") {
+		return response.Error(http.StatusForbidden, err.Error(), err)
+	}
+
 	// Log errors that cause internal server error status code.
 	l.log.Error(message, "error", err)
 	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
