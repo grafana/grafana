@@ -20,7 +20,7 @@ func Test_StaticProvider(t *testing.T) {
 	stFeatValue := stFeat.Expression == "true"
 
 	t.Run("empty config loads standard flags", func(t *testing.T) {
-		p := provider(t, []byte(``))
+		p := setup(t, []byte(``))
 		// Check for one of the standard flags
 		feat, err := p.Client.BooleanValueDetails(ctx, stFeatName, !stFeatValue, evalCtx)
 		assert.NoError(t, err)
@@ -32,14 +32,14 @@ func Test_StaticProvider(t *testing.T) {
 [feature_toggles]
 featureOne = true
 `)
-		p := provider(t, conf)
+		p := setup(t, conf)
 		feat, err := p.Client.BooleanValueDetails(ctx, "featureOne", false, evalCtx)
 		assert.NoError(t, err)
 		assert.True(t, feat.Value)
 	})
 
 	t.Run("missing feature should return default evaluation value and an error", func(t *testing.T) {
-		p := provider(t, []byte(``))
+		p := setup(t, []byte(``))
 		missingFeature, err := p.Client.BooleanValueDetails(ctx, "missingFeature", true, evalCtx)
 		assert.Error(t, err)
 		assert.True(t, missingFeature.Value)
@@ -47,7 +47,7 @@ featureOne = true
 	})
 }
 
-func provider(t *testing.T, conf []byte) *OpenFeatureService {
+func setup(t *testing.T, conf []byte) *OpenFeatureService {
 	t.Helper()
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
@@ -64,16 +64,12 @@ func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
 	_, err = sec.NewKey("ABCD", "true")
 	require.NoError(t, err)
 
-	p, err := ProvideOpenFeatureService(cfg)
+	// Use StaticFlagEvaluator instead of OpenFeatureService for static evaluation
+	staticEvaluator, err := ProvideStaticEvaluator(cfg)
 	require.NoError(t, err)
 
-	_, ok := p.provider.(*inMemoryBulkProvider)
-	if !ok {
-		t.Fatalf("expected inMemoryBulkProvider, got %T", p.provider)
-	}
-
 	ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext("grafana", nil))
-	allFlags, err := p.EvalAllFlagsWithStaticProvider(ctx)
+	allFlags, err := staticEvaluator.EvalAllFlags(ctx)
 	require.NoError(t, err)
 
 	openFeatureEnabledFlags := map[string]bool{}
@@ -86,7 +82,7 @@ func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
 	mgr, err := ProvideManagerService(cfg)
 	require.NoError(t, err)
 
-	// compare enabled feature flags match between OpenFeature static provider and Feature Manager
+	// compare enabled feature flags match between StaticFlagEvaluator and Feature Manager
 	enabledFeatureManager := mgr.GetEnabled(ctx)
 	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
 }
