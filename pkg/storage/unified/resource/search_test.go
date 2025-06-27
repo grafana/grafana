@@ -81,13 +81,6 @@ func (m *mockResourceIndex) ListManagedObjects(ctx context.Context, req *resourc
 	return &resourcepb.ListManagedObjectsResponse{}, nil
 }
 
-// mockDocumentBuilder implements DocumentBuilder for testing
-type mockDocumentBuilder struct{}
-
-func (m *mockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, resourceVersion int64, value []byte) (*IndexableDocument, error) {
-	return &IndexableDocument{Key: key}, nil
-}
-
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	resourceStats []ResourceStats
@@ -185,17 +178,6 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 	return 0
 }
 
-// mockDocumentBuilderSupplier for testing
-type mockDocumentBuilderSupplier struct{}
-
-func (m *mockDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
-	return []DocumentBuilderInfo{
-		{
-			Builder: &mockDocumentBuilder{},
-		},
-	}, nil
-}
-
 func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -264,7 +246,12 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 				buildIndexCalls:      []buildIndexCall{},
 				buildEmptyIndexCalls: []buildEmptyIndexCall{},
 			}
-			supplier := &mockDocumentBuilderSupplier{}
+			supplier := &TestDocumentBuilderSupplier{
+				GroupsResources: map[string]string{
+					"group1": "resource1",
+					"group2": "resource2",
+				},
+			}
 
 			// Create search support with the specified initMaxSize
 			opts := SearchOptions{

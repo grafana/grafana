@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
@@ -881,4 +882,76 @@ func (s *builderCache) clearNamespacedCache(key NamespacedResource) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ns.Remove(key)
+}
+
+// Test utilities for document building
+
+// testDocumentBuilder implements DocumentBuilder for testing
+type testDocumentBuilder struct{}
+
+func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	// convert value to unstructured.Unstructured
+	var u unstructured.Unstructured
+	if err := u.UnmarshalJSON(value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+
+	title := ""
+	tags := []string{}
+	val := ""
+
+	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
+	if ok {
+		if v, ok := spec["title"]; ok {
+			title = v.(string)
+		}
+		if v, ok := spec["tags"]; ok {
+			if tagSlice, ok := v.([]interface{}); ok {
+				tags = make([]string, len(tagSlice))
+				for i, tag := range tagSlice {
+					if strTag, ok := tag.(string); ok {
+						tags[i] = strTag
+					}
+				}
+			}
+		}
+		if v, ok := spec["value"]; ok {
+			val = v.(string)
+		}
+	}
+	return &IndexableDocument{
+		Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      u.GetName(),
+		},
+		Title: title,
+		Tags:  tags,
+		Fields: map[string]interface{}{
+			"value": val,
+		},
+	}, nil
+}
+
+// TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
+type TestDocumentBuilderSupplier struct {
+	GroupsResources map[string]string
+}
+
+func (s *TestDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+	builders := make([]DocumentBuilderInfo, 0, len(s.GroupsResources))
+
+	// Add builders for all possible group/resource combinations
+	for group, resourceType := range s.GroupsResources {
+		builders = append(builders, DocumentBuilderInfo{
+			GroupResource: schema.GroupResource{
+				Group:    group,
+				Resource: resourceType,
+			},
+			Builder: &testDocumentBuilder{},
+		})
+	}
+
+	return builders, nil
 }
