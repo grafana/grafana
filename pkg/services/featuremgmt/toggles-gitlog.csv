@@ -218,7 +218,6 @@ grafanaAPIServerWithExperimentalAPIs,2023-10-06T18:55:22Z,,717a9dd6160e352ff7c18
 panelMonitoring,2023-10-09T05:19:08Z,,ef82767dabea7d19cd8efac0c36ed590d4d767f4,Victor Marin
 navAdminSubsections,2023-10-10T10:50:44Z,2023-11-17T10:04:34Z,f56cc6fdc01dbf2efb802f22650cb2bef0c40179,Ashley Harrison
 recoveryThreshold,2023-10-10T14:51:50Z,,810fbc3327841da6d21f945e75cad9daf040e625,Yuri Tseretyan
-libraryPanelRBAC,2023-10-11T23:30:50Z,,a12cb8cbf3a9b33841b2f2cb1522be11de78c86a,kay delaney
 awsDatasourcesNewFormStyling,2023-10-12T08:59:10Z,2024-07-22T12:48:17Z,2771fb940342aa152377b26b9554eb15082f90ac,Ida Štambuk
 cachingOptimizeSerializationMemoryUsage,2023-10-12T16:56:49Z,,94ce87571ddfcede0fb7a229a65502b385d5bca3,Michael Mandrus
 panelTitleSearchInV1,2023-10-13T12:04:24Z,2025-01-21T09:59:32Z,bf2f2540da7a4e4b8d80e1fa4ae3d05868cf7b69,Arati R
