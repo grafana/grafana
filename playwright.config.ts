@@ -204,5 +204,14 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'smoke',
+      testDir: path.join(testDirRoot, '/smoke-tests-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });
