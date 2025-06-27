@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Dashboard keybindings',
   {
-    tag: ['@dashboards', '@wip'],
+    tag: ['@dashboards'],
   },
   () => {
     // the "should collapse and expand all rows" test requires a larger viewport
