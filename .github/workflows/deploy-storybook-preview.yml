@@ -7,7 +7,7 @@ on:
   push:
     branches:
       # - main
-      - jh/storybook-pr-previews
+      - storybook-preview-deploys
     # paths:
     #   - 'packages/grafana-ui/**'
 
