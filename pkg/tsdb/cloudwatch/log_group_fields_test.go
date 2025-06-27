@@ -1,29 +1,30 @@
-package routes
+package cloudwatch
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
 func TestLogGroupFieldsRoute(t *testing.T) {
-	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{}, err
-	}
+	origLogGroupsService := services.NewLogGroupsService
+	t.Cleanup(func() {
+		services.NewLogGroupsService = origLogGroupsService
+	})
 	t.Run("returns 400 if an invalid LogGroupFieldsRequest is used", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", `/log-group-fields?region=us-east-2`, nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupFieldsHandler, logger, nil))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupFieldsHandler))
 		handler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 		assert.Equal(t, `{"Message":"error in LogGroupFieldsHandler: you need to specify either logGroupName or logGroupArn","Error":"you need to specify either logGroupName or logGroupArn","StatusCode":400}`, rr.Body.String())
@@ -31,14 +32,15 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 
 	t.Run("returns 500 if GetLogGroupFields method fails", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupFieldsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
+		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return &mockLogsService
 		}
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-group-fields?region=us-east-2&logGroupName=test", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupFieldsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupFieldsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -47,7 +49,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 
 	t.Run("returns valid json response if everything is ok", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupFieldsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{
+		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{
 			{
 				AccountId: new(string),
 				Value: resources.LogGroupField{
@@ -63,13 +65,14 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 				},
 			},
 		}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
+		services.NewLogGroupsService = func(_ models.CloudWatchLogsAPIProvider, _ bool) models.LogGroupsProvider {
+			return &mockLogsService
 		}
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-group-fields?region=us-east-2&logGroupName=test", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupFieldsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupFieldsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
