@@ -6,7 +6,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Export for internal and external use', async ({ dashboardPage, gotoDashboardPage, page, selectors }) => {
+    test('Export for internal and external use', async ({
+      context,
+      dashboardPage,
+      gotoDashboardPage,
+      page,
+      selectors,
+    }) => {
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       await gotoDashboardPage({
         uid: 'ZqZnVvFZz',
       });
