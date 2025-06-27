@@ -111,9 +111,9 @@ For more information on how to query other Prometheus-compatible projects from G
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Once you have provisioned a data source you cannot edit it.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provisioning example
 
@@ -177,17 +177,17 @@ Add the following setting in the **[auth]** section :
 azure_auth_enabled = true
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using Azure authentication settings do not enable `Forward OAuth identity`. Both use the same HTTP authorization headers. Azure settings will get overwritten by the Oauth token.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Exemplars
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](ref:exemplars) in Prometheus documentation for detailed information on how they work.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
 

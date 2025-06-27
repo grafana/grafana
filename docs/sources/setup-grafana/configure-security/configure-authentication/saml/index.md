@@ -21,9 +21,9 @@ weight: 500
 
 # Configure SAML authentication using the configuration file
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
@@ -34,15 +34,15 @@ You can configure SAML authentication in Grafana through one of the following me
 - the user interface (refer to [Configure SAML authentication using the Grafana user interface](../saml-ui/))
 - the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
-{{% /admonition %}}
+{{< /admonition >}}
 
 All methods offer the same configuration options, but you might prefer using the Grafana configuration file or the Terraform provider if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through the other methods.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Supported SAML
 
@@ -68,7 +68,7 @@ In terms of initiation, Grafana supports:
 
 By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)](#idp-initiated-single-sign-on-sso).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
 Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows,.
@@ -80,7 +80,7 @@ Related links:
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - [Set up SAML with Azure AD](#set-up-saml-with-azure-ad)
 - [Configure a Graph API application in Azure AD](#configure-a-graph-api-application-in-azure-ad)
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 ### Edit SAML options in the Grafana config file
 
@@ -127,9 +127,9 @@ If multiple bindings are supported for SAML Single Sign-On (SSO) by the Identity
 
 To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the IdP's domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Certificate and private key
 
@@ -140,9 +140,9 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 - Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ---
 
@@ -293,9 +293,9 @@ Grafana supports user authentication through Okta, which is useful when you want
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
-     {{% admonition type="note" %}}
+     {{< admonition type="note" >}}
      If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
-     {{% /admonition %}}
+     {{< /admonition >}}
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
      | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
@@ -390,9 +390,9 @@ Additionally, Grafana did not support IdP sessions and could not include the `Se
 
 Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 These improvements are available in public preview behind the `improvedExternalSessionHandling` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles](../../../configure-grafana/feature-toggles/)
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Assertion mapping
 
@@ -438,9 +438,9 @@ Group synchronization allows you to map user groups from an identity provider to
 To use SAML group synchronization, set [`assertion_attribute_groups`](../../../configure-grafana/enterprise-configuration/#assertion_attribute_groups) to the attribute name where you store user groups.
 Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Team sync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Given the following partial SAML assertion:
 
@@ -602,9 +602,9 @@ allowed_organizations = Engineering, Sales
 
 ### Example SAML configuration in Terraform
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "saml_sso_settings" {

@@ -155,13 +155,13 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
 
 The HA settings (`ha_peers`, etc.) apply only to communication between alertmanagers, synchronizing silences and attempting to avoid duplicate notifications, as described in the introduction.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 

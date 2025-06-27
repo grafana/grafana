@@ -11,9 +11,9 @@ weight: 600
 
 # Configure SAML authentication using the Grafana user interface
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) version 10.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication using the configuration file](../saml/).
 
@@ -24,13 +24,13 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 - It doesn't require Grafana to be restarted after a configuration update
 - Access to the SAML UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file. For more information on how Grafana determines the order of precedence for its settings, please refer to the [Settings update at runtime](../../../configure-grafana/settings-updates-at-runtime/).
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling the UI does not affect any configuration settings that were previously set up through the UI. Those settings will continue to function as intended even with the UI disabled.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -44,7 +44,7 @@ To follow this guide, you need:
 
 - Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise](../../../../introduction/grafana-enterprise/) or [Grafana Cloud Pro or Advanced](/docs/grafana-cloud/) license.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
 Grafana versions 11.1 and below do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows.
@@ -56,7 +56,7 @@ Related links:
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - [Set up SAML with Azure AD](../saml/#set-up-saml-with-azure-ad)
 - [Configure a Graph API application in Azure AD](../saml/#configure-a-graph-api-application-in-azure-ad)
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 ## Steps To Configure SAML Authentication
 

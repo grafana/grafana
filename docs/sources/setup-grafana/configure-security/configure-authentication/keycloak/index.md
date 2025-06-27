@@ -24,9 +24,9 @@ Keycloak OAuth2 authentication allows users to log in to Grafana using their Key
 
 Refer to [Generic OAuth authentication](../generic-oauth/) for extra configuration options available for this provider.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If Users use the same email address in Keycloak that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
@@ -59,10 +59,10 @@ To configure the `kc_idp_hint` parameter for Keycloak, you need to change the `a
 auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth?kc_idp_hint=google
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
 It is useful as a fallback or if the user has more than 150 group memberships.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Keycloak configuration
 
@@ -93,9 +93,9 @@ profile
 roles
 ```
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 These scopes do not add group claims to the id_token. Without group claims, group synchronization will not work. Group synchronization is covered further down in this document.
-{{% /admonition %}}
+{{< /admonition >}}
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -157,9 +157,9 @@ signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protoc
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Allow assigning Grafana Admin
 

@@ -46,9 +46,9 @@ refs:
 
 # RBAC role definitions
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 The following tables list permissions associated with basic and fixed roles.
 
@@ -167,14 +167,14 @@ For more information about the permissions required to access alert rules, refer
 
 ### Grafana OnCall roles (beta)
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available from Grafana 9.4 in early access.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is behind the `accessControlOnCall` feature toggle.
 You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
-{{% /admonition %}}
+{{< /admonition >}}
 
 If you are using [Grafana OnCall](ref:oncall), you can try out the integration between Grafana OnCall and RBAC.
 For a detailed list of the available OnCall RBAC roles, refer to the table in [Available Grafana OnCall RBAC roles and granted actions](ref:available-grafana-oncall-rbac-roles--granted-actions).
