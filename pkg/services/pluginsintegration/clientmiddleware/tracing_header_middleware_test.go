@@ -238,5 +238,101 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.RunStreamReq.GetHTTPHeader(`X-Query-Group-Id`))
 			require.Equal(t, `true`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
+
+		t.Run("When headers contain invalid characters, they are sanitized", func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
+			require.NoError(t, err)
+
+			// Set headers with control characters that need sanitization
+			req.Header[`X-Dashboard-Uid`] = []string{"dashboard\x00uid"}
+			req.Header[`X-Datasource-Uid`] = []string{"datasource\tuid"}
+			req.Header[`X-Panel-Id`] = []string{"panel\nid"}
+			req.Header[`X-Grafana-Org-Id`] = []string{"org\rid"}
+
+			pluginCtx := backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}
+
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{},
+			})
+			require.NoError(t, err)
+
+			// Verify that headers were sanitized (control characters percent-encoded)
+			require.Equal(t, `dashboard%00uid`, cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `datasource%09uid`, cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `panel%0Aid`, cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `org%0Did`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+		})
 	})
+}
+
+func TestSanitizeGrpcHeaderValue(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Valid printable ASCII characters remain unchanged",
+			input:    "Hello World! 123 @#$%^&*()",
+			expected: "Hello World! 123 @#$%^&*()",
+		},
+		{
+			name:     "Extended characters remain unchanged",
+			input:    "café résumé naïve",
+			expected: "café résumé naïve",
+		},
+		{
+			name:     "Invalid characters are percent-encoded",
+			input:    "Ó",
+			expected: "Ó",
+		},
+		{
+			name:     "Control characters are percent-encoded",
+			input:    "hello\x00\x01\x1Fworld",
+			expected: "hello%00%01%1Fworld",
+		},
+		{
+			name:     "Tab character is percent-encoded",
+			input:    "hello\tworld",
+			expected: "hello%09world",
+		},
+		{
+			name:     "Newline character is percent-encoded",
+			input:    "hello\nworld",
+			expected: "hello%0Aworld",
+		},
+		{
+			name:     "Carriage return is percent-encoded",
+			input:    "hello\rworld",
+			expected: "hello%0Dworld",
+		},
+		{
+			name:     "Mixed valid and invalid characters",
+			input:    "Valid text\x00invalid\x1Fmore valid 🚀",
+			expected: "Valid text%00invalid%1Fmore valid 🚀",
+		},
+		{
+			name:     "Empty string remains empty",
+			input:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := sanitizeGrpcHeaderValue(tc.input)
+			require.Equal(t, tc.expected, result)
+		})
+	}
 }
