@@ -58,14 +58,47 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	return args.Get(0).(*IndexableDocument), nil
 }
 
-// mockStorageBackend implements StorageBackend for testing
-type mockStorageBackend struct {
+// simpleResourceIndex implements ResourceIndex for testing
+type simpleResourceIndex struct {
+	bulkIndexCalls []BulkIndexRequest
+}
+
+func (s *simpleResourceIndex) BulkIndex(req *BulkIndexRequest) error {
+	s.bulkIndexCalls = append(s.bulkIndexCalls, *req)
+	return nil
+}
+
+func (s *simpleResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error) {
+	return &resourcepb.ResourceSearchResponse{}, nil
+}
+
+func (s *simpleResourceIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	return nil, nil
+}
+
+func (s *simpleResourceIndex) DocCount(ctx context.Context, folder string) (int64, error) {
+	return 0, nil
+}
+
+func (s *simpleResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	return &resourcepb.ListManagedObjectsResponse{}, nil
+}
+
+// simpleDocumentBuilder implements DocumentBuilder for testing
+type simpleDocumentBuilder struct{}
+
+func (s *simpleDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, resourceVersion int64, value []byte) (*IndexableDocument, error) {
+	return &IndexableDocument{Key: key}, nil
+}
+
+// simpleStorageBackend implements StorageBackend for testing
+type simpleStorageBackend struct {
 	resourceStats []ResourceStats
 }
 
-func (m *mockStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
+func (s *simpleStorageBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error) {
 	var result []ResourceStats
-	for _, stat := range m.resourceStats {
+	for _, stat := range s.resourceStats {
 		// Apply the minCount filter like the real implementation does
 		if stat.Count > int64(minCount) {
 			result = append(result, stat)
@@ -74,28 +107,28 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, namespace str
 	return result, nil
 }
 
-func (m *mockStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
+func (s *simpleStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	return 0, nil
 }
 
-func (m *mockStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+func (s *simpleStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	return nil
 }
 
-func (m *mockStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+func (s *simpleStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	return nil, nil
 }
 
-func (m *mockStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+func (s *simpleStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
 
-func (m *mockStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+func (s *simpleStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
 
-// mockSearchBackend implements SearchBackend for testing with tracking capabilities
-type mockSearchBackend struct {
+// simpleSearchBackend implements SearchBackend for testing with tracking capabilities
+type simpleSearchBackend struct {
 	buildIndexCalls      []buildIndexCall
 	buildEmptyIndexCalls []buildEmptyIndexCall
 	indexes              map[string]ResourceIndex
@@ -115,18 +148,18 @@ type buildEmptyIndexCall struct {
 	fields          SearchableDocumentFields
 }
 
-func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
-	return m.indexes[key.String()], nil
+func (s *simpleSearchBackend) GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	return s.indexes[key.String()], nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
-	// Create a mock index that can handle method calls
-	mockIndex := &MockResourceIndex{}
-	mockIndex.On("BulkIndex", mock.Anything).Return(nil).Maybe()
-	mockIndex.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
+func (s *simpleSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+	// Create a simple index
+	index := &simpleResourceIndex{
+		bulkIndexCalls: []BulkIndexRequest{},
+	}
 
 	// Call the builder function (required by the contract)
-	_, err := builder(mockIndex)
+	_, err := builder(index)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +168,7 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Empty indexes are characterized by size == 0
 	if size == 0 {
 		// This is an empty index (buildEmptyIndex was called)
-		m.buildEmptyIndexCalls = append(m.buildEmptyIndexCalls, buildEmptyIndexCall{
+		s.buildEmptyIndexCalls = append(s.buildEmptyIndexCalls, buildEmptyIndexCall{
 			key:             key,
 			size:            size,
 			resourceVersion: resourceVersion,
@@ -143,7 +176,7 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 		})
 	} else {
 		// This is a normal index (build was called)
-		m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
+		s.buildIndexCalls = append(s.buildIndexCalls, buildIndexCall{
 			key:             key,
 			size:            size,
 			resourceVersion: resourceVersion,
@@ -151,21 +184,21 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 		})
 	}
 
-	m.indexes[key.String()] = mockIndex
-	return mockIndex, nil
+	s.indexes[key.String()] = index
+	return index, nil
 }
 
-func (m *mockSearchBackend) TotalDocs() int64 {
+func (s *simpleSearchBackend) TotalDocs() int64 {
 	return 0
 }
 
-// mockDocumentBuilderSupplier for testing
-type mockDocumentBuilderSupplier struct{}
+// simpleDocumentBuilderSupplier for testing
+type simpleDocumentBuilderSupplier struct{}
 
-func (m *mockDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+func (s *simpleDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
 	return []DocumentBuilderInfo{
 		{
-			Builder: StandardDocumentBuilder(),
+			Builder: &simpleDocumentBuilder{},
 		},
 	}, nil
 }
@@ -230,27 +263,27 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup mocks
-			mockStorage := &mockStorageBackend{
+			// Setup simple implementations
+			storage := &simpleStorageBackend{
 				resourceStats: tt.resourceStats,
 			}
-			mockSearch := &mockSearchBackend{
+			search := &simpleSearchBackend{
 				buildIndexCalls:      []buildIndexCall{},
 				buildEmptyIndexCalls: []buildEmptyIndexCall{},
 				indexes:              make(map[string]ResourceIndex),
 			}
-			mockSupplier := &mockDocumentBuilderSupplier{}
+			supplier := &simpleDocumentBuilderSupplier{}
 
 			// Create search support with the specified initMaxSize
 			opts := SearchOptions{
-				Backend:       mockSearch,
-				Resources:     mockSupplier,
+				Backend:       search,
+				Resources:     supplier,
 				WorkerThreads: 1,
 				InitMinCount:  0, // disable min count for this test
 				InitMaxCount:  tt.initMaxSize,
 			}
 
-			support, err := newSearchSupport(opts, mockStorage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
 			require.NoError(t, err)
 			require.NotNil(t, support)
 
@@ -264,15 +297,15 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 			require.Equal(t, expectedTotal, indexesBuilt)
 
 			// Verify the correct resources were built normally
-			actualNormalBuilds := make([]string, len(mockSearch.buildIndexCalls))
-			for i, call := range mockSearch.buildIndexCalls {
+			actualNormalBuilds := make([]string, len(search.buildIndexCalls))
+			for i, call := range search.buildIndexCalls {
 				actualNormalBuilds[i] = call.key.String()
 			}
 			require.ElementsMatch(t, tt.expectedNormalBuilds, actualNormalBuilds)
 
 			// Verify the correct resources were built as empty indexes
-			actualEmptyBuilds := make([]string, len(mockSearch.buildEmptyIndexCalls))
-			for i, call := range mockSearch.buildEmptyIndexCalls {
+			actualEmptyBuilds := make([]string, len(search.buildEmptyIndexCalls))
+			for i, call := range search.buildEmptyIndexCalls {
 				actualEmptyBuilds[i] = call.key.String()
 				// Verify that empty indexes are built with size 0
 				require.Equal(t, int64(0), call.size, "Empty index should be built with size 0")
