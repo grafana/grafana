@@ -23,6 +23,7 @@ import {
   SpecialValueMatch,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -309,8 +310,9 @@ export function prepareTimelineFields(
   timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
+  // this allows PanelDataErrorView to show the default noValue message
   if (!series?.length) {
-    return { warn: 'No data in response' };
+    return { warn: '' };
   }
 
   cacheFieldDisplayNames(series);
@@ -436,10 +438,10 @@ export function prepareTimelineFields(
   }
 
   if (!hasTimeseries) {
-    return { warn: 'Data does not have a time field' };
+    return { warn: t('timeline.missing-field.time', 'Data does not have a time field') };
   }
   if (!frames.length) {
-    return { warn: 'No graphable fields' };
+    return { warn: t('timeline.missing-field.all', 'No graphable fields') };
   }
 
   return { frames };
