@@ -551,10 +551,6 @@ const (
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
-	// FlagFailWrongDSUID
-	// Throws an error if a data source has an invalid UIDs
-	FlagFailWrongDSUID = "failWrongDSUID"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
