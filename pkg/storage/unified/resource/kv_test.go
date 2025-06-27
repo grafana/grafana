@@ -25,6 +25,15 @@ func setupTestBadgerDB(t *testing.T) *badger.DB {
 	return db
 }
 
+func setupTestKV(t *testing.T) KV {
+	db := setupTestBadgerDB(t)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return NewBadgerKV(db)
+}
+
 func TestBadgerKV_Get(t *testing.T) {
 	db := setupTestBadgerDB(t)
 
@@ -118,7 +127,8 @@ func TestBadgerKV_Delete(t *testing.T) {
 
 	t.Run("Delete non-existent key", func(t *testing.T) {
 		err := kv.Delete(ctx, "section", "nonexistent")
-		require.NoError(t, err) // Badger doesn't return error for non-existent keys
+		assert.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
 	})
 }
 
