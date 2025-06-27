@@ -58,7 +58,7 @@ Fields explanation:
 
 **Single Logout:** Logging out from Grafana also logs you out of provider session
 
-**SCIM support:** Support for SCIM provisioning. Supported IDPs are Azure AD and Okta.
+**SCIM support:** Support for SCIM provisioning. Supported Identity Providers are Azure AD and Okta.
 
 ## Configuring multiple identity providers
 
