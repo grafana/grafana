@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -38,8 +38,10 @@ interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> 
   suffix?: React.ReactNode;
 }
 
-const TextAreaWithSuffix = ({ suffix, ...textAreaProps }: TextAreaWithSuffixProps) => {
+const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
   const theme = useTheme2();
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  
   const styles = useStyles2(() => ({
     wrapper: css({
       position: 'relative',
@@ -47,6 +49,9 @@ const TextAreaWithSuffix = ({ suffix, ...textAreaProps }: TextAreaWithSuffixProp
     }),
     textArea: css({
       paddingRight: suffix ? theme.spacing(5) : undefined,
+      resize: 'none',
+      overflow: 'hidden',
+      minHeight: theme.spacing(5), // Minimum height
     }),
     suffix: css({
       position: 'absolute',
@@ -60,9 +65,36 @@ const TextAreaWithSuffix = ({ suffix, ...textAreaProps }: TextAreaWithSuffixProp
     }),
   }));
 
+  // Auto-resize function
+  const autoResize = useCallback(() => {
+    const textArea = textAreaRef.current;
+    if (textArea) {
+      // Reset height to auto to get the actual scrollHeight
+      textArea.style.height = 'auto';
+      // Set height to scrollHeight to fit content
+      textArea.style.height = `${Math.max(textArea.scrollHeight, parseInt(theme.spacing(5), 10))}px`;
+    }
+  }, [theme]);
+
+  // Auto-resize on value change (including during typing effect)
+  useEffect(() => {
+    autoResize();
+  }, [value, autoResize]);
+
+  // Auto-resize on initial mount
+  useEffect(() => {
+    autoResize();
+  }, [autoResize]);
+
   return (
     <div className={styles.wrapper}>
-      <TextArea {...textAreaProps} className={styles.textArea} />
+      <TextArea 
+        {...textAreaProps} 
+        ref={textAreaRef}
+        value={value}
+        className={styles.textArea}
+        onInput={autoResize} // Also resize on manual input
+      />
       {suffix && <div className={styles.suffix}>{suffix}</div>}
     </div>
   );
