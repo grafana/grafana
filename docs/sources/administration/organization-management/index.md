@@ -88,9 +88,9 @@ For more information about adding users to an organization, refer to [Add a user
 
 This action permanently removes an organization from your Grafana server.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Deleting the organization also deletes all teams and dashboards associated the organization.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Before you begin
 
