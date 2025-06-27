@@ -243,11 +243,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Display Angular warnings in dashboards and panels
-  * @default true
-  */
-  angularDeprecationUI?: boolean;
-  /**
   * Enable AI powered features in dashboards
   * @default true
   */
@@ -264,11 +259,6 @@ export interface FeatureToggles {
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
-  /**
-  * Enables RBAC support for library panels
-  * @default true
-  */
-  libraryPanelRBAC?: boolean;
   /**
   * Enables running Loki queries in parallel
   */

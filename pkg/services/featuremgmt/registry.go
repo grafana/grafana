@@ -398,14 +398,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:         "angularDeprecationUI",
-			Description:  "Display Angular warnings in dashboards and panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
 			Stage:        FeatureStageGeneralAvailability,
@@ -433,15 +425,6 @@ var (
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:            "libraryPanelRBAC",
-			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -1315,7 +1298,7 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{

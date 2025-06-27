@@ -1421,51 +1421,36 @@ func TestDataStore_LastResourceVersion(t *testing.T) {
 	})
 
 	t.Run("returns error for empty required fields", func(t *testing.T) {
-		testCases := []struct {
-			name string
-			key  ListRequestKey
-		}{
-			{
-				name: "empty namespace",
-				key: ListRequestKey{
-					Namespace: "",
-					Group:     "test-group",
-					Resource:  "test-resource",
-					Name:      "test-name",
-				},
+		testCases := map[string]ListRequestKey{
+			"empty namespace": {
+				Namespace: "",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "test-name",
 			},
-			{
-				name: "empty group",
-				key: ListRequestKey{
-					Namespace: "test-namespace",
-					Group:     "",
-					Resource:  "test-resource",
-					Name:      "test-name",
-				},
+			"empty group": {
+				Namespace: "test-namespace",
+				Group:     "",
+				Resource:  "test-resource",
+				Name:      "test-name",
 			},
-			{
-				name: "empty resource",
-				key: ListRequestKey{
-					Namespace: "test-namespace",
-					Group:     "test-group",
-					Resource:  "",
-					Name:      "test-name",
-				},
+			"empty resource": {
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "",
+				Name:      "test-name",
 			},
-			{
-				name: "empty name",
-				key: ListRequestKey{
-					Namespace: "test-namespace",
-					Group:     "test-group",
-					Resource:  "test-resource",
-					Name:      "",
-				},
+			"empty name": {
+				Namespace: "test-namespace",
+				Group:     "test-group",
+				Resource:  "test-resource",
+				Name:      "",
 			},
 		}
 
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				_, err := ds.LastResourceVersion(ctx, tc.key)
+		for name, key := range testCases {
+			t.Run(name, func(t *testing.T) {
+				_, err := ds.LastResourceVersion(ctx, key)
 				require.Error(t, err)
 			})
 		}

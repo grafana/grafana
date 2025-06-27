@@ -3,6 +3,7 @@ package artifacts
 import (
 	"context"
 	"log/slog"
+	"os"
 	"path/filepath"
 
 	"dagger.io/dagger"
@@ -191,10 +192,17 @@ func NewBackendFromString(ctx context.Context, log *slog.Logger, artifact string
 		return nil, err
 	}
 
+	goCacheProg := ""
+	// If the caller has GOCACHEPROG set, then reuse it
+	if val, ok := os.LookupEnv("GOCACHEPROG"); ok {
+		goCacheProg = val
+	}
+
 	bopts := &backend.BuildOpts{
 		Version:           p.Version,
 		Enterprise:        p.Enterprise,
 		ExperimentalFlags: experiments,
+		GoCacheProg:       goCacheProg,
 		Static:            static,
 		WireTag:           wireTag,
 		Tags:              tags,
