@@ -458,9 +458,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: 'grafana', // built-in annotations are always of type grafana
-          datasource: {
-            name: layer.state.query.query.spec.datasource.uid,
-          },
           spec: {
             ...layer.state.query.target,
           },
@@ -470,13 +467,16 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: datasource?.type!,
-          datasource: {
-            name: datasource?.uid,
-          },
           spec: {
             ...layer.state.query.target,
           },
         };
+
+        if (layer.state.query.datasource?.uid) {
+          result.spec.query.datasource = {
+            name: layer.state.query.datasource?.uid,
+          };
+        }
       }
     }
     // For annotations without query.query defined (e.g., grafana annotations without tags)
