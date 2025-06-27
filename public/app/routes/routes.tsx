@@ -386,6 +386,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
     },
+    {
+      path: '/admin/upgrade-grafana',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "GrafanaDetailsPage" */ 'app/features/admin/Upgrade/UpgradeGrafanaPage')
+      ),
+    },
     // LOGIN / SIGNUP
     {
       path: '/login',

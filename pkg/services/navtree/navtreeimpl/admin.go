@@ -61,6 +61,14 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
+	if c.HasRole(identity.RoleAdmin) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Upgrade Grafana",
+			Id:       "upgrade-grafana",
+			SubTitle: "Upgrade Grafana to the latest version",
+			Url:      s.cfg.AppSubURL + "/admin/upgrade-grafana",
+		})
+	}
 	if c.HasRole(identity.RoleAdmin) &&
 		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
 			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
